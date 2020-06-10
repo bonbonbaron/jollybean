@@ -1,0 +1,434 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+Activity	ge.h	/^typedef struct Activity {  \/* stack var *\/$/;"	s
+Activity	ge.h	/^} Activity;$/;"	t	typeref:struct:Activity
+AnimSequence	img.py	/^from animsequence import AnimSequence$/;"	i
+AnimatedSprite	ge.h	/^typedef struct AnimatedSprite {$/;"	s
+AnimatedSprite	ge.h	/^} AnimatedSprite;$/;"	t	typeref:struct:AnimatedSprite
+Animation	ge.h	/^} Animation;$/;"	t	typeref:struct:Animation_t
+AnimationStrip	ge.h	/^typedef struct AnimationStrip {$/;"	s
+AnimationStrip	ge.h	/^} AnimationStrip;$/;"	t	typeref:struct:AnimationStrip
+Animation_t	ge.h	/^typedef struct Animation_t {$/;"	s
+AnimobSprite	ge.h	/^typedef struct AnimobSprite {$/;"	s
+AnimobSprite	ge.h	/^} AnimobSprite;$/;"	t	typeref:struct:AnimobSprite
+BUTTON_REPEAT_RATE	main.c	17;"	d	file:
+BYTEORDER	img.py	/^BYTEORDER = "big"  # since that's the order files are written in$/;"	v
+BlitCoords	img.py	/^    from blitcoords import BlitCoords$/;"	i
+CC	Makefile	/^CC=gcc$/;"	m
+CFLAGS	Makefile	/^CFLAGS = -L\/usr\/local\/lib\/ -lSDL2main -lSDL2 -I\/usr\/local\/include\/SDL2\/ -I\/home\/pi\/Desktop\/ge\/$/;"	m
+CTRL_A	ge.h	34;"	d
+CTRL_B	ge.h	35;"	d
+CTRL_D	ge.h	31;"	d
+CTRL_L	ge.h	32;"	d
+CTRL_R	ge.h	33;"	d
+CTRL_S	ge.h	37;"	d
+CTRL_U	ge.h	30;"	d
+CTRL_X	ge.h	36;"	d
+Camera	ge.h	/^} Camera;$/;"	t	typeref:struct:__anon8
+CommChannel	ge.h	/^typedef struct CommChannel {$/;"	s
+CommChannel	ge.h	/^} CommChannel;$/;"	t	typeref:struct:CommChannel
+DATA_FILE	ge.h	359;"	d
+DEBUG	ge.h	22;"	d
+DEPS	Makefile	/^DEPS = ge.h$/;"	m
+Error	ge.h	/^typedef Sint8 Error;$/;"	t
+FLG_SPRITE_ANIMATED	ge.h	144;"	d
+FLG_SPRITE_AUDIBLE	ge.h	146;"	d
+FLG_SPRITE_MOBILE	ge.h	145;"	d
+FLIP_DIAG	image.c	12;"	d	file:
+FLIP_DIAG	img.py	/^FLIP_DIAG = 3 << 14$/;"	v
+FLIP_LR	image.c	11;"	d	file:
+FLIP_LR	img.py	/^FLIP_LR   = 2 << 14$/;"	v
+FLIP_NONE	image.c	9;"	d	file:
+FLIP_NONE	img.py	/^FLIP_NONE = 0$/;"	v
+FLIP_UD	image.c	10;"	d	file:
+FLIP_UD	img.py	/^FLIP_UD   = 1 << 14$/;"	v
+FPS	ge.h	39;"	d
+FRAME_DURATION	ge.h	40;"	d
+GE_H	ge.h	6;"	d
+IDX_B	img.py	/^IDX_B                 =  2$/;"	v
+IDX_G	img.py	/^IDX_G                 =  1$/;"	v
+IDX_LEN	ge.h	358;"	d
+IDX_OFFSET	ge.h	357;"	d
+IDX_R	img.py	/^IDX_R                 =  0$/;"	v
+IMG_DEBUG	image.c	3;"	d	file:
+IMG_DIR_IDX_LOCATION	img.py	/^IMG_DIR_IDX_LOCATION  = 1$/;"	v
+IMG_DIR_IDX_NAME	img.py	/^IMG_DIR_IDX_NAME      = 0$/;"	v
+IMG_DIR_IDX_NBR_TILES	img.py	/^IMG_DIR_IDX_NBR_TILES = 2$/;"	v
+ImageInfo	img.py	/^class ImageInfo:$/;"	c
+LerpConsts	ge.h	/^} LerpConsts;$/;"	t	typeref:struct:__anon7
+LinkedList	ge.h	/^typedef struct LinkedList {$/;"	s
+LinkedList	ge.h	/^} LinkedList;$/;"	t	typeref:struct:LinkedList
+ListNode	ge.h	/^typedef struct ListNode {$/;"	s
+ListNode	ge.h	/^} ListNode;$/;"	t	typeref:struct:ListNode
+MEDIA_IMG	ge.h	/^  MEDIA_IMG, MEDIA_SND, MEDIA_TXT$/;"	e	enum:__anon5
+MEDIA_SND	ge.h	/^  MEDIA_IMG, MEDIA_SND, MEDIA_TXT$/;"	e	enum:__anon5
+MEDIA_TXT	ge.h	/^  MEDIA_IMG, MEDIA_SND, MEDIA_TXT$/;"	e	enum:__anon5
+MINIZ_HAS_64BIT_REGISTERS	data.c	50;"	d	file:
+MINIZ_LITTLE_ENDIAN	data.c	45;"	d	file:
+MINIZ_USE_UNALIGNED_LOADS_AND_STORES	data.c	43;"	d	file:
+MZ_CLEAR_OBJ	data.c	172;"	d	file:
+MZ_FREE	data.c	162;"	d	file:
+MZ_FREE	data.c	166;"	d	file:
+MZ_MACRO_END	data.c	55;"	d	file:
+MZ_MACRO_END	data.c	57;"	d	file:
+MZ_MALLOC	data.c	161;"	d	file:
+MZ_MALLOC	data.c	165;"	d	file:
+MZ_MAX	data.c	170;"	d	file:
+MZ_MIN	data.c	171;"	d	file:
+MZ_READ_LE16	data.c	175;"	d	file:
+MZ_READ_LE16	data.c	178;"	d	file:
+MZ_READ_LE32	data.c	176;"	d	file:
+MZ_READ_LE32	data.c	179;"	d	file:
+MZ_REALLOC	data.c	163;"	d	file:
+MZ_REALLOC	data.c	167;"	d	file:
+MediaInfo	ge.h	/^typedef struct MediaInfo {$/;"	s
+MediaInfo	ge.h	/^} MediaInfo ;$/;"	t	typeref:struct:MediaInfo
+MobInfo	ge.h	/^} MobInfo;$/;"	t	typeref:union:__anon6
+MobilityLerping	ge.h	/^typedef struct MobilityLerping {$/;"	s
+MobilityTranslation	ge.h	/^typedef struct MobilityTranslation {$/;"	s
+Motion	ge.h	/^} Motion;$/;"	t	typeref:struct:Motion_t
+MotionLerping	ge.h	/^} MotionLerping;$/;"	t	typeref:struct:MobilityLerping
+MotionTranslation	ge.h	/^} MotionTranslation;$/;"	t	typeref:struct:MobilityTranslation
+Motion_t	ge.h	/^typedef struct Motion_t {$/;"	s
+NBR_COLOR_CHANNELS	img.py	/^NBR_COLOR_CHANNELS    =  3$/;"	v
+NUM_COMM_CHANNELS	ge.h	343;"	d
+OBJS	Makefile	/^OBJS = main.o ctrl.o data.o image.o scene.o$/;"	m
+PNG_BITDEPTH_DATA_SZ	img.py	/^PNG_BITDEPTH_DATA_SZ  = 1$/;"	v
+PNG_BITDEPTH_LOCATION	img.py	/^PNG_BITDEPTH_LOCATION = 24$/;"	v
+PNG_IDATA_LOCATION	img.py	/^PNG_IDATA_LOCATION    = PNG_BITDEPTH_LOCATION + 8$/;"	v
+PNG_IDAT_CHUNK_TYPE	img.py	/^PNG_IDAT_CHUNK_TYPE   = bytearray([73, 68, 65, 84])  $/;"	v
+PNG_IDAT_END	img.py	/^PNG_IDAT_END          = bytearray("IEND".encode())$/;"	v
+PNG_IDAT_START	img.py	/^PNG_IDAT_START        = bytearray("IDAT".encode())$/;"	v
+PNG_IEND	img.py	/^PNG_IEND              = bytearray([0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130])$/;"	v
+PNG_IEND_LENGTH	img.py	/^PNG_IEND_LENGTH       = 8$/;"	v
+PNG_IHDR_START	img.py	/^PNG_IHDR_START        = bytearray([0, 0, 0, 13, 73, 72, 68, 82])$/;"	v
+PNG_PLTE_CHUNK_TYPE	img.py	/^PNG_PLTE_CHUNK_TYPE   = bytearray([80, 76, 84, 69])$/;"	v
+PNG_SIGNATURE	img.py	/^PNG_SIGNATURE         = bytearray([137, 80, 78, 71, 13, 10, 26, 10])$/;"	v
+QuadNode	ge.h	/^} QuadNode;$/;"	t	typeref:struct:_QuadNode
+QuadTree	ge.h	/^typedef struct QuadTree {$/;"	s
+QuadTree	ge.h	/^} QuadTree;$/;"	t	typeref:struct:QuadTree
+ReactSeq	ge.h	/^typedef struct ReactSeq {$/;"	s
+ReactSeq	ge.h	/^} ReactSeq;$/;"	t	typeref:struct:ReactSeq
+ReactSeqGrp	ge.h	/^} ReactSeqGrp;$/;"	t	typeref:struct:ReactSeqGrp_t
+ReactSeqGrpOption	ge.h	/^typedef struct ReactSeqGrpOption {$/;"	s
+ReactSeqGrpOption	ge.h	/^} ReactSeqGrpOption;$/;"	t	typeref:struct:ReactSeqGrpOption
+ReactSeqGrp_t	ge.h	/^typedef struct ReactSeqGrp_t {$/;"	s
+Scene	ge.h	/^} Scene;$/;"	t	typeref:struct:Scene_t
+Scene_t	ge.h	/^typedef struct Scene_t {$/;"	s
+Sprite	ge.h	/^} Sprite;$/;"	t	typeref:struct:Sprite_t
+Sprite_t	ge.h	/^typedef struct Sprite_t {$/;"	s
+Subscriber	ge.h	/^} Subscriber;$/;"	t	typeref:struct:__anon9
+TILE_H	ge.h	28;"	d
+TILE_HEIGHT	img.py	/^TILE_HEIGHT           =  8$/;"	v
+TILE_SIZE	img.py	/^TILE_SIZE = TILE_WIDTH * TILE_HEIGHT * NBR_COLOR_CHANNELS$/;"	v
+TILE_W	ge.h	27;"	d
+TILE_WIDTH	img.py	/^TILE_WIDTH            =  8$/;"	v
+TINFL_BITBUF_SIZE	data.c	136;"	d	file:
+TINFL_BITBUF_SIZE	data.c	139;"	d	file:
+TINFL_CR_BEGIN	data.c	185;"	d	file:
+TINFL_CR_FINISH	data.c	188;"	d	file:
+TINFL_CR_RETURN	data.c	186;"	d	file:
+TINFL_CR_RETURN_FOREVER	data.c	187;"	d	file:
+TINFL_DECOMPRESS_MEM_TO_MEM_FAILED	data.c	85;"	d	file:
+TINFL_FAST_LOOKUP_BITS	data.c	/^  TINFL_FAST_LOOKUP_BITS = 10, TINFL_FAST_LOOKUP_SIZE = 1 << TINFL_FAST_LOOKUP_BITS$/;"	e	enum:__anon3	file:
+TINFL_FAST_LOOKUP_SIZE	data.c	/^  TINFL_FAST_LOOKUP_BITS = 10, TINFL_FAST_LOOKUP_SIZE = 1 << TINFL_FAST_LOOKUP_BITS$/;"	e	enum:__anon3	file:
+TINFL_FLAG_COMPUTE_ADLER32	data.c	/^  TINFL_FLAG_COMPUTE_ADLER32 = 8$/;"	e	enum:__anon1	file:
+TINFL_FLAG_HAS_MORE_INPUT	data.c	/^  TINFL_FLAG_HAS_MORE_INPUT = 2,$/;"	e	enum:__anon1	file:
+TINFL_FLAG_PARSE_ZLIB_HEADER	data.c	/^  TINFL_FLAG_PARSE_ZLIB_HEADER = 1,$/;"	e	enum:__anon1	file:
+TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF	data.c	/^  TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF = 4,$/;"	e	enum:__anon1	file:
+TINFL_GET_BITS	data.c	210;"	d	file:
+TINFL_GET_BYTE	data.c	192;"	d	file:
+TINFL_HEADER_INCLUDED	data.c	28;"	d	file:
+TINFL_HUFF_BITBUF_FILL	data.c	216;"	d	file:
+TINFL_HUFF_DECODE	data.c	235;"	d	file:
+TINFL_LZ_DICT_SIZE	data.c	96;"	d	file:
+TINFL_MAX_HUFF_SYMBOLS_0	data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINFL_MAX_HUFF_SYMBOLS_2 = 19,$/;"	e	enum:__anon3	file:
+TINFL_MAX_HUFF_SYMBOLS_1	data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINFL_MAX_HUFF_SYMBOLS_2 = 19,$/;"	e	enum:__anon3	file:
+TINFL_MAX_HUFF_SYMBOLS_2	data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINFL_MAX_HUFF_SYMBOLS_2 = 19,$/;"	e	enum:__anon3	file:
+TINFL_MAX_HUFF_TABLES	data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINFL_MAX_HUFF_SYMBOLS_2 = 19,$/;"	e	enum:__anon3	file:
+TINFL_MEMCPY	data.c	182;"	d	file:
+TINFL_MEMSET	data.c	183;"	d	file:
+TINFL_NEED_BITS	data.c	208;"	d	file:
+TINFL_SKIP_BITS	data.c	209;"	d	file:
+TINFL_STATUS_ADLER32_MISMATCH	data.c	/^  TINFL_STATUS_ADLER32_MISMATCH = -2,$/;"	e	enum:__anon2	file:
+TINFL_STATUS_BAD_PARAM	data.c	/^  TINFL_STATUS_BAD_PARAM = -3,$/;"	e	enum:__anon2	file:
+TINFL_STATUS_DONE	data.c	/^  TINFL_STATUS_DONE = 0,$/;"	e	enum:__anon2	file:
+TINFL_STATUS_FAILED	data.c	/^  TINFL_STATUS_FAILED = -1,$/;"	e	enum:__anon2	file:
+TINFL_STATUS_HAS_MORE_OUTPUT	data.c	/^  TINFL_STATUS_HAS_MORE_OUTPUT = 2$/;"	e	enum:__anon2	file:
+TINFL_STATUS_NEEDS_MORE_INPUT	data.c	/^  TINFL_STATUS_NEEDS_MORE_INPUT = 1,$/;"	e	enum:__anon2	file:
+TINFL_USE_64BIT_BITBUF	data.c	131;"	d	file:
+TblAnimRow	ge.h	/^typedef struct TblAnimRow {$/;"	s
+TblAnimRow	ge.h	/^} TblAnimRow;$/;"	t	typeref:struct:TblAnimRow
+TblCameraRow	ge.h	/^typedef struct TblCameraRow {$/;"	s
+TblCameraRow	ge.h	/^} TblCameraRow;$/;"	t	typeref:struct:TblCameraRow
+TblMobileRow	ge.h	/^typedef struct TblMobileRow {$/;"	s
+TblMobileRow	ge.h	/^} TblMobileRow;$/;"	t	typeref:struct:TblMobileRow
+TblReactRow	ge.h	/^typedef struct TblReactRow {$/;"	s
+TblReactRow	ge.h	/^} TblReactRow;$/;"	t	typeref:struct:TblReactRow
+TblSpriteRow	ge.h	/^} TblSpriteRow;$/;"	t	typeref:struct:_TblSpriteRow
+Vector2	ge.h	/^typedef struct Vector2 {$/;"	s
+Vector2	ge.h	/^} Vector2;$/;"	t	typeref:struct:Vector2
+Vector3	ge.h	/^typedef struct Vector3 {$/;"	s
+Vector3	ge.h	/^} Vector3;$/;"	t	typeref:struct:Vector3
+WINDOW_HEIGHT	ge.h	25;"	d
+WINDOW_WIDTH	ge.h	24;"	d
+_QuadNode	ge.h	/^typedef struct _QuadNode {$/;"	s
+_TblSpriteRow	ge.h	/^typedef struct _TblSpriteRow {$/;"	s
+__init__	img.py	/^	def __init__(self, length, w, ,h, bpp, is_tiled, idat):$/;"	m	class:ImageInfo
+acc	ge.h	/^  Vector2 vel, acc, vel_max;  \/\/6$/;"	m	struct:MobilityTranslation
+accelerate	image.c	/^void accelerate(Vector2 *velocity, Motion *motion) {$/;"	f
+activity	ge.h	/^  Activity activity;$/;"	m	struct:__anon9
+anim_group	ge.h	/^  TblAnimRow     *anim_group;$/;"	m	struct:Animation_t
+anim_strips	ge.h	/^  AnimationStrip *anim_strips;  \/* Animation strips are indexed identically for all sprites of a certain type. idx in strip fn. *\/$/;"	m	struct:TblAnimRow
+animate	image.c	/^void animate(Sprite *s, Animation *anim) {$/;"	f
+animation	ge.h	/^	Animation *animation;$/;"	m	struct:AnimatedSprite
+animation	ge.h	/^	Animation *animation;$/;"	m	struct:AnimobSprite
+backgrounds	ge.h	/^    SDL_Surface  *backgrounds;$/;"	m	struct:Scene_t
+bg_idx	ge.h	/^    Uint8         bg_idx; \/* bg layer that camera moves along *\/$/;"	m	struct:Scene_t
+blit_coords	ge.h	/^  SDL_Rect              rect, blit_coords;$/;"	m	struct:Sprite_t
+blit_coords	ge.h	/^  SDL_Rect     *blit_coords;$/;"	m	struct:AnimationStrip
+bound_camera_in_bg	scene.c	/^void bound_camera_in_bg(Camera *camera, SDL_Surface *bg_surf) {$/;"	f
+bound_camera_in_bg_x	scene.c	/^void bound_camera_in_bg_x(Camera *camera, SDL_Surface *bg_surf) {$/;"	f
+bound_camera_in_bg_y	scene.c	/^void bound_camera_in_bg_y(Camera *camera, SDL_Surface *bg_surf) {$/;"	f
+bpp	ge.h	/^  Uint8  bpp, num_colors, type;$/;"	m	struct:_TblSpriteRow
+br_corner	ge.h	/^  Vector2 tl_corner, br_corner;$/;"	m	struct:_QuadNode
+broadcast	event.c	/^void broadcast(Uint8 channel) {$/;"	f
+busy	ge.h	/^  SDL_bool busy;$/;"	m	struct:__anon9
+camera	ge.h	/^    Camera        camera;$/;"	m	struct:Scene_t
+camera_track_tgt	scene.c	/^void camera_track_tgt(Scene *scene, MotionTranslation *motion) {$/;"	f
+cancel	event.c	/^void cancel(Uint8 channel) {$/;"	f
+canvas_surface	main.c	/^static SDL_Surface  *canvas_surface;$/;"	v	file:
+close	main.c	/^void close() {$/;"	f
+cmp	ge.h	/^typedef SDL_bool (*cmp)(struct Sprite_t*, struct Sprite_t*);$/;"	t
+coll_grid	ge.h	/^    Uint8      ***coll_grid; \/* Triple pointer: 1st pointer corresponds to Z-layer; 2nd, a 2D logic grid. Indexed by sprite.z, sprite.x >> 3, and sprite.y >> 3. *\/$/;"	m	struct:Scene_t
+coll_quadtree	ge.h	/^    QuadTree      coll_quadtree;$/;"	m	struct:Scene_t
+colors	ge.h	/^  SDL_Color *colors;$/;"	m	struct:_TblSpriteRow
+comm_channels	ge.h	/^CommChannel comm_channels[NUM_COMM_CHANNELS];$/;"	v
+compress_img_and_anim	img.py	/^def compress_img_and_anim(img, sprite, animated=False):$/;"	f
+compress_sprite_imgs	img.py	/^def compress_sprite_imgs(directory, sprite_name):$/;"	f
+compressed_len	ge.h	/^  Uint32 offset, uncompressed_len, compressed_len;$/;"	m	struct:MediaInfo
+contains	img.py	/^def contains(container, elem):$/;"	f
+create_anim_map	img.py	/^def create_anim_map(img_name):$/;"	f
+ctrl_listen	ctrl.c	/^void ctrl_listen() {$/;"	f
+curr_anim_strip	ge.h	/^  AnimationStrip *curr_anim_strip;$/;"	m	struct:Animation_t
+curr_duration	ge.h	/^  Uint32          curr_duration;$/;"	m	struct:Animation_t
+curr_frame_num	ge.h	/^	Uint8           curr_frame_num;$/;"	m	struct:Animation_t
+current_reaction_sequence	ge.h	/^  ReactSeq *current_reaction_sequence;$/;"	m	struct:Activity
+cv2	img.py	/^import cv2, os$/;"	i
+data	ge.h	/^  void *data;$/;"	m	struct:ListNode
+decompress_media	data.c	/^Error decompress_media(const unsigned char *src, const int src_len, void **dst, size_t *dst_len) {$/;"	f
+delete_list	data.c	/^void delete_list(LinkedList *ll) {$/;"	f
+depth	ge.h	/^  Uint8 num_elems, depth;$/;"	m	struct:_QuadNode
+deque	img.py	/^    from collections import deque$/;"	i
+deque	img.py	/^from collections import deque$/;"	i
+detect_collisions	sprite.c	/^void detect_collisions() {$/;"	f
+durations	ge.h	/^  Uint16       *durations;$/;"	m	struct:AnimationStrip
+elems	ge.h	/^  LinkedList *elems;$/;"	m	struct:_QuadNode
+elems_equal	img.py	/^def elems_equal(a, b):$/;"	f
+flip_diag	img.py	/^def flip_diag(np_array):$/;"	f
+flip_funcs	img.py	/^flip_funcs = {FLIP_NONE: flip_none, FLIP_UD: flip_ud, FLIP_LR: flip_lr, FLIP_DIAG: flip_diag}$/;"	v
+flip_lr	img.py	/^flip_lr = np.fliplr$/;"	v
+flip_none	img.py	/^def flip_none(np_array):$/;"	f
+flip_ud	img.py	/^flip_ud = np.flipud$/;"	v
+game_over	ge.h	/^SDL_bool game_over;$/;"	v
+get_color_palette	img.py	/^def get_color_palette(img):$/;"	f
+get_key_mapping	img.py	/^def get_key_mapping(fn):$/;"	f
+get_key_mapping_str	img.py	/^def get_key_mapping_str(fn, underscore_psns):$/;"	f
+get_keymap_psn	img.py	/^def  get_keymap_psn(filename):$/;"	f
+getsize	img.py	/^from os.path import getsize$/;"	i
+glob	img.py	/^from glob import glob$/;"	i
+gray_out_img	img.py	/^def gray_out_img(img, color_palette):$/;"	f
+head	ge.h	/^  ListNode *head;$/;"	m	struct:LinkedList
+high	ge.h	/^  Uint16 low, high;$/;"	m	struct:__anon7
+high_const	ge.h	/^  Uint8 low_const, high_const; \/\/2 \/* LOL Uint8 instead of 16 just to make the union a perfect match in size. I'm obsessive. *\/$/;"	m	struct:MobilityLerping
+id	ge.h	/^  Uint16                id;       \/* e.g. Goomba #1, Goomba #2, Bowser #1, etc. *\/$/;"	m	struct:Sprite_t
+init	main.c	/^Error init() {$/;"	f
+init_animation	sprite.c	/^void init_animation(Sprite *s, Animation *anim) {$/;"	f
+init_camera	scene.c	/^void init_camera(Scene *scene, Vector2 *init_pos) {$/;"	f
+init_directions	ge.h	/^    Uint8        *init_directions;  \/* initial directions each sprite is facing *\/$/;"	m	struct:Scene_t
+init_list	data.c	/^Error init_list(LinkedList **ll) {$/;"	f
+init_motion	sprite.c	/^void init_motion(Sprite *s, Motion *mobility) {$/;"	f
+init_positions	ge.h	/^    Vector2      *init_positions;   \/* initial position each sprite is located *\/$/;"	m	struct:Scene_t
+init_reaction_sequence_group	sprite.c	/^void init_reaction_sequence_group(Sprite *s, Scene *scene) {$/;"	f
+init_scene	scene.c	/^Error init_scene(Uint16 scene_id, Scene *scene) {$/;"	f
+init_sprite	sprite.c	/^Error init_sprite(Sprite *s, const Vector2 *pos) {$/;"	f
+init_surface	sprite.c	/^Error init_surface(Sprite *s, TblSpriteRow *tbl_row) {$/;"	f
+init_vector2	data.c	/^void init_vector2(Vector2 *vector2, Sint8 x, Sint8 y) {$/;"	f
+init_vector3	data.c	/^void init_vector3(Vector3 *vector3, Sint8 x, Sint8 y, Sint8 z) {$/;"	f
+insert_sort	data.c	/^void insert_sort(Sprite* sprites[], int num_sprites, cmp cmp_func) {$/;"	f
+json	img.py	/^import json$/;"	i
+kill_scene	scene.c	/^void kill_scene(Scene *scene) {$/;"	f
+lerp	image.c	/^void lerp(Sprite *s, Vector2 *dest, Motion *motion) {$/;"	f
+limit_speed	image.c	/^void limit_speed(Vector2 *velocity, Motion *motion) {$/;"	f
+list_find_node	data.c	/^ListNode* list_find_node(LinkedList *ll, void *data) {$/;"	f
+list_insert_head	data.c	/^Error list_insert_head(LinkedList *ll, void *data) {$/;"	f
+list_insert_tail	data.c	/^Error list_insert_tail(LinkedList *ll, void *data) {$/;"	f
+list_remove_node	data.c	/^void list_remove_node(LinkedList *ll, ListNode *node, ListNode **next, void **data) {$/;"	f
+load_surface	image.c	/^Error load_surface(TblSpriteRow *metadata, SDL_Surface **colormap) {$/;"	f
+load_tileset	image.c	/^static Error load_tileset(TblSpriteRow *metadata, SDL_Surface **tileset_surface) {$/;"	f	file:
+low	ge.h	/^  Uint16 low, high;$/;"	m	struct:__anon7
+low_const	ge.h	/^  Uint8 low_const, high_const; \/\/2 \/* LOL Uint8 instead of 16 just to make the union a perfect match in size. I'm obsessive. *\/$/;"	m	struct:MobilityLerping
+m_bit_buf	data.c	/^  tinfl_bit_buf_t m_bit_buf;$/;"	m	struct:tinfl_decompressor_tag	file:
+m_check_adler32	data.c	/^  mz_uint32 m_state, m_num_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_code_size	data.c	/^  mz_uint8 m_code_size[TINFL_MAX_HUFF_SYMBOLS_0];$/;"	m	struct:__anon4	file:
+m_counter	data.c	/^  mz_uint32 m_state, m_num_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_dist	data.c	/^  mz_uint32 m_state, m_num_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_dist_from_out_buf_start	data.c	/^  size_t m_dist_from_out_buf_start;$/;"	m	struct:tinfl_decompressor_tag	file:
+m_final	data.c	/^  mz_uint32 m_state, m_num_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_len_codes	data.c	/^  mz_uint8 m_raw_header[4], m_len_codes[TINFL_MAX_HUFF_SYMBOLS_0 + TINFL_MAX_HUFF_SYMBOLS_1 + 137];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_look_up	data.c	/^  mz_int16 m_look_up[TINFL_FAST_LOOKUP_SIZE], m_tree[TINFL_MAX_HUFF_SYMBOLS_0 * 2];$/;"	m	struct:__anon4	file:
+m_num_bits	data.c	/^  mz_uint32 m_state, m_num_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_num_extra	data.c	/^  mz_uint32 m_state, m_num_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_raw_header	data.c	/^  mz_uint8 m_raw_header[4], m_len_codes[TINFL_MAX_HUFF_SYMBOLS_0 + TINFL_MAX_HUFF_SYMBOLS_1 + 137];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_state	data.c	/^  mz_uint32 m_state, m_num_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_table_sizes	data.c	/^  mz_uint32 m_state, m_num_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_tables	data.c	/^  tinfl_huff_table m_tables[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_tree	data.c	/^  mz_int16 m_look_up[TINFL_FAST_LOOKUP_SIZE], m_tree[TINFL_MAX_HUFF_SYMBOLS_0 * 2];$/;"	m	struct:__anon4	file:
+m_type	data.c	/^  mz_uint32 m_state, m_num_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_z_adler32	data.c	/^  mz_uint32 m_state, m_num_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_zhdr0	data.c	/^  mz_uint32 m_state, m_num_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_zhdr1	data.c	/^  mz_uint32 m_state, m_num_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+main	main.c	/^int main(int argc, char **argv) {$/;"	f
+map_tiles	img.py	/^def map_tiles(img):$/;"	f
+max_depth	ge.h	/^  Uint8 max_depth, max_num_elems;$/;"	m	struct:QuadTree
+max_frame_idx	ge.h	/^  Uint8         max_frame_idx;  \/* awkward var name, because i don't want to subtract by one in animate(). *\/$/;"	m	struct:AnimationStrip
+max_num_elems	ge.h	/^  Uint8 max_depth, max_num_elems;$/;"	m	struct:QuadTree
+media_info	ge.h	/^  MediaInfo *media_info;$/;"	m	struct:_TblSpriteRow
+media_type	ge.h	/^} media_type;$/;"	t	typeref:enum:__anon5
+mob_info	ge.h	/^  MobInfo mob_info;$/;"	m	struct:Motion_t
+mob_lerp	ge.h	/^  MotionLerping mob_lerp;$/;"	m	union:__anon6
+mob_translate	ge.h	/^  MotionTranslation mob_translate;$/;"	m	union:__anon6
+motion	ge.h	/^  Motion      *motion;$/;"	m	struct:TblCameraRow
+motion	ge.h	/^  Motion      *motion;$/;"	m	struct:__anon8
+motions	ge.h	/^  Motion *motions;$/;"	m	struct:TblMobileRow
+move	ge.h	/^  move_func_ptr move;  \/\/4  \/* must come first so it can always be accessed the same way in generic move() function. *\/$/;"	m	struct:Motion_t
+move	image.c	/^void move(Sprite *s, Motion *motion) {$/;"	f
+move_func_ptr	ge.h	/^typedef SDL_bool (*move_func_ptr)(Sprite *s, struct Motion_t *motion);$/;"	t
+mz_int16	data.c	/^typedef signed short mz_int16;$/;"	t	file:
+mz_uint	data.c	/^typedef unsigned int mz_uint;$/;"	t	file:
+mz_uint16	data.c	/^typedef unsigned short mz_uint16;$/;"	t	file:
+mz_uint32	data.c	/^typedef unsigned int mz_uint32;$/;"	t	file:
+mz_uint64	data.c	/^typedef unsigned long long mz_uint64;$/;"	t	file:
+mz_uint8	data.c	/^typedef unsigned char mz_uint8;$/;"	t	file:
+next	ge.h	/^  struct ListNode *next, *prev;$/;"	m	struct:ListNode	typeref:struct:ListNode::ListNode
+nodes	ge.h	/^  struct _QuadNode *nodes[4];$/;"	m	struct:_QuadNode	typeref:struct:_QuadNode::_QuadNode
+np	img.py	/^import numpy as np$/;"	i
+num_anim_strips	ge.h	/^  Uint8           num_anim_strips;$/;"	m	struct:TblAnimRow
+num_colors	ge.h	/^  Uint8  bpp, num_colors, type;$/;"	m	struct:_TblSpriteRow
+num_elems	ge.h	/^  Uint8 num_elems, depth;$/;"	m	struct:_QuadNode
+num_motions	ge.h	/^  Uint8 num_motions;$/;"	m	struct:TblMobileRow
+num_react_seqs	ge.h	/^  Uint8      num_react_seqs;  \/* used to prevent illegal access error *\/$/;"	m	struct:ReactSeqGrp_t
+num_reactions	ge.h	/^  Uint8 num_reactions;$/;"	m	struct:ReactSeq
+num_scene_sprite_options	ge.h	/^  Uint8               num_scene_sprite_options;$/;"	m	struct:TblReactRow
+num_sprites	ge.h	/^		Uint16        num_sprites;$/;"	m	struct:Scene_t
+offset	ge.h	/^  Uint32 offset, uncompressed_len, compressed_len;$/;"	m	struct:MediaInfo
+onscreen	ge.h	/^  SDL_bool              onscreen;$/;"	m	struct:Sprite_t
+os	img.py	/^import cv2, os$/;"	i
+pack	img.py	/^from struct import pack, unpack$/;"	i
+png	img.py	/^import png$/;"	i
+prev	ge.h	/^  struct ListNode *next, *prev;$/;"	m	struct:ListNode	typeref:struct:ListNode::
+preview	img.py	/^def preview(img):$/;"	f
+print_no_mem	data.c	/^void print_no_mem(char *func_nm) {$/;"	f
+priority	ge.h	/^  Uint8      priority;     \/* To interrupt sequences of lower priorities. 255 = lowest priority. *\/$/;"	m	struct:ReactSeqGrp_t
+ptr	ge.h	/^  ReactSeqGrp        *ptr;$/;"	m	struct:TblReactRow
+ptr	ge.h	/^  SDL_Surface *ptr;$/;"	m	struct:_TblSpriteRow
+qn	ge.h	/^  QuadNode *qn;  \/* Only moving sprites get a place in the quad tree. The rest are assigned to the grid. *\/$/;"	m	struct:Motion_t
+qn_delete	data.c	/^void qn_delete(QuadNode **qn) {$/;"	f
+qn_init	data.c	/^Error qn_init(QuadNode **qn, Uint8 depth, Vector2 *tl, Vector2 *br) {$/;"	f
+qn_insert	data.c	/^Error qn_insert(QuadTree *qt, QuadNode *qn, Sprite *s) {$/;"	f
+qn_move	data.c	/^Error qn_move(QuadTree *qt, QuadNode *qn, Sprite *s) {$/;"	f
+qn_query	data.c	/^void qn_query(QuadTree *qt, Vector2 *tl, Vector2 *br, QuadNode **qn) {$/;"	f
+qn_remove	data.c	/^void qn_remove(QuadTree *qt, QuadNode *qn, Sprite *s) {$/;"	f
+qn_subdivide	data.c	/^Error qn_subdivide(QuadTree *qt, QuadNode *qn) {$/;"	f
+qt_delete	data.c	/^void qt_delete(QuadTree **qt) {$/;"	f
+qt_init	data.c	/^Error qt_init(QuadTree **qt, Uint8 max_depth, Vector2 *tree_rect_dims, Uint8 max_num_elems) {$/;"	f
+qt_insert	data.c	/^Error qt_insert(QuadTree *qt, Sprite *s) {$/;"	f
+qt_query	data.c	/^void qt_query(QuadTree *qt, Vector2 *tl, Vector2 *br, QuadNode **qn) {$/;"	f
+rank_elems	img.py	/^def rank_elems(array):$/;"	f
+react_func_ptr	ge.h	/^  react_func_ptr  *react_func_ptr; \/* (args TBD) *\/$/;"	m	struct:ReactSeq
+react_func_ptr	ge.h	/^typedef SDL_bool (*react_func_ptr)(Sprite*, Sprite*, struct Scene_t*);  \/* acting sprite, tgt (if any), scene (if necessary) *\/$/;"	t
+react_seq_grp	ge.h	/^  ReactSeqGrp *react_seq_grp;$/;"	m	struct:ReactSeqGrpOption
+react_seq_grp	ge.h	/^  ReactSeqGrp *react_seq_grp;$/;"	m	struct:TblCameraRow
+react_seq_grp	ge.h	/^  ReactSeqGrp *react_seq_grp;$/;"	m	struct:__anon8
+react_seq_grp	ge.h	/^  struct ReactSeqGrp_t *react_seq_grp;$/;"	m	struct:Sprite_t	typeref:struct:Sprite_t::ReactSeqGrp_t
+react_seq_grp_options	ge.h	/^  ReactSeqGrpOption  *react_seq_grp_options;  \/* array of ReactSeqGrpOptions *\/$/;"	m	struct:TblReactRow
+react_seq_ptr	ge.h	/^  ReactSeq **react_seq_ptr; \/* Double ptr = array of ptrs to reaction sequences *\/$/;"	m	struct:ReactSeqGrp_t
+reaction_bookmark	ge.h	/^  Uint8                 reaction_bookmark;  \/* Bc if sprite doesn't do anything, why is it not just a background tile? *\/$/;"	m	struct:Sprite_t
+read_media	data.c	/^Error read_media(MediaInfo *media_info, unsigned char **src) {$/;"	f
+reconstruct_colormap	image.c	/^Error reconstruct_colormap(SDL_Surface *tileset_surface, Uint16 *tilemap, SDL_Surface *colormap_surface) {$/;"	f
+rect	ge.h	/^  SDL_Rect              rect, blit_coords;$/;"	m	struct:Sprite_t
+rect	ge.h	/^  SDL_Rect     rect;$/;"	m	struct:__anon8
+rect_h	ge.h	/^  Uint16 rect_w, rect_h, surface_w, surface_h;$/;"	m	struct:_TblSpriteRow
+rect_w	ge.h	/^  Uint16 rect_w, rect_h, surface_w, surface_h;$/;"	m	struct:_TblSpriteRow
+remove_dupe_frames	img.py	/^def remove_dupe_frames(anim_map, img):$/;"	f
+render	main.c	/^Error render() {$/;"	f
+renderer	main.c	/^static SDL_Renderer *renderer;$/;"	v	file:
+repeat	ge.h	/^  SDL_bool      repeat;$/;"	m	struct:AnimationStrip
+repeat	ge.h	/^  SDL_bool repeat;$/;"	m	struct:ReactSeq
+rle	img.py	/^def rle(tile):$/;"	f
+root	ge.h	/^  QuadNode *root;$/;"	m	struct:QuadTree
+s	ge.h	/^  Sprite *s;$/;"	m	struct:__anon9
+scene	main.c	/^static Scene        *scene;$/;"	v	file:
+scene_type	ge.h	/^  Uint8        sprite_type, scene_type;$/;"	m	struct:ReactSeqGrpOption
+sep	img.py	/^from os import sep$/;"	i
+signal_on	ge.h	/^  SDL_bool       signal_on;$/;"	m	struct:CommChannel
+signals	ge.h	/^    LinkedList    signals;$/;"	m	struct:Scene_t
+signals_exist	main.c	/^SDL_bool signals_exist = SDL_FALSE;$/;"	v
+sort_colors	img.py	/^def sort_colors(color_palette, brightness_ranks):$/;"	f
+species	ge.h	/^  Uint16                species;  \/* e.g. Goomba, old man in red shirt, Bowser, etc. *\/$/;"	m	struct:Sprite_t
+sprite	ge.h	/^	Sprite *sprite;$/;"	m	struct:AnimatedSprite
+sprite	ge.h	/^	Sprite *sprite;$/;"	m	struct:AnimobSprite
+sprite_id	ge.h	/^static Uint16 sprite_id = 0;$/;"	v
+sprite_tgt	ge.h	/^  Uint8       *sprite_tgt;$/;"	m	struct:TblCameraRow
+sprite_type	ge.h	/^  Uint8        sprite_type, scene_type;$/;"	m	struct:ReactSeqGrpOption
+sprites	ge.h	/^    Sprite      **sprites;  \/* If there's a way to make background images sprites too, do iiiiiit!! *\/$/;"	m	struct:Scene_t
+subscribe	event.c	/^Error subscribe(Sprite *s) {$/;"	f
+subscribers	ge.h	/^  LinkedList    *subscribers;$/;"	m	struct:CommChannel
+surface	ge.h	/^  SDL_Surface          *surface;$/;"	m	struct:Sprite_t
+surface_h	ge.h	/^  Uint16 rect_w, rect_h, surface_w, surface_h;$/;"	m	struct:_TblSpriteRow
+surface_w	ge.h	/^  Uint16 rect_w, rect_h, surface_w, surface_h;$/;"	m	struct:_TblSpriteRow
+switch_scene	scene.c	/^void switch_scene(Scene *scene) {$/;"	f
+t	img.py	/^from time import time as t$/;"	i
+tail	ge.h	/^  ListNode *tail;$/;"	m	struct:LinkedList
+tgt	ge.h	/^  Sprite     *tgt;$/;"	m	struct:__anon8
+tgt	ge.h	/^  Sprite *tgt;$/;"	m	struct:Activity
+tgt	ge.h	/^  Sprite* tgt;  \/\/4$/;"	m	struct:MobilityLerping
+tgt_offset	ge.h	/^  Vector2    tgt_offset;   \/* for when tgt sprite is running fast and we want to track a point front of it *\/$/;"	m	struct:__anon8
+throw_underscore_error	img.py	/^def throw_underscore_error(fn):$/;"	f
+tilemap	ge.h	/^  Uint16 *tilemap;$/;"	m	struct:_TblSpriteRow
+tinfl_bit_buf_t	data.c	/^  typedef mz_uint32 tinfl_bit_buf_t;$/;"	t	file:
+tinfl_bit_buf_t	data.c	/^  typedef mz_uint64 tinfl_bit_buf_t;$/;"	t	file:
+tinfl_decompress	data.c	/^tinfl_status tinfl_decompress(tinfl_decompressor *r, const mz_uint8 *pIn_buf_next, size_t *pIn_buf_size, mz_uint8 *pOut_buf_start, mz_uint8 *pOut_buf_next, size_t *pOut_buf_size, const mz_uint32 decomp_flags)$/;"	f
+tinfl_decompress_mem_to_heap	data.c	/^void *tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_len, size_t *pOut_len, int flags)$/;"	f
+tinfl_decompressor	data.c	/^struct tinfl_decompressor_tag; typedef struct tinfl_decompressor_tag tinfl_decompressor;$/;"	t	typeref:struct:tinfl_decompressor_tag	file:
+tinfl_decompressor_tag	data.c	/^struct tinfl_decompressor_tag$/;"	s	file:
+tinfl_get_adler32	data.c	111;"	d	file:
+tinfl_huff_table	data.c	/^} tinfl_huff_table;$/;"	t	typeref:struct:__anon4	file:
+tinfl_init	data.c	110;"	d	file:
+tinfl_put_buf_func_ptr	data.c	/^typedef int (*tinfl_put_buf_func_ptr)(const void* pBuf, int len, void *pUser);$/;"	t	file:
+tinfl_status	data.c	/^} tinfl_status;$/;"	t	typeref:enum:__anon2	file:
+tl_corner	ge.h	/^  Vector2 tl_corner, br_corner;$/;"	m	struct:_QuadNode
+translate	image.c	/^void translate(Sprite *s, Vector2 *velocity, Motion *motion) {$/;"	f
+trigger_reaction	event.c	/^Error trigger_reaction(Subscriber *subscriber, Uint8 signal, LinkedList *active_subscribers) {$/;"	f
+triggers	ge.h	/^  Uint8             **triggers;  \/* each has same # of triggers as reaction sequences in each reaction sequence group *\/$/;"	m	struct:TblReactRow
+triggers	ge.h	/^  Uint8     *triggers;     \/* needed for subscribing each reaction sequence to a channel *\/$/;"	m	struct:ReactSeqGrp_t
+type	ge.h	/^    Uint8         type;  \/* determines the reactions and their mappings that sprites have *\/$/;"	m	struct:Scene_t
+type	ge.h	/^  Uint8                 type;     \/* e.g. enemy, fire, water, poisFon, spring, etc. *\/$/;"	m	struct:Sprite_t
+type	ge.h	/^  Uint8  bpp, num_colors, type;$/;"	m	struct:_TblSpriteRow
+uncompressed_len	ge.h	/^  Uint32 offset, uncompressed_len, compressed_len;$/;"	m	struct:MediaInfo
+unpack	img.py	/^from struct import pack, unpack$/;"	i
+unsubscribe	event.c	/^Error unsubscribe(Sprite *s, Uint8 channel) {$/;"	f
+update	main.c	/^Error update() {$/;"	f
+vel	ge.h	/^  Vector2 vel, acc, vel_max;  \/\/6$/;"	m	struct:MobilityTranslation
+vel_max	ge.h	/^  Vector2 vel, acc, vel_max;  \/\/6$/;"	m	struct:MobilityTranslation
+velocity	ge.h	/^	Vector2 *velocity;$/;"	m	struct:AnimobSprite
+window	main.c	/^static SDL_Window   *window;$/;"	v	file:
+x	ge.h	/^    Sint32 x, y, z;$/;"	m	struct:Vector3
+x	ge.h	/^    Sint32 x, y;$/;"	m	struct:Vector2
+y	ge.h	/^    Sint32 x, y, z;$/;"	m	struct:Vector3
+y	ge.h	/^    Sint32 x, y;$/;"	m	struct:Vector2
+z	ge.h	/^    Sint32 x, y, z;$/;"	m	struct:Vector3
