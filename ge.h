@@ -298,20 +298,42 @@ extern TblCameraRow *tbl_camera;
 
 void init_camera(struct Scene_t *scene, Vector2 *init_pos);
 
+typedef struct Exit {
+	Uint8 id;
+	Scene *tgt_scene;
+	Uint8 transition_type;
+} Exit;
+
 typedef struct Scene_t {
     Sprite      **sprites;  /* If there's a way to make background images sprites too, do iiiiiit!! */
     Uint8         type;  /* determines the reactions and their mappings that sprites have */
     Uint8         bg_idx; /* bg layer that camera moves along */
-    Vector2      *init_positions;   /* initial position each sprite is located */
-    Uint8        *init_directions;  /* initial directions each sprite is facing */
+    Exit         *exits; /* This gets indexed by colliding into a tile whose type contains this index. */
     SDL_Surface  *backgrounds;
-		Uint16        num_sprites;
     LinkedList    signals;
     Camera        camera;
     QuadTree      coll_quadtree;
     Uint8      ***coll_grid; /* Triple pointer: 1st pointer corresponds to Z-layer; 2nd, a 2D logic grid. Indexed by sprite.z, sprite.x >> 3, and sprite.y >> 3. */
 } Scene;
 
+/* Let's just play around for a second. I want to see if I can come up with a good Scene table scheme. */
+typedef struct SceneTblRow {
+	Uint8 num_sprites;
+	Uint16 *sprite_ids;
+	Vector2 *sprite_positions;
+	Uint8 *sprite_orientations; /* Only as big as number of animated sprites. The pointer increments if sprite is animated. */
+	Uint8 num_songs;
+	Uint8 song_ids;
+	Uint8 num_sounds;
+	Uint8 sound_ids;
+	/* If file I/O is the slowest part of the loading process, then let's load as much as we can at once: song ID, coll grid, tileset IDs, tilemaps, exits, etc. Somethings need to be dynamically populated, like the QT, etc. */
+	MediaInfo media_info;
+}
+
+
+/* How did I intend on doing scene-loading? I don't remember quite how I was planning on going about that. ID sounds like I was going to index into a table. So then what would this table have? Would everything already be allocated? I remember envisioning a file for each scene; a C file. And I remember seeing (in my head) a series of initializers being called, like michael = new_michael(), stuff like that. But if there were ten Goombas, even if I've already worked out all the media one-time-only loading, I'd still have to write *twenty* new_goomba() calls. So maybe something more repeatable. init_sprite(goomba_species_id, pos1, pos2, pos3...). But that ellipsis prevents from adding in orientation data too. So I see no way around having to write new_sprite(goomba_type, pos_vec2, orientation Uint8) twenty times. Maybe I'll come up with a better design someday, but that's the best I've got for now.
+ *
+ * */
 Error init_scene(Uint16 scene_id, Scene *scene);
 void  close_scene(Scene *scene);
 Error init_surface(Sprite *s, TblSpriteRow *metadata);
