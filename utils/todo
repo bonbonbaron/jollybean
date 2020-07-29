@@ -1,0 +1,7 @@
+Configure game dev environment
+	data.bin location: This'll be in the root directory of the game folder.
+	database.c: This'll have the tables that can be extern'd from other game code. Mutexes and such will be dealt with later if needed.
+	
+
+Make a row in the appropriate game table
+Store compressible data in the game's data.bin file.

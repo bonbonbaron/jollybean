@@ -375,7 +375,7 @@ class ImageInfo:
 		self.num_tiles = 0
 ###########################################
 # current problem: how to get anim_offset correlated with this
-def compress_img_and_anim(img, sprite, animated=False):
+def compress_img_and_anim(img, animated=False):
     compressed_tileset = []
     color_palette      = []
      
@@ -451,10 +451,10 @@ def compress_img_and_anim(img, sprite, animated=False):
     image_data[IDX_IS_TILED] = nbr_tiles > 1
      
     if tilemap is not None:
-        tm_data = [0, 0, 0, 0]
-        tm_data[IDX_LEN] = 2 * tilemap.shape[0] * tilemap.shape[1]  # USHORT data type
-        tm_data[IDX_W]   = tilemap.shape[1]
-        tm_data[IDX_H]   = tilemap.shape[0]
+        tm_metadata = [0, 0, 0, 0]
+        tm_metadata[IDX_LEN] = 2 * tilemap.shape[0] * tilemap.shape[1]  # USHORT data type
+        tm_metadata[IDX_W]   = tilemap.shape[1]
+        tm_metadata[IDX_H]   = tilemap.shape[0]
         temp = list(tilemap.flatten())
         temp = [int(t).to_bytes(2, BYTEORDER) for t in temp]
         tm_array = bytearray()
@@ -462,22 +462,32 @@ def compress_img_and_anim(img, sprite, animated=False):
             tm_array.extend(t)
     else:
         tm_array = None
-        tm_data  = None
+        tm_metadata  = None
      
-    return idat, image_data, tm_array, tm_data
+    return idat, image_data, tm_array, tm_metadata
  
 ###########################################
 # Updates both image dictionary and global data file where it's stored
-def compress_sprite_imgs(directory, sprite_name):
+def compress_sprite_imgs(directory, img_name):
 	# Find all files belonging to sprite
-	img_fps = glob("%s%s*.png"%(directory, img_name))
+	img_fps = glob("%s/%s*.png"%(directory, img_name))
 	# Concatenate if animated
 	if len(img_fps) == 0:
 		print("No images found for %s in \"%s\"! If there are, they're supposed to be PNG format."%(img_name, directory))
 		quit()
 	animated = "_" in img_fps[0]
 	for img_fp in img_fps:
-		img = cv2.imread(img_fps[0])
-		png_idat, image_data, tm_array, tm_data = compress_img_and_anim(img, s, animated)
-                # I think I originally returned this info and wrote it to a file somewhere. Or maybe I did never get that far.
-                # I did actually have a Map object before though. I threw it away because I'm no longer going the Python route, reading from dicts and all that stuff. That would only take place in the neat bloatware Python world.
+            fn = img_fp.split(".")[0]
+            img = cv2.imread(img_fps[0])
+            png_idat, image_data, tm_array, tm_metadata = compress_img_and_anim(img, animated)
+            f = open("./%.bin"%(fn), "wb")
+            f.write(png_idat)
+            f.close()
+            if tm_array is not None and tm_metadata is not None:
+                f = open("%s_tm_array.bin"%(fn), "wb")
+                f.write(tm_array)
+                f.close()
+                f = open("%s_tm_metadata.bin"%(fn), "wb")
+                f.write(tm_metadata)
+                f.close()
+
