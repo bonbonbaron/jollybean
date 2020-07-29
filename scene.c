@@ -6,9 +6,6 @@ Error init_scene(Uint16 scene_id, Scene *scene) {
 	Error stat = 0;
   Uint16 i, sprite_id = 0;
 
-  for (i = 0; i < scene->num_sprites; i++) {
-    
-  }
 
 	return stat;
 }
@@ -22,8 +19,6 @@ void switch_scene(Scene *scene) {
 void kill_scene(Scene *scene) {
   Error stat = 0;
   Uint16 i, sprite_id = 0;
-  for (i = 0; i < scene->num_sprites; i++) {
-  }
 }
 
 void bound_camera_in_bg_x(Camera *camera, SDL_Surface *bg_surf) {

@@ -168,6 +168,7 @@ typedef struct Sprite_t {
   struct ReactSeqGrp_t *react_seq_grp;
 } Sprite;
 
+/* Motion_t points to this func ptr, so having Motion_t parameter is circular. See if that's really correct. */
 typedef SDL_bool (*move_func_ptr)(Sprite *s, struct Motion_t *motion);
 
 typedef struct MobilityTranslation {
@@ -247,8 +248,8 @@ typedef struct ReactSeq {
 /* Seems to me all we have to do is index a staggered array. The triggers member is not needed. */
 typedef struct ReactSeqGrp_t {
   Uint8      priority;     /* To interrupt sequences of lower priorities. 255 = lowest priority. */
-  Uint8     *triggers;     /* needed for subscribing each reaction sequence to a channel */
   Uint8      num_react_seqs;  /* used to prevent illegal access error */
+  Uint8     *triggers;     /* needed for subscribing each reaction sequence to a channel */
   ReactSeq **react_seq_ptr; /* Double ptr = array of ptrs to reaction sequences */
 } ReactSeqGrp;
 
@@ -261,8 +262,7 @@ typedef struct ReactSeqGrpOption {
 
 typedef struct TblReactRow {
   ReactSeqGrp        *ptr;
-  Uint8               num_scene_sprite_options;
-  Uint8             **triggers;  /* each has same # of triggers as reaction sequences in each reaction sequence group */
+  Uint8               num_react_seq_grp_options;  /* This'll apply for camera too */
   ReactSeqGrpOption  *react_seq_grp_options;  /* array of ReactSeqGrpOptions */
 } TblReactRow;
  
@@ -300,15 +300,16 @@ void init_camera(struct Scene_t *scene, Vector2 *init_pos);
 
 typedef struct Exit {
 	Uint8 id;
-	Scene *tgt_scene;
 	Uint8 transition_type;
+	Uint16 tgt_scene_idx;
 } Exit;
 
 typedef struct Scene_t {
     Sprite      **sprites;  /* If there's a way to make background images sprites too, do iiiiiit!! */
+    Uint16	  num_sprites;
     Uint8         type;  /* determines the reactions and their mappings that sprites have */
     Uint8         bg_idx; /* bg layer that camera moves along */
-    Exit         *exits; /* This gets indexed by colliding into a tile whose type contains this index. */
+    Exit         *exits; /* just point to the array in the table */
     SDL_Surface  *backgrounds;
     LinkedList    signals;
     Camera        camera;
@@ -318,17 +319,18 @@ typedef struct Scene_t {
 
 /* Let's just play around for a second. I want to see if I can come up with a good Scene table scheme. */
 typedef struct SceneTblRow {
-	Uint8 num_sprites;
-	Uint16 *sprite_ids;
-	Vector2 *sprite_positions;
-	Uint8 *sprite_orientations; /* Only as big as number of animated sprites. The pointer increments if sprite is animated. */
-	Uint8 num_songs;
-	Uint8 song_ids;
-	Uint8 num_sounds;
-	Uint8 sound_ids;
-	/* If file I/O is the slowest part of the loading process, then let's load as much as we can at once: song ID, coll grid, tileset IDs, tilemaps, exits, etc. Somethings need to be dynamically populated, like the QT, etc. */
+	Uint8    num_sprites;
+	Uint8    num_exits;
+	Uint8    num_songs;
+	Uint8    song_ids;  /* TODO: implement songs so you can put them in the Scene struct */
+	Uint8    num_sounds;
+	Uint8    sound_ids;  /* TODO: implement sound so you can put it in the Scene struct */
+	Uint16  *sprite_ids;
 	MediaInfo media_info;
-}
+	PosOriTblRow *posori;
+	/* If file I/O is the slowest part of the loading process, then let's load as much as we can at once: song ID, coll grid, tileset IDs, tilemaps, exits, etc. Some things need to be dynamically populated, like the QT, etc. */
+	Exit    *exits; /* This gets indexed by colliding into a tile whose type contains this index. */
+} SceneTblRow; 
 
 
 /* How did I intend on doing scene-loading? I don't remember quite how I was planning on going about that. ID sounds like I was going to index into a table. So then what would this table have? Would everything already be allocated? I remember envisioning a file for each scene; a C file. And I remember seeing (in my head) a series of initializers being called, like michael = new_michael(), stuff like that. But if there were ten Goombas, even if I've already worked out all the media one-time-only loading, I'd still have to write *twenty* new_goomba() calls. So maybe something more repeatable. init_sprite(goomba_species_id, pos1, pos2, pos3...). But that ellipsis prevents from adding in orientation data too. So I see no way around having to write new_sprite(goomba_type, pos_vec2, orientation Uint8) twenty times. Maybe I'll come up with a better design someday, but that's the best I've got for now.
@@ -340,6 +342,7 @@ Error init_surface(Sprite *s, TblSpriteRow *metadata);
 Error init_audios(Scene *scene);
 Error init_events(Scene *scene);
 extern Scene *scene_zero;
+extern SceneTblRow *scene_tbl;
 
 /************/
 /* events.c */
@@ -378,7 +381,7 @@ void cancel(Uint8 signal);
  
 #define IDX_OFFSET 0
 #define IDX_LEN    0
-#define DATA_FILE "C:\\Users\\bonbo\\Desktop\\data.bin"
+extern char *DATA_FILE;
  
  
 #endif
