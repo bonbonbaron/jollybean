@@ -1,4 +1,7 @@
 Design the database system in the '''...''' section at the end of append_db.py.
+Write the Python representations of the GE objects
+Populate the image metadata. Don't worry about anything else right now.
+
 
 HASH OUT SCENE INHERITANCE DETAILS
 Write local scene data to local scene row; scenes should be able to inherit though. Because I don't want to have to rewrite a battle scene for all 300 different battles in the game. So all the data in the level editor gets shunted in one of two different directions: global and local data portions of the game binary data file. My hope is that I don't have to shunt anything ever into the global area; the type of the scene should be able to access a table of scene types and inherit all the qualities it needs for itself. 

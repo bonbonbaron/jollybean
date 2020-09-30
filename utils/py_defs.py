@@ -4,7 +4,7 @@ END_ROW = "/* END_ROW_DEFS */\n"
 TBL_DESC = "/* Idx #, Position array, Orientation array */\n"
 START_TBL = "/* START_TBL_DEF */\n"
 END_TBL = "/* END_TBL_DEF */\n"
-DBS = ["scene", "sprite", "audio", "text", "image", "etc"]
+DBS = ["scene", "sprite", "audi", "text", "image", "etc"]
 
 import os
 IS_LINUX = False
