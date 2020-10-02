@@ -1,24 +1,35 @@
-'''
-typedef struct Sprite_t {
-  SDL_bool              onscreen;
-  Uint8                 reaction_bookmark;  /* Bc if sprite doesn't do anything, why is it not just a background tile? */
-  Uint16                id;       /* e.g. Goomba #1, Goomba #2, Bowser #1, etc. */
-  Uint8                 type;     /* e.g. enemy, fire, water, poisFon, spring, etc. */
-  Uint16                species;  /* e.g. Goomba, old man in red shirt, Bowser, etc. */
-  SDL_Surface          *surface;
-  SDL_Rect              rect, blit_coords;
-  struct ReactSeqGrp_t *react_seq_grp;
-} Sprite;
-'''
+from py_defs import *
+from utils import *
 
 class Sprite:
-    def __init__(self):
+    def __init__(self, name):
+        self.name = name
+        self.type = SPRITE
+        #####################  <~~ separates JB-specific attributes from those only needed by the database setup system
         self.onscreen = False
-        self.reaction_bookmark = None
+        self.reaction_bookmark = 0
         self.id = 0
         self.type = 0
         self.species = 0
-        self.surface = None
+        self.surface = NULL
         self.rect = None
         self.blit_coords = None
-        react_seq_grp = None
+        self.react_seq_grp = NULL
+
+class Scene:
+    def __init__(self, name):
+        self.name = name
+        self.type = SCENE
+        #####################
+        self.sprites = [];  
+        self.num_sprites = 0;
+        self.type = 0;  
+        self.bg_idx = 0;
+        self.exits = [];
+        self.backgrounds = [];
+        self.signals = [];
+        self.camera = None;
+        self.coll_quadtree = NULL;
+        self.coll_grid = NULL
+
+
