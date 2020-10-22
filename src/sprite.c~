@@ -10,7 +10,7 @@ Error init_surface(Sprite *s, TblSpriteRow *tbl_row) {
   else {
     stat = load_surface(tbl_row, &tbl_row->ptr);
     if (!stat) {
-      s->surface_p = tbl_row->ptr;
+      s->surface = tbl_row->ptr;
     }
   }
   return stat;
