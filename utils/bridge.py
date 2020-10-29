@@ -18,6 +18,16 @@ class TblSpriteRow:
 		self.ptr = None
 '''
 # Enforce a certain directory structure of the game development ecosystem. All images must be saved in the appropriate resources child folder.
+'''
+typedef struct TblImgRow_t {
+  Uint8  bpp, num_colors, type;
+  Uint16 rect_w, rect_h, surface_w, surface_h;
+  MediaInfo *media_info;  /* This is a reference to where the tileset is stored in media.bin. */
+  Uint16 *tilemap;
+  SDL_Color *colors;
+  SDL_Surface *ptr;  /* this is a pointer to a loaded surface. */
+} TblImgRow;
+'''
 
 '''
 ============= DIRECTORY STRUCTURE ==============
@@ -25,6 +35,15 @@ class TblSpriteRow:
     [GAME DEVELOPMENT ROOT FOLDER] (can be anywhere on your machine)
         media.bin
         db/
+            sprite/
+                db_sprite.c  
+            bg/
+                db_bg.c
+            music/
+                db_music.c
+            sound/
+                db_sound.c
+
             ...
         resources/
             image/
