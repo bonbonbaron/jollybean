@@ -27,9 +27,6 @@ typedef struct TblImgRow_t {
   SDL_Color *colors;
   SDL_Surface *ptr;  /* this is a pointer to a loaded surface. */
 } TblImgRow;
-'''
-
-'''
 ============= DIRECTORY STRUCTURE ==============
 
     [GAME DEVELOPMENT ROOT FOLDER] (can be anywhere on your machine)
@@ -60,6 +57,16 @@ typedef struct TblImgRow_t {
                 menu/
                 dialogue/
 
+
+========== BRIDGE DESIGH ============
+The basic type of the object should be passed in. "Sprite", for instance, should map to both the resources sprite and database sprite subdirectories. Then Bridge can figure it out from there.
+
+The games root development directory should also be passed in. Otherwise, when rewriting the entire database, traversing through all the directories could take a very long time. 
+
+Then Bridge should be called from a parent function. The parent function iterates through every file in all the resources subdirectories.
+    
+    ARGS:
+        [game root directory], [JB object type], [source filepath]
 '''
 
 # Verify that this is a sprite object by looking at the containing folder.
@@ -73,10 +80,3 @@ typedef struct TblImgRow_t {
 # Call the appropriate bridge function no matter what.
 compress_sprite_imgs(directory, img_name);
 
-
-
-
-
-
-# TODO: Use this file as a template for your other bridges to accelerate development. In fact, just make one bridge. The differences are small enough
-#       for this to serve as a switch among them.
