@@ -1,23 +1,9 @@
 from img import *
 from py_defs import *
 from jb_objects import TblSpriteRow
+from glob import glob
+from os.path import getmtime
 
-'''
-class TblSpriteRow:
-	def __init__(self):
-		self.bpp = 0
-		self.num_colors = 0
-		self.type = 0
-		self.rect_w = 0
-		self.rect_h = 0
-		self.surface_w = 0
-		self.surface_h = 0
-		self.media_info = None
-		self.tilemap = None
-		self.colors = None
-		self.ptr = None
-'''
-# Enforce a certain directory structure of the game development ecosystem. All images must be saved in the appropriate resources child folder.
 '''
 typedef struct TblImgRow_t {
   Uint8  bpp, num_colors, type;
@@ -29,47 +15,42 @@ typedef struct TblImgRow_t {
 } TblImgRow;
 ============= DIRECTORY STRUCTURE ==============
 
-    [GAME DEVELOPMENT ROOT FOLDER] (can be anywhere on your machine)
+    [DEV_DIR] <---- manualy defined in py_defs.py
         media.bin
-        db/
+        game/
+          db/
             sprite/
-                db_sprite.c  
-            bg/
-                db_bg.c
-            music/
-                db_music.c
-            sound/
-                db_sound.c
+              warrior/
+                warrior.h
+                warrior.c
+        jb/
+          db/
+            db_media.c  (table of MediaInfo objects) sprite/
+            sprite/
+              db_sprite.c  
+              db_anim.c
+              db_mobile.c
+        assets/
+          sprite/
+            raw PNG images
 
-            ...
-        resources/
-            image/
-                sprite/
-                    raw PNG images
-                background/  # What's the difference between a BG and map? We've determined that a FG or animated BG tile is a sprite. 
-                    type grid (for collision grid)-- find a way to make this tiled-based. I think it can automate that.
-                    tileset (tiled-friendly)-- can be generated in aseprite
-                    tilemap (tiled file)
-            audio/
-                music/
-                sound/
-            text/
-                menu/
-                dialogue/
+Length-varying attributes point to a specific C file stored in the game directory's specific subfolder. This means sprite's reaction group points to its type's subfolder. I will not make another table for them.
 
-
-========== BRIDGE DESIGH ============
-The basic type of the object should be passed in. "Sprite", for instance, should map to both the resources sprite and database sprite subdirectories. Then Bridge can figure it out from there.
-
-The games root development directory should also be passed in. Otherwise, when rewriting the entire database, traversing through all the directories could take a very long time. 
-
-Then Bridge should be called from a parent function. The parent function iterates through every file in all the resources subdirectories.
-    
-    ARGS:
-        [game root directory], [JB object type], [source filepath]
+Therefore, db.py needs to know which class-based attributes are length-varying and which aren't. I'll figure this out later.
 '''
-
-# Verify that this is a sprite object by looking at the containing folder.
+# directories for assets and in-game databases
+media_bin_fp = "%smedia.bin"%(DEV_DIR)
+for asset_type, asset_file_ext in zip(ASSET_TYPES, ASSET_FILETYPES):
+    asset_dir = "%sassets%s%s%s"%(ASSETS_DIR, asset_type, SEP)
+    # Check DB for existing record.
+    for fn in glob("%s*.%s"%(asset_dir, asset_file_ext)):
+        asset_name = fn.split(".")[0].split("_")
+        idx = query(asset_type,  
+    # If a match is found, check the modifiction time.
+    # If the mod time is newer than the one in the DB, run the media gen script. It'll process other DBs internally.
+    # Rewrite the part of media.bin associated with this media object.
+    # 
+    
 
 # Check DB for any existing record of this object.
 
@@ -78,5 +59,5 @@ Then Bridge should be called from a parent function. The parent function iterate
 # If the object exists in the database, the entire media.bin file and all the DB MediaInfo members need to be rewritten.
 
 # Call the appropriate bridge function no matter what.
-compress_sprite_imgs(directory, img_name);
+#compress_sprite_imgs(directory, img_name);
 

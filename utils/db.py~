@@ -1,82 +1,111 @@
 # NOTE: you have to use Python 3 to preserve ordering of class attributes when writing to the C database files.
 from py_defs import *
+from jb_objects import *
 import sys
 from os import path, chdir, getcwd, listdir
 
-# query() is the bread and butter of interacting with an element in the database. Returns -1 if object's not found.
-# TODO: You want to be able to navigate from your resources folder to your database directories. 
-def query(python_obj):
+type_map = {"<type 'int'>": int, "<type 'str'>": str, "<type 'instance'>": None}
+
+# TODO: You want to be able to navigate from your assets folder to your database directories. 
+def get_tbl(tbl_nm):
+  if tbl_nm in ASSET_TYPES:
+    db_parent = JB_DIR
+  else:
+    db_parent = GAME_DIR
+  db_path = "%sdb%s%s%sdb_%s.h"%(db_parent, SEP, tbl_nm, SEP, tbl_nm)
+  return db_path
+
+def list_attributes(obj):
+  return list(obj.__dict__.keys())
+# query() is the bread and butter of interacting with an element in the database. Returns None if object's not found. Otherwise, it returns a Python object representing that found in the database.
+def query(tbl_nm, asset_name):
   # Look for the appropriate directory of the attribute you want to search for
-  found_db = False
-  for _ in range(5):  # try 5 parent directories
-    if "media.bin" in os.listdir("."):
-      found_db = True
-      chdir("./db")
-      break
-  if not found_db:
-    print("Didn't find database after traversing 5 parent directories to %s."%(getcwd()))
-    quit()
-  else:
-    
-  obj_dir = "%s%s%s"%(python_obj.type, SEP, python_obj.type)
-  obj_db  = "../games/%s/db_%s"%(game_name, python_obj.type)
-  if attr_name is None:
-    filename = "%s%s%s_db.c"%(obj_dir, SEP, python_obj.name)
-  else:
-    filename = "%s%s%s%sattr%s%s_db.c"%(obj_dir, SEP, python_obj.name, SEP, SEP, attr_name)
-    
-  # Insert/update overarching table
-  f = open(filename, "r");
-  # Trusting that Python's class data aligns with C's struct data...
+  obj_db = get_tbl(tbl_nm);
+  jb_obj = eval("%s()"%(tbl_nm.lower()));
+  # Open table in read-mode.
+  f = open(obj_db, "r");
   file_lines = f.readlines();
   f.close();
   # See if element we're merging exists yet in file
+  asset_name = asset_name.strip().lower()
   for line_idx in range(len(file_lines)):
-    if python_obj.name in file_lines[line_idx].split():
-      return line_idx;
-  return -1;
+    if asset_name == file_lines[line_idx].strip("/**/").strip().lower():
+      # First, get the internals of the brackets and split by commas.
+      line = file_lines[line_idx + 1]
+      if "{" in line or "}" in line:
+        line = [l.strip() for l in line.strip("{}").split(",")]
+        obj_attributes = list_attributes(jb_obj)
+        if len(line) != (len(obj_attributes) - 2):
+          print("Record for %s in table %s doesn't match the %d elements in the Python object (not including the JBObject elems)! Maybe you need to run gen_jb_objs.py again.")
+          quit()
+        # Load the record into a Python object
+        for attr, item in zip(obj_attributes, line):
+          # If this elem in the record is a reference or curly brace instantiation, don't try to cast it
+          eval("jb_obj.%s = %s"%(attr, item))
+      jb_obj.name = asset_name
+      jb_obj.tbl_name = tbl_nm
+      return (jb_obj, line_idx)
+  return None;
 
-# mod() stands for Merge Or Delete (play on words-- MODify, hee hee heeeeeeeee k bad joke)
-def mod(mod_type, python_obj, attr_name=None, attr_val=None):
-  obj_dir = "%s%s%s"%(python_obj.type, SEP, python_obj.type)
-  obj_db  = "../games/%s/db_%s"%(game_name, python_obj.type)
-  if attr_name is None:
-    filename = "%s%s%s_db.c"%(obj_dir, SEP, python_obj.name)
-  else:
-    filename = "%s%s%s%sattr%s%s_db.c"%(obj_dir, SEP, python_obj.name, SEP, SEP, attr_name)
-    
-  # Insert/update overarching table
+
+# mod() stands for Merge Or Delete
+def mod(mod_type, tbl_nm, input_obj):
   # See if element we're merging exists yet in file
-  for line_idx in range(len(file_lines)):
-    if python_obj.name in file_lines(line_idx):
-      before_obj_lines = file_lines[:line_idx]
-      if (line_idx != len(file_lines) - 1):
-        after_obj_lines  = file_lines[(line_idx + 1):]
-      else:
-        after_obj_lines = "\n}"
-      obj_exists_in_db = True
-    break
+  db_obj, line_idx = query(input_obj.type, input_obj.name)
   # If element is found in DB, then copy the lines before and after. Then paste the before-lines, the new lines, and after.
-  if obj_exists_in_db:
+  if db_obj is not None:
     # If any of the object's attributes are structs, they must go into another DB in current directory's child folder.
-    for obj_attr_name in python_obj.__dict__.keys():
-      # If this object is a Python class (struct), recurse for the next directory.
-      if type(obj_attr_name) == "instance":
-        mod(mod_type, python_obj, attr_name, eval("%s.%s")%(python_obj, attr_name))  # eval(...) gets the value of the attribute from this object
-      else:
-        f = open(filename, "w")
-        f.write(before_obj_lines)
-        if mod_type == MERGE:
-          f.write("\t%s,\n"%(python_obj.__dict__.keysobj_attr_name]))
-        f.write(after_obj_lines)
-        f.close()
+    in_obj_attrs = list_attributes(input_obj)
+    f = open(filename, "r")
+    all_lines = f.readlines()
+    before_obj_lines = all_lines[:line_idx]
+    after_obj_lines  = all_lines[(line_idx + 2):]
+    f.close()
+    # Merge or delete record here.
+    f = open(filename, "w")
+    f.write(before_obj_lines)
+    if mod_type == MERGE:
+      f.write("%s %s = {")
+      # For simplicity, assume no instance attributes. Even those that are should simply be strings; e.g. "{1, 123, "abc", 12}". Even strings like "&img_boy" are fine.
+      for attr in in_obj_attrs:
+        f.write(str(eval("%s.%s"%(input_obj, attr))))
+      f.write("};\n")
+    f.write(after_obj_lines)
+    f.close()
+  # If it's not in the DB, then just append it to the end of the table. 
+  else:
+    f = open(filename, "a");
+    f.write("%s %s = {"%(input_obj.tbl_nm, input_obj.name))
+    attributes = list_attributes(input_obj);
+    for idx in range(len(attributes)):
+      f.write("%s", eval("input_obj.%s"%attributes[idx]))
+      if idx < (len(attributes - 1)):
+        f.write(", ")
+    f.write("};\n")
+    f.close()
+
 
 
 # merge() both inserts and updates, since we're breaking everything up into separate files.
-def merge(python_obj, game_name, attr_name=None):
-  mod(MERGE, python_obj, game_name, attr_name)
+def merge(python_obj, attr_name=None):
+  mod(MERGE, python_obj,  attr_name)
+
 
 # delete() just removes a row from a table and all of the 
-def delete(python_obj, game_name, attr_name=None):
-  mod(DELETE, python_obj, game_name, attr_name)
+def delete(python_obj, attr_name=None):
+  mod(DELETE, python_obj, attr_name)
+
+
+# create a new database
+def create_db(db_name):
+  if db_name.lower().strip() in ASSET_TYPES:
+    base_dir = JB_DIR
+  else:
+    base_dir = GAME_DIR
+  f = open("%sdb%sdb_%s.h"%(base_dir, SEP, db_name), "w")
+  f.write("%s\n%s%s%s%s%s"%(INCL_GE_H, START_ROW, END_ROW, TBL_DESC, START_TBL, END_TBL))
+  f.close()
+
+
+def config_db():
 

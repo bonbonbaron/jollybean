@@ -4,7 +4,7 @@ import CppHeaderParser as p
 h = p.CppHeader("/home/bonbonbaron/hack/jollybean/src/jb.h")
 
 f = open("jb_objects.py", "w")
-f.write("from py_defs import JBObject\n\n")
+
 for c in h.classes:
     f.write("class %s(JBObject):\n\tdef __init__(self):\n"%(c))
     f.write("\t\tJBObject.__init__(self)\n")

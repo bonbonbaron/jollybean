@@ -1,0 +1,3 @@
+f = open("tmp")
+lines = f.read_lines()
+print(lines)
