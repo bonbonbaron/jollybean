@@ -10,10 +10,7 @@ else:
     IS_LINUX = True
     SEP = "/"
 
-INCL_GE_H = "#include \"ge.h\"\n"
-START_ROW = "/* START_ROW_DEFS */\n"
-END_ROW = "/* END_ROW_DEFS */\n"
-TBL_DESC = "/* Idx #, Position array, Orientation array */\n"
+INCL_GE_H = "#include \"ge.h\""
 START_TBL = "/* START_TBL_DEF */\n"
 END_TBL = "/* END_TBL_DEF */\n"
 SCENE = "scene"
@@ -22,6 +19,7 @@ AUDIO  = "audio"
 TEXT   = "text"
 IMAGE  = "image"
 DEV_DIR = "/home/bonbonbaron/nectar/"
+ENUM_FP = "%sjb_enum.h"%(DEV_DIR)
 JB_DIR  = "%sjb%s"%(DEV_DIR, SEP)
 GAME_DIR = "%sgame%s"%(DEV_DIR, SEP)
 ASSETS_DIR = "%sassets%s"%(JB_DIR, SEP)
