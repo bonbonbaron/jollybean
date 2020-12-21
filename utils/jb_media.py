@@ -1,5 +1,5 @@
 from py_defs import *
-from db import *
+from jb_db import *
 
 def create_media_file():
   f = open(MEDIA_FP, "w")
@@ -35,4 +35,3 @@ def update(offset, length, new_data):
   f.write(new_data)
   f.write(after_data)
   f.close()
-  

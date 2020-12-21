@@ -1,6 +1,6 @@
 # TODO: change color maps to always-increasing integer order. That way it'll be easier to share colormaps.
-from time import time as t
 import json
+from time import time as t
 from collections import deque
 import cv2, os
 import numpy as np
@@ -9,6 +9,13 @@ from struct import pack, unpack
 from os.path import getsize
 from os import sep
 from glob import glob
+import sys
+import jb_db
+import jb_media
+import jb_enum
+from os import path
+from py_defs import *
+
 IDX_R                 =  0
 IDX_G                 =  1
 IDX_B                 =  2
@@ -44,8 +51,38 @@ class AnimSequence:
     def __init__(self, blit_coords, frame_order, durations, repeat):
         self.blit_coords = blit_coords
         self.frame_order = frame_order
-        self.durations = durations
-        self.repeat = repeat
+        self.durations   = durations
+        self.repeat      = repeat
+     
+class Tileset:
+    def __init__(self, idat, tileset, bitdepth):
+        self.len      = len(idat)
+        self.w        = tileset.shape[1]
+        self.h        = tileset.shape[0]
+        self.bpp      = bitdepth
+        self.idat     = idat
+
+class Tilemap:
+    def __init__(self, tilemap):
+        # Start off by making the tilemap an array of Uint16s.
+        temp = list(tilemap.flatten())
+        temp = [int(t).to_bytes(2, BYTEORDER) for t in temp]
+        tm_array = bytearray()
+        for t in temp:
+            tm_array.extend(t)
+        # Then initialize the tilemap object.
+        self.len = 2 * tilemap.shape[0] * tilemap.shape[1]
+        self.w   = tilemap.shape[1]
+        self.h   = tilemap.shape[0]
+        self.tm  = tm_array
+
+def is_animated(fp):
+    f = open(fp)
+    a = json.load(f)
+    if len(a["frames"]) > 1:
+        return True
+    return False
+
 ###########################################
 #def preview(img):
 #    cv2.imshow("preview", img)
@@ -121,11 +158,7 @@ def map_tiles(img):
                                 tiles_labelled[x2, y2] = True
                 tile_label += 1
     # Images with no repeatable parts are treated as vanilla PNG files without tiling.
-    if tile_label == NBR_TILES_HIGH * NBR_TILES_WIDE:
-        tilemap = None
-        tileset = None
-    else:
-        tilemap = tilemap.reshape((NBR_TILES_HIGH, NBR_TILES_WIDE))
+    tilemap = tilemap.reshape((NBR_TILES_HIGH, NBR_TILES_WIDE))
     # print(tilemap)
     return tileset, tilemap
      
@@ -398,10 +431,10 @@ def compress_img_and_anim(img, animated=False):
         bpp = 4
      
     _ = []
-    if animated:
-        print("removing dupe frames")
-        anim_map = create_anim_map(sprite.img_name)
-        remove_dupe_frames(anim_map, img)
+    #if animated:
+    #    print("removing dupe frames")
+    #    anim_map = create_anim_map(sprite.img_name)
+    #    remove_dupe_frames(anim_map, img)
     gray_img = gray_out_img(img, _)
     # RIGHT HERE. Before mapping tiles, look up anim JSON data and cut out parts of image that are identical.
     tileset, tilemap = map_tiles(gray_img)
@@ -422,7 +455,7 @@ def compress_img_and_anim(img, animated=False):
         bitdepth = 4
     final_tileset = np.zeros((8, 8 * len(tileset)), np.uint8)
     # 40 tiles * 64 pixels/tile * 4 bits/pixel * 1 byte/8 bits
-    for i in range(len_tileset):
+    for i in range(tilemap.shape[0] * tilemap.shape[1]):
         final_tileset[:, i*8: (i+1)*8] = tileset[i]
      
     w = final_tileset.shape[1]
@@ -433,60 +466,48 @@ def compress_img_and_anim(img, animated=False):
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
     #~~~~~~~~~ Extract PNG's IDAT ~~~~~~~~~~~#
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-    f = open("temp.png", "wb")
+    f = open("./temp.png", "wb")
     writer.write(f, final_tileset)
     f.close()
-    f = open("temp.png", "rb")
+    f = open("./temp.png", "rb")
     png_data = f.read()
-    idat_start = png_data.index(PNG_IDAT_START) + 4  # We don't include "IDAT." We're BYTE MISERS!
+    idat_start = png_data.index(PNG_IDAT_START) + 4  # We don't even include "IDAT." We're BYTE MISERS!
     idat_end   = png_data.index(PNG_IDAT_END) - 4    # 4-byte length precedes IEND
     idat = png_data[idat_start : idat_end]
      
-    image_data = [0, 0, 0, 0, 0, 0]
-    image_data[IDX_LEN]      = len(idat)
-    image_data[IDX_W]        = final_tileset.shape[1]
-    image_data[IDX_H]        = final_tileset.shape[0]
-    image_data[IDX_BPP]      = bitdepth
-    image_data[IDX_IS_TILED] = nbr_tiles > 1
-     
+    ts = Tileset(idat, final_tileset, bitdepth)
     if tilemap is not None:
-        tm_metadata = [0, 0, 0, 0]
-        tm_metadata[IDX_LEN] = 2 * tilemap.shape[0] * tilemap.shape[1]  # USHORT data type
-        tm_metadata[IDX_W]   = tilemap.shape[1]
-        tm_metadata[IDX_H]   = tilemap.shape[0]
-        temp = list(tilemap.flatten())
-        temp = [int(t).to_bytes(2, BYTEORDER) for t in temp]
-        tm_array = bytearray()
-        for t in temp:
-            tm_array.extend(t)
+        tm = Tilemap(tilemap)
     else:
         tm_array = None
         tm_metadata  = None
      
-    return idat, image_data, tm_array, tm_metadata
+    return ts, tm  # Tileset, Tilemap
  
 ###########################################
 # Updates both image dictionary and global data file where it's stored
-def compress_sprite_imgs(directory, img_name):
-	# Find all files belonging to sprite
-	img_fps = glob("%s/%s*.png"%(directory, img_name))
-	# Concatenate if animated
-	if len(img_fps) == 0:
-		print("No images found for %s in \"%s\"! If there are, they're supposed to be PNG format."%(img_name, directory))
-		quit()
-	animated = "_" in img_fps[0]
-	for img_fp in img_fps:
-            fn = img_fp.split(".")[0]
-            img = cv2.imread(img_fps[0])
-            png_idat, image_data, tm_array, tm_metadata = compress_img_and_anim(img, animated)
-            f = open("./%.bin"%(fn), "wb")
-            f.write(png_idat)
-            f.close()
-            if tm_array is not None and tm_metadata is not None:
-                f = open("%s_tm_array.bin"%(fn), "wb")
-                f.write(tm_array)
-                f.close()
-                f = open("%s_tm_metadata.bin"%(fn), "wb")
-                f.write(tm_metadata)
-                f.close()
+###########################################
+def gen_data_sprite(img_name):
+    tgt_dir  = "%ssprite%s"%(ASSETS_DIR, SEP)
+    # Find all files belonging to sprite
+    img_fp   = "%s%s.png"%(tgt_dir, img_name)
+    img_json = "%s%s.json"%(tgt_dir, img_name)
+    # Concatenate if animated
+    if not path.exists(img_fp):
+        print("[gen_data_sprite] Couldn't find %s!"%(img_fp))
+        quit()
+    if not path.exists(img_json):
+        print("No JSON file found for %s in \"%s\"!"%(img_name, tgt_dir))
+        quit()
+    # Do yo magic
+    anim = is_animated(img_json)
+    img = cv2.imread(img_fp)
+    ts, tm = compress_img_and_anim(img, anim)
+    media.insert(ts.idat)
+    insert_enum_elem("Tileset", img_name)
+    db.insert("tileset", ts)
+    insert_enum_elem("Tilemap", img_name)
+    db.insert("tilemap", tm)
+    insert_enum_elem("ColorPalette", img_name)
 
+gen_data_sprite("ben")
