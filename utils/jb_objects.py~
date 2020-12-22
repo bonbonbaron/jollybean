@@ -18,7 +18,7 @@ class ListNode(JBObject):
 		JBObject.__init__(self)
 		self.data = None
 		self.next = None
-		self.prev = None
+		self. = None
 
 class LinkedList(JBObject):
 	def __init__(self):

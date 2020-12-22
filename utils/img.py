@@ -1,4 +1,3 @@
-# TODO: change color maps to always-increasing integer order. That way it'll be easier to share colormaps.
 import json
 from time import time as t
 from collections import deque
@@ -15,6 +14,7 @@ import jb_media
 import jb_enum
 from os import path
 from py_defs import *
+from jb_objects import *
 
 IDX_R                 =  0
 IDX_G                 =  1
@@ -54,28 +54,6 @@ class AnimSequence:
         self.durations   = durations
         self.repeat      = repeat
      
-class Tileset:
-    def __init__(self, idat, tileset, bitdepth):
-        self.len      = len(idat)
-        self.w        = tileset.shape[1]
-        self.h        = tileset.shape[0]
-        self.bpp      = bitdepth
-        self.idat     = idat
-
-class Tilemap:
-    def __init__(self, tilemap):
-        # Start off by making the tilemap an array of Uint16s.
-        temp = list(tilemap.flatten())
-        temp = [int(t).to_bytes(2, BYTEORDER) for t in temp]
-        tm_array = bytearray()
-        for t in temp:
-            tm_array.extend(t)
-        # Then initialize the tilemap object.
-        self.len = 2 * tilemap.shape[0] * tilemap.shape[1]
-        self.w   = tilemap.shape[1]
-        self.h   = tilemap.shape[0]
-        self.tm  = tm_array
-
 def is_animated(fp):
     f = open(fp)
     a = json.load(f)
@@ -381,10 +359,9 @@ def gray_out_img(img, color_palette):
     max_brightness = max(brightness_ranks)
     # print(max_brightness)
     sorted_color_palette = sort_colors(color_palette, brightness_ranks)
-    # Map each value in color image to its rank
     gray_img = (255 * np.ones((NBR_PIXELS_HIGH, NBR_PIXELS_WIDE))).astype(np.uint8)
     len_color_palette = len(color_palette)
-    # print(len_color_palette)
+    # Map each value in color image to its rank
     for x in range(img.shape[0]):
         for y in range(img.shape[1]):
             pixel = img[x, y]
@@ -407,7 +384,7 @@ class ImageInfo:
 		self.num_tiles = 0
 ###########################################
 # current problem: how to get anim_offset correlated with this
-def compress_img_and_anim(img, animated=False):
+def compress_img_and_anim(img, img_name, cp_name, animated=False):
     compressed_tileset = []
     color_palette      = []
      
@@ -431,12 +408,11 @@ def compress_img_and_anim(img, animated=False):
         bpp = 4
      
     _ = []
-    #if animated:
-    #    print("removing dupe frames")
-    #    anim_map = create_anim_map(sprite.img_name)
-    #    remove_dupe_frames(anim_map, img)
+    if animated:
+        print("removing dupe frames")
+        anim_map = create_anim_map(sprite.img_name)
+        remove_dupe_frames(anim_map, img)
     gray_img = gray_out_img(img, _)
-    # RIGHT HERE. Before mapping tiles, look up anim JSON data and cut out parts of image that are identical.
     tileset, tilemap = map_tiles(gray_img)
      
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
@@ -475,19 +451,31 @@ def compress_img_and_anim(img, animated=False):
     idat_end   = png_data.index(PNG_IDAT_END) - 4    # 4-byte length precedes IEND
     idat = png_data[idat_start : idat_end]
      
-    ts = Tileset(idat, final_tileset, bitdepth)
-    if tilemap is not None:
-        tm = Tilemap(tilemap)
-    else:
-        tm_array = None
-        tm_metadata  = None
-     
-    return ts, tm  # Tileset, Tilemap
+    ts = Tileset()
+    tm = Tilemap()
+    cp = ColorPalette()
+    ts.name = img_name;
+    ts.num_tiles = int(w * h / 64)
+    ts.bpp = bitdepth
+    ts.mi_idx = "eiMediaInfo_%s"%(img_name)
+    ts.surface_p = "NULL"
+    tm.name = img_name;
+    tm.ts_idx = "eiTileset_%s"%(img_name)
+    tm.tm_arry = list(tilemap.flatten())
+    tm.dimensions = "{%d, %d}"%(tilemap.shape[0], tilemap.shape[1])
+    cp.name = cp_name;
+    cp.num_colors = len(color_palette)
+    cp.cp_arry = str(color_palette)
+
+    return ts, tm, cp, idat  # Tileset, Tilemap, Binary data from image
  
 ###########################################
 # Updates both image dictionary and global data file where it's stored
 ###########################################
 def gen_data_sprite(img_name):
+    split_nm = img_name.split("_")  # Naming convention goes "ben_aqua" or [sprite name]_[color palette name]
+    img_nm   = split_nm[0]
+    cp_nm    = split_nm[1]
     tgt_dir  = "%ssprite%s"%(ASSETS_DIR, SEP)
     # Find all files belonging to sprite
     img_fp   = "%s%s.png"%(tgt_dir, img_name)
@@ -497,17 +485,25 @@ def gen_data_sprite(img_name):
         print("[gen_data_sprite] Couldn't find %s!"%(img_fp))
         quit()
     if not path.exists(img_json):
-        print("No JSON file found for %s in \"%s\"!"%(img_name, tgt_dir))
+        print("No JSON file found for %s in \"%s\"!"%(img_nm, tgt_dir))
         quit()
     # Do yo magic
     anim = is_animated(img_json)
     img = cv2.imread(img_fp)
-    ts, tm = compress_img_and_anim(img, anim)
-    jb_media.insert(ts.idat)
-    jb_enum.insert_enum_elem("Tileset", img_name)
+    ts, tm, cp, idat = compress_img_and_anim(img, img_nm, cp_nm, anim)
+    jb_media.insert(idat)
+    jb_enum.insert_enum_elem("Tileset", img_nm)
     jb_db.insert("tileset", ts)
-    jb_enum.insert_enum_elem("Tilemap", img_name)
+    jb_enum.insert_enum_elem("ColorPalette", "%s%d"%(cp_nm, cp.num_colors))
+    jb_db.insert("colorPalette", cp)
+    jb_enum.insert_enum_elem("Tilemap", img_nm)
     jb_db.insert("tilemap", tm)
-    jb_enum.insert_enum_elem("ColorPalette", img_name)
 
-gen_data_sprite("ben")
+jb_media.clean_media_file()
+jb_enum.create_enum("tileset")
+jb_enum.create_enum("tilemap")
+jb_enum.create_enum("colorPalette")
+jb_db.create_tbl("tileset")
+jb_db.create_tbl("tilemap")
+jb_db.create_tbl("colorPalette")
+gen_data_sprite("ben_aqua")

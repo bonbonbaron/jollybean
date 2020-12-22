@@ -48,7 +48,7 @@ def elems_to_enum(enum_nm, elems):
   return enum_string
   
 def get_proper_enum_nm(nm):
-  return "e%s%s"%(nm[0].title(), nm[1:])
+    return "e%s%s"%(nm[0].title(), nm[1:])
 
 def get_proper_elem_nm(enum_nm, elem_nm):
   return "i%s_%s"%(enum_nm, elem_nm)

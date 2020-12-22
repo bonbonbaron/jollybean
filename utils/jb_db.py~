@@ -167,7 +167,7 @@ def objs_from_records(tbl_nm):
   return objs
 
 def write_to_tbl(tbl_nm, loc_vars_str, objs):
-  LOC_VARS_PRELUDE = "%s\n%s\n%s"%(INCL_GE_H, INCL_ENUM, START_LOC_VARS)
+  LOC_VARS_PRELUDE = "%s\n%s"%(INCL_GE_H, START_LOC_VARS)
   RECORDS_PRELUDE  = "%s\n%s tbl%s[] = {\n%s"%(END_LOC_VARS, cap(tbl_nm), cap(tbl_nm), START_TBL)
   FINALE           = TBL_ENDING
   f = open("%stbl_%s.c"%(JB_DB_DIR, tbl_nm), "w")

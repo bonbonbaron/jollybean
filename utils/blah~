@@ -1,0 +1,5 @@
+why is tileset not getting the proper ending?
+consume the name of a color palette you want
+but it has to validate the number of colors
+so it has to query and check that value
+you may want to have the number in the palette name just to make sure. In fact, that can be how it checks.
