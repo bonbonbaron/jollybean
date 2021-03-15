@@ -1,0 +1,90 @@
+***FIRST LAW: Architectures must be entirely self-contained. One must not depend on another.
+***SECOND LAW: Nobody controls systems but parent systems. Systems don't message each other; they msg the arch. The arch alone messages each system.
+***THIRD LAW: Every primitive system must be portable across games. We only solve problems once to accelerate all future developments; therefore, it's desirable for parent systems to be self-contained and portable too (first law).
+When I make a system:
+
+(emphasizing how out-of-order things can be)
+
+PRIMITIVE SYSTEMS:
+******************
+IMAGE SYS:
+		jill, bob, glenn, dan
+ANIM SYS: 
+		bob, jill, glenn
+MOTION SYS:
+		dan, bob, jill
+COLLISION SYS:
+		dan, jill, bob
+CONTROL SYS:
+		bob
+TIMER SYS:
+		dan, jill   <-- these guys have randomly timed animated walks
+TEXT SYS:
+		dan, jill   <-- the only sprites you can talk to 
+
+GAME-SPECIFIC SYSTEMS:
+**********************
+BATTLE STAT SYS
+
+These systems will each tick every clock cycle.
+When they need to communicate, they'll need:
+		1) the address of the other system
+		2) the type of the other system
+		3) the index of the entity in the other system (can be active or inactive if you don't want compliance)
+		4) the command to send to that entity in that system
+
+There's a system structure, with parent and child systems, with parent systems controlling child systems. Point of entry high as possible. The parent system can be seen as a hub for communication as well as a place where the overall logic of the system ecosystem is stored.
+
+SYSTEMS (WITH CHILD SYSTEMS):
+**************
+BATTLE SYS:
+	BATTLE STAT SYS
+	ANIM SYS				
+	MOTION SYS
+	COLLISION SYS
+	TIMER SYS
+	TEXT SYS
+	MENU SYS
+		TEXT SYS
+		CONTROL SYS
+	IMAGE SYS
+
+MASTER MENU SYS:
+	TEXT SYS
+	ANIM SYS
+	IMAGE SYS
+	CONTROL SYS
+
+SYSTEMS: your only job is to churn through your comps and signal the parent when something significant happens. Signal type and component ID. Let the parent worry about what to do with that signal. This makes systems perfectly and uttery standalone, free to be implemented in whatever what the game designer sees fit.
+
+Don't implement it as arrays of children. Just stick the children directly in the parent systems' structs. That way you know they're there, and you don't have to spend time allocating everything at every startup. No, you need the list because that's how allocation is efficient. You're worried about having to search sequentially for a system to send it a msessage. A router can handle that for you. Each parent system can contain a router of array indices; one for the system, another for its component.
+
+If I open the master menu in the middle of the battle, I pause the battle sys, the timers, animations, and motions in that sys cease. That's beautiful.
+In this way I can have multiple systems of the same type. I can cease entire inner loops. BEAUTIFUL.
+
+
+Okay, I'm getting close. What I have for system design is this:
+	a fixed-size output signal array
+	a 2D directory array for accessing individual components via entity ID *without* sequential searches
+
+The remaining problem to solve is how I'll know which system to use without having to use pointers. Preferably it'll just use one-byte indices for systems. When we're populating the directory, we'll do this by having an array of children systems (which, by the way, allows for a init-all-in-one-place structure). The first child will grab all its components and populate the directory's first column; second, second, and so on. Question is, how does the parent system know which column to use based on a child system's output signals? First of all, the above information is insufficient to define that. There has to be something more to a system than its children, components, behaviors, and directory. But you know, I may be making it more difficult than it needs to be. Because when I code each individual system, I the programmer am going to know which indices each system is. So all I have to do is have #defines or an enum for all their indices, and then when I code the messaging behavior, i'll say, "Okay, if I get a MSG_MOVED message from the motion system, I, the collision parent system, will take that signal and look in my database for the way this particular sprite type and the type of the sprite it collided with and figure out how both of them are supposed to react. It may be that 2 systems should react, or maybe 5 (animation, motion, battle stats, controls, and sound). A message should look like this:
+
+
+MESSAGE
+	src             // individual, in case this sprite reacts to individuals differently
+	src type        // in case this sprite reacts to types differently
+	tgt             // individual
+	tgt type        // whole group (sometimes everybody)
+	signal          // defined in H file, necessarily used in funciton array of commands in system
+
+	typedef struct {
+		children  // these will be parsed through for signal info
+		dir_ar2   // entities-to-system-components-mapping
+		component_ar
+		signal_ar		// could be NULL if this system never talks to anybody 
+		behavior .. not really coded but you know 
+	} System;
+
+Another consideration is how to have every system fly through their components. Is it faster just to go through the whole array ignoring inactive components? Or is it better to have another array of indices of active components?
+
+
