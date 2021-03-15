@@ -1,6 +1,6 @@
 #include "ge.h"
 
-Error init_surface(Sprite *s, TblSpriteRow *tbl_row) {
+Error init_surface(Sprite *s, TblImgRow *tbl_row) {
   Error stat = 0;
   /* Share surfaces to spare RAM. TODO: use below commneted func to share colormaps w/ different palettes. */
   /* extern DECLSPEC SDL_Surface *SDLCALL SDL_DuplicateSurface(SDL_Surface * surface); */
@@ -17,7 +17,7 @@ Error init_surface(Sprite *s, TblSpriteRow *tbl_row) {
 }
 
 Error init_sprite(Sprite *s, const Vector2 *pos) {
-  TblSpriteRow *tbl_row = &tbl_sprite[s->species];
+  TblImgRow *tbl_row = &tbl_sprite[s->species];
   
   s->id                 = sprite_id++;
   s->onscreen           = SDL_FALSE;
@@ -68,5 +68,11 @@ void init_reaction_sequence_group(Sprite *s, Scene *scene) {
 
 /* TODO: This is waiting on the quadtree and grid to both be completed. These two items in turn are waiting on the gap between the level editor and game engine to be bridged. */
 void detect_collisions() {
+
+}
+
+
+void inherit(void *inheritance_data_p, Uint8 type) {
+	extern InheritanceTblRow *inh_row_p;
 
 }

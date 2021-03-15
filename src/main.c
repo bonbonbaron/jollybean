@@ -16,74 +16,17 @@ SDL_bool signals_exist = SDL_FALSE;
 
 #define BUTTON_REPEAT_RATE 50
 Error update() {
-  Error stat = 0;
-  Uint8 channel_num;
-  static LinkedList active_subscribers = {NULL};
-  ListNode *node;
-  Subscriber *subscriber;
-
-  /* If signals exist, alert their subscribers. */
-  if (signals_exist) {
-    for (channel_num = 0; channel_num < NUM_COMM_CHANNELS; channel_num++) {
-      if (comm_channels[channel_num].signal_on && comm_channels[channel_num].subscribers != NULL) {
-        for (node = comm_channels[channel_num].subscribers->head; node != NULL; node = node->next) {
-          subscriber = node->data;
-          if (!subscriber->busy || subscriber-> {
-						/* Channel_num is basically the signal since channels themselves are binary siganls. */
-            stat = trigger_reaction(subscriber, channel_num, &active_subscribers);  
-            if (stat) {
-              goto break_out_of_nested_loop;
-            }
-          }
-        }
-      }
-      comm_channels[channel_num].signal_on = SDL_FALSE;
-    }
-    signals_exist = SDL_FALSE;
-  }
-
-  /* If collisions exist, alert the sprites collided. */
-  /* TODO */
-
-  /* Run active_subscribers. */
-  for (node = active_subscribers.head; node != NULL; node = node->next) {
-    subscriber = node->data;
-    subscriber->s->reaction_bookmark += subscriber->activity.current_reaction_sequence->react_func_ptr[subscriber->s->reaction_bookmark](subscriber->s, subscriber->activity.tgt, scene);
-    /* If subscriber's reaction sequence is finished, reset the index to zero. It's still busy if the sequence is meant to loop. */
-    if (subscriber->s->reaction_bookmark >= subscriber->activity.current_reaction_sequence->num_reactions) {
-      subscriber->s->reaction_bookmark = 0;
-      subscriber->busy = subscriber->activity.current_reaction_sequence->repeat;
-    }
-  }
-
-break_out_of_nested_loop:
-  return stat;
 }
 
 Error render() {
 	Error stat = 0;
 	Uint16 i;
-	Uint32 final_address;
   SDL_Rect rect;
+
   SDL_RenderClear(renderer);
 
-  //final_address =
   /* TODO: Consider pointer arithmetic instead for this. */
-  for (i = 0; i < scene->num_sprites; i++) {
-    /* Scene's sprites should always be ordered with onscreen ones first. */
-    if (!(scene->sprites[i]->onscreen)) {
-      break;
-    }
-    rect.x = scene->sprites[i]->blit_coords.x - scene->camera.rect.x;
-    rect.y = scene->sprites[i]->blit_coords.y - scene->camera.rect.y;
-    rect.w = scene->sprites[i]->blit_coords.w;
-    rect.h = scene->sprites[i]->blit_coords.h;
-    stat = SDL_BlitSurface(scene->sprites[i]->surface, &rect, canvas_surface, NULL);
-    if (stat) {
-      printf("render error\n");
-      return 1;
-    }
-  }
+
 
 	SDL_UpdateWindowSurface(window);
   return stat;
@@ -94,7 +37,6 @@ Error init() {
   extern Scene *scene_zero;
 
   /* Communication Channels */
-  memset(comm_channels, 0, sizeof(CommChannel) * NUM_COMM_CHANNELS);
 	renderer = NULL;
 
   /* SDL Video */
@@ -167,8 +109,6 @@ int main(int argc, char **argv) {
       };
 		  ctrl_listen();
       update();
-		  // if ((delay = SDL_GetTicks() - t0) < FRAME_DURATION)
-			  // SDL_Delay(delay);
 		  SDL_Delay(50);
 	  }
 	  close();

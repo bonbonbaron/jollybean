@@ -760,6 +760,21 @@ ListNode* list_find_node(LinkedList *ll, void *data) {
 }
 
 #endif 
+void insert_sort(Sprite* sprites[], int num_sprites, cmp cmp_func) {
+  Uint16 i, j;
+  Sprite *s_key;
+  for (i = 1; i < num_sprites; i++) {
+    //key = arr[i]; /* current element */
+    s_key = sprites[i];
+    j = i - 1;
+    //while(j >= 0 && arr[j] > key) {  /* Cmp func must return 1 if jth element going backward is greater than key element. */
+    while(j >= 0 && (*cmp_func)(sprites[j], s_key)) {
+      sprites[j + 1] = sprites[j];
+      j--;  /* going backwards from current element */
+    }
+    sprites[j + 1] = s_key;
+  }
+}
 
 /******************************/
 /**********QUAD TREES**********/

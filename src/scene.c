@@ -20,7 +20,7 @@ void kill_scene(Scene *scene) {
   Error stat = 0;
   Uint16 i, sprite_id = 0;
 }
-
+/*
 void bound_camera_in_bg_x(Camera *camera, SDL_Surface *bg_surf) {
   if (camera->rect.x < 0) {
     camera->rect.x = 0;
@@ -43,16 +43,13 @@ void bound_camera_in_bg(Camera *camera, SDL_Surface *bg_surf) {
   bound_camera_in_bg_x(camera, bg_surf);
   bound_camera_in_bg_y(camera, bg_surf);
 }
-
+*/
+/*
 void init_camera(Scene *scene, Vector2 *init_pos) {
   TblCameraRow *tbl_row;
   tbl_row = &tbl_camera[scene->type];
   scene->camera.motion = tbl_row->motion;
   scene->camera.react_seq_grp = tbl_row->react_seq_grp;
-  /* If camera is bigger than bg, center bg. Otherwise, put cam in target position and keep bounded to BG. */
-  if (scene->backgrounds[scene->bg_idx].w <= scene->camera.rect.w) {
-    scene->camera.rect.x = (scene->camera.rect.w - scene ->backgrounds[scene->bg_idx].w) >> 1;
-  }
   else {
     scene->camera.rect.x = init_pos->x;
     bound_camera_in_bg_x(&scene->camera, &scene->backgrounds[scene->bg_idx]);
@@ -65,18 +62,20 @@ void init_camera(Scene *scene, Vector2 *init_pos) {
     bound_camera_in_bg_y(&scene->camera, &scene->backgrounds[scene->bg_idx]);
   }
 }
-
+*/
 /* TODO: implement tracking offset from sprite */
 /* motion is movement of sprite being tracked */
+/*
 void camera_track_tgt(Scene *scene, MotionTranslation *motion) {
   if (motion != NULL) {
-    scene->camera.tgt_offset.x = motion->vel.x * 5;   /* TODO: fine-tune this later */
+    scene->camera.tgt_offset.x = motion->vel.x * 5;
     scene->camera.tgt_offset.y = motion->vel.y * 5;
+
   }
   scene->camera.motion->move(scene->camera.tgt, scene->camera.motion);
   bound_camera_in_bg(&scene->camera, &scene->backgrounds[scene->bg_idx]);
 }
-
+*/
 /*
   data types for storing scene objects
 

@@ -9,7 +9,7 @@
 #include <string.h>
 #include "SDL.h"
 extern void ctrl_listen();
- 
+#define USE_LINKLISTS 0 
 /************/
 /***Errors***/
 /************/
@@ -43,7 +43,7 @@ static Uint16 sprite_id = 0;
 struct Sprite_t;
 struct Mobility_t;
 struct Motion_t;
-struct TblSpriteRow_t;
+struct TblImgRow_t;
 struct Animation_t;
 struct Scene_t;
 struct ReactSeqGrp_t;
@@ -134,40 +134,81 @@ void print_no_mem(char *func_nm);
 /***********/
 /* image.c */
 /***********/
-struct _TblSpriteRow;
-Error load_surface(struct _TblSpriteRow *tbl_sprite_Row, SDL_Surface **colormap);
+struct Image_t;
+Error load_image(Uint16 img_idx, struct Image_t **img_pp);
 Error reconstruct_colormap(SDL_Surface* tileset_surface, Uint16* tilemap, SDL_Surface* colormap_surface);
 
 /***********/
 /* sprite.c */
 /***********/
-#define FLG_SPRITE_ANIMATED (1)
-#define FLG_SPRITE_MOBILE   (2)
-#define FLG_SPRITE_AUDIBLE  (4)
-/* react_func_ptr() returns 1 if it's okay to proceed to the next action and increment bookmark, 0 otherwise. */
-
 /* Indexed by sprite->species */
 /* Instead of implementing hash tables, just order all warriors' attacks the same. Then all walk_ups are 0, attack_1s are 4, jumps are 5, etc. */
-typedef struct _TblSpriteRow {
-  Uint8  bpp, num_colors, type;
-  Uint16 rect_w, rect_h, surface_w, surface_h;
-  MediaInfo *media_info;
-  Uint16 *tilemap;
-  SDL_Color *colors;
-  SDL_Surface *ptr;
-} TblSpriteRow;
+typedef struct Tileset {
+	Uint16    num_tiles;
+	Uint8     bpp;
+	Uint16    mi_idx;     /* index into the media info table */
+	SDL_Surface *surface_p;
+	Uint32    last_modified_tm;
+} Tileset;
 
+typedef struct Tilemap {
+	Uint16         ts_idx;      /* index into tileset table */
+	Uint16        *tm_arry;
+	Vector2        dimensions;  /* in units of tiles */
+} Tilemap;
+
+typedef struct ColorPalette {
+	Uint8      num_colors;
+	SDL_Color *cp_arry;
+} ColorPalette;
+
+typedef struct Image_t {
+	Uint16        tm_idx;     /* index into tilemap table */
+	Uint8         cp_idx;     /* index into color palette table */
+  SDL_Surface  *surface_p;  /* ptr to loaded surface; results loaded tileset building img w/ tilemap & colors */
+} Image;
+
+typedef struct CollisionBounds {
+	SDL_Rect n, s, e, w;
+} CollisionBounds;
+
+/* an array of shorts will be used to populate sprites. Sprites don't need references to the index of the image in the image table. */
 typedef struct Sprite_t {
-  SDL_bool              onscreen;
-  Uint8                 reaction_bookmark;  /* Bc if sprite doesn't do anything, why is it not just a background tile? */
-  Uint16                id;                 /* e.g. Goomba #1, Goomba #2, Bowser #1, etc. */
-  Uint8                 species;            /* determines what colors the loaded image gets. e.g. enemy, fire, water, poisFon, spring, old man in red shirt, etc. */
-  Uint16                family;             /* determines the grayscale image loaded from media file; red and green Koopas are in the Koopa family. */
-	Uint8                 class;              /* describes whether Sprite is a good guy, bad guy, neutral guy, or something else very fundamental. Can be used to decided collision reaction. */
-  SDL_Surface          *surface_p;
-  SDL_Rect              rect, blit_coords;
-  struct ReactSeqGrp_t *react_seq_grp_p;
+  SDL_Rect              rect;
+  Image                *image_p;
 } Sprite;
+
+typedef struct LevelLayer {
+	Tilemap              *tilemap_p;           /* For camera to know which part of the image to draw */
+	Uint8                *logic_grid_arry;     /* Interaction with sprite */
+	Tileset              *tileset_p;           /* Image that gets drawn on again and again based on where "camera" is */
+} LevelLayer;
+
+extern MediaInfo *tblMediaInfo;
+extern Image *tblImage;
+extern Tileset *tblTileset;
+extern Tilemap *tblTilemap;
+extern ColorPalette *tblColorPalette;
+
+#define NUM_COMM_CHANNELS 12
+#define MAX_NUM_SPRITES 10
+#define MAX_NUM_BGS 3
+#define MAX_NUM_EXITS 5
+#define MAX_NUM_ACTIVITIES 20
+/* Scene table row. Event-related stuff is absent, because it'll be loaded  */
+typedef struct SceneTblRow {
+	Uint16  *level_layer_arry;
+  Uint16  *sprite_id_arry;
+	Uint16  *position_arry;
+} SceneTblRow; 
+
+typedef struct Scene_t {
+    Uint8         type;  /* determines the reactions and their mappings that sprites have */
+    Sprite        sprite_arry[MAX_NUM_SPRITES]; 
+    SDL_Surface   bg_arry[MAX_NUM_BGS];
+    Uint8      ***coll_grid_ppp; /* Triple pointer: 1st pointer corresponds to Z-layer; 2nd, a 2D logic grid. Indexed by sprite.z, sprite.x >> 3, and sprite.y >> 3. */
+    QuadTree      coll_quadtree;
+} Scene;
 
 /* Motion_t points to this func ptr, so having Motion_t parameter is circular. See if that's really correct. */
 typedef SDL_bool (*MoveCallback)(Sprite *s, struct Motion_t *motion);
@@ -218,214 +259,86 @@ typedef struct TblAnimRow {
 
 /* instead of HTs, I'm going to enforce same-ordering & same population of everybody belonging to a sprite group. */
 typedef struct Animation_t {
+	SDL_Rect        blit_coords;
   Uint8           curr_frame_num;
   Uint32          curr_duration;
   AnimationStrip *curr_anim_strip;
   TblAnimRow     *anim_group;
 } Animation;
 
-/* Animated and/or Mobile Sprites */
-typedef struct AnimatedSprite {
-  Sprite *sprite;
-  Animation *animation;
-} AnimatedSprite;
-
-
-typedef struct AnimobSprite {
-  Sprite *sprite;
-  Animation *animation;
-  Vector2 *velocity;
-} AnimobSprite;
-
-/* ReactParams stores the arguments for the reaction function. Every single reaction in a chain
-	 of reactions requires their own parameters. However, every sprite that uses this sequence shares it;
-   it's not repeated. All they need is a pointer to it and a bookmark of where they left off. */
-typedef struct {
-	Sprite   *sprite_p;  /* actor sprite */
-	void     *tgt_p;     /* acted upon sprite */
-	Uint16    val;       /* in case this action requires a value */
-	Scene    *scene_p;   /* in case this action requires more information from the scene */
-} ReactParams;
-
-/* The reaction callback returns 1 if it's okay to move on to the next actual in the sequence after this one returns. */
-typedef SDL_bool (*ReactCallback)(ReactParams *react_params_p);  
-/* (predefined) A sequence of reactions a sprite calls in response to a trigger */
-typedef struct ReactSeq {
-  Uint8          priority;     /* To interrupt sequences of lower priorities. 255 = lowest priority. */
-  Uint8          num_reactions;
-  SDL_bool       repeat;
-  ReactCallback *react_callback_arry;
-} ReactSeq;
-
-/* ===================+ NOTES ON COLLISION SYSTEM +======================
-	 So let's get this straight: Sally bumps into Susie. The motion system will alert them both individually. There may
-	 actually be only one function necessary for collision dealing: A single in-game case structure to handle all coll-
-	 isions; one function to rule them all. The function only needs to be called once. The sprites' types merge together
-	 into one integer and go down the switch cases one by one. When it hits the integer-ordered number matching that of
-	 the collided sprites, throw up to two new items into the Activity Linked List.  
-
-	 Collision case structure should be as minimal as possible since, after all, we are all about speed and 8-bittiness. So
-	 this will be based on the class of collided object instead of type. The particulars of the collision, such as the amount
-	 of damage done or the text spoken by the townsperson, can be further subdivided into family, species, and/or ID.
-*/
-
-/* A group of sequences, e.g. reseq_pedestrian would have walk_up/down/etc. based on timers */
-/* Seems to me all we have to do is index a staggered array. The triggers member is not needed. */
-typedef struct ReactSeqGrp_t {
-  Uint8      num_react_seqs;    /* used to prevent illegal access error */
-  Uint8     *triggers_arry;     /* needed for subscribing each reaction sequence to a channel */
-  ReactSeq **react_seq_p_arry;  /* array of pointers to reaction sequence table records (which is a jagged array) */
-} ReactSeqGrp;
-
-/* Points to the reaction sequence group and its seq available to the sprite for this scene type. */
-/* Seems to me all we have to do is index a staggered array. The triggers member is not needed. */
-typedef struct ReactSeqGrpOption {
-  Uint8        sprite_type, scene_type;
-  ReactSeqGrp *react_seq_grp_p;
-} ReactSeqGrpOption;
-
-typedef struct TblReactRow {
-  ReactSeqGrp        *ptr;
-  Uint8               num_react_seq_grp_options;  /* This'll apply for camera too */
-  ReactSeqGrpOption  *react_seq_grp_options;  /* array of ReactSeqGrpOptions */
-} TblReactRow;
- 
 Error init_sprite(Sprite *s, const Vector2 *position);
 void init_motion(Sprite *s, Motion *motion);
 void init_animation(Sprite *s, Animation *animation);
 void init_reaction_sequence_group(Sprite *s, struct Scene_t *scene);
-extern TblSpriteRow *tbl_sprite;
+extern Image *tblImage;
 extern TblMobileRow *tbl_mobile;
 extern TblAnimRow   *tbl_anim;  /* table indexed by sprite species */
-extern TblReactRow  *tbl_react;
 
 /***********/
 /* scene.c */
 /***********/
 
-typedef struct {
-  SDL_Rect     rect;
-  Sprite     *tgt;
-  Vectore    tgt_offset;   /* for when tgt sprite is running fast and we want to track a point front of it */
-  ReactSeqGrp *react_seq_grp;
-  Motion      *motion;
-} Camera;
-
-
-/* Row indexed by Uint8 scene_type */
-typedef struct TblCameraRow {
-  Motion      *motion;
-  Uint8       *sprite_tgt;
-  ReactSeqGrp *react_seq_grp;
-} TblCameraRow;
-extern TblCameraRow *tbl_camera;
-
 void init_camera(struct Scene_t *scene, Vector2 *init_pos);
 
 typedef struct Exit {
   Uint8 id;
+	Uint16 tile_id;
   Uint8 transition_type;
   Uint16 tgt_scene_idx;
 } Exit;
 
-typedef struct _CommChannel;
-/*
-Here's my thinking on why I picked 12:
-	* Collisions are a direct messaging system in themselves. One doesn't need to subscribe to anything to know he's been punched in the face.
-	* 4 Timers. Timers are a major cause for change. So I'll allow, in this version, 4 timers as a creativity-inducing constraint. 
-  * 8 Controller inputs: A, B, U, D, L, R, Start, and Esc. These will bitmask into each subscriber's FAMILY-based switch-case structure. It'll be like:
-	
-				goodguy_react_btns(ReactParams *react_params_p) {
-					switch(curr_button_pressed) {
-						case A: case B: case L: case R:
-							char_p->buttons_heard |= curr_button_pressed;
-							break;
-						case U: case D:
-							if (char_p->context == WATER || ...- == LADDER)
-								char_p->buttons_heard |= curr_button_pressed;
-							break;
-						default;
-							break;
-					}
-				}
-*/
-#define NUM_COMM_CHANNELS 12
-typedef struct Scene_t {
-    Sprite       *sprite_arry; 
-    Uint16        num_sprites;
-    Uint8         type;  /* determines the reactions and their mappings that sprites have */
-    Uint8         bg_idx; /* bg layer that camera moves along */
-    Exit         *exit_arry; /* just point to the array in the table */
-    SDL_Surface  *bg_arry;
-    Uint8      ***coll_grid_ppp; /* Triple pointer: 1st pointer corresponds to Z-layer; 2nd, a 2D logic grid. Indexed by sprite.z, sprite.x >> 3, and sprite.y >> 3. */
-    QuadTree      coll_quadtree;
-    LinkedList    activity_list;
-    Camera        camera;
-		_CommChannel  comm_channel_arry[NUM_COMM_CHANNELS];  /* TODO explain why i picked 12... i don't remember now lol */
-} Scene;
-
-/* Let's just play around for a second. I want to see if I can come up with a good Scene table scheme. */
-typedef struct SceneTblRow {
-  Uint8    num_sprites;
-  Uint8    num_exits;
-  Uint8    num_songs;
-  Uint8    song_ids;  /* TODO: implement songs so you can put them in the Scene struct */
-  Uint8    num_sounds;
-  Uint8    sound_ids;  /* TODO: implement sound so you can put it in the Scene struct */
-  Uint16  *sprite_id_arry;
-  MediaInfo media_info;
-  /* If file I/O is the slowest part of the loading process, then let's load as much as we can at once: song ID, coll grid, tileset IDs, tilemaps, exits, etc. Some things need to be dynamically populated, like the QT, etc. */
-  Exit    *exit_arry; /* This gets indexed by colliding into a tile whose type contains this index. */
-} SceneTblRow; 
-
-
-/* How did I intend on doing scene-loading? I don't remember quite how I was planning on going about that. ID sounds like I was going to index into a table. So then what would this table have? Would everything already be allocated? I remember envisioning a file for each scene; a C file. And I remember seeing (in my head) a series of initializers being called, like michael = new_michael(), stuff like that. But if there were ten Goombas, even if I've already worked out all the media one-time-only loading, I'd still have to write *twenty* new_goomba() calls. So maybe something more repeatable. init_sprite(goomba_species_id, pos1, pos2, pos3...). But that ellipsis prevents from adding in orientation data too. So I see no way around having to write new_sprite(goomba_type, pos_vec2, orientation Uint8) twenty times. Maybe I'll come up with a better design someday, but that's the best I've got for now.
- *
- * */
 Error init_scene(Uint16 scene_id, Scene *scene);
 void  close_scene(Scene *scene);
-Error init_surface(Sprite *s, TblSpriteRow *metadata);
+Error init_surface(Sprite *s, Image *metadata);
 Error init_audios(Scene *scene);
 Error init_events(Scene *scene);
 extern Scene *scene_zero;
 extern SceneTblRow *scene_tbl;
 
-/************/
-/* events.c */
-/************/
-
-/* Events are for non-collision-based activities. */
-typedef struct _CommChannel {
-  SDL_bool       signal_on;
-  LinkedList    *subscriber_list;
-} CommChannel;
-
-typedef struct Activity {  /* stack var */
-  Sprite *tgt_p;
-  ReactSeq *curr_react_seq_p;
-} Activity;
-
-typedef struct {
-  SDL_bool busy;
-  Sprite *s;
-  Activity activity;
-} Subscriber;
-
-
-Error subscribe(Sprite *s);
-Error unsubscribe(Sprite *s, Uint8 channel);
-Error trigger_reaction(Subscriber *subscriber, Uint8 signal, LinkedList *active_subscribers);
-void broadcast(Uint8 signal );
-void cancel(Uint8 signal);
- 
-/********/
-/* LUTS */
-/********/
- 
  
 #define IDX_OFFSET 0
 #define IDX_LEN    0
 extern char *DATA_FILE;
  
- 
+/***********/
+/* Systems */
+/***********/
+typedef struct {
+	Uint8 src_entity_id;
+	Uint8 src_entity_type;
+	Uint8 dst_entity_id;
+	Uint8 dst_entity_type;
+	Uint8 signal;
+	Uint16 val1;
+	Uint16 val2;
+	Uint16 val3;
+	Uint16 val4;
+} Signal;
+
+typedef Error (*SysCallback)(Signal *sig_p);
+
+struct _System;
+
+typedef struct {
+	Uint8    num_children;
+	Uint8    num_components;
+	Uint8    num_signals;
+	Uint8    num_callbacks;
+	SDL_bool active;
+	struct _System *parent_p;
+	struct _System *children_1a;
+	Uint8 **directory_2a;   /* 2D array mapping entities to systems' components. 0xFF means no component. Columns correspond to systems; rows to entities. */
+	Signal *signal_1a;  /* active signals are always in front; stop iteration at dead signal */
+	SysCallback *callbacks_1a;
+} System;
+	
+Error ini_sys(System *sys_p);
+Error del_sys(System *sys_p);
+Error ini_sys_children(System *sys_p);
+Error del_sys_children(System *sys_p);
+Error get_entity_component(System *parent_p, Uint8 sys_id, Uint8 entity_id, void **comp_pp);  /* gets address of component; caller can cast it to whatever */
+
+
+
+
 #endif

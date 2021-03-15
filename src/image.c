@@ -120,19 +120,28 @@ Error reconstruct_colormap(SDL_Surface *tileset_surface, Uint16 *tilemap, SDL_Su
   return stat;
 }
 
-static Error load_tileset(TblSpriteRow *metadata, SDL_Surface **tileset_surface) {
+/* metadata provides index to media info. */
+static Error load_tileset(Uint16 ts_idx, Tileset **ts_pp) {
   unsigned char* compressed_data;
+	Uint16 w, jpp;
+	MediaInfo *mi_p;
   Error stat = 0;
+	Tileset *ts_p;
 
-  stat = read_media(metadata->media_info, &compressed_data);
+	*ts_pp = &tblTileset[ts_idx];
+	ts_p = *ts_pp;
+
+	mi_p = &tblMediaInfo[ts_p->mi_idx];
+	w = TILE_W * ts_p->num_tiles;
+  stat = read_media(mi_p, &compressed_data);
   if (!stat) {
-    *tileset_surface = SDL_CreateRGBSurfaceWithFormat(metadata->media_info->offset, metadata->surface_w, 
-      metadata->surface_h, metadata->bpp, SDL_PIXELFORMAT_INDEX8);
-    if (tileset_surface != NULL) {
-      stat = decompress_media(compressed_data, metadata->media_info->compressed_len, 
-        &(*tileset_surface)->pixels, (size_t*)&metadata->media_info->uncompressed_len);
+    ts_p->surface_p = SDL_CreateRGBSurfaceWithFormat(mi_p->offset, w, 
+      TILE_H, ts_p->bpp, SDL_PIXELFORMAT_INDEX8);
+    if (ts_p->surface_p != NULL) {
+      stat = decompress_media(compressed_data, mi_p->compressed_len, 
+        &ts_p->surface_p->pixels, (size_t*)&mi_p->uncompressed_len);
       if (stat) {
-        SDL_FreeSurface(*tileset_surface);
+        SDL_FreeSurface(ts_p->surface_p);
       }
     }
     else {
@@ -143,22 +152,34 @@ static Error load_tileset(TblSpriteRow *metadata, SDL_Surface **tileset_surface)
   return stat;
 }
 
-Error load_surface(TblSpriteRow *metadata, SDL_Surface **colormap) {
+/* metadata provies */
+Error load_image(Uint16 img_idx, Image **img_pp) {
   Error stat = 0;
-  SDL_Surface *tileset_surface = NULL;
-
-  *colormap = NULL;
+	Tilemap *tm_p;
+	Tileset *ts_p;
+	Image *img_p;
+	MediaInfo *mi_p;
+	ColorPalette *cp_p;
 
   /* Load tileset */
-  stat = load_tileset(metadata, &tileset_surface);
-  if (!stat && tileset_surface != NULL) {
+	*img_pp = &tblImage[img_idx];
+	img_p = *img_pp;
+	img_p->surface_p = NULL;
+	tm_p = &tblTilemap[img_p->tm_idx];
+	mi_p = &tblMediaInfo[ts_p->mi_idx];
+	cp_p = &tblColorPalette[img_p->cp_idx];
+
+	/* Load this image's tileset. */
+	stat = load_tileset(tm_p->ts_idx, &ts_p);
+
+  if (!stat && ts_p != NULL) {
     /* Piece tiles together to reconstruct colormap */
-    *colormap = SDL_CreateRGBSurfaceWithFormat(metadata->media_info->offset, metadata->surface_w, 
-      metadata->surface_h, metadata->bpp, SDL_PIXELFORMAT_INDEX8);
-    if (*colormap != NULL) {
-      stat = reconstruct_colormap(tileset_surface, metadata->tilemap, *colormap);
+    img_p->surface_p = SDL_CreateRGBSurfaceWithFormat(mi_p->offset, tm_p->dimensions.x * TILE_W, 
+      tm_p->dimensions.y * TILE_H, ts_p->bpp, SDL_PIXELFORMAT_INDEX8);
+    if (img_p->surface_p != NULL) {
+      stat = reconstruct_colormap(ts_p->surface_p, tm_p->tm_arry, img_p->surface_p);
       if (stat) {
-        SDL_FreeSurface(*colormap); 
+        SDL_FreeSurface(img_p->surface_p); 
       }
     }
     else {
@@ -172,14 +193,14 @@ Error load_surface(TblSpriteRow *metadata, SDL_Surface **colormap) {
   }
   /* Set palette */
   if (!stat) {
-    stat = SDL_SetPaletteColors((*colormap)->format->palette, metadata->colors, 0, metadata->num_colors);
+    stat = SDL_SetPaletteColors((img_p->surface_p)->format->palette, cp_p->cp_arry, 0, cp_p->num_colors);
   }
 
-  if (tileset_surface != NULL) {
-    SDL_FreeSurface(tileset_surface);
+  if (ts_p->surface_p != NULL) {
+    SDL_FreeSurface(ts_p->surface_p);
   }
   if (stat) {
-    SDL_FreeSurface(*colormap);
+    SDL_FreeSurface(img_p->surface_p);
   }
 
   return stat;
@@ -197,12 +218,12 @@ void animate(Sprite *s, Animation *anim) {
         anim->curr_frame_num++;
       }
     }
-    s->blit_coords = anim->curr_anim_strip->blit_coords[anim->curr_frame_num];
+    //s->blit_coords = anim->curr_anim_strip->blit_coords[anim->curr_frame_num];
   }
 }
 
 void move(Sprite *s, Motion *motion) {
-  motion->move(s, motion);
+  //motion->move(s, motion);
 }
 
 void accelerate(Vector2 *velocity, Motion *motion) {
