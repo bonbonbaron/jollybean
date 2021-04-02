@@ -1,7 +1,7 @@
 #include "jb.h"
 
 
-void ctrl_listen() {
+void ctrl_listen(Uint8 *bp_p) {
   extern SDL_bool game_over;
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
@@ -12,40 +12,31 @@ void ctrl_listen() {
 		else if (event.type == SDL_KEYUP) {
 			switch(event.key.keysym.sym) {
 			case SDLK_a:
-				//bp &= ~CTRL_L;
-        cancel(CTRL_L);
+				*bp_p &= ~CTRL_L;
 				break;
 			case SDLK_s:
-				//bp &= ~CTRL_D;
-        cancel(CTRL_D);
+				*bp_p &= ~CTRL_D;
 				break;
 			case SDLK_w:
-				//bp &= ~CTRL_U;
-        cancel(CTRL_U);
+				*bp_p &= ~CTRL_U;
 				break;
 			case SDLK_d:
-				//bp &= ~CTRL_R;
-        cancel(CTRL_R);
+				*bp_p &= ~CTRL_R;
 				break;
 			case SDLK_j:
-        //bp &= ~CTRL_A;
-        cancel(CTRL_A);
+        *bp_p &= ~CTRL_A;
 				break;
 			case SDLK_k:
-        //bp &= ~CTRL_B;
-        cancel(CTRL_B);
+        *bp_p &= ~CTRL_B;
 				break;
 			case SDLK_x:
-        //bp &= ~CTRL_X;
-        cancel(CTRL_X);
+        *bp_p &= ~CTRL_X;
 				break;
 			case SDLK_SPACE:
-				//bp &= ~CTRL_S;
-        cancel(CTRL_S);
+				*bp_p &= ~CTRL_S;
 				break;
 			case SDLK_ESCAPE:
-        //bp = 0xff;
-        game_over = SDL_TRUE;
+        *bp_p = 0xff;
 				SDL_Quit();
 				return;
 			}
@@ -53,40 +44,31 @@ void ctrl_listen() {
 		else if (event.type == SDL_KEYDOWN) {
 			switch(event.key.keysym.sym) {
       case SDLK_a:
-        //bp &= ~CTRL_L;
-        broadcast(CTRL_L);
+        *bp_p &= ~CTRL_L;
         break;
       case SDLK_s:
-        //bp &= ~CTRL_D;
-        broadcast(CTRL_D);
+        *bp_p &= ~CTRL_D;
         break;
       case SDLK_w:
-        //bp &= ~CTRL_U;
-        broadcast(CTRL_U);
+        *bp_p &= ~CTRL_U;
         break;
       case SDLK_d:
-        //bp &= ~CTRL_R;
-        broadcast(CTRL_R);
+        *bp_p &= ~CTRL_R;
         break;
       case SDLK_j:
-        //bp &= ~CTRL_A;
-        broadcast(CTRL_A);
+        *bp_p &= ~CTRL_A;
         break;
       case SDLK_k:
-        //bp &= ~CTRL_B;
-        broadcast(CTRL_B);
+        *bp_p &= ~CTRL_B;
         break;
       case SDLK_x:
-        //bp &= ~CTRL_X;
-        broadcast(CTRL_X);
+        *bp_p &= ~CTRL_X;
         break;
       case SDLK_SPACE:
-        //bp &= ~CTRL_S;
-        broadcast(CTRL_S);
+        *bp_p &= ~CTRL_S;
         break;
       case SDLK_ESCAPE:
-        //bp = 0xff;
-        game_over = SDL_TRUE;
+        *bp_p = 0xff;
         SDL_Quit();
         return;
       }

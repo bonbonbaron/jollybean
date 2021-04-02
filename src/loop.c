@@ -12,11 +12,8 @@ static SDL_Window   *window;
 static SDL_Renderer *renderer;
 static SDL_Surface  *canvas_surface;
 static Scene        *scene;
-SDL_bool signals_exist = SDL_FALSE;
 
 #define BUTTON_REPEAT_RATE 50
-Error update() {
-}
 
 Error render() {
 	Error stat = 0;
@@ -32,7 +29,7 @@ Error render() {
   return stat;
 }
 
-Error init() {
+Error init(Uint8 *bp_p) {
   Error stat = 0;
   extern Scene *scene_zero;
 
@@ -86,6 +83,10 @@ Error init() {
     scene = scene_zero;
   }
 
+	if (!stat) {
+		*bp_p = 0;
+	}
+
 	return stat;
 }
 
@@ -98,17 +99,16 @@ void close() {
 	SDL_Quit();
 }
 
-int main(int argc, char **argv) {
+int loop(int argc, char **argv) {
 	Uint32 t0;  /* ms */
-  SDL_bool game_over = SDL_FALSE;
-  if (!init()) {
+	Uint8  bp;  /* buttons pressed */
+  if (!init(&bp)) {
     while (!game_over) {
 		  t0 = SDL_GetTicks();
       if (render()) {
         break;
       };
-		  ctrl_listen();
-      update();
+		  ctrl_listen(&bp);
 		  SDL_Delay(50);
 	  }
 	  close();

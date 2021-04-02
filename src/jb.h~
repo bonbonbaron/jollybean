@@ -8,7 +8,6 @@
 #include <stdlib.h> 
 #include <string.h>
 #include "SDL.h"
-extern void ctrl_listen();
 #define USE_LINKLISTS 0 
 /************/
 /***Errors***/
@@ -47,6 +46,7 @@ struct TblImgRow_t;
 struct Animation_t;
 struct Scene_t;
 struct ReactSeqGrp_t;
+struct Database_t;
  
 /***********/
 /* data.c  */
@@ -57,7 +57,7 @@ typedef enum {
 } media_type;
 
 /* You also need a game perma-data table so you don't have to store metadata in file */
-
+void ctrl_listen(Uint8 *bp_p);
 /* Defined in sprite's init() function. DON'T read this from a file! */
  
 typedef struct Vector2 {
@@ -90,17 +90,17 @@ ListNode* list_find_node(LinkedList *ll, void *data);
 struct _QuadNode;
 typedef struct _QuadNode {
   struct _QuadNode *nodes[4];
-  Uint8 num_elems, depth;
+  Uint8 n_elems, depth;
   Vector2 tl_corner, br_corner;
   LinkedList *elems;
 } QuadNode;
 
 typedef struct QuadTree {
   QuadNode *root;
-  Uint8 max_depth, max_num_elems;
+  Uint8 max_depth, max_n_elems;
 } QuadTree;
 
-Error qt_init(QuadTree **qt, Uint8 max_depth, Vector2 *tree_rect_dims, Uint8 max_num_elems);
+Error qt_init(QuadTree **qt, Uint8 max_depth, Vector2 *tree_rect_dims, Uint8 max_n_elems);
 Error qn_init(QuadNode **qn, Uint8 depth, Vector2 *tl, Vector2 *br);
 void qt_delete(QuadTree **qt);
 void qn_delete(QuadNode **qn);
@@ -114,7 +114,7 @@ Error qn_subdivide(QuadTree *qt, QuadNode *qn);
 
 /* Sorting */
 typedef SDL_bool (*cmp)(struct Sprite_t*, struct Sprite_t*);
-void insert_sort(struct Sprite_t* arr[], int num_sprites, cmp cmp_func);
+void insert_sort(struct Sprite_t* arr[], int n_sprites, cmp cmp_func);
 
 /* Game state */
 void save_game(void *data);
@@ -126,7 +126,7 @@ typedef struct MediaInfo {
 } MediaInfo ;
 
 /* Decompression */
-Error read_media(MediaInfo *media_info, unsigned char **src);
+Error read_media(const char *media_fp, MediaInfo *media_info, unsigned char **src);
 Error decompress_media(const unsigned char *src, const int src_len, void **dst, size_t *dst_len);
 /* General */
 void print_no_mem(char *func_nm);
@@ -135,7 +135,7 @@ void print_no_mem(char *func_nm);
 /* image.c */
 /***********/
 struct Image_t;
-Error load_image(Uint16 img_idx, struct Image_t **img_pp);
+Error load_image(struct Database_t *db_p, Uint16 img_idx, struct Image_t **img_pp);
 Error reconstruct_colormap(SDL_Surface* tileset_surface, Uint16* tilemap, SDL_Surface* colormap_surface);
 
 /***********/
@@ -144,7 +144,7 @@ Error reconstruct_colormap(SDL_Surface* tileset_surface, Uint16* tilemap, SDL_Su
 /* Indexed by sprite->species */
 /* Instead of implementing hash tables, just order all warriors' attacks the same. Then all walk_ups are 0, attack_1s are 4, jumps are 5, etc. */
 typedef struct Tileset {
-	Uint16    num_tiles;
+	Uint16    n_tiles;
 	Uint8     bpp;
 	Uint16    mi_idx;     /* index into the media info table */
 	SDL_Surface *surface_p;
@@ -158,7 +158,7 @@ typedef struct Tilemap {
 } Tilemap;
 
 typedef struct ColorPalette {
-	Uint8      num_colors;
+	Uint8      n_colors;
 	SDL_Color *cp_arry;
 } ColorPalette;
 
@@ -184,12 +184,14 @@ typedef struct LevelLayer {
 	Tileset              *tileset_p;           /* Image that gets drawn on again and again based on where "camera" is */
 } LevelLayer;
 
-extern MediaInfo *tblMediaInfo;
-extern Image *tblImage;
-extern Tileset *tblTileset;
-extern Tilemap *tblTilemap;
-extern ColorPalette *tblColorPalette;
-
+typedef struct Database_t {
+	MediaInfo *tblMediaInfo;
+	Image     *tblImage;
+	Tileset   *tblTileset;
+	Tilemap   *tblTilemap;
+	ColorPalette *tblColorPalette;
+	char *media_fp;
+} Database;
 #define NUM_COMM_CHANNELS 12
 #define MAX_NUM_SPRITES 10
 #define MAX_NUM_BGS 3
@@ -211,8 +213,6 @@ typedef struct Scene_t {
 } Scene;
 
 /* Motion_t points to this func ptr, so having Motion_t parameter is circular. See if that's really correct. */
-typedef SDL_bool (*MoveCallback)(Sprite *s, struct Motion_t *motion);
-
 typedef struct MobilityTranslation {
   Vector2 vel, acc, vel_max;  //6
 } MotionTranslation;
@@ -226,23 +226,11 @@ typedef struct MobilityLerping {
 typedef union {
   MotionTranslation mob_translate;
   MotionLerping mob_lerp;
-} MobInfo;
-
-typedef struct Motion_t {
-  MoveCallback  move_callback;  //4  /* must come first so it can always be accessed the same way in generic move() function. */
-  MobInfo       mob_info;
-  QuadNode     *qn;  /* Only moving sprites get a place in the quad tree. The rest are assigned to the grid. */
 } Motion;
-  
 
 typedef struct {
   Uint16 low, high;
 } LerpConsts;
-
-typedef struct TblMobileRow {
-  Uint8 num_motions;
-  Motion *motions;
-} TblMobileRow;
 
 typedef struct AnimationStrip {
   SDL_bool      repeat;
@@ -251,28 +239,18 @@ typedef struct AnimationStrip {
   SDL_Rect     *blit_coords;
 } AnimationStrip;
 
-/* Used to group together the set of animations for each sprite->type, like walk left, up, down, punch, etc. */
-typedef struct TblAnimRow {
-  Uint8           num_anim_strips;
-  AnimationStrip *anim_strips;  /* Animation strips are indexed identically for all sprites of a certain type. idx in strip fn. */
-} TblAnimRow;
-
 /* instead of HTs, I'm going to enforce same-ordering & same population of everybody belonging to a sprite group. */
 typedef struct Animation_t {
 	SDL_Rect        blit_coords;
   Uint8           curr_frame_num;
   Uint32          curr_duration;
   AnimationStrip *curr_anim_strip;
-  TblAnimRow     *anim_group;
 } Animation;
 
 Error init_sprite(Sprite *s, const Vector2 *position);
 void init_motion(Sprite *s, Motion *motion);
 void init_animation(Sprite *s, Animation *animation);
 void init_reaction_sequence_group(Sprite *s, struct Scene_t *scene);
-extern Image *tblImage;
-extern TblMobileRow *tbl_mobile;
-extern TblAnimRow   *tbl_anim;  /* table indexed by sprite species */
 
 /***********/
 /* scene.c */
@@ -292,13 +270,9 @@ void  close_scene(Scene *scene);
 Error init_surface(Sprite *s, Image *metadata);
 Error init_audios(Scene *scene);
 Error init_events(Scene *scene);
-extern Scene *scene_zero;
-extern SceneTblRow *scene_tbl;
-
  
 #define IDX_OFFSET 0
 #define IDX_LEN    0
-extern char *DATA_FILE;
  
 /***********/
 /* Systems */
@@ -315,29 +289,60 @@ typedef struct {
 	Uint16 val4;
 } Signal;
 
+
 typedef Error (*SysCallback)(Signal *sig_p);
 
 struct _System;
 
 typedef struct {
-	Uint8    num_children;
-	Uint8    num_components;
-	Uint8    num_signals;
-	Uint8    num_callbacks;
-	SDL_bool active;
-	struct _System *parent_p;
-	struct _System *children_1a;
-	Uint8 **directory_2a;   /* 2D array mapping entities to systems' components. 0xFF means no component. Columns correspond to systems; rows to entities. */
-	Signal *signal_1a;  /* active signals are always in front; stop iteration at dead signal */
-	SysCallback *callbacks_1a;
-} System;
-	
-Error ini_sys(System *sys_p);
-Error del_sys(System *sys_p);
-Error ini_sys_children(System *sys_p);
-Error del_sys_children(System *sys_p);
-Error get_entity_component(System *parent_p, Uint8 sys_id, Uint8 entity_id, void **comp_pp);  /* gets address of component; caller can cast it to whatever */
+	Uint16 id;
+	Uint8 type;
+} Entity;
 
+typedef struct {
+	SDL_bool			 	 active;
+	struct _System  *parent_p;
+	struct _System  *children_1a;
+	Uint8          **directory_2a;   /* 2D array mapping entities to systems' components. 0xFF means no component. Columns correspond to systems; rows to entities. */
+	Signal          *signal_1a;      /* active signals are always in front; stop iteration at dead signal */
+	SysCallback     *callbacks_1a;   /* to clean up code, implement array and 2D array to avoid having so many num_XXXXXX-like members */
+} System;
+/* one thing missing in System is components for its callbacks to operate on. Nothing for callbacks to act on. */	
+Error new_sys(System **sys_pp);
+void  del_sys(System **sys_pp);
+Error sys_receive();
+Error sys_update();
+Error sys_tick();
+Error sys_send(Uint8 msg_type);
+
+typedef void (*IniSysCallback)(System *sys_p);
+/* Passing in a system type to this table gets you the proper initializer. */
+typedef struct {
+	Uint8            num_children;
+	Uint8            num_entities;  /* also the number of components  */
+	Uint8            num_callbacks;
+	Uint8           *child_sys_types_p; 
+	void            *components_p;
+	Entity          *entities_p;
+	IniSysCallback   ini_sys;
+	SysCallback     *callbacks_p;
+} TblSysRow;
+
+/*
+ * How do we grab the resources needed by the system?
+ * System Type: a single number that determines which system tree to build recursively
+ * System ID:   decides which resources to draw for this system instance
+*							BASIC
+*								images: an array of image indices
+*								audio: " " audio indices
+*								... etc. for all the basic system resources
+*							SPECIAL
+*								automatically instantiated by the root system type via indexed system ini array
+*								table-specific enums will save us from making huge directories. One table for every 
+*								enums will also save us from table deletions ruining everything
+ *
+ *
+ * */
 
 
 

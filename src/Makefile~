@@ -6,7 +6,7 @@ OBJS = main.o ctrl.o data.o image.o scene.o
 	$(CC) -c -o $@ $< $(CFLAGS)  #Compile @.c ($<) outputting @.o. Include 
 	touch $@
 jb: $(OBJS)   #jb colon main.o ctrl.o data.o image.o scene.o.... so it compiles each *.o file then links here.
-	$(CC) -o $@ $^ $(CFLAGS)
+	$(CC) -shared -o $@ $^ $(CFLAGS)
 
 
 clean:
