@@ -1,3 +1,0 @@
-cd /home/pi/Desktop/ge/
-gcc main.c ctrl.c data.c image.c scene.c -L/usr/local/lib/ -lSDL2main -lSDL2 -I/usr/local/include/SDL2/ -I/home/pi/Desktop/ge/ -o a
-./a

@@ -1,0 +1,26 @@
+#include <stdio.h>
+
+// formula: coutnMask = (1 << ((bitIdx & 0x7) + 1) - 1);
+int main(int argc, char **argv) {
+	unsigned char i, j, cntMask;
+	FILE *f;
+
+	f = fopen("./bitCountMaskLUT.h", "w");
+	fprintf(f, "#include \"jb.h\"\n\n");
+	fprintf(f, "Uint8 bitCountMaskLUT[] = {\n");
+
+	for (i = 0; i <= 0xFF; i++) {
+		for (j = 0, cntMask = 0; j < 8; j++)     /* 64-127 should have bit mask 0x00111111, etc. */
+			if ((1 << j) & i) {
+				cntMask = (1 << (j & 0x7) + 1) - 1;
+			}
+		if (i != 0xFF) 
+			fprintf(f, "\t0x%02x,\t// key = %d\n", cntMask, i);
+		else {
+			fprintf(f, "\t0x%02x\t// key = %d\n};", cntMask, i);
+			break;
+		}
+	}
+	fclose(f);
+}
+

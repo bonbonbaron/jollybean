@@ -48,10 +48,10 @@ def elems_to_enum(enum_nm, elems):
   return enum_string
   
 def get_proper_enum_nm(nm):
-  return "e%s%s"%(nm[0].title(), nm[1:])
+  return "e_%s%s"%(nm[0].title(), nm[1:])
 
 def get_proper_elem_nm(enum_nm, elem_nm):
-  return "i%s_%s"%(enum_nm, elem_nm)
+  return "ee_%s_%s"%(enum_nm, elem_nm)
 
 def update_enum_file(enum_nm, new_enum):
   idx = find_enum_idx(enum_nm)
@@ -124,7 +124,3 @@ def delete_enum_elem(enum_nm, elem_nm):
   elems.pop(elems.index(proper_elem_nm))
   enum_string = elems_to_enum(proper_enum_nm, elems)
   update_enum_file(proper_enum_nm, enum_string)
-
-
-
-

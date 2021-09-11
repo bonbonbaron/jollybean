@@ -1,0 +1,389 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+AFTER_CURR_SYS	include/jb.h	/^	AFTER_CURR_SYS$/;"	e	enum:__anon10
+Animation	include/jbOld.h	/^} Animation;$/;"	t	typeref:struct:Animation_t
+Animation_t	include/jbOld.h	/^typedef struct Animation_t {$/;"	s
+BUTTON_REPEAT_RATE	old/exampleSDL.c	16;"	d	file:
+CC	Makefile	/^CC=gcc$/;"	m
+CC	old/Makefile	/^CC=gcc$/;"	m
+CFLAGS	Makefile	/^CFLAGS = -lSDL2main -lSDL2 -I\/usr\/include\/SDL2\/ -I\/home\/bonbonbaron\/hack\/jollybean\/src\/include\/$/;"	m
+CFLAGS	old/Makefile	/^CFLAGS = -lSDL2main -lSDL2 -I\/usr\/include\/SDL2\/ -I\/home\/bonbonbaron\/hack\/jollybean\/src\/ -I\/home\/bonbonbaron\/hack\/jollybean\/src\/include\/$/;"	m
+COMPONENT	include/jb.h	/^	COMPONENT,$/;"	e	enum:__anon9
+CTRL_A	include/jbOld.h	20;"	d
+CTRL_B	include/jbOld.h	21;"	d
+CTRL_D	include/jbOld.h	17;"	d
+CTRL_L	include/jbOld.h	18;"	d
+CTRL_R	include/jbOld.h	19;"	d
+CTRL_S	include/jbOld.h	23;"	d
+CTRL_U	include/jbOld.h	16;"	d
+CTRL_X	include/jbOld.h	22;"	d
+CmdType	include/jb.h	/^} CmdType;$/;"	t	typeref:enum:__anon11
+CmpLocation	include/jb.h	/^} CmpLocation;$/;"	t	typeref:struct:__anon12
+ColorPalette	include/jbOld.h	/^typedef struct ColorPalette {$/;"	s
+ColorPalette	include/jbOld.h	/^} ColorPalette;$/;"	t	typeref:struct:ColorPalette
+Component	include/jb.h	/^} Component;$/;"	t	typeref:struct:__anon14
+DEPS	Makefile	/^DEPS = jb.h$/;"	m
+DEPS	old/Makefile	/^DEPS = jb.h$/;"	m
+DIRECTOR_SYS_KEY	include/jb.h	/^	DIRECTOR_SYS_KEY,$/;"	e	enum:__anon8
+ECSType	include/jb.h	/^} ECSType;$/;"	t	typeref:enum:__anon9
+ENTITY	include/jb.h	/^	ENTITY,         \/\/ a message to an entity never directly reaches a system; the entity likely changes sequences$/;"	e	enum:__anon9
+E_BAD_ARGS	include/errors.h	/^	E_BAD_ARGS,$/;"	e	enum:Error
+E_BAD_INDEX	include/errors.h	/^	E_BAD_INDEX,$/;"	e	enum:Error
+E_MSG_INVALID_CMD	include/errors.h	/^	E_MSG_INVALID_CMD$/;"	e	enum:Error
+E_MSG_TO_ECS_TYPE_MISMATCH	include/errors.h	/^	E_MSG_TO_ECS_TYPE_MISMATCH,$/;"	e	enum:Error
+E_MSG_TO_ID_MISMATCH	include/errors.h	/^	E_MSG_TO_ID_MISMATCH,$/;"	e	enum:Error
+E_NO_MEMORY	include/errors.h	/^	E_NO_MEMORY,$/;"	e	enum:Error
+Error	include/errors.h	/^typedef enum Error {$/;"	g
+Error	include/errors.h	/^} Error;$/;"	t	typeref:enum:Error
+Error	include/jbOld.h	/^typedef Sint8 Error;$/;"	t
+FLIP_DIAG	old/image.c	12;"	d	file:
+FLIP_LR	old/image.c	11;"	d	file:
+FLIP_NONE	old/image.c	9;"	d	file:
+FLIP_UD	old/image.c	10;"	d	file:
+FPS	include/jbOld.h	25;"	d
+FRAME_DURATION	include/jbOld.h	26;"	d
+FlagInfo	include/jb.h	/^} FlagInfo;$/;"	t	typeref:struct:__anon6
+IMG_DEBUG	old/image.c	3;"	d	file:
+IMMEDIATELY	include/jb.h	/^	IMMEDIATELY,$/;"	e	enum:__anon10
+INCLUDEDIR	Makefile	/^INCLUDEDIR = \/home\/bonbonbaron\/hack\/jollybean\/src\/include\/$/;"	m
+INCLUDEDIR	old/Makefile	/^INCLUDEDIR = \/home\/bonbonbaron\/hack\/jollybean\/src\/include\/$/;"	m
+INSTALLDIR	Makefile	/^INSTALLDIR = \/home\/bonbonbaron\/hack\/jollybean\/$/;"	m
+INSTALLDIR	old/Makefile	/^INSTALLDIR = \/home\/bonbonbaron\/hack\/jollybean\/$/;"	m
+Image	include/jbOld.h	/^} Image;$/;"	t	typeref:struct:Image_t
+Image_t	include/jbOld.h	/^typedef struct Image_t {$/;"	s
+IniSysFP	include/jbOld.h	/^typedef void (*IniSysFP)(System *sys_p);$/;"	t
+JB_H	include/jb.h	2;"	d
+JB_H	include/jbOld.h	2;"	d
+LinkedList	include/jbOld.h	/^typedef struct LinkedList {$/;"	s
+LinkedList	include/jbOld.h	/^} LinkedList;$/;"	t	typeref:struct:LinkedList
+ListNode	include/jbOld.h	/^typedef struct ListNode {$/;"	s
+ListNode	include/jbOld.h	/^} ListNode;$/;"	t	typeref:struct:ListNode
+MINIZ_HAS_64BIT_REGISTERS	old/dataOld.c	40;"	d	file:
+MINIZ_LITTLE_ENDIAN	old/dataOld.c	35;"	d	file:
+MINIZ_USE_UNALIGNED_LOADS_AND_STORES	old/dataOld.c	33;"	d	file:
+MZ_CLEAR_OBJ	old/dataOld.c	162;"	d	file:
+MZ_FREE	old/dataOld.c	152;"	d	file:
+MZ_FREE	old/dataOld.c	156;"	d	file:
+MZ_MACRO_END	old/dataOld.c	45;"	d	file:
+MZ_MACRO_END	old/dataOld.c	47;"	d	file:
+MZ_MALLOC	old/dataOld.c	151;"	d	file:
+MZ_MALLOC	old/dataOld.c	155;"	d	file:
+MZ_MAX	old/dataOld.c	160;"	d	file:
+MZ_MIN	old/dataOld.c	161;"	d	file:
+MZ_READ_LE16	old/dataOld.c	165;"	d	file:
+MZ_READ_LE16	old/dataOld.c	168;"	d	file:
+MZ_READ_LE32	old/dataOld.c	166;"	d	file:
+MZ_READ_LE32	old/dataOld.c	169;"	d	file:
+MZ_REALLOC	old/dataOld.c	153;"	d	file:
+MZ_REALLOC	old/dataOld.c	157;"	d	file:
+Map	include/jb.h	/^} Map;$/;"	t	typeref:struct:__anon7
+MediaInfo	include/jbOld.h	/^typedef struct MediaInfo {$/;"	s
+MediaInfo	include/jbOld.h	/^} MediaInfo ;$/;"	t	typeref:struct:MediaInfo
+Message	include/jb.h	/^} Message;$/;"	t	typeref:struct:__anon13
+MsgUrgency	include/jb.h	/^} MsgUrgency;$/;"	t	typeref:enum:__anon10
+NUM_ECS_TYPES	include/jb.h	/^	NUM_ECS_TYPES   \/\/ probably never used$/;"	e	enum:__anon9
+NUM_SYS_KEYS	include/jb.h	/^	NUM_SYS_KEYS  \/\/ only used for creating system histograms$/;"	e	enum:__anon8
+N_FLAG_BITS	include/jb.h	8;"	d
+N_FLAG_BYTES	include/jb.h	7;"	d
+OBJS	Makefile	/^OBJS = data.o main.o$/;"	m
+OBJS	old/Makefile	/^OBJS = data.o $/;"	m
+ONE_OFF_CMP_CMD	include/jb.h	/^	ONE_OFF_CMP_CMD$/;"	e	enum:__anon11
+OUTPUTFILE	Makefile	/^OUTPUTFILE = jb$/;"	m
+OUTPUTFILE	old/Makefile	/^OUTPUTFILE = libjb.a$/;"	m
+Position	include/jbOld.h	/^typedef struct Position {$/;"	s
+Position	include/jbOld.h	/^} Position;  \/* Used by Motion to point at X & Y portion of SDL_Rect *\/$/;"	t	typeref:struct:Position
+QuadNode	include/jbOld.h	/^} QuadNode;$/;"	t	typeref:struct:_QuadNode
+QuadTree	include/jbOld.h	/^typedef struct QuadTree {$/;"	s
+QuadTree	include/jbOld.h	/^} QuadTree;$/;"	t	typeref:struct:QuadTree
+REPEATING_CMP_CMD	include/jb.h	/^	REPEATING_CMP_CMD,$/;"	e	enum:__anon11
+RunSysLoopFP	include/jbOld.h	/^typedef Error (*RunSysLoopFP)(void *componentArry, void);$/;"	t
+S16	include/jb.h	/^typedef short S16;$/;"	t
+S32	include/jb.h	/^typedef int S32;$/;"	t
+S8	include/jb.h	/^typedef char S8;$/;"	t
+SCREEN_HEIGHT	main.c	/^const int SCREEN_HEIGHT = 480;$/;"	v
+SCREEN_WIDTH	main.c	/^const int SCREEN_WIDTH = 640;$/;"	v
+SUCCESS	include/errors.h	/^	SUCCESS,$/;"	e	enum:Error
+SYSTEM	include/jb.h	/^	SYSTEM,$/;"	e	enum:__anon9
+SYSTEMWIDE_CMD	include/jb.h	/^	SYSTEMWIDE_CMD,$/;"	e	enum:__anon11
+SYS_ANIMATION	include/sys.h	/^	SYS_ANIMATION,$/;"	e	enum:__anon5
+SYS_COLLISION	include/sys.h	/^	SYS_COLLISION$/;"	e	enum:__anon5
+SYS_MOTION	include/sys.h	/^	SYS_MOTION,$/;"	e	enum:__anon5
+SYS_RENDERER	include/sys.h	/^	SYS_RENDERER,$/;"	e	enum:__anon5
+SYS_TOGGLE_ACTIVE	sys.c	/^	SYS_TOGGLE_ACTIVE,$/;"	e	enum:__anon15	file:
+Strip	include/jbOld.h	/^typedef struct Strip {$/;"	s
+Strip	include/jbOld.h	/^} Strip;$/;"	t	typeref:struct:Strip
+SysBasicFP	sys.c	/^typedef void (*SysBasicFP)(System *sP);$/;"	t	file:
+SysCmdID	sys.c	/^} SysCmdID;$/;"	t	typeref:enum:__anon15	file:
+SysFP	include/jb.h	/^typedef Error (*SysFP)(struct _System *sysP, void *cmpA);$/;"	t
+SysIniFP	include/jb.h	/^typedef Error (*SysIniFP)(struct _System *sysP, void *cmpA);$/;"	t
+SysKeys	include/jb.h	/^} SysKeys;$/;"	t	typeref:enum:__anon8
+System	include/jb.h	/^} System;$/;"	t	typeref:struct:_System
+System	include/jbOld.h	/^typedef struct System {$/;"	s
+System	include/jbOld.h	/^} System;$/;"	t	typeref:struct:System
+Systems	include/sys.h	/^} Systems;$/;"	t	typeref:enum:__anon5
+TILE_H	include/jbOld.h	14;"	d
+TILE_W	include/jbOld.h	13;"	d
+TINFL_BITBUF_SIZE	old/dataOld.c	126;"	d	file:
+TINFL_BITBUF_SIZE	old/dataOld.c	129;"	d	file:
+TINFL_CR_BEGIN	old/dataOld.c	175;"	d	file:
+TINFL_CR_FINISH	old/dataOld.c	178;"	d	file:
+TINFL_CR_RETURN	old/dataOld.c	176;"	d	file:
+TINFL_CR_RETURN_FOREVER	old/dataOld.c	177;"	d	file:
+TINFL_DECOMPRESS_MEM_TO_MEM_FAILED	old/dataOld.c	75;"	d	file:
+TINFL_FAST_LOOKUP_BITS	old/dataOld.c	/^  TINFL_FAST_LOOKUP_BITS = 10, TINFL_FAST_LOOKUP_SIZE = 1 << TINFL_FAST_LOOKUP_BITS$/;"	e	enum:__anon3	file:
+TINFL_FAST_LOOKUP_SIZE	old/dataOld.c	/^  TINFL_FAST_LOOKUP_BITS = 10, TINFL_FAST_LOOKUP_SIZE = 1 << TINFL_FAST_LOOKUP_BITS$/;"	e	enum:__anon3	file:
+TINFL_FLAG_COMPUTE_ADLER32	old/dataOld.c	/^  TINFL_FLAG_COMPUTE_ADLER32 = 8$/;"	e	enum:__anon1	file:
+TINFL_FLAG_HAS_MORE_INPUT	old/dataOld.c	/^  TINFL_FLAG_HAS_MORE_INPUT = 2,$/;"	e	enum:__anon1	file:
+TINFL_FLAG_PARSE_ZLIB_HEADER	old/dataOld.c	/^  TINFL_FLAG_PARSE_ZLIB_HEADER = 1,$/;"	e	enum:__anon1	file:
+TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF	old/dataOld.c	/^  TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF = 4,$/;"	e	enum:__anon1	file:
+TINFL_GET_BITS	old/dataOld.c	200;"	d	file:
+TINFL_GET_BYTE	old/dataOld.c	182;"	d	file:
+TINFL_HEADER_INCLUDED	old/dataOld.c	22;"	d	file:
+TINFL_HUFF_BITBUF_FILL	old/dataOld.c	206;"	d	file:
+TINFL_HUFF_DECODE	old/dataOld.c	225;"	d	file:
+TINFL_LZ_DICT_SIZE	old/dataOld.c	86;"	d	file:
+TINFL_MAX_HUFF_SYMBOLS_0	old/dataOld.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINFL_MAX_HUFF_SYMBOLS_2 = 19,$/;"	e	enum:__anon3	file:
+TINFL_MAX_HUFF_SYMBOLS_1	old/dataOld.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINFL_MAX_HUFF_SYMBOLS_2 = 19,$/;"	e	enum:__anon3	file:
+TINFL_MAX_HUFF_SYMBOLS_2	old/dataOld.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINFL_MAX_HUFF_SYMBOLS_2 = 19,$/;"	e	enum:__anon3	file:
+TINFL_MAX_HUFF_TABLES	old/dataOld.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINFL_MAX_HUFF_SYMBOLS_2 = 19,$/;"	e	enum:__anon3	file:
+TINFL_MEMCPY	old/dataOld.c	172;"	d	file:
+TINFL_MEMSET	old/dataOld.c	173;"	d	file:
+TINFL_NEED_BITS	old/dataOld.c	198;"	d	file:
+TINFL_SKIP_BITS	old/dataOld.c	199;"	d	file:
+TINFL_STATUS_ADLER32_MISMATCH	old/dataOld.c	/^  TINFL_STATUS_ADLER32_MISMATCH = -2,$/;"	e	enum:__anon2	file:
+TINFL_STATUS_BAD_PARAM	old/dataOld.c	/^  TINFL_STATUS_BAD_PARAM = -3,$/;"	e	enum:__anon2	file:
+TINFL_STATUS_DONE	old/dataOld.c	/^  TINFL_STATUS_DONE = 0,$/;"	e	enum:__anon2	file:
+TINFL_STATUS_FAILED	old/dataOld.c	/^  TINFL_STATUS_FAILED = -1,$/;"	e	enum:__anon2	file:
+TINFL_STATUS_HAS_MORE_OUTPUT	old/dataOld.c	/^  TINFL_STATUS_HAS_MORE_OUTPUT = 2$/;"	e	enum:__anon2	file:
+TINFL_STATUS_NEEDS_MORE_INPUT	old/dataOld.c	/^  TINFL_STATUS_NEEDS_MORE_INPUT = 1,$/;"	e	enum:__anon2	file:
+TINFL_USE_64BIT_BITBUF	old/dataOld.c	121;"	d	file:
+Tilemap	include/jbOld.h	/^typedef struct Tilemap {$/;"	s
+Tilemap	include/jbOld.h	/^} Tilemap;$/;"	t	typeref:struct:Tilemap
+Tileset	include/jbOld.h	/^typedef struct Tileset {$/;"	s
+Tileset	include/jbOld.h	/^} Tileset;$/;"	t	typeref:struct:Tileset
+U16	include/jb.h	/^typedef unsigned short U16;$/;"	t
+U32	include/jb.h	/^typedef unsigned int U32;$/;"	t
+U8	include/jb.h	/^typedef unsigned char U8;$/;"	t
+WINDOW_HEIGHT	include/jbOld.h	11;"	d
+WINDOW_WIDTH	include/jbOld.h	10;"	d
+_MAX_SYSTEMWIDE_CMD_ID	sys.c	/^	_MAX_SYSTEMWIDE_CMD_ID$/;"	e	enum:__anon15	file:
+_QuadNode	include/jbOld.h	/^typedef struct _QuadNode {$/;"	s
+_System	include/jb.h	/^typedef struct _System {$/;"	s
+_gtActivePriority	sys.c	/^inline static U8 _gtActivePriority(System *sP, U8 cmdID, U8 cmpID) {$/;"	f	file:
+_isFlagSet	data.c	/^static inline U8 _isFlagSet(U8 flags, const U8 key) {$/;"	f	file:
+_mapGetElemIdx	data.c	/^static inline U8 _mapGetElemIdx(const U8 flags, const U8 prevBitCount, const U8 key) {$/;"	f	file:
+_mapGetElemP	data.c	/^static inline void* _mapGetElemP(const Map *mapP, const U8 key) {$/;"	f	file:
+_mapGetNextEmptyElemIdx	data.c	/^static inline U8 _mapGetNextEmptyElemIdx(const Map *mapP, const U8 key) {$/;"	f	file:
+_mapGetNextEmptyElemP	data.c	/^static inline void* _mapGetNextEmptyElemP(const Map *mapP, const U8 key) {$/;"	f	file:
+_sysClrMailbox	sys.c	/^static void _sysClrMailbox(const Message *mailboxP) {$/;"	f	file:
+_sysDelCmpsJInners	sys.c	/^static void _sysDelCmpsJInners(const System *sP) {$/;"	f	file:
+_sysDelMailboxes	sys.c	/^static void _sysDelMailboxes(const System *sP) {$/;"	f	file:
+_sysValidateCmpsJBase	sys.c	/^static inline U8 _sysValidateCmpsJBase(const System *sP, const U8 jBaseIdx) { $/;"	f	file:
+_sysValidateCmpsJInner	sys.c	/^static inline U8 _sysValidateCmpsJInner(const System *sP, const U8 jBaseIdx, const U8 jInnerIdx) { $/;"	f	file:
+_validateMessage	sys.c	/^inline static Error _validateMessage(const System *sP, const Message *msgP, const ECSType expectedECSType, const U32 expectedID) {$/;"	f	file:
+accelerate	old/image.c	/^void accelerate(Vector2 *velocity_p, Motion *motion_p) {$/;"	f
+active	include/jb.h	/^	U8          active;          \/* boolean for whether this syskem should even operate *\/$/;"	m	struct:_System
+animate	old/image.c	/^void animate(Sprite *s, Animation *anim) {$/;"	f
+array2dDel	old/dataOld.c	/^void array2dDel(void **arry2PP) {$/;"	f
+array2dGetNElems	old/dataOld.c	/^Sint32 array2dGetNElems(void **arry2PP, Vector2 *dimsP) {$/;"	f
+array2dNew	old/dataOld.c	/^Error array2dNew(Uint32 elemSz, Sint32 xdim, Sint32 ydim, void ***arry2PPp) {$/;"	f
+arrayDel	data.c	/^void arrayDel(void **arryPP) {$/;"	f
+arrayDel	old/dataOld.c	/^void arrayDel(void *arryP) {$/;"	f
+arrayGetElemSz	data.c	/^U32 arrayGetElemSz(const void *arryP) {$/;"	f
+arrayGetElemSz	old/dataOld.c	/^inline Sint32 arrayGetElemSz(const void *arryP) {$/;"	f
+arrayGetNElems	data.c	/^U32 arrayGetNElems(const void *arryP) {$/;"	f
+arrayGetNElems	old/dataOld.c	/^Sint32 arrayGetNElems(void *arryP) {$/;"	f
+arrayNew	data.c	/^Error arrayNew(void **arryPP, U32 elemSz, U32 nElems) {$/;"	f
+arrayNew	old/dataOld.c	/^Error arrayNew(void **arryPP, Uint32 elemSz, Sint32 nElems) {$/;"	f
+bitCountLUT	include/bitCountLUT.h	/^U8 bitCountLUT[] = {$/;"	v
+bitCountMaskLUT	include/bitCountMaskLUT.h	/^U8 bitCountMaskLUT[] = {$/;"	v
+bitFlagLUT	include/bitFlagLUT.h	/^U8 bitFlagLUT[] = {$/;"	v
+blit_coords	include/jbOld.h	/^	SDL_Rect        blit_coords;$/;"	m	struct:Animation_t
+blit_coords	include/jbOld.h	/^	SDL_Rect     *blit_coords;$/;"	m	struct:Strip
+bookmarkA	include/jb.h	/^	U8         *bookmarkA;       \/* Used to bookmark the place in each loop *\/$/;"	m	struct:_System
+bpp	include/jbOld.h	/^	Uint8     bpp;$/;"	m	struct:Tileset
+br_corner	include/jbOld.h	/^	Vector2 tl_corner, br_corner;$/;"	m	struct:_QuadNode
+byteIdxLUT	include/byteIdxLUT.h	/^U8 byteIdxLUT[] = {$/;"	v
+canvas_surface	old/exampleSDL.c	/^static SDL_Surface  *canvas_surface;$/;"	v	file:
+childSysArry	include/jbOld.h	/^	System      *childSysArry;$/;"	m	struct:System
+close	old/exampleSDL.c	/^void close() {$/;"	f
+cmd	include/jb.h	/^	U8						 cmd;$/;"	m	struct:__anon13
+cmdType	include/jb.h	/^	CmdType        cmdType;$/;"	m	struct:__anon13
+cmp	include/jbOld.h	/^typedef SDL_bool (*cmp)(struct Sprite_t*, struct Sprite_t*);$/;"	t
+cmpAddressMap	include/jb.h	/^	Map         cmpAddressMap;   \/* maps component IDs to an element in an array of CmpAddresses *\/$/;"	m	struct:_System
+cmpMapP	include/jb.h	/^	Map *cmpMapP;  \/* For things like animation, this is crucial. We won't copy entire maps to a system; just the initial values. *\/$/;"	m	struct:__anon14
+cmpP	include/jb.h	/^	void *cmpP;$/;"	m	struct:__anon14
+cmpSz	include/jb.h	/^	U8 cmpSz;$/;"	m	struct:__anon14
+componentArry	include/jbOld.h	/^	void        *componentArry;$/;"	m	struct:System
+componentsJ	include/jb.h	/^	void      **componentsJ;     \/* "J" means "Jagged array"; same # rows as length of sysLoopFPA *\/$/;"	m	struct:_System
+compressed_len	include/jbOld.h	/^	Uint32 offset, uncompressed_len, compressed_len;$/;"	m	struct:MediaInfo
+cp_arry	include/jbOld.h	/^	SDL_Color *cp_arry;$/;"	m	struct:ColorPalette
+cp_idx	include/jbOld.h	/^	Uint8         cp_idx;     \/* index into color palette table *\/$/;"	m	struct:Image_t
+ctrl_listen	old/ctrl.c	/^void ctrl_listen(Uint8 *bp_p) {$/;"	f
+curr_duration	include/jbOld.h	/^	Uint32          curr_duration;$/;"	m	struct:Animation_t
+curr_frame_num	include/jbOld.h	/^	Uint8           curr_frame_num;$/;"	m	struct:Animation_t
+curr_strip_p	include/jbOld.h	/^	Strip          *curr_strip_p;$/;"	m	struct:Animation_t
+data	include/jbOld.h	/^	void *data;$/;"	m	struct:ListNode
+decompress_media	old/dataOld.c	/^Error decompress_media(const unsigned char *src, const int src_len, void **dst, size_t *dst_len) {$/;"	f
+depth	include/jbOld.h	/^	Uint8 n_elems, depth;$/;"	m	struct:_QuadNode
+detect_collisions	old/sprite.c	/^void detect_collisions() {$/;"	f
+dimensions	include/jbOld.h	/^	Vector2        dimensions;  \/* in units of tiles *\/$/;"	m	struct:Tilemap
+durations	include/jbOld.h	/^	Uint16       *durations;$/;"	m	struct:Strip
+elems	include/jbOld.h	/^	LinkedList *elems;$/;"	m	struct:_QuadNode
+entityDirectory	include/jbOld.h	/^	dirEntry    *entityDirectory;  \/\/ a system reads inbox and delivers messages to its components. Multiple entities may send message to the same component. $/;"	m	struct:System
+flagA	include/jb.h	/^	FlagInfo flagA[N_FLAG_BYTES];  \/* "A" means "Array" for JB's naming standards *\/$/;"	m	struct:__anon7
+flags	include/jb.h	/^	U8 flags;$/;"	m	struct:__anon6
+game_over	include/jbOld.h	/^SDL_bool game_over;$/;"	v
+get_a2_elemSz	old/dataOld.c	/^Error get_a2_elemSz(void **arry2PP) {$/;"	f
+head	include/jbOld.h	/^	ListNode *head;$/;"	m	struct:LinkedList
+histoU8Del	data.c	/^void histoU8Del(U32 **histoPP) {$/;"	f
+histoU8New	data.c	/^Error histoU8New(U32 **histoPP, const U8 *srcA, const U32 maxVal) {$/;"	f
+id	include/jb.h	/^	U8          id;$/;"	m	struct:_System
+inbox	include/jbOld.h	/^	Message     *inbox;$/;"	m	struct:System
+inboxA	include/jb.h	/^	Message    *inboxA;$/;"	m	struct:_System
+inherit	old/sprite.c	/^void inherit(void *inheritance_data_p, Uint8 type) {$/;"	f
+init	old/exampleSDL.c	/^Error init(Database *db_p, Uint8 *bp_p) {$/;"	f
+init_animation	old/sprite.c	/^void init_animation(Sprite *s, Animation *anim) {$/;"	f
+init_motion	old/sprite.c	/^void init_motion(Sprite *s, Motion *mobility) {$/;"	f
+init_reaction_sequence_group	old/sprite.c	/^void init_reaction_sequence_group(Sprite *s, Scene *scene) {$/;"	f
+init_scene	old/scene.c	/^Error init_scene(Uint16 scene_id, Scene *scene) {$/;"	f
+init_sprite	old/sprite.c	/^Error init_sprite(Sprite *s, const Vector2 *pos) {$/;"	f
+init_surface	old/sprite.c	/^Error init_surface(Sprite *s, TblImgRow *tbl_row) {$/;"	f
+jBaseIdx	include/jb.h	/^	U8 jBaseIdx;$/;"	m	struct:__anon12
+jInnerIdx	include/jb.h	/^	U8 jInnerIdx;$/;"	m	struct:__anon12
+jbAlloc	data.c	/^inline Error jbAlloc(void **voidPP, U8 elemSz, U8 nElems) {$/;"	f
+jbAlloc	old/jbMem.c	/^inline Error jbAlloc(void **voidPP, elemSz, nElems) {$/;"	f
+jbFree	data.c	/^inline void jbFree(void **voidPP) {$/;"	f
+jbFree	old/jbMem.c	/^inline void jbFree(void **voidPP) {$/;"	f
+kill_scene	old/scene.c	/^void kill_scene(Scene *scene) {$/;"	f
+last_modified_tm	include/jbOld.h	/^	Uint32    last_modified_tm;$/;"	m	struct:Tileset
+lerp	old/image.c	/^void lerp(Sprite *s, Vector2 *dest, Motion *motion_p) {$/;"	f
+limit_speed	old/image.c	/^void limit_speed(Vector2 *velocity, Motion *motion_p) {$/;"	f
+list_insert_head	old/dataOld.c	/^Error list_insert_head(LinkedList *ll, void *data) {$/;"	f
+list_insert_tail	old/dataOld.c	/^Error list_insert_tail(LinkedList *ll, void *data) {$/;"	f
+llDel	old/dataOld.c	/^void llDel(LinkedList *ll) {$/;"	f
+llDelNode	old/dataOld.c	/^void llDelNode(LinkedList *ll, ListNode *node, ListNode **next, void **data) {$/;"	f
+llFindNode	old/dataOld.c	/^ListNode* llFindNode(LinkedList *ll, void *data) {$/;"	f
+llIni	old/dataOld.c	/^Error llIni(LinkedList **ll) {$/;"	f
+load_image	old/image.c	/^Error load_image(Database *db_p, Uint16 img_idx, Image **img_pp) {$/;"	f
+load_tileset	old/image.c	/^static Error load_tileset(Database *db_p, Uint16 ts_idx, Tileset **ts_pp) {$/;"	f	file:
+loop	old/exampleSDL.c	/^int loop(Database *db_p) {$/;"	f
+m_bit_buf	old/dataOld.c	/^  tinfl_bit_buf_t m_bit_buf;$/;"	m	struct:tinfl_decompressor_tag	file:
+m_check_adler32	old/dataOld.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_n_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_code_size	old/dataOld.c	/^  mz_uint8 m_code_size[TINFL_MAX_HUFF_SYMBOLS_0];$/;"	m	struct:__anon4	file:
+m_counter	old/dataOld.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_n_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_dist	old/dataOld.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_n_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_dist_from_out_buf_start	old/dataOld.c	/^  size_t m_dist_from_out_buf_start;$/;"	m	struct:tinfl_decompressor_tag	file:
+m_final	old/dataOld.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_n_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_len_codes	old/dataOld.c	/^  mz_uint8 m_raw_header[4], m_len_codes[TINFL_MAX_HUFF_SYMBOLS_0 + TINFL_MAX_HUFF_SYMBOLS_1 + 137];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_look_up	old/dataOld.c	/^  mz_int16 m_look_up[TINFL_FAST_LOOKUP_SIZE], m_tree[TINFL_MAX_HUFF_SYMBOLS_0 * 2];$/;"	m	struct:__anon4	file:
+m_n_bits	old/dataOld.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_n_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_n_extra	old/dataOld.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_n_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_raw_header	old/dataOld.c	/^  mz_uint8 m_raw_header[4], m_len_codes[TINFL_MAX_HUFF_SYMBOLS_0 + TINFL_MAX_HUFF_SYMBOLS_1 + 137];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_state	old/dataOld.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_n_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_table_sizes	old/dataOld.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_n_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_tables	old/dataOld.c	/^  tinfl_huff_table m_tables[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_tree	old/dataOld.c	/^  mz_int16 m_look_up[TINFL_FAST_LOOKUP_SIZE], m_tree[TINFL_MAX_HUFF_SYMBOLS_0 * 2];$/;"	m	struct:__anon4	file:
+m_type	old/dataOld.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_n_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_z_adler32	old/dataOld.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_n_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_zhdr0	old/dataOld.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_n_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_zhdr1	old/dataOld.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_n_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+main	main.c	/^int main( int argc, char* args[] )$/;"	f
+mapA	include/jb.h	/^	void  *mapA;  $/;"	m	struct:__anon7
+mapDel	data.c	/^inline void mapDel(Map **mapPP) {$/;"	f
+mapDel	old/dataOld.c	/^inline void mapDel(Map **mapPP) {$/;"	f
+mapGet	data.c	/^void* mapGet(const Map *mapP, const U8 key) {$/;"	f
+mapGet	old/dataOld.c	/^inline void* mapGet(int flagKey, void *mapP) {$/;"	f
+mapGetIdx	old/dataOld.c	/^inline int mapGetIdx(int flagKey, Map *mapP) {$/;"	f
+mapIsValid	data.c	/^static inline U8 mapIsValid(const Map *mapP) {$/;"	f	file:
+mapNew	data.c	/^Error mapNew(Map **mapPP, const U8 elemSz, const U16 nElems) {$/;"	f
+mapNew	old/dataOld.c	/^inline Error mapNew(Map **mapPP, Uint8 elemSz, Uint16 nElems) {$/;"	f
+mapSet	data.c	/^Error mapSet(Map *mapP, const U8 key, const void *valP) {$/;"	f
+max_depth	include/jbOld.h	/^	Uint8 max_depth, max_n_elems;$/;"	m	struct:QuadTree
+max_frame_idx	include/jbOld.h	/^	Uint8         max_frame_idx;  \/* awkward var name, because i don't want to subtract by one in animate(). *\/$/;"	m	struct:Strip
+max_n_elems	include/jbOld.h	/^	Uint8 max_depth, max_n_elems;$/;"	m	struct:QuadTree
+mi_idx	include/jbOld.h	/^	Uint16    mi_idx;     \/* index into the media info table *\/$/;"	m	struct:Tileset
+move	old/image.c	/^void move(Sprite *s, Motion *motion) {$/;"	f
+mz_int16	old/dataOld.c	/^typedef signed short mz_int16;$/;"	t	file:
+mz_uint	old/dataOld.c	/^typedef unsigned int mz_uint;$/;"	t	file:
+mz_uint16	old/dataOld.c	/^typedef unsigned short mz_uint16;$/;"	t	file:
+mz_uint32	old/dataOld.c	/^typedef unsigned int mz_uint32;$/;"	t	file:
+mz_uint64	old/dataOld.c	/^typedef unsigned long long mz_uint64;$/;"	t	file:
+mz_uint8	old/dataOld.c	/^typedef unsigned char mz_uint8;$/;"	t	file:
+nFuncs	include/jb.h	/^	U8          nFuncs;$/;"	m	struct:_System
+n_colors	include/jbOld.h	/^	Uint8      n_colors;$/;"	m	struct:ColorPalette
+n_elems	include/jbOld.h	/^	Uint8 n_elems, depth;$/;"	m	struct:_QuadNode
+n_tiles	include/jbOld.h	/^	Uint16    n_tiles;$/;"	m	struct:Tileset
+next	include/jbOld.h	/^	struct ListNode *next, *prev;$/;"	m	struct:ListNode	typeref:struct:ListNode::ListNode
+nodes	include/jbOld.h	/^	struct _QuadNode *nodes[4];$/;"	m	struct:_QuadNode	typeref:struct:_QuadNode::_QuadNode
+offset	include/jbOld.h	/^	Uint32 offset, uncompressed_len, compressed_len;$/;"	m	struct:MediaInfo
+outbox	include/jbOld.h	/^	Message     *outbox;$/;"	m	struct:System
+outboxA	include/jb.h	/^	Message    *outboxA;$/;"	m	struct:_System
+paramsP	include/jb.h	/^	void *paramsP;                \/* Parameters for the target to pass to the cmd function... IF tgtECSType == SYSTEM. *\/$/;"	m	struct:__anon13
+prev	include/jbOld.h	/^	struct ListNode *next, *prev;$/;"	m	struct:ListNode	typeref:struct:ListNode::
+prevBitCount	include/jb.h	/^	U8 prevBitCount;$/;"	m	struct:__anon6
+priority	include/jb.h	/^	Priority       priority;      \/* priority which message command has over any existing component activity *\/$/;"	m	struct:__anon13
+qnDel	old/dataOld.c	/^void qnDel(QuadNode **qn) {$/;"	f
+qnIni	old/dataOld.c	/^Error qnIni(QuadNode **qn, Uint8 depth, Vector2 *tl, Vector2 *br) {$/;"	f
+qnMove	old/dataOld.c	/^Error qnMove(QuadTree *qt, QuadNode *qn, Sprite *s) {$/;"	f
+qn_insert	old/dataOld.c	/^Error qn_insert(QuadTree *qt, QuadNode *qn, Sprite *s) {$/;"	f
+qn_query	old/dataOld.c	/^void qn_query(QuadTree *qt, Vector2 *tl, Vector2 *br, QuadNode **qn) {$/;"	f
+qn_remove	old/dataOld.c	/^void qn_remove(QuadTree *qt, QuadNode *qn, Sprite *s) {$/;"	f
+qn_subdivide	old/dataOld.c	/^Error qn_subdivide(QuadTree *qt, QuadNode *qn) {$/;"	f
+qtDel	old/dataOld.c	/^void qtDel(QuadTree **qt) {$/;"	f
+qtIni	old/dataOld.c	/^Error qtIni(QuadTree **qt, Uint8 maxDepth, Vector2 *tree_rect_dims, Uint8 max_nElems) {$/;"	f
+qt_insert	old/dataOld.c	/^Error qt_insert(QuadTree *qt, Sprite *s) {$/;"	f
+qt_query	old/dataOld.c	/^void qt_query(QuadTree *qt, Vector2 *tl, Vector2 *br, QuadNode **qn) {$/;"	f
+reconstruct_colormap	old/image.c	/^Error reconstruct_colormap(SDL_Surface *tileset_surface, Uint16 *tilemap, SDL_Surface *colormap_surface) {$/;"	f
+render	old/exampleSDL.c	/^Error render() {$/;"	f
+renderer	old/exampleSDL.c	/^static SDL_Renderer *renderer;$/;"	v	file:
+repeat	include/jbOld.h	/^	SDL_bool      repeat;$/;"	m	struct:Strip
+root	include/jbOld.h	/^	QuadNode *root;$/;"	m	struct:QuadTree
+runLoop	include/jbOld.h	/^	RunSysLoopFP runLoop;$/;"	m	struct:System
+scene	old/exampleSDL.c	/^static RowTblScene  *scene;$/;"	v	file:
+surface_p	include/jbOld.h	/^	SDL_Surface  *surface_p;  \/* ptr to loaded surface; results loaded tileset building img w\/ tilemap & colors *\/$/;"	m	struct:Image_t
+surface_p	include/jbOld.h	/^	SDL_Surface *surface_p;$/;"	m	struct:Tileset
+switch_scene	old/scene.c	/^void switch_scene(Scene *scene) {$/;"	f
+sysBasicFuncs	sys.c	/^SysBasicFP sysBasicFuncs[] = {$/;"	v
+sysDel	include/jbOld.h	/^void  sysDel;$/;"	v
+sysFPA	include/jb.h	/^	SysFP      *sysFPA;          \/* those that're used get copied into map; array is hard-coded in system C file *\/$/;"	m	struct:_System
+sysIniCmp	sys.c	/^static void sysIniCmp(const System *sP, const U8 jBaseIdx, const U8 jInnerIdx, const U8 szCmp, const void *cmpP) {$/;"	f	file:
+sysIniFP	include/jb.h	/^	SysIniFP   *sysIniFP;        \/* "FP" means "Function Pointer"; array of function pointers *\/ $/;"	m	struct:_System
+sysKey	include/jb.h	/^	U8 sysKey;$/;"	m	struct:__anon14
+sysLoopM	include/jb.h	/^	Map        *sysLoopM;        \/* "M" means "Map". *\/$/;"	m	struct:_System
+sysNewCmpsJRow	sys.c	/^Error sysNewCmpsJRow(const System *sP, const U8 nCmps, const U8 szCmp, const U8 jBaseIdx) {$/;"	f
+sysNewMailbox	sys.c	/^Error sysNewMailbox(Msg **mailboxPP, U32 nMailSlots) {$/;"	f
+sysReadMessage	sys.c	/^Error sysReadMessage(System *sP, Message *msgP, U8 maxCmdID) {$/;"	f
+sysReset	sys.c	/^void sysReset(const System *sP) {$/;"	f
+sysToggleActive	sys.c	/^void sysToggleActive(const System *sP) {$/;"	f
+tail	include/jbOld.h	/^	ListNode *tail;$/;"	m	struct:LinkedList
+tinflIni	old/dataOld.c	100;"	d	file:
+tinfl_bit_buf_t	old/dataOld.c	/^  typedef mz_uint32 tinfl_bit_buf_t;$/;"	t	file:
+tinfl_bit_buf_t	old/dataOld.c	/^  typedef mz_uint64 tinfl_bit_buf_t;$/;"	t	file:
+tinfl_decompress	old/dataOld.c	/^tinfl_status tinfl_decompress(tinfl_decompressor *r, const mz_uint8 *pIn_buf_next, size_t *pIn_buf_size, mz_uint8 *pOut_buf_start, mz_uint8 *pOut_buf_next, size_t *pOut_buf_size, const mz_uint32 decomp_flags)$/;"	f
+tinfl_decompress_mem_to_heap	old/dataOld.c	/^void *tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_len, size_t *pOut_len, int flags)$/;"	f
+tinfl_decompressor	old/dataOld.c	/^struct tinfl_decompressor_tag; typedef struct tinfl_decompressor_tag tinfl_decompressor;$/;"	t	typeref:struct:tinfl_decompressor_tag	file:
+tinfl_decompressor_tag	old/dataOld.c	/^struct tinfl_decompressor_tag$/;"	s	file:
+tinfl_get_adler32	old/dataOld.c	101;"	d	file:
+tinfl_huff_table	old/dataOld.c	/^} tinfl_huff_table;$/;"	t	typeref:struct:__anon4	file:
+tinfl_put_buf_func_ptr	old/dataOld.c	/^typedef int (*tinfl_put_buf_func_ptr)(const void* pBuf, int len, void *pUser);$/;"	t	file:
+tinfl_status	old/dataOld.c	/^} tinfl_status;$/;"	t	typeref:enum:__anon2	file:
+tl_corner	include/jbOld.h	/^	Vector2 tl_corner, br_corner;$/;"	m	struct:_QuadNode
+tm_arry	include/jbOld.h	/^	Uint16        *tm_arry;$/;"	m	struct:Tilemap
+tm_idx	include/jbOld.h	/^	Uint16        tm_idx;     \/* index into tilemap table *\/$/;"	m	struct:Image_t
+toECSType	include/jb.h	/^	ECSType        toECSType;$/;"	m	struct:__anon13
+toID	include/jb.h	/^	U32            toID;          \/* id of recipient *\/$/;"	m	struct:__anon13
+translate	old/image.c	/^void translate(Sprite *s, Vector2 *velocity, Motion *motion) {$/;"	f
+ts_idx	include/jbOld.h	/^	Uint16         ts_idx;      \/* index into tileset table *\/$/;"	m	struct:Tilemap
+type	include/jb.h	/^	U8          type;$/;"	m	struct:_System
+uncompressed_len	include/jbOld.h	/^	Uint32 offset, uncompressed_len, compressed_len;$/;"	m	struct:MediaInfo
+urgency	include/jb.h	/^	MsgUrgency		 urgency;       \/* speed at which message must reach its destination *\/$/;"	m	struct:__anon13
+vec2Ini	old/dataOld.c	/^void vec2Ini(Vector2 *vector2, Sint8 x, Sint8 y) {$/;"	f
+vec3Ini	old/dataOld.c	/^void vec3Ini(Vector3 *vector3, Sint8 x, Sint8 y, Sint8 z) {$/;"	f
+window	old/exampleSDL.c	/^static SDL_Window   *window;$/;"	v	file:
+x	include/jbOld.h	/^	Sint32 x;$/;"	m	struct:Position
+y	include/jbOld.h	/^	Sint32 y;$/;"	m	struct:Position

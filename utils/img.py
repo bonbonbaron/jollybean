@@ -45,7 +45,17 @@ FLIP_UD   = 1 << 14
 FLIP_LR   = 2 << 14
 FLIP_DIAG = 3 << 14
  
- 
+MAP    = 1
+SPRITE = 2
+def is_sprite_or_map(json_fp):
+    j_fp = json_fp.split(SEP) 
+    if (json_fp[-1].lower() == 'm'):
+        print("%s is identified as a map since it starts with 'm'."%(json_fp))
+        return MAP
+    else:
+        print("%s is identified as a sprite since it doesn't start with 'm'."%(json_fp))
+        return SPRITE
+
 ###########################################
 class AnimSequence:
     def __init__(self, blit_coords, frame_order, durations, repeat):
@@ -382,9 +392,29 @@ class ImageInfo:
 		self.h = final_tileset.shape[0]
 		self.bpp = bpp
 		self.num_tiles = 0
+def compress(img):
+
 ###########################################
 # current problem: how to get anim_offset correlated with this
-def compress_img_and_anim(img, img_name, cp_name, animated=False):
+def compress_img(img_name):
+    split_nm = img_name.split("_")  # Naming convention goes "ben_aqua" or [sprite name]_[color palette name]
+    img_nm   = split_nm[0]
+    cp_nm    = split_nm[1]
+    tgt_dir  = "%ssprite%s"%(ASSETS_DIR, SEP)
+    # Find all files belonging to sprite
+    img_fp   = "%s%s.png"%(tgt_dir, img_name)
+    img_json = "%s%s.json"%(tgt_dir, img_name)
+    # Concatenate if animated
+    if not path.exists(img_fp):
+        print("[gen_data_sprite] Couldn't find %s!"%(img_fp))
+        quit()
+    if not path.exists(img_json):
+        print("No JSON file found for %s in \"%s\"!"%(img_nm, tgt_dir))
+        quit()
+    # Do yo magic
+    anim = is_animated(img_json)
+    img = cv2.imread(img_fp)
+
     compressed_tileset = []
     color_palette      = []
      
@@ -451,46 +481,34 @@ def compress_img_and_anim(img, img_name, cp_name, animated=False):
     idat_end   = png_data.index(PNG_IDAT_END) - 4    # 4-byte length precedes IEND
     idat = png_data[idat_start : idat_end]
      
-    ts = Tileset()
-    tm = Tilemap()
-    cp = ColorPalette()
-    ts.name = img_name;
-    ts.num_tiles = int(w * h / 64)
-    ts.bpp = bitdepth
-    ts.mi_idx = "eiMediaInfo_%s"%(img_name)
-    ts.surface_p = "NULL"
-    tm.name = img_name;
-    tm.ts_idx = "eiTileset_%s"%(img_name)
-    tm.tm_arry = list(tilemap.flatten())
-    tm.dimensions = "{%d, %d}"%(tilemap.shape[0], tilemap.shape[1])
-    cp.name = cp_name;
-    cp.num_colors = len(color_palette)
-    cp.cp_arry = str(color_palette)
+    img_obj = Img(img, img_name, w, h, bitdepth, tilemap, cp_name, color_palette, idat) 
 
-    return ts, tm, cp, idat  # Tileset, Tilemap, Binary data from image
+    return img_obj
+
+class Img:
+    def __init__(self, raw_img, img_name, w, h, bitdepth, tilemap, cp_name, color_palette, idat):
+        self.ts = Tileset()
+        self.tm = Tilemap()
+        self.cp = ColorPalette()
+        self.ts.name = img_name;
+        self.ts.num_tiles = int(w * h / 64)
+        self.ts.bpp = bitdepth
+        self.ts.mi_idx = "eiMediaInfo_%s"%(img_name)
+        self.ts.surface_p = "NULL"
+        self.tm.name = img_name;
+        self.tm.ts_idx = "eiTileset_%s"%(img_name)
+        self.tm.tm_arry = list(tilemap.flatten())
+        self.tm.dimensions = "{%d, %d}"%(tilemap.shape[0], tilemap.shape[1])
+        self.cp.name = cp_name;
+        self.cp.num_colors = len(color_palette)
+        self.cp.cp_arry = str(color_palette)
+        self.raw_img = raw_img
+
  
 ###########################################
 # Updates both image dictionary and global data file where it's stored
 ###########################################
 def gen_data_sprite(img_name):
-    split_nm = img_name.split("_")  # Naming convention goes "ben_aqua" or [sprite name]_[color palette name]
-    img_nm   = split_nm[0]
-    cp_nm    = split_nm[1]
-    tgt_dir  = "%ssprite%s"%(ASSETS_DIR, SEP)
-    # Find all files belonging to sprite
-    img_fp   = "%s%s.png"%(tgt_dir, img_name)
-    img_json = "%s%s.json"%(tgt_dir, img_name)
-    # Concatenate if animated
-    if not path.exists(img_fp):
-        print("[gen_data_sprite] Couldn't find %s!"%(img_fp))
-        quit()
-    if not path.exists(img_json):
-        print("No JSON file found for %s in \"%s\"!"%(img_nm, tgt_dir))
-        quit()
-    # Do yo magic
-    anim = is_animated(img_json)
-    img = cv2.imread(img_fp)
-    ts, tm, cp, idat = compress_img_and_anim(img, img_nm, cp_nm, anim)
     jb_media.insert(idat)
     jb_enum.insert_enum_elem("Tileset", img_nm)
     jb_db.insert("tileset", ts)
@@ -499,11 +517,24 @@ def gen_data_sprite(img_name):
     jb_enum.insert_enum_elem("Tilemap", img_nm)
     jb_db.insert("tilemap", tm)
 
-jb_media.clean_media_file()
-jb_enum.create_enum("tileset")
-jb_enum.create_enum("tilemap")
-jb_enum.create_enum("colorPalette")
-jb_db.create_tbl("tileset")
-jb_db.create_tbl("tilemap")
-jb_db.create_tbl("colorPalette")
-gen_data_sprite("ben_aqua")
+
+# Okay, act like you have no function yet to handle what you want. And start from there.
+def proc_img(img_name):
+    game_dir = get_game_dir();
+    sprite_or_map = is_sprite_or_map(img_name)
+    img_obj = compress_img(img_name)
+    
+
+'''
+    /get game directory from global data file
+    /determine whether the current image is a map or sprite
+    /Either way, compress it and write compressed data to media.bin.
+    Make function to write to media.bin and to media db
+    "" update ""
+    "" delete ""
+    if sprite, write new region and rules to rules.tmx. 
+        Check whether rules.tmx exists. If not, create it with basic structure. 
+        Create region matching sprite's single-frame size.
+    Generate animation data in map's *.tsx file for animated tiles.
+
+'''

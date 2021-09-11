@@ -46,3 +46,6 @@ class JBObject:
     def __init__(self):
         self.name = ""
         self.tbl_name = ""
+
+def get_game_dir():
+    return DEV_DIR

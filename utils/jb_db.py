@@ -17,6 +17,7 @@ type_map = {"<type 'int'>": int, "<type 'str'>": str, "<type 'instance'>": None}
 # TODO: You want to be able to navigate from your assets folder to your database directories. 
 def cap(string):
   return (string[0].title() + string[1:])
+  
 def get_tbl(tbl_nm):
   if tbl_nm in ASSET_TYPES:
     db_parent = JB_DIR
@@ -54,12 +55,7 @@ def extract_record_items(record):
   items = [i.strip(", ") for i in items]
   return items
 
-  
-  
-
-
 #TODO: make funcs for adding local variables. Need list of lines for this, and comments bounding the loc vars.
-
 
 # query() is the bread and butter of interacting with an element in the database. Returns None if object's not found. Otherwise, it returns a Python object representing that found in the database.
 def query(tbl_nm, obj):
@@ -186,20 +182,6 @@ def write_to_tbl(tbl_nm, loc_vars_str, objs):
   f.write(TBL_ENDING);
   f.close();
 
-# update_str must have "obj.[ATTRIBUTE NAME] [=, -=, +=, etc.] [OPERAND]" or something similar. 
-def udpate(tbl_nm, update_str, idx=None, condition_str=None):
-  objs = objs_from_records(tbl_nm)
-  # Update happens here
-  if idx is not None:
-    obj = objs[idx]
-    exec("%s"%(update_str))
-  elif condition is not None:
-    for obj in objs:
-      exec("condition_met = %s"%(condition))
-      if condition_met:
-        exec("%s"%(update_str))
-  # Write results back to table
-  write_to_tbl(tbl_nm, objs)
 
 def print_attrs(obj):
   print("[print_attrs] object attributes")
@@ -234,6 +216,21 @@ def insert(tbl_nm, obj):
   print("[insert] inserting %s into table %s"%(str(obj), tbl_nm))
   write_to_tbl(tbl_nm, loc_vars_str, objs)
 
+# update_str must have "obj.[ATTRIBUTE NAME] [=, -=, +=, etc.] [OPERAND]" or something similar. 
+def udpate(tbl_nm, update_str, idx=None, condition_str=None):
+  objs = objs_from_records(tbl_nm)
+  # Update happens here
+  if idx is not None:
+    obj = objs[idx]
+    exec("%s"%(update_str))
+  elif condition is not None:
+    for obj in objs:
+      exec("condition_met = %s"%(condition))
+      if condition_met:
+        exec("%s"%(update_str))
+  # Write results back to table
+  write_to_tbl(tbl_nm, objs)
+
 def delete(tbl_nm, idx=None, condition_str=None):
   objs = objs_from_records(tbl_nm)
   # Delete happens here
@@ -249,7 +246,7 @@ def delete(tbl_nm, idx=None, condition_str=None):
 
 # create a new database
 def create_tbl(tbl_name):
-  TBL_PRELUDE = "%s\n%s\n%s%s\n%s tbl%s[] = {\n%s"%(INCL_GE_H, INCL_ENUM, START_LOC_VARS, END_LOC_VARS, cap(tbl_name), cap(tbl_name), START_TBL);
+  TBL_PRELUDE = "%s\n%s\n%s%s\n%s tbl_%s[] = {\n%s"%(INCL_GE_H, INCL_ENUM, START_LOC_VARS, END_LOC_VARS, cap(tbl_name), cap(tbl_name), START_TBL);
   if tbl_name in ASSET_TYPES:
     print("%s is in %s"%(tbl_name, str(ASSET_TYPES)))
     base_dir = JB_DIR
