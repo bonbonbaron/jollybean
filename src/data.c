@@ -1,10 +1,10 @@
-#include "jb.h"
+#include "data.h"
 #include "bitCountLUT.h"
 #include "byteIdxLUT.h"
 #include "bitCountMaskLUT.h"
 #include "bitFlagLUT.h"
 
-inline Error jbAlloc(void **voidPP, U8 elemSz, U8 nElems) {
+__inline Error jbAlloc(void **voidPP, U8 elemSz, U8 nElems) {
 	if (voidPP == NULL)
 		return E_BAD_ARGS;
 	*voidPP = malloc(nElems * elemSz);
@@ -13,7 +13,7 @@ inline Error jbAlloc(void **voidPP, U8 elemSz, U8 nElems) {
 	return SUCCESS;
 }
 
-inline void jbFree(void **voidPP) {
+__inline void jbFree(void **voidPP) {
 	if (voidPP != NULL) {
 		free(*voidPP);
 		*voidPP = NULL;
@@ -21,7 +21,7 @@ inline void jbFree(void **voidPP) {
 }
 
 /************************************/
-/********** ARRAYS (1D & 2d) ********/
+/********** ARRAYS (1D & 2D) ********/
 /************************************/
 Error arrayNew(void **arryPP, U32 elemSz, U32 nElems) {
 	U32 *ptr;
@@ -41,7 +41,7 @@ Error arrayNew(void **arryPP, U32 elemSz, U32 nElems) {
 		*arryPP = (ptr + 2);
 		memset(*arryPP, 0, elemSz * nElems);
 	}
-	return 0;
+	return SUCCESS;
 }
 	
 void arrayDel(void **arryPP) {
@@ -75,11 +75,21 @@ U32 arrayGetElemSz(const void *arryP) {
 }
 
 /* Rule here is "while (ptr < endPtr)". */
-void* arrayGetEndPtr(const void *arryP) {
-	return arrayGetNElems(arryP) * arrayGetElemSz(arryP);
+void* arrayGetEndPtr(const void *arryP, S32 endIdx) {
+  if (endIdx < 0)
+	  return ((U8*) arryP) + (arrayGetNElems(arryP) * arrayGetElemSz(arryP));
+  else 
+    return ((U8*) arryP) + (endIdx * arrayGetElemSz(arryP));
 }
 
-/****** Maps ******/
+void arrayIniPtrs(const void *arryP, void **startP, void **endP, S32 endIdx) {
+  *startP = (void*) arryP;
+  *endP = arrayGetEndPtr(arryP, endIdx);
+}
+
+/***********************/
+/********* MAPS ********/
+/***********************/
 Error mapNew(Map **mapPP, const U8 elemSz, const U16 nElems) {
 	Error e = jbAlloc((void**) mapPP, sizeof(Map), 1);
 	if (!e)
@@ -87,54 +97,54 @@ Error mapNew(Map **mapPP, const U8 elemSz, const U16 nElems) {
 	return e;
 }
 
-inline void mapDel(Map **mapPP) {
+void mapDel(Map **mapPP) {
 	arrayDel(&(*mapPP)->mapA);
 	jbFree((void**) mapPP);
 }
 
-static inline U8 mapIsValid(const Map *mapP) {
+static __inline U8 _mapIsValid(const Map *mapP) {
 	return (mapP != NULL && mapP->mapA != NULL); 
 }	
 
 /* Map GETTING functions */
-static inline U8 _isFlagSet(U8 flags, const U8 key) {
+static __inline U8 _isFlagSet(U8 flags, const U8 key) {
 	return bitFlagLUT[key] & flags;
 }
 
-static inline U8 _mapGetElemIdx(const U8 flags, const U8 prevBitCount, const U8 key) {
+static __inline U8 _mapGetElemIdx(const U8 flags, const U8 prevBitCount, const U8 key) {
 	return (bitCountLUT[flags & bitCountMaskLUT[key]]) + prevBitCount - 1;
 }
 
-static inline void* _mapGetElemP(const Map *mapP, const U8 key) {
+static __inline void* _mapGetElemP(const Map *mapP, const U8 key) {
 	const FlagInfo f = mapP->flagA[byteIdxLUT[key]];
 	const U8 flags = f.flags;
-	if (!_isFlagSet(flags, key))
+  if (!_isFlagSet(flags, key)) {
 		return NULL;
+  }
 	const U8 elemIdx = _mapGetElemIdx(flags, f.prevBitCount, key);
 	return (void*) ((U32) mapP->mapA + ((U32) elemIdx * (U32) arrayGetElemSz(mapP->mapA)));
 }	
 
 void* mapGet(const Map *mapP, const U8 key) {
-	if (mapIsValid(mapP) ) {
+	if (_mapIsValid(mapP)) 
 		return _mapGetElemP(mapP, key);
-	}
 	return NULL;
 }
 /* Map SETTING functinos */
-static inline U8 _mapGetNextEmptyElemIdx(const Map *mapP, const U8 key) {
+static __inline U8 _mapGetNextEmptyElemIdx(const Map *mapP, const U8 key) {
 	const FlagInfo f = mapP->flagA[byteIdxLUT[key]];
 	const U8 flags = f.flags;
 	return (bitCountLUT[flags & bitCountMaskLUT[key]]) + f.prevBitCount;
 }
 
-static inline void* _mapGetNextEmptyElemP(const Map *mapP, const U8 key) {
+static __inline void* _mapGetNextEmptyElemP(const Map *mapP, const U8 key) {
 	const U8 elemIdx = _mapGetNextEmptyElemIdx(mapP, key);
 	void *ptr = (void*) ((U32) mapP->mapA + ((U32) elemIdx * (U32) arrayGetElemSz(mapP->mapA)));
 	return (void*) ((U32) mapP->mapA + ((U32) elemIdx * (U32) arrayGetElemSz(mapP->mapA)));
 }
 
 Error mapSet(Map *mapP, const U8 key, const void *valP) {
-	if (mapIsValid(mapP)) {
+	if (_mapIsValid(mapP)) {
 		void *elemP = _mapGetNextEmptyElemP(mapP, key);
 
 		if (elemP != NULL) {
@@ -153,10 +163,14 @@ Error mapSet(Map *mapP, const U8 key, const void *valP) {
 	return SUCCESS;
 }
 
-/* Histograms */
+/************************************/
+/************ HISTOGRAMS ************/
+/************************************/
+
 Error histoU8New(U32 **histoPP, const U8 *srcA, const U32 maxVal) {
-	if (histoPP == NULL || srcA == NULL) 
+	if (histoPP == NULL || srcA == NULL) {
 		return E_BAD_ARGS;
+  }
 	Error e = arrayNew((void**) histoPP, sizeof(U32), maxVal);
 	if (!e) {
 		U8 *u8P = (U8*) srcA;
