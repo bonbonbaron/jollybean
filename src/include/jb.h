@@ -44,84 +44,39 @@ void  mapDel(Map **mapPP);
 Error mapSet(Map *mapP, const U8 key, const void *valP);
 void* mapGet(const Map *mapP, const U8 key);
 
-/* System */
-struct _System;
-typedef Error (*SysFP)(struct _System *sysP, void *cmpA);
-typedef Error (*SysIniFP)(struct _System *sysP, void *cmpA);
-
-typedef enum {
-	DIRECTOR_SYS_KEY,
-	NUM_SYS_KEYS  // only used for creating system histograms
-} SysKeys;
-
-typedef enum {
-	ENTITY,         // a message to an entity never directly reaches a system; the entity likely changes sequences
-	COMPONENT,
-	SYSTEM,
-	NUM_ECS_TYPES   // probably never used
-} ECSType;
-
-typedef enum {
-	IMMEDIATELY,
-	AFTER_CURR_SYS
-} MsgUrgency;
-
-typedef enum {
-	SYSTEMWIDE_CMD,
-	REPEATING_CMP_CMD,
-	ONE_OFF_CMP_CMD
-} CmdType;
-
-typedef struct {
-	U8 jBaseIdx;
-	U8 jInnerIdx;
-} CmpLocation;
-
-typedef struct {
-	U8						 cmd;
-	CmdType        cmdType;
-	ECSType        toECSType;
-	U32            toID;          /* id of recipient */
-	MsgUrgency		 urgency;       /* speed at which message must reach its destination */
-	Priority       priority;      /* priority which message command has over any existing component activity */
-	void *paramsP;                /* Parameters for the target to pass to the cmd function... IF tgtECSType == SYSTEM. */
-} Message;
-
-// TODO: revamp sys.c to support an array of SysActivity elements instead of several disparate elements talking about the same thing.
-typedef struct {
-	U8 active; /* boolean for whether this function should even operate */
-	U8 firstInactiveIdx; /* marks the first inactive element's index */
-	SysFP *sysFP; /* function that runs on these components */
-	void *cmpsA;  /* components the above function operates on */
-} SysActivity;
-
-/* Systems are allocated. */
-typedef struct _System {
-	U8           id;
-	U8           active;            /* boolean for whether this syskem should even operate */
-	U8           cmpSz;             /* components are the same size in all of this system's activities */
-	Map         *cmpLocationMapP;   /* maps component IDs to an element in an array of CmpAddresses */
-	SysActivity *sysActivityA;
-	Message     *inboxA;
-	Message     *outboxA;
-} System;
-
 /* Histograms */
 Error histoU8New(U32 **histoPP, const U8 *srcA, const U32 maxVal);
 void histoU8Del(U32 **histoPP);
 
-/* Components are stored in memory. */
-typedef struct {
-	U8 sysKey;
-	U8 cmpSz;
-	void *cmpP;
-	Map *cmpMapP;  /* For things like animation, this is crucial. We won't copy entire maps to a system; just the initial values. */
-} Component;
-
-typedef struct {
-	Component *componentsA;
-} EntitySeed;
-
-typedef U8 Entity;  /* HAH! That's all an entity is!? A key to its components like we're a key to our atoms! */
-
 #endif
+/* how sys starts up:
+ * T-TO-C MAPPING
+ *		B: entities' behaviors
+ *		S: System
+ *		C: Cmp
+ *		Si: System index
+ *		Ci: Cmp index
+ *		E: Entity
+ *		J: Jagged array mapping triggers to Cs
+ *		T: Trigger
+ *			"histo T and C"
+ *			/0)  make histo() function
+ *			1)  histo B's Ts  and alias them in an array the same size as the histo. 
+ *			2)  histo Es' components, C in each E's G via their C- headers (for checking system compatibility),
+ *			    and alias them in array same size as histo for Si.
+ *			"make S array"
+ *			3)  allocate array of S based on # nonzeros in (2)
+ *			4)  create S based on order of nonzeros and tell those S'es what their aliases are
+ *			"make T jagged array"
+ *			5)  allocate the base of a jagged array, J with the highest alias assigned in (1) 
+ *			6)  rn each element of (5), allocate the count from the histo                  
+ *			7)  for each E, go through its G and make J[1.alias][counter++] = {Si, Ci}. 
+ *			"make E-to-S:C mapping"
+ *			8)  Collision S spits out a msg saying E1 collided with a type. So we go to the E array, index E1, and look at its trigger array. It may not respond to collisions; we don't know yet. A flag could say so, and the number of 1s up to the bit can indicate where in that E's behavior array the response to the T is. This limits an E to 32 Cs. But if the game has more than 32 Cs, you have to have an array of integers. All you have to do is mask out the bits beyond the desired one and use a LUT.. 
+ *
+ *
+ *			This is going to be such an incredible game engine. Here are 2 reasons why:
+ *			* Writing behaviors is easy: I just need to give the sys key, function enum, parameter key, and desired output when it's done for entire sets of behaviors. That's programming by tiny data instead of huge, 64-bit machine instructions. 
+ *			* Writing entities is going to be easy too, because all I have to do there is write an array of pointers to component maps. 
+ *
+ *			In terms of development, having pre-existing components to borrow from helps a ton. 

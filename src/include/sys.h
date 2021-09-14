@@ -1,6 +1,0 @@
-typedef enum {
-	SYS_RENDERER,
-	SYS_MOTION,
-	SYS_ANIMATION,
-	SYS_COLLISION
-} Systems;

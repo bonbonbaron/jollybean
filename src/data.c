@@ -74,6 +74,11 @@ U32 arrayGetElemSz(const void *arryP) {
 	}
 }
 
+/* Rule here is "while (ptr < endPtr)". */
+void* arrayGetEndPtr(const void *arryP) {
+	return arrayGetNElems(arryP) * arrayGetElemSz(arryP);
+}
+
 /****** Maps ******/
 Error mapNew(Map **mapPP, const U8 elemSz, const U16 nElems) {
 	Error e = jbAlloc((void**) mapPP, sizeof(Map), 1);
