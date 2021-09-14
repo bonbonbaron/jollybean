@@ -27,6 +27,8 @@ Error arrayNew(void **arryPP, U32 elemSz, U32 nElems);
 void arrayDel(void **arryPP);
 U32 arrayGetNElems(const void *arryP);
 U32 arrayGetElemSz(const void *arryP);
+void* arrayGetEndPtr(const void *arryP, S32 endIdx);
+void arrayIniPtrs(const void *arryP, void **startP, void **endP, S32 endIdx);
 
 /* Maps */
 typedef struct {
