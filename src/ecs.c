@@ -1,5 +1,9 @@
 #include "ecs.h"
 
+/* Go ahead and provide these functions here:
+	1) Histogramming entitieSeeds' genes
+	2) Validating entitySeeds' behaviors (e.g. every system function-index is lower than the system's highest function index enum)
+*/
 /* Components in Arrays: Thought Process
  *     ecs.c sees entities and components as a unit. System *implementations*, however, usually see only the components. They do this by jumping over the entities as they loop through. The components are pulled out of storage and lumped together with entities as they enter systems' bowels. They swap together, move together, delete together; they always stay together. */
 
