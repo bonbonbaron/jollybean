@@ -151,7 +151,7 @@ static __inline void* _mapGetNextEmptyElemP(const Map *mapP, const U8 key) {
 
 Error mapSet(Map *mapP, const U8 key, const void *valP) {
 	if (_mapIsValid(mapP)) {
-		void *elemP = _mapGetNextEmptyElemP(mapP, key);
+		void *elemP = _mapGetNextEmptyElemP(mapP, key);  /* TODO: replace with a function that finds the proper index no matter what. */
 
 		if (elemP != NULL) {
 			/* Copy value into map element. */
