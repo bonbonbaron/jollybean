@@ -38,7 +38,7 @@ __inline static U8 _cmpIsActive(const System *sP, const ECLocation *eclP) {
 	return (eclP->ecIdx < sP->activityA[eclP->activityIdx].firstInactiveIdx);
 }
 
-__inline static _updateECLocation(ECLocation *eclP, U8 dstActIdx, U8 dstEcIdx, void *dstEcP) {
+__inline static void _updateECLocation(ECLocation *eclP, U8 dstActIdx, U8 dstEcIdx, void *dstEcP) {
   eclP->activityIdx = dstActIdx;
   eclP->ecIdx       = dstEcIdx;
   eclP->ecP         = dstEcP;
@@ -64,24 +64,27 @@ static void _swapECs(System *sP, void *srcEcP, U8 dstActIdx, U8 dstEcIdx) {
 /* Deactivates component by swapping it with the last active slot and decrementing the first active index beforehand. */
 __inline static void _deactivateEC(System *sP, Entity entity) {
   ECLocation *eclP = _getECLocation(sP, entity);
-  _swapECs(sP, eclP->ecP, eclP->activityIdx, --sP->activityA[eclP->activityIdx].firstInactiveIdx);  /* swap with last active EC */
+  _swapECs(sP, eclP->ecP, eclP->activityIdx, --sP->activityA[eclP->activityIdx].firstInactiveIdx);  /* swap w/ last active EC */
 }
 
 /* Activates component by swapping it with the first inactive slot and incrementing the first active index afterward. */
 __inline static void _activateEC(System *sP, Entity entity) {
   ECLocation *eclP = _getECLocation(sP, entity);
-  _swapECs(sP, eclP->ecP, eclP->activityIdx, sP->activityA[eclP->activityIdx].firstInactiveIdx++);  /* swap with last active EC */
+  _swapECs(sP, eclP->ecP, eclP->activityIdx, sP->activityA[eclP->activityIdx].firstInactiveIdx++);  /* swap w/ first inactive EC */
 }
 
 /* Kind of a no-brainer that if you're transferring something, it's going to be active in its destination activity. */
 __inline static void _startEcActivity(System *sP, Entity entity, U8 dstActivity) {
   ECLocation *eclP = _getECLocation(sP, entity);
+	if (eclP != NULL)
+		return;
   if (eclP->activityIdx == dstActivity)
     _activateEC(sP, entity);
   else {
-    /* Move EC in destination out of the way. */
+    /* Move EC in destination out of the way then fill vacated spot with source EC. */
     void *ecP = _getEcPByIndex(sP, &sP->activityA[dstActivity], sP->activityA[dstActivity].firstInactiveIdx - 1);
     _mvEC(sP, ecP, dstActivity, sP->activityA[dstActivity].firstEmptyIdx++);  /* You should check if destination is already emtpy first. */
+		_mvEC(sP, eclP->ecP, dstActivity, sP->activityA[dstActivity].firstInactiveIdx++);
   }
 }
 
@@ -95,26 +98,24 @@ static void iniActivity(SysFP *funcPtr, Activity *aP) {
 	
 Error sysNew(System **sPP, U8 sysID, const U8 activityIdx, SysFP *funcPtrA, const U8 ecSz) {
   U8 nFuncs;
-	Error e = jbAlloc(sPP, sizeof(System), 1);
+	Error e = jbAlloc((void**) sPP, sizeof(System), 1);
 	/* Allocate activity array. */
 	if (!e) {
 		SysFP *funcP = funcPtrA;
 		for (nFuncs = 0; funcP != NULL; ++funcP, ++nFuncs);
-		e = arrayNew(&(*sPP)->activityA, sizeof(Activity), nFuncs);
+		e = arrayNew((void**) &(*sPP)->activityA, sizeof(Activity), nFuncs);
   }
   if (!e) 
-    e = jbAlloc(&(*sPP)->swapPlaceholderP, ecSz, 1);
+    e = jbAlloc((void**)&(*sPP)->swapPlaceholderP, ecSz, 1);
   if (!e) {
     (*sPP)->ecSz = ecSz;
 	  /* These are left to parent system to allocate for better performance. */
 	  (*sPP)->cmpLocationMapP = NULL;
-	  (*sPP)->inboxA = NULL;
-	  (*sPP)->outboxA = NULL;
   } else {
     /* If something bad happened, clean up. */
     arrayDel((void**) &(*sPP)->activityA);
     jbFree((void**) &(*sPP)->swapPlaceholderP);
-    jbFree(sPP);
+    jbFree((void**) sPP);
   }
 
 	return e;
@@ -138,7 +139,7 @@ void sysIni(System *sP, U8 cSz, SysFP *funcPtrA) {
 Error sysNewCmpsA(const System *sP, const U8 activityIdx, const U8 nCmps) {
 	/* Include Entity between every Component. */
 	if (_validateActivityIdx(sP, activityIdx))
-		return arrayNew(&sP->activityA[activityIdx].ecA, sP->ecSz, nCmps);
+		return arrayNew((void**) &sP->activityA[activityIdx].ecA, sP->ecSz, nCmps);
 	return E_BAD_ARGS;
 }
 
@@ -157,24 +158,31 @@ static void sysIniCmp(const System *sP, const U8 activityIdx, const Entity entit
 static void _sysDelActivities(System *sP) {
 	for (U8 i = 0, nActivities = arrayGetNElems(sP->activityA); i < nActivities; i++) 
 		arrayDel((void**) &sP->activityA[i]);
-	arrayDel(&sP->activityA);
+	arrayDel((void**) &sP->activityA);
 }	
 
-Error sysNewMailbox(Message **mailboxPP, U32 nMailSlots) {
-	return arrayNew(mailboxPP, sizeof(Message), nMailSlots);
+Error sysNewMailbox(Mailbox **mailboxPP, U32 nMailSlots) {
+	Error e = jbAlloc((void**)mailboxPP, sizeof(Mailbox), 1);
+	if (!e)
+		e = arrayNew((void**) mailboxPP, sizeof(Message), nMailSlots);
+	if (e) {
+		arrayDel((void**) mailboxPP);
+		jbFree((void**)mailboxPP);
+	}
+	return e;
 }
 		
-static void _clrMailbox(Message *mailboxP) {
-	memset(mailboxP, 0, sizeof(Message) * arrayGetNElems(mailboxP));
+static void _clrMailbox(Mailbox *mailboxP) {
+	memset(mailboxP->msgA, 0, sizeof(Message) * arrayGetNElems(mailboxP));
 }
 
-static void _sysDelMailboxes(System *sP) {
-	arrayDel(&sP->inboxA);
-	arrayDel(&sP->outboxA);
+static void _sysDelMailboxMsgs(System *sP) {
+	arrayDel((void**)&sP->inbox.msgA);
+	arrayDel((void**)&sP->outbox.msgA);
 }
 
 void sysReset(System *sP) {
-	
+	/* TODO */
 }
 
 void sysToggleActive(System *sP) {
@@ -185,10 +193,13 @@ __inline static U8 _getNActivities(const System *sP) {
   return (U8) arrayGetNElems((void*) sP->activityA);
 }
 
+void sysIniCPtrs(System *sP, Activity *aP, void **startPP, void **endPP) {
+	*startPP = (void*) (((U8*) aP->ecA) + sizeof(Entity));
+	*endPP   = (void*) (((U8*) _getEcPByIndex(sP, aP, arrayGetNElems(aP->ecA) - 1)) + sizeof(Entity));
+}
 
 /* This used to validate messages. Now, we boost performance validating entity behaviors externally only once at load-time instead. */
-Error sysReadMessage(System *sP, Message *msgP, U8 maxCmdID) {
-  ECLocation *eclP;
+void sysReadMessage(System *sP, Message *msgP) {
 	if (sP != NULL && msgP != NULL) {
 		switch(msgP->cmdType) {
 			/* Message intends a system-wide response. All systems share the same pool of systemwide functions. */
@@ -197,24 +208,35 @@ Error sysReadMessage(System *sP, Message *msgP, U8 maxCmdID) {
 				break;
 			/* Message intends a repeating function call on a component. */
 			case REPEATING_CMP_CMD:
-				eclP = _getECLocation(sP, msgP->toID);
-        if (eclP != NULL) {
-        
-        }
+				_startEcActivity(sP, msgP->toID, msgP->cmd);
 				break;
 			/* Message intends a one-time function call on a component. */
 			case ONE_OFF_CMP_CMD:
-				// TODO: Change this to be one-off functions. One-offs are simply toggling  activeness or moving cmp to a new loop.
+				(*sP->oneOffFPA[msgP->cmd])(sP, msgP->toID, msgP->misc);
 				break;
 			default:
 				break;
 		}
 	}
-  return SUCCESS;
 }
 
-// sysIniPtrs: move iniPtr past 1st entity and  calculate endPtr w/ firstInactiveIdx
-// sysReadMsg  
-// sysReadInbox
-// sysWriteOutbox   <-- this is called by system functions
-// sysRun... automate away the mail I/O and activity-processing inside it :)
+void sysReadInbox(System *sP) {
+	Message *msgP, *msgLastP;
+	arrayIniPtrs(sP->inbox.msgA, (void**) &msgP, (void**) &msgLastP, sP->inbox.nMsgs);
+	while (msgP < msgLastP)
+		sysReadMessage(sP, msgP++);
+}
+
+/* sysWriteOutbox() is called by implemented systems when specific events occur that may interest the outside world. */
+void sysWriteOutbox(System *sP, Message *msgP) {
+	memcpy((void*) &sP->outbox.msgA[sP->outbox.nMsgs++], msgP, sizeof(Message));
+}
+
+/* This is how the entire ECS framework works. */
+void sysRun(System *sP) {
+	sysReadInbox(sP);
+	Activity *aP, *aEndP;
+	arrayIniPtrs(sP->activityA, (void**) &aP, (void**) &aEndP, -1);
+	while (aP < aEndP) 
+		(*aP->sysFP)(sP, aP->ecA);
+}

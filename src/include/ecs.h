@@ -62,6 +62,7 @@ struct _System;
 typedef Error (*SysFP)(struct _System *sysP, void *cmpA);
 typedef Error (*SysIniFP)(struct _System *sysP, void *cmpA);
 typedef void (*SysBasicFP)(struct _System *sP);
+typedef void (*SysOneOffFP)(struct _System *sP, Entity entity, U8 key);  /* optional key to a map or idx to array */
 
 typedef struct {
 	U8 activityIdx;
@@ -74,10 +75,16 @@ typedef struct {
 	CmdType        cmdType;
 	ECSType        toECSType;
 	U32            toID;          /* id of recipient */
+	U32            misc;          /* any miscellaneous content may be included here */
 	MsgUrgency		 urgency;       /* speed at which message must reach its destination */
 	Priority       priority;      /* priority which message command has over any existing component activity */
 	void *paramsP;                /* Parameters for the target to pass to the cmd function... IF tgtECSType == SYSTEM. */
 } Message;
+
+typedef struct {
+	Message *msgA;
+	U32 nMsgs;
+} Mailbox;
 
 // TODO: revamp sys.c to support an array of SysActivity elements instead of several disparate elements talking about the same thing.
 typedef struct {
@@ -88,16 +95,17 @@ typedef struct {
 	void *ecA;  /* components the above function operates on */
 } Activity;
 
-/* Systems are allocated. */
+/* Systems are agnostic. They know nothing outside themselves. They merely react to their inbox contents. When they're done, they populate their outboxes however they're programmed to; the outside world can do whatever with it that they wish. */
 typedef struct _System {
   U8           id;                /* this is needed to ensure messages are sent to the correct system */
 	U8           active;            /* boolean for whether this syskem should even operate */
 	U8           ecSz;              /* components are the same size in all of this system's activities */
-  void        *swapPlaceholderP;  /* An array to hold the place of swaps; avoids allocating a new placeholder every time. */
+  void        *swapPlaceholderP;  /* Avoids allocating a new placeholder every EC-swap. */
 	Map         *cmpLocationMapP;   /* maps component IDs to an element in an array of CmpAddresses */
-	Activity    *activityA;
-	Message     *inboxA;
-	Message     *outboxA;
+	Activity    *activityA;         /* Array of activities that loop through their components */
+	SysOneOffFP *oneOffFPA;         /* Array of one-off functions for system to perform one action immediately on an EC */
+	Mailbox      inbox;            /* Where commands come in from the outside world */
+	Mailbox      outbox;           /* Where this system talks to the outside world */
 } System;
 
 typedef enum {
@@ -105,6 +113,10 @@ typedef enum {
 	_MAX_SYSTEMWIDE_CMD_ID
 } SysCmdID;
 
-SysBasicFP sysBasicFuncs[];
+void sysToggleActive(System *sP);
+
+SysBasicFP sysBasicFuncs[] = {
+	sysToggleActive
+};
 
 #endif
