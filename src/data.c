@@ -4,6 +4,12 @@
 #include "bitCountMaskLUT.h"
 #include "bitFlagLUT.h"
 
+/* TODO: Implement mapSetCarefully() and mapSetQuickly() for ordered flag-setting. Fixes known out-of-order flag-setting bug. Wrap mapSet() 
+         around these with the condition of the index being smaller than the highest byte's previous byte count plus its own bit-count. Actually,
+	 just put this condition around the actual setting. Add function to shift everything to the right from the target index. 
+	 
+	 Also add code to shift everything past target-removed index to the left if a bit-flag is un-set. */
+
 __inline Error jbAlloc(void **voidPP, U8 elemSz, U8 nElems) {
 	if (voidPP == NULL)
 		return E_BAD_ARGS;
