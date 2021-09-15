@@ -3,9 +3,13 @@
 /* Components in Arrays: Thought Process
  *     ecs.c sees entities and components as a unit. System *implementations*, however, usually see only the components. They do this by jumping over the entities as they loop through. The components are pulled out of storage and lumped together with entities as they enter systems' bowels. They swap together, move together, delete together; they always stay together. */
 
+__inline static U8 _getNActivities(const System *sP) {
+  return (U8) arrayGetNElems((void*) sP->activityA);
+}
+
 /* Only inspect every possible messaging error at load-time. Do not inspect every single message-reading. */
 __inline static U8 _validateActivityIdx(const System *sP, const U8 activityIdx) { 
-	return (activityIdx < (U8) arrayGetNElems(sP->activityA));
+	return (activityIdx < _getNActivities(sP));
 }
 
 /* Only inspect every possible messaging error at load-time. Do not inspect every single message-reading. */
@@ -156,8 +160,8 @@ static void sysIniCmp(const System *sP, const U8 activityIdx, const Entity entit
 }
 
 static void _sysDelActivities(System *sP) {
-	for (U8 i = 0, nActivities = arrayGetNElems(sP->activityA); i < nActivities; i++) 
-		arrayDel((void**) &sP->activityA[i]);
+	for (U8 i = 0, nActivities = _getNActivities(sP); i < nActivities; i++) 
+		arrayDel((void**) &sP->activityA[i].ecA);
 	arrayDel((void**) &sP->activityA);
 }	
 
@@ -189,42 +193,38 @@ void sysToggleActive(System *sP) {
 	sP->active = !(sP->active);
 }
 
-__inline static U8 _getNActivities(const System *sP) {
-  return (U8) arrayGetNElems((void*) sP->activityA);
-}
-
 void sysIniCPtrs(System *sP, Activity *aP, void **startPP, void **endPP) {
 	*startPP = (void*) (((U8*) aP->ecA) + sizeof(Entity));
 	*endPP   = (void*) (((U8*) _getEcPByIndex(sP, aP, arrayGetNElems(aP->ecA) - 1)) + sizeof(Entity));
 }
 
 /* This used to validate messages. Now, we boost performance validating entity behaviors externally only once at load-time instead. */
-void sysReadMessage(System *sP, Message *msgP) {
-	if (sP != NULL && msgP != NULL) {
-		switch(msgP->cmdType) {
-			/* Message intends a system-wide response. All systems share the same pool of systemwide functions. */
-			case SYSTEMWIDE_CMD:
-			  (*sysBasicFuncs[msgP->cmd])(sP);
-				break;
-			/* Message intends a repeating function call on a component. */
-			case REPEATING_CMP_CMD:
-				_startEcActivity(sP, msgP->toID, msgP->cmd);
-				break;
-			/* Message intends a one-time function call on a component. */
-			case ONE_OFF_CMP_CMD:
-				(*sP->oneOffFPA[msgP->cmd])(sP, msgP->toID, msgP->misc);
-				break;
-			default:
-				break;
-		}
+__inline static void sysReadMessage(System *sP, Message *msgP) {
+	switch(msgP->cmdType) {
+		/* Message intends a system-wide response. All systems share the same pool of systemwide functions. */
+		case SYSTEMWIDE_CMD:
+			(*sysBasicFuncs[msgP->cmd])(sP);
+			break;
+		/* Message intends a repeating function call on a component. */
+		case REPEATING_CMP_CMD:
+			_startEcActivity(sP, msgP->toID, msgP->cmd);
+			break;
+		/* Message intends a one-time function call on a component. */
+		case ONE_OFF_CMP_CMD:
+			(*sP->oneOffFPA[msgP->cmd])(sP, msgP->toID, msgP->misc);
+			break;
+		default:
+			break;
 	}
 }
 
 void sysReadInbox(System *sP) {
-	Message *msgP, *msgLastP;
-	arrayIniPtrs(sP->inbox.msgA, (void**) &msgP, (void**) &msgLastP, sP->inbox.nMsgs);
-	while (msgP < msgLastP)
-		sysReadMessage(sP, msgP++);
+	if (sP != NULL && sP->inbox.msgA != NULL) {
+		Message *msgP, *msgLastP;
+		arrayIniPtrs(sP->inbox.msgA, (void**) &msgP, (void**) &msgLastP, sP->inbox.nMsgs);
+		while (msgP < msgLastP)
+			sysReadMessage(sP, msgP++);
+	}
 }
 
 /* sysWriteOutbox() is called by implemented systems when specific events occur that may interest the outside world. */
