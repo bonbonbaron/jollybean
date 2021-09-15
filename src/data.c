@@ -173,18 +173,11 @@ Error mapSet(Map *mapP, const U8 key, const void *valP) {
 /************ HISTOGRAMS ************/
 /************************************/
 
-Error histoU8New(U32 **histoPP, const U8 *srcA, const U32 maxVal) {
-	if (histoPP == NULL || srcA == NULL) {
+Error histoU8New(U32 **histoPP, const U32 maxVal) {
+	if (histoPP == NULL) {
 		return E_BAD_ARGS;
-  }
-	Error e = arrayNew((void**) histoPP, sizeof(U32), maxVal);
-	if (!e) {
-		U8 *u8P = (U8*) srcA;
-		const U8 *u8EndP = u8P + maxVal;
-		U32 *histoP = *histoPP;
-		while (u8P < u8EndP) 
-			histoP[*u8P++]++;
 	}
+	Error e = arrayNew((void**) histoPP, sizeof(U32), maxVal);
 	return e;
 }	
 
