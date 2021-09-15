@@ -32,12 +32,10 @@ __inline void jbFree(void **voidPP) {
 Error arrayNew(void **arryPP, U32 elemSz, U32 nElems) {
 	U32 *ptr;
 
-	if (elemSz <= 0 || nElems < 0 || arryPP == NULL) {
+	if (elemSz <= 0 || nElems < 0 || arryPP == NULL) 
 		return E_BAD_ARGS;  /* TODO: replace with reasonable error type */
-	}
-	if (nElems == 0) {
+	if (nElems == 0) 
 		*arryPP = NULL;
-	}
 	else {
 		ptr = (U32*) malloc((elemSz * nElems) + (2 * sizeof(U32)));
 		if (ptr == NULL) 
@@ -51,12 +49,10 @@ Error arrayNew(void **arryPP, U32 elemSz, U32 nElems) {
 }
 	
 void arrayDel(void **arryPP) {
-	if (arryPP != NULL) {
-		if (*arryPP != NULL) {
-			U32 *ptr = *arryPP;
-			free((ptr) - 2);
-			*arryPP = NULL;
-		}
+	if (arryPP != NULL && *arryPP != NULL) {
+		U32 *ptr = *arryPP;
+		free((ptr) - 2);
+		*arryPP = NULL;
 	}
 }
 
@@ -82,15 +78,15 @@ U32 arrayGetElemSz(const void *arryP) {
 
 /* Rule here is "while (ptr < endPtr)". */
 void* arrayGetEndPtr(const void *arryP, S32 endIdx) {
-  if (endIdx < 0)
-	  return ((U8*) arryP) + (arrayGetNElems(arryP) * arrayGetElemSz(arryP));
-  else 
-    return ((U8*) arryP) + (endIdx * arrayGetElemSz(arryP));
+	if (endIdx < 0)
+		return ((U8*) arryP) + (arrayGetNElems(arryP) * arrayGetElemSz(arryP));
+  	else 
+		return ((U8*) arryP) + (endIdx * arrayGetElemSz(arryP));
 }
 
 void arrayIniPtrs(const void *arryP, void **startP, void **endP, S32 endIdx) {
-  *startP = (void*) arryP;
-  *endP = arrayGetEndPtr(arryP, endIdx);
+	*startP = (void*) arryP;
+	*endP = arrayGetEndPtr(arryP, endIdx);
 }
 
 /***********************/
@@ -124,9 +120,8 @@ static __inline U8 _mapGetElemIdx(const U8 flags, const U8 prevBitCount, const U
 static __inline void* _mapGetElemP(const Map *mapP, const U8 key) {
 	const FlagInfo f = mapP->flagA[byteIdxLUT[key]];
 	const U8 flags = f.flags;
-  if (!_isFlagSet(flags, key)) {
+	if (!_isFlagSet(flags, key)) 
 		return NULL;
-  }
 	const U8 elemIdx = _mapGetElemIdx(flags, f.prevBitCount, key);
 	return (void*) ((U32) mapP->mapA + ((U32) elemIdx * (U32) arrayGetElemSz(mapP->mapA)));
 }	
