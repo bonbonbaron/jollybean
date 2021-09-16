@@ -135,21 +135,17 @@ __inline static void* _getElemP(const Map *mapP, const FlagInfo f, const U8 key)
 	return _arrayGetVoidElemPtr(mapP->mapA, _getElemIdx(f, key));
 }	
 
-__inline static void* _getSetElemP(const Map *mapP, const FlagInfo f, const U8 key) {
-	return _arrayGetVoidElemPtr(mapP->mapA, _getElemIdx(f, key) - 1);
-}	
-
 __inline static U32 _getMapElemSz(const Map *mapP) {
   return arrayGetElemSz(mapP->mapA);
 }
-
+#define TRY
 void* mapGet(const Map *mapP, const U8 key) {
 	if (_isMapValid(mapP)) {
 	  const FlagInfo f  = _getFlagInfo(mapP, key);
 	  if (!_isFlagSet(f.flags, key)) {
 		  return NULL;
     }
-		return _getSetElemP(mapP, f, key);  /* f is 2 bytes, so don't pass its pointer. */
+		return _getElemP(mapP, f, key);  /* f is 2 bytes, so don't pass its pointer. */
   }
 	return NULL;
 }
@@ -171,7 +167,7 @@ static Error preMapSet(const Map *mapP, const U8 key, void **elemPP, void **next
     *elemPP = _getElemP(mapP, f, key);
 	  if (*elemPP) {  /* Side-stepping mapGet() to avoid NULL pointers and double-calling _isMapValid() */
       U32 nBitsSet = _getNBitsSet(mapP);
-      U32 keyElemIdx = _getElemIdx(f, key);
+			U32 keyElemIdx = _getElemIdx(f, key);
       /* If something's already in the target index, move everything over one. */
       if (_idxIsPopulated(nBitsSet, keyElemIdx)) {
         U32 mapElemSz = _getMapElemSz(mapP);
