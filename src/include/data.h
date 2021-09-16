@@ -4,7 +4,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#define N_FLAG_BYTES (1)  /* This times 8 is the number of items JB's hash map can hold. Increase as necessary. */
+#define N_FLAG_BYTES (32)  /* This times 8 is the number of items JB's hash map can hold. Increase as necessary. */
+#define LAST_FLAG_BYTE_IDX (N_FLAG_BYTES - 1)
 #define N_FLAG_BITS (8 * N_FLAG_BYTES)
 
 typedef unsigned char U8;
@@ -27,7 +28,6 @@ Error arrayNew(void **arryPP, U32 elemSz, U32 nElems);
 void arrayDel(void **arryPP);
 U32 arrayGetNElems(const void *arryP);
 U32 arrayGetElemSz(const void *arryP);
-void* arrayGetEndPtr(const void *arryP, S32 endIdx);
 void arrayIniPtrs(const void *arryP, void **startP, void **endP, S32 endIdx);
 
 /* Maps */
