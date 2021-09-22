@@ -24,13 +24,9 @@ __inline static U8 _validateEcIdx(const System *sP, Activity *aP, const U8 ecIdx
 /* EC Getters and Setters */
 /* When activating or deactivating, you have to update the system's directory to its new location. */
 __inline static Entity _getEntity(const void *cmpP) {
-	return *((Entity*) cmpP);
+	return ((CmpHeader*) cmpP)->owner;
 }
 
-/* This may be unnecessary. We'll see. */
-__inline static void* _getComponentP(const void *cmpP) {
-	return ((U8*) cmpP) + (sizeof(Entity));
-}
 
 __inline static void* _getEcPByIndex(const System *sP, Activity *aP, U8 ecIdx) {
   return (void*) (((U8*) aP->ecA) + (sP->ecSz * ecIdx));
@@ -96,7 +92,7 @@ __inline static void _startEcActivity(System *sP, Entity entity, U8 dstActivity)
   }
 }
 
-static void iniActivity(SysFP *funcPtr, Activity *aP) {
+static void iniActivity(SysFP funcPtr, Activity *aP) {
 	aP->sysFP = funcPtr;
 	aP->active = 0;
 	aP->firstInactiveIdx = 0;
@@ -104,42 +100,38 @@ static void iniActivity(SysFP *funcPtr, Activity *aP) {
 	aP->ecA = NULL;
 }
 	
-Error sysNew(System **sPP, U8 sysID, const U8 activityIdx, SysFP *funcPtrA, const U8 ecSz) {
-  U8 nFuncs;
+Error sysNew(System **sPP, U8 sysID, const U8 ecSz, U8 nFuncs) {
 	Error e = jbAlloc((void**) sPP, sizeof(System), 1);
 	/* Allocate activity array. */
 	if (!e) {
-		SysFP *funcP = funcPtrA;
-		for (nFuncs = 0; funcP != NULL; ++funcP, ++nFuncs);
 		e = arrayNew((void**) &(*sPP)->activityA, sizeof(Activity), nFuncs);
   }
   if (!e) 
     e = jbAlloc((void**)&(*sPP)->swapPlaceholderP, ecSz, 1);
-  if (!e) {
-    (*sPP)->ecSz = ecSz;
-	  /* These are left to parent system to allocate for better performance. */
+	/* These are left to parent system to allocate for better performance. */
+  if (!e) 
 	  (*sPP)->cmpLocationMapP = NULL;
-  } else {
+  else {
     /* If something bad happened, clean up. */
     arrayDel((void**) &(*sPP)->activityA);
     jbFree((void**) &(*sPP)->swapPlaceholderP);
     jbFree((void**) sPP);
   }
-
 	return e;
 }
 
-void sysIni(System *sP, U8 cSz, SysFP *funcPtrA) {
+void sysIni(System *sP, U8 sysID, SysFP *funcPtrA, U8 ecSz) {
 		/* Populate activity array's function pointers. */
 	Activity *aP, *aEndP;
 	SysFP *funcP = funcPtrA;
   arrayIniPtrs((void*) sP->activityA, (void**) &aP, (void**) &aEndP, -1);
 	while (aP < aEndP)
-		iniActivity(funcP++, aP++);
+		iniActivity(*funcP++, aP++);
 	/* For performance, the parent system is in charge of allocating the component arrays within the activity array elements. */
 	/* Set individual settings. */
 	sP->active = 0;
-	sP->ecSz = cSz + sizeof(Entity);  /* Entities are squeezed between components */
+  sP->ecSz = ecSz;
+	sP->id = sysID;
 	sP->cmpLocationMapP = NULL;
 }
 
@@ -193,21 +185,26 @@ void sysReset(System *sP) {
 	/* TODO */
 }
 
+void sysDel(System **sPP) {
+	_sysDelMailboxMsgs(*sPP);
+	_sysDelActivities(*sPP);
+	jbFree((void**) sPP);
+}
+
 void sysToggleActive(System *sP) {
 	sP->active = !(sP->active);
 }
 
-void sysIniCPtrs(System *sP, Activity *aP, void **startPP, void **endPP) {
-	*startPP = (void*) (((U8*) aP->ecA) + sizeof(Entity));
-	*endPP   = (void*) (((U8*) _getEcPByIndex(sP, aP, arrayGetNElems(aP->ecA) - 1)) + sizeof(Entity));
-}
+SysBasicFP sysBasicFuncs[] = {
+	sysToggleActive
+};
 
 /* This used to validate messages. Now, we boost performance validating entity behaviors externally only once at load-time instead. */
 __inline static void sysReadMessage(System *sP, Message *msgP) {
 	switch(msgP->cmdType) {
 		/* Message intends a system-wide response. All systems share the same pool of systemwide functions. */
 		case SYSTEMWIDE_CMD:
-			(*sysBasicFuncs[msgP->cmd])(sP);
+			(sysBasicFuncs[msgP->cmd])(sP);
 			break;
 		/* Message intends a repeating function call on a component. */
 		case REPEATING_CMP_CMD:
@@ -242,5 +239,5 @@ void sysRun(System *sP) {
 	Activity *aP, *aEndP;
 	arrayIniPtrs(sP->activityA, (void**) &aP, (void**) &aEndP, -1);
 	while (aP < aEndP) 
-		(*aP->sysFP)(sP, aP->ecA);
+		(*aP->sysFP)(sP, aP, aP->ecA);
 }

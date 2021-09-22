@@ -101,14 +101,16 @@ Error mapNew(Map **mapPP, const U8 elemSz, const U16 nElems) {
     memset((*mapPP)->flagA, 0, sizeof(FlagInfo) * N_FLAG_BYTES);
   else {
     arrayDel((*mapPP)->mapA);
-    jbFree(mapPP);
+    jbFree((void**)mapPP);
   }
 	return e;
 }
 
 void mapDel(Map **mapPP) {
-	arrayDel(&(*mapPP)->mapA);
-	jbFree((void**) mapPP);
+	if (mapPP != NULL && *mapPP != NULL) {
+		arrayDel(&(*mapPP)->mapA);
+		jbFree((void**) mapPP);
+	}
 }
 
 __inline static U8 _isMapValid(const Map *mapP) {
@@ -150,7 +152,7 @@ void* mapGet(const Map *mapP, const U8 key) {
 	return NULL;
 }
 
-__inline static _getNBitsSet(const Map *mapP) {
+__inline static U32 _getNBitsSet(const Map *mapP) {
   return mapP->flagA[LAST_FLAG_BYTE_IDX].prevBitCount + bitCountLUT[mapP->flagA[LAST_FLAG_BYTE_IDX].flags];
 }
 /* Map SETTING functinos */
@@ -207,9 +209,8 @@ Error mapRem(Map *mapP, const U8 key) {
   U32 nBytesToMove;
   Error e = preMapSet(mapP, key, &elemP, &nextElemP, &nBytesToMove);
   if (!e) {
-    if (nBytesToMove) {
+    if (nBytesToMove) 
       memcpy(elemP, (const void*) nextElemP, nBytesToMove);
-    }
 		/* Unset flag. */
 		U8 byteIdx = byteIdxLUT[key];
 		mapP->flagA[byteIdx].flags &= ~bitFlagLUT[key];  /* key's bit position byteIdx'th byte */

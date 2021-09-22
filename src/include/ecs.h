@@ -2,6 +2,10 @@
 #define ECS_H
 #include "data.h"
 
+/* Makes stepping on components in EC arrays easier */
+#define STEP_CMP(cP, type) (cP = (type*)((U8*) cP + (sizeof(Entity) + (sizeof(type)))))
+
+
 /* Enums */
 typedef enum {
 	DIRECTOR_SYS_KEY,
@@ -30,17 +34,19 @@ typedef enum {
 	ONE_OFF_CMP_CMD
 } CmdType;
 
-/* This is how every system increments the component pointer. */
-#define INCR_CMP_P(ptr, stepSz) (((U8*) ptr) += stepSz)
-#define INI_CMP_P(ptr) (((U8*) ptr) + sizeof(Entity))
-
 struct _Component;
 
 /**********/
 /* Entity */
 /**********/
+
 typedef struct {
-	struct _Component *componentsA;
+	void *compSeedP;
+} Gene;
+
+typedef struct {
+	KeyValPair *personalityA;
+	Gene *geneA;
 } EntitySeed;
 
 typedef U8 Entity;  /* HAH! That's all an entity is!? A key to its components like we're a key to our atoms! */
@@ -59,7 +65,8 @@ typedef struct {
 /* System */
 /**********/
 struct _System;
-typedef Error (*SysFP)(struct _System *sysP, void *cmpA);
+struct _Activity;
+typedef Error (*SysFP)(struct _System *sysP, struct _Activity *aP, void *cmpA);
 typedef Error (*SysIniFP)(struct _System *sysP, void *cmpA);
 typedef void (*SysBasicFP)(struct _System *sP);
 typedef void (*SysOneOffFP)(struct _System *sP, Entity entity, U8 key);  /* optional key to a map or idx to array */
@@ -69,6 +76,21 @@ typedef struct {
 	U8 ecIdx;
   void *ecP;      /* Systems that use pointers to other systems' components may use double pointers to avoid requesting updated info. */
 } ECLocation;
+
+typedef U8 CmpType;
+
+typedef struct {
+	Entity owner;
+	CmpType type;
+} CmpHeader;
+
+typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;
+typedef struct {
+	Key sysKey;
+	U8  funcEnum;
+	Key miscKey;
+	Output  output;
+} Response;
 
 typedef struct {
 	U8						 cmd;
@@ -87,15 +109,15 @@ typedef struct {
 } Mailbox;
 
 // TODO: revamp sys.c to support an array of SysActivity elements instead of several disparate elements talking about the same thing.
-typedef struct {
+typedef struct _Activity {
 	U8 active; /* boolean for whether this function should even operate */
 	U8 firstInactiveIdx; /* marks the first inactive element's index */
 	U8 firstEmptyIdx; /* marks the first empty element's index */
-	SysFP *sysFP; /* function that runs on these components */
+	SysFP sysFP; /* function that runs on these components */
 	void *ecA;  /* components the above function operates on */
 } Activity;
 
-/* Systems are agnostic. They know nothing outside themselves. They merely react to their inbox contents. When they're done, they populate their outboxes however they're programmed to; the outside world can do whatever with it that they wish. */
+/* Systems are agnostic. They know nothing outside themselves. They just react to their inboxes. When they're done with that, they fill their outboxes. The outside world can do whatever with it that they wish. */
 typedef struct _System {
   U8           id;                /* this is needed to ensure messages are sent to the correct system */
 	U8           active;            /* boolean for whether this syskem should even operate */
@@ -113,10 +135,11 @@ typedef enum {
 	_MAX_SYSTEMWIDE_CMD_ID
 } SysCmdID;
 
+
 void sysToggleActive(System *sP);
 
-SysBasicFP sysBasicFuncs[] = {
-	sysToggleActive
-};
-
+void sysIniPtrs(System *sP, Activity *aP, void **startPP, void **endPP);
+Error sysNew(System **sPP, U8 sysID, const U8 ecSz, U8 nFuncs);
+void sysIni(System *sP, U8 sysID, SysFP *funcPtrA, U8 ecSz);
+void sysDel(System **sPP);
 #endif
