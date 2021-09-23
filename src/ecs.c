@@ -34,7 +34,7 @@ __inline static void* _getEcPByIndex(const System *sP, Activity *aP, U8 ecIdx) {
 
 /* Returns a component's location in the jagged array of components. Each row in the J-array corresponds to a function. */
 __inline static ECLocation* _getECLocation(System *sP, Entity entity) {
-	return (ECLocation*) mapGet(sP->cmpLocationMapP, entity);
+	return (ECLocation*) mapGet(sP->ecLocationMapP, entity);
 }
 
 /* Checks if the component, wherever it is in the jagged array, is before the function's stopping point in its array. */
@@ -110,7 +110,7 @@ Error sysNew(System **sPP, U8 sysID, const U8 ecSz, U8 nFuncs) {
     e = jbAlloc((void**)&(*sPP)->swapPlaceholderP, ecSz, 1);
 	/* These are left to parent system to allocate for better performance. */
   if (!e) 
-	  (*sPP)->cmpLocationMapP = NULL;
+	  (*sPP)->ecLocationMapP = NULL;
   else {
     /* If something bad happened, clean up. */
     arrayDel((void**) &(*sPP)->activityA);
@@ -132,7 +132,7 @@ void sysIni(System *sP, U8 sysID, SysFP *funcPtrA, U8 ecSz) {
 	sP->active = 0;
   sP->ecSz = ecSz;
 	sP->id = sysID;
-	sP->cmpLocationMapP = NULL;
+	sP->ecLocationMapP = NULL;
 }
 
 /* Parent system calls this on each system's activities after histogramming the entity seed data. */
@@ -144,7 +144,7 @@ Error sysNewCmpsA(const System *sP, const U8 activityIdx, const U8 nCmps) {
 }
 
 Error sysNewCmpMap(System *sP, U8 elemSz, U8 nElems) {
-  return mapNew(&sP->cmpLocationMapP, elemSz, nElems);
+  return mapNew(&sP->ecLocationMapP, elemSz, nElems);
 }
 
 
@@ -188,6 +188,7 @@ void sysReset(System *sP) {
 void sysDel(System **sPP) {
 	_sysDelMailboxMsgs(*sPP);
 	_sysDelActivities(*sPP);
+	mapDel(&(*sPP)->ecLocationMapP);
 	jbFree((void**) sPP);
 }
 

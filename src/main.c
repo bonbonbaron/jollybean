@@ -27,44 +27,54 @@ SysFP velFPA[] = { incVel, decVel, NULL };
 
 
 typedef enum {T1, T2, T3, T4, T5, T_NONE} Trigger;
-typedef enum {SCENE_1, SCENE_2} SceneType;
-typedef enum _SystemKey {K_SYS_MOTION, NUM_SYSTEMS} SystemKey;
-typedef enum { INCREASE_VELOCITY, DECREASE_VELOCITY, I_MTN_STOP_VEL, NUM_MTN_FUNCS} MotionFuncIdx;   
-typedef enum {K_MOVE_UP, K_MOVE_DOWN, K_MOVE_LEFT, K_MOVE_RIGHT, K_MOVE_STOP, K_NUM_MOVES} MotionKey;
+typedef enum {DEFAULT = 1, SCENE_1, SCENE_2} SceneType;
+typedef enum _SystemKey {MOTION, ANIMATION, IMAGE, RENDERING, NUM_SYSTEMS} SystemKey;
+typedef enum {INCREASE_VELOCITY, DECREASE_VELOCITY, I_MTN_STOP_VEL, NUM_MTN_FUNCS} MotionFuncIdx;   
+typedef enum {DONT_SWITCH, MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, MOVE_STOP, NUM_MOVES} MotionKey;
 /* You're going to have VERY FEW responses defined for each system! Wow!!! */
-/* Responses */
+/**************************************************************/
 Response 
-r1 = {K_SYS_MOTION, INCREASE_VELOCITY, K_MOVE_UP, NO_OUTPUT},
-r2 = {K_SYS_MOTION, INCREASE_VELOCITY, K_MOVE_UP, NO_OUTPUT},
-r3 = {K_SYS_MOTION, INCREASE_VELOCITY, K_MOVE_UP, NO_OUTPUT},
-r4 = {K_SYS_MOTION, INCREASE_VELOCITY, K_MOVE_UP, NO_OUTPUT},
-r5 = {K_SYS_MOTION, INCREASE_VELOCITY, K_MOVE_UP, NO_OUTPUT},
+/* Responses */
+r1 = {MOTION, INCREASE_VELOCITY, DONT_SWITCH, NO_OUTPUT},
+r2 = {MOTION, INCREASE_VELOCITY, MOVE_UP, NO_OUTPUT},
+r3 = {MOTION, INCREASE_VELOCITY, MOVE_UP, NO_OUTPUT},
+r4 = {MOTION, INCREASE_VELOCITY, MOVE_DOWN, NO_OUTPUT},
+r5 = {MOTION, INCREASE_VELOCITY, DONT_SWITCH, NO_OUTPUT},
 /* Response Sets */
 *rs1[] = RS_(&r1, &r2), 
-*rs2[] = RS_(&r2, &r3, &r4, &r5), 
+*rs2[] = RS_(&r2, &r4, &r5), 
 /* Response Set Sequences */
-**rsSeq1AA[] = RS_SEQ_(rs1, rs2),
-**rsSeq2AA[] = RS_SEQ_(rs2);
-
+**takingOutTheTrash[] = RS_SEQ_(rs1, rs2),
+**sayingHello[] = RS_SEQ_(rs2);
 /* Behaviors */
-typedef HardCodedMap Behavior;
 Behavior
 b1 = BEHAVIOR_(
-  SET_(T1, rsSeq1AA),
-  SET_(T2, rsSeq2AA)
+	RESPOND_TO_(T1) BY_(takingOutTheTrash),
+	RESPOND_TO_(T2) BY_(sayingHello)
 ),
 b2 = BEHAVIOR_(
-  SET_(T5, rsSeq1AA),
-  SET_(T3, rsSeq2AA),
-  SET_(T4, rsSeq2AA),
-  SET_(T2, rsSeq1AA),
-  SET_(T1, rsSeq2AA)
+	RESPOND_TO_(T1) BY_(takingOutTheTrash),
+	RESPOND_TO_(T5) BY_(sayingHello),
+	RESPOND_TO_(T3) BY_(sayingHello),
+	RESPOND_TO_(T2) BY_(takingOutTheTrash),
+	RESPOND_TO_(T4) BY_(sayingHello)
 ),
 b3 = BEHAVIOR_(
-	SET_(T3, rsSeq2AA)
+	RESPOND_TO_(T3) BY_(takingOutTheTrash)
+);
+/* Personalities */
+Personality
+p1 = PERSONALITY_(
+  IF_SCENE_TYPE_IS_(SCENE_1) BEHAVE_AS_(b1),
+	IF_SCENE_TYPE_IS_(SCENE_2) BEHAVE_AS_(b2),
+	OTHERWISE_BEHAVE_AS_(b3)
+),
+p2 = PERSONALITY_(
+	IF_SCENE_TYPE_IS_(SCENE_2) BEHAVE_AS_(b2),
+	OTHERWISE_BEHAVE_AS_(b1)
 );
 
-
+#if 0
 U32 getNullTermALen(void *array, U32 elemSz) {
 	U32 i = 0;
 	U8 **elemPP = (U8**) array;
@@ -72,24 +82,8 @@ U32 getNullTermALen(void *array, U32 elemSz) {
 		++i;
 	return i;
 }
-	
-/***************************************************/
+#endif	
 
-Error mapIni(Map **mapPP, KeyValPair *keyValA) {
-	Error e = SUCCESS;
-
-	U32 arrayLen = getNullTermALen((void*) keyValA, sizeof(KeyValPair));
-
-	if (arrayLen) {
-		e = mapNew(mapPP, keyValA[0]._valSz, arrayLen);
-		if (!e)
-			for (U32 i = 0; !e && i < arrayLen; i++) 
-				e = mapSet(*mapPP, keyValA[i].key, keyValA[i].valueP);
-	} else
-		*mapPP = NULL;
-
-	return e;
-}
 	
 
 

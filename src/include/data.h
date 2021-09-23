@@ -31,7 +31,7 @@ U32 arrayGetElemSz(const void *arryP);
 void arrayIniPtrs(const void *arryP, void **startP, void **endP, S32 endIdx);
 
 /* Maps */
-/* helpful macros for defining hard-coded key-value pairs in map seeds; also mitigates ugly "(void*)" and "{..., ...}" syntax */
+/* helpful macros for defining hard-coded key-value pairs in map seeds; also mitigates ugly "(void*)", null-termination, and "{..., ...}" syntax */
 #define SET_(key, val) {key, (void*) &val}
 #define MAP_END_ {T_NONE, NULL}
 #define MAP_(...) {__VA_ARGS__, MAP_END_}
@@ -42,9 +42,6 @@ void arrayIniPtrs(const void *arryP, void **startP, void **endP, S32 endIdx);
 	NULL, /* prevents multiple copies */ \
 	MAP_(__VA_ARGS__) \
 }
-#define BEHAVIOR_(...) HARD_CODED_MAP_(void**, __VA_ARGS__)
-#define RS_(...) {__VA_ARGS__, NULL}   /* Response Set Sequence (must be null-terminated) */
-#define RS_SEQ_(...) {__VA_ARGS__, NULL}   /* Response Set Sequence (must be null-terminated) */
 
 typedef struct {
 	U8 prevBitCount;
@@ -72,7 +69,7 @@ typedef struct {
 
 Error mapNew(Map **mapPP, const U8 elemSz, const U16 nElems);
 void  mapDel(Map **mapPP);
-Error mapIni(Map **mapPP, KeyValPair *kvA);   /* from an array of KeyValPairs */
+Error mapIni(Map **mapPP, HardCodedMap *hcMapP);   /* from an array of KeyValPairs */
 Error mapSet(Map *mapP, const U8 key, const void *valP);
 void* mapGet(const Map *mapP, const U8 key);
 

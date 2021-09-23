@@ -106,6 +106,25 @@ Error mapNew(Map **mapPP, const U8 elemSz, const U16 nElems) {
 	return e;
 }
 
+Error mapIni(Map **mapPP, HardCodedMap *hcMapP) {
+	Error e = SUCCESS;
+
+	//U32 arrayLen = getNullTermALen((void*) keyValA, sizeof(KeyValPair));
+	if (mapPP == NULL && hcMapP == NULL) 
+		return E_BAD_ARGS;
+	if (hcMapP->mapP == NULL) {
+		e = mapNew(&hcMapP->mapP, hcMapP->_elemSz, hcMapP->_nKeyValPairs);
+		if (!e) 
+			for (U32 i = 0; !e && i < hcMapP->_nKeyValPairs; i++) 
+				e = mapSet(*mapPP, hcMapP->keyValA[i].key, hcMapP->keyValA[i].valueP);
+	}
+	
+	if (!e)
+		*mapPP = hcMapP->mapP;
+
+	return e;
+}
+
 void mapDel(Map **mapPP) {
 	if (mapPP != NULL && *mapPP != NULL) {
 		arrayDel(&(*mapPP)->mapA);
