@@ -68,6 +68,10 @@ U32 arrayGetElemSz(const void *arryP) {
 	}
 }
 
+__inline static void* _fast_arrayGetVoidElemPtr(const void *arryP, S32 idx) {
+	return (void*) ((U8*) arryP + (idx * arrayGetElemSz(arryP)));
+}
+
 __inline static void* _arrayGetVoidElemPtr(const void *arryP, S32 idx) {
   const U32 nElems = arrayGetNElems(arryP);
   /* If idx < 0, return void pointer past end of array. */
@@ -153,7 +157,7 @@ __inline static U32 _getElemIdx(const FlagInfo f, const U8 key) {
 }
 
 __inline static void* _getElemP(const Map *mapP, const FlagInfo f, const U8 key) {
-	return _arrayGetVoidElemPtr(mapP->mapA, _getElemIdx(f, key));
+	return _fast_arrayGetVoidElemPtr(mapP->mapA, _getElemIdx(f, key));
 }	
 
 __inline static U32 _getMapElemSz(const Map *mapP) {

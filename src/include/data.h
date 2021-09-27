@@ -17,6 +17,9 @@ typedef int S32;
 
 #include "errors.h"
 
+/* Arg-counting macro, useful for getting size of hard-coded arrays and maps */
+#define NUM_ARGS_(_type, ...) sizeof((_type[]){__VA_ARGS__}) / sizeof(_type)
+
 /* Basic utils */
 Error jbAlloc(void **voidPP, U8 elemSz, U8 nElems);
 void  jbFree(void **voidPP);
@@ -24,6 +27,25 @@ extern U8 bitCountLUT[];
 extern U8 byteIdxLUT[];
 
 /* Arrays */
+typedef struct {
+	U16 _enum;
+	void *valP;
+} EnumValPair;
+
+typedef struct {
+	U32         _elemSz;
+	U32         _nEnumValPairs;
+	void        *arrayP;       /* defaults to NULL to prevent copies */
+	EnumValPair  enumValA[];
+} HardCodedArray;
+
+#define HARD_CODED_ARRAY_(_type, ...) { \
+	sizeof(_type), \
+	NUM_ARGS_(EnumValPair, __VA_ARGS__), \
+	NULL, /* prevents multiple copies */ \
+	{__VA_ARGS__} \
+}
+
 Error arrayNew(void **arryPP, U32 elemSz, U32 nElems);
 void arrayDel(void **arryPP);
 U32 arrayGetNElems(const void *arryP);
@@ -33,9 +55,7 @@ void arrayIniPtrs(const void *arryP, void **startP, void **endP, S32 endIdx);
 /* Maps */
 /* helpful macros for defining hard-coded key-value pairs in map seeds; also mitigates ugly "(void*)", null-termination, and "{..., ...}" syntax */
 #define SET_(key, val) {key, (void*) &val}
-#define MAP_END_ {T_NONE, NULL}
-#define MAP_(...) {__VA_ARGS__, MAP_END_}
-#define NUM_ARGS_(_type, ...) sizeof((_type[]){__VA_ARGS__}) / sizeof(_type)
+#define MAP_(...) {__VA_ARGS__}
 #define HARD_CODED_MAP_(_type, ...) { \
 	sizeof(_type), \
 	NUM_ARGS_(KeyValPair, __VA_ARGS__), \

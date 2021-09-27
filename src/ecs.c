@@ -32,7 +32,7 @@ __inline static void* _getEcPByIndex(const System *sP, Activity *aP, U8 ecIdx) {
   return (void*) (((U8*) aP->ecA) + (sP->ecSz * ecIdx));
 }
 
-/* Returns a component's location in the jagged array of components. Each row in the J-array corresponds to a function. */
+/* Returns a component's location in the jagged array of components.  */
 __inline static ECLocation* _getECLocation(System *sP, Entity entity) {
 	return (ECLocation*) mapGet(sP->ecLocationMapP, entity);
 }

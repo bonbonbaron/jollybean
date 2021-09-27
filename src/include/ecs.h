@@ -46,32 +46,26 @@ typedef enum {
 typedef HardCodedMap Behavior;
 typedef HardCodedMap Personality;
 
-struct _Component;
-
 /**********/
 /* Entity */
 /**********/
-
+struct _CmpHeader;
 typedef struct {
-	void *compSeedP;
-} Gene;
-
-typedef struct {
-	KeyValPair *personalityA;
-	Gene *geneA;
+	Personality *personalityP;
+	struct _CmpHeader **geneA;
 } EntitySeed;
 
-typedef U8 Entity;  /* HAH! That's all an entity is!? A key to its components like we're a key to our atoms! */
+typedef U8 Entity;  
 
 /*************/
 /* Component */
 /*************/
-typedef struct {
-	U8 sysKey;
-	U8 cmpSz;  /* this size does not include the Entity byte */
-	void *cmpDataP;
-	Map *cmpMapP;  /* For things like animation, this is crucial. We won't copy entire maps to a system; just the cmps' init vals. */
-} ComponentSeed;
+typedef U8 CmpType;
+
+typedef struct _CmpHeader {
+	Entity owner;   /* necessary to know what entity to affect */
+	CmpType type;   /* necessary to know what system this component belongs to */
+} CmpHeader;      /* size is inferred by system pointed to by type */
 
 /**********/
 /* System */
@@ -88,13 +82,6 @@ typedef struct {
 	U8 ecIdx;
   void *ecP;      /* Systems that use pointers to other systems' components may use double pointers to avoid requesting updated info. */
 } ECLocation;
-
-typedef U8 CmpType;
-
-typedef struct {
-	Entity owner;
-	CmpType type;
-} CmpHeader;
 
 typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;
 typedef struct {
