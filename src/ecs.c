@@ -147,13 +147,14 @@ Error sysNewCmpMap(System *sP, U8 elemSz, U8 nElems) {
   return mapNew(&sP->ecLocationMapP, elemSz, nElems);
 }
 
-
+#if 0
 static void sysIniCmp(const System *sP, const U8 activityIdx, const Entity entity, const void *cmpP) {
   if (_validateActivityIdx(sP, activityIdx)) {
     Activity *aP = &sP->activityA[activityIdx];
   	memcpy(_getEcPByIndex(sP, aP, aP->firstEmptyIdx++), cmpP, sP->ecSz);
   }
 }
+#endif
 
 static void _sysDelActivities(System *sP) {
 	for (U8 i = 0, nActivities = _getNActivities(sP); i < nActivities; i++) 
@@ -172,9 +173,11 @@ Error sysNewMailbox(Mailbox **mailboxPP, U32 nMailSlots) {
 	return e;
 }
 		
+#if 0  /* get rid of compiler warnings for now */
 static void _clrMailbox(Mailbox *mailboxP) {
 	memset(mailboxP->msgA, 0, sizeof(Message) * arrayGetNElems(mailboxP));
 }
+#endif
 
 static void _sysDelMailboxMsgs(System *sP) {
 	arrayDel((void**)&sP->inbox.msgA);

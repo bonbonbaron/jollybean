@@ -114,7 +114,7 @@ Error mapIni(Map **mapPP, HardCodedMap *hcMapP) {
 	Error e = SUCCESS;
 
 	//U32 arrayLen = getNullTermALen((void*) keyValA, sizeof(KeyValPair));
-	if (mapPP == NULL && hcMapP == NULL) 
+	if (hcMapP == NULL) 
 		return E_BAD_ARGS;
 	if (hcMapP->mapP == NULL) {
 		e = mapNew(&hcMapP->mapP, hcMapP->_elemSz, hcMapP->_nKeyValPairs);
@@ -123,7 +123,8 @@ Error mapIni(Map **mapPP, HardCodedMap *hcMapP) {
 				e = mapSet(*mapPP, hcMapP->keyValA[i].key, hcMapP->keyValA[i].valueP);
 	}
 	
-	if (!e)
+	/* Dev may or may not want to store the mapP somewhere else for easy access. */
+	if (!e && mapPP != NULL)
 		*mapPP = hcMapP->mapP;
 
 	return e;

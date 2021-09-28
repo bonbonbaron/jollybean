@@ -72,9 +72,68 @@ typedef struct {
 	U16 y;
 } Position;
 
+/* genePool.type is binary. It determines whether a gene is selected from the pool by 
+ * querying one or more flags with a mask, which outputs 0 or 1 to index a binary array;
+ * or simply by using an entire [Key] element from the game state to access a gene map. */
+typedef enum {UNARY, BINARY, NONBINARY} GenePoolType;
+typedef struct {
+	U8 type;  /* Forcing one-byte storage instead of letting GenePoolType expand ot 4 */
+	union {
+		struct {
+			void *dataP;
+		} unary;
+		struct {
+			U8 mask;         
+			U8 expVal;       /* the masked data must equal expVal to index 1. Otherwise 0. */
+			U8 *dataP;
+			void *binaryPA[];
+		} binary;
+		struct {
+			Key *keyP;
+			HardCodedMap *hcmP;
+		} nonbinary;
+	} data;
+} GenePool;
+
+/* GenePool.type determines which function in the below array accesses the data. */
+/* Unary gene-selection */
+void* getUnaryGene(GenePool *gpP) {
+	return gpP->data.unary.dataP;
+}
+
+/* Binary gene-selection */
+void* getBinaryGene(GenePool *gpP) {
+	return &gpP->data.binary.binaryPA[((*gpP->data.binary.dataP & gpP->data.binary.mask) == gpP->data.binary.mask)];
+}
+
+/* Nonbinary gene-selection */
+void* getNonbinaryGene(GenePool *gpP) {
+	Error e = SUCCESS;
+	void *resultP = NULL;
+
+	if (gpP->data.nonbinary.hcmP->mapP == NULL) 
+		e = mapIni(NULL, gpP->data.nonbinary.hcmP);
+	if (!e)
+		resultP = mapGet(gpP->data.nonbinary.hcmP->mapP, *gpP->data.nonbinary.keyP);
+
+	return resultP;
+}
+
+typedef void* (*GetGeneFP)(GenePool *gpP);
+GetGeneFP getGeneFPA[] = {getUnaryGene, getBinaryGene, getNonbinaryGene};
+
+void* getGene(GenePool *gpP) {
+	/* No need for internal NULL-checks when wrapper does it here. */
+	if (gpP != NULL)
+		return (*getGeneFPA[gpP->type])(gpP);
+	return NULL;
+}
+
+
+
 // So if I wanted to store a component like that in memory...
 #define MOTION_COMPONENT_(...) {CMP_HEADER_(MOTION), {{__VA_ARGS__}}}
-#define POSITION_COMPONENT_(...) {CMP_HEADER_(MOTION), __VA_ARGS__}
+#define POSITION_COMPONENT_(...) {CMP_HEADER_(POSITION), __VA_ARGS__}
 #define CMP_HEADER_(sysKey) {0, sysKey}
 
 Motion 
@@ -95,6 +154,17 @@ CmpHeader
 	GENES_(bowserGenes) = {
 		ADD_(bowserPos),
 		ADD_(gremlinMotion)};
+
+/* Game state maps to genes. So this is similar to personality. */
+/* Key is enum of game state. Internally, JB checks if the key'th bit in the game state bytes is 1.
+ * Some genes will be conditional; not all. Therefore, every gene needs a condition U8 or U16; better typedef GameStateCondition.
+ * The conditional genes need a fall-back option; maybe even multiple. Hell, that's literally a map. I'll make a U8 map to spare the RAM.
+ * Multiple conditions may be OR'ed together. 
+ * */
+#define IF_GAME_STATE(key) {key, 
+#define MANIFEST_AS(val) (void*) &val}
+#define OTHERWISE_MANIFEST_AS_(val) {DEFAULT, (void*) &val}
+
 
 /* You're going to have VERY FEW responses defined for each system! Wow!!! */
 /**************************************************************/
@@ -141,6 +211,8 @@ EntitySeed
 
 // Problem: Some genes vary from scene to scene, such as position. These will have to be blank in genes. Instead, they'll be dynamic genes, populated by the scene struct itself. 
 int main(int argc, char **argv) {
+	printf("size of GenePool: %d\n", sizeof(GenePool));
+
 	return 0;
 }
 
@@ -155,6 +227,7 @@ int main(int argc, char **argv) {
  \* 7) make mapIni() to generate maps from key-value arrays
  \* 8) make macros for personalities and their constituents to make game devs' lives easier
  * 11) make macros for making all kinds of data
+ * 12) lay foundation for game states' interplay with components/genes
  * 12) histogram components; at the same time, validate personality target systems against available systems in histo
  * 13) validate personality response function indices against target systems' activity array lengths
  * 14) validate that responses' universal keys return non-NULLs from entities' components
