@@ -161,40 +161,7 @@ void* getGene(GenePool *gpP) {
 #define POS_C_(...) {CMP_HEADER_(POSITION), __VA_ARGS__}
 #define CMP_HEADER_(sysKey) {0, sysKey}
 
-Motion
-	m1 = MTN_C_(1, 2, 3, 4, 5),
-	m2 = MTN_C_(6, 7, 8, 9, 10),
-	m3 = MTN_C_(11, 12, 13, 14, 15);
-
-Key key1 = 1;
-
-/* Gene pool storage macros */
-#if 0
-#define BINARY_GENE_POOL(mask_, expval_, dataName, binaryA) {\
-	.type = BINARY, \
-	.data.binary = {\
-		.keyP = &globalStateKey_,\
-		.hcm = \
-	} \
-}
-#endif
-
-/* Unary Example */
-/* Binary Example */
-/* Nonbinary Example */
-/* So genes will indeed exist in other folders just like I originally envisioned.
- * Everybody who wants one can grab it. */
-#if 0
-typedef struct {   /* 15 bytes */
-	U8          type;
-	U8          _elemSz;
-	U8          _nElems;
-	Key        *keyP;
-	Map        *mapP;       /* defaults to NULL to prevent copies */
-	KeyValPair *kvAP;        /* automagically generated via macro */
-} NonbinaryGene;
-#endif
-
+/* Gene storage macros */
 #define UNARY_GENE_(name_, cmpType_, ...) \
 	cmpType_ name_##UVal = __VA_ARGS__;\
 	UnaryGene name_##cmpType_##UGene = {\
@@ -211,21 +178,28 @@ typedef struct {   /* 15 bytes */
 		.binaryA = name_##BA};
 
 #define NONBINARY_GENE_(name_, cmpType_, globalStateKey_, ...) \
-	KeyValPair name_##NBKVA[] = {__VA_ARGS__};\
-	NonbinaryGene name_##cmpType_##NBGene  = {\
+	KeyValPair name_##NKVA[] = {__VA_ARGS__};\
+	NonbinaryGene name_##cmpType_##NGene  = {\
 		.type    = NONBINARY,\
 		._elemSz = sizeof(cmpType_),\
 		._nElems = NUM_ARGS_(KeyValPair, __VA_ARGS__),\
 		.keyP    = &globalStateKey_,\
 		.mapP    = NULL,\
-		.kvAP    = name_##NBKVA};
-NONBINARY_GENE_(mario, Motion, key1, {1, &m1}, {2, &m2}, {3, &m3});
+		.kvAP    = name_##NKVA};
+
+/* Examples */
+Key key1 = 1;
+Motion
+	m1 = MTN_C_(1, 2, 3, 4, 5),
+	m2 = MTN_C_(6, 7, 8, 9, 10),
+	m3 = MTN_C_(11, 12, 13, 14, 15);
+
+#define KV_(key_, val_) {key_, (const typeof(val_)) val_}
+NONBINARY_GENE_(mario, Motion, key1, KV_(1, &m1), KV_(2, &m2), KV_(3, &m3));
 BINARY_GENE_(mario, Motion, key1, 0xFF, 1, MTN_C_(1, 2, 3, 4, 5), MTN_C_(6, 7, 8, 9, 10));
+//BINARY_GENE_(mario, Motion, key1, 0xFF, 1, m1, m2);
 UNARY_GENE_(mario, Position, POS_C_(58, 47));
-
-//HardCodedMap hcm = HARD_CODED_MAP_(Motion, {1, &m1}, {2, &m2}, {3, &m3});
-//GenePool g1 = NONBINARY_GENE_POOL_(Motion, key1, {1, &m1}, {2, &m2}, {3, &m3}); 
-
+//TODO: make another binary and unary that can take a reference to a separate variable.
 
 /* You're going to have VERY FEW responses defined for each system! Wow!!! */
 /**************************************************************/
@@ -271,11 +245,9 @@ int main(int argc, char **argv) {
 	printf("size of nonbinary gene: %d\n", sizeof(NonbinaryGene));
 	printf("size of binary gene: %d\n", sizeof(BinaryGene));
 	printf("size of unary gene: %d\n", sizeof(UnaryGene));
-	printf("mario non-binary gene is at 0x%08x\n", (U32) &marioMotionNBGene);
+	printf("mario non-binary gene is at 0x%08x\n", (U32) &marioMotionNGene);
 	printf("mario binary gene is at 0x%08x\n", (U32) &marioMotionBGene);
 	printf("mario's position is (%d, %d).\n", ((Position*) marioPositionUGene.unaryP)->x, ((Position*) marioPositionUGene.unaryP)->y);
-
-
 	return 0;
 }
 
