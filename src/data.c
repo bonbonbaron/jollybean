@@ -85,11 +85,49 @@ __inline static void* _arrayGetVoidElemPtr(const void *arryP, S32 idx) {
     return NULL;  
 }
 
+/* Also provide an external copy of above function. */
+void* arrayGetVoidElemPtr(const void *arryP, S32 idx) {
+  const U32 nElems = arrayGetNElems(arryP);
+  /* If idx < 0, return void pointer past end of array. */
+  if (idx < 0) 
+    return (void*) (((U8*) arryP) + (nElems * arrayGetElemSz(arryP)));
+  /* If idx is valid, return void pointer to indexed element. */
+  else if ((U32) idx < nElems)
+    return (void*) ((U8*) arryP + (idx * arrayGetElemSz(arryP)));
+  /* Index is invalid. */
+  else
+    return NULL;  
+}
+
 void arrayIniPtrs(const void *arryP, void **startP, void **endP, S32 endIdx) {
 	*startP = (void*) arryP;
 	*endP = _arrayGetVoidElemPtr(arryP, endIdx);
 }
 
+/* arrayIni(), unlike mapIni(), does not need to allocate any memory. 
+ * Instead, it reorders its array elements using the enums. 
+ * That's why key and value are separated: so the array is already good! */
+Error arrayIni(void **arryPP, HardCodedArray *hcaP) {
+	if (arryPP == NULL || hcaP == NULL) 
+		return E_BAD_ARGS;
+	Error e = arrayNew(arryPP, hcaP->_elemSz, hcaP->_nEnumValPairs);
+	if (!e) {
+		EnumValPair *evP    = &hcaP->enumValA[0];
+		EnumValPair *evEndP = &hcaP->enumValA[hcaP->_nEnumValPairs];
+		U8 *dstP;
+		for (; evP < evEndP; evP++) {
+			dstP = _fast_arrayGetVoidElemPtr(*arryPP, evP->_enum);
+			if (dstP == NULL) {
+				e = E_BAD_INDEX;
+				break;
+			}
+			memcpy(dstP, evP->valP, hcaP->_elemSz);
+		}
+	}
+	if (e)
+		arrayDel(arryPP);
+	return e;
+}
 
 /***********************/
 /********* MAPS ********/

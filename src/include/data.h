@@ -14,6 +14,7 @@ typedef unsigned short U16;
 typedef short S16;
 typedef unsigned int U32;
 typedef int S32;
+typedef U8 Key;
 
 #include "errors.h"
 
@@ -28,7 +29,7 @@ extern U8 byteIdxLUT[];
 
 /* Arrays */
 typedef struct {
-	U16 _enum;
+	Key _enum;
 	void *valP;
 } EnumValPair;
 
@@ -39,6 +40,7 @@ typedef struct {
 	EnumValPair  enumValA[];
 } HardCodedArray;
 
+/* Unfortunately this doubles the sizes of arrays, but it's safe. */
 #define HARD_CODED_ARRAY_(_type, ...) { \
 	sizeof(_type), \
 	NUM_ARGS_(EnumValPair, __VA_ARGS__), \
@@ -47,20 +49,20 @@ typedef struct {
 }
 
 Error arrayNew(void **arryPP, U32 elemSz, U32 nElems);
+Error arrayIni(void **arryPP, HardCodedArray *hcaP);
 void arrayDel(void **arryPP);
 U32 arrayGetNElems(const void *arryP);
 U32 arrayGetElemSz(const void *arryP);
 void arrayIniPtrs(const void *arryP, void **startP, void **endP, S32 endIdx);
+void* arrayGetVoidElemPtr(const void *arryP, S32 idx);
 
 /* Maps */
 /* helpful macros for defining hard-coded key-value pairs in map seeds; also mitigates ugly "(void*)", null-termination, and "{..., ...}" syntax */
-#define SET_(key, val) {key, (void*) &val}
-#define MAP_(...) {__VA_ARGS__}
 #define HARD_CODED_MAP_(_type, ...) { \
-	sizeof(_type), \
-	NUM_ARGS_(KeyValPair, __VA_ARGS__), \
+	sizeof(_type), /* elemSz */  \
+	NUM_ARGS_(KeyValPair, __VA_ARGS__), /* nElems */ \
 	NULL, /* prevents multiple copies */ \
-	MAP_(__VA_ARGS__) \
+	{__VA_ARGS__} /* key pair array */ \
 }
 
 typedef struct {
@@ -68,11 +70,9 @@ typedef struct {
 	U8 flags;
 } FlagInfo;
 
-typedef U8 Key;
 typedef struct {
 	Key key;
 	void *valueP;
-	U8 _valSz;      /* ***IMPORTANT: _valSz requires the value to be in the SAME FILE as map definition! */
 } KeyValPair;
 
 typedef struct {
@@ -81,8 +81,8 @@ typedef struct {
 } Map;
 
 typedef struct {
-	U32         _elemSz;
-	U32         _nKeyValPairs;
+	U8         _elemSz;
+	Key        _nKeyValPairs;
 	Map        *mapP;       /* defaults to NULL to prevent copies */
 	KeyValPair  keyValA[];
 } HardCodedMap;
