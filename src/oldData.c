@@ -1,8 +1,8 @@
 #include "data.h"
 #include "bitCountLUT.h"
-
-#define BYTE_IDX(key) ((key - 1) >> 3)
-#define BIT_FLAG(key) (1 << ((key - 1) & 0x07))
+#include "byteIdxLUT.h"
+#include "bitCountMaskLUT.h"
+#include "bitFlagLUT.h"
 
 __inline Error jbAlloc(void **voidPP, U8 elemSz, U8 nElems) {
 	if (voidPP == NULL)
@@ -186,14 +186,14 @@ __inline static U8 _isKeyValid(const U8 key) {
 
 /* Map GETTING functions */
 __inline static FlagInfo _getFlagInfo(const Map *mapP, const U8 key) {
-  return mapP->flagA[BYTE_IDX(key)];
+  return mapP->flagA[byteIdxLUT[key]];
 }
 __inline static U8 _isFlagSet(const U8 flags, const U8 key) {
-	return flags & (1 << ((key - 1) & 0x07));
+	return bitFlagLUT[key] & flags;
 }
 
 __inline static U32 _getElemIdx(const FlagInfo f, const U8 key) {
-	return f.prevBitCount + bitCountLUT[f.flags & (BIT_FLAG(key) - 1)];
+	return (bitCountLUT[f.flags & bitCountMaskLUT[key]]) + f.prevBitCount;  /* heart of the bit-count map algorithm */
 }
 
 __inline static void* _getElemP(const Map *mapP, const FlagInfo f, const U8 key) {
@@ -241,7 +241,7 @@ static Error preMapSet(const Map *mapP, const U8 key, void **elemPP, void **next
         U32 mapElemSz = _getMapElemSz(mapP);
         *nBytesTMoveP = (nBitsSet - keyElemIdx) * mapElemSz;
         *nextElemPP = (U8*) *elemPP + mapElemSz;
-        printf("Key = %d: moving %d bytes %d indices forward\n", key, *nBytesTMoveP, (((U32) *nextElemPP - (U32) *elemPP) / _getMapElemSz(mapP)));
+        printf("moving %d bytes %d indices forward\n", *nBytesTMoveP, (((U32) *nextElemPP - (U32) *elemPP) / _getMapElemSz(mapP)));
       }
       return SUCCESS;
     } else {
@@ -261,8 +261,8 @@ Error mapSet(Map *mapP, const U8 key, const void *valP) {
 		/* Write value to map element. */
 		memcpy(elemP, valP, _getMapElemSz(mapP));
 		/* Set flag. */
-		U8 byteIdx = BYTE_IDX(key);
-		mapP->flagA[byteIdx].flags |= BIT_FLAG(key);  /* flagNum & 0x07 gives you # of bits in the Nth byte */
+		U8 byteIdx = byteIdxLUT[key];
+		mapP->flagA[byteIdx].flags |= bitFlagLUT[key];  /* flagNum & 0x07 gives you # of bits in the Nth byte */
 		/* Increment all prevBitCounts in bytes above affected one. */
 		while (++byteIdx < N_FLAG_BYTES) 
 		  ++mapP->flagA[byteIdx].prevBitCount;
@@ -278,8 +278,8 @@ Error mapRem(Map *mapP, const U8 key) {
     if (nBytesToMove) 
       memcpy(elemP, (const void*) nextElemP, nBytesToMove);
 		/* Unset flag. */
-		U8 byteIdx = BYTE_IDX(key);
-		mapP->flagA[byteIdx].flags &= ~BIT_FLAG(key);  /* key's bit position byteIdx'th byte */
+		U8 byteIdx = byteIdxLUT[key];
+		mapP->flagA[byteIdx].flags &= ~bitFlagLUT[key];  /* key's bit position byteIdx'th byte */
 		/* Increment all prevBitCounts in bytes above affected one. */
 		while (++byteIdx < N_FLAG_BYTES) 
 			--mapP->flagA[byteIdx].prevBitCount;
