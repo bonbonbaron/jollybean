@@ -68,10 +68,6 @@ U32 arrayGetElemSz(const void *arryP) {
 	}
 }
 
-__inline static void* _fast_arrayGetVoidElemPtr(const void *arryP, S32 idx) {
-	return (void*) ((U8*) arryP + (idx * arrayGetElemSz(arryP)));
-}
-
 __inline static void* _arrayGetVoidElemPtr(const void *arryP, S32 idx) {
   const U32 nElems = arrayGetNElems(arryP);
   /* If idx < 0, return void pointer past end of array. */
@@ -102,6 +98,13 @@ void* arrayGetVoidElemPtr(const void *arryP, S32 idx) {
 void arrayIniPtrs(const void *arryP, void **startP, void **endP, S32 endIdx) {
 	*startP = (void*) arryP;
 	*endP = _arrayGetVoidElemPtr(arryP, endIdx);
+}
+
+static __inline U32 _fast_arrayGetElemSz(const void *arryP) {
+	return *(((U32*)arryP) - 2);
+}
+static __inline void* _fast_arrayGetVoidElemPtr(const void *arryP, U8 idx) {
+	return (void*) ((U8*) arryP + (idx * _fast_arrayGetElemSz(arryP)));
 }
 
 /* arrayIni(), unlike mapIni(), does not need to allocate any memory. 
@@ -150,8 +153,6 @@ Error mapNew(Map **mapPP, const U8 elemSz, const U16 nElems) {
 
 Error mapIni(Map **mapPP, HardCodedMap *hcMapP) {
 	Error e = SUCCESS;
-
-	//U32 arrayLen = getNullTermALen((void*) keyValA, sizeof(KeyValPair));
 	if (hcMapP == NULL) 
 		return E_BAD_ARGS;
 	if (hcMapP->mapP == NULL) {
@@ -192,7 +193,7 @@ __inline static U8 _isFlagSet(const U8 flags, const U8 key) {
 }
 
 __inline static U32 _getElemIdx(const FlagInfo f, const U8 key) {
-	return (bitCountLUT[f.flags & bitCountMaskLUT[key]]) + f.prevBitCount;
+	return (bitCountLUT[f.flags & bitCountMaskLUT[key]]) + f.prevBitCount;  /* heart of the bit-count map algorithm */
 }
 
 __inline static void* _getElemP(const Map *mapP, const FlagInfo f, const U8 key) {
@@ -202,20 +203,23 @@ __inline static void* _getElemP(const Map *mapP, const FlagInfo f, const U8 key)
 __inline static U32 _getMapElemSz(const Map *mapP) {
   return arrayGetElemSz(mapP->mapA);
 }
-#define TRY
-void* mapGet(const Map *mapP, const U8 key) {
-	if (_isMapValid(mapP)) {
-	  const FlagInfo f  = _getFlagInfo(mapP, key);
-	  if (!_isFlagSet(f.flags, key)) {
-		  return NULL;
-    }
-		return _getElemP(mapP, f, key);  /* f is 2 bytes, so don't pass its pointer. */
-  }
-	return NULL;
-}
 
 __inline static U32 _getNBitsSet(const Map *mapP) {
   return mapP->flagA[LAST_FLAG_BYTE_IDX].prevBitCount + bitCountLUT[mapP->flagA[LAST_FLAG_BYTE_IDX].flags];
+}
+
+extern void* mapGet(const Map *mapP, const U8 key) {
+	//const FlagInfo f  = _getFlagInfo(mapP, key);
+	//if (!_isFlagSet(f.flags, key)) {
+	//	return NULL;
+	//}
+	//return _getElemP(mapP, f, key);  /* f is 2 bytes, so don't pass its pointer. */
+	const register U8 keyMinus1 = key - 1;
+	const register FlagInfo f = mapP->flagA[keyMinus1 >> 3];
+	const register U8 bitFlag = 1 << (keyMinus1 & 0x07);
+	if (f.flags & bitFlag)
+		return _fast_arrayGetVoidElemPtr(mapP->mapA, f.prevBitCount + bitCountLUT[f.flags & (bitFlag - 1)]);
+	return NULL;
 }
 /* Map SETTING functinos */
 /* If any bits exist to the left of the key's bit, array elements exist in target spot. */
