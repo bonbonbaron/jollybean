@@ -7,6 +7,7 @@
 #define N_FLAG_BYTES (32)  /* This times 8 is the number of items JB's hash map can hold. Increase as necessary. */
 #define LAST_FLAG_BYTE_IDX (N_FLAG_BYTES - 1)
 #define N_FLAG_BITS (8 * N_FLAG_BYTES)
+#define inline __attribute__((always_inline)) __inline
 
 typedef unsigned char U8;
 typedef char S8;

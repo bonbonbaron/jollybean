@@ -4,7 +4,7 @@
 #define BYTE_IDX(key) ((key - 1) >> 3)
 #define BIT_FLAG(key) (1 << ((key - 1) & 0x07))
 
-__inline Error jbAlloc(void **voidPP, U8 elemSz, U8 nElems) {
+inline Error jbAlloc(void **voidPP, U8 elemSz, U8 nElems) {
 	if (voidPP == NULL)
 		return E_BAD_ARGS;
 	*voidPP = malloc(nElems * elemSz);
@@ -13,7 +13,7 @@ __inline Error jbAlloc(void **voidPP, U8 elemSz, U8 nElems) {
 	return SUCCESS;
 }
 
-__inline void jbFree(void **voidPP) {
+inline void jbFree(void **voidPP) {
 	if (voidPP != NULL) {
 		free(*voidPP);
 		*voidPP = NULL;
@@ -68,7 +68,7 @@ U32 arrayGetElemSz(const void *arryP) {
 	}
 }
 
-__inline static void* _arrayGetVoidElemPtr(const void *arryP, S32 idx) {
+inline static void* _arrayGetVoidElemPtr(const void *arryP, S32 idx) {
   const U32 nElems = arrayGetNElems(arryP);
   /* If idx < 0, return void pointer past end of array. */
   if (idx < 0) 
@@ -100,10 +100,10 @@ void arrayIniPtrs(const void *arryP, void **startP, void **endP, S32 endIdx) {
 	*endP = _arrayGetVoidElemPtr(arryP, endIdx);
 }
 
-static __inline U32 _fast_arrayGetElemSz(const void *arryP) {
+static inline U32 _fast_arrayGetElemSz(const void *arryP) {
 	return *(((U32*)arryP) - 2);
 }
-static __inline void* _fast_arrayGetVoidElemPtr(const void *arryP, U8 idx) {
+static inline void* _fast_arrayGetVoidElemPtr(const void *arryP, U8 idx) {
 	return (void*) ((U8*) arryP + (idx * _fast_arrayGetElemSz(arryP)));
 }
 
@@ -176,35 +176,35 @@ void mapDel(Map **mapPP) {
 	}
 }
 
-__inline static U8 _isMapValid(const Map *mapP) {
+inline static U8 _isMapValid(const Map *mapP) {
 	return (mapP != NULL && mapP->mapA != NULL); 
 }	
 
-__inline static U8 _isKeyValid(const U8 key) {
+inline static U8 _isKeyValid(const U8 key) {
   return (key > 0);
 }
 
 /* Map GETTING functions */
-__inline static FlagInfo _getFlagInfo(const Map *mapP, const U8 key) {
+inline static FlagInfo _getFlagInfo(const Map *mapP, const U8 key) {
   return mapP->flagA[BYTE_IDX(key)];
 }
-__inline static U8 _isFlagSet(const U8 flags, const U8 key) {
+inline static U8 _isFlagSet(const U8 flags, const U8 key) {
 	return flags & (1 << ((key - 1) & 0x07));
 }
 
-__inline static U32 _getElemIdx(const FlagInfo f, const U8 key) {
+inline static U32 _getElemIdx(const FlagInfo f, const U8 key) {
 	return f.prevBitCount + bitCountLUT[f.flags & (BIT_FLAG(key) - 1)];
 }
 
-__inline static void* _getElemP(const Map *mapP, const FlagInfo f, const U8 key) {
+inline static void* _getElemP(const Map *mapP, const FlagInfo f, const U8 key) {
 	return _fast_arrayGetVoidElemPtr(mapP->mapA, _getElemIdx(f, key));
 }	
 
-__inline static U32 _getMapElemSz(const Map *mapP) {
+inline static U32 _getMapElemSz(const Map *mapP) {
   return arrayGetElemSz(mapP->mapA);
 }
 
-__inline static U32 _getNBitsSet(const Map *mapP) {
+inline static U32 _getNBitsSet(const Map *mapP) {
   return mapP->flagA[LAST_FLAG_BYTE_IDX].prevBitCount + bitCountLUT[mapP->flagA[LAST_FLAG_BYTE_IDX].flags];
 }
 
@@ -213,17 +213,26 @@ extern void* mapGet(const Map *mapP, const U8 key) {
 	//if (!_isFlagSet(f.flags, key)) {
 	//	return NULL;
 	//}
-	//return _getElemP(mapP, f, key);  /* f is 2 bytes, so don't pass its pointer. */
+	//return _getElemP(mapP, f, key);  /* f is 2 bytes, so don't pass its pointer. 
 	const register U8 keyMinus1 = key - 1;
 	const register FlagInfo f = mapP->flagA[keyMinus1 >> 3];
 	const register U8 bitFlag = 1 << (keyMinus1 & 0x07);
-	if (f.flags & bitFlag)
+	if (f.flags & bitFlag) {
+#if 0
 		return _fast_arrayGetVoidElemPtr(mapP->mapA, f.prevBitCount + bitCountLUT[f.flags & (bitFlag - 1)]);
+#else
+		register U8 count = bitFlag - 1;
+		count = (count & 0x55) + (count >> 1 & 0x55);
+		count = (count & 0x33) + (count >> 2 & 0x33);
+		count = (count & 0x0f) + (count >> 4 & 0x0f);
+		return _fast_arrayGetVoidElemPtr(mapP->mapA, count + f.prevBitCount);
+#endif
+	}
 	return NULL;
 }
 /* Map SETTING functinos */
 /* If any bits exist to the left of the key's bit, array elements exist in target spot. */
-__inline static U8 _idxIsPopulated(const U8 nBitsSet, U32 idx) {
+inline static U8 _idxIsPopulated(const U8 nBitsSet, U32 idx) {
   return (idx < nBitsSet);
 }
 
