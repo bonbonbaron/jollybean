@@ -1,0 +1,165 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+ASSETS_DIR	py_defs.py	/^ASSETS_DIR = "%sassets%s"%(DEV_DIR, SEP)$/;"	v
+ASSET_FILETYPES	py_defs.py	/^ASSET_FILETYPES = ["?", "?", "mp3", "txt", "png"]$/;"	v
+ASSET_TYPES	py_defs.py	/^ASSET_TYPES = [SCENE, SPRITE, AUDIO, TEXT, IMAGE, TILESET, TILEMAP, MEDIAINFO, COLORPALETTE]$/;"	v
+AUDIO	py_defs.py	/^AUDIO  = "audio"$/;"	v
+AnimSequence	img.py	/^class AnimSequence:$/;"	c
+BYTEORDER	img.py	/^BYTEORDER = "big"  # since that's the order files are written in$/;"	v
+COLORPALETTE	py_defs.py	/^COLORPALETTE = "colorPalette"$/;"	v
+DELETE	py_defs.py	/^DELETE = 2$/;"	v
+DEV_DIR	py_defs.py	/^DEV_DIR = "\/home\/bonbonbaron\/nectar\/"$/;"	v
+END_LOC_VARS	py_defs.py	/^END_LOC_VARS = "\/* END_LOCAL_VARIABLES *\/\\n"$/;"	v
+END_TBL	py_defs.py	/^END_TBL = "\/* END_TBL_RECORDS *\/\\n"$/;"	v
+ENUM_FP	py_defs.py	/^ENUM_FP = "%sjb_enum.h"%(DEV_DIR)$/;"	v
+ENUM_NAME_PREFIX	jb_enum.py	/^ENUM_NAME_PREFIX = "e"$/;"	v
+FLIP_DIAG	img.py	/^FLIP_DIAG = 3 << 14$/;"	v
+FLIP_LR	img.py	/^FLIP_LR   = 2 << 14$/;"	v
+FLIP_NONE	img.py	/^FLIP_NONE = 0$/;"	v
+FLIP_UD	img.py	/^FLIP_UD   = 1 << 14$/;"	v
+GAME_DIR	py_defs.py	/^GAME_DIR = "%sgame%s"%(DEV_DIR, SEP)$/;"	v
+IDX_B	img.py	/^IDX_B                 =  2$/;"	v
+IDX_G	img.py	/^IDX_G                 =  1$/;"	v
+IDX_R	img.py	/^IDX_R                 =  0$/;"	v
+IMAGE	py_defs.py	/^IMAGE  = "image"$/;"	v
+IMG_DIR_IDX_LOCATION	img.py	/^IMG_DIR_IDX_LOCATION  = 1$/;"	v
+IMG_DIR_IDX_NAME	img.py	/^IMG_DIR_IDX_NAME      = 0$/;"	v
+IMG_DIR_IDX_NBR_TILES	img.py	/^IMG_DIR_IDX_NBR_TILES = 2$/;"	v
+INCL_ENUM	py_defs.py	/^INCL_ENUM = "#include \\"jb_enum.h\\""$/;"	v
+INCL_GE_H	py_defs.py	/^INCL_GE_H = "#include \\"jb.h\\""$/;"	v
+IS_LINUX	py_defs.py	/^    IS_LINUX = True$/;"	v
+IS_WINDOWS	py_defs.py	/^    IS_WINDOWS = True$/;"	v
+ImageInfo	img.py	/^class ImageInfo:$/;"	c
+Img	img.py	/^class Img:$/;"	c
+JBObject	py_defs.py	/^class JBObject:$/;"	c
+JB_DB_DIR	py_defs.py	/^JB_DB_DIR = "%sdb%s"%(JB_DIR, SEP)$/;"	v
+JB_DIR	py_defs.py	/^JB_DIR  = "%sjb%s"%(DEV_DIR, SEP)$/;"	v
+MAP	img.py	/^MAP    = 1$/;"	v
+MEDIAINFO	py_defs.py	/^MEDIAINFO = "mediaInfo"$/;"	v
+MEDIA_FP	py_defs.py	/^MEDIA_FP = "%smedia.bin"%(DEV_DIR)$/;"	v
+MERGE	py_defs.py	/^MERGE  = 1$/;"	v
+NBR_COLOR_CHANNELS	img.py	/^NBR_COLOR_CHANNELS    =  3$/;"	v
+NULL	py_defs.py	/^NULL = "NULL"$/;"	v
+NUM_JB_ATTRS	jb_db.py	/^NUM_JB_ATTRS = len(list_attributes(tmp))$/;"	v
+PNG_BITDEPTH_DATA_SZ	img.py	/^PNG_BITDEPTH_DATA_SZ  = 1$/;"	v
+PNG_BITDEPTH_LOCATION	img.py	/^PNG_BITDEPTH_LOCATION = 24$/;"	v
+PNG_IDATA_LOCATION	img.py	/^PNG_IDATA_LOCATION    = PNG_BITDEPTH_LOCATION + 8$/;"	v
+PNG_IDAT_CHUNK_TYPE	img.py	/^PNG_IDAT_CHUNK_TYPE   = bytearray([73, 68, 65, 84])  $/;"	v
+PNG_IDAT_END	img.py	/^PNG_IDAT_END          = bytearray("IEND".encode())$/;"	v
+PNG_IDAT_START	img.py	/^PNG_IDAT_START        = bytearray("IDAT".encode())$/;"	v
+PNG_IEND	img.py	/^PNG_IEND              = bytearray([0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130])$/;"	v
+PNG_IEND_LENGTH	img.py	/^PNG_IEND_LENGTH       = 8$/;"	v
+PNG_IHDR_START	img.py	/^PNG_IHDR_START        = bytearray([0, 0, 0, 13, 73, 72, 68, 82])$/;"	v
+PNG_PLTE_CHUNK_TYPE	img.py	/^PNG_PLTE_CHUNK_TYPE   = bytearray([80, 76, 84, 69])$/;"	v
+PNG_SIGNATURE	img.py	/^PNG_SIGNATURE         = bytearray([137, 80, 78, 71, 13, 10, 26, 10])$/;"	v
+SCENE	py_defs.py	/^SCENE = "scene"$/;"	v
+SEP	py_defs.py	/^    SEP = "\/"$/;"	v
+SEP	py_defs.py	/^    SEP = "\\\\"$/;"	v
+SPRITE	img.py	/^SPRITE = 2$/;"	v
+SPRITE	py_defs.py	/^SPRITE = "sprite"$/;"	v
+START_LOC_VARS	py_defs.py	/^START_LOC_VARS = "\/* START_LOCAL_VARIABLES *\/\\n"$/;"	v
+START_TBL	py_defs.py	/^START_TBL = "\/* START_TBL_RECORDS *\/\\n"$/;"	v
+TBL_ENDING	py_defs.py	/^TBL_ENDING  = "\\n%s};\\n"%(END_TBL)$/;"	v
+TEXT	py_defs.py	/^TEXT   = "text"$/;"	v
+TILEMAP	py_defs.py	/^TILEMAP = "tilemap"$/;"	v
+TILESET	py_defs.py	/^TILESET = "tileset"$/;"	v
+TILE_HEIGHT	img.py	/^TILE_HEIGHT           =  8$/;"	v
+TILE_SIZE	img.py	/^TILE_SIZE = TILE_WIDTH * TILE_HEIGHT * NBR_COLOR_CHANNELS$/;"	v
+TILE_WIDTH	img.py	/^TILE_WIDTH            =  8$/;"	v
+U8	new.c	/^typedef unsigned char U8;$/;"	t	file:
+__init__	img.py	/^	def __init__(self, length, w, h, bpp, is_tiled, idat):$/;"	m	class:ImageInfo
+__init__	img.py	/^    def __init__(self, blit_coords, frame_order, durations, repeat):$/;"	m	class:AnimSequence
+__init__	img.py	/^    def __init__(self, raw_img, img_name, w, h, bitdepth, tilemap, cp_name, color_palette, idat):$/;"	m	class:Img
+__init__	py_defs.py	/^    def __init__(self):$/;"	m	class:JBObject
+ben	test.py	/^ben = Image()$/;"	v
+bitFlagLUT	bitFlagLUT.h	/^Uint8 bitFlagLUT[] = {$/;"	v
+bitMaskLUT	bitMaskLUT.h	/^Uint8 bitMaskLUT[] = {$/;"	v
+byteIdxLUT	byteIdx.h	/^Uint8 byteIdxLUT[] = {$/;"	v
+cap	jb_db.py	/^def cap(string):$/;"	f
+clean_media_file	jb_media.py	/^def clean_media_file():$/;"	f
+compress_img	img.py	/^def compress_img(img_name):$/;"	f
+contains	img.py	/^def contains(container, elem):$/;"	f
+counter1	bitCountLUT.py	/^  counter1 = 0$/;"	v
+counter2	bitCountLUT.py	/^  counter2 = 0$/;"	v
+create_anim_map	img.py	/^def create_anim_map(img_name):$/;"	f
+create_enum	jb_enum.py	/^def create_enum(enum_nm):$/;"	f
+create_enum_file	jb_enum.py	/^def create_enum_file():$/;"	f
+create_media_file	jb_media.py	/^def create_media_file():$/;"	f
+create_tbl	jb_db.py	/^def create_tbl(tbl_name):$/;"	f
+delete	jb_db.py	/^def delete(tbl_nm, idx=None, condition_str=None):$/;"	f
+delete	jb_media.py	/^def delete(offset, length):$/;"	f
+delete_enum	jb_enum.py	/^def delete_enum(enum_nm):$/;"	f
+delete_enum_elem	jb_enum.py	/^def delete_enum_elem(enum_nm, elem_nm):$/;"	f
+delete_record	jb_media.py	/^def delete_record():$/;"	f
+elems_equal	img.py	/^def elems_equal(a, b):$/;"	f
+elems_to_enum	jb_enum.py	/^def elems_to_enum(enum_nm, elems):$/;"	f
+ensure_json_exists	jb_media.py	/^def ensure_json_exists():$/;"	f
+extract_record_items	jb_db.py	/^def extract_record_items(record):$/;"	f
+f	bitCountLUT.py	/^f = open("bitCountLUT.h", "w")$/;"	v
+find_enum_idx	jb_enum.py	/^def find_enum_idx(enum_nm):$/;"	f
+flip_diag	img.py	/^def flip_diag(np_array):$/;"	f
+flip_funcs	img.py	/^flip_funcs = {FLIP_NONE: flip_none, FLIP_UD: flip_ud, FLIP_LR: flip_lr, FLIP_DIAG: flip_diag}$/;"	v
+flip_lr	img.py	/^flip_lr = np.fliplr$/;"	v
+flip_none	img.py	/^def flip_none(np_array):$/;"	f
+flip_ud	img.py	/^flip_ud = np.flipud$/;"	v
+gen_data_sprite	img.py	/^def gen_data_sprite(img_name):$/;"	f
+gen_local_vars_string	jb_db.py	/^def gen_local_vars_string(tbl_nm, obj):$/;"	f
+get_all_local_variables	jb_db.py	/^def get_all_local_variables(tbl_nm):$/;"	f
+get_all_records	jb_db.py	/^def get_all_records(tbl_nm):$/;"	f
+get_color_palette	img.py	/^def get_color_palette(img):$/;"	f
+get_enum	jb_enum.py	/^def get_enum(enum_nm):$/;"	f
+get_enum_elems	jb_enum.py	/^def get_enum_elems(enum_nm):$/;"	f
+get_game_dir	py_defs.py	/^def get_game_dir():$/;"	f
+get_key_mapping	img.py	/^def get_key_mapping(fn):$/;"	f
+get_key_mapping_str	img.py	/^def get_key_mapping_str(fn, underscore_psns):$/;"	f
+get_keymap_psn	img.py	/^def  get_keymap_psn(filename):$/;"	f
+get_proper_elem_nm	jb_enum.py	/^def get_proper_elem_nm(enum_nm, elem_nm):$/;"	f
+get_proper_enum_nm	jb_enum.py	/^def get_proper_enum_nm(nm):$/;"	f
+get_tbl	jb_db.py	/^def get_tbl(tbl_nm):$/;"	f
+gray_out_img	img.py	/^def gray_out_img(img):$/;"	f
+insert	jb_db.py	/^def insert(tbl_nm, obj):$/;"	f
+insert	jb_media.py	/^def insert(data):$/;"	f
+insert_enum_elem	jb_enum.py	/^def insert_enum_elem(enum_nm, elem_nm, idx=-1):   # element does not start with "e_" prefix$/;"	f
+insert_record	jb_media.py	/^def insert_record():$/;"	f
+is_animated	img.py	/^def is_animated(fp):$/;"	f
+is_sprite_or_map	img.py	/^def is_sprite_or_map(json_fp):$/;"	f
+list_attr_vals	jb_db.py	/^def list_attr_vals(obj):$/;"	f
+list_attributes	jb_db.py	/^def list_attributes(obj):$/;"	f
+local_arry_from_list	jb_db.py	/^def local_arry_from_list(_list, tbl_nm, attr_name, obj_name):$/;"	f
+main	bitCountLUT.c	/^int main(int argc, char **argv) {$/;"	f
+main	bitCountMaskLUT.c	/^int main(int argc, char **argv) {$/;"	f
+main	bitFlagLUT.c	/^int main(int argc, char **argv) {$/;"	f
+main	byteIdxLUT.c	/^int main(int argc, char **argv) {$/;"	f
+main	new.c	/^int main(int argc, char **argv) {$/;"	f
+map_tiles	img.py	/^def map_tiles(img):$/;"	f
+nibble1	bitCountLUT.py	/^  nibble1 = 0$/;"	v
+nibble1	bitCountLUT.py	/^  nibble1 = max(counter1 - 1, 0);$/;"	v
+nibble2	bitCountLUT.py	/^  nibble2 = 0$/;"	v
+nibble2	bitCountLUT.py	/^  nibble2 = max(counter2 - 1, 0);$/;"	v
+obj_from_record	jb_db.py	/^def obj_from_record(object_type, record):$/;"	f
+objs_from_records	jb_db.py	/^def objs_from_records(tbl_nm):$/;"	f
+outputStr	bitCountLUT.py	/^outputStr = ""$/;"	v
+print_attrs	jb_db.py	/^def print_attrs(obj):$/;"	f
+print_file	jb_media.py	/^def print_file():$/;"	f
+proc_img	img.py	/^def proc_img(img_name):$/;"	f
+query	jb_db.py	/^def query(tbl_nm, obj):$/;"	f
+query_enum_elem	jb_enum.py	/^def query_enum_elem(elems, elem_nm):$/;"	f
+query_media_tbl	jb_media.py	/^def query_media_tbl(name):$/;"	f
+rank_elems	img.py	/^def rank_elems(array):$/;"	f
+read_enum_lines	jb_enum.py	/^def read_enum_lines():$/;"	f
+record_from_obj	jb_db.py	/^def record_from_obj(obj):$/;"	f
+remove_dupe_frames	img.py	/^def remove_dupe_frames(anim_map, img):$/;"	f
+rle	img.py	/^def rle(tile):$/;"	f
+sort_colors	img.py	/^def sort_colors(color_palette, brightness_ranks):$/;"	f
+throw_underscore_error	img.py	/^def throw_underscore_error(fn):$/;"	f
+tmp	jb_db.py	/^tmp = JBObject()$/;"	v
+type_map	jb_db.py	/^type_map = {"<type 'int'>": int, "<type 'str'>": str, "<type 'instance'>": None}$/;"	v
+udpate	jb_db.py	/^def udpate(tbl_nm, update_str, idx=None, condition_str=None):$/;"	f
+update	jb_media.py	/^def update(offset, length, new_data):$/;"	f
+update_enum_file	jb_enum.py	/^def update_enum_file(enum_nm, new_enum):$/;"	f
+update_record	jb_media.py	/^def update_record():$/;"	f
+write_to_tbl	jb_db.py	/^def write_to_tbl(tbl_nm, loc_vars_str, objs):$/;"	f

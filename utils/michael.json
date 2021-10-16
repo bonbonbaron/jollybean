@@ -1,0 +1,53 @@
+{ "frames": {
+   "michael_d 0.aseprite": {
+    "frame": { "x": 0, "y": 0, "w": 25, "h": 33 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 25, "h": 33 },
+    "sourceSize": { "w": 25, "h": 33 },
+    "duration": 100
+   },
+   "michael_d 1.aseprite": {
+    "frame": { "x": 25, "y": 0, "w": 25, "h": 33 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 25, "h": 33 },
+    "sourceSize": { "w": 25, "h": 33 },
+    "duration": 100
+   },
+   "michael_d 2.aseprite": {
+    "frame": { "x": 50, "y": 0, "w": 25, "h": 33 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 25, "h": 33 },
+    "sourceSize": { "w": 25, "h": 33 },
+    "duration": 100
+   },
+   "michael_d 3.aseprite": {
+    "frame": { "x": 75, "y": 0, "w": 25, "h": 33 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 25, "h": 33 },
+    "sourceSize": { "w": 25, "h": 33 },
+    "duration": 100
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.2.9-x64",
+  "image": "C:\\Users\\bonbo\\Dropbox\\Magic\\Programming\\ge\\images\\sprites\\michael_d.png",
+  "format": "I8",
+  "size": { "w": 100, "h": 33 },
+  "scale": "1",
+  "frameTags": [
+  ],
+  "layers": [
+   { "name": "Legs", "opacity": 255, "blendMode": "normal" },
+   { "name": "Torso", "opacity": 255, "blendMode": "normal" },
+   { "name": "Arms", "opacity": 255, "blendMode": "normal" },
+   { "name": "Head", "opacity": 255, "blendMode": "normal" }
+  ],
+  "slices": [
+  ]
+ }
+}
