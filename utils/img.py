@@ -399,7 +399,7 @@ def compress_img(img_name):
     print("inflated length: %d"%(len(d)))
     
     # Tell game engine how to deflate colormap tileset
-    inflatable = Inflatable(img_name, len(c), len(d), d)
+    inflatable = Inflatable(img_name, len(c), len(d), c)
     inflatable.writeInflationData("./test.c")
 
     # Make sure the inflated image matches the input!       width                                   height         bpp
