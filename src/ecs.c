@@ -4,45 +4,83 @@
 	1) Histogramming entitieSeeds' genes
 	2) Validating entitySeeds' behaviors (e.g. every system function-index is lower than the system's highest function index enum)
 */
-/* Components in Arrays: Thought Process
- *     ecs.c sees entities and components as a unit. System *implementations*, however, usually see only the components. They do this by jumping over the entities as they loop through. The components are pulled out of storage and lumped together with entities as they enter systems' bowels. They swap together, move together, delete together; they always stay together. */
 
-__inline static U8 _getNActivities(const System *sP) {
+/**************/
+/* Components */
+/**************/
+const static GetGeneFP getGeneFPA[] = {getUnaryGene, getBinaryGene, getNonbinaryGene};
+
+/* Unary gene-selection */
+void* getUnaryGene(U8 *geneHeaderP, Key *overrideKeyP) {
+	_UNUSED(overrideKeyP);
+	return ((UnaryGene*) geneHeaderP)->unaryP;
+}
+
+/* Binary gene-selection */
+void* getBinaryGene(U8 *geneHeaderP, Key *overrideKeyP) {
+	BinaryGene *bP = (BinaryGene*) geneHeaderP;
+	if (overrideKeyP)
+		return arrayGetVoidElemPtr(bP->binaryA, ((*overrideKeyP & bP->mask) == bP->expVal));
+	else
+		return arrayGetVoidElemPtr(bP->binaryA, ((*bP->tgtP & bP->mask) == bP->expVal));
+}
+
+/* Nonbinary gene-selection */
+void* getNonbinaryGene(U8 *geneHeaderP, Key *overrideKeyP) {
+	NonbinaryGene *nP = (NonbinaryGene*) geneHeaderP;
+	if (overrideKeyP)
+		return mapGet(nP->mapP, *overrideKeyP);
+	else
+		return mapGet(nP->mapP, *nP->keyP);
+}
+
+void* getGene(U8 *geneHeaderP, Key *overrideKeyP) {
+	/* No need for internal NULL-checks since wrapper does it here. */
+	if (geneHeaderP != NULL)
+		return (*getGeneFPA[*geneHeaderP])(geneHeaderP, overrideKeyP);
+	return NULL;
+}
+
+
+/***********/
+/* Systems */
+/***********/
+inline static U8 _getNActivities(const System *sP) {
   return (U8) arrayGetNElems((void*) sP->activityA);
 }
 
 /* Only inspect every possible messaging error at load-time. Do not inspect every single message-reading. */
-__inline static U8 _validateActivityIdx(const System *sP, const U8 activityIdx) { 
+inline static U8 _validateActivityIdx(const System *sP, const U8 activityIdx) { 
 	return (activityIdx < _getNActivities(sP));
 }
 
 /* Only inspect every possible messaging error at load-time. Do not inspect every single message-reading. */
-__inline static U8 _validateEcIdx(const System *sP, Activity *aP, const U8 ecIdx) { 
+inline static U8 _validateEcIdx(const System *sP, Activity *aP, const U8 ecIdx) { 
 	return (ecIdx < (U8) arrayGetNElems(aP->ecA));
 }
 
 /* EC Getters and Setters */
 /* When activating or deactivating, you have to update the system's directory to its new location. */
-__inline static Entity _getEntity(const void *cmpP) {
+inline static Entity _getEntity(const void *cmpP) {
 	return ((CmpHeader*) cmpP)->owner;
 }
 
 
-__inline static void* _getEcPByIndex(const System *sP, Activity *aP, U8 ecIdx) {
+inline static void* _getEcPByIndex(const System *sP, Activity *aP, U8 ecIdx) {
   return (void*) (((U8*) aP->ecA) + (sP->ecSz * ecIdx));
 }
 
 /* Returns a component's location in the jagged array of components.  */
-__inline static ECLocation* _getECLocation(System *sP, Entity entity) {
+inline static ECLocation* _getECLocation(System *sP, Entity entity) {
 	return (ECLocation*) mapGet(sP->ecLocationMapP, entity);
 }
 
 /* Checks if the component, wherever it is in the jagged array, is before the function's stopping point in its array. */
-__inline static U8 _cmpIsActive(const System *sP, const ECLocation *eclP) {
+inline static U8 _cmpIsActive(const System *sP, const ECLocation *eclP) {
 	return (eclP->ecIdx < sP->activityA[eclP->activityIdx].firstInactiveIdx);
 }
 
-__inline static void _updateECLocation(ECLocation *eclP, U8 dstActIdx, U8 dstEcIdx, void *dstEcP) {
+inline static void _updateECLocation(ECLocation *eclP, U8 dstActIdx, U8 dstEcIdx, void *dstEcP) {
   eclP->activityIdx = dstActIdx;
   eclP->ecIdx       = dstEcIdx;
   eclP->ecP         = dstEcP;
@@ -66,19 +104,19 @@ static void _swapECs(System *sP, void *srcEcP, U8 dstActIdx, U8 dstEcIdx) {
 }
 
 /* Deactivates component by swapping it with the last active slot and decrementing the first active index beforehand. */
-__inline static void _deactivateEC(System *sP, Entity entity) {
+inline static void _deactivateEC(System *sP, Entity entity) {
   ECLocation *eclP = _getECLocation(sP, entity);
   _swapECs(sP, eclP->ecP, eclP->activityIdx, --sP->activityA[eclP->activityIdx].firstInactiveIdx);  /* swap w/ last active EC */
 }
 
 /* Activates component by swapping it with the first inactive slot and incrementing the first active index afterward. */
-__inline static void _activateEC(System *sP, Entity entity) {
+inline static void _activateEC(System *sP, Entity entity) {
   ECLocation *eclP = _getECLocation(sP, entity);
   _swapECs(sP, eclP->ecP, eclP->activityIdx, sP->activityA[eclP->activityIdx].firstInactiveIdx++);  /* swap w/ first inactive EC */
 }
 
 /* Kind of a no-brainer that if you're transferring something, it's going to be active in its destination activity. */
-__inline static void _startEcActivity(System *sP, Entity entity, U8 dstActivity) {
+inline static void _startEcActivity(System *sP, Entity entity, U8 dstActivity) {
   ECLocation *eclP = _getECLocation(sP, entity);
 	if (eclP != NULL)
 		return;
@@ -204,7 +242,7 @@ SysBasicFP sysBasicFuncs[] = {
 };
 
 /* This used to validate messages. Now, we boost performance validating entity behaviors externally only once at load-time instead. */
-__inline static void sysReadMessage(System *sP, Message *msgP) {
+inline static void sysReadMessage(System *sP, Message *msgP) {
 	switch(msgP->cmdType) {
 		/* Message intends a system-wide response. All systems share the same pool of systemwide functions. */
 		case SYSTEMWIDE_CMD:

@@ -7,7 +7,12 @@
 #define N_FLAG_BYTES (32)  /* This times 8 is the number of items JB's hash map can hold. Increase as necessary. */
 #define LAST_FLAG_BYTE_IDX (N_FLAG_BYTES - 1)
 #define N_FLAG_BITS (8 * N_FLAG_BYTES)
+
 #define inline __attribute__((always_inline)) __inline
+#define _UNUSED(x) (void)(x)
+
+#define ENUM_KEYS_(first, ...) typedef enum {first = 1, __VA_ARGS__} 
+#define ENUM_INDICES_(...) typedef enum {__VA_ARGS__} 
 
 typedef unsigned char U8;
 typedef char S8;
@@ -23,7 +28,7 @@ typedef U8 Key;
 #define NUM_ARGS_(_type, ...) sizeof((_type[]){__VA_ARGS__}) / sizeof(_type)
 
 /* Basic utils */
-Error jbAlloc(void **voidPP, U8 elemSz, U8 nElems);
+Error jbAlloc(void **voidPP, U32 elemSz, U32 nElems);
 void  jbFree(void **voidPP);
 extern U8 bitCountLUT[];
 extern U8 byteIdxLUT[];
@@ -97,5 +102,16 @@ void* mapGet(const Map *mapP, const U8 key);
 /* Histograms */
 Error histoU8New(U32 **histoPP, const U8 *srcA, const U32 maxVal);
 void histoU8Del(U32 **histoPP);
+
+/* TinFL Decompression */
+typedef struct {
+	U32 compressedLen;
+	U32 inflatedLen;
+	void *inflatedDataP;
+	U8  compressedData[];
+} Inflatable;
+
+//Error decompress_media(const unsigned char *src, const int src_len, void **dst, size_t *dst_len);
+Error inflate(Inflatable *inflatableP);
 
 #endif
