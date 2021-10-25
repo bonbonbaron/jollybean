@@ -204,58 +204,57 @@ def packBytes(stripList, bpp):
     np_stripSet = np.zeros((len(stripList) * STRP_N_PIXELS)).astype("uint8")
     for i in range(len(stripList)):
         np_stripSet[(i * STRP_N_PIXELS) : ((i + 1) * STRP_N_PIXELS)] = stripList[i]
-    flat = np_stripSet.flatten().astype("uint8")
-    flatNew = np.zeros(len(flat) // (8 // bpp)).astype("uint8")
+    unpackedBytes = np_stripSet.flatten().astype("uint8")
+    bpg = np.zeros(len(unpackedBytes) // (8 // bpp)).astype("uint8")  # bits packed contiguous 
+    bps = np.zeros(bpg.shape).astype("uint8")  # bits packed staggered
     if bpp == 1:
         # It's too messy to pack on the fly with our 8-bit staggering. Better to swap after.
         # So pack as if every pixel is still contiguous first:
-        for i in range(len(flatNew)):
-            flatNew[i] = (flat[i * 8] & 0x01 << 0) | \
-                             (flat[i * 8] & 0x01 << 1) | \
-                             (flat[i * 8] & 0x01 << 2) | \
-                             (flat[i * 8] & 0x01 << 3) | \
-                             (flat[i * 8] & 0x01 << 4) | \
-                             (flat[i * 8] & 0x01 << 5) | \
-                             (flat[i * 8] & 0x01 << 6) | \
-                             (flat[i * 8] & 0x01 << 7).astype("uint8") 
+        for i in range(len(bpg)):
+            bpg[i] = (unpackedBytes[i * 8] & 0x01 << 0) | \
+                             (unpackedBytes[i * 8] & 0x01 << 1) | \
+                             (unpackedBytes[i * 8] & 0x01 << 2) | \
+                             (unpackedBytes[i * 8] & 0x01 << 3) | \
+                             (unpackedBytes[i * 8] & 0x01 << 4) | \
+                             (unpackedBytes[i * 8] & 0x01 << 5) | \
+                             (unpackedBytes[i * 8] & 0x01 << 6) | \
+                             (unpackedBytes[i * 8] & 0x01 << 7).astype("uint8") 
         # For every 4 bytes (U32), order bits as [0, 4, 8, 16, 20, 24, 28], [1, 5, 9, 13, 17, 21, 25, 29], ... etc. for the next 2 bytes
-        for i in range(0, len(flatNew) - 4, 4):
+        for i in range(0, len(bpg) - 4, 4):
             # only bother swapping bits if they're not the same
-            for j in range(8):
+            for j in range(0, 8):
                 bit = 1 << j
-                if (flatNew[i] & bit) ^ (flatNew[i + 4] & bit):  # doesn't need differentBits like the 2bpp and 4bpp cases
-                    flatNew[i] ^= bit   # toggle the jth bit in each byte
-                    flatNew[i + 4] ^= bit
+                if (bpg [i] & bit) ^ (bpg [i + 4] & bit):  # doesn't need differentBits like the 2bpp and 4bpp cases
+                    bpg [i] ^= bit   # toggle the jth bit in each byte
+                    bpg [i + 4] ^= bit
     elif bpp == 2:
-        for i in range(len(flatNew)):
-            flatNew[i] = ((flat[(i * 4) + 3] & 0x03) << 0) | \
-                         ((flat[(i * 4) + 2] & 0x03) << 2) | \
-                         ((flat[(i * 4) + 1] & 0x03) << 4) | \
-                         ((flat[(i * 4) + 0] & 0x03) << 6).astype("uint8")
+        for i in range(len(bpg)):
+            bpg[i] = ((unpackedBytes[(i * 4) + 0] & 0x03) << 0) | \
+                     ((unpackedBytes[(i * 4) + 1] & 0x03) << 2) | \
+                     ((unpackedBytes[(i * 4) + 2] & 0x03) << 4) | \
+                     ((unpackedBytes[(i * 4) + 3] & 0x03) << 6).astype("uint8")
         # For every 4 bytes (U32), order crumbs as [0, 4, 8, 12], [1, 5, 9, 13], ... etc. for the next 2 bytes
-        for i in range(0, len(flatNew) - 4, 4):
+        for i in range(0, len(bpg) - 4, 4):
             # only bother swapping bits if they're not the same
             for j in range(0, 8, 2):
                 crumb = 0x03 << j
-                differentBits = (flatNew[i] & crumb) ^ (flatNew[i + 4] & crumb)
-                if differentBits:
-                    flatNew[i] ^= differentBits   # toggle the jth bit in each byte
-                    flatNew[i + 4] ^= differentBits 
+                differentBits = (bpg [i] & crumb) ^ (bpg [i + 4] & crumb)
+                if differentCrumbs:
+                    bpg [i] ^= differentCrumbs   # toggle the jth bit in each byte
+                    bpg [i + 4] ^= differentCrumbs 
     elif bpp == 4:
-        for i in range(len(flatNew)):
-            flatNew[i] = ((flat[(i * 2) + 1] & 0x0f) << 0) | \
-                         ((flat[(i * 2) + 0] & 0x0f) << 4).astype("uint8")
+        for i in range(len(bpg)):
+            bpg[i] = ((unpackedBytes[(i * 2) + 0] & 0x0f) << 0) | \
+                     ((unpackedBytes[(i * 2) + 1] & 0x0f) << 4).astype("uint8")
         # For every 4 bytes (U32), order nibbles as [0, 4], [1, 5], ... etc. for the next 2 bytes
-        for i in range(0, len(flatNew) - 4, 4):
-            # only bother swapping bits if they're not the same
-            for j in range(0, 8, 4):
-                nibble = 0x0f << j
-                differentBits = (flatNew[i] & nibble) ^ (flatNew[i + 4] & nibble)
-                if differentBits:
-                    flatNew[i] ^= differentBits   # toggle the jth bit in each byte
-                    flatNew[i + 4] ^= differentBits 
+        for i in range(0, bps.shape[0], 4):  # [i] is a byte index
+            # 0th and 7th nibbles stay put... Order is confusing as hell with no rhyme or reason lol.
+            bps[i + 0] = ((bpg[i + 0] & 0x0f) >> 0) | ((bpg[i + 2] & 0x0f) << 4)
+            bps[i + 1] = ((bpg[i + 0] & 0xf0) >> 4) | ((bpg[i + 2] & 0xf0) << 0)
+            bps[i + 2] = ((bpg[i + 1] & 0x0f) >> 0) | ((bpg[i + 3] & 0x0f) << 4)
+            bps[i + 3] = ((bpg[i + 1] & 0xf0) >> 4) | ((bpg[i + 3] & 0xf0) << 0)
 
-    return flatNew 
+    return bps 
 
 ###########################################
 def unpackBytes(packedBytes, bpp):
@@ -265,7 +264,7 @@ def unpackBytes(packedBytes, bpp):
     print("packed bytes len: " + str(len(packedBytes)))
     j = 0
     if bpp == 1:
-        for i in range(0, len(packedBytes), 32):
+        for i in range(0, len(colormap), 32):
             colormap[i +  0] = ((packedBytes[j +  0] & 0x01) >> 0) 
             colormap[i +  1] = ((packedBytes[j +  1] & 0x01) >> 0)
             colormap[i +  2] = ((packedBytes[j +  2] & 0x01) >> 0)
@@ -300,7 +299,7 @@ def unpackBytes(packedBytes, bpp):
             colormap[i + 31] = ((packedBytes[j +  3] & 0x80) >> 7)
             j += 4
     elif bpp == 2:
-        for i in range(0, len(packedBytes), 16):
+        for i in range(0, len(colormap), 16):
             colormap[i +  0] = ((packedBytes[j +  0] & 0x03) >> 0) 
             colormap[i +  1] = ((packedBytes[j +  1] & 0x03) >> 0)
             colormap[i +  2] = ((packedBytes[j +  2] & 0x03) >> 0)
@@ -319,7 +318,7 @@ def unpackBytes(packedBytes, bpp):
             colormap[i + 15] = ((packedBytes[j +  3] & 0xc0) >> 6)
             j += 4
     elif bpp == 4:
-        for i in range(0, len(packedBytes), 8):
+        for i in range(0, len(colormap), 8):
             colormap[i +  0] = ((packedBytes[j +  0] & 0x0f) >> 0) 
             colormap[i +  1] = ((packedBytes[j +  1] & 0x0f) >> 0)
             colormap[i +  2] = ((packedBytes[j +  2] & 0x0f) >> 0)
@@ -331,6 +330,7 @@ def unpackBytes(packedBytes, bpp):
             j += 4
     elif bpp == 8:
         pass
+    #print(colormap)
 
     return colormap
 
