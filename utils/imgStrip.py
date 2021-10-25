@@ -207,25 +207,53 @@ def packBytes(stripList, bpp):
     flat = np_stripSet.flatten().astype("uint8")
     flatNew = np.zeros(len(flat) // (8 // bpp)).astype("uint8")
     if bpp == 1:
+        # It's too messy to pack on the fly with our 8-bit staggering. Better to swap after.
+        # So pack as if every pixel is still contiguous first:
         for i in range(len(flatNew)):
-            flatNew[i] = ((flat[(i * 8) + 7] & 0x01) << 0) | \
-                         ((flat[(i * 8) + 6] & 0x01) << 1) | \
-                         ((flat[(i * 8) + 5] & 0x01) << 2) | \
-                         ((flat[(i * 8) + 4] & 0x01) << 3) | \
-                         ((flat[(i * 8) + 3] & 0x01) << 4) | \
-                         ((flat[(i * 8) + 2] & 0x01) << 5) | \
-                         ((flat[(i * 8) + 1] & 0x01) << 6) | \
-                         ((flat[(i * 8) + 0] & 0x01) << 7).astype("uint8") 
+            flatNew[i] = (flat[i * 8] & 0x01 << 0) | \
+                             (flat[i * 8] & 0x01 << 1) | \
+                             (flat[i * 8] & 0x01 << 2) | \
+                             (flat[i * 8] & 0x01 << 3) | \
+                             (flat[i * 8] & 0x01 << 4) | \
+                             (flat[i * 8] & 0x01 << 5) | \
+                             (flat[i * 8] & 0x01 << 6) | \
+                             (flat[i * 8] & 0x01 << 7).astype("uint8") 
+        # For every 4 bytes (U32), order bits as [0, 4, 8, 16, 20, 24, 28], [1, 5, 9, 13, 17, 21, 25, 29], ... etc. for the next 2 bytes
+        for i in range(0, len(flatNew) - 4, 4):
+            # only bother swapping bits if they're not the same
+            for j in range(8):
+                bit = 1 << j
+                if (flatNew[i] & bit) ^ (flatNew[i + 4] & bit):  # doesn't need differentBits like the 2bpp and 4bpp cases
+                    flatNew[i] ^= bit   # toggle the jth bit in each byte
+                    flatNew[i + 4] ^= bit
     elif bpp == 2:
         for i in range(len(flatNew)):
             flatNew[i] = ((flat[(i * 4) + 3] & 0x03) << 0) | \
                          ((flat[(i * 4) + 2] & 0x03) << 2) | \
                          ((flat[(i * 4) + 1] & 0x03) << 4) | \
                          ((flat[(i * 4) + 0] & 0x03) << 6).astype("uint8")
+        # For every 4 bytes (U32), order crumbs as [0, 4, 8, 12], [1, 5, 9, 13], ... etc. for the next 2 bytes
+        for i in range(0, len(flatNew) - 4, 4):
+            # only bother swapping bits if they're not the same
+            for j in range(0, 8, 2):
+                crumb = 0x03 << j
+                differentBits = (flatNew[i] & crumb) ^ (flatNew[i + 4] & crumb)
+                if differentBits:
+                    flatNew[i] ^= differentBits   # toggle the jth bit in each byte
+                    flatNew[i + 4] ^= differentBits 
     elif bpp == 4:
         for i in range(len(flatNew)):
             flatNew[i] = ((flat[(i * 2) + 1] & 0x0f) << 0) | \
                          ((flat[(i * 2) + 0] & 0x0f) << 4).astype("uint8")
+        # For every 4 bytes (U32), order nibbles as [0, 4], [1, 5], ... etc. for the next 2 bytes
+        for i in range(0, len(flatNew) - 4, 4):
+            # only bother swapping bits if they're not the same
+            for j in range(0, 8, 4):
+                nibble = 0x0f << j
+                differentBits = (flatNew[i] & nibble) ^ (flatNew[i + 4] & nibble)
+                if differentBits:
+                    flatNew[i] ^= differentBits   # toggle the jth bit in each byte
+                    flatNew[i + 4] ^= differentBits 
 
     return flatNew 
 
@@ -235,26 +263,72 @@ def unpackBytes(packedBytes, bpp):
     colormap = np.zeros(len(packedBytes) * (8 // bpp)).astype("uint8")
     print("colormap shape: " + str(colormap.shape))
     print("packed bytes len: " + str(len(packedBytes)))
+    j = 0
     if bpp == 1:
-        for i in range(len(packedBytes)):
-            colormap[(i * 8) + 0] = ((packedBytes[i] & 0x01) >> 0) 
-            colormap[(i * 8) + 1] = ((packedBytes[i] & 0x02) >> 1)
-            colormap[(i * 8) + 2] = ((packedBytes[i] & 0x04) >> 2)
-            colormap[(i * 8) + 3] = ((packedBytes[i] & 0x08) >> 3)
-            colormap[(i * 8) + 4] = ((packedBytes[i] & 0x10) >> 4)
-            colormap[(i * 8) + 5] = ((packedBytes[i] & 0x20) >> 5)
-            colormap[(i * 8) + 6] = ((packedBytes[i] & 0x40) >> 6)
-            colormap[(i * 8) + 7] = ((packedBytes[i] & 0x80) >> 7)
+        for i in range(0, len(packedBytes), 32):
+            colormap[i +  0] = ((packedBytes[j +  0] & 0x01) >> 0) 
+            colormap[i +  1] = ((packedBytes[j +  1] & 0x01) >> 0)
+            colormap[i +  2] = ((packedBytes[j +  2] & 0x01) >> 0)
+            colormap[i +  3] = ((packedBytes[j +  3] & 0x01) >> 0)
+            colormap[i +  4] = ((packedBytes[j +  0] & 0x02) >> 1)
+            colormap[i +  5] = ((packedBytes[j +  1] & 0x02) >> 1)
+            colormap[i +  6] = ((packedBytes[j +  2] & 0x02) >> 1)
+            colormap[i +  7] = ((packedBytes[j +  3] & 0x02) >> 1)
+            colormap[i +  8] = ((packedBytes[j +  0] & 0x04) >> 2) 
+            colormap[i +  9] = ((packedBytes[j +  1] & 0x04) >> 2)
+            colormap[i + 10] = ((packedBytes[j +  2] & 0x04) >> 2)
+            colormap[i + 11] = ((packedBytes[j +  3] & 0x04) >> 2)
+            colormap[i + 12] = ((packedBytes[j +  0] & 0x08) >> 3)
+            colormap[i + 13] = ((packedBytes[j +  1] & 0x08) >> 3)
+            colormap[i + 14] = ((packedBytes[j +  2] & 0x08) >> 3)
+            colormap[i + 15] = ((packedBytes[j +  3] & 0x08) >> 3)
+            colormap[i + 16] = ((packedBytes[j +  0] & 0x10) >> 4) 
+            colormap[i + 17] = ((packedBytes[j +  1] & 0x10) >> 4)
+            colormap[i + 18] = ((packedBytes[j +  2] & 0x10) >> 4)
+            colormap[i + 19] = ((packedBytes[j +  3] & 0x10) >> 4)
+            colormap[i + 20] = ((packedBytes[j +  0] & 0x20) >> 5)
+            colormap[i + 21] = ((packedBytes[j +  1] & 0x20) >> 5)
+            colormap[i + 22] = ((packedBytes[j +  2] & 0x20) >> 5)
+            colormap[i + 23] = ((packedBytes[j +  3] & 0x20) >> 5)
+            colormap[i + 24] = ((packedBytes[j +  0] & 0x40) >> 6) 
+            colormap[i + 25] = ((packedBytes[j +  1] & 0x40) >> 6)
+            colormap[i + 26] = ((packedBytes[j +  2] & 0x40) >> 6)
+            colormap[i + 27] = ((packedBytes[j +  3] & 0x40) >> 6)
+            colormap[i + 28] = ((packedBytes[j +  0] & 0x80) >> 7)
+            colormap[i + 29] = ((packedBytes[j +  1] & 0x80) >> 7)
+            colormap[i + 30] = ((packedBytes[j +  2] & 0x80) >> 7)
+            colormap[i + 31] = ((packedBytes[j +  3] & 0x80) >> 7)
+            j += 4
     elif bpp == 2:
-        for i in range(len(packedBytes)):
-            colormap[(i * 4) + 0] = ((packedBytes[i] & 0x03) >> 0) 
-            colormap[(i * 4) + 1] = ((packedBytes[i] & 0x0c) >> 2)
-            colormap[(i * 4) + 2] = ((packedBytes[i] & 0x30) >> 4)
-            colormap[(i * 4) + 3] = ((packedBytes[i] & 0xc0) >> 6)
+        for i in range(0, len(packedBytes), 16):
+            colormap[i +  0] = ((packedBytes[j +  0] & 0x03) >> 0) 
+            colormap[i +  1] = ((packedBytes[j +  1] & 0x03) >> 0)
+            colormap[i +  2] = ((packedBytes[j +  2] & 0x03) >> 0)
+            colormap[i +  3] = ((packedBytes[j +  3] & 0x03) >> 0)
+            colormap[i +  4] = ((packedBytes[j +  0] & 0x0c) >> 2)
+            colormap[i +  5] = ((packedBytes[j +  1] & 0x0c) >> 2)
+            colormap[i +  6] = ((packedBytes[j +  2] & 0x0c) >> 2)
+            colormap[i +  7] = ((packedBytes[j +  3] & 0x0c) >> 2)
+            colormap[i +  8] = ((packedBytes[j +  0] & 0x30) >> 4) 
+            colormap[i +  9] = ((packedBytes[j +  1] & 0x30) >> 4)
+            colormap[i + 10] = ((packedBytes[j +  2] & 0x30) >> 4)
+            colormap[i + 11] = ((packedBytes[j +  3] & 0x30) >> 4)
+            colormap[i + 12] = ((packedBytes[j +  0] & 0xc0) >> 6)
+            colormap[i + 13] = ((packedBytes[j +  1] & 0xc0) >> 6)
+            colormap[i + 14] = ((packedBytes[j +  2] & 0xc0) >> 6)
+            colormap[i + 15] = ((packedBytes[j +  3] & 0xc0) >> 6)
+            j += 4
     elif bpp == 4:
-        for i in range(len(packedBytes)):
-            colormap[(i * 2) + 1] = ((packedBytes[i] & 0x0f) >> 0)
-            colormap[(i * 2) + 0] = ((packedBytes[i] & 0xf0) >> 4)
+        for i in range(0, len(packedBytes), 8):
+            colormap[i +  0] = ((packedBytes[j +  0] & 0x0f) >> 0) 
+            colormap[i +  1] = ((packedBytes[j +  1] & 0x0f) >> 0)
+            colormap[i +  2] = ((packedBytes[j +  2] & 0x0f) >> 0)
+            colormap[i +  3] = ((packedBytes[j +  3] & 0x0f) >> 0)
+            colormap[i +  4] = ((packedBytes[j +  0] & 0xf0) >> 4)
+            colormap[i +  5] = ((packedBytes[j +  1] & 0xf0) >> 4)
+            colormap[i +  6] = ((packedBytes[j +  2] & 0xf0) >> 4)
+            colormap[i +  7] = ((packedBytes[j +  3] & 0xf0) >> 4)
+            j += 4
     elif bpp == 8:
         pass
 
