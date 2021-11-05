@@ -892,14 +892,9 @@ Error inflate(Inflatable *inflatableP) {
 					                                                    (size_t) inflatableP->compressedLen, 
 																															&inflatableP->inflatedLen,
 																														 	TINFL_FLAG_PARSE_ZLIB_HEADER); 
-			printf("expected: %lld, actual: %d\n", expectedInflatedLen, inflatableP->inflatedLen);
+			//printf("expected: %lld, actual: %d\n", expectedInflatedLen, inflatableP->inflatedLen);
 			if (inflatableP->inflatedLen != expectedInflatedLen) {
 				e = E_UNEXPECTED_DCMP_SZ;
-				// dump to output binary file for analysis
-				FILE *fp = fopen("../utils/actualDecompression.bin", "wb");
-				if (fp != NULL)
-					fwrite(inflatableP->inflatedDataP, inflatableP->inflatedLen, 1, fp);
-
 				jbFree(&inflatableP->inflatedDataP);
 			}
 		}
