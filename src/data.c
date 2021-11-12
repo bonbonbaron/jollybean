@@ -300,7 +300,7 @@ Error histoNew(U32 **histoPP, const U32 maxVal) {
 	return arrayNew((void**) histoPP, sizeof(U32), maxVal);
 }	
 
-void histoU8Del(U32 **histoPP) {
+void histoDel(U32 **histoPP) {
 	arrayDel((void**) histoPP);
 }
 

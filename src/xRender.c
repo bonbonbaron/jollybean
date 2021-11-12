@@ -1,12 +1,16 @@
 #include "xRender.h"
+#include "SDL.h"
 
 // Compressed images are already in memory in JB. 
 // JB just reconstructs them from strips of staggered pixels. 
-// Packed bits are staggered to allow JB to unpack 4 color-mapped pixels' bits at a time.
+// Packed bits are staggered to allow JB to unpack and (if necessary) flip 4 color-mapped pixels at a time.
 
+// =========================================
+// Clear color map and all its related data.
+// =========================================
 void cmClr(Colormap *cmP) {
 	if (cmP != NULL) {
-	 	if (cmP->dataP != NULL)
+	 	if (cmP->dataP != NULL)    // But if the double pointer is null, avoid any processing.
 			jbFree((void**) &cmP->dataP);
 		if (cmP->stripSetP != NULL && cmP->stripSetP->stripSetInfP != NULL &&
 				cmP->stripSetP->stripSetInfP->inflatedDataP != NULL)
@@ -17,10 +21,12 @@ void cmClr(Colormap *cmP) {
 	}
 }
 
+// =====================================================================
+// Build color map by inflating, unpacking, and piecing together strips.
+// =====================================================================
 Error cmGen(Colormap *cmP) {
 	Error e;
 	register U32 dstFlip;
-	register U32 srcStrip;
 
 	if (cmP != NULL) {
 		// Check if the image has already been reconstructed. If so, get out.
@@ -35,7 +41,7 @@ Error cmGen(Colormap *cmP) {
 		if (!e && cmP->stripMapP)
 			e = inflate(cmP->stripMapP->stripMapInfP);
 		// Allocate colormap memory.
-		if (!e)
+		if (!e) 
 			e = jbAlloc((void**) &cmP->dataP, sizeof(U8), cmP->w * cmP->h);
 	}
 	else
@@ -148,15 +154,13 @@ Error cmGen(Colormap *cmP) {
 	return e;
 }
 
-/* We need these types of initializations:
- * iniC: inflate (if necessary), initialize (" "), 
- * iniS: prepare the system to handle all its components.
- */
 static SDL_Window *windowP;
 static SDL_Surface *wSurfP;
-static SDL_Rect wRect = {0};
 static SDL_Renderer *rendererP;
 
+//======================================================
+// Initialize xRender's system.
+//======================================================
 Error xRenderIniS() {
 	// Init SDL
 	if (SDL_Init(SDL_INIT_VIDEO) != SUCCESS)
@@ -167,7 +171,6 @@ Error xRenderIniS() {
 	if (!windowP)
 		return EXIT_FAILURE;
 	wSurfP = SDL_GetWindowSurface(windowP);
-	wRect.w =  = {0, 0, 620, 387};
 
 	// Init renderer
 	rendererP = SDL_CreateRenderer(windowP, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
@@ -179,56 +182,89 @@ Error xRenderIniS() {
 	return SUCCESS;
 }
 
-// Decouple SDL from JB as much as possible! 
-// I need a plan:
-// 0) design XRenderC... and how do seeds interact with entities?
-// 1) initialize a system's special attributes along with its standard ECS attributes (repeatable)
-// 2) initialize one component
-// 3) initialize an array of components
-// 4) 
-//
-Error xRenderIniC() {
-	Error e = cmGen(&biggerCM);
+//======================================================
+// Initialize xRender's components, which are Images.
+//======================================================
+Error xRenderIniC(XRenderC *cP) {
+	// Build colormap.
+	Error e = cmGen(cP->imgP->colorMapP);
+	// Make surface out of colormap and color palette.
+	SDL_Surface *surfaceP = NULL;
+
 	if (!e)
-		SDL_Surface *surfaceP = SDL_CreateRGBSurfaceWithFormat(0, biggerCM.w, biggerCM.h, biggerCM.bpp, SDL_PIXELFORMAT_INDEX8);
+		surfaceP = SDL_CreateRGBSurfaceWithFormat(0, cP->imgP->colorMapP->w, cP->imgP->colorMapP->h, cP->imgP->colorMapP->bpp, SDL_PIXELFORMAT_INDEX8);
 
 	if (!surfaceP) 
 		e = E_BAD_ARGS;
 	else {
-		SDL_Palette palette1 = {16, colorSet1, 0, 0};
-		surfaceP->pixels = biggerCM.dataP;
-		e = SDL_SetSurfacePalette(surfaceP, &palette1);
+		SDL_Palette palette = {cP->imgP->nColors, (SDL_Color*) cP->imgP->colorA, 0, 0};
+		surfaceP->pixels = cP->imgP->colorMapP->dataP;
+		e = SDL_SetSurfacePalette(surfaceP, &palette);
 	}
 
-	SDL_Texture *tP = SDL_CreateTextureFromSurface(rendererP, surfaceP);
+	if (!e && surfaceP != NULL)
+		cP->imgP->textureP = SDL_CreateTextureFromSurface(rendererP, surfaceP);
 
-	if (!tP) 
+	if (!e && !cP->imgP->textureP) 
 		e = E_BAD_ARGS;
+
 	if (!e) 
-		e = SDL_SetTextureBlendMode(tP, SDL_BLENDMODE_BLEND);
+		e = SDL_SetTextureBlendMode(cP->imgP->textureP, SDL_BLENDMODE_BLEND);
 
-	if (!e) {
-		SDL_Rect srcRect = {0, 0, 128, 256};
-		SDL_Rect dstRect = {100, 100, 64, 256};
+	if (!e)
+		cP->srcRectPP = cP->dstRectPP = NULL;
+
+	if (e) {
+		cmClr(cP->imgP->colorMapP);
+		SDL_FreeSurface(surfaceP);
+		surfaceP = NULL;
+		if (cP->imgP->textureP) {
+			SDL_DestroyTexture(cP->imgP->textureP);
+			cP->imgP->textureP = NULL;
+		}
 	}
-
-	cmClr(&biggerCM);
+	return e;
 }
 
-Error xRenderExe() {
+//======================================================
+// Render activity
+//======================================================
+Error xRender(Activity *aP) {
 	Error e = SUCCESS;
+	XRenderC *cP, *cEndP;
 
-	for (U32 i = 0; i < 500; i++) {
-		SDL_SetRenderDrawColor(rendererP, 0, 0, 0, 0xff);
-		SDL_RenderClear(rendererP);
-		e = SDL_RenderCopy(rendererP, tP, &srcRect, &dstRect);
-		dstRect.x++;
+	// Clear the screen.
+	SDL_SetRenderDrawColor(rendererP, 0, 0, 0, 0xff);
+	SDL_RenderClear(rendererP);
+
+	// Send GPU instructions on what to render.
+	arrayIniPtrs((const void*) aP->ecA, (void**) &cP, (void**) &cEndP, (S32) aP->firstInactiveIdx);
+
+	for (; cP < cEndP; cP++) 
+		e = SDL_RenderCopy(rendererP, cP->imgP->textureP, *cP->srcRectPP, *cP->dstRectPP);
+
+	// Tell GPU to execute instructions.
+	if (!e)
 		SDL_RenderPresent(rendererP);
-	}
-
-	SDL_DestroyRenderer(rendererP);
-	SDL_DestroyWindow(windowP);
-	SDL_Quit();
 
 	return e;
 }
+
+//======================================================
+// System definition
+//======================================================
+XRenderC xImgSwapPH;
+
+System sRender = {
+	.id								= RENDER,						
+	.sysIniFP					= xRenderIniS,
+	.active						= 0,					
+	.ecSz							= sizeof(XRenderC),
+	.swapPlaceholderP = &xImgSwapPH,			
+	.ecLocationMapP		= NULL,							
+	.oneOffFPA				= NULL,					
+	.inbox						= {NULL, 0},				
+	.outbox						= {NULL, 0},			
+	.nActivities			= 1,
+	.activityA				= { ACTIVITY_(xRender) }
+};

@@ -1,8 +1,7 @@
 #include "ecs.h"
 
 /* Go ahead and provide these functions here:
-	1) Histogramming entitieSeeds' genes
-	2) Validating entitySeeds' behaviors (e.g. every system function-index is lower than the system's highest function index enum)
+	Histogramming entitieSeeds' genes
 */
 
 /**************/
@@ -19,7 +18,7 @@ void* getUnaryGene(U8 *geneHeaderP, Key *overrideKeyP) {
 /* Binary gene-selection */
 void* getBinaryGene(U8 *geneHeaderP, Key *overrideKeyP) {
 	BinaryGene *bP = (BinaryGene*) geneHeaderP;
-	if (overrideKeyP)
+	if (overrideKeyP && *overrideKeyP)
 		return arrayGetVoidElemPtr(bP->binaryA, ((*overrideKeyP & bP->mask) == bP->expVal));
 	else
 		return arrayGetVoidElemPtr(bP->binaryA, ((*bP->tgtP & bP->mask) == bP->expVal));
@@ -130,59 +129,32 @@ inline static void _startEcActivity(System *sP, Entity entity, U8 dstActivity) {
   }
 }
 
-static void iniActivity(SysFP funcPtr, Activity *aP) {
-	aP->sysFP = funcPtr;
-	aP->active = 0;
-	aP->firstInactiveIdx = 0;
-	aP->firstEmptyIdx = 0;
-	aP->ecA = NULL;
-}
-	
-Error sysNew(System **sPP, U8 sysID, const U8 ecSz, U8 nFuncs) {
-	Error e = jbAlloc((void**) sPP, sizeof(System), 1);
-	/* Allocate activity array. */
-	if (!e) {
-		e = arrayNew((void**) &(*sPP)->activityA, sizeof(Activity), nFuncs);
-  }
-  if (!e) 
-    e = jbAlloc((void**)&(*sPP)->swapPlaceholderP, ecSz, 1);
-	/* These are left to parent system to allocate for better performance. */
-  if (!e) 
-	  (*sPP)->ecLocationMapP = NULL;
-  else {
-    /* If something bad happened, clean up. */
-    arrayDel((void**) &(*sPP)->activityA);
-    jbFree((void**) &(*sPP)->swapPlaceholderP);
-    jbFree((void**) sPP);
-  }
+static Error iniActivity(System *sP, Activity *aP, U32 nComps) {
+	Error e = arrayNew(&aP->ecA, sP->ecSz, nComps);
+	if (!e) 
+		aP->ownerP = sP;
 	return e;
 }
 
-void sysIni(System *sP, U8 sysID, SysFP *funcPtrA, U8 ecSz) {
-		/* Populate activity array's function pointers. */
-	Activity *aP, *aEndP;
-	SysFP *funcP = funcPtrA;
-  arrayIniPtrs((void*) sP->activityA, (void**) &aP, (void**) &aEndP, -1);
-	while (aP < aEndP)
-		iniActivity(*funcP++, aP++);
-	/* For performance, the parent system is in charge of allocating the component arrays within the activity array elements. */
-	/* Set individual settings. */
-	sP->active = 0;
-  sP->ecSz = ecSz;
-	sP->id = sysID;
-	sP->ecLocationMapP = NULL;
+// Components are initially spread out across the entity seeds, 
+// so we'll initialize those one at a time later into the first activity as deactivated.
+// Then the Behavior System will take care of putting those in the proper activity.
+Error sysIni(System *sP, U32 nComps) {
+	// First call the system's unique initializer.
+	Error e = (*sP->sysIniFP)();
+	if (!e)
+		e = mapNew(&sP->ecLocationMapP, sP->ecSz, nComps);
+
+	if (!e) 
+		// Then allocate enough room for all components in every activity. 
+		for (U8 i = 0; !e && i < sP->nActivities; i++) 
+			e = iniActivity(sP, &sP->activityA[i], nComps);
+	
+	return e;
 }
 
-/* Parent system calls this on each system's activities after histogramming the entity seed data. */
-Error sysNewCmpsA(const System *sP, const U8 activityIdx, const U8 nCmps) {
-	/* Include Entity between every Component. */
-	if (_validateActivityIdx(sP, activityIdx))
-		return arrayNew((void**) &sP->activityA[activityIdx].ecA, sP->ecSz, nCmps);
-	return E_BAD_ARGS;
-}
-
-Error sysNewCmpMap(System *sP, U8 elemSz, U8 nElems) {
-  return mapNew(&sP->ecLocationMapP, elemSz, nElems);
+Error sysNewCmpMap(System *sP, U8 nElems) {
+  return mapNew(&sP->ecLocationMapP, sP->ecSz, nElems);
 }
 
 #if 0
@@ -194,10 +166,9 @@ static void sysIniCmp(const System *sP, const U8 activityIdx, const Entity entit
 }
 #endif
 
-static void _sysDelActivities(System *sP) {
+static void _sysClrActivities(System *sP) {
 	for (U8 i = 0, nActivities = _getNActivities(sP); i < nActivities; i++) 
 		arrayDel((void**) &sP->activityA[i].ecA);
-	arrayDel((void**) &sP->activityA);
 }	
 
 Error sysNewMailbox(Mailbox **mailboxPP, U32 nMailSlots) {
@@ -211,26 +182,25 @@ Error sysNewMailbox(Mailbox **mailboxPP, U32 nMailSlots) {
 	return e;
 }
 		
-#if 0  /* get rid of compiler warnings for now */
 static void _clrMailbox(Mailbox *mailboxP) {
 	memset(mailboxP->msgA, 0, sizeof(Message) * arrayGetNElems(mailboxP));
 }
-#endif
 
-static void _sysDelMailboxMsgs(System *sP) {
+static void _sysClrMailboxes(System *sP) {
 	arrayDel((void**)&sP->inbox.msgA);
 	arrayDel((void**)&sP->outbox.msgA);
+	sP->inbox.nMsgs = 0;
+	sP->outbox.nMsgs = 0;
 }
 
 void sysReset(System *sP) {
 	/* TODO */
 }
 
-void sysDel(System **sPP) {
-	_sysDelMailboxMsgs(*sPP);
-	_sysDelActivities(*sPP);
-	mapDel(&(*sPP)->ecLocationMapP);
-	jbFree((void**) sPP);
+void sysClr(System *sP) {
+	_sysClrMailboxes(sP);
+	_sysClrActivities(sP);
+	mapDel(&sP->ecLocationMapP);
 }
 
 void sysToggleActive(System *sP) {
@@ -278,8 +248,10 @@ void sysWriteOutbox(System *sP, Message *msgP) {
 /* This is how the entire ECS framework works. */
 void sysRun(System *sP) {
 	sysReadInbox(sP);
+	_clrMailbox(&sP->inbox);
+
 	Activity *aP, *aEndP;
 	arrayIniPtrs(sP->activityA, (void**) &aP, (void**) &aEndP, -1);
 	while (aP < aEndP) 
-		(*aP->sysFP)(sP, aP, aP->ecA);
+		(*aP->sysFP)(aP);
 }

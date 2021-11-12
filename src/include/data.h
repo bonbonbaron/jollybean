@@ -100,8 +100,8 @@ Error mapSet(Map *mapP, const U8 key, const void *valP);
 void* mapGet(const Map *mapP, const U8 key);
 
 /* Histograms */
-Error histoU8New(U32 **histoPP, const U8 *srcA, const U32 maxVal);
-void histoU8Del(U32 **histoPP);
+Error histoNew(U32 **histoPP, const U32 maxVal);
+void histoDel(U32 **histoPP);
 
 /* TinFL Decompression */
 typedef struct {
