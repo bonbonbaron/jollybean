@@ -2,10 +2,9 @@
 #define ECS_H
 #include "data.h"
 
-
 /* Keys */
 ENUM_KEYS_(DEFAULT, SCENE_TYPE_1, SCENE_TYPE_2, N_SCENE_TYPES) SceneType;
-ENUM_KEYS_(POSITION, MOTION, ANIMATION, COLLISION, IMAGE, RENDER, N_SYS_TYPES) SystemKey; 
+ENUM_KEYS_(POSITION, MOTION, ANIMATION, COLLISION, RENDER, JOLLYBEAN, N_SYS_TYPES) SystemKey; 
 /* Macros for Response, Response Sets, and Response Set Sequences */
 #define RS_(...) {__VA_ARGS__, NULL}   /* Response Set (must be null-terminated) */
 #define RS_SEQ_(...) {__VA_ARGS__, NULL}   /* Response Set Sequence (must be null-terminated) */
@@ -29,6 +28,8 @@ ENUM_KEYS_(POSITION, MOTION, ANIMATION, COLLISION, IMAGE, RENDER, N_SYS_TYPES) S
 	.genomePA = {__VA_ARGS__}\
 }
 
+#define FIRST_ACTIVITY (0)
+
 #define ACTIVITY_(sysFP) {\
 	NULL,   /* owner */\
 	0,			/* active */\
@@ -38,6 +39,29 @@ ENUM_KEYS_(POSITION, MOTION, ANIMATION, COLLISION, IMAGE, RENDER, N_SYS_TYPES) S
 	NULL    /* array of ECs */\
 }
 
+#define NEW_SYS_(name_, id_, ...) \
+\
+X##name_##C x##name_##SwapPH;\
+\
+Activity x##name_##ActivityA[] = {__VA_ARGS__};\
+System s##name_ = {\
+	.xHeader          = {.owner = 0, .type = JOLLYBEAN},\
+	.id								= id_,\
+	.sysIniSFP				= x##name_##IniS,\
+	.sysIniCFP				= x##name_##IniC,\
+	.ecSz							= sizeof(X##name_##C),\
+	.swapPlaceholderP = &x##name_##SwapPH,\
+	.ecLocationMapP		= NULL,\
+	.oneOffFPA				= NULL,\
+	.inbox						= {NULL, 0},\
+	.outbox						= {NULL, 0},\
+	.nActivities			= NUM_ARGS_(Activity, __VA_ARGS__),\
+	.activityA				= &x##name_##ActivityA[0]\
+}
+
+/**********/
+/* Entity */
+/**********/
 typedef U8 Entity;  
 
 typedef struct {
@@ -86,16 +110,11 @@ typedef enum {
 typedef HardCodedMap Behavior;
 typedef HardCodedMap Personality;
 
-/**********/
-/* Entity */
-/**********/
-// Looks like genes are all an entity seed is made of now! Behaviors are genes too!
 
 
 /*************/
 /* Component */
 /*************/
-	
 /* Gene storage macros */
 #define CMP_HEADER_(sysKey) {0, sysKey}
 #define UNARY_GENE_(name_, cmpType_, ...) \
@@ -170,13 +189,14 @@ struct _System;
 struct _Activity;
 typedef Error (*SysFP)(struct _Activity *aP);
 typedef Error (*SysIniFP)(void);
+typedef Error (*SysIniCFP)(XHeader *xhP);
 typedef void (*SysBasicFP)(struct _System *sP);
 typedef void (*SysOneOffFP)(struct _System *sP, Entity entity, U8 key);  /* optional key to a map or idx to array */
 
 typedef struct {
 	U8 activityIdx;
 	U8 ecIdx;
-  void *ecP;      /* Systems that use pointers to other systems' components may use double pointers to avoid requesting updated info. */
+  void *ecP; /* Systems that use pointers to other systems' components may use double pointers to avoid requesting updated info. */
 } ECLocation;
 
 typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;
@@ -213,19 +233,20 @@ typedef struct _Activity {
 	void *ecA;  /* components the above function operates on */
 } Activity;
 
-/* Systems are 100% modular by ignoring the outside world. They just react to their inboxes and fill their outboxes. */
+/* Systems are agnostic to the outside world. They just react to their inboxes and fill their outboxes. This makes them completely modular. */
 typedef struct _System {
+	XHeader      xHeader;           /* This allows (sub)systems to be components of other systems! */
   U8           id;                /* this is needed to ensure messages are sent to the correct system */
-	U8           active;            /* boolean for whether this system should even operate */
 	U8           ecSz;              /* components are the same size in all of this system's activities */
 	U8           nActivities;       /* Number of activities in activityA[] */
   void        *swapPlaceholderP;  /* Avoids allocating a new placeholder every EC-swap. */
 	Map         *ecLocationMapP;    /* maps component IDs to an element in an array of CmpAddresses */
-	SysIniFP     sysIniFP;					/* System init function pointer */
+	SysIniFP     sysIniSFP;					/* System init function pointer */
+	SysIniCFP    sysIniCFP;					/* Some systems need to inflate components before using them. */
 	SysOneOffFP *oneOffFPA;         /* Array of one-off functions for system to perform one action immediately on an EC */
 	Mailbox      inbox;             /* Where commands come in from the outside world */
 	Mailbox      outbox;            /* Where this system talks to the outside world */
-	Activity     activityA[];			  /* Array of activities that loop through their components */
+	Activity    *activityA;			  /* Array of activities that loop through their components */
 } System;
 
 typedef enum {
@@ -233,11 +254,15 @@ typedef enum {
 	_MAX_SYSTEMWIDE_CMD_ID
 } SysCmdID;
 
-
-void sysToggleActive(System *sP);
-
 void sysIniPtrs(System *sP, Activity *aP, void **startPP, void **endPP);
 Error sysNew(System **sPP, const U8 ecSz, U8 nFuncs);
 Error sysIni(System *sP, U32 nComps);
+void sysRun(System *sP);
 void sysClr(System *sP);
+Error sysIniActivity(System *sP, Activity *aP, U32 nComps);
+Error sysIniActivityEC(System *sP, const U8 activityIdx, const Entity entity, const void *cmpP);
+Error sysAddComponent(System *sP, Entity entity, XHeader *xhP);
+Error sysNewECMap(System *sP, U8 nElems);
+void* sysGetComponent(System *sP, Entity entity);
+Error sysDeactivateCmp(System *sP, Entity entity);
 #endif

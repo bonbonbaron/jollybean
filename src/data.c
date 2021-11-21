@@ -94,6 +94,15 @@ void* arrayGetVoidElemPtr(const void *arryP, S32 idx) {
     return NULL;  
 }
 
+Error arraySetVoidElem(void *arrayP, U32 idx, const void *elemSrcP) {
+	if (!arrayP)
+		return E_BAD_ARGS;
+	U32 elemSz = arrayGetElemSz((const void*) arrayP);
+	void *dstP = (U8*) arrayP + (idx * elemSz);
+	memcpy(dstP, elemSrcP, elemSz);
+	return SUCCESS;
+}
+
 void arrayIniPtrs(const void *arryP, void **startP, void **endP, S32 endIdx) {
 	*startP = (void*) arryP;
 	*endP = _arrayGetVoidElemPtr(arryP, endIdx);
@@ -130,6 +139,32 @@ Error arrayIni(void **arryPP, HardCodedArray *hcaP) {
 		arrayDel(arryPP);
 	return e;
 }
+
+// Hard-coded arrays force elements to be located at particular indices. Good for enum flexibility.
+Error hcArrayIni(HardCodedArray *hcaP) {
+	if (!hcaP)
+		return E_BAD_ARGS;
+	// Don't bother if array's already been initialized.
+	if (hcaP->arrayP)
+		return SUCCESS;
+	
+	// Figure out how many elements array should have. Not necessarily same as _nEnumValPairs.
+	U32 maxIdx = 0;
+	for (U32 i = 0; i < hcaP->_nEnumValPairs; i++) 
+		if (hcaP->enumValA[i]._enum > maxIdx)
+			maxIdx = hcaP->enumValA[i]._enum;
+	
+	// Populate array.
+	Error e = arrayNew(&hcaP->arrayP, hcaP->_elemSz, maxIdx);
+	if (!e)
+		for (U32 i = 0; !e && i < hcaP->_nEnumValPairs; i++) 
+			e = arraySetVoidElem(hcaP->arrayP, hcaP->enumValA[i]._enum, hcaP->enumValA[i].valP);
+
+	return e;
+}
+
+
+
 
 /***********************/
 /********* MAPS ********/
@@ -216,8 +251,10 @@ extern void* mapGet(const Map *mapP, const U8 key) {
 	const register U8 keyMinus1 = key - 1;
 	const register FlagInfo f = mapP->flagA[keyMinus1 >> 3];
 	const register U8 bitFlag = 1 << (keyMinus1 & 0x07);
+	// If the bit flag in question is set, that means a value exists for the input key.
 	if (f.flags & bitFlag) {
-		register U8 bitCount = bitFlag - 1;
+		// Count all the bits set BEFORE the key'th bit (first bit is 1) to get the array index.
+		register U8 bitCount = f.flags & (bitFlag - 1);
 		bitCount = (bitCount & 0x55) + (bitCount >> 1 & 0x55);
 		bitCount = (bitCount & 0x33) + (bitCount >> 2 & 0x33);
 		bitCount = (bitCount & 0x0f) + (bitCount >> 4 & 0x0f);
@@ -262,6 +299,7 @@ Error mapSet(Map *mapP, const U8 key, const void *valP) {
     if (nBytesToMove) 
       memcpy(nextElemP, (const void*) elemP, nBytesToMove);
 		/* Write value to map element. */
+		printf("size of *valP: %d\n", _getMapElemSz(mapP));
 		memcpy(elemP, valP, _getMapElemSz(mapP));
 		/* Set flag. */
 		U8 byteIdx = BYTE_IDX(key);
@@ -290,6 +328,21 @@ Error mapRem(Map *mapP, const U8 key) {
 	return e;
 }
 
+Error hcMapIni(HardCodedMap *hcmP) {
+	if (!hcmP)
+		return E_BAD_ARGS;
+	// Don't bother if map's already been initialized.
+	if (hcmP->mapP)
+		return SUCCESS;
+	
+	// Populate array.
+	Error e = mapNew(&hcmP->mapP, hcmP->_elemSz, hcmP->_nKeyValPairs);
+	if (!e)
+		for (U32 i = 0; !e && i < hcmP->_nKeyValPairs; i++) 
+			e = mapSet(hcmP->mapP, hcmP->keyValA[i].key, hcmP->keyValA[i].valueP);
+
+	return e;
+}
 /************************************/
 /************ HISTOGRAMS ************/
 /************************************/

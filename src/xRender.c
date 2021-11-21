@@ -8,7 +8,7 @@
 // =========================================
 // Clear color map and all its related data.
 // =========================================
-void cmClr(Colormap *cmP) {
+void _cmClr(Colormap *cmP) {
 	if (cmP != NULL) {
 	 	if (cmP->dataP != NULL)    // But if the double pointer is null, avoid any processing.
 			jbFree((void**) &cmP->dataP);
@@ -24,14 +24,16 @@ void cmClr(Colormap *cmP) {
 // =====================================================================
 // Build color map by inflating, unpacking, and piecing together strips.
 // =====================================================================
-Error cmGen(Colormap *cmP) {
+Error _cmGen(Colormap *cmP) {
 	Error e;
 	register U32 dstFlip;
+	printf("cmgen\n");
 
 	if (cmP != NULL) {
 		// Check if the image has already been reconstructed. If so, get out.
 		if (cmP->dataP != NULL)   // Colormap has already been reconstructed.
 			return SUCCESS;  
+		printf("inflating bigger image\n");
 		// If not reconstructed yet, inflate strip set if it's still compressed (inflate() checks internally).
 		if (cmP->stripSetP)
 			e = inflate(cmP->stripSetP->stripSetInfP);
@@ -149,35 +151,37 @@ Error cmGen(Colormap *cmP) {
 		}
 	}
 	else 
-		cmClr(cmP);
+		_cmClr(cmP);
 
 	return e;
 }
 
-static SDL_Window *windowP;
-static SDL_Surface *wSurfP;
-static SDL_Renderer *rendererP;
+static SDL_Window *windowP = NULL;
+static SDL_Surface *wSurfP = NULL;
+static SDL_Renderer *rendererP = NULL;
 
 //======================================================
 // Initialize xRender's system.
 //======================================================
 Error xRenderIniS() {
-	// Init SDL
-	if (SDL_Init(SDL_INIT_VIDEO) != SUCCESS)
-		return EXIT_FAILURE;
+	if (!rendererP && !wSurfP && !windowP) {
+		// Init SDL
+		if (SDL_Init(SDL_INIT_VIDEO) != SUCCESS)
+			return EXIT_FAILURE;
 
-	// Init window
-	windowP = SDL_CreateWindow("Hello world!", 100, 100, 1080, 700, SDL_WINDOW_SHOWN);
-	if (!windowP)
-		return EXIT_FAILURE;
-	wSurfP = SDL_GetWindowSurface(windowP);
+		// Init window
+		windowP = SDL_CreateWindow("Hello world!", 100, 100, 1080, 700, SDL_WINDOW_SHOWN);
+		if (!windowP)
+			return EXIT_FAILURE;
+		wSurfP = SDL_GetWindowSurface(windowP);
 
-	// Init renderer
-	rendererP = SDL_CreateRenderer(windowP, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-	if (!rendererP) {
-		SDL_DestroyWindow(windowP);
-		SDL_Quit();
-		return EXIT_FAILURE;
+		// Init renderer
+		rendererP = SDL_CreateRenderer(windowP, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+		if (!rendererP) {
+			SDL_DestroyWindow(windowP);
+			SDL_Quit();
+			return EXIT_FAILURE;
+		}
 	}
 	return SUCCESS;
 }
@@ -185,15 +189,22 @@ Error xRenderIniS() {
 //======================================================
 // Initialize xRender's components, which are Images.
 //======================================================
-Error xRenderIniC(XRenderC *cP) {
+Error xRenderIniC(XHeader *xhP) {
+	if (!xhP)
+		return E_BAD_ARGS;
+
+	XRenderC *cP = (XRenderC*) xhP;
+	if (cP->imgP->textureP) 
+		return SUCCESS;
 	// Build colormap.
-	Error e = cmGen(cP->imgP->colorMapP);
+	Error e = _cmGen(cP->imgP->colorMapP);
 	// Make surface out of colormap and color palette.
 	SDL_Surface *surfaceP = NULL;
 
 	if (!e)
 		surfaceP = SDL_CreateRGBSurfaceWithFormat(0, cP->imgP->colorMapP->w, cP->imgP->colorMapP->h, cP->imgP->colorMapP->bpp, SDL_PIXELFORMAT_INDEX8);
 
+	// Apply color palette to color map.
 	if (!surfaceP) 
 		e = E_BAD_ARGS;
 	else {
@@ -202,6 +213,7 @@ Error xRenderIniC(XRenderC *cP) {
 		e = SDL_SetSurfacePalette(surfaceP, &palette);
 	}
 
+	// Create texture from surface. 
 	if (!e && surfaceP != NULL)
 		cP->imgP->textureP = SDL_CreateTextureFromSurface(rendererP, surfaceP);
 
@@ -214,10 +226,11 @@ Error xRenderIniC(XRenderC *cP) {
 	if (!e)
 		cP->srcRectPP = cP->dstRectPP = NULL;
 
+	//SDL_FreeSurface(surfaceP);  // Program crashes when I do this. Maybe textureP needs it?
+
+	// Clean up if anything bad happened.
 	if (e) {
-		cmClr(cP->imgP->colorMapP);
-		SDL_FreeSurface(surfaceP);
-		surfaceP = NULL;
+		_cmClr(cP->imgP->colorMapP);
 		if (cP->imgP->textureP) {
 			SDL_DestroyTexture(cP->imgP->textureP);
 			cP->imgP->textureP = NULL;
@@ -237,11 +250,23 @@ Error xRender(Activity *aP) {
 	SDL_SetRenderDrawColor(rendererP, 0, 0, 0, 0xff);
 	SDL_RenderClear(rendererP);
 
-	// Send GPU instructions on what to render.
-	arrayIniPtrs((const void*) aP->ecA, (void**) &cP, (void**) &cEndP, (S32) aP->firstInactiveIdx);
 
-	for (; cP < cEndP; cP++) 
-		e = SDL_RenderCopy(rendererP, cP->imgP->textureP, *cP->srcRectPP, *cP->dstRectPP);
+	// Send GPU instructions on what to render.
+	//arrayIniPtrs((const void*) aP->ecA, (void**) &cP, (void**) &cEndP, (S32) aP->firstInactiveIdx);
+	cP = (XRenderC*) aP->ecA;
+	cEndP = cP + aP->firstInactiveIdx;
+	SDL_Rect *srcRectP = NULL;
+	SDL_Rect dstRects[] = {
+		{0, 0, 100, 200},
+		{50, 100, 200, 200},
+		{100, 150, 150, 150}
+	};
+	U8 i = 0;
+
+	for (; !e && cP < cEndP; cP++) 
+		e = SDL_RenderCopy(rendererP, cP->imgP->textureP, srcRectP, &dstRects[i++]);
+		///e = SDL_RenderCopy(rendererP, cP->imgP->textureP, *cP->srcRectPP, *cP->dstRectPP);
+		//TODO: replace the above NULLs with pointers to rectangles from other systems
 
 	// Tell GPU to execute instructions.
 	if (!e)
@@ -253,18 +278,4 @@ Error xRender(Activity *aP) {
 //======================================================
 // System definition
 //======================================================
-XRenderC xImgSwapPH;
-
-System sRender = {
-	.id								= RENDER,						
-	.sysIniFP					= xRenderIniS,
-	.active						= 0,					
-	.ecSz							= sizeof(XRenderC),
-	.swapPlaceholderP = &xImgSwapPH,			
-	.ecLocationMapP		= NULL,							
-	.oneOffFPA				= NULL,					
-	.inbox						= {NULL, 0},				
-	.outbox						= {NULL, 0},			
-	.nActivities			= 1,
-	.activityA				= { ACTIVITY_(xRender) }
-};
+NEW_SYS_(Render, RENDER, ACTIVITY_(xRender));
