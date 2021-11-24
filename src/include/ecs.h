@@ -3,8 +3,7 @@
 #include "data.h"
 
 /* Keys */
-ENUM_KEYS_(DEFAULT, SCENE_TYPE_1, SCENE_TYPE_2, N_SCENE_TYPES) SceneType;
-ENUM_KEYS_(POSITION, MOTION, ANIMATION, COLLISION, RENDER, JOLLYBEAN, N_SYS_TYPES) SystemKey; 
+ENUM_KEYS_(CONTROL, POSITION, MOTION, ANIMATION, COLLISION, RENDER, JOLLYBEAN, N_SYS_TYPES) SystemKey; 
 /* Macros for Response, Response Sets, and Response Set Sequences */
 #define RS_(...) {__VA_ARGS__, NULL}   /* Response Set (must be null-terminated) */
 #define RS_SEQ_(...) {__VA_ARGS__, NULL}   /* Response Set Sequence (must be null-terminated) */
@@ -19,24 +18,24 @@ ENUM_KEYS_(POSITION, MOTION, ANIMATION, COLLISION, RENDER, JOLLYBEAN, N_SYS_TYPE
 #define OTHERWISE_BEHAVE_AS_(val) {DEFAULT, (void*) &val}
 
 #define NEW_GENOME_(name, ...) Genome name = {\
-	.nGenes = NUM_ARGS_(XHeader*, __VA_ARGS__),\
-	.genePA = {__VA_ARGS__}\
+  .nGenes = NUM_ARGS_(XHeader*, __VA_ARGS__),\
+  .genePA = {__VA_ARGS__}\
 }
 
 #define GENOME_GROUP_(name, ...) GenomeGrp name = {\
-	.nEntities = NUM_ARGS_(Genome*, __VA_ARGS__),\
-	.genomePA = {__VA_ARGS__}\
+  .nEntities = NUM_ARGS_(Genome*, __VA_ARGS__),\
+  .genomePA = {__VA_ARGS__}\
 }
 
 #define FIRST_ACTIVITY (0)
 
-#define ACTIVITY_(sysFP) {\
-	NULL,   /* owner */\
-	0,			/* active */\
-	0,  		/* first inactive */\
-	0,  		/* first emtpy */\
-	sysFP,  /* system function pointer */\
-	NULL    /* array of ECs */\
+#define ACTIVITY_(id_, sFP_) {\
+  .id               = id_, \
+  .ownerP           = NULL, \
+  .firstInactiveIdx = 0, \
+  .firstEmptyIdx   = 0, \
+  .sFP              = sFP_, \
+  .cA               = NULL \
 }
 
 #define NEW_SYS_(name_, id_, ...) \
@@ -45,18 +44,18 @@ X##name_##C x##name_##SwapPH;\
 \
 Activity x##name_##ActivityA[] = {__VA_ARGS__};\
 System s##name_ = {\
-	.xHeader          = {.owner = 0, .type = JOLLYBEAN},\
-	.id								= id_,\
-	.sysIniSFP				= x##name_##IniS,\
-	.sysIniCFP				= x##name_##IniC,\
-	.ecSz							= sizeof(X##name_##C),\
-	.swapPlaceholderP = &x##name_##SwapPH,\
-	.ecLocationMapP		= NULL,\
-	.oneOffFPA				= NULL,\
-	.inbox						= {NULL, 0},\
-	.outbox						= {NULL, 0},\
-	.nActivities			= NUM_ARGS_(Activity, __VA_ARGS__),\
-	.activityA				= &x##name_##ActivityA[0]\
+  .xHeader          = {.owner = 0, .type = JOLLYBEAN},\
+  .id                = id_,\
+  .sIniSFP          = x##name_##IniS,\
+  .sIniCFP          = x##name_##IniC,\
+  .cSz              = sizeof(X##name_##C),\
+  .swapPlaceholderP = &x##name_##SwapPH,\
+  .cDirectoryP      = NULL,\
+  .oneOffFPA        = NULL,\
+  .inbox            = {NULL, 0},\
+  .outbox            = {NULL, 0},\
+  .nActivities      = NUM_ARGS_(Activity, __VA_ARGS__),\
+  .activityA        = &x##name_##ActivityA[0]\
 }
 
 /**********/
@@ -65,36 +64,36 @@ System s##name_ = {\
 typedef U8 Entity;  
 
 typedef struct {
-	Entity owner;
-	U8 type;
+  Entity owner;
+  U8 type;
 } XHeader;
 
 typedef struct {
-	U32 nGenes;
-	XHeader *genePA[];
+  U32 nGenes;
+  XHeader *genePA[];
 } Genome;
 
 typedef struct {
-	U32 nEntities;
-	Genome *genomePA[];
+  U32 nEntities;
+  Genome *genomePA[];
 } GenomeGrp;
 
 /* Enums */
 typedef enum {
-	DIRECTOR_SYS_KEY,
-	NUM_SYS_KEYS  // only used for creating system histograms
+  DIRECTOR_SYS_KEY,
+  NUM_SYS_KEYS  // only used for creating stem histograms
 } SysKeys;
 
 typedef enum {
-	ENTITY,         // a message to an entity never directly reaches a system; changes E's behavior sequences
-	COMPONENT,
-	SYSTEM,
-	NUM_ECS_TYPES   // probably never used
+  ENTITY,         // a message to an entity never directly reaches a stem; changes E's behavior sequences
+  COMPONENT,
+  SYSTEM,
+  NUM_ECS_TYPES   // probably never used
 } ECSType;
 
 typedef enum {
-	IMMEDIATELY,
-	AFTER_CURR_SYS
+  IMMEDIATELY,
+  AFTER_CURR_SYS
 } MsgUrgency;
 
 typedef enum {
@@ -102,12 +101,11 @@ typedef enum {
 } Priority;
 
 typedef enum {
-	SYSTEMWIDE_CMD,
-	REPEATING_CMP_CMD,
-	ONE_OFF_CMP_CMD
+  SYSTEMWIDE_CMD,
+  REPEATING_CMP_CMD,
+  ONE_OFF_CMP_CMD
 } CmdType;
 
-typedef HardCodedMap Behavior;
 typedef HardCodedMap Personality;
 
 
@@ -116,31 +114,31 @@ typedef HardCodedMap Personality;
 /* Component */
 /*************/
 /* Gene storage macros */
-#define CMP_HEADER_(sysKey) {0, sysKey}
+#define CMP_HEADER_(sKey) {0, sKey}
 #define UNARY_GENE_(name_, cmpType_, ...) \
-	cmpType_ name_##UVal = __VA_ARGS__;\
-	UnaryGene name_##cmpType_##UGene = {\
-		.type = UNARY,\
-		.unaryP = &name_##UVal};
+  cmpType_ name_##UVal = __VA_ARGS__;\
+  UnaryGene name_##cmpType_##UGene = {\
+    .type = UNARY,\
+    .unaryP = &name_##UVal};
 
 #define BINARY_GENE_(name_, cmpType_, tgtVal_, mask_, expVal_, ...) \
-	cmpType_ name_##BA[2] = {__VA_ARGS__};\
-	BinaryGene name_##cmpType_##BGene = {\
-		.type    = BINARY,\
-		.mask    = mask_,\
-		.expVal  = expVal_,\
-		.tgtP    = &tgtVal_,\
-		.binaryA = name_##BA};
+  cmpType_ name_##BA[2] = {__VA_ARGS__};\
+  BinaryGene name_##cmpType_##BGene = {\
+    .type    = BINARY,\
+    .mask    = mask_,\
+    .expVal  = expVal_,\
+    .tgtP    = &tgtVal_,\
+    .binaryA = name_##BA};
 
 #define NONBINARY_GENE_(name_, cmpType_, globalStateKey_, ...) \
-	KeyValPair name_##NKVA[] = {__VA_ARGS__};\
-	NonbinaryGene name_##cmpType_##NGene  = {\
-		.type    = NONBINARY,\
-		._elemSz = sizeof(cmpType_),\
-		._nElems = NUM_ARGS_(KeyValPair, __VA_ARGS__),\
-		.keyP    = &globalStateKey_,\
-		.mapP    = NULL,\
-		.kvAP    = name_##NKVA};
+  KeyValPair name_##NKVA[] = {__VA_ARGS__};\
+  NonbinaryGene name_##cmpType_##NGene  = {\
+    .type    = NONBINARY,\
+    ._elemSz = sizeof(cmpType_),\
+    ._nElems = NUM_ARGS_(KeyValPair, __VA_ARGS__),\
+    .keyP    = &globalStateKey_,\
+    .mapP    = NULL,\
+    .kvAP    = name_##NKVA};
 
 #define GENE_(name_, type_, arity_) (U8*) &name_##type_##arity_##Gene 
 #define RESPONSE_SET_(name) *name[]
@@ -154,33 +152,28 @@ void* getBinaryGene(U8 *geneHeaderP, Key *overrideKeyP);
 void* getNonbinaryGene(U8 *geneHeaderP, Key *overrideKeyP);
 
 typedef struct {   
-	U8          type;
-	U8          _elemSz;
-	U8          _nElems;
-	Key        *keyP;
-	Map        *mapP;       /* defaults to NULL to prevent copies */
-	KeyValPair *kvAP;        /* automagically generated via macro */
+  U8          type;
+  U8          _elemSz;
+  U8          _nElems;
+  Key        *keyP;
+  Map        *mapP;       /* defaults to NULL to prevent copies */
+  KeyValPair *kvAP;        /* automagically generated via macro */
 } NonbinaryGene;
 
 typedef struct {  
-	U8 type;
-	U8 mask;        
-	U8 expVal;       /* the masked data must equal expVal to index 1. Otherwise 0. */
-	U8 *tgtP;
-	void *binaryA;   /* automatically generated by macro */
+  U8 type;
+  U8 mask;        
+  U8 expVal;       /* the masked data must equal expVal to index 1. Otherwise 0. */
+  U8 *tgtP;
+  void *binaryA;   /* automatically generated by macro */
 } BinaryGene;
 
 typedef struct {  
-	U8 type;
-	void *unaryP;
+  U8 type;
+  void *unaryP;
 } UnaryGene;
 
 typedef U8 CmpType;
-
-typedef struct {
-	Entity owner;   /* necessary to know what entity to affect */
-	CmpType type;   /* necessary to know what system this component belongs to */
-} CmpHeader;      /* size is inferred by system pointed to by type */
 
 /**********/
 /* System */
@@ -194,75 +187,86 @@ typedef void (*SysBasicFP)(struct _System *sP);
 typedef void (*SysOneOffFP)(struct _System *sP, Entity entity, U8 key);  /* optional key to a map or idx to array */
 
 typedef struct {
-	U8 activityIdx;
-	U8 ecIdx;
-  void *ecP; /* Systems that use pointers to other systems' components may use double pointers to avoid requesting updated info. */
-} ECLocation;
+  U8 activityID;
+  U8 cIdx;
+  void *cP; /* Systems that use pointers to other stems' components may use double pointers to avoid requesting updated info. */
+} CDirEntry;
+
+typedef struct {
+  U8 activityIdx;
+  struct _Activity *activityP; /* Systems that use pointers to other stems' components may use double pointers to avoid requesting updated info. */
+} ActDirEntry;
 
 typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;
 
 typedef struct {
-	Key sysKey;
-	U8  funcEnum;
-	Key miscKey;
-	Output  output;
+  Key sKey;
+  U8  funcEnum;
+  Key miscKey;
+  Output  output;
 } Response;
 
+// What's the most succinct yet powerful way to write messages?
+// To, from, priority, urgency, contents
+// If the hero moves, the camera must be told of it. How does the camera listen? To avoid the dilemma of every single entity's movement flooding the motion stem's outbox, we could have the one specific entity programmed to send that message on its movements. However, the camera make want to switch targets to follow. In such case, we must be flexible in who sends that message. So outputs must be configurable on the fly. 
 typedef struct {
-	U8						 cmd;
-	CmdType        cmdType;
-	ECSType        toECSType;
-	U32            toID;          /* id of recipient */
-	U32            misc;          /* any miscellaneous content may be included here */
-	MsgUrgency		 urgency;       /* speed at which message must reach its destination */
-	Priority       priority;      /* priority which message command has over any existing component activity */
-	void *paramsP;                /* Parameters for the target to pass to the cmd function... IF tgtECSType == SYSTEM. */
-} Message;
+  U8             cmd;
+  U8             cmdType;
+  Key            toID;
+  Key            fromID;
+  Key            misc;          // this is the key that's used fro things like selecting the animation sequence and stuff
+  U16             event;         // notifies entity of what event happened
+  Entity         fromEntity;    // id of sender (conceptually)
+  Entity         toEntity;      // id of recipient 
+} Message;  // Nice: a message packed inside of a word
 
 typedef struct {
-	Message *msgA;
-	U32 nMsgs;
+  Message *msgA;
+  U32 nMsgs;
 } Mailbox;
 
 typedef struct _Activity {
-	struct _System *ownerP;
-	U8 active; /* boolean for whether this function should even operate */
-	U8 firstInactiveIdx; /* marks the first inactive element's index */
-	U8 firstEmptyIdx; /* marks the first empty element's index */
-	SysFP sysFP; /* function that runs on these components */
-	void *ecA;  /* components the above function operates on */
+  struct _System *ownerP;
+  U8 id;  /* ID of activity */
+  U8 firstInactiveIdx; /* marks the first inactive element's index */
+  U8 firstEmptyIdx; /* marks the first empty element's index */
+  SysFP sFP; /* function that runs on these components */
+  void *cA;  /* components the above function operates on */
 } Activity;
 
 /* Systems are agnostic to the outside world. They just react to their inboxes and fill their outboxes. This makes them completely modular. */
 typedef struct _System {
-	XHeader      xHeader;           /* This allows (sub)systems to be components of other systems! */
-  U8           id;                /* this is needed to ensure messages are sent to the correct system */
-	U8           ecSz;              /* components are the same size in all of this system's activities */
-	U8           nActivities;       /* Number of activities in activityA[] */
-  void        *swapPlaceholderP;  /* Avoids allocating a new placeholder every EC-swap. */
-	Map         *ecLocationMapP;    /* maps component IDs to an element in an array of CmpAddresses */
-	SysIniFP     sysIniSFP;					/* System init function pointer */
-	SysIniCFP    sysIniCFP;					/* Some systems need to inflate components before using them. */
-	SysOneOffFP *oneOffFPA;         /* Array of one-off functions for system to perform one action immediately on an EC */
-	Mailbox      inbox;             /* Where commands come in from the outside world */
-	Mailbox      outbox;            /* Where this system talks to the outside world */
-	Activity    *activityA;			  /* Array of activities that loop through their components */
+  XHeader      xHeader;             /* This allows (sub)stems to be components of other stems! */
+  U8           id;                  /* this is needed to ensure messages are sent to the correct stem */
+  U8           cSz;                 /* components are the same size in all of this stem's activities */
+  U8           nActivities;         /* Number of activities in activityA[] */
+  void        *swapPlaceholderP;    /* Avoids allocating a new placeholder every EC-swap. */
+  Map         *cDirectoryP;         /* maps component IDs to an element in an array of CmpAddresses */
+  Map         *actDirectoryP;       /* maps component IDs to an element in an array of CmpAddresses */
+  Key          firstInactiveActIdx; /* index of first inactive activity */
+  SysIniFP     sIniSFP;              /* System init function pointer */
+  SysIniCFP    sIniCFP;              /* Some stems need to inflate components before using them. */
+  SysOneOffFP *oneOffFPA;           /* Array of one-off functions for stem to perform one action immediately on an EC */
+  Mailbox      inbox;               /* Where commands come in from the outside world */
+  Mailbox      outbox;              /* Where this stem talks to the outside world */
+  Activity    *activityA;            /* Array of activities that loop through their components */
 } System;
 
 typedef enum {
-	SYS_TOGGLE_ACTIVE,
-	_MAX_SYSTEMWIDE_CMD_ID
+  SYS_TOGGLE_ACTIVE,
+  _MAX_SYSTEMWIDE_CMD_ID
 } SysCmdID;
 
-void sysIniPtrs(System *sP, Activity *aP, void **startPP, void **endPP);
-Error sysNew(System **sPP, const U8 ecSz, U8 nFuncs);
-Error sysIni(System *sP, U32 nComps);
-void sysRun(System *sP);
-void sysClr(System *sP);
-Error sysIniActivity(System *sP, Activity *aP, U32 nComps);
-Error sysIniActivityEC(System *sP, const U8 activityIdx, const Entity entity, const void *cmpP);
-Error sysAddComponent(System *sP, Entity entity, XHeader *xhP);
-Error sysNewECMap(System *sP, U8 nElems);
-void* sysGetComponent(System *sP, Entity entity);
-Error sysDeactivateCmp(System *sP, Entity entity);
+void  sIniPtrs(System *sP, Activity *aP, void **startPP, void **endPP);
+Error sNew(System **sPP, const U8 cSz, U8 nFuncs);
+Error sIni(System *sP, U32 nComps);
+void  sRun(System *sP);
+void  sClr(System *sP);
+Error sIniActivity(System *sP, Activity *aP, U32 nComps);
+Error sIniActivityEC(System *sP, const U8 activityIdx, const Entity entity, const void *cmpP);
+Error sAddC(System *sP, Entity entity, XHeader *xhP);
+Error sNewECMap(System *sP, U8 nElems);
+void* sGetC(System *sP, Entity entity);
+Error sDeactivateC(System *sP, Entity entity);
+Error sActivateC(System *sP, Entity entity);
 #endif

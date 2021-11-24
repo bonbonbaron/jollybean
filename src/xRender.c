@@ -189,11 +189,27 @@ Error xRenderIniS() {
 //======================================================
 // Initialize xRender's components, which are Images.
 //======================================================
+// TODO delete this debuggery garbage
+static U8 ii = 0;
+SDL_Rect rect1 = {0, 0, 100, 200};
+SDL_Rect rect2 = {50, 100, 200, 200};
+SDL_Rect rect3 = {100, 150, 150, 150};
+SDL_Rect *rect1P = &rect1;
+SDL_Rect *rect2P = &rect2;
+SDL_Rect *rect3P = &rect3;
+
 Error xRenderIniC(XHeader *xhP) {
 	if (!xhP)
 		return E_BAD_ARGS;
 
 	XRenderC *cP = (XRenderC*) xhP;
+	if (ii == 0)
+		cP->dstRectPP = &rect1P;
+	else if (ii == 1)
+		cP->dstRectPP = &rect2P;
+	else 
+		cP->dstRectPP = &rect3P;
+	ii++;
 	if (cP->imgP->textureP) 
 		return SUCCESS;
 	// Build colormap.
@@ -224,7 +240,7 @@ Error xRenderIniC(XHeader *xhP) {
 		e = SDL_SetTextureBlendMode(cP->imgP->textureP, SDL_BLENDMODE_BLEND);
 
 	if (!e)
-		cP->srcRectPP = cP->dstRectPP = NULL;
+		cP->srcRectPP = NULL;
 
 	//SDL_FreeSurface(surfaceP);  // Program crashes when I do this. Maybe textureP needs it?
 
@@ -253,18 +269,13 @@ Error xRender(Activity *aP) {
 
 	// Send GPU instructions on what to render.
 	//arrayIniPtrs((const void*) aP->ecA, (void**) &cP, (void**) &cEndP, (S32) aP->firstInactiveIdx);
-	cP = (XRenderC*) aP->ecA;
+	cP = (XRenderC*) aP->cA;
 	cEndP = cP + aP->firstInactiveIdx;
+	// TODO get rid of these placeholder rectangles.
 	SDL_Rect *srcRectP = NULL;
-	SDL_Rect dstRects[] = {
-		{0, 0, 100, 200},
-		{50, 100, 200, 200},
-		{100, 150, 150, 150}
-	};
-	U8 i = 0;
 
 	for (; !e && cP < cEndP; cP++) 
-		e = SDL_RenderCopy(rendererP, cP->imgP->textureP, srcRectP, &dstRects[i++]);
+		e = SDL_RenderCopy(rendererP, cP->imgP->textureP, srcRectP, *cP->dstRectPP);
 		///e = SDL_RenderCopy(rendererP, cP->imgP->textureP, *cP->srcRectPP, *cP->dstRectPP);
 		//TODO: replace the above NULLs with pointers to rectangles from other systems
 
@@ -278,4 +289,4 @@ Error xRender(Activity *aP) {
 //======================================================
 // System definition
 //======================================================
-NEW_SYS_(Render, RENDER, ACTIVITY_(xRender));
+NEW_SYS_(Render, RENDER, ACTIVITY_(XRENDER, xRender));

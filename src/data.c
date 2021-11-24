@@ -299,7 +299,6 @@ Error mapSet(Map *mapP, const U8 key, const void *valP) {
     if (nBytesToMove) 
       memcpy(nextElemP, (const void*) elemP, nBytesToMove);
 		/* Write value to map element. */
-		printf("size of *valP: %d\n", _getMapElemSz(mapP));
 		memcpy(elemP, valP, _getMapElemSz(mapP));
 		/* Set flag. */
 		U8 byteIdx = BYTE_IDX(key);
@@ -861,7 +860,6 @@ common_exit:
     }
     r->m_check_adler32 = (s2 << 16) + s1; 
 		if ((status == TINFL_STATUS_DONE) && (decomp_flags & TINFL_FLAG_PARSE_ZLIB_HEADER) && (r->m_check_adler32 != r->m_z_adler32)) {
-		 printf("adler32 mismatch\n");
 	 	 status = TINFL_STATUS_ADLER32_MISMATCH;
 		}
   }
@@ -945,7 +943,6 @@ Error inflate(Inflatable *inflatableP) {
 					                                                    (size_t) inflatableP->compressedLen, 
 																															&inflatableP->inflatedLen,
 																														 	TINFL_FLAG_PARSE_ZLIB_HEADER); 
-			//printf("expected: %lld, actual: %d\n", expectedInflatedLen, inflatableP->inflatedLen);
 			if (inflatableP->inflatedLen != expectedInflatedLen) {
 				e = E_UNEXPECTED_DCMP_SZ;
 				jbFree(&inflatableP->inflatedDataP);

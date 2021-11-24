@@ -3,6 +3,10 @@
 #include "ecs.h"
 #include "SDL.h"
 
+typedef enum {
+	XRENDER = 1
+} XRenderActivityID;
+
 typedef struct {
 	U16 nFlips;
 	U16 flipIdxA[];

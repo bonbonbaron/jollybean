@@ -1,29 +1,17 @@
 #include "xJollybean.h"
 
-/* IMMEDIATE GOALS
- * ================
- X-split genes
- X-make genomes
- X-histogram them
- X-make macro to ease system creation
- X-use histogram results to allocate the right amount of memory into xRender's activities
- * load the right one into xRender
- * have xRender automatically initialize it for you
- * call sysRun() to make sure xRender() doesn't draw anything, only blanks the screen
- * send xRender a message to activate E's component
- * call xRender() again and see if your image draws
- * wait 2 seconds
- * send xRender a message to deactivate E's component
- * call xRender() again to see if your image disappears
- * */
-
 NEW_GENOME_(bigger, &biggerXRenderC.xHeader);
 GENOME_GROUP_(grp1, &bigger, &bigger, &bigger);
 
-NEW_SYS_(Jollybean, JOLLYBEAN, ACTIVITY_(xJollybeanRun));
+NEW_SYS_(Jollybean, JOLLYBEAN, 
+		ACTIVITY_(JB_RUN, xJollybeanRun),
+		ACTIVITY_(JB_BEHAVE, xJollybeanBehave)
+);
 
-// Register subsystems here.
-static System *sysPA[N_SYS_TYPES] = {
+Map *behaviorMA;
+Map *SubscriberAM;
+
+static System *sPA[N_SYS_TYPES] = {
 	&sRender, 
 	NULL, 
 	NULL, 
@@ -65,16 +53,16 @@ static Error _distributeGenes(System *sJollybeanP, GenomeGrp *ggP) {
 		xhEndPP = xhPP + (*gPP)->nGenes;
 		// Loop through current genome's genes
 		for (System *sP = NULL; !e && xhPP < xhEndPP; xhPP++) {  // xhPP is a pointer to a pointer to a global singleton of a component
-			sP = (System*) sysGetComponent(&sJollybean, (*xhPP)->type);  // We don't set the owner of the gene pool.
+			sP = (System*) sGetC(&sJollybean, (*xhPP)->type);  // We don't set the owner of the gene pool.
 			if (sP)
-				e = sysAddComponent(sP, entityCounter, *xhPP);
+				e = sAddC(sP, entityCounter, *xhPP);
 		}
 	}
 	return SUCCESS;
 }
 
 // =====================================================================
-// Initialize the Jollybean system.
+// Initialize the Jollybean stem.
 // =====================================================================
 Error xJollybeanIniS() {
 	// Histogram gene types
@@ -83,34 +71,30 @@ Error xJollybeanIniS() {
 	if (!e)
 		e = histoGeneTypes(histoP, &grp1);
 	
-	// Add subsystems as components to Jollybean system.
-	for (U32 i = 0; !e && i < sizeof(sysPA) / sizeof(sysPA[0]); i++) 
-		if (sysPA[i])
-			e = sysAddComponent(&sJollybean, sysPA[i]->id, &sysPA[i]->xHeader);
+	// Add subsystems as components to Jollybean stem.
+	sAddC(&sJollybean, sControl.id, &sControl.xHeader); // Add control sys no matter what
+	for (U32 i = 0; !e && i < sizeof(sPA) / sizeof(sPA[0]); i++) 
+		if (sPA[i])
+			e = sAddC(&sJollybean, sPA[i]->id, &sPA[i]->xHeader);
 
 	// Initialize Jollybean's component subsystems before we throw genes in.
 	if (!e) {
 		U32 *hP, *hEndP;
 		arrayIniPtrs(histoP, (void**) &hP, (void**) &hEndP, -1);
-		for (Entity sysID = 0; !e && hP < hEndP; hP++, sysID++) {
+		for (Entity sID = 1; !e && hP < hEndP; hP++, sID++) {
 			if (*hP)  {
-				System *sP = (System*) sysGetComponent(&sJollybean, sysID);
+				System *sP = (System*) sGetC(&sJollybean, sID);
 				if (sP)
-					e = sysIni(sP, *hP);  // makes subsystem's EC map and activities
+					e = sIni(sP, *hP);  // makes subsystem's EC map and activities
 			}
 		}
 	}
 
-	// Distribute the genes to the proper systems.
+	// Distribute the genes to the proper stems.
 	if (!e)
 		e = _distributeGenes(&sJollybean, &grp1);
-
-	// TODO: replace below if-block with cohesive function
-	// How do we determine what's active? 
-	if (!e) {
-		sJollybean.activityA[0].active = 1;
-		sJollybean.activityA[0].firstInactiveIdx++;
-	}
+	if (!e) 
+		sJollybean.activityA[0].firstInactiveIdx++;  // TODO: replace below if-block with cohesive function
 	
 	// Clean up.
 	histoDel(&histoP);
@@ -119,10 +103,10 @@ Error xJollybeanIniS() {
 }
 
 // =====================================================================
-// Clear all subsystems and Jollybean system.
+// Clear all subsystems and Jollybean stem.
 // =====================================================================
-void sysClrAll() {
-	sysClr(&sRender);  // EXAMPLE CODE! You're gonna have to loop through a mapped array of systems here. 
+void sClrAll() {
+	sClr(&sRender);  // EXAMPLE CODE! You're gonna have to loop through a mapped array of stems here. 
 }
 
 // ====================================================================================
@@ -134,48 +118,67 @@ Error xJollybeanIniC(XHeader *xhP) {
 	return SUCCESS;
 }
 
-// ====================================================================================
-// This is THE game engine loop.
-// ====================================================================================
-Error xJollybeanRun(Activity *aP) {
-	System *sP, *sEndP;
-	arrayIniPtrs(aP->ecA, (void**) &sP, (void**) &sEndP, aP->firstInactiveIdx);
-	for (; sP < sEndP; sP++)
-		sysRun(sP);
+Error xJollybeanBehave(Activity *aP) {
+	Behavior *bP, *bEndP;
+	arrayIniPtrs(aP->cA, (void**) &bP, (void**) &bEndP, aP->firstInactiveIdx);
+	Error e = SUCCESS;
+	for (; !e && bP < bEndP; bP++)
+		e = (*bP->callback)(bP->entity);
 
 	return SUCCESS;
 }
 
 // ====================================================================================
-// Main 
+// This is THE game engine loop.
 // ====================================================================================
+Error xJollybeanRun(Activity *aP) {
+	System *sP, *sEndP;
+	arrayIniPtrs(aP->cA, (void**) &sP, (void**) &sEndP, aP->firstInactiveIdx);
+	for (; sP < sEndP; sP++)
+		sRun(sP);
+
+	return SUCCESS;
+}
+
 void displayComponents(System *jollybeanSysP, Entity entity) {
-	System *sP =  (System*) sysGetComponent(jollybeanSysP, entity);
+	System *sP =  (System*) sGetC(jollybeanSysP, entity);
 	if (sP) {
-		printf("system %d's active components in its first activity:\n", sP->xHeader.owner);
-		for (U32 i = 0, e = SUCCESS; !e && i < sP->activityA[0].firstInactiveIdx; i++) {
-			XRenderC *cP = (XRenderC*) arrayGetVoidElemPtr(sP->activityA[0].ecA, i);
+		printf("stem %d's active components in its first activity:\n", sP->xHeader.owner);
+		XRenderC *cP = sP->activityA[0].cA;
+		for (U32 i = 0, e = SUCCESS; !e && i < sP->activityA[0].firstInactiveIdx; i++, cP++) {
 			printf("\tEntity %d: 0x%08x\n", cP->xHeader.owner, (U32) cP);
 		}
 	}
 }
+
+// ====================================================================================
+// Main 
+// ====================================================================================
 #include <unistd.h>
 int main() {
-	Error e = sysIni(&sJollybean, N_SYS_TYPES);
+	Error e = sIni(&sJollybean, N_SYS_TYPES);
 	if (!e)
-		sysRun(&sJollybean);
-	displayComponents(&sJollybean, RENDER);
+		sRun(&sJollybean);
 	sleep(1);
 
-	if (!e) {
-		sysDeactivateCmp((System*) sJollybean.activityA[0].ecA, 9);
-		displayComponents(&sJollybean, RENDER);
+	System *sRenderP = NULL;
+	if (!e)
+		sRenderP = sGetC(&sJollybean, RENDER);
+	// Test deactivating and activating on all components 
+	for (U8 i = 8; !e && i <= 10; i++) {
+		//displayComponents(&sJollybean, RENDER);
+		sDeactivateC(sRenderP, i);
+		//displayComponents(&sJollybean, RENDER);
+		sRun(&sJollybean);
+		sleep(1);
+		e = sActivateC(sRenderP, i);
+		//displayComponents(&sJollybean, RENDER);
+		if (!e) {
+			sRun(&sJollybean);
+			sleep(1);
+		}
 	}
-
-	if (!e)
-		sysRun(&sJollybean);
-	sleep(1);
 	
-	sysClrAll();
+	sClrAll();
 	return e;
 }
