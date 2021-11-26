@@ -1,24 +1,21 @@
 #include "xJollybean.h"
 
-NEW_GENOME_(bigger, &biggerXRenderC.xHeader);
-GENOME_GROUP_(grp1, &bigger, &bigger, &bigger);
+//NEW_GENOME_(bigger, &biggerXRenderC.xHeader);
+//GENOME_GROUP_(grp1, &bigger, &bigger, &bigger);
+GenomeGrp grp1;
 
 NEW_SYS_(Jollybean, JOLLYBEAN, 
 		ACTIVITY_(JB_RUN, xJollybeanRun),
 		ACTIVITY_(JB_BEHAVE, xJollybeanBehave)
 );
 
-Map *behaviorMA;
-Map *SubscriberAM;
+Map **entityReactionMA;
+U32 nEntities;
+Map *subscriberAMP;
 
-static System *sPA[N_SYS_TYPES] = {
-	&sRender, 
-	NULL, 
-	NULL, 
-	NULL, 
-	NULL, 
-	NULL, 
-	NULL
+static System *sPA[] = {
+	&sRender,
+	&sControl
 }; 
 
 // =====================================================================
@@ -128,16 +125,61 @@ Error xJollybeanBehave(Activity *aP) {
 	return SUCCESS;
 }
 
+// msgP may contain information the callback finds pertinent; e.g. "Who collided w/ me?"
+static Error trigger(Entity entity, Message *msgP) {
+	if (msgP->toID <= nEntities) {
+		Map *mapP = entityReactionMA[entity];
+		Reaction *reactionP = (Reaction*) mapGet(mapP, msgP->event);
+		if (reactionP) {
+			reactionP->cb(msgP, reactionP->paramsP);
+			return SUCCESS;
+		}
+	}
+	return E_BAD_INDEX;
+}
+
+static Error triggerGroup(Message *msgP) {
+	if (!msgP)
+		return E_BAD_ARGS;
+	Error e = SUCCESS;
+	Entity *eA = (Entity*) mapGet(subscriberAMP, msgP->event);
+	if (eA) {
+		Entity *eP, *eEndP;
+		arrayIniPtrs((void*) eA, (void**) &eP, (void**) &eEndP, -1);
+		for (; !e && eP < eEndP; eP++)
+			e = trigger(*eP, msgP);
+		return e;
+	}
+	return E_BAD_KEY;
+}
+
 // ====================================================================================
 // This is THE game engine loop.
 // ====================================================================================
 Error xJollybeanRun(Activity *aP) {
 	System *sP, *sEndP;
+	if (!aP)
+		return E_BAD_ARGS;
+	Error e = SUCCESS;
 	arrayIniPtrs(aP->cA, (void**) &sP, (void**) &sEndP, aP->firstInactiveIdx);
-	for (; sP < sEndP; sP++)
-		sRun(sP);
-
-	return SUCCESS;
+	while (!e) {
+		// Check active subsystems' outboxes. Their callbacks populate systems directly.
+		for (; sP < sEndP; sP++) {
+			for (Message *msgP = sP->outbox.msgA, *msgEndP = sP->outbox.msgA + sP->outbox.nMsgs;
+					 !e && msgP < msgEndP;
+					 msgP++) {
+				if (msgP->toID) 
+					e = trigger(msgP->toID, msgP);
+				else
+					e = triggerGroup(msgP);
+			}
+		}
+		// Run the systems!
+		if (!e)
+			for (sP = (System*) aP->cA; sP < sEndP; sP++)
+				sRun(sP);
+	}
+	return e;
 }
 
 void displayComponents(System *jollybeanSysP, Entity entity) {
@@ -154,12 +196,10 @@ void displayComponents(System *jollybeanSysP, Entity entity) {
 // ====================================================================================
 // Main 
 // ====================================================================================
-#include <unistd.h>
 int main() {
 	Error e = sIni(&sJollybean, N_SYS_TYPES);
 	if (!e)
 		sRun(&sJollybean);
-	sleep(1);
 
 	System *sRenderP = NULL;
 	if (!e)
@@ -170,12 +210,10 @@ int main() {
 		sDeactivateC(sRenderP, i);
 		//displayComponents(&sJollybean, RENDER);
 		sRun(&sJollybean);
-		sleep(1);
 		e = sActivateC(sRenderP, i);
 		//displayComponents(&sJollybean, RENDER);
 		if (!e) {
 			sRun(&sJollybean);
-			sleep(1);
 		}
 	}
 	

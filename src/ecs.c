@@ -365,7 +365,7 @@ SysBasicFP sBasicFuncs[] = {
 #endif
 
 inline static void _sReadMessage(System *sP, Message *msgP) {
-  switch(msgP->cmdType) {
+  switch(msgP->type) {
 #if 0
     /* Message intends a system-wide response. All systems share the same pool of systemwide functions. */
     case SYSTEMWIDE_CMD:
@@ -378,7 +378,7 @@ inline static void _sReadMessage(System *sP, Message *msgP) {
       break;
     /* Message intends a one-time function call on a component. */
     case ONE_OFF_CMP_CMD:
-      (*sP->oneOffFPA[msgP->cmd])(sP, msgP->toID, msgP->misc);
+      (*sP->oneOffFPA[msgP->cmd])(sP, msgP->toID, msgP->event);
       break;
     default:
       break;

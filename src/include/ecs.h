@@ -199,39 +199,38 @@ typedef struct {
 
 typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;
 
-typedef struct {
-  Key sKey;
-  U8  funcEnum;
-  Key miscKey;
-  Output  output;
-} Response;
 
 // What's the most succinct yet powerful way to write messages?
 // To, from, priority, urgency, contents
 // If the hero moves, the camera must be told of it. How does the camera listen? To avoid the dilemma of every single entity's movement flooding the motion stem's outbox, we could have the one specific entity programmed to send that message on its movements. However, the camera make want to switch targets to follow. In such case, we must be flexible in who sends that message. So outputs must be configurable on the fly. 
 typedef struct {
-  U8             cmd;
-  U8             cmdType;
+  Key            cmd;
+	U8             type;
+  Key            event;         // notifies entity of what event happened
   Key            toID;
   Key            fromID;
-  Key            misc;          // this is the key that's used fro things like selecting the animation sequence and stuff
-  U16             event;         // notifies entity of what event happened
-  Entity         fromEntity;    // id of sender (conceptually)
-  Entity         toEntity;      // id of recipient 
-} Message;  // Nice: a message packed inside of a word
+} Message;  
 
 typedef struct {
   Message *msgA;
   U32 nMsgs;
 } Mailbox;
 
+typedef Error (*ReactionCallback)(Message *msgP, void *paramsP);
+
+typedef struct {
+	Key trigger;
+	ReactionCallback cb;
+  void *paramsP;
+} Reaction;
+
 typedef struct _Activity {
-  struct _System *ownerP;
   U8 id;  /* ID of activity */
   U8 firstInactiveIdx; /* marks the first inactive element's index */
   U8 firstEmptyIdx; /* marks the first empty element's index */
   SysFP sFP; /* function that runs on these components */
   void *cA;  /* components the above function operates on */
+  struct _System *ownerP;
 } Activity;
 
 /* Systems are agnostic to the outside world. They just react to their inboxes and fill their outboxes. This makes them completely modular. */
