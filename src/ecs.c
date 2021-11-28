@@ -96,7 +96,7 @@ Activity* sGetActivityFromE(System *sP, Entity entity) {
 }
 
 /* Checks if the component, wherever it is in the jagged array, is before the function's stopping point in its array. */
-inline static U8 _cmpIsActive(System *sP, Entity entity) {
+U8 sComponentIsActive(System *sP, Entity entity) {
   CDirEntry* cdeP = _getCDirEntry(sP, entity);
   Activity *aP = sGetActivityFromE(sP, entity);
   return (cdeP->cIdx < aP->firstInactiveIdx);
@@ -208,7 +208,7 @@ Error sDeactivateActivity(System *sP, Key activityID) {
 }
 
 /* Kind of a no-brainer that if you're transferring something, it's going to be active in its destination activity. */
-inline static Error _startEcActivity(System *sP, Entity entity, Key dstActivityID) {
+Error sStartCActivity(System *sP, Entity entity, Key dstActivityID) {
   Error e = SUCCESS;
   CDirEntry *cdeP = _getCDirEntry(sP, entity);
   if (cdeP != NULL)
@@ -374,7 +374,7 @@ inline static void _sReadMessage(System *sP, Message *msgP) {
 #endif
     /* Message intends a repeating function call on a component. */
     case REPEATING_CMP_CMD:
-      _startEcActivity(sP, msgP->toID, msgP->cmd);
+      sStartCActivity(sP, msgP->toID, msgP->cmd);
       break;
     /* Message intends a one-time function call on a component. */
     case ONE_OFF_CMP_CMD:
@@ -394,10 +394,14 @@ void _sReadInbox(System *sP) {
   }
 }
 
-/* sWriteMessage() is called by implemented systems when specific events occur that may interest the outside world. */
-void sWriteMessage(System *sP, Entity toEntity, Entity fromEntity) {
-  Message *msgP = &sP->outbox.msgA[sP->outbox.nMsgs++];
+// Outbox messages
+void sSendMessage(System *sP, Message *msgP) {
   memcpy((void*) &sP->outbox.msgA[sP->outbox.nMsgs++], msgP, sizeof(Message));
+}
+
+// Inbox messages (should only be called by Jollybean's reactions' callbacks)
+void sDeliverMessage(System *sP, Message *msgP) {
+  memcpy((void*) &sP->inbox.msgA[sP->inbox.nMsgs++], msgP, sizeof(Message));
 }
 
 /* This is how the entire ECS framework works. */

@@ -3,27 +3,38 @@
 #include "SDL.h"
 #include "genes.h"
 #include "ecs.h"
+#include <assert.h>
 
-typedef Error (*Callback)(Entity entity);
+/***** Reactions *****/
+typedef enum {
+	COMPLETE,
+	RUNNING
+	// FAILED  // can't conceive any use for this as I'm avoiding behavior trees
+} ReactionStatus;
+
+typedef ReactionStatus (*ReactionCallback)(Message *msgP, void *paramsP);
 
 typedef struct {
-	Callback callback;
-	U8 priority;
-	Entity entity;
-} Behavior;
+	Key trigger;
+	U8  priority;
+	ReactionCallback cb;
+  void *paramsP;
+	Message msg;  // must consume message that triggered this reaction before JB clears a child's outbox
+} Reaction;
 
+/***** Jollybean *****/
 typedef struct {
 	union {
 		System s;
-		Behavior b;
+		Reaction r;
 	} item;
 } XJollybeanC;
 
-enum {JB_RUN = 1, JB_BEHAVE};
-extern System sJollybean;
+ENUM_KEYS_(JB_RUN_CHILDREN, JB_REACT) JBActivities; 
 Error xJollybeanExe(Activity *aP);
-static U32 entityCounter;
-Error xJollybeanRun(Activity *aP);
 Error xJollybeanIniC(XHeader *xhP);
 Error xJollybeanIniS();
+Error xJollybeanReact(Activity *aP);
+Error xJollybeanRunChildren(Activity *aP);
 Error xJollybeanBehave(Activity *aP);
+extern System sJollybean;

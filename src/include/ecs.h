@@ -97,7 +97,7 @@ typedef enum {
 } MsgUrgency;
 
 typedef enum {
-  TOP_PRIORITY  // As my boss says, "Everything is top priority!" Oh geez.
+  TOP_PRIORITY
 } Priority;
 
 typedef enum {
@@ -207,22 +207,14 @@ typedef struct {
   Key            cmd;
 	U8             type;
   Key            event;         // notifies entity of what event happened
-  Key            toID;
-  Key            fromID;
+  Entity         toID;
+  Entity         fromID;
 } Message;  
 
 typedef struct {
   Message *msgA;
   U32 nMsgs;
 } Mailbox;
-
-typedef Error (*ReactionCallback)(Message *msgP, void *paramsP);
-
-typedef struct {
-	Key trigger;
-	ReactionCallback cb;
-  void *paramsP;
-} Reaction;
 
 typedef struct _Activity {
   U8 id;  /* ID of activity */
@@ -262,10 +254,16 @@ Error sIni(System *sP, U32 nComps);
 void  sRun(System *sP);
 void  sClr(System *sP);
 Error sIniActivity(System *sP, Activity *aP, U32 nComps);
-Error sIniActivityEC(System *sP, const U8 activityIdx, const Entity entity, const void *cmpP);
+Error sIniActivityC(System *sP, const U8 activityIdx, const Entity entity, const void *cmpP);
 Error sAddC(System *sP, Entity entity, XHeader *xhP);
 Error sNewECMap(System *sP, U8 nElems);
 void* sGetC(System *sP, Entity entity);
 Error sDeactivateC(System *sP, Entity entity);
 Error sActivateC(System *sP, Entity entity);
+Error sStartCActivity(System *sP, Entity entity, Key dstActivityID);
+Activity* sGetActivityFromE(System *sP, Entity entity);
+U8 sComponentIsActive(System *sP, Entity entity);
+Activity* sGetActivity(System *sP, Key actID);
+void sSendMessage(System *sP, Message *msgP);
+void sDeliverMessage(System *sP, Message *msgP);
 #endif
