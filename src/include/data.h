@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 // For-each macro, which allows per-element macro-processing on variadic arguments
 
