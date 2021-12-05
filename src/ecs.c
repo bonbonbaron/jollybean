@@ -1,46 +1,4 @@
 #include "ecs.h"
-
-/* Go ahead and provide these functions here:
-  Histogramming entitieSeeds' genes
-*/
-
-/**************/
-/* Components */
-/**************/
-const static GetGeneFP getGeneFPA[] = {getUnaryGene, getBinaryGene, getNonbinaryGene};
-
-/* Unary gene-selection */
-void* getUnaryGene(U8 *geneHeaderP, Key *overrideKeyP) {
-  UNUSED_(overrideKeyP);
-  return ((UnaryGene*) geneHeaderP)->unaryP;
-}
-
-/* Binary gene-selection */
-void* getBinaryGene(U8 *geneHeaderP, Key *overrideKeyP) {
-  BinaryGene *bP = (BinaryGene*) geneHeaderP;
-  if (overrideKeyP && *overrideKeyP)
-    return arrayGetVoidElemPtr(bP->binaryA, ((*overrideKeyP & bP->mask) == bP->expVal));
-  else
-    return arrayGetVoidElemPtr(bP->binaryA, ((*bP->tgtP & bP->mask) == bP->expVal));
-}
-
-/* Nonbinary gene-selection */
-void* getNonbinaryGene(U8 *geneHeaderP, Key *overrideKeyP) {
-  NonbinaryGene *nP = (NonbinaryGene*) geneHeaderP;
-  if (overrideKeyP)
-    return mapGet(nP->mapP, *overrideKeyP);
-  else
-    return mapGet(nP->mapP, *nP->keyP);
-}
-
-void* getGene(U8 *geneHeaderP, Key *overrideKeyP) {
-  /* No need for internal NULL-checks since wrapper does it here. */
-  if (geneHeaderP != NULL)
-    return (*getGeneFPA[*geneHeaderP])(geneHeaderP, overrideKeyP);
-  return NULL;
-}
-
-
 /***********/
 /* Systems */
 /***********/
@@ -72,6 +30,10 @@ inline static CDirEntry* _getCDirEntry(System *sP, Entity entity) {
 
 inline static ActDirEntry* _getActDirEntry(System *sP, Key actID) {
   return (ActDirEntry*) mapGet(sP->actDirectoryP, actID);
+}
+
+U32 sGetNComponents(System *sP) {
+	return arrayGetNElems(sP->cDirectoryP->mapA);
 }
 
 void* sGetC(System *sP, Entity entity) {
@@ -255,7 +217,7 @@ Error sNewActDirectory(System *sP) {
 // Components are initially spread out across the entity seeds, 
 // so we'll initialize those one at a time later into the first activity as deactivated.
 // Then the Behavior System will take care of putting those in the proper activity.
-Error sIni(System *sP, U32 nComps) {
+Error sIni(System *sP, U32 nComps, void *miscP) {
   // Sytems with system components need to initialize maps in sIniFP().
   Error e =  sNewCDirectory(sP, nComps);
   // Then allocate enough room for all components in every activity. 
@@ -273,7 +235,7 @@ Error sIni(System *sP, U32 nComps) {
 
   // Finally, call the system's unique initializer.
   if (!e)
-    e = (*sP->sIniSFP)();
+    e = (*sP->sIniSFP)(miscP);
 
   // Clean up if there are any problems
   if (e) {
@@ -357,32 +319,23 @@ void sClr(System *sP) {
   mapDel(&sP->cDirectoryP);
 }
 
-// TODO:when you have some valid system-wide functions, add them here
-#if 0
-SysBasicFP sBasicFuncs[] = {
+static void sSetC(System *sP, Entity entity, const void *newValP) {
+	void *componentP = sGetC(sP, entity);
+	assert(componentP);
+	memcpy(componentP, newValP, sP->cSz);
+}
 
-};
-#endif
-
-inline static void _sReadMessage(System *sP, Message *msgP) {
-  switch(msgP->type) {
-#if 0
-    /* Message intends a system-wide response. All systems share the same pool of systemwide functions. */
-    case SYSTEMWIDE_CMD:
-      (sBasicFuncs[msgP->cmd])(sP);
-      break;
-#endif
-    /* Message intends a repeating function call on a component. */
-    case REPEATING_CMP_CMD:
-      sStartCActivity(sP, msgP->toID, msgP->cmd);
-      break;
-    /* Message intends a one-time function call on a component. */
-    case ONE_OFF_CMP_CMD:
-      (*sP->oneOffFPA[msgP->cmd])(sP, msgP->toID, msgP->event);
-      break;
-    default:
-      break;
-  }
+static void _sReadMessage(System *sP, Message *msgP) {
+	// Change the component's contents if necessary using map indicated by message.
+	if (msgP->contents.cmd.key) {
+		CDirEntry *cdeP = (CDirEntry*) mapGet(sP->cDirectoryP, msgP->to);
+		assert(cdeP && cdeP->hcmP && cdeP->hcmP->mapP);
+		const void *newComponentValP = mapGet(cdeP->hcmP->mapP, 
+				                                  msgP->contents.cmd.key);
+		assert(newComponentValP);
+		sSetC(sP, msgP->to, newComponentValP);
+	}
+	sStartCActivity(sP, msgP->to, msgP->contents.cmd.activityID);
 }
 
 void _sReadInbox(System *sP) {
@@ -417,222 +370,4 @@ void sRun(System *sP) {
   _sReadInbox(sP);
   _clrMailbox(&sP->inbox);
 	sAct(sP);
-}
-
-//***************************************************
-//** Parent systems *********************************
-//***************************************************
-
-static Entity entityCounter;
-
-NEW_SYS_(Parent, 0, 
-	ACTIVITY_(REACT, xParentReact),
-	ACTIVITY_(TICK, xParentTick),
-);
-
-static Map **_entityReactionMA;
-static Map *_subscriberAMP;
-static U32 _nEntities;
-static U16 _nSystems;
-static GenomeGrp *_currGenomeGrpP;
-static System **_sPA;
-//TODO: consider static variables for system array and seed array
-
-// =====================================================================
-// Loop through each genome's genes and histogram their component types.
-// =====================================================================
-Error _histoGeneTypes(U32 *histoA, GenomeGrp *ggP) {
-	Genome **gPP = &ggP->genomePA[0];					// pointer to an array of genomes
-	Genome **gEndPP = gPP + ggP->nEntities;   // pointer to the end of the above array
-	XHeader **xhPP, **xhEndPP;   // pointers to an array of X-header pointers and its end
-	// Loop through genomes
-	for (; gPP < gEndPP; gPP++) {
-		xhPP = &(*gPP)->genePA[0];
-		xhEndPP = xhPP + (*gPP)->nGenes;
-		// Loop through current genome's genes
-		for (; xhPP < xhEndPP; xhPP++)
-			histoA[(*xhPP)->type]++;
-	}
-	return SUCCESS;
-}
-
-// =====================================================================
-// Distribute all genes to their appropriate subsystems.
-// =====================================================================
-static Error _distributeGenes(System *sParentP, GenomeGrp *ggP) {
-	Genome **gPP = &ggP->genomePA[0];					// pointer to an array of genomes
-	Genome **gEndPP = gPP + ggP->nEntities;   // pointer to the end of the above array
-	XHeader **xhPP, **xhEndPP;   // pointers to an array of X-header pointers and its end
-	Error e = SUCCESS;
-	// Loop through genomes
-	for (entityCounter = N_SYS_TYPES; !e && gPP < gEndPP; gPP++, entityCounter++) {
-		xhPP = &(*gPP)->genePA[0];
-		xhEndPP = xhPP + (*gPP)->nGenes;
-		// Loop through current genome's genes
-		for (System *sP = NULL; !e && xhPP < xhEndPP; xhPP++) {  // xhPP is a pointer to a pointer to a global singleton of a component
-			sP = (System*) sGetC(sParentP, (*xhPP)->type);  // We don't set the owner of the gene pool.
-			if (sP)
-				e = sAddC(sP, entityCounter, *xhPP);
-		}
-	}
-	return SUCCESS;
-}
-
-// =====================================================================
-// Initialize the Parent system.
-// =====================================================================
-Error xParentIniS() {
-	// Histogram gene types
-	U32 *histoP = NULL;
-	Error e = histoNew(&histoP, N_SYS_TYPES);
-	if (!e)
-		e = _histoGeneTypes(histoP, _currGenomeGrpP);
-	
-	// Add subsystems as components to Parent system.
-	extern System sControl;
-	sAddC(&sParent, sControl.id, &sControl.xHeader); // Add control sys no matter what
-	for (U32 i = 0; !e && i < _nSystems; i++) 
-		if (_sPA[i])
-			e = sAddC(&sParent, _sPA[i]->id, &_sPA[i]->xHeader);
-
-	// Initialize Parent's component subsystems before we throw genes in.
-	if (!e) {
-		U32 *hP, *hEndP;
-		arrayIniPtrs(histoP, (void**) &hP, (void**) &hEndP, -1);
-		for (Entity sID = 0; !e && hP < hEndP; hP++, sID++) {
-			if (*hP)  {
-				System *sP = (System*) sGetC(&sParent, sID);
-				if (sP)
-					e = sIni(sP, *hP);  // makes subsystem's EC map and activities
-			}
-		}
-	}
-	
-	// Distribute the genes to the proper systems.
-	if (!e)
-		e = _distributeGenes(&sParent, _currGenomeGrpP);
-	
-	sParent.firstInactiveActIdx = 2;
-	// Clean up.
-	histoDel(&histoP);
-	
-	return e;
-}
-
-// =====================================================================
-// Clear all subsystems and Parent system.
-// =====================================================================
-void sClrAll() {
-	//TODO
-}
-
-// ====================================================================================
-// Placeholder for component-initialization; this has to be handled in xParentIniS().
-// ====================================================================================
-Error xParentIniC(XHeader *xhP) {
-	UNUSED_(xhP);
-	return SUCCESS;
-}
-
-// Only parents are allowed to deliver messages to child systems.
-// This is how callbacks will start ECS loops.
-Error sDeliverMessage(Key sysID, Message *msgP) {
-	// Get the child.
-	System *sP = (System*) sGetC(&sParent, sysID);
-	assert(sP);
-	// Deliver the message.
-  memcpy((void*) &sP->inbox.msgA[sP->inbox.nMsgs++], msgP, sizeof(Message));
-	// If child system is asleep, wake it up!
-	if (!(sComponentIsActive(&sParent, sysID)))
-		return sActivateC(&sParent, sysID);
-	return SUCCESS;
-}
-// msgP may contain information the callback finds pertinent; e.g. "Who collided w/ me?"
-static Error _trigger(Message *msgP) {
-	assert(msgP->toID >= _nEntities && msgP->toID >= N_SYS_TYPES);  // highest system will have entity ID <= N_SYS_TYPES
-	Map *mapP = _entityReactionMA[msgP->toID];  // toID is an entity
-	Reaction *requestedReactionP = (Reaction*) mapGet(mapP, msgP->event);
-	assert(requestedReactionP);
-	Reaction *ongoingReactionP = (Reaction*) sGetC(&sParent, msgP->toID);
-	assert(ongoingReactionP);
-	// If entity is busy, see if we're allowed to interrupt it.
-	Activity *currActivityP = sGetActivityFromE(&sParent, msgP->toID);
-	assert(currActivityP);
-	if (currActivityP->id == TICK && sComponentIsActive(&sParent, msgP->toID)) {
-		if (requestedReactionP->priority < ongoingReactionP->priority)  // request is lower priority than current activity
-			return SUCCESS;
-	}
-	// Entity is either idle or doing something less important. Give it something better to do.
-	*ongoingReactionP = *requestedReactionP;
-	ongoingReactionP->msg = *msgP;
-	return sStartCActivity(&sParent, msgP->toID, TICK);
-}
-
-static Error _triggerGroup(Message *msgP) {
-	assert(msgP);
-	Error e = SUCCESS;
-	Entity *eA = (Entity*) mapGet(_subscriberAMP, msgP->event);
-	assert(eA);
-	Entity *eP, *eEndP;
-	arrayIniPtrs((void*) eA, (void**) &eP, (void**) &eEndP, -1);
-	for (; !e && eP < eEndP; eP++)
-		e = _trigger(msgP);
-	return e;
-}
-
-Error xParentReact(Activity *aP) {
-	assert(aP);
-	XParentC *cP, *cEndP;
-	Error e = SUCCESS;
-	// Check active subsystems' outboxes. Their callbacks populate systems and JB's reaction activity.
-	Activity *rcaP = sGetActivity(&sParent, TICK);
-	assert(rcaP);
-	arrayIniPtrs(rcaP->cA, (void**) &cP, (void**) &cEndP, rcaP->firstInactiveIdx);
-	for (; !e && cP < cEndP; cP++) {
-		for (Message *msgP = cP->item.s.outbox.msgA, *msgEndP = cP->item.s.outbox.msgA + cP->item.s.outbox.nMsgs;
-				 !e && msgP < msgEndP;
-				 msgP++) {
-			if (msgP->toID) 
-				e = _trigger(msgP);
-			else
-				e = _triggerGroup(msgP);
-		}
-	}
-	
-	// Run active reactions.
-	arrayIniPtrs(rcaP->cA, (void**) &cP, (void**) cEndP, rcaP->firstInactiveIdx);
-	for (; !e && cP < cEndP; cP++)
-		if (cP->item.r.cb(&cP->item.r.msg, cP->item.r.paramsP) == COMPLETE) 
-			sDeactivateC(&sParent, cP->item.r.msg.toID);
-
-	return SUCCESS;
-}
-
-// This runs Parent's subsystems.
-Error xParentTick(Activity *aP) {
-	assert(aP);
-	XParentC *cP, *cEndP;
-	Error e = SUCCESS;
-	arrayIniPtrs(aP->cA, (void**) &cP, (void**) &cEndP, aP->firstInactiveIdx);
-	for (cP = aP->cA; !e && cP < cEndP; cP++) {
-		sRun(&cP->item.s);
-		// Put idle systems to sleep.
-		if (cP->item.s.firstInactiveActIdx == 0)
-			e = sDeactivateC(&sParent, cP->item.s.id);
-	}
-	return e;
-}
-
-Error xIni(System **sPA, U16 nSystems, GenomeGrp *genomeGroupP) {
-	// sIni() takes no arguments, yet the parent system needs to know some outside factors.
-	// So we use static variables here. 
-	_nSystems = nSystems;
-	_currGenomeGrpP = genomeGroupP;
-	_sPA = sPA;
-	return sIni(&sParent, N_SYS_TYPES);
-}
-
-Error xRun() {
-	sAct(&sParent);
-	return SUCCESS;
 }
