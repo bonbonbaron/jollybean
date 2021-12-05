@@ -15,13 +15,16 @@ GAME_INCLUDES    = $(GAMEINCLUDEDIR)*.h
 ENGINE_INCLUDES  = $(ENGINEINCLUDEDIR)*.h
 # Compile options
 IFLAGS        = -I$(GAMEINCLUDEDIR) -I$(ENGINEINCLUDEDIR)
-CFLAGS_COMMON = -Wall -I/usr/include/SDL2/ $(IFLAGS) -ffunction-sections \
+SDL_CFLAGS    = $(shell sdl2-config --cflags)
+CFLAGS_COMMON = -Wall $(SDL_CFLAGS) \
+							  $(IFLAGS) -ffunction-sections \
 								-fdata-sections -s -fno-ident -fmerge-all-constants \
 								-fomit-frame-pointer -fno-stack-protector 
 CFLAGS_TINY   = $(CFLAGS_COMMON) #-Os    TODO: uncomment when ready for relase
 CFLAGS_FAST   = $(CFLAGS_COMMON) #-Ofast    TODO: uncomment when ready for relase
-LFLAGS        = `sdl2-config --libs --cflags` -Wl,--gc-sections -Wl,-z,norelro \
-								-Wl,--build-id=none
+SDL_LFLAGS    = $(shell sdl2-config --libs)
+LFLAGS        = -Wl,--gc-sections -Wl,-z,norelro \
+								-Wl,--build-id=none $(SDL_LFLAGS)
 # Source files
 GAME_SRC      = $(shell find $(GAMEDIR) -name "*.c") 
 ENGINE_SRC    = $(shell find $(ENGINEDIR) -name "*.c") 
@@ -35,7 +38,7 @@ OUTPUTFILE    = o
 # Linker
 ##############################
 $(OUTPUTFILE): $(OBJS)
-	$(CC) $(LFLAGS) $(OBJS) -o $(OUTPUTFILE) 
+	$(CC)  $(OBJS) $(LFLAGS) -o $(OUTPUTFILE) 
 	touch $(OUTPUTFILE)
 
 ##############################
