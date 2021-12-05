@@ -11,5 +11,6 @@ extern StripMap biggerStripMap;
 extern Colormap biggerCM;
 extern Image biggerImg;
 extern XRenderC biggerXRenderC;
-
+extern Genome bigger;
+extern GenomeGrp grp1;
 #endif

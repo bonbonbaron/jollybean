@@ -3,10 +3,10 @@
 ##############################
 CC=cc
 # Directories
-JBDIR = /home/bonbonbaron/hack/jollybean/
+JBDIR = /home/$(USER)/hack/jollybean/
 INSTALLDIR       = $(JBDIR)
 ENGINEDIR        = $(JBDIR)src/
-GAMEDIR          = $(JBDIR)genes/
+GAMEDIR          = $(JBDIR)game/
 BUILDDIR         = $(JBDIR)build/
 GAMEINCLUDEDIR   = $(GAMEDIR)include/
 ENGINEINCLUDEDIR = $(ENGINE)include/
@@ -20,7 +20,7 @@ CFLAGS_COMMON = -Wall -I/usr/include/SDL2/ $(IFLAGS) -ffunction-sections \
 								-fomit-frame-pointer -fno-stack-protector 
 CFLAGS_TINY   = $(CFLAGS_COMMON) #-Os    TODO: uncomment when ready for relase
 CFLAGS_FAST   = $(CFLAGS_COMMON) #-Ofast    TODO: uncomment when ready for relase
-LFLAGS        = `pkg-config --cflags --libs sdl2` -Wl,--gc-sections -Wl,-z,norelro \
+LFLAGS        = `sdl2-config --libs --cflags` -Wl,--gc-sections -Wl,-z,norelro \
 								-Wl,--build-id=none
 # Source files
 GAME_SRC      = $(shell find $(GAMEDIR) -name "*.c") 

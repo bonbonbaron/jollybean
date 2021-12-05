@@ -1,4 +1,4 @@
-#include "ecs.h"
+#include "xParent.h"
 //***************************************************
 //** Parent systems *********************************
 //***************************************************
@@ -8,7 +8,7 @@ static Map **_entityReactionMA;
 static Map *_subscriberAMP;
 static System **_sPA;
 
-NEW_SYS_(Parent, 0, NULL,
+NEW_SYS_(Parent, 0, 
 	ACTIVITY_(REACT, sParentReact),
 	ACTIVITY_(TICK, sParentTick),
 );

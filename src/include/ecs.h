@@ -38,7 +38,7 @@ ENUM_KEYS_(CONTROL, POSITION, MOTION, ANIMATION, COLLISION, RENDER, JOLLYBEAN, N
   .cA               = NULL \
 }
 
-#define NEW_SYS_(name_, id_, sIniPrmsP, ...) \
+#define NEW_SYS_(name_, id_, ...) \
 \
 X##name_##C x##name_##SwapPH;\
 \
@@ -47,7 +47,6 @@ System s##name_ = {\
   .xHeader          = {.owner = 0, .type = 0},\
   .id               = id_,\
   .sIniSFP          = x##name_##IniS,\
-	.sIniSParamsP     = sIniPrmsP,\
   .sIniCFP          = x##name_##IniC,\
   .cSz              = sizeof(X##name_##C),\
   .swapPlaceholderP = &x##name_##SwapPH,\
@@ -200,45 +199,6 @@ typedef enum {
   _MAX_SYSTEMWIDE_CMD_ID
 } SysCmdID;
 
-/**************************/
-/***** Parent systems *****/
-/**************************/
-// Reactions
-ENUM_KEYS_(TICK, REACT) JBActivities; 
-
-typedef enum {
-	COMPLETE,
-	RUNNING
-	// FAILED  // can't conceive any use for this as I'm avoiding behavior trees
-} ReactionStatus;
-
-typedef ReactionStatus (*ReactionCallback)(Message *msgP, void *paramsP);
-
-typedef struct {
-	Key trigger;
-	U8  priority;
-	ReactionCallback cb;
-  void *paramsP;
-	Message msg;  // must consume message that triggered this reaction before JB clears a child's outbox
-} Reaction;
-
-//REACT_TO_(t1) WITH_(action) USING_PARAMS_(params) AT_PRIORITY_(5);
-/* Entities need to have reactions hard-coded. This requires:
- *		callback
- *		hard-coded params
- *		priority
- */
-
-typedef union {
-	System s;
-	Reaction r;
-} XParentC;
-
-typedef struct {
-	Entity nSystems;
-	GenomeGrp *genomeGroupP;
-	System **sysPA;
-} SParentIniSParams;
 
 // *************************
 // Functions
@@ -264,8 +224,4 @@ void sSendMessage(System *sP, Message *msgP);
 Error sDeliverMessage(Key sysID, Message *msgP);
 void sAct(System *sP);
 U32 sGetNComponents(System *sP);
-Error xParentIniS();
-Error xParentIniC();
-Error xIni(System **sPA, U16 nSystems, GenomeGrp *genomeGroupP);
-Error xRun();
 #endif

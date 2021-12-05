@@ -1,0 +1,588 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_FILESEP	slash	/slash or backslash/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PATTERN_LENGTH_LIMIT	96	/0 for no limit/
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	0.0.0	//
+$(ENGINEDIR)%.o	Makefile	/^$(ENGINEDIR)%.o: $(ENGINEDIR)%.c $(ENGINE_INCLUDES)$/;"	t
+$(GAMEDIR)%.o	Makefile	/^$(GAMEDIR)%.o: $(GAMEDIR)%.c $(GAME_INCLUDES) $(ENGINE_INCLUDES)$/;"	t
+$(OUTPUTFILE)	Makefile	/^$(OUTPUTFILE): $(OBJS)$/;"	t
+ACTIVITY_	include/ecs.h	/^#define ACTIVITY_(/;"	d
+AFTER_CURR_SYS	include/ecs.h	/^  AFTER_CURR_SYS$/;"	e	enum:__anona526cbc90703
+ActDirEntry	include/ecs.h	/^} ActDirEntry;$/;"	t	typeref:struct:__anona526cbc90b08
+Activity	include/ecs.h	/^} Activity;$/;"	t	typeref:struct:_Activity
+Animation	include/jbOld.h	/^} Animation;$/;"	t	typeref:struct:Animation_t
+Animation_t	include/jbOld.h	/^typedef struct Animation_t {$/;"	s
+BEHAVE_AS_	include/ecs.h	/^#define BEHAVE_AS_(/;"	d
+BEHAVIOR_	include/ecs.h	/^#define BEHAVIOR_(/;"	d
+BIT_FLAG	data.c	/^#define BIT_FLAG(/;"	d	file:
+BUILDDIR	Makefile	/^BUILDDIR         = $(JBDIR)build\/$/;"	m
+BYTE_IDX	data.c	/^#define BYTE_IDX(/;"	d	file:
+BY_	include/ecs.h	/^#define BY_(/;"	d
+CC	Makefile	/^CC=cc$/;"	m
+CDirEntry	include/ecs.h	/^} CDirEntry;$/;"	t	typeref:struct:__anona526cbc90a08
+CFLAGS_COMMON	Makefile	/^CFLAGS_COMMON = -Wall -I\/usr\/include\/SDL2\/ $(IFLAGS) -ffunction-sections \\$/;"	m
+CFLAGS_FAST	Makefile	/^CFLAGS_FAST   = $(CFLAGS_COMMON) #-Ofast    TODO: uncomment when ready for relase$/;"	m
+CFLAGS_TINY	Makefile	/^CFLAGS_TINY   = $(CFLAGS_COMMON) #-Os    TODO: uncomment when ready for relase$/;"	m
+COMPLETE	include/ecs.h	/^	COMPLETE,$/;"	e	enum:__anona526cbc91303
+COMPONENT	include/ecs.h	/^  COMPONENT,$/;"	e	enum:__anona526cbc90603
+CTRL_A	include/jbOld.h	/^#define CTRL_A /;"	d
+CTRL_A	include/xControl.h	/^#define CTRL_A /;"	d
+CTRL_B	include/jbOld.h	/^#define CTRL_B /;"	d
+CTRL_B	include/xControl.h	/^#define CTRL_B /;"	d
+CTRL_D	include/jbOld.h	/^#define CTRL_D /;"	d
+CTRL_DOWN	include/xControl.h	/^#define CTRL_DOWN /;"	d
+CTRL_L	include/jbOld.h	/^#define CTRL_L /;"	d
+CTRL_LEFT	include/xControl.h	/^#define CTRL_LEFT /;"	d
+CTRL_LISTEN	include/xControl.h	/^	CTRL_LISTEN = 1$/;"	e	enum:__anon980894470103
+CTRL_R	include/jbOld.h	/^#define CTRL_R /;"	d
+CTRL_RIGHT	include/xControl.h	/^#define CTRL_RIGHT /;"	d
+CTRL_S	include/jbOld.h	/^#define CTRL_S /;"	d
+CTRL_SELECT	include/xControl.h	/^#define CTRL_SELECT /;"	d
+CTRL_START	include/xControl.h	/^#define CTRL_START /;"	d
+CTRL_U	include/jbOld.h	/^#define CTRL_U /;"	d
+CTRL_UP	include/xControl.h	/^#define CTRL_UP /;"	d
+CTRL_X	include/jbOld.h	/^#define CTRL_X /;"	d
+CmdType	include/ecs.h	/^} CmdType;$/;"	t	typeref:enum:__anona526cbc90903
+ColorPalette	include/jbOld.h	/^typedef struct ColorPalette {$/;"	s
+ColorPalette	include/jbOld.h	/^} ColorPalette;$/;"	t	typeref:struct:ColorPalette
+Colormap	include/xRender.h	/^} Colormap;     \/\/ When the inflatable requires neither unpacking nor strip-mapping, go ahead /;"	t	typeref:struct:__anon843289a60508
+DATA_H	include/data.h	/^#define DATA_H$/;"	d
+DIRECTOR_SYS_KEY	include/ecs.h	/^  DIRECTOR_SYS_KEY,$/;"	e	enum:__anona526cbc90503
+ECSType	include/ecs.h	/^} ECSType;$/;"	t	typeref:enum:__anona526cbc90603
+ECS_H	include/ecs.h	/^#define ECS_H$/;"	d
+ENGINEDIR	Makefile	/^ENGINEDIR        = $(JBDIR)src\/$/;"	m
+ENGINEINCLUDEDIR	Makefile	/^ENGINEINCLUDEDIR = $(ENGINE)include\/$/;"	m
+ENGINE_INCLUDES	Makefile	/^ENGINE_INCLUDES  = $(ENGINEINCLUDEDIR)*.h$/;"	m
+ENGINE_OBJS	Makefile	/^ENGINE_OBJS   = $(ENGINE_SRC:%.c=%.o)$/;"	m
+ENGINE_SRC	Makefile	/^ENGINE_SRC    = $(shell find $(ENGINEDIR) -name "*.c") $/;"	m
+ENTITY	include/ecs.h	/^  ENTITY,         \/\/ a message to an entity never directly reaches a stem; changes E's behavio/;"	e	enum:__anona526cbc90603
+ENUM_INDICES_	include/data.h	/^#define ENUM_INDICES_(/;"	d
+ENUM_KEYS_	include/data.h	/^#define ENUM_KEYS_(/;"	d
+E_BAD_ARGS	include/errors.h	/^	E_BAD_ARGS,$/;"	e	enum:Error
+E_BAD_INDEX	include/errors.h	/^	E_BAD_INDEX,$/;"	e	enum:Error
+E_BAD_KEY	include/errors.h	/^	E_BAD_KEY,$/;"	e	enum:Error
+E_MSG_INVALID_CMD	include/errors.h	/^	E_MSG_INVALID_CMD,$/;"	e	enum:Error
+E_MSG_TO_ECS_TYPE_MISMATCH	include/errors.h	/^	E_MSG_TO_ECS_TYPE_MISMATCH,$/;"	e	enum:Error
+E_MSG_TO_ID_MISMATCH	include/errors.h	/^	E_MSG_TO_ID_MISMATCH,$/;"	e	enum:Error
+E_NO_MEMORY	include/errors.h	/^	E_NO_MEMORY,$/;"	e	enum:Error
+E_NULL_VAR	include/errors.h	/^	E_NULL_VAR$/;"	e	enum:Error
+E_SYS_CMP_MISMATCH	include/errors.h	/^	E_SYS_CMP_MISMATCH,$/;"	e	enum:Error
+E_UNEXPECTED_DCMP_SZ	include/errors.h	/^	E_UNEXPECTED_DCMP_SZ,$/;"	e	enum:Error
+E_UNSUPPORTED_PIXEL_FORMAT	include/errors.h	/^	E_UNSUPPORTED_PIXEL_FORMAT,$/;"	e	enum:Error
+Entity	include/ecs.h	/^typedef U8 Entity;  $/;"	t	typeref:typename:U8
+EnumValPair	include/data.h	/^} EnumValPair;$/;"	t	typeref:struct:__anon478849880108
+Error	include/errors.h	/^typedef enum Error {$/;"	g
+Error	include/errors.h	/^} Error;$/;"	t	typeref:enum:Error
+Error	include/jbOld.h	/^typedef Sint8 Error;$/;"	t	typeref:typename:Sint8
+FIRST_ACTIVITY	include/ecs.h	/^#define FIRST_ACTIVITY /;"	d
+FPS	include/jbOld.h	/^#define FPS /;"	d
+FRAME_DURATION	include/jbOld.h	/^#define FRAME_DURATION /;"	d
+FlagInfo	include/data.h	/^} FlagInfo;$/;"	t	typeref:struct:__anon478849880308
+FlipSet	include/xRender.h	/^} FlipSet;$/;"	t	typeref:struct:__anon843289a60208
+GAMEDIR	Makefile	/^GAMEDIR          = $(JBDIR)genes\/$/;"	m
+GAMEINCLUDEDIR	Makefile	/^GAMEINCLUDEDIR   = $(GAMEDIR)include\/$/;"	m
+GAME_INCLUDES	Makefile	/^GAME_INCLUDES    = $(GAMEINCLUDEDIR)*.h$/;"	m
+GAME_OBJS	Makefile	/^GAME_OBJS     = $(GAME_SRC:%.c=%.o)$/;"	m
+GAME_SRC	Makefile	/^GAME_SRC      = $(shell find $(GAMEDIR) -name "*.c") $/;"	m
+GENOME_GROUP_	include/ecs.h	/^#define GENOME_GROUP_(/;"	d
+Genome	include/ecs.h	/^} Genome;$/;"	t	typeref:struct:__anona526cbc90208
+GenomeGrp	include/ecs.h	/^} GenomeGrp;$/;"	t	typeref:struct:__anona526cbc90308
+HARD_CODED_ARRAY_	include/data.h	/^#define HARD_CODED_ARRAY_(/;"	d
+HARD_CODED_MAP_	include/data.h	/^#define HARD_CODED_MAP_(/;"	d
+HardCodedArray	include/data.h	/^} HardCodedArray;$/;"	t	typeref:struct:__anon478849880208
+HardCodedMap	include/data.h	/^} HardCodedMap;$/;"	t	typeref:struct:__anon478849880608
+IFLAGS	Makefile	/^IFLAGS        = -I$(GAMEINCLUDEDIR) -I$(ENGINEINCLUDEDIR)$/;"	m
+IF_SCENE_TYPE_IS_	include/ecs.h	/^#define IF_SCENE_TYPE_IS_(/;"	d
+IMMEDIATELY	include/ecs.h	/^  IMMEDIATELY,$/;"	e	enum:__anona526cbc90703
+INSTALLDIR	Makefile	/^INSTALLDIR       = $(JBDIR)$/;"	m
+Image	include/jbOld.h	/^} Image;$/;"	t	typeref:struct:Image_t
+Image	include/xRender.h	/^} Image; $/;"	t	typeref:struct:__anon843289a60608
+Image_t	include/jbOld.h	/^typedef struct Image_t {$/;"	s
+Inflatable	include/data.h	/^} Inflatable;$/;"	t	typeref:struct:__anon478849880708
+IniSysFP	include/jbOld.h	/^typedef void (*IniSysFP)(System *sys_p);$/;"	t	typeref:typename:void (*)(System * sys_p)
+JBDIR	Makefile	/^JBDIR = \/home\/$(USER)\/hack\/jollybean\/$/;"	m
+JB_H	include/jbOld.h	/^#define JB_H$/;"	d
+Key	include/data.h	/^typedef U8 Key;$/;"	t	typeref:typename:U8
+KeyValPair	include/data.h	/^} KeyValPair;$/;"	t	typeref:struct:__anon478849880408
+LAST_FLAG_BYTE_IDX	include/data.h	/^#define LAST_FLAG_BYTE_IDX /;"	d
+LFLAGS	Makefile	/^LFLAGS        = `sdl2-config --libs --cflags` -Wl,--gc-sections -Wl,-z,norelro \\$/;"	m
+LinkedList	include/jbOld.h	/^typedef struct LinkedList {$/;"	s
+LinkedList	include/jbOld.h	/^} LinkedList;$/;"	t	typeref:struct:LinkedList
+ListNode	include/jbOld.h	/^typedef struct ListNode {$/;"	s
+ListNode	include/jbOld.h	/^} ListNode;$/;"	t	typeref:struct:ListNode
+MINIZ_HAS_64BIT_REGISTERS	data.c	/^#define MINIZ_HAS_64BIT_REGISTERS /;"	d	file:
+MINIZ_LITTLE_ENDIAN	data.c	/^#define MINIZ_LITTLE_ENDIAN /;"	d	file:
+MINIZ_USE_UNALIGNED_LOADS_AND_STORES	data.c	/^#define MINIZ_USE_UNALIGNED_LOADS_AND_STORES /;"	d	file:
+MZ_CLEAR_OBJ	data.c	/^#define MZ_CLEAR_OBJ(/;"	d	file:
+MZ_FREE	data.c	/^  #define MZ_FREE(/;"	d	file:
+MZ_MACRO_END	data.c	/^  #define MZ_MACRO_END /;"	d	file:
+MZ_MALLOC	data.c	/^  #define MZ_MALLOC(/;"	d	file:
+MZ_MAX	data.c	/^#define MZ_MAX(/;"	d	file:
+MZ_MIN	data.c	/^#define MZ_MIN(/;"	d	file:
+MZ_READ_LE16	data.c	/^  #define MZ_READ_LE16(/;"	d	file:
+MZ_READ_LE32	data.c	/^  #define MZ_READ_LE32(/;"	d	file:
+MZ_REALLOC	data.c	/^  #define MZ_REALLOC(/;"	d	file:
+Mailbox	include/ecs.h	/^} Mailbox;$/;"	t	typeref:struct:__anona526cbc91108
+Map	include/data.h	/^} Map;$/;"	t	typeref:struct:__anon478849880508
+MediaInfo	include/jbOld.h	/^typedef struct MediaInfo {$/;"	s
+MediaInfo	include/jbOld.h	/^} MediaInfo ;$/;"	t	typeref:struct:MediaInfo
+Message	include/ecs.h	/^} Message;  $/;"	t	typeref:struct:__anona526cbc90d08
+MsgUrgency	include/ecs.h	/^} MsgUrgency;$/;"	t	typeref:enum:__anona526cbc90703
+NEW_GENOME_	include/ecs.h	/^#define NEW_GENOME_(/;"	d
+NEW_SYS_	include/ecs.h	/^#define NEW_SYS_(/;"	d
+NO_OUTPUT	include/ecs.h	/^typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;$/;"	e	enum:__anona526cbc90c03
+NUM_ARGS_	include/data.h	/^#define NUM_ARGS_(/;"	d
+NUM_ECS_TYPES	include/ecs.h	/^  NUM_ECS_TYPES   \/\/ probably never used$/;"	e	enum:__anona526cbc90603
+NUM_OUTPUTS	include/ecs.h	/^typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;$/;"	e	enum:__anona526cbc90c03
+NUM_SYS_KEYS	include/ecs.h	/^  NUM_SYS_KEYS  \/\/ only used for creating stem histograms$/;"	e	enum:__anona526cbc90503
+N_FLAG_BITS	include/data.h	/^#define N_FLAG_BITS /;"	d
+N_FLAG_BYTES	include/data.h	/^#define N_FLAG_BYTES /;"	d
+OBJS	Makefile	/^OBJS          = $(ENGINE_OBJS) $(GAME_OBJS) $/;"	m
+ONE_OFF_CMP_CMD	include/ecs.h	/^  ONE_OFF_CMP_CMD$/;"	e	enum:__anona526cbc90903
+OTHERWISE_BEHAVE_AS_	include/ecs.h	/^#define OTHERWISE_BEHAVE_AS_(/;"	d
+OUTPUTFILE	Makefile	/^OUTPUTFILE    = o$/;"	m
+Output	include/ecs.h	/^typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;$/;"	t	typeref:enum:__anona526cbc90c03
+PERSONALITY_	include/ecs.h	/^#define PERSONALITY_(/;"	d
+Personality	include/ecs.h	/^typedef HardCodedMap Personality;$/;"	t	typeref:typename:HardCodedMap
+Position	include/jbOld.h	/^typedef struct Position {$/;"	s
+Position	include/jbOld.h	/^} Position;  \/* Used by Motion to point at X & Y portion of SDL_Rect *\/$/;"	t	typeref:struct:Position
+Priority	include/ecs.h	/^} Priority;$/;"	t	typeref:enum:__anona526cbc90803
+QuadNode	include/jbOld.h	/^} QuadNode;$/;"	t	typeref:struct:_QuadNode
+QuadTree	include/jbOld.h	/^typedef struct QuadTree {$/;"	s
+QuadTree	include/jbOld.h	/^} QuadTree;$/;"	t	typeref:struct:QuadTree
+REPEATING_CMP_CMD	include/ecs.h	/^  REPEATING_CMP_CMD,$/;"	e	enum:__anona526cbc90903
+RESPOND_TO_	include/ecs.h	/^#define RESPOND_TO_(/;"	d
+RS_	include/ecs.h	/^#define RS_(/;"	d
+RS_SEQ_	include/ecs.h	/^#define RS_SEQ_(/;"	d
+RUNNING	include/ecs.h	/^	RUNNING$/;"	e	enum:__anona526cbc91303
+Reaction	include/ecs.h	/^} Reaction;$/;"	t	typeref:struct:__anona526cbc91408
+ReactionCallback	include/ecs.h	/^typedef ReactionStatus (*ReactionCallback)(Message *msgP, void *paramsP);$/;"	t	typeref:typename:ReactionStatus (*)(Message * msgP,void * paramsP)
+ReactionStatus	include/ecs.h	/^} ReactionStatus;$/;"	t	typeref:enum:__anona526cbc91303
+RunSysLoopFP	include/jbOld.h	/^typedef Error (*RunSysLoopFP)(void *componentArry, void);$/;"	t	typeref:typename:Error (*)(void * componentArry,void)
+S16	include/data.h	/^typedef short S16;$/;"	t	typeref:typename:short
+S32	include/data.h	/^typedef int S32;$/;"	t	typeref:typename:int
+S8	include/data.h	/^typedef char S8;$/;"	t	typeref:typename:char
+SParentIniSParams	include/ecs.h	/^} SParentIniSParams;$/;"	t	typeref:struct:__anona526cbc91608
+SUCCESS	include/errors.h	/^	SUCCESS,$/;"	e	enum:Error
+SYSTEM	include/ecs.h	/^  SYSTEM,$/;"	e	enum:__anona526cbc90603
+SYSTEMWIDE_CMD	include/ecs.h	/^  SYSTEMWIDE_CMD,$/;"	e	enum:__anona526cbc90903
+SYS_CONTROL	include/xControl.h	/^#define SYS_CONTROL$/;"	d
+SYS_RENDER	include/xRender.h	/^#define SYS_RENDER$/;"	d
+SYS_TOGGLE_ACTIVE	include/ecs.h	/^  SYS_TOGGLE_ACTIVE,$/;"	e	enum:__anona526cbc91203
+Seed	include/ecs.h	/^} Seed;$/;"	t	typeref:struct:__anona526cbc90408
+Strip	include/jbOld.h	/^typedef struct Strip {$/;"	s
+Strip	include/jbOld.h	/^} Strip;$/;"	t	typeref:struct:Strip
+StripMap	include/xRender.h	/^} StripMap;$/;"	t	typeref:struct:__anon843289a60408
+StripSet	include/xRender.h	/^} StripSet;$/;"	t	typeref:struct:__anon843289a60308
+SysBasicFP	include/ecs.h	/^typedef void (*SysBasicFP)(struct _System *sP);$/;"	t	typeref:typename:void (*)(struct _System * sP)
+SysCmdID	include/ecs.h	/^} SysCmdID;$/;"	t	typeref:enum:__anona526cbc91203
+SysFP	include/ecs.h	/^typedef Error (*SysFP)(struct _Activity *aP);$/;"	t	typeref:typename:Error (*)(struct _Activity * aP)
+SysIniCFP	include/ecs.h	/^typedef Error (*SysIniCFP)(XHeader *xhP);$/;"	t	typeref:typename:Error (*)(XHeader * xhP)
+SysIniFP	include/ecs.h	/^typedef Error (*SysIniFP)(void* sParamsP);$/;"	t	typeref:typename:Error (*)(void * sParamsP)
+SysKeys	include/ecs.h	/^} SysKeys;$/;"	t	typeref:enum:__anona526cbc90503
+SysOneOffFP	include/ecs.h	/^typedef void (*SysOneOffFP)(struct _System *sP, Entity entity, U8 key);  \/* optional key to a m/;"	t	typeref:typename:void (*)(struct _System * sP,Entity entity,U8 key)
+System	include/ecs.h	/^} System;$/;"	t	typeref:struct:_System
+System	include/jbOld.h	/^typedef struct System {$/;"	s
+System	include/jbOld.h	/^} System;$/;"	t	typeref:struct:System
+TILE_H	include/jbOld.h	/^#define TILE_H /;"	d
+TILE_W	include/jbOld.h	/^#define TILE_W /;"	d
+TINFL_BITBUF_SIZE	data.c	/^  #define TINFL_BITBUF_SIZE /;"	d	file:
+TINFL_CR_BEGIN	data.c	/^#define TINFL_CR_BEGIN /;"	d	file:
+TINFL_CR_FINISH	data.c	/^#define TINFL_CR_FINISH /;"	d	file:
+TINFL_CR_RETURN	data.c	/^#define TINFL_CR_RETURN(/;"	d	file:
+TINFL_CR_RETURN_FOREVER	data.c	/^#define TINFL_CR_RETURN_FOREVER(/;"	d	file:
+TINFL_DECOMPRESS_MEM_TO_MEM_FAILED	data.c	/^#define TINFL_DECOMPRESS_MEM_TO_MEM_FAILED /;"	d	file:
+TINFL_FAST_LOOKUP_BITS	data.c	/^  TINFL_FAST_LOOKUP_BITS = 10, TINFL_FAST_LOOKUP_SIZE = 1 << TINFL_FAST_LOOKUP_BITS$/;"	e	enum:__anonf83f6b700303	file:
+TINFL_FAST_LOOKUP_SIZE	data.c	/^  TINFL_FAST_LOOKUP_BITS = 10, TINFL_FAST_LOOKUP_SIZE = 1 << TINFL_FAST_LOOKUP_BITS$/;"	e	enum:__anonf83f6b700303	file:
+TINFL_FLAG_COMPUTE_ADLER32	data.c	/^  TINFL_FLAG_COMPUTE_ADLER32 = 8$/;"	e	enum:__anonf83f6b700103	file:
+TINFL_FLAG_HAS_MORE_INPUT	data.c	/^  TINFL_FLAG_HAS_MORE_INPUT = 2,$/;"	e	enum:__anonf83f6b700103	file:
+TINFL_FLAG_PARSE_ZLIB_HEADER	data.c	/^  TINFL_FLAG_PARSE_ZLIB_HEADER = 1,$/;"	e	enum:__anonf83f6b700103	file:
+TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF	data.c	/^  TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF = 4,$/;"	e	enum:__anonf83f6b700103	file:
+TINFL_GET_BITS	data.c	/^#define TINFL_GET_BITS(/;"	d	file:
+TINFL_GET_BYTE	data.c	/^#define TINFL_GET_BYTE(/;"	d	file:
+TINFL_HEADER_INCLUDED	data.c	/^#define TINFL_HEADER_INCLUDED$/;"	d	file:
+TINFL_HUFF_BITBUF_FILL	data.c	/^#define TINFL_HUFF_BITBUF_FILL(/;"	d	file:
+TINFL_HUFF_DECODE	data.c	/^#define TINFL_HUFF_DECODE(/;"	d	file:
+TINFL_LZ_DICT_SIZE	data.c	/^#define TINFL_LZ_DICT_SIZE /;"	d	file:
+TINFL_MAX_HUFF_SYMBOLS_0	data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINF/;"	e	enum:__anonf83f6b700303	file:
+TINFL_MAX_HUFF_SYMBOLS_1	data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINF/;"	e	enum:__anonf83f6b700303	file:
+TINFL_MAX_HUFF_SYMBOLS_2	data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINF/;"	e	enum:__anonf83f6b700303	file:
+TINFL_MAX_HUFF_TABLES	data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINF/;"	e	enum:__anonf83f6b700303	file:
+TINFL_MEMCPY	data.c	/^#define TINFL_MEMCPY(/;"	d	file:
+TINFL_MEMSET	data.c	/^#define TINFL_MEMSET(/;"	d	file:
+TINFL_NEED_BITS	data.c	/^#define TINFL_NEED_BITS(/;"	d	file:
+TINFL_SKIP_BITS	data.c	/^#define TINFL_SKIP_BITS(/;"	d	file:
+TINFL_STATUS_ADLER32_MISMATCH	data.c	/^  TINFL_STATUS_ADLER32_MISMATCH = -2,$/;"	e	enum:__anonf83f6b700203	file:
+TINFL_STATUS_BAD_PARAM	data.c	/^  TINFL_STATUS_BAD_PARAM = -3,$/;"	e	enum:__anonf83f6b700203	file:
+TINFL_STATUS_DONE	data.c	/^  TINFL_STATUS_DONE = 0,$/;"	e	enum:__anonf83f6b700203	file:
+TINFL_STATUS_FAILED	data.c	/^  TINFL_STATUS_FAILED = -1,$/;"	e	enum:__anonf83f6b700203	file:
+TINFL_STATUS_HAS_MORE_OUTPUT	data.c	/^  TINFL_STATUS_HAS_MORE_OUTPUT = 2$/;"	e	enum:__anonf83f6b700203	file:
+TINFL_STATUS_NEEDS_MORE_INPUT	data.c	/^  TINFL_STATUS_NEEDS_MORE_INPUT = 1,$/;"	e	enum:__anonf83f6b700203	file:
+TINFL_USE_64BIT_BITBUF	data.c	/^  #define TINFL_USE_64BIT_BITBUF /;"	d	file:
+TOP_PRIORITY	include/ecs.h	/^  TOP_PRIORITY$/;"	e	enum:__anona526cbc90803
+Tilemap	include/jbOld.h	/^typedef struct Tilemap {$/;"	s
+Tilemap	include/jbOld.h	/^} Tilemap;$/;"	t	typeref:struct:Tilemap
+Tileset	include/jbOld.h	/^typedef struct Tileset {$/;"	s
+Tileset	include/jbOld.h	/^} Tileset;$/;"	t	typeref:struct:Tileset
+U16	include/data.h	/^typedef unsigned short U16;$/;"	t	typeref:typename:unsigned short
+U32	include/data.h	/^typedef unsigned int U32;$/;"	t	typeref:typename:unsigned int
+U8	include/data.h	/^typedef unsigned char U8;$/;"	t	typeref:typename:unsigned char
+UNUSED_	include/data.h	/^#define UNUSED_(/;"	d
+WINDOW_HEIGHT	include/jbOld.h	/^#define WINDOW_HEIGHT /;"	d
+WINDOW_WIDTH	include/jbOld.h	/^#define WINDOW_WIDTH /;"	d
+XControlActivityID	include/xControl.h	/^} XControlActivityID;$/;"	t	typeref:enum:__anon980894470103
+XControlC	include/xControl.h	/^} XControlC;$/;"	t	typeref:struct:__anon980894470208
+XHeader	include/ecs.h	/^} XHeader;$/;"	t	typeref:struct:__anona526cbc90108
+XParentC	include/ecs.h	/^} XParentC;$/;"	t	typeref:union:__anona526cbc9150a
+XRENDER	include/xRender.h	/^	XRENDER = 1$/;"	e	enum:__anon843289a60103
+XRenderActivityID	include/xRender.h	/^} XRenderActivityID;$/;"	t	typeref:enum:__anon843289a60103
+XRenderC	include/xRender.h	/^} XRenderC;$/;"	t	typeref:struct:__anon843289a60708
+_Activity	include/ecs.h	/^typedef struct _Activity {$/;"	s
+_MAX_SYSTEMWIDE_CMD_ID	include/ecs.h	/^  _MAX_SYSTEMWIDE_CMD_ID$/;"	e	enum:__anona526cbc91203
+_QuadNode	include/jbOld.h	/^typedef struct _QuadNode {$/;"	s
+_System	include/ecs.h	/^typedef struct _System {$/;"	s
+__anon478849880108	include/data.h	/^typedef struct {$/;"	s
+__anon478849880208	include/data.h	/^typedef struct {$/;"	s
+__anon478849880308	include/data.h	/^typedef struct {$/;"	s
+__anon478849880408	include/data.h	/^typedef struct {$/;"	s
+__anon478849880508	include/data.h	/^typedef struct {$/;"	s
+__anon478849880608	include/data.h	/^typedef struct {$/;"	s
+__anon478849880708	include/data.h	/^typedef struct {$/;"	s
+__anon843289a60103	include/xRender.h	/^typedef enum {$/;"	g
+__anon843289a60208	include/xRender.h	/^typedef struct {$/;"	s
+__anon843289a60308	include/xRender.h	/^typedef struct {$/;"	s
+__anon843289a60408	include/xRender.h	/^typedef struct {$/;"	s
+__anon843289a60508	include/xRender.h	/^typedef struct {$/;"	s
+__anon843289a60608	include/xRender.h	/^typedef struct {$/;"	s
+__anon843289a60708	include/xRender.h	/^typedef struct {$/;"	s
+__anon980894470103	include/xControl.h	/^typedef enum {$/;"	g
+__anon980894470208	include/xControl.h	/^typedef struct {$/;"	s
+__anona526cbc90108	include/ecs.h	/^typedef struct {$/;"	s
+__anona526cbc90208	include/ecs.h	/^typedef struct {$/;"	s
+__anona526cbc90308	include/ecs.h	/^typedef struct {$/;"	s
+__anona526cbc90408	include/ecs.h	/^typedef struct {$/;"	s
+__anona526cbc90503	include/ecs.h	/^typedef enum {$/;"	g
+__anona526cbc90603	include/ecs.h	/^typedef enum {$/;"	g
+__anona526cbc90703	include/ecs.h	/^typedef enum {$/;"	g
+__anona526cbc90803	include/ecs.h	/^typedef enum {$/;"	g
+__anona526cbc90903	include/ecs.h	/^typedef enum {$/;"	g
+__anona526cbc90a08	include/ecs.h	/^typedef struct {$/;"	s
+__anona526cbc90b08	include/ecs.h	/^typedef struct {$/;"	s
+__anona526cbc90c03	include/ecs.h	/^typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;$/;"	g
+__anona526cbc90d08	include/ecs.h	/^typedef struct {$/;"	s
+__anona526cbc90e0a	include/ecs.h	/^	union {$/;"	u	struct:__anona526cbc90d08
+__anona526cbc90f08	include/ecs.h	/^		struct {$/;"	s	union:__anona526cbc90d08::__anona526cbc90e0a
+__anona526cbc91008	include/ecs.h	/^		struct {$/;"	s	union:__anona526cbc90d08::__anona526cbc90e0a
+__anona526cbc91108	include/ecs.h	/^typedef struct {$/;"	s
+__anona526cbc91203	include/ecs.h	/^typedef enum {$/;"	g
+__anona526cbc91303	include/ecs.h	/^typedef enum {$/;"	g
+__anona526cbc91408	include/ecs.h	/^typedef struct {$/;"	s
+__anona526cbc9150a	include/ecs.h	/^typedef union {$/;"	u
+__anona526cbc91608	include/ecs.h	/^typedef struct {$/;"	s
+__anonf83f6b700103	data.c	/^{$/;"	g	file:
+__anonf83f6b700203	data.c	/^{$/;"	g	file:
+__anonf83f6b700303	data.c	/^{$/;"	g	file:
+__anonf83f6b700408	data.c	/^{$/;"	s	file:
+_arrayGetVoidElemPtr	data.c	/^inline static void* _arrayGetVoidElemPtr(const void *arryP, S32 idx) {$/;"	f	typeref:typename:void *	file:
+_clrMailbox	ecs.c	/^static void _clrMailbox(Mailbox *mailboxP) {$/;"	f	typeref:typename:void	file:
+_cmClr	xRender.c	/^void _cmClr(Colormap *cmP) {$/;"	f	typeref:typename:void
+_cmGen	xRender.c	/^Error _cmGen(Colormap *cmP) {$/;"	f	typeref:typename:Error
+_countU8Bits	data.c	/^inline static U8 _countU8Bits(U8 byte) {$/;"	f	typeref:typename:U8	file:
+_distributeGenes	xParent.c	/^static Error _distributeGenes(System *sParentP, GenomeGrp *ggP) {$/;"	f	typeref:typename:Error	file:
+_elemSz	include/data.h	/^	U32         _elemSz;$/;"	m	struct:__anon478849880208	typeref:typename:U32
+_elemSz	include/data.h	/^	U8         _elemSz;$/;"	m	struct:__anon478849880608	typeref:typename:U8
+_entityReactionMA	xParent.c	/^static Map **_entityReactionMA;$/;"	v	typeref:typename:Map **	file:
+_enum	include/data.h	/^	Key _enum;$/;"	m	struct:__anon478849880108	typeref:typename:Key
+_fast_arrayGetElemSz	data.c	/^static inline U32 _fast_arrayGetElemSz(const void *arryP) {$/;"	f	typeref:typename:U32	file:
+_fast_arrayGetVoidElemPtr	data.c	/^static inline void* _fast_arrayGetVoidElemPtr(const void *arryP, U8 idx) {$/;"	f	typeref:typename:void *	file:
+_getActDirEntry	ecs.c	/^inline static ActDirEntry* _getActDirEntry(System *sP, Key actID) {$/;"	f	typeref:typename:ActDirEntry *	file:
+_getCDirEntry	ecs.c	/^inline static CDirEntry* _getCDirEntry(System *sP, Entity entity) {$/;"	f	typeref:typename:CDirEntry *	file:
+_getCPByIndex	ecs.c	/^inline static void* _getCPByIndex(const System *sP, Activity *aP, U8 cIdx) {$/;"	f	typeref:typename:void *	file:
+_getE	ecs.c	/^inline static Entity _getE(const void *cmpP) {$/;"	f	typeref:typename:Entity	file:
+_getElemIdx	data.c	/^inline static U32 _getElemIdx(const FlagInfo f, const U8 key) {$/;"	f	typeref:typename:U32	file:
+_getElemP	data.c	/^inline static void* _getElemP(const Map *mapP, const FlagInfo f, const U8 key) {$/;"	f	typeref:typename:void *	file:
+_getFlagInfo	data.c	/^inline static FlagInfo _getFlagInfo(const Map *mapP, const U8 key) {$/;"	f	typeref:typename:FlagInfo	file:
+_getMapElemSz	data.c	/^inline static U32 _getMapElemSz(const Map *mapP) {$/;"	f	typeref:typename:U32	file:
+_getNBitsSet	data.c	/^inline static U32 _getNBitsSet(const Map *mapP) {$/;"	f	typeref:typename:U32	file:
+_histoGeneTypes	xParent.c	/^Error _histoGeneTypes(U32 *histoA, GenomeGrp *ggP) {$/;"	f	typeref:typename:Error
+_idxIsPopulated	data.c	/^inline static U8 _idxIsPopulated(const U8 nBitsSet, U32 idx) {$/;"	f	typeref:typename:U8	file:
+_isFlagSet	data.c	/^inline static U8 _isFlagSet(const U8 flags, const U8 key) {$/;"	f	typeref:typename:U8	file:
+_isKeyValid	data.c	/^inline static U8 _isKeyValid(const U8 key) {$/;"	f	typeref:typename:U8	file:
+_isMapValid	data.c	/^inline static U8 _isMapValid(const Map *mapP) {$/;"	f	typeref:typename:U8	file:
+_mvActivity	ecs.c	/^static Error _mvActivity(System *sP, Activity *srcActP, U8 dstActIdx) {$/;"	f	typeref:typename:Error	file:
+_mvC	ecs.c	/^static Error _mvC(System *sP, void *srcCP, void *dstCP, Key dstActID, U8 dstCIdx) {$/;"	f	typeref:typename:Error	file:
+_nEnumValPairs	include/data.h	/^	U32         _nEnumValPairs;$/;"	m	struct:__anon478849880208	typeref:typename:U32
+_nKeyValPairs	include/data.h	/^	Key        _nKeyValPairs;$/;"	m	struct:__anon478849880608	typeref:typename:Key
+_sClrActivities	ecs.c	/^static void _sClrActivities(System *sP) {$/;"	f	typeref:typename:void	file:
+_sClrMailboxes	ecs.c	/^static void _sClrMailboxes(System *sP) {$/;"	f	typeref:typename:void	file:
+_sPA	xParent.c	/^static System **_sPA;$/;"	v	typeref:typename:System **	file:
+_sReadInbox	ecs.c	/^void _sReadInbox(System *sP) {$/;"	f	typeref:typename:void
+_sReadMessage	ecs.c	/^static void _sReadMessage(System *sP, Message *msgP) {$/;"	f	typeref:typename:void	file:
+_subscriberAMP	xParent.c	/^static Map *_subscriberAMP;$/;"	v	typeref:typename:Map *	file:
+_swapActivities	ecs.c	/^static Error _swapActivities(System *sP, Key srcActID, U8 dstActIdx) {$/;"	f	typeref:typename:Error	file:
+_trigger	xParent.c	/^static Error _trigger(System *sParentP, Message *msgP) {$/;"	f	typeref:typename:Error	file:
+_triggerGroup	xParent.c	/^static Error _triggerGroup(System *sParentP, Message *msgP) {$/;"	f	typeref:typename:Error	file:
+_updateActDirEntry	ecs.c	/^static Error _updateActDirEntry(System *sP, Key actID, U8 dstActIdx, Activity *dstActP) {$/;"	f	typeref:typename:Error	file:
+_updateCDirEntry	ecs.c	/^static Error  _updateCDirEntry(System *sP, Entity entity, U8 dstActID, U8 dstCIdx, void *dstCP) /;"	f	typeref:typename:Error	file:
+_validateActivityIdx	ecs.c	/^inline static U8 _validateActivityIdx(const System *sP, const U8 activityIdx) { $/;"	f	typeref:typename:U8	file:
+_validateEcIdx	ecs.c	/^inline static U8 _validateEcIdx(const System *sP, Activity *aP, const U8 cIdx) { $/;"	f	typeref:typename:U8	file:
+actDirectoryP	include/ecs.h	/^  Map         *actDirectoryP;       \/* maps component IDs to an element in an array of CmpAddre/;"	m	struct:_System	typeref:typename:Map *
+activityA	include/ecs.h	/^  Activity    *activityA;            \/* Array of activities that loop through their components /;"	m	struct:_System	typeref:typename:Activity *
+activityID	include/ecs.h	/^			Key activityID;$/;"	m	struct:__anona526cbc90d08::__anona526cbc90e0a::__anona526cbc91008	typeref:typename:Key
+activityID	include/ecs.h	/^  U8 activityID;$/;"	m	struct:__anona526cbc90a08	typeref:typename:U8
+activityIdx	include/ecs.h	/^  U8 activityIdx;$/;"	m	struct:__anona526cbc90b08	typeref:typename:U8
+activityP	include/ecs.h	/^  struct _Activity *activityP; \/* Systems that use pointers to other stems' components may use /;"	m	struct:__anona526cbc90b08	typeref:struct:_Activity *
+arrayDel	data.c	/^void arrayDel(void **arryPP) {$/;"	f	typeref:typename:void
+arrayGetElemSz	data.c	/^U32 arrayGetElemSz(const void *arryP) {$/;"	f	typeref:typename:U32
+arrayGetNElems	data.c	/^U32 arrayGetNElems(const void *arryP) {$/;"	f	typeref:typename:U32
+arrayGetVoidElemPtr	data.c	/^void* arrayGetVoidElemPtr(const void *arryP, S32 idx) {$/;"	f	typeref:typename:void *
+arrayIni	data.c	/^Error arrayIni(void **arryPP, HardCodedArray *hcaP) {$/;"	f	typeref:typename:Error
+arrayIniPtrs	data.c	/^void arrayIniPtrs(const void *arryP, void **startP, void **endP, S32 endIdx) {$/;"	f	typeref:typename:void
+arrayNew	data.c	/^Error arrayNew(void **arryPP, U32 elemSz, U32 nElems) {$/;"	f	typeref:typename:Error
+arrayP	include/data.h	/^	void        *arrayP;       \/\/ defaults to NULL to prevent copies $/;"	m	struct:__anon478849880208	typeref:typename:void *
+arraySetVoidElem	data.c	/^Error arraySetVoidElem(void *arrayP, U32 idx, const void *elemSrcP) {$/;"	f	typeref:typename:Error
+blit_coords	include/jbOld.h	/^	SDL_Rect        blit_coords;$/;"	m	struct:Animation_t	typeref:typename:SDL_Rect
+blit_coords	include/jbOld.h	/^	SDL_Rect     *blit_coords;$/;"	m	struct:Strip	typeref:typename:SDL_Rect *
+bpp	include/jbOld.h	/^	Uint8     bpp;$/;"	m	struct:Tileset	typeref:typename:Uint8
+bpp	include/xRender.h	/^	U8 bpp;$/;"	m	struct:__anon843289a60508	typeref:typename:U8
+br_corner	include/jbOld.h	/^	Vector2 tl_corner, br_corner;$/;"	m	struct:_QuadNode	typeref:typename:Vector2
+buttonsDown	include/xControl.h	/^	U32 buttonsDown;$/;"	m	struct:__anon980894470208	typeref:typename:U32
+buttonsPressed	xControl.c	/^U32 buttonsPressed;$/;"	v	typeref:typename:U32
+cA	include/ecs.h	/^  void *cA;  \/* components the above function operates on *\/$/;"	m	struct:_Activity	typeref:typename:void *
+cDirectoryP	include/ecs.h	/^  Map         *cDirectoryP;         \/* maps component IDs to an element in an array of CmpAddre/;"	m	struct:_System	typeref:typename:Map *
+cIdx	include/ecs.h	/^  U8 cIdx;$/;"	m	struct:__anona526cbc90a08	typeref:typename:U8
+cP	include/ecs.h	/^  void *cP; \/* Systems that use pointers to other stems' components may use double pointers to /;"	m	struct:__anona526cbc90a08	typeref:typename:void *
+cSz	include/ecs.h	/^  U8           cSz;                 \/* components are the same size in all of this stem's activ/;"	m	struct:_System	typeref:typename:U8
+cb	include/ecs.h	/^	ReactionCallback cb;$/;"	m	struct:__anona526cbc91408	typeref:typename:ReactionCallback
+childSysArry	include/jbOld.h	/^	System      *childSysArry;$/;"	m	struct:System	typeref:typename:System *
+clean	Makefile	/^clean:$/;"	t
+cmd	include/ecs.h	/^		} cmd;$/;"	m	union:__anona526cbc90d08::__anona526cbc90e0a	typeref:struct:__anona526cbc90d08::__anona526cbc90e0a::__anona526cbc91008
+cmp	include/jbOld.h	/^typedef SDL_bool (*cmp)(struct Sprite_t*, struct Sprite_t*);$/;"	t	typeref:typename:SDL_bool (*)(struct Sprite_t *,struct Sprite_t *)
+colorA	include/xRender.h	/^	SDL_Color *colorA;$/;"	m	struct:__anon843289a60608	typeref:typename:SDL_Color *
+colorMapP	include/xRender.h	/^	Colormap *colorMapP;$/;"	m	struct:__anon843289a60608	typeref:typename:Colormap *
+componentArry	include/jbOld.h	/^	void        *componentArry;$/;"	m	struct:System	typeref:typename:void *
+compressedData	include/data.h	/^	U8  compressedData[];$/;"	m	struct:__anon478849880708	typeref:typename:U8[]
+compressedLen	include/data.h	/^	U32 compressedLen;$/;"	m	struct:__anon478849880708	typeref:typename:U32
+compressed_len	include/jbOld.h	/^	Uint32 offset, uncompressed_len, compressed_len;$/;"	m	struct:MediaInfo	typeref:typename:Uint32
+contents	include/ecs.h	/^	} contents;$/;"	m	struct:__anona526cbc90d08	typeref:union:__anona526cbc90d08::__anona526cbc90e0a
+cp_arry	include/jbOld.h	/^	SDL_Color *cp_arry;$/;"	m	struct:ColorPalette	typeref:typename:SDL_Color *
+cp_idx	include/jbOld.h	/^	Uint8         cp_idx;     \/* index into color palette table *\/$/;"	m	struct:Image_t	typeref:typename:Uint8
+ctrlListen	xControl.c	/^Error ctrlListen(Activity *aP) {$/;"	f	typeref:typename:Error
+curr_duration	include/jbOld.h	/^	Uint32          curr_duration;$/;"	m	struct:Animation_t	typeref:typename:Uint32
+curr_frame_num	include/jbOld.h	/^	Uint8           curr_frame_num;$/;"	m	struct:Animation_t	typeref:typename:Uint8
+curr_strip_p	include/jbOld.h	/^	Strip          *curr_strip_p;$/;"	m	struct:Animation_t	typeref:typename:Strip *
+data	include/jbOld.h	/^	void *data;$/;"	m	struct:ListNode	typeref:typename:void *
+dataP	include/xRender.h	/^	U8 *dataP;    \/\/ JB only supports 8-bit colormap. If image requires neither strips nor bit-un/;"	m	struct:__anon843289a60508	typeref:typename:U8 *
+depth	include/jbOld.h	/^	Uint8 n_elems, depth;$/;"	m	struct:_QuadNode	typeref:typename:Uint8
+dimensions	include/jbOld.h	/^	Vector2        dimensions;  \/* in units of tiles *\/$/;"	m	struct:Tilemap	typeref:typename:Vector2
+dstRectPP	include/xRender.h	/^	SDL_Rect **dstRectPP;$/;"	m	struct:__anon843289a60708	typeref:typename:SDL_Rect **
+durations	include/jbOld.h	/^	Uint16       *durations;$/;"	m	struct:Strip	typeref:typename:Uint16 *
+elems	include/jbOld.h	/^	LinkedList *elems;$/;"	m	struct:_QuadNode	typeref:typename:LinkedList *
+entityDirectory	include/jbOld.h	/^	dirEntry    *entityDirectory;  \/\/ a system reads inbox and delivers messages to its component/;"	m	struct:System	typeref:typename:dirEntry *
+enumValA	include/data.h	/^	EnumValPair  enumValA[];$/;"	m	struct:__anon478849880208	typeref:typename:EnumValPair[]
+event	include/ecs.h	/^		} event;$/;"	m	union:__anona526cbc90d08::__anona526cbc90e0a	typeref:struct:__anona526cbc90d08::__anona526cbc90e0a::__anona526cbc90f08
+firstEmptyIdx	include/ecs.h	/^  U8 firstEmptyIdx; \/* marks the first empty element's index *\/$/;"	m	struct:_Activity	typeref:typename:U8
+firstInactiveActIdx	include/ecs.h	/^  Key          firstInactiveActIdx; \/* index of first inactive activity *\/$/;"	m	struct:_System	typeref:typename:Key
+firstInactiveIdx	include/ecs.h	/^  U8 firstInactiveIdx; \/* marks the first inactive element's index *\/$/;"	m	struct:_Activity	typeref:typename:U8
+flagA	include/data.h	/^	FlagInfo flagA[N_FLAG_BYTES];  \/\/ "A" means "Array" for JB's naming standards $/;"	m	struct:__anon478849880508	typeref:typename:FlagInfo[]
+flags	include/data.h	/^	U8 flags;$/;"	m	struct:__anon478849880308	typeref:typename:U8
+flipIdxA	include/xRender.h	/^	U16 flipIdxA[];$/;"	m	struct:__anon843289a60208	typeref:typename:U16[]
+flipSetP	include/xRender.h	/^	FlipSet *flipSetP;$/;"	m	struct:__anon843289a60308	typeref:typename:FlipSet *
+game_over	include/jbOld.h	/^SDL_bool game_over;$/;"	v	typeref:typename:SDL_bool
+genePA	include/ecs.h	/^  XHeader *genePA[];$/;"	m	struct:__anona526cbc90208	typeref:typename:XHeader * []
+genomeGroupP	include/ecs.h	/^	GenomeGrp *genomeGroupP;$/;"	m	struct:__anona526cbc91608	typeref:typename:GenomeGrp *
+genomeP	include/ecs.h	/^	Genome *genomeP;$/;"	m	struct:__anona526cbc90408	typeref:typename:Genome *
+genomePA	include/ecs.h	/^  Genome *genomePA[];$/;"	m	struct:__anona526cbc90308	typeref:typename:Genome * []
+h	include/xRender.h	/^	U16 w, h, pitch;  \/\/ in pixel units; determine actual step size by pixel format$/;"	m	struct:__anon843289a60508	typeref:typename:U16
+hcArrayIni	data.c	/^Error hcArrayIni(HardCodedArray *hcaP) {$/;"	f	typeref:typename:Error
+hcMapIni	data.c	/^Error hcMapIni(HardCodedMap *hcmP) {$/;"	f	typeref:typename:Error
+hcmP	include/ecs.h	/^	HardCodedMap *hcmP;  \/\/ Some types of components' values change under various circumstances.$/;"	m	struct:__anona526cbc90a08	typeref:typename:HardCodedMap *
+head	include/jbOld.h	/^	ListNode *head;$/;"	m	struct:LinkedList	typeref:typename:ListNode *
+histoDel	data.c	/^void histoDel(U32 **histoPP) {$/;"	f	typeref:typename:void
+histoNew	data.c	/^Error histoNew(U32 **histoPP, const U32 maxVal) {$/;"	f	typeref:typename:Error
+id	include/ecs.h	/^			Key id;  \/\/ event ID$/;"	m	struct:__anona526cbc90d08::__anona526cbc90e0a::__anona526cbc90f08	typeref:typename:Key
+id	include/ecs.h	/^  U8           id;                  \/* this is needed to ensure messages are sent to the correc/;"	m	struct:_System	typeref:typename:U8
+id	include/ecs.h	/^  U8 id;  \/* ID of activity *\/$/;"	m	struct:_Activity	typeref:typename:U8
+ii	xRender.c	/^static U8 ii = 0;$/;"	v	typeref:typename:U8	file:
+imgP	include/xRender.h	/^	Image *imgP;$/;"	m	struct:__anon843289a60708	typeref:typename:Image *
+inbox	include/ecs.h	/^  Mailbox      inbox;               \/* Where commands come in from the outside world *\/$/;"	m	struct:_System	typeref:typename:Mailbox
+inbox	include/jbOld.h	/^	Message     *inbox;$/;"	m	struct:System	typeref:typename:Message *
+inflate	data.c	/^Error inflate(Inflatable *inflatableP) {$/;"	f	typeref:typename:Error
+inflatedDataP	include/data.h	/^	void *inflatedDataP;$/;"	m	struct:__anon478849880708	typeref:typename:void *
+inflatedLen	include/data.h	/^	U32 inflatedLen;$/;"	m	struct:__anon478849880708	typeref:typename:U32
+inline	include/data.h	/^#define inline /;"	d
+install	Makefile	/^install:$/;"	t
+jbAlloc	data.c	/^inline Error jbAlloc(void **voidPP, U32 elemSz, U32 nElems) {$/;"	f	typeref:typename:Error
+jbFree	data.c	/^inline void jbFree(void **voidPP) {$/;"	f	typeref:typename:void
+key	include/data.h	/^	Key key;$/;"	m	struct:__anon478849880408	typeref:typename:Key
+key	include/ecs.h	/^			Key key;  \/\/ tells activity what specifically to do with component every loop $/;"	m	struct:__anona526cbc90d08::__anona526cbc90e0a::__anona526cbc91008	typeref:typename:Key
+keyValA	include/data.h	/^	KeyValPair  keyValA[];$/;"	m	struct:__anon478849880608	typeref:typename:KeyValPair[]
+last_modified_tm	include/jbOld.h	/^	Uint32    last_modified_tm;$/;"	m	struct:Tileset	typeref:typename:Uint32
+m_bit_buf	data.c	/^  tinfl_bit_buf_t m_bit_buf;$/;"	m	struct:tinfl_decompressor_tag	typeref:typename:tinfl_bit_buf_t	file:
+m_check_adler32	data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32	file:
+m_code_size	data.c	/^  mz_uint8 m_code_size[TINFL_MAX_HUFF_SYMBOLS_0];$/;"	m	struct:__anonf83f6b700408	typeref:typename:mz_uint8[]	file:
+m_counter	data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32	file:
+m_dist	data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32	file:
+m_dist_from_out_buf_start	data.c	/^  size_t m_dist_from_out_buf_start;$/;"	m	struct:tinfl_decompressor_tag	typeref:typename:size_t	file:
+m_final	data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32	file:
+m_len_codes	data.c	/^  mz_uint8 m_raw_header[4], m_len_codes[TINFL_MAX_HUFF_SYMBOLS_0 + TINFL_MAX_HUFF_SYMBOLS_1 + 13/;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint8[]	file:
+m_look_up	data.c	/^  mz_int16 m_look_up[TINFL_FAST_LOOKUP_SIZE], m_tree[TINFL_MAX_HUFF_SYMBOLS_0 * 2];$/;"	m	struct:__anonf83f6b700408	typeref:typename:mz_int16[]	file:
+m_n_bits	data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32	file:
+m_num_extra	data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32	file:
+m_raw_header	data.c	/^  mz_uint8 m_raw_header[4], m_len_codes[TINFL_MAX_HUFF_SYMBOLS_0 + TINFL_MAX_HUFF_SYMBOLS_1 + 13/;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint8[4]	file:
+m_state	data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32	file:
+m_table_sizes	data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32[]	file:
+m_tables	data.c	/^  tinfl_huff_table m_tables[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	typeref:typename:tinfl_huff_table[]	file:
+m_tree	data.c	/^  mz_int16 m_look_up[TINFL_FAST_LOOKUP_SIZE], m_tree[TINFL_MAX_HUFF_SYMBOLS_0 * 2];$/;"	m	struct:__anonf83f6b700408	typeref:typename:mz_int16[]	file:
+m_type	data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32	file:
+m_z_adler32	data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32	file:
+m_zhdr0	data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32	file:
+m_zhdr1	data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32	file:
+main	jb.c	/^int main() {$/;"	f	typeref:typename:int
+mapA	include/data.h	/^	void  *mapA;  $/;"	m	struct:__anon478849880508	typeref:typename:void *
+mapDel	data.c	/^void mapDel(Map **mapPP) {$/;"	f	typeref:typename:void
+mapGet	data.c	/^extern void* mapGet(const Map *mapP, const U8 key) {$/;"	f	typeref:typename:void *
+mapIni	data.c	/^Error mapIni(Map **mapPP, HardCodedMap *hcMapP) {$/;"	f	typeref:typename:Error
+mapNew	data.c	/^Error mapNew(Map **mapPP, const U8 elemSz, const U16 nElems) {$/;"	f	typeref:typename:Error
+mapP	include/data.h	/^	Map        *mapP;       \/\/ defaults to NULL to prevent copies $/;"	m	struct:__anon478849880608	typeref:typename:Map *
+mapRem	data.c	/^Error mapRem(Map *mapP, const U8 key) {$/;"	f	typeref:typename:Error
+mapSet	data.c	/^Error mapSet(Map *mapP, const U8 key, const void *valP) {$/;"	f	typeref:typename:Error
+max_depth	include/jbOld.h	/^	Uint8 max_depth, max_n_elems;$/;"	m	struct:QuadTree	typeref:typename:Uint8
+max_frame_idx	include/jbOld.h	/^	Uint8         max_frame_idx;  \/* awkward var name, because i don't want to subtract by one in /;"	m	struct:Strip	typeref:typename:Uint8
+max_n_elems	include/jbOld.h	/^	Uint8 max_depth, max_n_elems;$/;"	m	struct:QuadTree	typeref:typename:Uint8
+mi_idx	include/jbOld.h	/^	Uint16    mi_idx;     \/* index into the media info table *\/$/;"	m	struct:Tileset	typeref:typename:Uint16
+msg	include/ecs.h	/^	Message msg;  \/\/ must consume message that triggered this reaction before JB clears a child's/;"	m	struct:__anona526cbc91408	typeref:typename:Message
+msgA	include/ecs.h	/^  Message *msgA;$/;"	m	struct:__anona526cbc91108	typeref:typename:Message *
+mz_int16	data.c	/^typedef signed short mz_int16;$/;"	t	typeref:typename:signed short	file:
+mz_uint	data.c	/^typedef unsigned int mz_uint;$/;"	t	typeref:typename:unsigned int	file:
+mz_uint16	data.c	/^typedef unsigned short mz_uint16;$/;"	t	typeref:typename:unsigned short	file:
+mz_uint32	data.c	/^typedef unsigned int mz_uint32;$/;"	t	typeref:typename:unsigned int	file:
+mz_uint64	data.c	/^typedef unsigned long long mz_uint64;$/;"	t	typeref:typename:unsigned long long	file:
+mz_uint8	data.c	/^typedef unsigned char mz_uint8;$/;"	t	typeref:typename:unsigned char	file:
+nActivities	include/ecs.h	/^  U8           nActivities;         \/* Number of activities in activityA[] *\/$/;"	m	struct:_System	typeref:typename:U8
+nColors	include/xRender.h	/^	U8 nColors;$/;"	m	struct:__anon843289a60608	typeref:typename:U8
+nEntities	include/ecs.h	/^  U32 nEntities;$/;"	m	struct:__anona526cbc90308	typeref:typename:U32
+nFlips	include/xRender.h	/^	U16 nFlips;$/;"	m	struct:__anon843289a60208	typeref:typename:U16
+nGenes	include/ecs.h	/^  U32 nGenes;$/;"	m	struct:__anona526cbc90208	typeref:typename:U32
+nIndices	include/xRender.h	/^	U16 nIndices;$/;"	m	struct:__anon843289a60408	typeref:typename:U16
+nMsgs	include/ecs.h	/^  U32 nMsgs;$/;"	m	struct:__anona526cbc91108	typeref:typename:U32
+nStrips	include/xRender.h	/^	U16 nStrips;    \/\/ number of 64-pixel strips in strip set$/;"	m	struct:__anon843289a60308	typeref:typename:U16
+nSystems	include/ecs.h	/^	Entity nSystems;$/;"	m	struct:__anona526cbc91608	typeref:typename:Entity
+n_colors	include/jbOld.h	/^	Uint8      n_colors;$/;"	m	struct:ColorPalette	typeref:typename:Uint8
+n_elems	include/jbOld.h	/^	Uint8 n_elems, depth;$/;"	m	struct:_QuadNode	typeref:typename:Uint8
+n_tiles	include/jbOld.h	/^	Uint16    n_tiles;$/;"	m	struct:Tileset	typeref:typename:Uint16
+next	include/jbOld.h	/^	struct ListNode *next, *prev;$/;"	m	struct:ListNode	typeref:struct:ListNode *
+nodes	include/jbOld.h	/^	struct _QuadNode *nodes[4];$/;"	m	struct:_QuadNode	typeref:struct:_QuadNode * [4]
+offset	include/jbOld.h	/^	Uint32 offset, uncompressed_len, compressed_len;$/;"	m	struct:MediaInfo	typeref:typename:Uint32
+oneOffFPA	include/ecs.h	/^  SysOneOffFP *oneOffFPA;           \/* Array of one-off functions for stem to perform one actio/;"	m	struct:_System	typeref:typename:SysOneOffFP *
+otherEntity	include/ecs.h	/^			Entity otherEntity;  \/\/ needed by systems like motion if tracking someone$/;"	m	struct:__anona526cbc90d08::__anona526cbc90e0a::__anona526cbc90f08	typeref:typename:Entity
+outbox	include/ecs.h	/^  Mailbox      outbox;              \/* Where this stem talks to the outside world *\/$/;"	m	struct:_System	typeref:typename:Mailbox
+outbox	include/jbOld.h	/^	Message     *outbox;$/;"	m	struct:System	typeref:typename:Message *
+owner	include/ecs.h	/^  Entity owner;$/;"	m	struct:__anona526cbc90108	typeref:typename:Entity
+ownerP	include/ecs.h	/^  struct _System *ownerP;$/;"	m	struct:_Activity	typeref:struct:_System *
+paramsP	include/ecs.h	/^  void *paramsP;$/;"	m	struct:__anona526cbc91408	typeref:typename:void *
+pitch	include/xRender.h	/^	U16 w, h, pitch;  \/\/ in pixel units; determine actual step size by pixel format$/;"	m	struct:__anon843289a60508	typeref:typename:U16
+preMapSet	data.c	/^static Error preMapSet(const Map *mapP, const U8 key, void **elemPP, void **nextElemPP, U32 *nBy/;"	f	typeref:typename:Error	file:
+prev	include/jbOld.h	/^	struct ListNode *next, *prev;$/;"	m	struct:ListNode	typeref:struct:ListNode *
+prevBitCount	include/data.h	/^	U8 prevBitCount;$/;"	m	struct:__anon478849880308	typeref:typename:U8
+priority	include/ecs.h	/^	U8  priority;$/;"	m	struct:__anona526cbc91408	typeref:typename:U8
+r	include/ecs.h	/^	Reaction r;$/;"	m	union:__anona526cbc9150a	typeref:typename:Reaction
+reactionMP	include/ecs.h	/^	Map *reactionMP;  \/\/ This would be a map of... $/;"	m	struct:__anona526cbc90408	typeref:typename:Map *
+rect1	xRender.c	/^SDL_Rect rect1 = {0, 0, 100, 200};$/;"	v	typeref:typename:SDL_Rect
+rect1P	xRender.c	/^SDL_Rect *rect1P = &rect1;$/;"	v	typeref:typename:SDL_Rect *
+rect2	xRender.c	/^SDL_Rect rect2 = {50, 100, 200, 200};$/;"	v	typeref:typename:SDL_Rect
+rect2P	xRender.c	/^SDL_Rect *rect2P = &rect2;$/;"	v	typeref:typename:SDL_Rect *
+rect3	xRender.c	/^SDL_Rect rect3 = {100, 150, 150, 150};$/;"	v	typeref:typename:SDL_Rect
+rect3P	xRender.c	/^SDL_Rect *rect3P = &rect3;$/;"	v	typeref:typename:SDL_Rect *
+rendererP	xRender.c	/^static SDL_Renderer *rendererP = NULL;$/;"	v	typeref:typename:SDL_Renderer *	file:
+repeat	include/jbOld.h	/^	SDL_bool      repeat;$/;"	m	struct:Strip	typeref:typename:SDL_bool
+root	include/jbOld.h	/^	QuadNode *root;$/;"	m	struct:QuadTree	typeref:typename:QuadNode *
+runLoop	include/jbOld.h	/^	RunSysLoopFP runLoop;$/;"	m	struct:System	typeref:typename:RunSysLoopFP
+s	include/ecs.h	/^	System s;$/;"	m	union:__anona526cbc9150a	typeref:typename:System
+sAct	ecs.c	/^void sAct(System *sP) {$/;"	f	typeref:typename:void
+sActivateActivity	ecs.c	/^Error sActivateActivity(System *sP, Key activityID) {$/;"	f	typeref:typename:Error
+sActivateC	ecs.c	/^Error sActivateC(System *sP, Entity entity) {$/;"	f	typeref:typename:Error
+sAddC	ecs.c	/^Error sAddC(System *sP, Entity entity, XHeader *xhP) {$/;"	f	typeref:typename:Error
+sClr	ecs.c	/^void sClr(System *sP) {$/;"	f	typeref:typename:void
+sClrAll	xParent.c	/^void sClrAll() {$/;"	f	typeref:typename:void
+sComponentIsActive	ecs.c	/^U8 sComponentIsActive(System *sP, Entity entity) {$/;"	f	typeref:typename:U8
+sDeactivateActivity	ecs.c	/^Error sDeactivateActivity(System *sP, Key activityID) {$/;"	f	typeref:typename:Error
+sDeactivateC	ecs.c	/^Error sDeactivateC(System *sP, Entity entity) {$/;"	f	typeref:typename:Error
+sDeliverMessage	xParent.c	/^Error sDeliverMessage(Key sysID, Message *msgP) {$/;"	f	typeref:typename:Error
+sFP	include/ecs.h	/^  SysFP sFP; \/* function that runs on these components *\/$/;"	m	struct:_Activity	typeref:typename:SysFP
+sGetActivity	ecs.c	/^Activity* sGetActivity(System *sP, Key actID) {$/;"	f	typeref:typename:Activity *
+sGetActivityFromE	ecs.c	/^Activity* sGetActivityFromE(System *sP, Entity entity) {$/;"	f	typeref:typename:Activity *
+sGetC	ecs.c	/^void* sGetC(System *sP, Entity entity) {$/;"	f	typeref:typename:void *
+sGetNComponents	ecs.c	/^U32 sGetNComponents(System *sP) {$/;"	f	typeref:typename:U32
+sIni	ecs.c	/^Error sIni(System *sP, U32 nComps, void *miscP) {$/;"	f	typeref:typename:Error
+sIniActivity	ecs.c	/^Error sIniActivity(System *sP, Activity *aP, U32 nComps) {$/;"	f	typeref:typename:Error
+sIniCFP	include/ecs.h	/^  SysIniCFP    sIniCFP;              \/* Some stems need to inflate components before using them/;"	m	struct:_System	typeref:typename:SysIniCFP
+sIniSFP	include/ecs.h	/^  SysIniFP     sIniSFP;              \/* System init function pointer *\/$/;"	m	struct:_System	typeref:typename:SysIniFP
+sIniSParamsP	include/ecs.h	/^	void        *sIniSParamsP;         \/* whatever sIniSFP() needs to properly initialize this sys/;"	m	struct:_System	typeref:typename:void *
+sNewActDirectory	ecs.c	/^Error sNewActDirectory(System *sP) {$/;"	f	typeref:typename:Error
+sNewCDirectory	ecs.c	/^Error sNewCDirectory(System *sP, U8 nElems) {$/;"	f	typeref:typename:Error
+sNewMailbox	ecs.c	/^Error sNewMailbox(Mailbox **mailboxPP, U32 nMailSlots) {$/;"	f	typeref:typename:Error
+sPA	jb.c	/^static System *sPA[] = {$/;"	v	typeref:typename:System * []	file:
+sParentReact	xParent.c	/^Error sParentReact(Activity *aP) {$/;"	f	typeref:typename:Error
+sParentTick	xParent.c	/^Error sParentTick(Activity *aP) {$/;"	f	typeref:typename:Error
+sReset	ecs.c	/^void sReset(System *sP) {$/;"	f	typeref:typename:void
+sRun	ecs.c	/^void sRun(System *sP) {$/;"	f	typeref:typename:void
+sSendMessage	ecs.c	/^void sSendMessage(System *sP, Message *msgP) {$/;"	f	typeref:typename:void
+sSetC	ecs.c	/^static void sSetC(System *sP, Entity entity, const void *newValP) {$/;"	f	typeref:typename:void	file:
+sStartCActivity	ecs.c	/^Error sStartCActivity(System *sP, Entity entity, Key dstActivityID) {$/;"	f	typeref:typename:Error
+srcRectPP	include/xRender.h	/^	SDL_Rect **srcRectPP;$/;"	m	struct:__anon843289a60708	typeref:typename:SDL_Rect **
+stripMapInfP	include/xRender.h	/^	Inflatable *stripMapInfP;$/;"	m	struct:__anon843289a60408	typeref:typename:Inflatable *
+stripMapP	include/xRender.h	/^	StripMap *stripMapP;$/;"	m	struct:__anon843289a60508	typeref:typename:StripMap *
+stripSetInfP	include/xRender.h	/^	Inflatable *stripSetInfP;  \/\/ strip set's compressed source data$/;"	m	struct:__anon843289a60308	typeref:typename:Inflatable *
+stripSetP	include/xRender.h	/^	StripSet *stripSetP;$/;"	m	struct:__anon843289a60508	typeref:typename:StripSet *
+surface_p	include/jbOld.h	/^	SDL_Surface  *surface_p;  \/* ptr to loaded surface; results loaded tileset building img w\/ ti/;"	m	struct:Image_t	typeref:typename:SDL_Surface *
+surface_p	include/jbOld.h	/^	SDL_Surface *surface_p;$/;"	m	struct:Tileset	typeref:typename:SDL_Surface *
+swapPlaceholderP	include/ecs.h	/^  void        *swapPlaceholderP;    \/* Avoids allocating a new placeholder every EC-swap. *\/$/;"	m	struct:_System	typeref:typename:void *
+sysDel	include/jbOld.h	/^void  sysDel;$/;"	v	typeref:typename:void
+sysID	include/ecs.h	/^			Key sysID;$/;"	m	struct:__anona526cbc90d08::__anona526cbc90e0a::__anona526cbc91008	typeref:typename:Key
+sysPA	include/ecs.h	/^	System **sysPA;$/;"	m	struct:__anona526cbc91608	typeref:typename:System **
+tail	include/jbOld.h	/^	ListNode *tail;$/;"	m	struct:LinkedList	typeref:typename:ListNode *
+textureP	include/xRender.h	/^	SDL_Texture *textureP;$/;"	m	struct:__anon843289a60608	typeref:typename:SDL_Texture *
+tinflIni	data.c	/^#define tinflIni(/;"	d	file:
+tinfl_bit_buf_t	data.c	/^  typedef mz_uint32 tinfl_bit_buf_t;$/;"	t	typeref:typename:mz_uint32	file:
+tinfl_bit_buf_t	data.c	/^  typedef mz_uint64 tinfl_bit_buf_t;$/;"	t	typeref:typename:mz_uint64	file:
+tinfl_decompress	data.c	/^tinfl_status tinfl_decompress(tinfl_decompressor *r, const mz_uint8 *pIn_buf_next, size_t *pIn_b/;"	f	typeref:typename:tinfl_status
+tinfl_decompress_mem_to_heap	data.c	/^void *tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_len, size_t *pOut_len, i/;"	f	typeref:typename:void *
+tinfl_decompressor	data.c	/^struct tinfl_decompressor_tag; typedef struct tinfl_decompressor_tag tinfl_decompressor;$/;"	t	typeref:struct:tinfl_decompressor_tag	file:
+tinfl_decompressor_tag	data.c	/^struct tinfl_decompressor_tag$/;"	s	file:
+tinfl_get_adler32	data.c	/^#define tinfl_get_adler32(/;"	d	file:
+tinfl_huff_table	data.c	/^} tinfl_huff_table;$/;"	t	typeref:struct:__anonf83f6b700408	file:
+tinfl_put_buf_func_ptr	data.c	/^typedef int (*tinfl_put_buf_func_ptr)(const void* pBuf, int len, void *pUser);$/;"	t	typeref:typename:int (*)(const void * pBuf,int len,void * pUser)	file:
+tinfl_status	data.c	/^} tinfl_status;$/;"	t	typeref:enum:__anonf83f6b700203	file:
+tl_corner	include/jbOld.h	/^	Vector2 tl_corner, br_corner;$/;"	m	struct:_QuadNode	typeref:typename:Vector2
+tm_arry	include/jbOld.h	/^	Uint16        *tm_arry;$/;"	m	struct:Tilemap	typeref:typename:Uint16 *
+tm_idx	include/jbOld.h	/^	Uint16        tm_idx;     \/* index into tilemap table *\/$/;"	m	struct:Image_t	typeref:typename:Uint16
+to	include/ecs.h	/^	Entity to;$/;"	m	struct:__anona526cbc90d08	typeref:typename:Entity
+trigger	include/ecs.h	/^	Key trigger;$/;"	m	struct:__anona526cbc91408	typeref:typename:Key
+ts_idx	include/jbOld.h	/^	Uint16         ts_idx;      \/* index into tileset table *\/$/;"	m	struct:Tilemap	typeref:typename:Uint16
+type	include/ecs.h	/^			U8 type;  \/\/ needed by systems like collision, battle, etc.$/;"	m	struct:__anona526cbc90d08::__anona526cbc90e0a::__anona526cbc90f08	typeref:typename:U8
+type	include/ecs.h	/^  U8 type;$/;"	m	struct:__anona526cbc90108	typeref:typename:U8
+uncompressed_len	include/jbOld.h	/^	Uint32 offset, uncompressed_len, compressed_len;$/;"	m	struct:MediaInfo	typeref:typename:Uint32
+valP	include/data.h	/^	void *valP;$/;"	m	struct:__anon478849880108	typeref:typename:void *
+valueP	include/data.h	/^	void *valueP;$/;"	m	struct:__anon478849880408	typeref:typename:void *
+w	include/xRender.h	/^	U16 w, h, pitch;  \/\/ in pixel units; determine actual step size by pixel format$/;"	m	struct:__anon843289a60508	typeref:typename:U16
+wSurfP	xRender.c	/^static SDL_Surface *wSurfP = NULL;$/;"	v	typeref:typename:SDL_Surface *	file:
+windowP	xRender.c	/^static SDL_Window *windowP = NULL;$/;"	v	typeref:typename:SDL_Window *	file:
+x	include/jbOld.h	/^	Sint32 x;$/;"	m	struct:Position	typeref:typename:Sint32
+xControlIniC	xControl.c	/^Error xControlIniC(XHeader *xhP) {$/;"	f	typeref:typename:Error
+xControlIniS	xControl.c	/^Error xControlIniS() {$/;"	f	typeref:typename:Error
+xHeader	include/ecs.h	/^  XHeader      xHeader;             \/* This allows (sub)stems to be components of other stems! /;"	m	struct:_System	typeref:typename:XHeader
+xHeader	include/xControl.h	/^	XHeader xHeader;$/;"	m	struct:__anon980894470208	typeref:typename:XHeader
+xHeader	include/xRender.h	/^	XHeader xHeader;$/;"	m	struct:__anon843289a60708	typeref:typename:XHeader
+xIni	xParent.c	/^Error xIni(System **sPA, U16 nSystems, GenomeGrp *genomeGroupP) {$/;"	f	typeref:typename:Error
+xParentIniC	xParent.c	/^Error xParentIniC(XHeader *xhP) {$/;"	f	typeref:typename:Error
+xParentIniS	xParent.c	/^Error xParentIniS(void *sParamsP) {$/;"	f	typeref:typename:Error
+xRender	xRender.c	/^Error xRender(Activity *aP) {$/;"	f	typeref:typename:Error
+xRenderIniC	xRender.c	/^Error xRenderIniC(XHeader *xhP) {$/;"	f	typeref:typename:Error
+xRenderIniS	xRender.c	/^Error xRenderIniS() {$/;"	f	typeref:typename:Error
+xRun	xParent.c	/^Error xRun() {$/;"	f	typeref:typename:Error
+y	include/jbOld.h	/^	Sint32 y;$/;"	m	struct:Position	typeref:typename:Sint32
