@@ -23,6 +23,7 @@ typedef short S16;
 typedef unsigned int U32;
 typedef int S32;
 typedef U8 Key;
+typedef U8 Bln;   // Boolean
 
 #include "errors.h"
 

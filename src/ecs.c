@@ -214,9 +214,6 @@ Error sNewActDirectory(System *sP) {
 }
 
 
-// Components are initially spread out across the entity seeds, 
-// so we'll initialize those one at a time later into the first activity as deactivated.
-// Then the Behavior System will take care of putting those in the proper activity.
 Error sIni(System *sP, U32 nComps, void *miscP) {
   // Sytems with system components need to initialize maps in sIniFP().
   Error e =  sNewCDirectory(sP, nComps);
@@ -352,22 +349,19 @@ void sSendMessage(System *sP, Message *msgP) {
   memcpy((void*) &sP->outbox.msgA[sP->outbox.nMsgs++], msgP, sizeof(Message));
 }
 
-void sAct(System *sP) {
+/* This is how the entire ECS framework works. */
+void sRun(System *sP) {
+  _sReadInbox(sP);
+  _clrMailbox(&sP->inbox);
   Activity *aP = &sP->activityA[0];
   Activity *aEndP = aP + sP->firstInactiveActIdx;
 
   // Run all live activities.
   for (; aP < aEndP; aP++) {
     (*aP->sFP)(aP);
+    // TODO add checks array traversal 
     // Move dead activities out of the way.
     if (aP->firstInactiveIdx == 0)
       sDeactivateActivity(sP, aP->id);  
   }
-}
-
-/* This is how the entire ECS framework works. */
-void sRun(System *sP) {
-  _sReadInbox(sP);
-  _clrMailbox(&sP->inbox);
-	sAct(sP);
 }

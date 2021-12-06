@@ -7,6 +7,6 @@ static System *sPA[] = {
 int main() {
 	Error e = xIni(sPA, sizeof(sPA) / sizeof(sPA[0]), &grp1);
 	while (!e)
-		e = xRun();
+		sRun(&sParent);
 	return e;
 }

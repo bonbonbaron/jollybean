@@ -17,17 +17,14 @@ typedef ReactionStatus (*ReactionCallback)(Message *msgP, void *paramsP);
 typedef struct {
 	Key trigger;
 	U8  priority;
-	ReactionCallback cb;
+	ReactionCallback cb;  // This can return anything. I'm not so sure that it must be pinged anymore. 
+  U32 condCur;  // conditions currently set to TRUE; these can be anything
+  U32 condExp;  // conditions expected before calling cb
   void *paramsP;
-	Message msg;  // must consume message that triggered this reaction before JB clears a child's outbox
+	Message msg;  // must copy message triggered by this reaction before JB clears it from outbox
 } Reaction;
 
-//REACT_TO_(t1) WITH_(action) USING_PARAMS_(params) AT_PRIORITY_(5);
-/* Entities need to have reactions hard-coded. This requires:
- *		callback
- *		hard-coded params
- *		priority
- */
+// Activities output unconditional signals and/or conditional ones. Who sets the conditional ones?
 
 typedef union {
 	System s;
@@ -44,3 +41,6 @@ Error xParentIniS();
 Error xParentIniC();
 Error xIni(System **sPA, U16 nSystems, GenomeGrp *genomeGroupP);
 Error xRun();
+Error xParentDeliverMessage(Message *msgP);
+
+extern System sParent;

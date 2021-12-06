@@ -2,8 +2,6 @@
 #define ECS_H
 #include "data.h"
 
-/* Keys */
-ENUM_KEYS_(CONTROL, POSITION, MOTION, ANIMATION, COLLISION, RENDER, JOLLYBEAN, N_SYS_TYPES) SystemKey; 
 /* Macros for Response, Response Sets, and Response Set Sequences */
 #define RS_(...) {__VA_ARGS__, NULL}   /* Response Set (must be null-terminated) */
 #define RS_SEQ_(...) {__VA_ARGS__, NULL}   /* Response Set Sequence (must be null-terminated) */
@@ -53,7 +51,7 @@ System s##name_ = {\
   .cDirectoryP      = NULL,\
   .oneOffFPA        = NULL,\
   .inbox            = {NULL, 0},\
-  .outbox            = {NULL, 0},\
+  .outbox           = {NULL, 0},\
   .nActivities      = NUM_ARGS_(Activity, __VA_ARGS__),\
   .activityA        = &x##name_##ActivityA[0]\
 }
@@ -63,10 +61,35 @@ System s##name_ = {\
 /**********/
 typedef U8 Entity;  
 
+struct _CDirEntry;
+
 typedef struct {
   Entity owner;
   U8 type;
 } XHeader;
+
+/************/
+/** Checks **/
+/************/
+//    Checks prevent a function from having to query all the components over and over
+// again every frame. The original vision was for external functions to query these
+// just to check conditions; now we're making that the responsibility of systems
+// themselves, who have more immediate access to these components. 
+//    So, instead, we're spreading those conditions out across multiple systems.
+// And when preceding sequential steps are completed, we don't need to test their con-
+// ditions again. We just move on to the next step. 
+typedef Bln (*CheckCBP)(XHeader *xhP, void *operandP); 
+typedef struct {
+  Bln   cbIdx;                 // index to FP instead of FP itself to prevent external functions
+  Bln   repeating;             // decides whether this condition continues being checked after CB returns TRUE
+  U8    output;                // flags are less flexible than sums of events. 
+  Key   tgtEvent;             // if root event isn't happening, this shouldn't be checked
+  void *operandP;           // e.g. seeing if E 45's velocity magnitude is > 45 (pre-set somewhere)
+  struct _CDirEntry *cdeP;  // to keep tabs on where the component is via its pointer here
+} Check;
+// Now the question is, who requests this check? <-- WHY is it requested? It's requested because
+// we now need to know something at a certain point, which indicates an event has occurred. 
+// A check can be attached to a Response Set. One check per. 
 
 typedef struct {
   U32 nGenes;
@@ -83,37 +106,6 @@ typedef struct {
 	Map *reactionMP;  // This would be a map of... 
 } Seed;
 
-/* Enums */
-typedef enum {
-  DIRECTOR_SYS_KEY,
-  NUM_SYS_KEYS  // only used for creating stem histograms
-} SysKeys;
-
-typedef enum {
-  ENTITY,         // a message to an entity never directly reaches a stem; changes E's behavior sequences
-  COMPONENT,
-  SYSTEM,
-  NUM_ECS_TYPES   // probably never used
-} ECSType;
-
-typedef enum {
-  IMMEDIATELY,
-  AFTER_CURR_SYS
-} MsgUrgency;
-
-typedef enum {
-  TOP_PRIORITY
-} Priority;
-
-typedef enum {
-  SYSTEMWIDE_CMD,
-  REPEATING_CMP_CMD,
-  ONE_OFF_CMP_CMD
-} CmdType;
-
-typedef HardCodedMap Personality;
-
-
 /**********/
 /* System */
 /**********/
@@ -122,10 +114,8 @@ struct _Activity;
 typedef Error (*SysFP)(struct _Activity *aP);
 typedef Error (*SysIniFP)(void* sParamsP);
 typedef Error (*SysIniCFP)(XHeader *xhP);
-typedef void (*SysBasicFP)(struct _System *sP);
-typedef void (*SysOneOffFP)(struct _System *sP, Entity entity, U8 key);  /* optional key to a map or idx to array */
 
-typedef struct {
+typedef struct _CDirEntry {
   U8 activityID;
   U8 cIdx;
 	HardCodedMap *hcmP;  // Some types of components' values change under various circumstances.
@@ -158,7 +148,7 @@ typedef struct {
 		} cmd;
 	} contents;
 } Message;  
-// When an external functi9on wants to trigger a sprite walk animation and motion, the user only needs to call go(entity, WALK_LEFT). That function then starts two messages: one for the animation system (animMsg = {.contents.cmd = {ANIMATE, goKey}}). 
+// When an external function wants to trigger a sprite walk animation and motion, the user only needs to call go(entity, WALK_LEFT). That function then starts two messages: one for the animation system (animMsg = {.contents.cmd = {ANIMATE, goKey}}). 
 // Go can wrap animate() and move(). Those in turn can wrap writeMessage(), to which they tell the correct 
 
 typedef struct {
@@ -188,20 +178,14 @@ typedef struct _System {
 	void        *sIniSParamsP;         /* whatever sIniSFP() needs to properly initialize this system */
   SysIniFP     sIniSFP;              /* System init function pointer */
   SysIniCFP    sIniCFP;              /* Some stems need to inflate components before using them. */
-  SysOneOffFP *oneOffFPA;           /* Array of one-off functions for stem to perform one action immediately on an EC */
   Mailbox      inbox;               /* Where commands come in from the outside world */
   Mailbox      outbox;              /* Where this stem talks to the outside world */
+  Check       *checkA;               /* Checks that need to be performed */
   Activity    *activityA;            /* Array of activities that loop through their components */
 } System;
 
-typedef enum {
-  SYS_TOGGLE_ACTIVE,
-  _MAX_SYSTEMWIDE_CMD_ID
-} SysCmdID;
-
-
 // *************************
-// Functions
+// Functions 
 // *************************
 void  sIniPtrs(System *sP, Activity *aP, void **startPP, void **endPP);
 Error sNew(System **sPP, const U8 cSz, U8 nFuncs);
@@ -221,7 +205,6 @@ Activity* sGetActivity(System *sP, Key actID);
 Error sActivateActivity(System *sP, Key activityID);
 Error sDeactivateActivity(System *sP, Key activityID);
 void sSendMessage(System *sP, Message *msgP);
-Error sDeliverMessage(Key sysID, Message *msgP);
 void sAct(System *sP);
 U32 sGetNComponents(System *sP);
 #endif

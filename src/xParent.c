@@ -12,12 +12,11 @@ NEW_SYS_(Parent, 0,
 	ACTIVITY_(REACT, sParentReact),
 	ACTIVITY_(TICK, sParentTick),
 );
-//TODO: consider static variables for system array and seed array
 
 // =====================================================================
 // Loop through each genome's genes and histogram their component types.
 // =====================================================================
-Error _histoGeneTypes(U32 *histoA, GenomeGrp *ggP) {
+static Error _histoGeneTypes(U32 *histoA, GenomeGrp *ggP) {
 	Genome **gPP = &ggP->genomePA[0];					// pointer to an array of genomes
 	Genome **gEndPP = gPP + ggP->nEntities;   // pointer to the end of the above array
 	XHeader **xhPP, **xhEndPP;   // pointers to an array of X-header pointers and its end
@@ -47,11 +46,10 @@ static Error _distributeGenes(System *sParentP, GenomeGrp *ggP) {
 		// Loop through current genome's genes
 		for (System *sP = NULL; !e && xhPP < xhEndPP; xhPP++) {  // xhPP is a pointer to a pointer to a global singleton of a component
 			sP = (System*) sGetC(sParentP, (*xhPP)->type);  // We don't set the owner of the gene pool.
-			if (sP)
-				e = sAddC(sP, entityCounter, *xhPP);
+			e = sAddC(sP, entityCounter, *xhPP);
 		}
 	}
-	return SUCCESS;
+	return e;
 }
 
 // =====================================================================
@@ -99,13 +97,6 @@ Error xParentIniS(void *sParamsP) {
 	return e;
 }
 
-// =====================================================================
-// Clear all subsystems and Parent system.
-// =====================================================================
-void sClrAll() {
-	//TODO
-}
-
 // ====================================================================================
 // Placeholder for component-initialization; this has to be handled in xParentIniS().
 // ====================================================================================
@@ -113,20 +104,47 @@ Error xParentIniC(XHeader *xhP) {
 	UNUSED_(xhP);
 	return SUCCESS;
 }
-
 // Only parents are allowed to deliver messages to child systems.
 // This is how callbacks will start ECS loops.
-Error sDeliverMessage(Key sysID, Message *msgP) {
-	// Get the child.
-	System *sP = (System*) sGetC(&sParent, sysID);
-	assert(sP);
-	// Deliver the message.
-  memcpy((void*) &sP->inbox.msgA[sP->inbox.nMsgs++], msgP, sizeof(Message));
-	// If child system is asleep, wake it up!
-	if (!(sComponentIsActive(&sParent, sysID)))
-		return sActivateC(&sParent, sysID);
-	return SUCCESS;
+Error sendSysMessage(const Entity entity, const Key sID, const Key aID, const Key k) {
+	// Get child system.
+	System *sChildP = (System*) sGetC(&sParent, sID);
+  if (!sChildP)
+    return E_BAD_ARGS;
+  // Write into its next available mailbox slot.
+  Message *msgP = &sChildP->inbox.msgA[sChildP->inbox.nMsgs++];
+  msgP->to = entity,
+  msgP->contents.cmd.sysID = sID,
+  msgP->contents.cmd.activityID = aID,
+  msgP->contents.cmd.key = k;
+  return SUCCESS;
 }
+
+// This is my sole focus right now: finding an elegant way to relay message back from game functions to the parent system. There are the following options:
+//    1) extern sParent, and just call sendSysMessage. For whatever reason, I'm putting it in here simply because the parent can send messages. However, really, anybody outside of the parent can send messages. My OCD tells me to only let the parent send messages, but then how will the external functions tell it to do so? My original vision was to let the messages be sent from inside the functions, because...
+//    unless... I could have an ID returned. A hybrid of my origginal vision, which was to have response set sequences... That was too simplistic to handle conditions gracefully. So then what are the functions really doing? The game functions would've been the way to check for conditions before triggering any conditions. Now sParent regains complete ownership of communications with its children; taht's more cohesive. Now things are more loosely coupled. The only strong connection between game and JB remains where the game must check the state of a component. It's less graceful to have that stored as data somehow ([Entity1, HorizontalSpeed, GT, 5]... ew). 
+// It would be good if we could have that kind of comparison done inside the system somehow with events being sent out when they are. A collision-with-treasure-box root only cares about the B button being pressed when it's received the player-facing-treasure-box event. What if that was the only way to call an external function, which should only be able to affect game state? That's the ideal: complete decoupling, except for where the game's functions are called. And because time, collision, and key-presses are the three sole roots, the game is completely dependent upon JB; everything is downward-dependent in the game pyramid. 
+//
+// I'm envisioning something like a struct or array of conditions. Perhaps a map, which has an array. It can contain a sum; when this sum is met, call the function. Having tons of maps may get hairy, but... Think about it like this: 
+//
+//
+//  Map 1
+//    [ ] Collided with treasure box
+//    [ ] Facing up
+//    [ ] 
+//    [ ] 
+//
+//
+//  This is all predicated on the idea that we can program the systems to send out events under certain conditions. We only want this map updated when another event (ON or OFF) gets sent out by a child. 
+//
+//
+//
+//  Response Sets contained by the parents
+//  Checks in component headers
+//    every individual activtiy needs an array of conditions to check so we're not asking "if" for everyone. The array can be sized through histo'ing the 
+//
+//  All the stuff I'd imagined I'd be doing in the game functions can now be done inside the checks. The only other few things I can imagine existing outside it are what're called blackboard objects/logic. Like, you press the A button in the shop on a slingshot. This alters some game logic, but still things in the core systems are impacted (images of text, numbers, the slingshot, etc.). So in fact, that blackboard function is called in conjunction with the response set triggering.
+//
 // msgP may contain information the triggered callback finds pertinent; e.g. "Who collided w/ me?"
 //TODO: make a way to stop all active components of an entity, and no more than that, in order to efficiently switch between an entity's reactions
 static Error _trigger(System *sParentP, Message *msgP) {
@@ -159,8 +177,10 @@ static Error _triggerGroup(System *sParentP, Message *msgP) {
 	assert(eA);
 	Entity *eP, *eEndP;
 	arrayIniPtrs((void*) eA, (void**) &eP, (void**) &eEndP, -1);
-	for (; !e && eP < eEndP; eP++)
+	for (; !e && eP < eEndP; eP++) {
+    msgP->to = *eP;
 		e = _trigger(sParentP, msgP);
+  }
 	return e;
 }
 
@@ -207,9 +227,7 @@ Error sParentTick(Activity *aP) {
 	return e;
 }
 
-// To change the hokey static variable assignment, I'd like to change the def of sIniSFP():
-//		number of systems
-//
+/* xIni() initializes the parent system as well as its children. */
 Error xIni(System **sPA, U16 nSystems, GenomeGrp *genomeGroupP) {
 	// sIni() takes no arguments, yet the parent system needs to know some outside factors.
 	// So we use static variables here. 
@@ -224,9 +242,4 @@ Error xIni(System **sPA, U16 nSystems, GenomeGrp *genomeGroupP) {
 
 	return sIni(&sParent, N_SYS_TYPES, (void*) &sParentIniSPrms);
 	// TODO: kick off the parent system activities here
-}
-
-Error xRun() {
-	sAct(&sParent);
-	return SUCCESS;
 }
