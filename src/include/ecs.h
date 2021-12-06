@@ -89,7 +89,8 @@ typedef struct {
 } Check;
 // Now the question is, who requests this check? <-- WHY is it requested? It's requested because
 // we now need to know something at a certain point, which indicates an event has occurred. 
-// A check can be attached to a Response Set. One check per. 
+// A check can be attached to a Response Set. One check per. Its anti-twin is the Reaction; it 
+// determines checks attached to the response set. 
 
 typedef struct {
   U32 nGenes;
