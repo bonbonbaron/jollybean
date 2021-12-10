@@ -1,5 +1,4 @@
-#include "xRender.h"
-#include "SDL.h"
+#include "jb.h"
 
 // Compressed images are already in memory in JB. 
 // JB just reconstructs them from strips of staggered pixels. 

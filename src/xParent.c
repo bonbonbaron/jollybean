@@ -1,4 +1,4 @@
-#include "xParent.h"
+#include "jb.h"
 //***************************************************
 //** Parent systems *********************************
 //***************************************************
@@ -120,22 +120,9 @@ Error sendSysMessage(const Entity entity, const Key sID, const Key aID, const Ke
   return SUCCESS;
 }
 
-// Unless... I could have an ID returned. A hybrid of my original vision, which was to have response set sequences... That was too simplistic to handle conditions gracefully. So then what are the functions really doing? The game functions would've been the way to check for conditions before triggering any conditions. Now sParent regains complete ownership of communications with its children; taht's more cohesive. Now things are more loosely coupled. The only strong connection between game and JB remains where the game must check the state of a component. It's less graceful to have that stored as data somehow ([Entity1, HorizontalSpeed, GT, 5]... ew). 
 // It would be good if we could have that kind of comparison done inside the system somehow with events being sent out when they are. A collision-with-treasure-box root only cares about the B button being pressed when it's received the player-facing-treasure-box event. What if that was the only way to call an external function, which should only be able to affect game state? That's the ideal: complete decoupling, except for where the game's functions are called. And because time, collision, and key-presses are the three sole roots, the game is completely dependent upon JB; everything is downward-dependent in the game pyramid. 
 //
-// I'm envisioning something like a struct or array of conditions. Perhaps a map, which has an array. It can contain a sum; when this sum is met, call the function. Having tons of maps may get hairy, but... Think about it like this: 
-//
-//
-//  Map 1
-//    [ ] Collided with treasure box
-//    [ ] Facing up
-//    [ ] 
-//    [ ] 
-//
-//
 //  This is all predicated on the idea that we can program the systems to send out events under certain conditions. We only want this map updated when another event (ON or OFF) gets sent out by a child. 
-//
-//
 //
 //  Response Sets contained by the parents
 //  Checks in component headers

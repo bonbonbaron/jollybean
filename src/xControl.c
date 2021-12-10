@@ -1,4 +1,4 @@
-#include "xControl.h"
+#include "jb.h"
 
 U32 buttonsPressed;
 
