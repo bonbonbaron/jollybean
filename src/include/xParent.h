@@ -14,22 +14,32 @@ typedef enum {
 
 typedef ReactionStatus (*ReactionCallback)(Message *msgP, void *paramsP);
 
-typedef struct {
-	Key trigger;
-	U8  priority;
-	ReactionCallback cb;  // This can return anything. I'm not so sure that it must be pinged anymore. 
-  U32 condCur;  // conditions currently set to TRUE; these can be anything
-  U32 condExp;  // conditions expected before calling cb
-  void *paramsP;
-	Message msg;  // must copy message triggered by this reaction before JB clears it from outbox
-} Reaction;
+typedef enum {SEQUENCE, SELECTOR, ENDPOINT} BTNodeType;
 
+typedef struct {
+  Key sysID;
+  Key activityID;
+  Key key;
+} XCmd;
+
+typedef struct {
+  U8 nCmds;
+  XCmd *xCmdA;
+} XCmdSet;
+
+typedef struct {
+  U8 currRoot;
+  Map *rootMP;
+} EntityState;
+typedef struct {
+  Key id;
+  U8 type;
+  Entity otherEntity;
+} Event;
+  
 // Activities output unconditional signals and/or conditional ones. Who sets the conditional ones?
 
-typedef union {
-	System s;
-	Reaction r;
-} XParentC;
+typedef System XParentC;
 
 typedef struct {
 	Entity nSystems;

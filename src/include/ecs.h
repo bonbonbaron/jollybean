@@ -49,7 +49,6 @@ System s##name_ = {\
   .cSz              = sizeof(X##name_##C),\
   .swapPlaceholderP = &x##name_##SwapPH,\
   .cDirectoryP      = NULL,\
-  .oneOffFPA        = NULL,\
   .inbox            = {NULL, 0},\
   .outbox           = {NULL, 0},\
   .nActivities      = NUM_ARGS_(Activity, __VA_ARGS__),\
@@ -80,17 +79,14 @@ typedef struct {
 // ditions again. We just move on to the next step. 
 typedef Bln (*CheckCBP)(XHeader *xhP, void *operandP); 
 typedef struct {
-  Bln   cbIdx;                 // index to FP instead of FP itself to prevent external functions
-  Bln   repeating;             // decides whether this condition continues being checked after CB returns TRUE
-  U8    output;                // flags are less flexible than sums of events. 
-  Key   tgtEvent;             // if root event isn't happening, this shouldn't be checked
-  void *operandP;           // e.g. seeing if E 45's velocity magnitude is > 45 (pre-set somewhere)
-  struct _CDirEntry *cdeP;  // to keep tabs on where the component is via its pointer here
+  Bln    cbIdx;                 // index to FP instead of FP itself to prevent external functions
+  Bln    toggle;                // decides whether the opposite of this condition needs to be checked to toggle output bit
+  U8     outputIfTrue;          // condition flag to be OR'd into if true
+  Entity entity;                // entity affected if this condition is true (not always same as check's owner)
+  Key    root;                  // root of behavior tree. 
+  void  *operandP;              // e.g. seeing if E 45's velocity magnitude is > 45 (pre-set somewhere)
+  struct _CDirEntry *cdeP;      // keep tabs on component's location
 } Check;
-// Now the question is, who requests this check? <-- WHY is it requested? It's requested because
-// we now need to know something at a certain point, which indicates an event has occurred. 
-// A check can be attached to a Response Set. One check per. Its anti-twin is the Reaction; it 
-// determines checks attached to the response set. 
 
 typedef struct {
   U32 nGenes;
@@ -106,6 +102,52 @@ typedef struct {
 	Genome *genomeP;
 	Map *reactionMP;  // This would be a map of... 
 } Seed;
+
+
+// ********** THREE MOVING PIECES: **********
+// 1) Unconditional checks that trigger roots   -- Brainstorming: What if you query a map and its required condition is zero? Then your passed-in condition is a selector. 
+//                                                                Otherwise, your passed-in condition is a trigger to a sequence. The sequence doesn't trigge
+// 2) Entities' states
+// 3) Key to reaction map (AKA root)
+//                     +--> response set (component actions and/or checks)
+// 4) Current Condition
+// 5) Expected Condition
+// 6) 
+//
+//
+// @@@@@@@@@@ WHAT REACTIONS DO @@@@@@@@@@
+// 1) If the required condition is zero, your passed-in condition is a selector to an array of {callback, params, response set} elements. 
+
+/*
+ * If I were ignorant of everything I'd said above before cluttering my mind, this is what I would say a SEQUENCE would be:
+ *  SEQUENCE is an Array of Elements made of {
+ *    U8  condition in order to advance
+ *    U32 pointer to current array of system commands to issue when this element is reached
+ *    U32 pointer to current array of checks to distribute when this element is reached
+ *    U32 callback to call when this element is reached
+ *    U32 void pointer to parameters to pass to callback when this element is reached
+ *  }  (that's all i can think of for now
+ *
+ *  SELECTOR is a struct made of {
+ *    condition that must be met before selecting anything
+ *    U32 pointer to array of other choices such as this one
+ *    U32 pointer to current array of checks to distribute when this element is reached
+ *    U32 callback to call when this element is reached
+ *    U32 void pointer to parameters to pass to callback when this element is reached
+ *
+ *
+ *
+ * A behavior tree is a labyrinth of sequences and selectors. A selector could be right in the middle of a sequence; one of the selector's choices could be another sequence, branching off. Some sequence items are conditional. If there's a point you want to return to when something goes wrong somewhere in the labyrinth, there ought to be a checkpoint. 
+ *
+ *
+ *
+ * A for-loop can iterate through a sequence. 
+ *
+ * Tree traversal:
+ *  
+ *    start at root (probably a selector)
+ *
+ * */
 
 /**********/
 /* System */

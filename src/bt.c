@@ -1,29 +1,6 @@
-typedef unsigned char U8;
-typedef signed char S8;
-typedef unsigned short U16;
-typedef signed short S16;
-typedef unsigned int U32;
-typedef signed int S32;
+#include "bt.h"
 
-typedef enum {COMPLETE, RUNNING, FAILED} NodeStat;
-typedef NodeStat(*NodeCB)();
-
-// _Node is read-only memory. It gets translated to Node at load-time.
-typedef struct SrcNode {
-  NodeCB nodeCB;
-  struct SrcNode *childrenP;
-  U8 nChildren;
-} SrcNode;
-
-typedef struct Node {
-  U8 firstChildIdx;
-  U8 nextSiblingIdx;  // allows easy "while(nodeP->nextSibling)" condition-check
-  NodeCB nodeCB;
-} Node;
-
-#define NO_CHILDREN NO_SIBLINGS_LEFT 
-#define NO_SIBLINGS_LEFT (0)  /* Root can never be a sibling, so this works. */
-void putNodeInArray(SrcNode *srcNodeP, Node *rootP, U8 *nextAvailIdxP) {
+static void _nodePush(SrcNode *srcNodeP, Node *rootP, U8 *nextAvailIdxP) {
   Node *dstNodeP = &rootP[*nextAvailIdxP];
   dstNodeP->nodeCB = srcNodeP->nodeCB;
   // If node has children, add all its descendants to the array recursively.
@@ -34,7 +11,7 @@ void putNodeInArray(SrcNode *srcNodeP, Node *rootP, U8 *nextAvailIdxP) {
       // Store current child for access after recursing through its descendants, if any.
       Node *dstChildP = &rootP[*nextAvailIdxP];
       // Add this child to the array at index *nextAvailP.
-      putNodeInArray(&srcNodeP->childrenP[childCount], rootP, nextAvailIdxP);
+      _nodePush(&srcNodeP->childrenP[childCount], rootP, nextAvailIdxP);
       // Next sibling (may not be contiguous)
       if (childCount < (srcNodeP->nChildren - 1))
         dstChildP->nextSiblingIdx = *nextAvailIdxP;
@@ -42,11 +19,51 @@ void putNodeInArray(SrcNode *srcNodeP, Node *rootP, U8 *nextAvailIdxP) {
         dstChildP->nextSiblingIdx = NO_SIBLINGS_LEFT;
     }
   }
-  // This node has no children; tell it so.
+  // This node has no children.
   else
     dstNodeP->firstChildIdx = NO_CHILDREN;
   // Increment for destination node's next sibling.
   ++*nextAvailIdxP;
 }
 
-// TODO: make BTree source storage algorithm.
+Error btNew(SrcNode *srcNodeP, U8 nTreeNodes, Node **treePP) {
+  Error e = arrayNew((void**) treePP, sizeof(Node), nTreeNodes);
+  if (!e) {
+    U8 nextAvailIdx = 0;
+    _nodePush(srcNodeP, *treePP, &nextAvailIdx);
+  }
+  return e;
+}
+
+void btDel(Node **treePP) {
+  arrayDel((void**) treePP);
+}
+
+static NodeStat _nodeRun(Node *rootP, Node *currNodeP, U16 event, Map *bbP) {
+  if ((event & rootP->expConditions) == rootP->expConditions)
+    return rootP->nodeCB(rootP, rootP, event, bbP);
+  return FAILED;
+}
+
+NodeStat btRun(Node *rootP, U16 event, Map *bbP) {
+  return _nodeRun(rootP, rootP, event, bbP);
+}
+
+/************ Specific node types ************/
+NodeStat btSequence(Node *rootP, Node *currNodeP, U16 event, Map *bbP) {
+  NodeStat stat = COMPLETE;
+  for (Node *childNodeP = &rootP[currNodeP->firstChildIdx];
+       stat == COMPLETE && childNodeP != rootP;
+       childNodeP = &rootP[currNodeP->nextSiblingIdx])
+    stat = _nodeRun(rootP, childNodeP, event, bbP);
+  return stat;
+}
+
+NodeStat btSelector(Node *rootP, Node *currNodeP, U16 event, Map *bbP) {
+  NodeStat stat = FAILED;
+  for (Node *childNodeP = &rootP[currNodeP->firstChildIdx];
+       stat != COMPLETE && childNodeP != rootP;
+       childNodeP = &rootP[currNodeP->nextSiblingIdx])
+    stat = _nodeRun(rootP, childNodeP, event, bbP);
+  return stat;
+}
