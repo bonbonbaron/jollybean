@@ -6,16 +6,6 @@
 // Reactions
 ENUM_KEYS_(TICK, REACT) JBActivities; 
 
-typedef enum {
-	COMPLETE,
-	RUNNING
-	// FAILED  // can't conceive any use for this as I'm avoiding behavior trees
-} ReactionStatus;
-
-typedef ReactionStatus (*ReactionCallback)(Message *msgP, void *paramsP);
-
-typedef enum {SEQUENCE, SELECTOR, ENDPOINT} BTNodeType;
-
 typedef struct {
   Key sysID;
   Key activityID;

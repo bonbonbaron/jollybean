@@ -11,7 +11,7 @@ static void _nodePush(SrcNode *srcNodeP, Node *rootP, U8 *nextAvailIdxP) {
       // Store current child for access after recursing through its descendants, if any.
       Node *dstChildP = &rootP[*nextAvailIdxP];
       // Add this child to the array at index *nextAvailP.
-      _nodePush(&srcNodeP->childrenP[childCount], rootP, nextAvailIdxP);
+      _nodePush(srcNodeP->childrenPA[childCount], rootP, nextAvailIdxP);
       // Next sibling (may not be contiguous)
       if (childCount < (srcNodeP->nChildren - 1))
         dstChildP->nextSiblingIdx = *nextAvailIdxP;
@@ -39,9 +39,9 @@ void btDel(Node **treePP) {
   arrayDel((void**) treePP);
 }
 
-static NodeStat _nodeRun(Node *rootP, Node *currNodeP, U16 event, Map *bbP) {
+static NodeFunc_(_nodeRun) {
   if ((event & rootP->expConditions) == rootP->expConditions)
-    return rootP->nodeCB(rootP, rootP, event, bbP);
+    return currNodeP->nodeCB(rootP, currNodeP, event, bbP);
   return FAILED;
 }
 
@@ -50,20 +50,20 @@ NodeStat btRun(Node *rootP, U16 event, Map *bbP) {
 }
 
 /************ Specific node types ************/
-NodeStat btSequence(Node *rootP, Node *currNodeP, U16 event, Map *bbP) {
+NodeFunc_(btSequence) {
   NodeStat stat = COMPLETE;
   for (Node *childNodeP = &rootP[currNodeP->firstChildIdx];
        stat == COMPLETE && childNodeP != rootP;
-       childNodeP = &rootP[currNodeP->nextSiblingIdx])
+       childNodeP = &rootP[childNodeP->nextSiblingIdx])
     stat = _nodeRun(rootP, childNodeP, event, bbP);
   return stat;
 }
 
-NodeStat btSelector(Node *rootP, Node *currNodeP, U16 event, Map *bbP) {
+NodeFunc_(btSelector) {
   NodeStat stat = FAILED;
   for (Node *childNodeP = &rootP[currNodeP->firstChildIdx];
        stat != COMPLETE && childNodeP != rootP;
-       childNodeP = &rootP[currNodeP->nextSiblingIdx])
+       childNodeP = &rootP[childNodeP->nextSiblingIdx])
     stat = _nodeRun(rootP, childNodeP, event, bbP);
   return stat;
 }

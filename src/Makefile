@@ -8,15 +8,17 @@ INSTALLDIR       = $(JBDIR)
 ENGINEDIR        = $(JBDIR)src/
 GAMEDIR          = $(JBDIR)game/
 BUILDDIR         = $(JBDIR)build/
+GAMEBUILDDIR     = $(BUILDDIR)game/
+ENGINEBUILDDIR   = $(BUILDDIR)engine/
 GAMEINCLUDEDIR   = $(GAMEDIR)include/
-ENGINEINCLUDEDIR = $(ENGINE)include/
+ENGINEINCLUDEDIR = $(ENGINEDIR)include/
 # Input files
 GAME_INCLUDES    = $(GAMEINCLUDEDIR)*.h
 ENGINE_INCLUDES  = $(ENGINEINCLUDEDIR)*.h
 # Compile options
 IFLAGS        = -I$(GAMEINCLUDEDIR) -I$(ENGINEINCLUDEDIR)
 SDL_CFLAGS    = $(shell sdl2-config --cflags)
-CFLAGS_COMMON = -Wall $(SDL_CFLAGS) \
+CFLAGS_COMMON = -g -Wall $(SDL_CFLAGS) \
 							  $(IFLAGS) -ffunction-sections \
 								-fdata-sections -s -fno-ident -fmerge-all-constants \
 								-fomit-frame-pointer -fno-stack-protector 
@@ -29,10 +31,10 @@ LFLAGS        = -Wl,--gc-sections -Wl,-z,norelro \
 GAME_SRC      = $(shell find $(GAMEDIR) -name "*.c") 
 ENGINE_SRC    = $(shell find $(ENGINEDIR) -name "*.c") 
 # Output files
-GAME_OBJS     = $(GAME_SRC:%.c=%.o)
-ENGINE_OBJS   = $(ENGINE_SRC:%.c=%.o)
-OBJS          = $(ENGINE_OBJS) $(GAME_OBJS) 
-OUTPUTFILE    = o
+GAME_OBJS   = $(GAME_SRC:%.c=%.o)
+ENGINE_OBJS = $(ENGINE_SRC:%.c=%.o)
+OBJS        = $(ENGINE_OBJS) $(GAME_OBJS) 
+OUTPUTFILE  = o
 
 ##############################
 # Linker
@@ -56,6 +58,7 @@ $(GAMEDIR)%.o: $(GAMEDIR)%.c $(GAME_INCLUDES) $(ENGINE_INCLUDES)
 .PHONY: install
 install:
 	cp -p $(OUTPUTFILE) $(INSTALLDIR)
+
 .PHONY: clean
 clean:
 	rm -f $(OBJS)

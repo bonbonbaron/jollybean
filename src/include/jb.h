@@ -1,4 +1,5 @@
 #include "ecs.h"
+#include "bt.h"
 #include "genes.h"
 #include "SDL.h"
 
