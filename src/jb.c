@@ -6,32 +6,50 @@ static System *sPA[] = {
 }; 
 #endif
 
-//typedef NodeStat(*NodeCB)(struct Node *rootP, struct Node *currNodeP, U8 event, Map *bbP);  
-NodeFunc_(cb1) {
+//typedef NodeStat(*NodeCB)(struct Node *nodeP, struct Node *currNodeP, U8 event, Map *bbP);  
+NodeCb_(cb1) {
   printf("node 1\n");
-  return FAILED;
+  return COMPLETE;
 }
 
-NodeFunc_(cb2) {
+NodeCb_(cb2) {
   printf("node 2\n");
   return COMPLETE;
 }
 
-NodeFunc_(cb3) {
+NodeCb_(cb3) {
   printf("node 3\n");
   return COMPLETE;
 }
 
-NodeFunc_(cb4) {
+NodeCb_(cb4) {
   printf("node 4\n");
   return COMPLETE;
 }
 
-CbNode_(a, cb1);
-CbNode_(b, cb2);
-CbNode_(c, cb3);
-CbNode_(d, cb4);
-SelectorNode_(seq, &a, &b, &c, &d);
+NodeCb_(cb5) {
+  printf("node 5\n");
+  return COMPLETE;
+}
+
+LeafNode_(a, cb1);
+LeafNode_(b, cb2);
+LeafNode_(c, cb3);
+LeafNode_(d, cb4);
+SelectorNode_(sel, &a, &b, &c, &d);
+LeafNode_(e, cb5);
+SequenceNode_(root, &sel, &e);
+
+U32 hp = 200;
+U32 mp = 300;
+#define BBSeed_(name_, ...) \
+  KeyValPair name_##BbKvPair[] = {__VA_ARGS__};\
+  BBSeed name_##BBSeed = {\
+    .nKeyValPairs = sizeof(name_##BbKvPair) / sizeof(KeyValPair), \
+    .keyValPairA = name_##BbKvPair\
+  };
+
+BBSeed_(mb, {1, (void*) &hp}, {2, (void*) &mp});
 
 int main() {
 #if 0
@@ -40,14 +58,15 @@ int main() {
 		sRun(&sParent);
 	return e;
 #else
-  Node *nodeP;
-  Error e = btNew(&seq, 5, &nodeP);
-  if (!e) {
-    NodeStat stat = btRun(nodeP, 0, NULL);
-    printf("stat is %d\n", stat);
-  }
-  else 
-    printf("btNew failed.\n");
+  BTree *treeP;
+  Blackboard *bbP;
+  Error e = btNew(&root, 0, &treeP);
+  if (!e)
+    e = bbNew(&bbP, treeP->rootP, &mbBBSeed);
+  if (!e)
+    btRun(treeP->rootP, bbP);
+  btDel(&treeP);
+  bbDel(&bbP);
   return e;
 #endif
 }

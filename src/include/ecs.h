@@ -80,13 +80,13 @@ typedef struct {
 typedef Bln (*CheckCBP)(XHeader *xhP, void *operandP); 
 typedef struct {
   Bln    cbIdx;                 // index to FP instead of FP itself to prevent external functions
-  Bln    toggle;                // decides whether the opposite of this condition needs to be checked to toggle output bit
+  Bln    toggle;                // opposite of toggle is latch, in which case thee condition only needs to have been true once
   U8     outputIfTrue;          // condition flag to be OR'd into if true
-  Entity entity;                // entity affected if this condition is true (not always same as check's owner)
-  Key    root;                  // root of behavior tree. 
-  void  *operandP;              // e.g. seeing if E 45's velocity magnitude is > 45 (pre-set somewhere)
+  Key    root;                  // root of behavior tree to fire
+  U8    *conditionP;            // condition to update through a simple pointer
   struct _CDirEntry *cdeP;      // keep tabs on component's location
 } Check;
+//TODO: ensure that when a latch-case (toggle = FALSE) check returns TRUE, the system deactivates the check.
 
 typedef struct {
   U32 nGenes;

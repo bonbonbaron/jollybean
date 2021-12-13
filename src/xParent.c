@@ -4,7 +4,7 @@
 //***************************************************
 static Error sParentReact(Activity *aP);
 static Error sParentTick(Activity *aP);
-static Map **_entityReactionMA;
+//static Map **_entityReactionMA;
 static Map *_subscriberAMP;
 static System **_sPA;
 
