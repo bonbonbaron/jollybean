@@ -1,12 +1,9 @@
 #include "jb.h"
 
-#if 0
 static System *sPA[] = {
 	&sRender
 }; 
-#endif
 
-//typedef NodeStat(*NodeCB)(struct Node *nodeP, struct Node *currNodeP, U8 event, Map *bbP);  
 NodeCb_(cb1) {
   printf("node 1\n");
   return COMPLETE;
@@ -49,15 +46,9 @@ U32 mp = 300;
     .keyValPairA = name_##BbKvPair\
   };
 
-BBSeed_(mb, {1, (void*) &hp}, {2, (void*) &mp});
+BBSeed_(mb, {1, &hp}, {2, &mp});
 
 int main() {
-#if 0
-	Error e = xIni(sPA, sizeof(sPA) / sizeof(sPA[0]), &grp1);
-	while (!e)
-		sRun(&sParent);
-	return e;
-#else
   BTree *treeP;
   Blackboard *bbP;
   Error e = btNew(&root, 0, &treeP);
@@ -65,8 +56,15 @@ int main() {
     e = bbNew(&bbP, treeP->rootP, &mbBBSeed);
   if (!e)
     btRun(treeP->rootP, bbP);
+
+  if (!e)
+    e = xIni(sPA, sizeof(sPA) / sizeof(sPA[0]), &grp1);
+
+	while (!e) {
+		sRun(&sParent);
+  }
+
   btDel(&treeP);
   bbDel(&bbP);
   return e;
-#endif
 }

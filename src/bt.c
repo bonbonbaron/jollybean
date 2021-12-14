@@ -7,23 +7,14 @@ static void _nodePush(SrcNode *srcNodeP, Node *rootP, U8 *nextAvailIdxP) {
   ++*nextAvailIdxP;
   // If node has children, add all its descendants to the array recursively.
   if (srcNodeP->nChildren > 0) {
-    // Increment for destination node's first child.
     dstNodeP->firstChildIdx = *nextAvailIdxP;  // already incremented above
     for (U8 childCount = 0; childCount < srcNodeP->nChildren; childCount++) {
-      // Store current child for access after recursing through its descendants, if any.
       Node *dstChildP = &rootP[*nextAvailIdxP];
-      // Add this child to the array at index *nextAvailP.
       _nodePush(srcNodeP->childrenPA[childCount], rootP, nextAvailIdxP);
-      // Next sibling (may not be contiguous)
       if (childCount < (srcNodeP->nChildren - 1))
         dstChildP->nextSiblingIdx = *nextAvailIdxP;
-      else
-        dstChildP->nextSiblingIdx = NO_SIBLINGS_LEFT;
     }
   }
-  // This node has no children.
-  else
-    dstNodeP->firstChildIdx = NO_CHILDREN;
 }
 
 static U32 _countSrcNodes(SrcNode *nodeP) {

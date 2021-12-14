@@ -84,6 +84,7 @@ typedef struct {
   U8     outputIfTrue;          // condition flag to be OR'd into if true
   Key    root;                  // root of behavior tree to fire
   U8    *conditionP;            // condition to update through a simple pointer
+  Entity entity;                // entity this check regards
   struct _CDirEntry *cdeP;      // keep tabs on component's location
 } Check;
 //TODO: ensure that when a latch-case (toggle = FALSE) check returns TRUE, the system deactivates the check.
@@ -161,6 +162,7 @@ typedef Error (*SysIniCFP)(XHeader *xhP);
 typedef struct _CDirEntry {
   U8 activityID;
   U8 cIdx;
+  U8 checkIdx;  // index of check
 	HardCodedMap *hcmP;  // Some types of components' values change under various circumstances.
   void *cP; /* Systems that use pointers to other stems' components may use double pointers to avoid requesting updated info. */
 } CDirEntry;
@@ -208,6 +210,12 @@ typedef struct _Activity {
   struct _System *ownerP;
 } Activity;
 
+typedef struct {
+  Check *checkA;
+  U8 firstInactiveIdx; /* marks the first inactive element's index */
+  U8 firstEmptyIdx; /* marks the first empty element's index */
+} Checkers;
+
 /* Systems are agnostic to the outside world. They just react to their inboxes and fill their outboxes. This makes them completely modular. */
 typedef struct _System {
   XHeader      xHeader;             /* This allows (sub)stems to be components of other stems! */
@@ -223,7 +231,7 @@ typedef struct _System {
   SysIniCFP    sIniCFP;              /* Some stems need to inflate components before using them. */
   Mailbox      inbox;               /* Where commands come in from the outside world */
   Mailbox      outbox;              /* Where this stem talks to the outside world */
-  Check       *checkA;               /* Checks that need to be performed */
+  Checkers     checkers;            /* Array of checks; similar to Activity without exlusive C-access */
   Activity    *activityA;            /* Array of activities that loop through their components */
 } System;
 

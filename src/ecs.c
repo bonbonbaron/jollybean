@@ -7,11 +7,6 @@ inline static U8 _validateActivityIdx(const System *sP, const U8 activityIdx) {
   return (activityIdx < sP->nActivities);
 }
 
-/* Only inspect every possible messaging error at load-time. Do not inspect every single message-reading. */
-inline static U8 _validateEcIdx(const System *sP, Activity *aP, const U8 cIdx) { 
-  return (cIdx >= (U8) arrayGetNElems(aP->cA));
-}
-
 /* EC Getters and Setters */
 /* When activating or deactivating, you have to update the system's directory to its new location. */
 inline static Entity _getE(const void *cmpP) {
