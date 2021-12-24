@@ -93,6 +93,16 @@ Error xParentIniS(void *sParamsP) {
 	sParent.firstInactiveActIdx = 2;
 	// Clean up.
 	histoDel(&histoP);
+
+  // Behaviors:
+  // TODO: You need to make behavior trees for everybody too. You do this by:
+  //  1   arrayNew() sizeof(Map*) times number of entities. For each element...
+  //  2   Moving behavior trees and nodes into their own files
+  //  3   Assigning key-value root names and behavior trees for each entity
+  //  4   Counting how many key-val pairs there are
+  //  5   mapNew() with that many trees in mind. For each element...
+  //  6   btNew() for current key-val's value
+  //  6   mapSet() key to the pointer to the above created Tree
 	
 	return e;
 }
@@ -166,19 +176,16 @@ Error sParentReact(Activity *aP) {
 	XParentC *cP, *cEndP;
 	Error e = SUCCESS;
 	// Check active subsystems' outboxes. Their callbacks populate systems and JB's reaction activity.
-	Activity *rcaP = sGetActivity(&sParent, TICK);  // the other activity's components are Systems
-	assert(rcaP);
-	arrayIniPtrs(rcaP->cA, (void**) &cP, (void**) &cEndP, rcaP->firstInactiveIdx);
-	for (; !e && cP < cEndP; cP++) {
+	arrayIniPtrs(aP->cA, (void**) &cP, (void**) &cEndP, aP->firstInactiveIdx);
+  // Read outboxes
+	for (; !e && cP < cEndP; cP++) 
 		for (Message *msgP = cP->outbox.msgA, *msgEndP = cP->outbox.msgA + cP->outbox.nMsgs;
 				 !e && msgP < msgEndP;
-				 msgP++) {
+				 msgP++) 
 			if (msgP->to) 
 				e = _trigger(aP->ownerP, msgP);
 			else
 				e = _triggerGroup(aP->ownerP, msgP);
-		}
-	}
 	
 	// Run active reactions until they're complete, at which point we deactivate them.
 	//arrayIniPtrs(rcaP->cA, (void**) &cP, (void**) cEndP, rcaP->firstInactiveIdx);

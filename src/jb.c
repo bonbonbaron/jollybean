@@ -6,6 +6,9 @@ static System *sPA[] = {
 
 NodeCb_(cb1) {
   printf("node 1\n");
+  U32 *hp = (U32*) mapGet(bbP->agentBbP, 1);
+  U32 *mp = (U32*) mapGet(bbP->agentBbP, 2);
+  printf("hp is %d; mp is %d.\n", *hp, *mp);
   return COMPLETE;
 }
 
@@ -52,10 +55,12 @@ int main() {
   BTree *treeP;
   Blackboard *bbP;
   Error e = btNew(&root, 0, &treeP);
+
   if (!e)
     e = bbNew(&bbP, treeP->rootP, &mbBBSeed);
+
   if (!e)
-    btRun(treeP->rootP, bbP);
+    btRun(treeP, bbP);
 
   if (!e)
     e = xIni(sPA, sizeof(sPA) / sizeof(sPA[0]), &grp1);
@@ -68,3 +73,8 @@ int main() {
   bbDel(&bbP);
   return e;
 }
+
+
+// TODO:
+//  \1) test BB by making a tree that uses it.
+//  2) test sending a system a message

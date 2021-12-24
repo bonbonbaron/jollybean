@@ -87,7 +87,7 @@ Error bbNew(Blackboard **bbPP, Node *rootP, BBSeed *bbSeedP) {
     bbP = *bbPP;
     e = arrayNew((void**) &bbP->nodeStatA, sizeof(NodeStat), _countNodes(rootP, rootP));
   }
-  // X-Condition nodes
+  // X-Condition nodes: These nodes run based on bit-flag conditions set by one or more ECS ("X") systems.
   if (!e) {
     U8 nXCondNodes = _countSpecificNodes(rootP, rootP, btXCondition);
     if (nXCondNodes)
@@ -105,7 +105,7 @@ Error bbNew(Blackboard **bbPP, Node *rootP, BBSeed *bbSeedP) {
       KeyValPair *kvpP = bbSeedP->keyValPairA;
       KeyValPair *kvpEndP = kvpP + bbSeedP->nKeyValPairs;
       for (; !e && kvpP < kvpEndP; kvpP++)
-        e = mapSet(bbP->agentBbP, kvpP->key, &kvpP->valueP);
+        e = mapSet(bbP->agentBbP, kvpP->key, kvpP->valueP);
     }
   }
   return e;
@@ -120,15 +120,14 @@ void bbDel(Blackboard **bbPP) {
 }
 
 static NodeCb_(_nodeRun) {
-  NodeStat stat;
-  stat = bbP->nodeStatA[currNodeP->thisIdx];
-  if (stat < COMPLETE)  // READY or RUNNING
+  NodeStat stat = bbP->nodeStatA[currNodeP->thisIdx];
+  if (stat < COMPLETE)  // Less than COMPLETE is either READY or RUNNING.
     return currNodeP->nodeCB(rootP, currNodeP, bbP);
   return stat;
 }
 
-NodeStat btRun(Node *rootP, Blackboard *bbP) {
-  return _nodeRun(rootP, rootP, bbP);
+NodeStat btRun(BTree *treeP, Blackboard *bbP) {
+  return _nodeRun(treeP->rootP, treeP->rootP, bbP);
 }
 
 /************ Specific node types ************/

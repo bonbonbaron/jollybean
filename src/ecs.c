@@ -179,7 +179,8 @@ Error sStartCActivity(System *sP, Entity entity, Key dstActivityID) {
     Activity *dstActivityP = sGetActivity(sP, dstActivityID);
     void *firstInactiveDstCP = _getCPByIndex(sP, dstActivityP, dstActivityP->firstInactiveIdx);
     void *firstEmptyDstCP    = _getCPByIndex(sP, dstActivityP, dstActivityP->firstEmptyIdx);
-    e = _mvC(sP, firstInactiveDstCP, firstEmptyDstCP, dstActivityID, dstActivityP->firstEmptyIdx++);  /* You should check if destination is already emtpy first. */
+    /* You should check if destination is already emtpy first. */
+    e = _mvC(sP, firstInactiveDstCP, firstEmptyDstCP, dstActivityID, dstActivityP->firstEmptyIdx++);  
     if (!e)
       e = _mvC(sP, cdeP->cP, firstInactiveDstCP, dstActivityID, dstActivityP->firstInactiveIdx++);
   }
@@ -311,21 +312,16 @@ void sClr(System *sP) {
   mapDel(&sP->cDirectoryP);
 }
 
-static void sSetC(System *sP, Entity entity, const void *newValP) {
-	void *componentP = sGetC(sP, entity);
-	assert(componentP);
-	memcpy(componentP, newValP, sP->cSz);
-}
-
 static void _sReadMessage(System *sP, Message *msgP) {
-	// Change the component's contents if necessary using map indicated by message.
+	// If message tells you to change the component, do it.
 	if (msgP->contents.cmd.key) {
+    // Get entity's directory listing.
 		CDirEntry *cdeP = (CDirEntry*) mapGet(sP->cDirectoryP, msgP->to);
 		assert(cdeP && cdeP->hcmP && cdeP->hcmP->mapP);
 		const void *newComponentValP = mapGet(cdeP->hcmP->mapP, 
 				                                  msgP->contents.cmd.key);
-		assert(newComponentValP);
-		sSetC(sP, msgP->to, newComponentValP);
+    if (newComponentValP)
+      memcpy(cdeP->cP, newComponentValP, sP->cSz);
 	}
 	sStartCActivity(sP, msgP->to, msgP->contents.cmd.activityID);
 }

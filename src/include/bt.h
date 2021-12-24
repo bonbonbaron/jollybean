@@ -67,9 +67,17 @@ typedef struct Node {
   U8 firstChildIdx;
   U8 nextSiblingIdx;  // allows easy "while(nodeP->nextSibling)" condition-check
   U8 thisIdx;         // allows updating of its own NodeStat and for keying condition map
-  U8 condition;
+  U8 condition;       // bit-flag conditions which must be met to run this node
   NodeCB nodeCB;      // because nobody points at root @ index 0 as sibling or child
 } Node;
+
+typedef struct NodeA {
+  U8 *firstChildIdxA;
+  U8 *nextSiblingIdxA;  // allows easy "while(nodeP->nextSibling)" condition-check
+  U8 *thisIdxA;         // allows updating of its own NodeStat and for keying condition map
+  U8 *conditionA;
+  NodeCB *nodeCbA;      // because nobody points at root @ index 0 as sibling or child
+} NodeA;
 
 typedef struct {
   U8 priority;
@@ -81,7 +89,7 @@ Error btNew(SrcNode *srcNodeP, U8 priority, BTree **treePP);
 void btDel(BTree **treePP);
 Error bbNew(Blackboard **bbPP, Node *rootP, BBSeed *bbSeedP);
 void  bbDel(Blackboard **bbPP);
-NodeStat btRun(Node *rootP, Blackboard *bbP);
+NodeStat btRun(BTree *treeP, Blackboard *bbP);
 NodeCb_(btSequence);
 NodeCb_(btSelector);
 NodeCb_(btCondition);   // easy-to-check condition (e.g. world state)

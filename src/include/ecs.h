@@ -164,12 +164,12 @@ typedef struct _CDirEntry {
   U8 cIdx;
   U8 checkIdx;  // index of check
 	HardCodedMap *hcmP;  // Some types of components' values change under various circumstances.
-  void *cP; /* Systems that use pointers to other stems' components may use double pointers to avoid requesting updated info. */
+  void *cP; /* Systems that use pointers to other systems' components may use double pointers to avoid requesting updated info. */
 } CDirEntry;
 
 typedef struct {
   U8 activityIdx;
-  struct _Activity *activityP; /* Systems that use pointers to other stems' components may use double pointers to avoid requesting updated info. */
+  struct _Activity *activityP; /* Systems that use pointers to other systems' components may use double pointers to avoid requesting updated info. */
 } ActDirEntry;
 
 typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;
@@ -177,7 +177,7 @@ typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;
 
 // What's the most succinct yet powerful way to write messages?
 // To, from, priority, urgency, contents
-// If the hero moves, the camera must be told of it. How does the camera listen? To avoid the dilemma of every single entity's movement flooding the motion stem's outbox, we could have the one specific entity programmed to send that message on its movements. However, the camera make want to switch targets to follow. In such case, we must be flexible in who sends that message. So outputs must be configurable on the fly. 
+// If the hero moves, the camera must be told of it. How does the camera listen? To avoid the dilemma of every single entity's movement flooding the motion system's outbox, we could have the one specific entity programmed to send that message on its movements. However, the camera make want to switch targets to follow. In such case, we must be flexible in who sends that message. So outputs must be configurable on the fly. 
 typedef struct {
 	Entity to;
 	union {
@@ -218,21 +218,21 @@ typedef struct {
 
 /* Systems are agnostic to the outside world. They just react to their inboxes and fill their outboxes. This makes them completely modular. */
 typedef struct _System {
-  XHeader      xHeader;             /* This allows (sub)stems to be components of other stems! */
-  U8           id;                  /* this is needed to ensure messages are sent to the correct stem */
-  U8           cSz;                 /* components are the same size in all of this stem's activities */
+  XHeader      xHeader;             /* This allows (sub)systems to be components of other systems! */
+  U8           id;                  /* this is needed to ensure messages are sent to the correct system */
+  U8           cSz;                 /* components are the same size in all of this system's activities */
   U8           nActivities;         /* Number of activities in activityA[] */
+  Key          firstInactiveActIdx; /* index of first inactive activity */
   void        *swapPlaceholderP;    /* Avoids allocating a new placeholder every EC-swap. */
   Map         *cDirectoryP;         /* maps component IDs to an element in an array of CmpAddresses */
   Map         *actDirectoryP;       /* maps component IDs to an element in an array of CmpAddresses */
-  Key          firstInactiveActIdx; /* index of first inactive activity */
-	void        *sIniSParamsP;         /* whatever sIniSFP() needs to properly initialize this system */
-  SysIniFP     sIniSFP;              /* System init function pointer */
-  SysIniCFP    sIniCFP;              /* Some stems need to inflate components before using them. */
+	void        *sIniSParamsP;        /* whatever sIniSFP() needs to properly initialize this system */
+  SysIniFP     sIniSFP;             /* System init function pointer */
+  SysIniCFP    sIniCFP;             /* Some systems need to inflate components before using them. */
   Mailbox      inbox;               /* Where commands come in from the outside world */
-  Mailbox      outbox;              /* Where this stem talks to the outside world */
+  Mailbox      outbox;              /* Where this system talks to the outside world */
   Checkers     checkers;            /* Array of checks; similar to Activity without exlusive C-access */
-  Activity    *activityA;            /* Array of activities that loop through their components */
+  Activity    *activityA;           /* Array of activities that loop through their components */
 } System;
 
 // *************************
