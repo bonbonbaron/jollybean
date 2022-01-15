@@ -19,10 +19,9 @@ static void _nodePush(SrcNode *srcNodeP, Node *rootP, U8 *nextAvailIdxP) {
 
 static U32 _countSrcNodes(SrcNode *nodeP) {
   U8 count = 1;  // counting this node
-  if (nodeP->nChildren > 0) {
+  if (nodeP->nChildren > 0) 
     for (U8 childCount = 0; childCount < nodeP->nChildren; childCount++) 
       count += _countSrcNodes(nodeP->childrenPA[childCount]);  // counting node's descendants
-  }
   return count;
 }
 
@@ -46,11 +45,14 @@ static U32 _countSpecificNodes(Node *rootP, Node *currNodeP, NodeCB nodeCB) {
   return count;
 }
 
+// Recursively map conditional nodes' indices to condition bytes.
 static Error _iniCondKeys(Node *rootP, Node *currNodeP, NodeCB nodeCB, Map *mapP) {
   U8 tmp = 0;
   Error e = SUCCESS;
+	// This node's index maps to a byte's worth of condition flags.
   if (currNodeP->nodeCB == nodeCB)
     mapSet(mapP, currNodeP->thisIdx, (void*) &tmp);
+	// If this node has any children, recursively call this function on those matching the specified node (nodeCB).
   if (currNodeP->firstChildIdx)
     for (Node *childNodeP = &rootP[currNodeP->firstChildIdx];
          !e && childNodeP != rootP;
@@ -95,9 +97,10 @@ Error bbNew(Blackboard **bbPP, Node *rootP, BBSeed *bbSeedP) {
     else
       bbP->conditionMP = NULL;
   }
+	// Recursively map conditional nodes' indices to condition bytes.
   if (!e && bbP->conditionMP)
     _iniCondKeys(rootP, rootP, btXCondition, bbP->conditionMP);
-  // Agent's blackboard
+  // Map agent's blackboard element enums to the actual elements.
   if (bbSeedP) {
     if (!e)
       e = mapNew(&bbP->agentBbP, sizeof(void*), bbSeedP->nKeyValPairs);

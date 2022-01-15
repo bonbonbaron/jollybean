@@ -63,7 +63,6 @@ U32 arrayGetElemSz(const void *arryP);
 void arrayIniPtrs(const void *arryP, void **startP, void **endP, S32 endIdx);
 void* arrayGetVoidElemPtr(const void *arryP, S32 idx);
 Error arraySetVoidElem(void *arrayP, U32 idx, const void *elemSrcP);
-Error hcArrayIni(HardCodedArray *hcaP);
 
 // Maps 
 #define HARD_CODED_MAP_(_type, ...) { \

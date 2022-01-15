@@ -1,4 +1,4 @@
-#include "genes.h"
+#include "jb.h"
 
 Image biggerImg = {
 	.colorMapP = &biggerCM,

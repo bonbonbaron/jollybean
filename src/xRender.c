@@ -32,7 +32,6 @@ Error _cmGen(Colormap *cmP) {
 		// Check if the image has already been reconstructed. If so, get out.
 		if (cmP->dataP != NULL)   // Colormap has already been reconstructed.
 			return SUCCESS;  
-		printf("inflating bigger image\n");
 		// If not reconstructed yet, inflate strip set if it's still compressed (inflate() checks internally).
 		if (cmP->stripSetP)
 			e = inflate(cmP->stripSetP->stripSetInfP);

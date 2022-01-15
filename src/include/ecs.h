@@ -10,7 +10,7 @@
 #define RESPOND_TO_(key) {key, 
 #define BY_(val) (void*) &val}
 /* Macros for Personality */
-#define PERSONALITY_(...) HARD_CODED_MAP_(void**, __VA_ARGS__)
+//#define PERSONALITY_(...) HARD_CODED_MAP_(void**, __VA_ARGS__)
 #define IF_SCENE_TYPE_IS_(key) {key, 
 #define BEHAVE_AS_(val) (void*) &val}
 #define OTHERWISE_BEHAVE_AS_(val) {DEFAULT, (void*) &val}

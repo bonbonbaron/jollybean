@@ -5,6 +5,13 @@
 #define NO_CHILDREN NO_SIBLINGS_LEFT 
 #define NO_SIBLINGS_LEFT (0)  /* Root can never be a sibling, so this works. */
 
+#define BBSeed_(name_, ...) \
+  KeyValPair name_##BbKvPair[] = {__VA_ARGS__};\
+  BBSeed name_##BBSeed = {\
+    .nKeyValPairs = sizeof(name_##BbKvPair) / sizeof(KeyValPair), \
+    .keyValPairA = name_##BbKvPair\
+  };
+
 struct Node;
 
 // RUNNING indicates that ECS is running checks on active components. When a check reports something, the
@@ -22,7 +29,7 @@ typedef struct {
 typedef struct {
   NodeStat *nodeStatA;
   Map      *conditionMP;  // maps node indices to U32 condition flags specifically enumerated for the condition node
-  Map      *agentBbP;     // maps a state name to a void pointer to it. Not world; access that directly.
+  Map      *agentBbP;     // maps an enum'd state name to a void pointer. Anything truly global should be accessed directly.
 } Blackboard;
 
 typedef NodeStat (*NodeCB)(struct Node *rootP, struct Node *currNodeP, Blackboard *bbP);  
@@ -62,7 +69,6 @@ typedef struct SrcNode {
 // NodeCb_ enforces conformity to node callback
 #define NodeCb_(name_) NodeStat name_(Node *rootP, Node *currNodeP, Blackboard *bbP) 
 
-// TODO may be able to squeeze something useful into 1-byte padding. 
 typedef struct Node {
   U8 firstChildIdx;
   U8 nextSiblingIdx;  // allows easy "while(nodeP->nextSibling)" condition-check
@@ -83,6 +89,11 @@ typedef struct {
   U8 priority;
   Node *rootP;
 } BTree;
+
+typedef struct {
+	BTree *treeP;  // NULL if yet unimplemented.
+	SrcNode *treeSeedP;
+} BTreeSingleton;
 
 // Functions
 Error btNew(SrcNode *srcNodeP, U8 priority, BTree **treePP);

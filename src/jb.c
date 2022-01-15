@@ -4,56 +4,11 @@ static System *sPA[] = {
 	&sRender
 }; 
 
-NodeCb_(cb1) {
-  printf("node 1\n");
-  U32 *hp = (U32*) mapGet(bbP->agentBbP, 1);
-  U32 *mp = (U32*) mapGet(bbP->agentBbP, 2);
-  printf("hp is %d; mp is %d.\n", *hp, *mp);
-  return COMPLETE;
-}
-
-NodeCb_(cb2) {
-  printf("node 2\n");
-  return COMPLETE;
-}
-
-NodeCb_(cb3) {
-  printf("node 3\n");
-  return COMPLETE;
-}
-
-NodeCb_(cb4) {
-  printf("node 4\n");
-  return COMPLETE;
-}
-
-NodeCb_(cb5) {
-  printf("node 5\n");
-  return COMPLETE;
-}
-
-LeafNode_(a, cb1);
-LeafNode_(b, cb2);
-LeafNode_(c, cb3);
-LeafNode_(d, cb4);
-SelectorNode_(sel, &a, &b, &c, &d);
-LeafNode_(e, cb5);
-SequenceNode_(root, &sel, &e);
-
-U32 hp = 200;
-U32 mp = 300;
-#define BBSeed_(name_, ...) \
-  KeyValPair name_##BbKvPair[] = {__VA_ARGS__};\
-  BBSeed name_##BBSeed = {\
-    .nKeyValPairs = sizeof(name_##BbKvPair) / sizeof(KeyValPair), \
-    .keyValPairA = name_##BbKvPair\
-  };
-
-BBSeed_(mb, {1, &hp}, {2, &mp});
-
 int main() {
-  BTree *treeP;
+	//BTreeSingleton ts1, ts2, ts3, ts4;
+	BTree *treeP;
   Blackboard *bbP;
+
   Error e = btNew(&root, 0, &treeP);
 
   if (!e)
@@ -74,7 +29,50 @@ int main() {
   return e;
 }
 
-
 // TODO:
+// =====
 //  \1) test BB by making a tree that uses it.
-//  2) test sending a system a message
+//  2) move behavior tree stuff to their own directory
+//  3) load entity's behavior trees at scene start
+//  4) send message to system; at least just start an activity
+//  5) receive message from a system
+//  6) send check to a system
+//  7) be triggered by a positive check in a system
+	// In "real life" I'm going to init all the ones used by each entity. What're all the trees used by each entity?
+	// Those in the map's array. Like this:
+	/*
+		typedef struct {
+			U8         _elemSz;
+			Key        _nKeyValPairs;
+			Map        *mapP;       // defaults to NULL to prevent copies 
+			KeyValPair  keyValA[];
+		} HardCodedMap;
+	*/
+	// A tree has a source node set and an actual tree implementation. These should be bundled together as singletons.
+	// If you want to direclty map to a tree itself, then you have to separate the grove map from the grove map seed.
+	// 
+	//	grove seed array: event key ==> tree singleton
+	// 	grove map:			  event key ==> tree 
+	// 
+	// So when I code an entity's behaviors, it'll be like this:
+	//	HardCodedArray bobGroveHCA = {
+		//	{EVENT_COLL_FIRE,     &CollFireTreeSgton}
+		//	{EVENT_COLL_ICE,      &CollIceIceSgton}
+		//	{EVENT_COLL_SPIKE,    &CollSpikeTreeSgton}
+		//	{EVENT_COLL_DOOR,     &CollDoorTreeSgton}
+		//	{EVENT_COLL_CTRL_UP,  &WalkUpTreeSgton}
+	//	};
+	//
+	//	Because I like to easily write things with only one type declarator, I'll keep all the grove definitions in one file.
+	//
+	// NEXT PROBLEM: initializing BBs
+	// ==============================
+	//	1) providing multiple tree stat arrays and condiiton maps
+	//	2) checking whether BBs implement all keys required by trees
+	//	3) initialize
+	//
+	//	(1)> Change bbNew() definition to have HardCodedArray parameter. 
+	//			 Iterate through grove hca, performing the counts for each one for both condition map and tree stat array map.
+	//			 Change bbDel() to account for this.
+	//	(2)> There's no clean, jolly way to do this. You're going to have to return an error from callbacks finding unset keys.
+	//

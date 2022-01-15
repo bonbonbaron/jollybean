@@ -1,6 +1,6 @@
 #ifndef GENES_
 #define GENES_
-#include "xRender.h"
+#include "jb.h"
 
 // Color Palettes
 extern SDL_Color biggerColorSet[];

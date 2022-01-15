@@ -47,6 +47,7 @@ $(OUTPUTFILE): $(OBJS)
 # Compiler
 ##############################
 $(ENGINEDIR)%.o: $(ENGINEDIR)%.c $(ENGINE_INCLUDES)
+	echo $(IFLAGS)
 	$(CC) $(CFLAGS_FAST) $(IFLAGS) -c $< -o $@
 	touch $@
 	
