@@ -1,882 +1,630 @@
 !_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
 !_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
-!_TAG_OUTPUT_FILESEP	slash	/slash or backslash/
-!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
-!_TAG_PATTERN_LENGTH_LIMIT	96	/0 for no limit/
-!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
-!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
-!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
-!_TAG_PROGRAM_VERSION	0.0.0	//
-$(ENGINEDIR)%.o	src/Makefile	/^$(ENGINEDIR)%.o: $(ENGINEDIR)%.c $(ENGINE_INCLUDES)$/;"	t
-$(GAMEDIR)%.o	src/Makefile	/^$(GAMEDIR)%.o: $(GAMEDIR)%.c $(GAME_INCLUDES) $(ENGINE_INCLUDES)$/;"	t
-$(OUTPUTFILE)	src/Makefile	/^$(OUTPUTFILE): $(OBJS)$/;"	t
-0	src/compile_commands.json	/^   "cc",$/;"	s	array:0.arguments
-0	src/compile_commands.json	/^   "cc",$/;"	s	array:1.arguments
-0	src/compile_commands.json	/^   "cc",$/;"	s	array:10.arguments
-0	src/compile_commands.json	/^   "cc",$/;"	s	array:11.arguments
-0	src/compile_commands.json	/^   "cc",$/;"	s	array:12.arguments
-0	src/compile_commands.json	/^   "cc",$/;"	s	array:2.arguments
-0	src/compile_commands.json	/^   "cc",$/;"	s	array:3.arguments
-0	src/compile_commands.json	/^   "cc",$/;"	s	array:4.arguments
-0	src/compile_commands.json	/^   "cc",$/;"	s	array:5.arguments
-0	src/compile_commands.json	/^   "cc",$/;"	s	array:6.arguments
-0	src/compile_commands.json	/^   "cc",$/;"	s	array:7.arguments
-0	src/compile_commands.json	/^   "cc",$/;"	s	array:8.arguments
-0	src/compile_commands.json	/^   "cc",$/;"	s	array:9.arguments
-0	src/compile_commands.json	/^ {$/;"	o
-1	src/compile_commands.json	/^   "-Wall",$/;"	s	array:0.arguments
-1	src/compile_commands.json	/^   "-Wall",$/;"	s	array:1.arguments
-1	src/compile_commands.json	/^   "-Wall",$/;"	s	array:10.arguments
-1	src/compile_commands.json	/^   "-Wall",$/;"	s	array:11.arguments
-1	src/compile_commands.json	/^   "-Wall",$/;"	s	array:12.arguments
-1	src/compile_commands.json	/^   "-Wall",$/;"	s	array:2.arguments
-1	src/compile_commands.json	/^   "-Wall",$/;"	s	array:3.arguments
-1	src/compile_commands.json	/^   "-Wall",$/;"	s	array:4.arguments
-1	src/compile_commands.json	/^   "-Wall",$/;"	s	array:5.arguments
-1	src/compile_commands.json	/^   "-Wall",$/;"	s	array:6.arguments
-1	src/compile_commands.json	/^   "-Wall",$/;"	s	array:7.arguments
-1	src/compile_commands.json	/^   "-Wall",$/;"	s	array:8.arguments
-1	src/compile_commands.json	/^   "-Wall",$/;"	s	array:9.arguments
-1	src/compile_commands.json	/^ {$/;"	o
-10	src/compile_commands.json	/^   "-fmerge-all-constants",$/;"	s	array:0.arguments
-10	src/compile_commands.json	/^   "-fmerge-all-constants",$/;"	s	array:1.arguments
-10	src/compile_commands.json	/^   "-fmerge-all-constants",$/;"	s	array:10.arguments
-10	src/compile_commands.json	/^   "-fmerge-all-constants",$/;"	s	array:11.arguments
-10	src/compile_commands.json	/^   "-fmerge-all-constants",$/;"	s	array:12.arguments
-10	src/compile_commands.json	/^   "-fmerge-all-constants",$/;"	s	array:2.arguments
-10	src/compile_commands.json	/^   "-fmerge-all-constants",$/;"	s	array:3.arguments
-10	src/compile_commands.json	/^   "-fmerge-all-constants",$/;"	s	array:4.arguments
-10	src/compile_commands.json	/^   "-fmerge-all-constants",$/;"	s	array:5.arguments
-10	src/compile_commands.json	/^   "-fmerge-all-constants",$/;"	s	array:6.arguments
-10	src/compile_commands.json	/^   "-fmerge-all-constants",$/;"	s	array:7.arguments
-10	src/compile_commands.json	/^   "-fmerge-all-constants",$/;"	s	array:8.arguments
-10	src/compile_commands.json	/^   "-fmerge-all-constants",$/;"	s	array:9.arguments
-10	src/compile_commands.json	/^ {$/;"	o
-11	src/compile_commands.json	/^   "-fomit-frame-pointer",$/;"	s	array:0.arguments
-11	src/compile_commands.json	/^   "-fomit-frame-pointer",$/;"	s	array:1.arguments
-11	src/compile_commands.json	/^   "-fomit-frame-pointer",$/;"	s	array:10.arguments
-11	src/compile_commands.json	/^   "-fomit-frame-pointer",$/;"	s	array:11.arguments
-11	src/compile_commands.json	/^   "-fomit-frame-pointer",$/;"	s	array:12.arguments
-11	src/compile_commands.json	/^   "-fomit-frame-pointer",$/;"	s	array:2.arguments
-11	src/compile_commands.json	/^   "-fomit-frame-pointer",$/;"	s	array:3.arguments
-11	src/compile_commands.json	/^   "-fomit-frame-pointer",$/;"	s	array:4.arguments
-11	src/compile_commands.json	/^   "-fomit-frame-pointer",$/;"	s	array:5.arguments
-11	src/compile_commands.json	/^   "-fomit-frame-pointer",$/;"	s	array:6.arguments
-11	src/compile_commands.json	/^   "-fomit-frame-pointer",$/;"	s	array:7.arguments
-11	src/compile_commands.json	/^   "-fomit-frame-pointer",$/;"	s	array:8.arguments
-11	src/compile_commands.json	/^   "-fomit-frame-pointer",$/;"	s	array:9.arguments
-11	src/compile_commands.json	/^ {$/;"	o
-12	src/compile_commands.json	/^   "-fno-stack-protector",$/;"	s	array:0.arguments
-12	src/compile_commands.json	/^   "-fno-stack-protector",$/;"	s	array:1.arguments
-12	src/compile_commands.json	/^   "-fno-stack-protector",$/;"	s	array:10.arguments
-12	src/compile_commands.json	/^   "-fno-stack-protector",$/;"	s	array:11.arguments
-12	src/compile_commands.json	/^   "-fno-stack-protector",$/;"	s	array:12.arguments
-12	src/compile_commands.json	/^   "-fno-stack-protector",$/;"	s	array:2.arguments
-12	src/compile_commands.json	/^   "-fno-stack-protector",$/;"	s	array:3.arguments
-12	src/compile_commands.json	/^   "-fno-stack-protector",$/;"	s	array:4.arguments
-12	src/compile_commands.json	/^   "-fno-stack-protector",$/;"	s	array:5.arguments
-12	src/compile_commands.json	/^   "-fno-stack-protector",$/;"	s	array:6.arguments
-12	src/compile_commands.json	/^   "-fno-stack-protector",$/;"	s	array:7.arguments
-12	src/compile_commands.json	/^   "-fno-stack-protector",$/;"	s	array:8.arguments
-12	src/compile_commands.json	/^   "-fno-stack-protector",$/;"	s	array:9.arguments
-12	src/compile_commands.json	/^ {$/;"	o
-13	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:0.arguments
-13	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:1.arguments
-13	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:10.arguments
-13	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:11.arguments
-13	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:12.arguments
-13	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:2.arguments
-13	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:3.arguments
-13	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:4.arguments
-13	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:5.arguments
-13	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:6.arguments
-13	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:7.arguments
-13	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:8.arguments
-13	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:9.arguments
-14	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:0.arguments
-14	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:1.arguments
-14	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:10.arguments
-14	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:11.arguments
-14	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:12.arguments
-14	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:2.arguments
-14	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:3.arguments
-14	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:4.arguments
-14	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:5.arguments
-14	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:6.arguments
-14	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:7.arguments
-14	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:8.arguments
-14	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:9.arguments
-15	src/compile_commands.json	/^   "-c",$/;"	s	array:0.arguments
-15	src/compile_commands.json	/^   "-c",$/;"	s	array:1.arguments
-15	src/compile_commands.json	/^   "-c",$/;"	s	array:10.arguments
-15	src/compile_commands.json	/^   "-c",$/;"	s	array:11.arguments
-15	src/compile_commands.json	/^   "-c",$/;"	s	array:12.arguments
-15	src/compile_commands.json	/^   "-c",$/;"	s	array:2.arguments
-15	src/compile_commands.json	/^   "-c",$/;"	s	array:3.arguments
-15	src/compile_commands.json	/^   "-c",$/;"	s	array:4.arguments
-15	src/compile_commands.json	/^   "-c",$/;"	s	array:5.arguments
-15	src/compile_commands.json	/^   "-c",$/;"	s	array:6.arguments
-15	src/compile_commands.json	/^   "-c",$/;"	s	array:7.arguments
-15	src/compile_commands.json	/^   "-c",$/;"	s	array:8.arguments
-15	src/compile_commands.json	/^   "-c",$/;"	s	array:9.arguments
-16	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/game\/gene\/ColorMap\/biggerCM.c",$/;"	s	array:7.arguments
-16	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/game\/gene\/ColorPalette\/biggerCP.c",$/;"	s	array:8.arguments
-16	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/game\/gene\/GenomeGrp\/grp1.c",$/;"	s	array:9.arguments
-16	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/game\/gene\/Genome\/bigger.c",$/;"	s	array:11.arguments
-16	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/game\/gene\/Image\/biggerImg.c",$/;"	s	array:6.arguments
-16	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/game\/gene\/StripMap\/biggerStripMap.c",$/;"	s	array:10.arguments
-16	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/game\/gene\/StripSet\/biggerStripSet.c",$/;"	s	array:12.arguments
-16	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/src\/data.c",$/;"	s	array:4.arguments
-16	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/src\/ecs.c",$/;"	s	array:1.arguments
-16	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/src\/jb.c",$/;"	s	array:5.arguments
-16	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/src\/xControl.c",$/;"	s	array:2.arguments
-16	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/src\/xParent.c",$/;"	s	array:3.arguments
-16	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/src\/xRender.c",$/;"	s	array:0.arguments
-17	src/compile_commands.json	/^   "-o",$/;"	s	array:0.arguments
-17	src/compile_commands.json	/^   "-o",$/;"	s	array:1.arguments
-17	src/compile_commands.json	/^   "-o",$/;"	s	array:10.arguments
-17	src/compile_commands.json	/^   "-o",$/;"	s	array:11.arguments
-17	src/compile_commands.json	/^   "-o",$/;"	s	array:12.arguments
-17	src/compile_commands.json	/^   "-o",$/;"	s	array:2.arguments
-17	src/compile_commands.json	/^   "-o",$/;"	s	array:3.arguments
-17	src/compile_commands.json	/^   "-o",$/;"	s	array:4.arguments
-17	src/compile_commands.json	/^   "-o",$/;"	s	array:5.arguments
-17	src/compile_commands.json	/^   "-o",$/;"	s	array:6.arguments
-17	src/compile_commands.json	/^   "-o",$/;"	s	array:7.arguments
-17	src/compile_commands.json	/^   "-o",$/;"	s	array:8.arguments
-17	src/compile_commands.json	/^   "-o",$/;"	s	array:9.arguments
-18	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/game\/gene\/ColorMap\/biggerCM.o"$/;"	s	array:7.arguments
-18	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/game\/gene\/ColorPalette\/biggerCP.o"$/;"	s	array:8.arguments
-18	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/game\/gene\/GenomeGrp\/grp1.o"$/;"	s	array:9.arguments
-18	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/game\/gene\/Genome\/bigger.o"$/;"	s	array:11.arguments
-18	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/game\/gene\/Image\/biggerImg.o"$/;"	s	array:6.arguments
-18	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/game\/gene\/StripMap\/biggerStripMap.o"$/;"	s	array:10.arguments
-18	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/game\/gene\/StripSet\/biggerStripSet.o"$/;"	s	array:12.arguments
-18	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/src\/data.o"$/;"	s	array:4.arguments
-18	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/src\/ecs.o"$/;"	s	array:1.arguments
-18	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/src\/jb.o"$/;"	s	array:5.arguments
-18	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/src\/xControl.o"$/;"	s	array:2.arguments
-18	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/src\/xParent.o"$/;"	s	array:3.arguments
-18	src/compile_commands.json	/^   "\/home\/bonbonbaron\/hack\/jollybean\/src\/xRender.o"$/;"	s	array:0.arguments
-2	src/compile_commands.json	/^   "-I\/usr\/local\/include\/SDL2",$/;"	s	array:0.arguments
-2	src/compile_commands.json	/^   "-I\/usr\/local\/include\/SDL2",$/;"	s	array:1.arguments
-2	src/compile_commands.json	/^   "-I\/usr\/local\/include\/SDL2",$/;"	s	array:10.arguments
-2	src/compile_commands.json	/^   "-I\/usr\/local\/include\/SDL2",$/;"	s	array:11.arguments
-2	src/compile_commands.json	/^   "-I\/usr\/local\/include\/SDL2",$/;"	s	array:12.arguments
-2	src/compile_commands.json	/^   "-I\/usr\/local\/include\/SDL2",$/;"	s	array:2.arguments
-2	src/compile_commands.json	/^   "-I\/usr\/local\/include\/SDL2",$/;"	s	array:3.arguments
-2	src/compile_commands.json	/^   "-I\/usr\/local\/include\/SDL2",$/;"	s	array:4.arguments
-2	src/compile_commands.json	/^   "-I\/usr\/local\/include\/SDL2",$/;"	s	array:5.arguments
-2	src/compile_commands.json	/^   "-I\/usr\/local\/include\/SDL2",$/;"	s	array:6.arguments
-2	src/compile_commands.json	/^   "-I\/usr\/local\/include\/SDL2",$/;"	s	array:7.arguments
-2	src/compile_commands.json	/^   "-I\/usr\/local\/include\/SDL2",$/;"	s	array:8.arguments
-2	src/compile_commands.json	/^   "-I\/usr\/local\/include\/SDL2",$/;"	s	array:9.arguments
-2	src/compile_commands.json	/^ {$/;"	o
-3	src/compile_commands.json	/^   "-D_REENTRANT",$/;"	s	array:0.arguments
-3	src/compile_commands.json	/^   "-D_REENTRANT",$/;"	s	array:1.arguments
-3	src/compile_commands.json	/^   "-D_REENTRANT",$/;"	s	array:10.arguments
-3	src/compile_commands.json	/^   "-D_REENTRANT",$/;"	s	array:11.arguments
-3	src/compile_commands.json	/^   "-D_REENTRANT",$/;"	s	array:12.arguments
-3	src/compile_commands.json	/^   "-D_REENTRANT",$/;"	s	array:2.arguments
-3	src/compile_commands.json	/^   "-D_REENTRANT",$/;"	s	array:3.arguments
-3	src/compile_commands.json	/^   "-D_REENTRANT",$/;"	s	array:4.arguments
-3	src/compile_commands.json	/^   "-D_REENTRANT",$/;"	s	array:5.arguments
-3	src/compile_commands.json	/^   "-D_REENTRANT",$/;"	s	array:6.arguments
-3	src/compile_commands.json	/^   "-D_REENTRANT",$/;"	s	array:7.arguments
-3	src/compile_commands.json	/^   "-D_REENTRANT",$/;"	s	array:8.arguments
-3	src/compile_commands.json	/^   "-D_REENTRANT",$/;"	s	array:9.arguments
-3	src/compile_commands.json	/^ {$/;"	o
-4	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:0.arguments
-4	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:1.arguments
-4	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:10.arguments
-4	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:11.arguments
-4	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:12.arguments
-4	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:2.arguments
-4	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:3.arguments
-4	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:4.arguments
-4	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:5.arguments
-4	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:6.arguments
-4	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:7.arguments
-4	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:8.arguments
-4	src/compile_commands.json	/^   "-I\/home\/bonbonbaron\/hack\/jollybean\/game\/include\/",$/;"	s	array:9.arguments
-4	src/compile_commands.json	/^ {$/;"	o
-5	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:0.arguments
-5	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:1.arguments
-5	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:10.arguments
-5	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:11.arguments
-5	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:12.arguments
-5	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:2.arguments
-5	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:3.arguments
-5	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:4.arguments
-5	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:5.arguments
-5	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:6.arguments
-5	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:7.arguments
-5	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:8.arguments
-5	src/compile_commands.json	/^   "-Iinclude\/",$/;"	s	array:9.arguments
-5	src/compile_commands.json	/^ {$/;"	o
-6	src/compile_commands.json	/^   "-ffunction-sections",$/;"	s	array:0.arguments
-6	src/compile_commands.json	/^   "-ffunction-sections",$/;"	s	array:1.arguments
-6	src/compile_commands.json	/^   "-ffunction-sections",$/;"	s	array:10.arguments
-6	src/compile_commands.json	/^   "-ffunction-sections",$/;"	s	array:11.arguments
-6	src/compile_commands.json	/^   "-ffunction-sections",$/;"	s	array:12.arguments
-6	src/compile_commands.json	/^   "-ffunction-sections",$/;"	s	array:2.arguments
-6	src/compile_commands.json	/^   "-ffunction-sections",$/;"	s	array:3.arguments
-6	src/compile_commands.json	/^   "-ffunction-sections",$/;"	s	array:4.arguments
-6	src/compile_commands.json	/^   "-ffunction-sections",$/;"	s	array:5.arguments
-6	src/compile_commands.json	/^   "-ffunction-sections",$/;"	s	array:6.arguments
-6	src/compile_commands.json	/^   "-ffunction-sections",$/;"	s	array:7.arguments
-6	src/compile_commands.json	/^   "-ffunction-sections",$/;"	s	array:8.arguments
-6	src/compile_commands.json	/^   "-ffunction-sections",$/;"	s	array:9.arguments
-6	src/compile_commands.json	/^ {$/;"	o
-7	src/compile_commands.json	/^   "-fdata-sections",$/;"	s	array:0.arguments
-7	src/compile_commands.json	/^   "-fdata-sections",$/;"	s	array:1.arguments
-7	src/compile_commands.json	/^   "-fdata-sections",$/;"	s	array:10.arguments
-7	src/compile_commands.json	/^   "-fdata-sections",$/;"	s	array:11.arguments
-7	src/compile_commands.json	/^   "-fdata-sections",$/;"	s	array:12.arguments
-7	src/compile_commands.json	/^   "-fdata-sections",$/;"	s	array:2.arguments
-7	src/compile_commands.json	/^   "-fdata-sections",$/;"	s	array:3.arguments
-7	src/compile_commands.json	/^   "-fdata-sections",$/;"	s	array:4.arguments
-7	src/compile_commands.json	/^   "-fdata-sections",$/;"	s	array:5.arguments
-7	src/compile_commands.json	/^   "-fdata-sections",$/;"	s	array:6.arguments
-7	src/compile_commands.json	/^   "-fdata-sections",$/;"	s	array:7.arguments
-7	src/compile_commands.json	/^   "-fdata-sections",$/;"	s	array:8.arguments
-7	src/compile_commands.json	/^   "-fdata-sections",$/;"	s	array:9.arguments
-7	src/compile_commands.json	/^ {$/;"	o
-8	src/compile_commands.json	/^   "-s",$/;"	s	array:0.arguments
-8	src/compile_commands.json	/^   "-s",$/;"	s	array:1.arguments
-8	src/compile_commands.json	/^   "-s",$/;"	s	array:10.arguments
-8	src/compile_commands.json	/^   "-s",$/;"	s	array:11.arguments
-8	src/compile_commands.json	/^   "-s",$/;"	s	array:12.arguments
-8	src/compile_commands.json	/^   "-s",$/;"	s	array:2.arguments
-8	src/compile_commands.json	/^   "-s",$/;"	s	array:3.arguments
-8	src/compile_commands.json	/^   "-s",$/;"	s	array:4.arguments
-8	src/compile_commands.json	/^   "-s",$/;"	s	array:5.arguments
-8	src/compile_commands.json	/^   "-s",$/;"	s	array:6.arguments
-8	src/compile_commands.json	/^   "-s",$/;"	s	array:7.arguments
-8	src/compile_commands.json	/^   "-s",$/;"	s	array:8.arguments
-8	src/compile_commands.json	/^   "-s",$/;"	s	array:9.arguments
-8	src/compile_commands.json	/^ {$/;"	o
-9	src/compile_commands.json	/^   "-fno-ident",$/;"	s	array:0.arguments
-9	src/compile_commands.json	/^   "-fno-ident",$/;"	s	array:1.arguments
-9	src/compile_commands.json	/^   "-fno-ident",$/;"	s	array:10.arguments
-9	src/compile_commands.json	/^   "-fno-ident",$/;"	s	array:11.arguments
-9	src/compile_commands.json	/^   "-fno-ident",$/;"	s	array:12.arguments
-9	src/compile_commands.json	/^   "-fno-ident",$/;"	s	array:2.arguments
-9	src/compile_commands.json	/^   "-fno-ident",$/;"	s	array:3.arguments
-9	src/compile_commands.json	/^   "-fno-ident",$/;"	s	array:4.arguments
-9	src/compile_commands.json	/^   "-fno-ident",$/;"	s	array:5.arguments
-9	src/compile_commands.json	/^   "-fno-ident",$/;"	s	array:6.arguments
-9	src/compile_commands.json	/^   "-fno-ident",$/;"	s	array:7.arguments
-9	src/compile_commands.json	/^   "-fno-ident",$/;"	s	array:8.arguments
-9	src/compile_commands.json	/^   "-fno-ident",$/;"	s	array:9.arguments
-9	src/compile_commands.json	/^ {$/;"	o
-ACTIVITY_	src/include/ecs.h	/^#define ACTIVITY_(/;"	d
-ActDirEntry	src/include/ecs.h	/^} ActDirEntry;$/;"	t	typeref:struct:__anon1c5c41200808
-Activity	src/include/ecs.h	/^} Activity;$/;"	t	typeref:struct:_Activity
-Animation	src/include/jbOld.h	/^} Animation;$/;"	t	typeref:struct:Animation_t
-Animation_t	src/include/jbOld.h	/^typedef struct Animation_t {$/;"	s
-BEHAVE_AS_	src/include/ecs.h	/^#define BEHAVE_AS_(/;"	d
-BEHAVIOR_	src/include/ecs.h	/^#define BEHAVIOR_(/;"	d
-BIT_FLAG	src/data.c	/^#define BIT_FLAG(/;"	d	file:
-BUILDDIR	src/Makefile	/^BUILDDIR         = $(JBDIR)build\/$/;"	m
-BYTE_IDX	src/data.c	/^#define BYTE_IDX(/;"	d	file:
-BY_	src/include/ecs.h	/^#define BY_(/;"	d
-CC	src/Makefile	/^CC=cc$/;"	m
-CDirEntry	src/include/ecs.h	/^} CDirEntry;$/;"	t	typeref:struct:__anon1c5c41200708
-CFLAGS_COMMON	src/Makefile	/^CFLAGS_COMMON = -Wall $(SDL_CFLAGS) \\$/;"	m
-CFLAGS_FAST	src/Makefile	/^CFLAGS_FAST   = $(CFLAGS_COMMON) #-Ofast    TODO: uncomment when ready for relase$/;"	m
-CFLAGS_TINY	src/Makefile	/^CFLAGS_TINY   = $(CFLAGS_COMMON) #-Os    TODO: uncomment when ready for relase$/;"	m
-COMPLETE	src/include/xParent.h	/^	COMPLETE,$/;"	e	enum:__anond63fe8a70103
-CTRL_A	src/include/jbOld.h	/^#define CTRL_A /;"	d
-CTRL_A	src/include/xControl.h	/^#define CTRL_A /;"	d
-CTRL_B	src/include/jbOld.h	/^#define CTRL_B /;"	d
-CTRL_B	src/include/xControl.h	/^#define CTRL_B /;"	d
-CTRL_D	src/include/jbOld.h	/^#define CTRL_D /;"	d
-CTRL_DOWN	src/include/xControl.h	/^#define CTRL_DOWN /;"	d
-CTRL_L	src/include/jbOld.h	/^#define CTRL_L /;"	d
-CTRL_LEFT	src/include/xControl.h	/^#define CTRL_LEFT /;"	d
-CTRL_LISTEN	src/include/xControl.h	/^	CTRL_LISTEN = 1$/;"	e	enum:__anon8edff7fe0103
-CTRL_R	src/include/jbOld.h	/^#define CTRL_R /;"	d
-CTRL_RIGHT	src/include/xControl.h	/^#define CTRL_RIGHT /;"	d
-CTRL_S	src/include/jbOld.h	/^#define CTRL_S /;"	d
-CTRL_SELECT	src/include/xControl.h	/^#define CTRL_SELECT /;"	d
-CTRL_START	src/include/xControl.h	/^#define CTRL_START /;"	d
-CTRL_U	src/include/jbOld.h	/^#define CTRL_U /;"	d
-CTRL_UP	src/include/xControl.h	/^#define CTRL_UP /;"	d
-CTRL_X	src/include/jbOld.h	/^#define CTRL_X /;"	d
-Check	src/include/ecs.h	/^} Check;$/;"	t	typeref:struct:__anon1c5c41200108
-ColorPalette	src/include/jbOld.h	/^typedef struct ColorPalette {$/;"	s
-ColorPalette	src/include/jbOld.h	/^} ColorPalette;$/;"	t	typeref:struct:ColorPalette
-Colormap	src/include/xRender.h	/^} Colormap;     \/\/ When the inflatable requires neither unpacking nor strip-mapping, go ahead /;"	t	typeref:struct:__anond940d27d0508
-DATA_H	src/include/data.h	/^#define DATA_H$/;"	d
-DIRECTOR_SYS_KEY	src/include/ecs.h	/^  DIRECTOR_SYS_KEY,$/;"	e	enum:__anon1c5c41200603
-ECS_H	src/include/ecs.h	/^#define ECS_H$/;"	d
-ENGINEDIR	src/Makefile	/^ENGINEDIR        = $(JBDIR)src\/$/;"	m
-ENGINEINCLUDEDIR	src/Makefile	/^ENGINEINCLUDEDIR = $(ENGINE)include\/$/;"	m
-ENGINE_INCLUDES	src/Makefile	/^ENGINE_INCLUDES  = $(ENGINEINCLUDEDIR)*.h$/;"	m
-ENGINE_OBJS	src/Makefile	/^ENGINE_OBJS   = $(ENGINE_SRC:%.c=%.o)$/;"	m
-ENGINE_SRC	src/Makefile	/^ENGINE_SRC    = $(shell find $(ENGINEDIR) -name "*.c") $/;"	m
-ENUM_INDICES_	src/include/data.h	/^#define ENUM_INDICES_(/;"	d
-ENUM_KEYS_	src/include/data.h	/^#define ENUM_KEYS_(/;"	d
-E_BAD_ARGS	src/include/errors.h	/^	E_BAD_ARGS,$/;"	e	enum:Error
-E_BAD_INDEX	src/include/errors.h	/^	E_BAD_INDEX,$/;"	e	enum:Error
-E_BAD_KEY	src/include/errors.h	/^	E_BAD_KEY,$/;"	e	enum:Error
-E_MSG_INVALID_CMD	src/include/errors.h	/^	E_MSG_INVALID_CMD,$/;"	e	enum:Error
-E_MSG_TO_ECS_TYPE_MISMATCH	src/include/errors.h	/^	E_MSG_TO_ECS_TYPE_MISMATCH,$/;"	e	enum:Error
-E_MSG_TO_ID_MISMATCH	src/include/errors.h	/^	E_MSG_TO_ID_MISMATCH,$/;"	e	enum:Error
-E_NO_MEMORY	src/include/errors.h	/^	E_NO_MEMORY,$/;"	e	enum:Error
-E_NULL_VAR	src/include/errors.h	/^	E_NULL_VAR$/;"	e	enum:Error
-E_SYS_CMP_MISMATCH	src/include/errors.h	/^	E_SYS_CMP_MISMATCH,$/;"	e	enum:Error
-E_UNEXPECTED_DCMP_SZ	src/include/errors.h	/^	E_UNEXPECTED_DCMP_SZ,$/;"	e	enum:Error
-E_UNSUPPORTED_PIXEL_FORMAT	src/include/errors.h	/^	E_UNSUPPORTED_PIXEL_FORMAT,$/;"	e	enum:Error
-Entity	src/include/ecs.h	/^typedef U8 Entity;  $/;"	t	typeref:typename:U8
-EnumValPair	src/include/data.h	/^} EnumValPair;$/;"	t	typeref:struct:__anona56c69bf0108
-Error	src/include/errors.h	/^typedef enum Error {$/;"	g
-Error	src/include/errors.h	/^} Error;$/;"	t	typeref:enum:Error
-Error	src/include/jbOld.h	/^typedef Sint8 Error;$/;"	t	typeref:typename:Sint8
-FIRST_ACTIVITY	src/include/ecs.h	/^#define FIRST_ACTIVITY /;"	d
-FPS	src/include/jbOld.h	/^#define FPS /;"	d
-FRAME_DURATION	src/include/jbOld.h	/^#define FRAME_DURATION /;"	d
-FlagInfo	src/include/data.h	/^} FlagInfo;$/;"	t	typeref:struct:__anona56c69bf0308
-FlipSet	src/include/xRender.h	/^} FlipSet;$/;"	t	typeref:struct:__anond940d27d0208
-GAMEDIR	src/Makefile	/^GAMEDIR          = $(JBDIR)game\/$/;"	m
-GAMEINCLUDEDIR	src/Makefile	/^GAMEINCLUDEDIR   = $(GAMEDIR)include\/$/;"	m
-GAME_INCLUDES	src/Makefile	/^GAME_INCLUDES    = $(GAMEINCLUDEDIR)*.h$/;"	m
-GAME_OBJS	src/Makefile	/^GAME_OBJS     = $(GAME_SRC:%.c=%.o)$/;"	m
-GAME_SRC	src/Makefile	/^GAME_SRC      = $(shell find $(GAMEDIR) -name "*.c") $/;"	m
-GENES_	game/include/genes.h	/^#define GENES_$/;"	d
-GENOME_GROUP_	src/include/ecs.h	/^#define GENOME_GROUP_(/;"	d
-Genome	src/include/ecs.h	/^} Genome;$/;"	t	typeref:struct:__anon1c5c41200308
-GenomeGrp	src/include/ecs.h	/^} GenomeGrp;$/;"	t	typeref:struct:__anon1c5c41200408
-HARD_CODED_ARRAY_	src/include/data.h	/^#define HARD_CODED_ARRAY_(/;"	d
-HARD_CODED_MAP_	src/include/data.h	/^#define HARD_CODED_MAP_(/;"	d
-HardCodedArray	src/include/data.h	/^} HardCodedArray;$/;"	t	typeref:struct:__anona56c69bf0208
-HardCodedMap	src/include/data.h	/^} HardCodedMap;$/;"	t	typeref:struct:__anona56c69bf0608
-IFLAGS	src/Makefile	/^IFLAGS        = -I$(GAMEINCLUDEDIR) -I$(ENGINEINCLUDEDIR)$/;"	m
-IF_SCENE_TYPE_IS_	src/include/ecs.h	/^#define IF_SCENE_TYPE_IS_(/;"	d
-INSTALLDIR	src/Makefile	/^INSTALLDIR       = $(JBDIR)$/;"	m
-Image	src/include/jbOld.h	/^} Image;$/;"	t	typeref:struct:Image_t
-Image	src/include/xRender.h	/^} Image; $/;"	t	typeref:struct:__anond940d27d0608
-Image_t	src/include/jbOld.h	/^typedef struct Image_t {$/;"	s
-Inflatable	src/include/data.h	/^} Inflatable;$/;"	t	typeref:struct:__anona56c69bf0708
-IniSysFP	src/include/jbOld.h	/^typedef void (*IniSysFP)(System *sys_p);$/;"	t	typeref:typename:void (*)(System * sys_p)
-JBDIR	src/Makefile	/^JBDIR = \/home\/$(USER)\/hack\/jollybean\/$/;"	m
-JB_H	src/include/jbOld.h	/^#define JB_H$/;"	d
-Key	src/include/data.h	/^typedef U8 Key;$/;"	t	typeref:typename:U8
-KeyValPair	src/include/data.h	/^} KeyValPair;$/;"	t	typeref:struct:__anona56c69bf0408
-LAST_FLAG_BYTE_IDX	src/include/data.h	/^#define LAST_FLAG_BYTE_IDX /;"	d
-LFLAGS	src/Makefile	/^LFLAGS        = -Wl,--gc-sections -Wl,-z,norelro \\$/;"	m
-LinkedList	src/include/jbOld.h	/^typedef struct LinkedList {$/;"	s
-LinkedList	src/include/jbOld.h	/^} LinkedList;$/;"	t	typeref:struct:LinkedList
-ListNode	src/include/jbOld.h	/^typedef struct ListNode {$/;"	s
-ListNode	src/include/jbOld.h	/^} ListNode;$/;"	t	typeref:struct:ListNode
-MINIZ_HAS_64BIT_REGISTERS	src/data.c	/^#define MINIZ_HAS_64BIT_REGISTERS /;"	d	file:
-MINIZ_LITTLE_ENDIAN	src/data.c	/^#define MINIZ_LITTLE_ENDIAN /;"	d	file:
-MINIZ_USE_UNALIGNED_LOADS_AND_STORES	src/data.c	/^#define MINIZ_USE_UNALIGNED_LOADS_AND_STORES /;"	d	file:
-MZ_CLEAR_OBJ	src/data.c	/^#define MZ_CLEAR_OBJ(/;"	d	file:
-MZ_FREE	src/data.c	/^  #define MZ_FREE(/;"	d	file:
-MZ_MACRO_END	src/data.c	/^  #define MZ_MACRO_END /;"	d	file:
-MZ_MALLOC	src/data.c	/^  #define MZ_MALLOC(/;"	d	file:
-MZ_MAX	src/data.c	/^#define MZ_MAX(/;"	d	file:
-MZ_MIN	src/data.c	/^#define MZ_MIN(/;"	d	file:
-MZ_READ_LE16	src/data.c	/^  #define MZ_READ_LE16(/;"	d	file:
-MZ_READ_LE32	src/data.c	/^  #define MZ_READ_LE32(/;"	d	file:
-MZ_REALLOC	src/data.c	/^  #define MZ_REALLOC(/;"	d	file:
-Mailbox	src/include/ecs.h	/^} Mailbox;$/;"	t	typeref:struct:__anon1c5c41200e08
-Map	src/include/data.h	/^} Map;$/;"	t	typeref:struct:__anona56c69bf0508
-MediaInfo	src/include/jbOld.h	/^typedef struct MediaInfo {$/;"	s
-MediaInfo	src/include/jbOld.h	/^} MediaInfo ;$/;"	t	typeref:struct:MediaInfo
-Message	src/include/ecs.h	/^} Message;  $/;"	t	typeref:struct:__anon1c5c41200a08
-NEW_GENOME_	src/include/ecs.h	/^#define NEW_GENOME_(/;"	d
-NEW_SYS_	src/include/ecs.h	/^#define NEW_SYS_(/;"	d
-NO_OUTPUT	src/include/ecs.h	/^typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;$/;"	e	enum:__anon1c5c41200903
-NUM_ARGS_	src/include/data.h	/^#define NUM_ARGS_(/;"	d
-NUM_OUTPUTS	src/include/ecs.h	/^typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;$/;"	e	enum:__anon1c5c41200903
-NUM_SYS_KEYS	src/include/ecs.h	/^  NUM_SYS_KEYS  \/\/ only used for creating stem histograms$/;"	e	enum:__anon1c5c41200603
-N_FLAG_BITS	src/include/data.h	/^#define N_FLAG_BITS /;"	d
-N_FLAG_BYTES	src/include/data.h	/^#define N_FLAG_BYTES /;"	d
-OBJS	src/Makefile	/^OBJS          = $(ENGINE_OBJS) $(GAME_OBJS) $/;"	m
-OTHERWISE_BEHAVE_AS_	src/include/ecs.h	/^#define OTHERWISE_BEHAVE_AS_(/;"	d
-OUTPUTFILE	src/Makefile	/^OUTPUTFILE    = o$/;"	m
-Output	src/include/ecs.h	/^typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;$/;"	t	typeref:enum:__anon1c5c41200903
-PERSONALITY_	src/include/ecs.h	/^#define PERSONALITY_(/;"	d
-Position	src/include/jbOld.h	/^typedef struct Position {$/;"	s
-Position	src/include/jbOld.h	/^} Position;  \/* Used by Motion to point at X & Y portion of SDL_Rect *\/$/;"	t	typeref:struct:Position
-QuadNode	src/include/jbOld.h	/^} QuadNode;$/;"	t	typeref:struct:_QuadNode
-QuadTree	src/include/jbOld.h	/^typedef struct QuadTree {$/;"	s
-QuadTree	src/include/jbOld.h	/^} QuadTree;$/;"	t	typeref:struct:QuadTree
-RESPOND_TO_	src/include/ecs.h	/^#define RESPOND_TO_(/;"	d
-RS_	src/include/ecs.h	/^#define RS_(/;"	d
-RS_SEQ_	src/include/ecs.h	/^#define RS_SEQ_(/;"	d
-RUNNING	src/include/xParent.h	/^	RUNNING$/;"	e	enum:__anond63fe8a70103
-Reaction	src/include/xParent.h	/^} Reaction;$/;"	t	typeref:struct:__anond63fe8a70208
-ReactionCallback	src/include/xParent.h	/^typedef ReactionStatus (*ReactionCallback)(Message *msgP, void *paramsP);$/;"	t	typeref:typename:ReactionStatus (*)(Message * msgP,void * paramsP)
-ReactionStatus	src/include/xParent.h	/^} ReactionStatus;$/;"	t	typeref:enum:__anond63fe8a70103
-RunSysLoopFP	src/include/jbOld.h	/^typedef Error (*RunSysLoopFP)(void *componentArry, void);$/;"	t	typeref:typename:Error (*)(void * componentArry,void)
-S16	src/include/data.h	/^typedef short S16;$/;"	t	typeref:typename:short
-S32	src/include/data.h	/^typedef int S32;$/;"	t	typeref:typename:int
-S8	src/include/data.h	/^typedef char S8;$/;"	t	typeref:typename:char
-SDL_CFLAGS	src/Makefile	/^SDL_CFLAGS    = $(shell sdl2-config --cflags)$/;"	m
-SDL_LFLAGS	src/Makefile	/^SDL_LFLAGS    = $(shell sdl2-config --libs)$/;"	m
-SParentIniSParams	src/include/xParent.h	/^} SParentIniSParams;$/;"	t	typeref:struct:__anond63fe8a70408
-SUCCESS	src/include/errors.h	/^	SUCCESS,$/;"	e	enum:Error
-SYS_CONTROL	src/include/xControl.h	/^#define SYS_CONTROL$/;"	d
-SYS_RENDER	src/include/xRender.h	/^#define SYS_RENDER$/;"	d
-SYS_TOGGLE_ACTIVE	src/include/ecs.h	/^  SYS_TOGGLE_ACTIVE,$/;"	e	enum:__anon1c5c41200f03
-Seed	src/include/ecs.h	/^} Seed;$/;"	t	typeref:struct:__anon1c5c41200508
-Strip	src/include/jbOld.h	/^typedef struct Strip {$/;"	s
-Strip	src/include/jbOld.h	/^} Strip;$/;"	t	typeref:struct:Strip
-StripMap	src/include/xRender.h	/^} StripMap;$/;"	t	typeref:struct:__anond940d27d0408
-StripSet	src/include/xRender.h	/^} StripSet;$/;"	t	typeref:struct:__anond940d27d0308
-SysCmdID	src/include/ecs.h	/^} SysCmdID;$/;"	t	typeref:enum:__anon1c5c41200f03
-SysFP	src/include/ecs.h	/^typedef Error (*SysFP)(struct _Activity *aP);$/;"	t	typeref:typename:Error (*)(struct _Activity * aP)
-SysIniCFP	src/include/ecs.h	/^typedef Error (*SysIniCFP)(XHeader *xhP);$/;"	t	typeref:typename:Error (*)(XHeader * xhP)
-SysIniFP	src/include/ecs.h	/^typedef Error (*SysIniFP)(void* sParamsP);$/;"	t	typeref:typename:Error (*)(void * sParamsP)
-SysKeys	src/include/ecs.h	/^} SysKeys;$/;"	t	typeref:enum:__anon1c5c41200603
-System	src/include/ecs.h	/^} System;$/;"	t	typeref:struct:_System
-System	src/include/jbOld.h	/^typedef struct System {$/;"	s
-System	src/include/jbOld.h	/^} System;$/;"	t	typeref:struct:System
-TILE_H	src/include/jbOld.h	/^#define TILE_H /;"	d
-TILE_W	src/include/jbOld.h	/^#define TILE_W /;"	d
-TINFL_BITBUF_SIZE	src/data.c	/^  #define TINFL_BITBUF_SIZE /;"	d	file:
-TINFL_CR_BEGIN	src/data.c	/^#define TINFL_CR_BEGIN /;"	d	file:
-TINFL_CR_FINISH	src/data.c	/^#define TINFL_CR_FINISH /;"	d	file:
-TINFL_CR_RETURN	src/data.c	/^#define TINFL_CR_RETURN(/;"	d	file:
-TINFL_CR_RETURN_FOREVER	src/data.c	/^#define TINFL_CR_RETURN_FOREVER(/;"	d	file:
-TINFL_DECOMPRESS_MEM_TO_MEM_FAILED	src/data.c	/^#define TINFL_DECOMPRESS_MEM_TO_MEM_FAILED /;"	d	file:
-TINFL_FAST_LOOKUP_BITS	src/data.c	/^  TINFL_FAST_LOOKUP_BITS = 10, TINFL_FAST_LOOKUP_SIZE = 1 << TINFL_FAST_LOOKUP_BITS$/;"	e	enum:__anon559e44a70303	file:
-TINFL_FAST_LOOKUP_SIZE	src/data.c	/^  TINFL_FAST_LOOKUP_BITS = 10, TINFL_FAST_LOOKUP_SIZE = 1 << TINFL_FAST_LOOKUP_BITS$/;"	e	enum:__anon559e44a70303	file:
-TINFL_FLAG_COMPUTE_ADLER32	src/data.c	/^  TINFL_FLAG_COMPUTE_ADLER32 = 8$/;"	e	enum:__anon559e44a70103	file:
-TINFL_FLAG_HAS_MORE_INPUT	src/data.c	/^  TINFL_FLAG_HAS_MORE_INPUT = 2,$/;"	e	enum:__anon559e44a70103	file:
-TINFL_FLAG_PARSE_ZLIB_HEADER	src/data.c	/^  TINFL_FLAG_PARSE_ZLIB_HEADER = 1,$/;"	e	enum:__anon559e44a70103	file:
-TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF	src/data.c	/^  TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF = 4,$/;"	e	enum:__anon559e44a70103	file:
-TINFL_GET_BITS	src/data.c	/^#define TINFL_GET_BITS(/;"	d	file:
-TINFL_GET_BYTE	src/data.c	/^#define TINFL_GET_BYTE(/;"	d	file:
-TINFL_HEADER_INCLUDED	src/data.c	/^#define TINFL_HEADER_INCLUDED$/;"	d	file:
-TINFL_HUFF_BITBUF_FILL	src/data.c	/^#define TINFL_HUFF_BITBUF_FILL(/;"	d	file:
-TINFL_HUFF_DECODE	src/data.c	/^#define TINFL_HUFF_DECODE(/;"	d	file:
-TINFL_LZ_DICT_SIZE	src/data.c	/^#define TINFL_LZ_DICT_SIZE /;"	d	file:
-TINFL_MAX_HUFF_SYMBOLS_0	src/data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINF/;"	e	enum:__anon559e44a70303	file:
-TINFL_MAX_HUFF_SYMBOLS_1	src/data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINF/;"	e	enum:__anon559e44a70303	file:
-TINFL_MAX_HUFF_SYMBOLS_2	src/data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINF/;"	e	enum:__anon559e44a70303	file:
-TINFL_MAX_HUFF_TABLES	src/data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINF/;"	e	enum:__anon559e44a70303	file:
-TINFL_MEMCPY	src/data.c	/^#define TINFL_MEMCPY(/;"	d	file:
-TINFL_MEMSET	src/data.c	/^#define TINFL_MEMSET(/;"	d	file:
-TINFL_NEED_BITS	src/data.c	/^#define TINFL_NEED_BITS(/;"	d	file:
-TINFL_SKIP_BITS	src/data.c	/^#define TINFL_SKIP_BITS(/;"	d	file:
-TINFL_STATUS_ADLER32_MISMATCH	src/data.c	/^  TINFL_STATUS_ADLER32_MISMATCH = -2,$/;"	e	enum:__anon559e44a70203	file:
-TINFL_STATUS_BAD_PARAM	src/data.c	/^  TINFL_STATUS_BAD_PARAM = -3,$/;"	e	enum:__anon559e44a70203	file:
-TINFL_STATUS_DONE	src/data.c	/^  TINFL_STATUS_DONE = 0,$/;"	e	enum:__anon559e44a70203	file:
-TINFL_STATUS_FAILED	src/data.c	/^  TINFL_STATUS_FAILED = -1,$/;"	e	enum:__anon559e44a70203	file:
-TINFL_STATUS_HAS_MORE_OUTPUT	src/data.c	/^  TINFL_STATUS_HAS_MORE_OUTPUT = 2$/;"	e	enum:__anon559e44a70203	file:
-TINFL_STATUS_NEEDS_MORE_INPUT	src/data.c	/^  TINFL_STATUS_NEEDS_MORE_INPUT = 1,$/;"	e	enum:__anon559e44a70203	file:
-TINFL_USE_64BIT_BITBUF	src/data.c	/^  #define TINFL_USE_64BIT_BITBUF /;"	d	file:
-Tilemap	src/include/jbOld.h	/^typedef struct Tilemap {$/;"	s
-Tilemap	src/include/jbOld.h	/^} Tilemap;$/;"	t	typeref:struct:Tilemap
-Tileset	src/include/jbOld.h	/^typedef struct Tileset {$/;"	s
-Tileset	src/include/jbOld.h	/^} Tileset;$/;"	t	typeref:struct:Tileset
-U16	src/include/data.h	/^typedef unsigned short U16;$/;"	t	typeref:typename:unsigned short
-U32	src/include/data.h	/^typedef unsigned int U32;$/;"	t	typeref:typename:unsigned int
-U8	src/include/data.h	/^typedef unsigned char U8;$/;"	t	typeref:typename:unsigned char
-UNUSED_	src/include/data.h	/^#define UNUSED_(/;"	d
-WINDOW_HEIGHT	src/include/jbOld.h	/^#define WINDOW_HEIGHT /;"	d
-WINDOW_WIDTH	src/include/jbOld.h	/^#define WINDOW_WIDTH /;"	d
-XControlActivityID	src/include/xControl.h	/^} XControlActivityID;$/;"	t	typeref:enum:__anon8edff7fe0103
-XControlC	src/include/xControl.h	/^} XControlC;$/;"	t	typeref:struct:__anon8edff7fe0208
-XHeader	src/include/ecs.h	/^} XHeader;$/;"	t	typeref:struct:__anon1c5c41200208
-XParentC	src/include/xParent.h	/^} XParentC;$/;"	t	typeref:union:__anond63fe8a7030a
-XRENDER	src/include/xRender.h	/^	XRENDER = 1$/;"	e	enum:__anond940d27d0103
-XRenderActivityID	src/include/xRender.h	/^} XRenderActivityID;$/;"	t	typeref:enum:__anond940d27d0103
-XRenderC	src/include/xRender.h	/^} XRenderC;$/;"	t	typeref:struct:__anond940d27d0708
-_Activity	src/include/ecs.h	/^typedef struct _Activity {$/;"	s
-_MAX_SYSTEMWIDE_CMD_ID	src/include/ecs.h	/^  _MAX_SYSTEMWIDE_CMD_ID$/;"	e	enum:__anon1c5c41200f03
-_QuadNode	src/include/jbOld.h	/^typedef struct _QuadNode {$/;"	s
-_System	src/include/ecs.h	/^typedef struct _System {$/;"	s
-__anon1c5c41200108	src/include/ecs.h	/^typedef struct {$/;"	s
-__anon1c5c41200208	src/include/ecs.h	/^typedef struct {$/;"	s
-__anon1c5c41200308	src/include/ecs.h	/^typedef struct {$/;"	s
-__anon1c5c41200408	src/include/ecs.h	/^typedef struct {$/;"	s
-__anon1c5c41200508	src/include/ecs.h	/^typedef struct {$/;"	s
-__anon1c5c41200603	src/include/ecs.h	/^typedef enum {$/;"	g
-__anon1c5c41200708	src/include/ecs.h	/^typedef struct {$/;"	s
-__anon1c5c41200808	src/include/ecs.h	/^typedef struct {$/;"	s
-__anon1c5c41200903	src/include/ecs.h	/^typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;$/;"	g
-__anon1c5c41200a08	src/include/ecs.h	/^typedef struct {$/;"	s
-__anon1c5c41200b0a	src/include/ecs.h	/^	union {$/;"	u	struct:__anon1c5c41200a08
-__anon1c5c41200c08	src/include/ecs.h	/^		struct {$/;"	s	union:__anon1c5c41200a08::__anon1c5c41200b0a
-__anon1c5c41200d08	src/include/ecs.h	/^		struct {$/;"	s	union:__anon1c5c41200a08::__anon1c5c41200b0a
-__anon1c5c41200e08	src/include/ecs.h	/^typedef struct {$/;"	s
-__anon1c5c41200f03	src/include/ecs.h	/^typedef enum {$/;"	g
-__anon559e44a70103	src/data.c	/^{$/;"	g	file:
-__anon559e44a70203	src/data.c	/^{$/;"	g	file:
-__anon559e44a70303	src/data.c	/^{$/;"	g	file:
-__anon559e44a70408	src/data.c	/^{$/;"	s	file:
-__anon8edff7fe0103	src/include/xControl.h	/^typedef enum {$/;"	g
-__anon8edff7fe0208	src/include/xControl.h	/^typedef struct {$/;"	s
-__anona56c69bf0108	src/include/data.h	/^typedef struct {$/;"	s
-__anona56c69bf0208	src/include/data.h	/^typedef struct {$/;"	s
-__anona56c69bf0308	src/include/data.h	/^typedef struct {$/;"	s
-__anona56c69bf0408	src/include/data.h	/^typedef struct {$/;"	s
-__anona56c69bf0508	src/include/data.h	/^typedef struct {$/;"	s
-__anona56c69bf0608	src/include/data.h	/^typedef struct {$/;"	s
-__anona56c69bf0708	src/include/data.h	/^typedef struct {$/;"	s
-__anond63fe8a70103	src/include/xParent.h	/^typedef enum {$/;"	g
-__anond63fe8a70208	src/include/xParent.h	/^typedef struct {$/;"	s
-__anond63fe8a7030a	src/include/xParent.h	/^typedef union {$/;"	u
-__anond63fe8a70408	src/include/xParent.h	/^typedef struct {$/;"	s
-__anond940d27d0103	src/include/xRender.h	/^typedef enum {$/;"	g
-__anond940d27d0208	src/include/xRender.h	/^typedef struct {$/;"	s
-__anond940d27d0308	src/include/xRender.h	/^typedef struct {$/;"	s
-__anond940d27d0408	src/include/xRender.h	/^typedef struct {$/;"	s
-__anond940d27d0508	src/include/xRender.h	/^typedef struct {$/;"	s
-__anond940d27d0608	src/include/xRender.h	/^typedef struct {$/;"	s
-__anond940d27d0708	src/include/xRender.h	/^typedef struct {$/;"	s
-_arrayGetVoidElemPtr	src/data.c	/^inline static void* _arrayGetVoidElemPtr(const void *arryP, S32 idx) {$/;"	f	typeref:typename:void *	file:
-_clrMailbox	src/ecs.c	/^static void _clrMailbox(Mailbox *mailboxP) {$/;"	f	typeref:typename:void	file:
-_cmClr	src/xRender.c	/^void _cmClr(Colormap *cmP) {$/;"	f	typeref:typename:void
-_cmGen	src/xRender.c	/^Error _cmGen(Colormap *cmP) {$/;"	f	typeref:typename:Error
-_countU8Bits	src/data.c	/^inline static U8 _countU8Bits(U8 byte) {$/;"	f	typeref:typename:U8	file:
-_distributeGenes	src/xParent.c	/^static Error _distributeGenes(System *sParentP, GenomeGrp *ggP) {$/;"	f	typeref:typename:Error	file:
-_elemSz	src/include/data.h	/^	U32         _elemSz;$/;"	m	struct:__anona56c69bf0208	typeref:typename:U32
-_elemSz	src/include/data.h	/^	U8         _elemSz;$/;"	m	struct:__anona56c69bf0608	typeref:typename:U8
-_entityReactionMA	src/xParent.c	/^static Map **_entityReactionMA;$/;"	v	typeref:typename:Map **	file:
-_enum	src/include/data.h	/^	Key _enum;$/;"	m	struct:__anona56c69bf0108	typeref:typename:Key
-_fast_arrayGetElemSz	src/data.c	/^static inline U32 _fast_arrayGetElemSz(const void *arryP) {$/;"	f	typeref:typename:U32	file:
-_fast_arrayGetVoidElemPtr	src/data.c	/^static inline void* _fast_arrayGetVoidElemPtr(const void *arryP, U8 idx) {$/;"	f	typeref:typename:void *	file:
-_getActDirEntry	src/ecs.c	/^inline static ActDirEntry* _getActDirEntry(System *sP, Key actID) {$/;"	f	typeref:typename:ActDirEntry *	file:
-_getCDirEntry	src/ecs.c	/^inline static CDirEntry* _getCDirEntry(System *sP, Entity entity) {$/;"	f	typeref:typename:CDirEntry *	file:
-_getCPByIndex	src/ecs.c	/^inline static void* _getCPByIndex(const System *sP, Activity *aP, U8 cIdx) {$/;"	f	typeref:typename:void *	file:
-_getE	src/ecs.c	/^inline static Entity _getE(const void *cmpP) {$/;"	f	typeref:typename:Entity	file:
-_getElemIdx	src/data.c	/^inline static U32 _getElemIdx(const FlagInfo f, const U8 key) {$/;"	f	typeref:typename:U32	file:
-_getElemP	src/data.c	/^inline static void* _getElemP(const Map *mapP, const FlagInfo f, const U8 key) {$/;"	f	typeref:typename:void *	file:
-_getFlagInfo	src/data.c	/^inline static FlagInfo _getFlagInfo(const Map *mapP, const U8 key) {$/;"	f	typeref:typename:FlagInfo	file:
-_getMapElemSz	src/data.c	/^inline static U32 _getMapElemSz(const Map *mapP) {$/;"	f	typeref:typename:U32	file:
-_getNBitsSet	src/data.c	/^inline static U32 _getNBitsSet(const Map *mapP) {$/;"	f	typeref:typename:U32	file:
-_histoGeneTypes	src/xParent.c	/^static Error _histoGeneTypes(U32 *histoA, GenomeGrp *ggP) {$/;"	f	typeref:typename:Error	file:
-_idxIsPopulated	src/data.c	/^inline static U8 _idxIsPopulated(const U8 nBitsSet, U32 idx) {$/;"	f	typeref:typename:U8	file:
-_isFlagSet	src/data.c	/^inline static U8 _isFlagSet(const U8 flags, const U8 key) {$/;"	f	typeref:typename:U8	file:
-_isKeyValid	src/data.c	/^inline static U8 _isKeyValid(const U8 key) {$/;"	f	typeref:typename:U8	file:
-_isMapValid	src/data.c	/^inline static U8 _isMapValid(const Map *mapP) {$/;"	f	typeref:typename:U8	file:
-_mvActivity	src/ecs.c	/^static Error _mvActivity(System *sP, Activity *srcActP, U8 dstActIdx) {$/;"	f	typeref:typename:Error	file:
-_mvC	src/ecs.c	/^static Error _mvC(System *sP, void *srcCP, void *dstCP, Key dstActID, U8 dstCIdx) {$/;"	f	typeref:typename:Error	file:
-_nEnumValPairs	src/include/data.h	/^	U32         _nEnumValPairs;$/;"	m	struct:__anona56c69bf0208	typeref:typename:U32
-_nKeyValPairs	src/include/data.h	/^	Key        _nKeyValPairs;$/;"	m	struct:__anona56c69bf0608	typeref:typename:Key
-_sClrActivities	src/ecs.c	/^static void _sClrActivities(System *sP) {$/;"	f	typeref:typename:void	file:
-_sClrMailboxes	src/ecs.c	/^static void _sClrMailboxes(System *sP) {$/;"	f	typeref:typename:void	file:
-_sPA	src/xParent.c	/^static System **_sPA;$/;"	v	typeref:typename:System **	file:
-_sReadInbox	src/ecs.c	/^void _sReadInbox(System *sP) {$/;"	f	typeref:typename:void
-_sReadMessage	src/ecs.c	/^static void _sReadMessage(System *sP, Message *msgP) {$/;"	f	typeref:typename:void	file:
-_subscriberAMP	src/xParent.c	/^static Map *_subscriberAMP;$/;"	v	typeref:typename:Map *	file:
-_swapActivities	src/ecs.c	/^static Error _swapActivities(System *sP, Key srcActID, U8 dstActIdx) {$/;"	f	typeref:typename:Error	file:
-_trigger	src/xParent.c	/^static Error _trigger(System *sParentP, Message *msgP) {$/;"	f	typeref:typename:Error	file:
-_triggerGroup	src/xParent.c	/^static Error _triggerGroup(System *sParentP, Message *msgP) {$/;"	f	typeref:typename:Error	file:
-_updateActDirEntry	src/ecs.c	/^static Error _updateActDirEntry(System *sP, Key actID, U8 dstActIdx, Activity *dstActP) {$/;"	f	typeref:typename:Error	file:
-_updateCDirEntry	src/ecs.c	/^static Error  _updateCDirEntry(System *sP, Entity entity, U8 dstActID, U8 dstCIdx, void *dstCP) /;"	f	typeref:typename:Error	file:
-_validateActivityIdx	src/ecs.c	/^inline static U8 _validateActivityIdx(const System *sP, const U8 activityIdx) { $/;"	f	typeref:typename:U8	file:
-_validateEcIdx	src/ecs.c	/^inline static U8 _validateEcIdx(const System *sP, Activity *aP, const U8 cIdx) { $/;"	f	typeref:typename:U8	file:
-actDirectoryP	src/include/ecs.h	/^  Map         *actDirectoryP;       \/* maps component IDs to an element in an array of CmpAddre/;"	m	struct:_System	typeref:typename:Map *
-activityA	src/include/ecs.h	/^  Activity    *activityA;            \/* Array of activities that loop through their components /;"	m	struct:_System	typeref:typename:Activity *
-activityID	src/include/ecs.h	/^			Key activityID;$/;"	m	struct:__anon1c5c41200a08::__anon1c5c41200b0a::__anon1c5c41200d08	typeref:typename:Key
-activityID	src/include/ecs.h	/^  U8 activityID;$/;"	m	struct:__anon1c5c41200708	typeref:typename:U8
-activityIdx	src/include/ecs.h	/^  U8 activityIdx;$/;"	m	struct:__anon1c5c41200808	typeref:typename:U8
-activityP	src/include/ecs.h	/^  struct _Activity *activityP; \/* Systems that use pointers to other stems' components may use /;"	m	struct:__anon1c5c41200808	typeref:struct:_Activity *
-arguments	src/compile_commands.json	/^  "arguments": [$/;"	a	object:0
-arguments	src/compile_commands.json	/^  "arguments": [$/;"	a	object:1
-arguments	src/compile_commands.json	/^  "arguments": [$/;"	a	object:10
-arguments	src/compile_commands.json	/^  "arguments": [$/;"	a	object:11
-arguments	src/compile_commands.json	/^  "arguments": [$/;"	a	object:12
-arguments	src/compile_commands.json	/^  "arguments": [$/;"	a	object:2
-arguments	src/compile_commands.json	/^  "arguments": [$/;"	a	object:3
-arguments	src/compile_commands.json	/^  "arguments": [$/;"	a	object:4
-arguments	src/compile_commands.json	/^  "arguments": [$/;"	a	object:5
-arguments	src/compile_commands.json	/^  "arguments": [$/;"	a	object:6
-arguments	src/compile_commands.json	/^  "arguments": [$/;"	a	object:7
-arguments	src/compile_commands.json	/^  "arguments": [$/;"	a	object:8
-arguments	src/compile_commands.json	/^  "arguments": [$/;"	a	object:9
-arrayDel	src/data.c	/^void arrayDel(void **arryPP) {$/;"	f	typeref:typename:void
-arrayGetElemSz	src/data.c	/^U32 arrayGetElemSz(const void *arryP) {$/;"	f	typeref:typename:U32
-arrayGetNElems	src/data.c	/^U32 arrayGetNElems(const void *arryP) {$/;"	f	typeref:typename:U32
-arrayGetVoidElemPtr	src/data.c	/^void* arrayGetVoidElemPtr(const void *arryP, S32 idx) {$/;"	f	typeref:typename:void *
-arrayIni	src/data.c	/^Error arrayIni(void **arryPP, HardCodedArray *hcaP) {$/;"	f	typeref:typename:Error
-arrayIniPtrs	src/data.c	/^void arrayIniPtrs(const void *arryP, void **startP, void **endP, S32 endIdx) {$/;"	f	typeref:typename:void
-arrayNew	src/data.c	/^Error arrayNew(void **arryPP, U32 elemSz, U32 nElems) {$/;"	f	typeref:typename:Error
-arrayP	src/include/data.h	/^	void        *arrayP;       \/\/ defaults to NULL to prevent copies $/;"	m	struct:__anona56c69bf0208	typeref:typename:void *
-arraySetVoidElem	src/data.c	/^Error arraySetVoidElem(void *arrayP, U32 idx, const void *elemSrcP) {$/;"	f	typeref:typename:Error
-biggerCM	game/gene/ColorMap/biggerCM.c	/^Colormap biggerCM = {$/;"	v	typeref:typename:Colormap
-biggerColorSet	game/gene/ColorPalette/biggerCP.c	/^SDL_Color biggerColorSet[] = { {0x11, 0x00, 0x00, 0x00},  {0xFF, 0xf0, 0xf0, 0xFF},	{0x0F, 0x00,/;"	v	typeref:typename:SDL_Color[]
-biggerImg	game/gene/Image/biggerImg.c	/^Image biggerImg = {$/;"	v	typeref:typename:Image
-biggerStripMap	game/gene/StripMap/biggerStripMap.c	/^StripMap biggerStripMap = {$/;"	v	typeref:typename:StripMap
-biggerStripMapInf	game/gene/StripMap/biggerStripMap.c	/^Inflatable biggerStripMapInf = {$/;"	v	typeref:typename:Inflatable
-biggerStripSet	game/gene/StripSet/biggerStripSet.c	/^StripSet biggerStripSet = {$/;"	v	typeref:typename:StripSet
-biggerStripSetInf	game/gene/StripSet/biggerStripSet.c	/^Inflatable biggerStripSetInf = {$/;"	v	typeref:typename:Inflatable
-biggerXRenderC	game/gene/Image/biggerImg.c	/^XRenderC biggerXRenderC = {$/;"	v	typeref:typename:XRenderC
-blit_coords	src/include/jbOld.h	/^	SDL_Rect        blit_coords;$/;"	m	struct:Animation_t	typeref:typename:SDL_Rect
-blit_coords	src/include/jbOld.h	/^	SDL_Rect     *blit_coords;$/;"	m	struct:Strip	typeref:typename:SDL_Rect *
-bpp	src/include/jbOld.h	/^	Uint8     bpp;$/;"	m	struct:Tileset	typeref:typename:Uint8
-bpp	src/include/xRender.h	/^	U8 bpp;$/;"	m	struct:__anond940d27d0508	typeref:typename:U8
-br_corner	src/include/jbOld.h	/^	Vector2 tl_corner, br_corner;$/;"	m	struct:_QuadNode	typeref:typename:Vector2
-buttonsDown	src/include/xControl.h	/^	U32 buttonsDown;$/;"	m	struct:__anon8edff7fe0208	typeref:typename:U32
-buttonsPressed	src/xControl.c	/^U32 buttonsPressed;$/;"	v	typeref:typename:U32
-cA	src/include/ecs.h	/^  void *cA;  \/* components the above function operates on *\/$/;"	m	struct:_Activity	typeref:typename:void *
-cDirectoryP	src/include/ecs.h	/^  Map         *cDirectoryP;         \/* maps component IDs to an element in an array of CmpAddre/;"	m	struct:_System	typeref:typename:Map *
-cIdx	src/include/ecs.h	/^  U8 cIdx;$/;"	m	struct:__anon1c5c41200708	typeref:typename:U8
-cP	src/include/ecs.h	/^  void *cP; \/* Systems that use pointers to other stems' components may use double pointers to /;"	m	struct:__anon1c5c41200708	typeref:typename:void *
-cSz	src/include/ecs.h	/^  U8           cSz;                 \/* components are the same size in all of this stem's activ/;"	m	struct:_System	typeref:typename:U8
-cb	src/include/xParent.h	/^	ReactionCallback cb;  \/\/ This can return anything. I'm not so sure that it must be pinged any/;"	m	struct:__anond63fe8a70208	typeref:typename:ReactionCallback
-checkA	src/include/ecs.h	/^  Check       *checkA;$/;"	m	struct:_System	typeref:typename:Check *
-checkP	src/include/ecs.h	/^  Check *checkP;$/;"	m	struct:__anon1c5c41200208	typeref:typename:Check *
-checkType	src/include/ecs.h	/^  U8 checkType;$/;"	m	struct:__anon1c5c41200108	typeref:typename:U8
-childSysArry	src/include/jbOld.h	/^	System      *childSysArry;$/;"	m	struct:System	typeref:typename:System *
-clean	src/Makefile	/^clean:$/;"	t
-cmd	src/include/ecs.h	/^		} cmd;$/;"	m	union:__anon1c5c41200a08::__anon1c5c41200b0a	typeref:struct:__anon1c5c41200a08::__anon1c5c41200b0a::__anon1c5c41200d08
-cmp	src/include/jbOld.h	/^typedef SDL_bool (*cmp)(struct Sprite_t*, struct Sprite_t*);$/;"	t	typeref:typename:SDL_bool (*)(struct Sprite_t *,struct Sprite_t *)
-colorA	src/include/xRender.h	/^	SDL_Color *colorA;$/;"	m	struct:__anond940d27d0608	typeref:typename:SDL_Color *
-colorMapP	src/include/xRender.h	/^	Colormap *colorMapP;$/;"	m	struct:__anond940d27d0608	typeref:typename:Colormap *
-componentArry	src/include/jbOld.h	/^	void        *componentArry;$/;"	m	struct:System	typeref:typename:void *
-compressedData	src/include/data.h	/^	U8  compressedData[];$/;"	m	struct:__anona56c69bf0708	typeref:typename:U8[]
-compressedLen	src/include/data.h	/^	U32 compressedLen;$/;"	m	struct:__anona56c69bf0708	typeref:typename:U32
-compressed_len	src/include/jbOld.h	/^	Uint32 offset, uncompressed_len, compressed_len;$/;"	m	struct:MediaInfo	typeref:typename:Uint32
-condCur	src/include/xParent.h	/^  U32 condCur;  \/\/ conditions currently set to TRUE; these can be anything$/;"	m	struct:__anond63fe8a70208	typeref:typename:U32
-condExp	src/include/xParent.h	/^  U32 condExp;  \/\/ conditions expected before calling cb$/;"	m	struct:__anond63fe8a70208	typeref:typename:U32
-contents	src/include/ecs.h	/^	} contents;$/;"	m	struct:__anon1c5c41200a08	typeref:union:__anon1c5c41200a08::__anon1c5c41200b0a
-cp_arry	src/include/jbOld.h	/^	SDL_Color *cp_arry;$/;"	m	struct:ColorPalette	typeref:typename:SDL_Color *
-cp_idx	src/include/jbOld.h	/^	Uint8         cp_idx;     \/* index into color palette table *\/$/;"	m	struct:Image_t	typeref:typename:Uint8
-ctrlListen	src/xControl.c	/^Error ctrlListen(Activity *aP) {$/;"	f	typeref:typename:Error
-curr_duration	src/include/jbOld.h	/^	Uint32          curr_duration;$/;"	m	struct:Animation_t	typeref:typename:Uint32
-curr_frame_num	src/include/jbOld.h	/^	Uint8           curr_frame_num;$/;"	m	struct:Animation_t	typeref:typename:Uint8
-curr_strip_p	src/include/jbOld.h	/^	Strip          *curr_strip_p;$/;"	m	struct:Animation_t	typeref:typename:Strip *
-data	src/include/jbOld.h	/^	void *data;$/;"	m	struct:ListNode	typeref:typename:void *
-dataP	src/include/xRender.h	/^	U8 *dataP;    \/\/ JB only supports 8-bit colormap. If image requires neither strips nor bit-un/;"	m	struct:__anond940d27d0508	typeref:typename:U8 *
-depth	src/include/jbOld.h	/^	Uint8 n_elems, depth;$/;"	m	struct:_QuadNode	typeref:typename:Uint8
-dimensions	src/include/jbOld.h	/^	Vector2        dimensions;  \/* in units of tiles *\/$/;"	m	struct:Tilemap	typeref:typename:Vector2
-directory	src/compile_commands.json	/^  "directory": "\/home\/bonbonbaron\/hack\/jollybean\/src",$/;"	s	object:0
-directory	src/compile_commands.json	/^  "directory": "\/home\/bonbonbaron\/hack\/jollybean\/src",$/;"	s	object:1
-directory	src/compile_commands.json	/^  "directory": "\/home\/bonbonbaron\/hack\/jollybean\/src",$/;"	s	object:10
-directory	src/compile_commands.json	/^  "directory": "\/home\/bonbonbaron\/hack\/jollybean\/src",$/;"	s	object:11
-directory	src/compile_commands.json	/^  "directory": "\/home\/bonbonbaron\/hack\/jollybean\/src",$/;"	s	object:12
-directory	src/compile_commands.json	/^  "directory": "\/home\/bonbonbaron\/hack\/jollybean\/src",$/;"	s	object:2
-directory	src/compile_commands.json	/^  "directory": "\/home\/bonbonbaron\/hack\/jollybean\/src",$/;"	s	object:3
-directory	src/compile_commands.json	/^  "directory": "\/home\/bonbonbaron\/hack\/jollybean\/src",$/;"	s	object:4
-directory	src/compile_commands.json	/^  "directory": "\/home\/bonbonbaron\/hack\/jollybean\/src",$/;"	s	object:5
-directory	src/compile_commands.json	/^  "directory": "\/home\/bonbonbaron\/hack\/jollybean\/src",$/;"	s	object:6
-directory	src/compile_commands.json	/^  "directory": "\/home\/bonbonbaron\/hack\/jollybean\/src",$/;"	s	object:7
-directory	src/compile_commands.json	/^  "directory": "\/home\/bonbonbaron\/hack\/jollybean\/src",$/;"	s	object:8
-directory	src/compile_commands.json	/^  "directory": "\/home\/bonbonbaron\/hack\/jollybean\/src",$/;"	s	object:9
-dstRectPP	src/include/xRender.h	/^	SDL_Rect **dstRectPP;$/;"	m	struct:__anond940d27d0708	typeref:typename:SDL_Rect **
-durations	src/include/jbOld.h	/^	Uint16       *durations;$/;"	m	struct:Strip	typeref:typename:Uint16 *
-elems	src/include/jbOld.h	/^	LinkedList *elems;$/;"	m	struct:_QuadNode	typeref:typename:LinkedList *
-entityDirectory	src/include/jbOld.h	/^	dirEntry    *entityDirectory;  \/\/ a system reads inbox and delivers messages to its component/;"	m	struct:System	typeref:typename:dirEntry *
-enumValA	src/include/data.h	/^	EnumValPair  enumValA[];$/;"	m	struct:__anona56c69bf0208	typeref:typename:EnumValPair[]
-event	src/include/ecs.h	/^		} event;$/;"	m	union:__anon1c5c41200a08::__anon1c5c41200b0a	typeref:struct:__anon1c5c41200a08::__anon1c5c41200b0a::__anon1c5c41200c08
-file	src/compile_commands.json	/^  "file": "\/home\/bonbonbaron\/hack\/jollybean\/game\/gene\/ColorMap\/biggerCM.c"$/;"	s	object:7
-file	src/compile_commands.json	/^  "file": "\/home\/bonbonbaron\/hack\/jollybean\/game\/gene\/ColorPalette\/biggerCP.c"$/;"	s	object:8
-file	src/compile_commands.json	/^  "file": "\/home\/bonbonbaron\/hack\/jollybean\/game\/gene\/GenomeGrp\/grp1.c"$/;"	s	object:9
-file	src/compile_commands.json	/^  "file": "\/home\/bonbonbaron\/hack\/jollybean\/game\/gene\/Genome\/bigger.c"$/;"	s	object:11
-file	src/compile_commands.json	/^  "file": "\/home\/bonbonbaron\/hack\/jollybean\/game\/gene\/Image\/biggerImg.c"$/;"	s	object:6
-file	src/compile_commands.json	/^  "file": "\/home\/bonbonbaron\/hack\/jollybean\/game\/gene\/StripMap\/biggerStripMap.c"$/;"	s	object:10
-file	src/compile_commands.json	/^  "file": "\/home\/bonbonbaron\/hack\/jollybean\/game\/gene\/StripSet\/biggerStripSet.c"$/;"	s	object:12
-file	src/compile_commands.json	/^  "file": "\/home\/bonbonbaron\/hack\/jollybean\/src\/data.c"$/;"	s	object:4
-file	src/compile_commands.json	/^  "file": "\/home\/bonbonbaron\/hack\/jollybean\/src\/ecs.c"$/;"	s	object:1
-file	src/compile_commands.json	/^  "file": "\/home\/bonbonbaron\/hack\/jollybean\/src\/jb.c"$/;"	s	object:5
-file	src/compile_commands.json	/^  "file": "\/home\/bonbonbaron\/hack\/jollybean\/src\/xControl.c"$/;"	s	object:2
-file	src/compile_commands.json	/^  "file": "\/home\/bonbonbaron\/hack\/jollybean\/src\/xParent.c"$/;"	s	object:3
-file	src/compile_commands.json	/^  "file": "\/home\/bonbonbaron\/hack\/jollybean\/src\/xRender.c"$/;"	s	object:0
-firstEmptyIdx	src/include/ecs.h	/^  U8 firstEmptyIdx; \/* marks the first empty element's index *\/$/;"	m	struct:_Activity	typeref:typename:U8
-firstInactiveActIdx	src/include/ecs.h	/^  Key          firstInactiveActIdx; \/* index of first inactive activity *\/$/;"	m	struct:_System	typeref:typename:Key
-firstInactiveIdx	src/include/ecs.h	/^  U8 firstInactiveIdx; \/* marks the first inactive element's index *\/$/;"	m	struct:_Activity	typeref:typename:U8
-flagA	src/include/data.h	/^	FlagInfo flagA[N_FLAG_BYTES];  \/\/ "A" means "Array" for JB's naming standards $/;"	m	struct:__anona56c69bf0508	typeref:typename:FlagInfo[]
-flags	src/include/data.h	/^	U8 flags;$/;"	m	struct:__anona56c69bf0308	typeref:typename:U8
-flipIdxA	src/include/xRender.h	/^	U16 flipIdxA[];$/;"	m	struct:__anond940d27d0208	typeref:typename:U16[]
-flipSetP	src/include/xRender.h	/^	FlipSet *flipSetP;$/;"	m	struct:__anond940d27d0308	typeref:typename:FlipSet *
-game_over	src/include/jbOld.h	/^SDL_bool game_over;$/;"	v	typeref:typename:SDL_bool
-genePA	src/include/ecs.h	/^  XHeader *genePA[];$/;"	m	struct:__anon1c5c41200308	typeref:typename:XHeader * []
-genomeGroupP	src/include/xParent.h	/^	GenomeGrp *genomeGroupP;$/;"	m	struct:__anond63fe8a70408	typeref:typename:GenomeGrp *
-genomeP	src/include/ecs.h	/^	Genome *genomeP;$/;"	m	struct:__anon1c5c41200508	typeref:typename:Genome *
-genomePA	src/include/ecs.h	/^  Genome *genomePA[];$/;"	m	struct:__anon1c5c41200408	typeref:typename:Genome * []
-h	src/include/xRender.h	/^	U16 w, h, pitch;  \/\/ in pixel units; determine actual step size by pixel format$/;"	m	struct:__anond940d27d0508	typeref:typename:U16
-hcArrayIni	src/data.c	/^Error hcArrayIni(HardCodedArray *hcaP) {$/;"	f	typeref:typename:Error
-hcMapIni	src/data.c	/^Error hcMapIni(HardCodedMap *hcmP) {$/;"	f	typeref:typename:Error
-hcmP	src/include/ecs.h	/^	HardCodedMap *hcmP;  \/\/ Some types of components' values change under various circumstances.$/;"	m	struct:__anon1c5c41200708	typeref:typename:HardCodedMap *
-head	src/include/jbOld.h	/^	ListNode *head;$/;"	m	struct:LinkedList	typeref:typename:ListNode *
-histoDel	src/data.c	/^void histoDel(U32 **histoPP) {$/;"	f	typeref:typename:void
-histoNew	src/data.c	/^Error histoNew(U32 **histoPP, const U32 maxVal) {$/;"	f	typeref:typename:Error
-id	src/include/ecs.h	/^			Key id;  \/\/ event ID$/;"	m	struct:__anon1c5c41200a08::__anon1c5c41200b0a::__anon1c5c41200c08	typeref:typename:Key
-id	src/include/ecs.h	/^  U8           id;                  \/* this is needed to ensure messages are sent to the correc/;"	m	struct:_System	typeref:typename:U8
-id	src/include/ecs.h	/^  U8 id;  \/* ID of activity *\/$/;"	m	struct:_Activity	typeref:typename:U8
-ii	src/xRender.c	/^static U8 ii = 0;$/;"	v	typeref:typename:U8	file:
-imgP	src/include/xRender.h	/^	Image *imgP;$/;"	m	struct:__anond940d27d0708	typeref:typename:Image *
-inbox	src/include/ecs.h	/^  Mailbox      inbox;               \/* Where commands come in from the outside world *\/$/;"	m	struct:_System	typeref:typename:Mailbox
-inbox	src/include/jbOld.h	/^	Message     *inbox;$/;"	m	struct:System	typeref:typename:Message *
-inflate	src/data.c	/^Error inflate(Inflatable *inflatableP) {$/;"	f	typeref:typename:Error
-inflatedDataP	src/include/data.h	/^	void *inflatedDataP;$/;"	m	struct:__anona56c69bf0708	typeref:typename:void *
-inflatedLen	src/include/data.h	/^	U32 inflatedLen;$/;"	m	struct:__anona56c69bf0708	typeref:typename:U32
-inline	src/include/data.h	/^#define inline /;"	d
-install	src/Makefile	/^install:$/;"	t
-jbAlloc	src/data.c	/^inline Error jbAlloc(void **voidPP, U32 elemSz, U32 nElems) {$/;"	f	typeref:typename:Error
-jbFree	src/data.c	/^inline void jbFree(void **voidPP) {$/;"	f	typeref:typename:void
-key	src/include/data.h	/^	Key key;$/;"	m	struct:__anona56c69bf0408	typeref:typename:Key
-key	src/include/ecs.h	/^			Key key;  \/\/ tells activity what specifically to do with component every loop $/;"	m	struct:__anon1c5c41200a08::__anon1c5c41200b0a::__anon1c5c41200d08	typeref:typename:Key
-keyValA	src/include/data.h	/^	KeyValPair  keyValA[];$/;"	m	struct:__anona56c69bf0608	typeref:typename:KeyValPair[]
-last_modified_tm	src/include/jbOld.h	/^	Uint32    last_modified_tm;$/;"	m	struct:Tileset	typeref:typename:Uint32
-m_bit_buf	src/data.c	/^  tinfl_bit_buf_t m_bit_buf;$/;"	m	struct:tinfl_decompressor_tag	typeref:typename:tinfl_bit_buf_t	file:
-m_check_adler32	src/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32	file:
-m_code_size	src/data.c	/^  mz_uint8 m_code_size[TINFL_MAX_HUFF_SYMBOLS_0];$/;"	m	struct:__anon559e44a70408	typeref:typename:mz_uint8[]	file:
-m_counter	src/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32	file:
-m_dist	src/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32	file:
-m_dist_from_out_buf_start	src/data.c	/^  size_t m_dist_from_out_buf_start;$/;"	m	struct:tinfl_decompressor_tag	typeref:typename:size_t	file:
-m_final	src/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32	file:
-m_len_codes	src/data.c	/^  mz_uint8 m_raw_header[4], m_len_codes[TINFL_MAX_HUFF_SYMBOLS_0 + TINFL_MAX_HUFF_SYMBOLS_1 + 13/;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint8[]	file:
-m_look_up	src/data.c	/^  mz_int16 m_look_up[TINFL_FAST_LOOKUP_SIZE], m_tree[TINFL_MAX_HUFF_SYMBOLS_0 * 2];$/;"	m	struct:__anon559e44a70408	typeref:typename:mz_int16[]	file:
-m_n_bits	src/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32	file:
-m_num_extra	src/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32	file:
-m_raw_header	src/data.c	/^  mz_uint8 m_raw_header[4], m_len_codes[TINFL_MAX_HUFF_SYMBOLS_0 + TINFL_MAX_HUFF_SYMBOLS_1 + 13/;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint8[4]	file:
-m_state	src/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32	file:
-m_table_sizes	src/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32[]	file:
-m_tables	src/data.c	/^  tinfl_huff_table m_tables[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	typeref:typename:tinfl_huff_table[]	file:
-m_tree	src/data.c	/^  mz_int16 m_look_up[TINFL_FAST_LOOKUP_SIZE], m_tree[TINFL_MAX_HUFF_SYMBOLS_0 * 2];$/;"	m	struct:__anon559e44a70408	typeref:typename:mz_int16[]	file:
-m_type	src/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32	file:
-m_z_adler32	src/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32	file:
-m_zhdr0	src/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32	file:
-m_zhdr1	src/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, /;"	m	struct:tinfl_decompressor_tag	typeref:typename:mz_uint32	file:
-main	src/jb.c	/^int main() {$/;"	f	typeref:typename:int
-mapA	src/include/data.h	/^	void  *mapA;  $/;"	m	struct:__anona56c69bf0508	typeref:typename:void *
-mapDel	src/data.c	/^void mapDel(Map **mapPP) {$/;"	f	typeref:typename:void
-mapGet	src/data.c	/^extern void* mapGet(const Map *mapP, const U8 key) {$/;"	f	typeref:typename:void *
-mapIni	src/data.c	/^Error mapIni(Map **mapPP, HardCodedMap *hcMapP) {$/;"	f	typeref:typename:Error
-mapNew	src/data.c	/^Error mapNew(Map **mapPP, const U8 elemSz, const U16 nElems) {$/;"	f	typeref:typename:Error
-mapP	src/include/data.h	/^	Map        *mapP;       \/\/ defaults to NULL to prevent copies $/;"	m	struct:__anona56c69bf0608	typeref:typename:Map *
-mapRem	src/data.c	/^Error mapRem(Map *mapP, const U8 key) {$/;"	f	typeref:typename:Error
-mapSet	src/data.c	/^Error mapSet(Map *mapP, const U8 key, const void *valP) {$/;"	f	typeref:typename:Error
-max_depth	src/include/jbOld.h	/^	Uint8 max_depth, max_n_elems;$/;"	m	struct:QuadTree	typeref:typename:Uint8
-max_frame_idx	src/include/jbOld.h	/^	Uint8         max_frame_idx;  \/* awkward var name, because i don't want to subtract by one in /;"	m	struct:Strip	typeref:typename:Uint8
-max_n_elems	src/include/jbOld.h	/^	Uint8 max_depth, max_n_elems;$/;"	m	struct:QuadTree	typeref:typename:Uint8
-mi_idx	src/include/jbOld.h	/^	Uint16    mi_idx;     \/* index into the media info table *\/$/;"	m	struct:Tileset	typeref:typename:Uint16
-msg	src/include/xParent.h	/^	Message msg;  \/\/ must copy message triggered by this reaction before JB clears it from outbox$/;"	m	struct:__anond63fe8a70208	typeref:typename:Message
-msgA	src/include/ecs.h	/^  Message *msgA;$/;"	m	struct:__anon1c5c41200e08	typeref:typename:Message *
-mz_int16	src/data.c	/^typedef signed short mz_int16;$/;"	t	typeref:typename:signed short	file:
-mz_uint	src/data.c	/^typedef unsigned int mz_uint;$/;"	t	typeref:typename:unsigned int	file:
-mz_uint16	src/data.c	/^typedef unsigned short mz_uint16;$/;"	t	typeref:typename:unsigned short	file:
-mz_uint32	src/data.c	/^typedef unsigned int mz_uint32;$/;"	t	typeref:typename:unsigned int	file:
-mz_uint64	src/data.c	/^typedef unsigned long long mz_uint64;$/;"	t	typeref:typename:unsigned long long	file:
-mz_uint8	src/data.c	/^typedef unsigned char mz_uint8;$/;"	t	typeref:typename:unsigned char	file:
-nActivities	src/include/ecs.h	/^  U8           nActivities;         \/* Number of activities in activityA[] *\/$/;"	m	struct:_System	typeref:typename:U8
-nColors	src/include/xRender.h	/^	U8 nColors;$/;"	m	struct:__anond940d27d0608	typeref:typename:U8
-nEntities	src/include/ecs.h	/^  U32 nEntities;$/;"	m	struct:__anon1c5c41200408	typeref:typename:U32
-nFlips	src/include/xRender.h	/^	U16 nFlips;$/;"	m	struct:__anond940d27d0208	typeref:typename:U16
-nGenes	src/include/ecs.h	/^  U32 nGenes;$/;"	m	struct:__anon1c5c41200308	typeref:typename:U32
-nIndices	src/include/xRender.h	/^	U16 nIndices;$/;"	m	struct:__anond940d27d0408	typeref:typename:U16
-nMsgs	src/include/ecs.h	/^  U32 nMsgs;$/;"	m	struct:__anon1c5c41200e08	typeref:typename:U32
-nStrips	src/include/xRender.h	/^	U16 nStrips;    \/\/ number of 64-pixel strips in strip set$/;"	m	struct:__anond940d27d0308	typeref:typename:U16
-nSystems	src/include/xParent.h	/^	Entity nSystems;$/;"	m	struct:__anond63fe8a70408	typeref:typename:Entity
-n_colors	src/include/jbOld.h	/^	Uint8      n_colors;$/;"	m	struct:ColorPalette	typeref:typename:Uint8
-n_elems	src/include/jbOld.h	/^	Uint8 n_elems, depth;$/;"	m	struct:_QuadNode	typeref:typename:Uint8
-n_tiles	src/include/jbOld.h	/^	Uint16    n_tiles;$/;"	m	struct:Tileset	typeref:typename:Uint16
-next	src/include/jbOld.h	/^	struct ListNode *next, *prev;$/;"	m	struct:ListNode	typeref:struct:ListNode *
-nodes	src/include/jbOld.h	/^	struct _QuadNode *nodes[4];$/;"	m	struct:_QuadNode	typeref:struct:_QuadNode * [4]
-offset	src/include/jbOld.h	/^	Uint32 offset, uncompressed_len, compressed_len;$/;"	m	struct:MediaInfo	typeref:typename:Uint32
-operand	src/include/ecs.h	/^  void *operand;  \/\/ e.g. seeing if E 45's velocity magnitude is > 45 (pre-set somewhere)$/;"	m	struct:__anon1c5c41200108	typeref:typename:void *
-otherEntity	src/include/ecs.h	/^			Entity otherEntity;  \/\/ needed by systems like motion if tracking someone$/;"	m	struct:__anon1c5c41200a08::__anon1c5c41200b0a::__anon1c5c41200c08	typeref:typename:Entity
-outbox	src/include/ecs.h	/^  Mailbox      outbox;              \/* Where this stem talks to the outside world *\/$/;"	m	struct:_System	typeref:typename:Mailbox
-outbox	src/include/jbOld.h	/^	Message     *outbox;$/;"	m	struct:System	typeref:typename:Message *
-output	src/include/ecs.h	/^  U8 output;  \/\/ flags are less flexible than sums of events. $/;"	m	struct:__anon1c5c41200108	typeref:typename:U8
-owner	src/include/ecs.h	/^  Entity owner;$/;"	m	struct:__anon1c5c41200208	typeref:typename:Entity
-ownerP	src/include/ecs.h	/^  struct _System *ownerP;$/;"	m	struct:_Activity	typeref:struct:_System *
-paramsP	src/include/xParent.h	/^  void *paramsP;$/;"	m	struct:__anond63fe8a70208	typeref:typename:void *
-pitch	src/include/xRender.h	/^	U16 w, h, pitch;  \/\/ in pixel units; determine actual step size by pixel format$/;"	m	struct:__anond940d27d0508	typeref:typename:U16
-preMapSet	src/data.c	/^static Error preMapSet(const Map *mapP, const U8 key, void **elemPP, void **nextElemPP, U32 *nBy/;"	f	typeref:typename:Error	file:
-prev	src/include/jbOld.h	/^	struct ListNode *next, *prev;$/;"	m	struct:ListNode	typeref:struct:ListNode *
-prevBitCount	src/include/data.h	/^	U8 prevBitCount;$/;"	m	struct:__anona56c69bf0308	typeref:typename:U8
-priority	src/include/xParent.h	/^	U8  priority;$/;"	m	struct:__anond63fe8a70208	typeref:typename:U8
-r	src/include/xParent.h	/^	Reaction r;$/;"	m	union:__anond63fe8a7030a	typeref:typename:Reaction
-reactionMP	src/include/ecs.h	/^	Map *reactionMP;  \/\/ This would be a map of... $/;"	m	struct:__anon1c5c41200508	typeref:typename:Map *
-rect1	src/xRender.c	/^SDL_Rect rect1 = {0, 0, 100, 200};$/;"	v	typeref:typename:SDL_Rect
-rect1P	src/xRender.c	/^SDL_Rect *rect1P = &rect1;$/;"	v	typeref:typename:SDL_Rect *
-rect2	src/xRender.c	/^SDL_Rect rect2 = {50, 100, 200, 200};$/;"	v	typeref:typename:SDL_Rect
-rect2P	src/xRender.c	/^SDL_Rect *rect2P = &rect2;$/;"	v	typeref:typename:SDL_Rect *
-rect3	src/xRender.c	/^SDL_Rect rect3 = {100, 150, 150, 150};$/;"	v	typeref:typename:SDL_Rect
-rect3P	src/xRender.c	/^SDL_Rect *rect3P = &rect3;$/;"	v	typeref:typename:SDL_Rect *
-rendererP	src/xRender.c	/^static SDL_Renderer *rendererP = NULL;$/;"	v	typeref:typename:SDL_Renderer *	file:
-repeat	src/include/jbOld.h	/^	SDL_bool      repeat;$/;"	m	struct:Strip	typeref:typename:SDL_bool
-root	src/include/jbOld.h	/^	QuadNode *root;$/;"	m	struct:QuadTree	typeref:typename:QuadNode *
-runLoop	src/include/jbOld.h	/^	RunSysLoopFP runLoop;$/;"	m	struct:System	typeref:typename:RunSysLoopFP
-s	src/include/xParent.h	/^	System s;$/;"	m	union:__anond63fe8a7030a	typeref:typename:System
-sActivateActivity	src/ecs.c	/^Error sActivateActivity(System *sP, Key activityID) {$/;"	f	typeref:typename:Error
-sActivateC	src/ecs.c	/^Error sActivateC(System *sP, Entity entity) {$/;"	f	typeref:typename:Error
-sAddC	src/ecs.c	/^Error sAddC(System *sP, Entity entity, XHeader *xhP) {$/;"	f	typeref:typename:Error
-sClr	src/ecs.c	/^void sClr(System *sP) {$/;"	f	typeref:typename:void
-sComponentIsActive	src/ecs.c	/^U8 sComponentIsActive(System *sP, Entity entity) {$/;"	f	typeref:typename:U8
-sDeactivateActivity	src/ecs.c	/^Error sDeactivateActivity(System *sP, Key activityID) {$/;"	f	typeref:typename:Error
-sDeactivateC	src/ecs.c	/^Error sDeactivateC(System *sP, Entity entity) {$/;"	f	typeref:typename:Error
-sFP	src/include/ecs.h	/^  SysFP sFP; \/* function that runs on these components *\/$/;"	m	struct:_Activity	typeref:typename:SysFP
-sGetActivity	src/ecs.c	/^Activity* sGetActivity(System *sP, Key actID) {$/;"	f	typeref:typename:Activity *
-sGetActivityFromE	src/ecs.c	/^Activity* sGetActivityFromE(System *sP, Entity entity) {$/;"	f	typeref:typename:Activity *
-sGetC	src/ecs.c	/^void* sGetC(System *sP, Entity entity) {$/;"	f	typeref:typename:void *
-sGetNComponents	src/ecs.c	/^U32 sGetNComponents(System *sP) {$/;"	f	typeref:typename:U32
-sIni	src/ecs.c	/^Error sIni(System *sP, U32 nComps, void *miscP) {$/;"	f	typeref:typename:Error
-sIniActivity	src/ecs.c	/^Error sIniActivity(System *sP, Activity *aP, U32 nComps) {$/;"	f	typeref:typename:Error
-sIniCFP	src/include/ecs.h	/^  SysIniCFP    sIniCFP;              \/* Some stems need to inflate components before using them/;"	m	struct:_System	typeref:typename:SysIniCFP
-sIniSFP	src/include/ecs.h	/^  SysIniFP     sIniSFP;              \/* System init function pointer *\/$/;"	m	struct:_System	typeref:typename:SysIniFP
-sIniSParamsP	src/include/ecs.h	/^	void        *sIniSParamsP;         \/* whatever sIniSFP() needs to properly initialize this sys/;"	m	struct:_System	typeref:typename:void *
-sNewActDirectory	src/ecs.c	/^Error sNewActDirectory(System *sP) {$/;"	f	typeref:typename:Error
-sNewCDirectory	src/ecs.c	/^Error sNewCDirectory(System *sP, U8 nElems) {$/;"	f	typeref:typename:Error
-sNewMailbox	src/ecs.c	/^Error sNewMailbox(Mailbox **mailboxPP, U32 nMailSlots) {$/;"	f	typeref:typename:Error
-sPA	src/jb.c	/^static System *sPA[] = {$/;"	v	typeref:typename:System * []	file:
-sParentReact	src/xParent.c	/^Error sParentReact(Activity *aP) {$/;"	f	typeref:typename:Error
-sParentTick	src/xParent.c	/^Error sParentTick(Activity *aP) {$/;"	f	typeref:typename:Error
-sReset	src/ecs.c	/^void sReset(System *sP) {$/;"	f	typeref:typename:void
-sRun	src/ecs.c	/^void sRun(System *sP) {$/;"	f	typeref:typename:void
-sSendMessage	src/ecs.c	/^void sSendMessage(System *sP, Message *msgP) {$/;"	f	typeref:typename:void
-sSetC	src/ecs.c	/^static void sSetC(System *sP, Entity entity, const void *newValP) {$/;"	f	typeref:typename:void	file:
-sStartCActivity	src/ecs.c	/^Error sStartCActivity(System *sP, Entity entity, Key dstActivityID) {$/;"	f	typeref:typename:Error
-sendSysMessage	src/xParent.c	/^Error sendSysMessage(const Entity entity, const Key sID, const Key aID, const Key k) {$/;"	f	typeref:typename:Error
-srcRectPP	src/include/xRender.h	/^	SDL_Rect **srcRectPP;$/;"	m	struct:__anond940d27d0708	typeref:typename:SDL_Rect **
-stripMapInfP	src/include/xRender.h	/^	Inflatable *stripMapInfP;$/;"	m	struct:__anond940d27d0408	typeref:typename:Inflatable *
-stripMapP	src/include/xRender.h	/^	StripMap *stripMapP;$/;"	m	struct:__anond940d27d0508	typeref:typename:StripMap *
-stripSetInfP	src/include/xRender.h	/^	Inflatable *stripSetInfP;  \/\/ strip set's compressed source data$/;"	m	struct:__anond940d27d0308	typeref:typename:Inflatable *
-stripSetP	src/include/xRender.h	/^	StripSet *stripSetP;$/;"	m	struct:__anond940d27d0508	typeref:typename:StripSet *
-surface_p	src/include/jbOld.h	/^	SDL_Surface  *surface_p;  \/* ptr to loaded surface; results loaded tileset building img w\/ ti/;"	m	struct:Image_t	typeref:typename:SDL_Surface *
-surface_p	src/include/jbOld.h	/^	SDL_Surface *surface_p;$/;"	m	struct:Tileset	typeref:typename:SDL_Surface *
-swapPlaceholderP	src/include/ecs.h	/^  void        *swapPlaceholderP;    \/* Avoids allocating a new placeholder every EC-swap. *\/$/;"	m	struct:_System	typeref:typename:void *
-sysDel	src/include/jbOld.h	/^void  sysDel;$/;"	v	typeref:typename:void
-sysID	src/include/ecs.h	/^			Key sysID;$/;"	m	struct:__anon1c5c41200a08::__anon1c5c41200b0a::__anon1c5c41200d08	typeref:typename:Key
-sysPA	src/include/xParent.h	/^	System **sysPA;$/;"	m	struct:__anond63fe8a70408	typeref:typename:System **
-tail	src/include/jbOld.h	/^	ListNode *tail;$/;"	m	struct:LinkedList	typeref:typename:ListNode *
-textureP	src/include/xRender.h	/^	SDL_Texture *textureP;$/;"	m	struct:__anond940d27d0608	typeref:typename:SDL_Texture *
-tinflIni	src/data.c	/^#define tinflIni(/;"	d	file:
-tinfl_bit_buf_t	src/data.c	/^  typedef mz_uint32 tinfl_bit_buf_t;$/;"	t	typeref:typename:mz_uint32	file:
-tinfl_bit_buf_t	src/data.c	/^  typedef mz_uint64 tinfl_bit_buf_t;$/;"	t	typeref:typename:mz_uint64	file:
-tinfl_decompress	src/data.c	/^tinfl_status tinfl_decompress(tinfl_decompressor *r, const mz_uint8 *pIn_buf_next, size_t *pIn_b/;"	f	typeref:typename:tinfl_status
-tinfl_decompress_mem_to_heap	src/data.c	/^void *tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_len, size_t *pOut_len, i/;"	f	typeref:typename:void *
-tinfl_decompressor	src/data.c	/^struct tinfl_decompressor_tag; typedef struct tinfl_decompressor_tag tinfl_decompressor;$/;"	t	typeref:struct:tinfl_decompressor_tag	file:
-tinfl_decompressor_tag	src/data.c	/^struct tinfl_decompressor_tag$/;"	s	file:
-tinfl_get_adler32	src/data.c	/^#define tinfl_get_adler32(/;"	d	file:
-tinfl_huff_table	src/data.c	/^} tinfl_huff_table;$/;"	t	typeref:struct:__anon559e44a70408	file:
-tinfl_put_buf_func_ptr	src/data.c	/^typedef int (*tinfl_put_buf_func_ptr)(const void* pBuf, int len, void *pUser);$/;"	t	typeref:typename:int (*)(const void * pBuf,int len,void * pUser)	file:
-tinfl_status	src/data.c	/^} tinfl_status;$/;"	t	typeref:enum:__anon559e44a70203	file:
-tl_corner	src/include/jbOld.h	/^	Vector2 tl_corner, br_corner;$/;"	m	struct:_QuadNode	typeref:typename:Vector2
-tm_arry	src/include/jbOld.h	/^	Uint16        *tm_arry;$/;"	m	struct:Tilemap	typeref:typename:Uint16 *
-tm_idx	src/include/jbOld.h	/^	Uint16        tm_idx;     \/* index into tilemap table *\/$/;"	m	struct:Image_t	typeref:typename:Uint16
-to	src/include/ecs.h	/^	Entity to;$/;"	m	struct:__anon1c5c41200a08	typeref:typename:Entity
-trigger	src/include/xParent.h	/^	Key trigger;$/;"	m	struct:__anond63fe8a70208	typeref:typename:Key
-ts_idx	src/include/jbOld.h	/^	Uint16         ts_idx;      \/* index into tileset table *\/$/;"	m	struct:Tilemap	typeref:typename:Uint16
-type	src/include/ecs.h	/^			U8 type;  \/\/ needed by systems like collision, battle, etc.$/;"	m	struct:__anon1c5c41200a08::__anon1c5c41200b0a::__anon1c5c41200c08	typeref:typename:U8
-type	src/include/ecs.h	/^  U8 type;$/;"	m	struct:__anon1c5c41200208	typeref:typename:U8
-uncompressed_len	src/include/jbOld.h	/^	Uint32 offset, uncompressed_len, compressed_len;$/;"	m	struct:MediaInfo	typeref:typename:Uint32
-valP	src/include/data.h	/^	void *valP;$/;"	m	struct:__anona56c69bf0108	typeref:typename:void *
-valueP	src/include/data.h	/^	void *valueP;$/;"	m	struct:__anona56c69bf0408	typeref:typename:void *
-w	src/include/xRender.h	/^	U16 w, h, pitch;  \/\/ in pixel units; determine actual step size by pixel format$/;"	m	struct:__anond940d27d0508	typeref:typename:U16
-wSurfP	src/xRender.c	/^static SDL_Surface *wSurfP = NULL;$/;"	v	typeref:typename:SDL_Surface *	file:
-windowP	src/xRender.c	/^static SDL_Window *windowP = NULL;$/;"	v	typeref:typename:SDL_Window *	file:
-x	src/include/jbOld.h	/^	Sint32 x;$/;"	m	struct:Position	typeref:typename:Sint32
-xControlIniC	src/xControl.c	/^Error xControlIniC(XHeader *xhP) {$/;"	f	typeref:typename:Error
-xControlIniS	src/xControl.c	/^Error xControlIniS() {$/;"	f	typeref:typename:Error
-xHeader	src/include/ecs.h	/^  XHeader      xHeader;             \/* This allows (sub)stems to be components of other stems! /;"	m	struct:_System	typeref:typename:XHeader
-xHeader	src/include/xControl.h	/^	XHeader xHeader;$/;"	m	struct:__anon8edff7fe0208	typeref:typename:XHeader
-xHeader	src/include/xRender.h	/^	XHeader xHeader;$/;"	m	struct:__anond940d27d0708	typeref:typename:XHeader
-xIni	src/xParent.c	/^Error xIni(System **sPA, U16 nSystems, GenomeGrp *genomeGroupP) {$/;"	f	typeref:typename:Error
-xParentIniC	src/xParent.c	/^Error xParentIniC(XHeader *xhP) {$/;"	f	typeref:typename:Error
-xParentIniS	src/xParent.c	/^Error xParentIniS(void *sParamsP) {$/;"	f	typeref:typename:Error
-xRender	src/xRender.c	/^Error xRender(Activity *aP) {$/;"	f	typeref:typename:Error
-xRenderIniC	src/xRender.c	/^Error xRenderIniC(XHeader *xhP) {$/;"	f	typeref:typename:Error
-xRenderIniS	src/xRender.c	/^Error xRenderIniS() {$/;"	f	typeref:typename:Error
-y	src/include/jbOld.h	/^	Sint32 y;$/;"	m	struct:Position	typeref:typename:Sint32
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+ActDirEntry	engine/include/ecs.h	/^} ActDirEntry;$/;"	t	typeref:struct:__anon12
+Activity	engine/include/ecs.h	/^} Activity;$/;"	t	typeref:struct:_Activity
+Activity_	engine/include/ecs.h	7;"	d
+Animation	engine/include/jbOld.h	/^} Animation;$/;"	t	typeref:struct:Animation_t
+Animation_t	engine/include/jbOld.h	/^typedef struct Animation_t {$/;"	s
+BBSeed	engine/include/bt.h	/^} BBSeed;$/;"	t	typeref:struct:__anon23
+BBSeed_	engine/include/bt.h	8;"	d
+BIOME_	engine/include/biome.h	2;"	d
+BIT_FLAG	engine/data.c	4;"	d	file:
+BT_H	engine/include/bt.h	2;"	d
+BTree	engine/include/bt.h	/^} BTree;$/;"	t	typeref:struct:__anon25
+BTreeSingleton	engine/include/bt.h	/^} BTreeSingleton;$/;"	t	typeref:struct:__anon26
+BTreeSingleton_	engine/include/bt.h	99;"	d
+BUILDDIR	engine/Makefile	/^BUILDDIR         = $(JBDIR)build\/$/;"	m
+BYTE_IDX	engine/data.c	3;"	d	file:
+Biome	engine/include/biome.h	/^} Biome;$/;"	t	typeref:struct:__anon27
+Biome_	engine/include/biome.h	5;"	d
+Blackboard	engine/include/bt.h	/^} Blackboard;$/;"	t	typeref:struct:__anon24
+Bln	engine/include/data.h	/^typedef U8 Bln;   \/\/ Boolean$/;"	t
+CC	engine/Makefile	/^CC=cc$/;"	m
+CDirEntry	engine/include/ecs.h	/^} CDirEntry;$/;"	t	typeref:struct:_CDirEntry
+CFLAGS_COMMON	engine/Makefile	/^CFLAGS_COMMON = -g -Wall $(SDL_CFLAGS) \\$/;"	m
+CFLAGS_FAST	engine/Makefile	/^CFLAGS_FAST   = $(CFLAGS_COMMON) #-Ofast    #TODO: uncomment when ready for relase$/;"	m
+CFLAGS_TINY	engine/Makefile	/^CFLAGS_TINY   = $(CFLAGS_COMMON) #-Os    #TODO: uncomment when ready for relase$/;"	m
+COMPLETE	engine/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon22
+CTRL_A	engine/include/jbOld.h	20;"	d
+CTRL_A	engine/include/xControl.h	19;"	d
+CTRL_B	engine/include/jbOld.h	21;"	d
+CTRL_B	engine/include/xControl.h	20;"	d
+CTRL_D	engine/include/jbOld.h	17;"	d
+CTRL_DOWN	engine/include/xControl.h	18;"	d
+CTRL_L	engine/include/jbOld.h	18;"	d
+CTRL_LEFT	engine/include/xControl.h	15;"	d
+CTRL_LISTEN	engine/include/xControl.h	/^	CTRL_LISTEN = 1$/;"	e	enum:__anon20
+CTRL_R	engine/include/jbOld.h	19;"	d
+CTRL_RIGHT	engine/include/xControl.h	16;"	d
+CTRL_S	engine/include/jbOld.h	23;"	d
+CTRL_SELECT	engine/include/xControl.h	22;"	d
+CTRL_START	engine/include/xControl.h	21;"	d
+CTRL_U	engine/include/jbOld.h	16;"	d
+CTRL_UP	engine/include/xControl.h	17;"	d
+CTRL_X	engine/include/jbOld.h	22;"	d
+Check	engine/include/ecs.h	/^} Check;$/;"	t	typeref:struct:__anon11
+CheckCBP	engine/include/ecs.h	/^typedef Bln (*CheckCBP)(XHeader *xhP, void *operandP); $/;"	t
+Checkers	engine/include/ecs.h	/^} Checkers;$/;"	t	typeref:struct:__anon19
+ColorPalette	engine/include/jbOld.h	/^typedef struct ColorPalette {$/;"	s
+ColorPalette	engine/include/jbOld.h	/^} ColorPalette;$/;"	t	typeref:struct:ColorPalette
+Colormap	engine/include/xRender.h	/^} Colormap;     \/\/ When the inflatable requires neither unpacking nor strip-mapping, go ahead and memcpy over. I can't think of any cleaner way to do it.$/;"	t	typeref:struct:__anon7
+DATA_H	engine/include/data.h	2;"	d
+ECS_H	engine/include/ecs.h	2;"	d
+ENGINEBUILDDIR	engine/Makefile	/^ENGINEBUILDDIR   = $(BUILDDIR)engine\/$/;"	m
+ENGINEDIR	engine/Makefile	/^ENGINEDIR        = $(JBDIR)engine\/$/;"	m
+ENGINEINCLUDEDIR	engine/Makefile	/^ENGINEINCLUDEDIR = $(ENGINEDIR)include\/$/;"	m
+ENGINE_INCLUDES	engine/Makefile	/^ENGINE_INCLUDES  = $(ENGINEINCLUDEDIR)*.h$/;"	m
+ENGINE_OBJS	engine/Makefile	/^ENGINE_OBJS = $(ENGINE_SRC:%.c=%.o)$/;"	m
+ENGINE_SRC	engine/Makefile	/^ENGINE_SRC    = $(shell find $(ENGINEDIR) -name "*.c") $/;"	m
+ERROR	engine/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon22
+E_BAD_ARGS	engine/include/errors.h	/^	E_BAD_ARGS,$/;"	e	enum:Error
+E_BAD_INDEX	engine/include/errors.h	/^	E_BAD_INDEX,$/;"	e	enum:Error
+E_BAD_KEY	engine/include/errors.h	/^	E_BAD_KEY,$/;"	e	enum:Error
+E_MSG_INVALID_CMD	engine/include/errors.h	/^	E_MSG_INVALID_CMD,$/;"	e	enum:Error
+E_MSG_TO_ECS_TYPE_MISMATCH	engine/include/errors.h	/^	E_MSG_TO_ECS_TYPE_MISMATCH,$/;"	e	enum:Error
+E_MSG_TO_ID_MISMATCH	engine/include/errors.h	/^	E_MSG_TO_ID_MISMATCH,$/;"	e	enum:Error
+E_NO_MEMORY	engine/include/errors.h	/^	E_NO_MEMORY,$/;"	e	enum:Error
+E_NULL_VAR	engine/include/errors.h	/^	E_NULL_VAR,$/;"	e	enum:Error
+E_SYS_CMP_MISMATCH	engine/include/errors.h	/^	E_SYS_CMP_MISMATCH,$/;"	e	enum:Error
+E_UNEXPECTED_DCMP_SZ	engine/include/errors.h	/^	E_UNEXPECTED_DCMP_SZ,$/;"	e	enum:Error
+E_UNSUPPORTED_PIXEL_FORMAT	engine/include/errors.h	/^	E_UNSUPPORTED_PIXEL_FORMAT,$/;"	e	enum:Error
+Entity	engine/include/ecs.h	/^typedef U8 Entity;  $/;"	t
+EntityState	engine/include/xParent.h	/^} EntityState;$/;"	t	typeref:struct:__anon30
+EnumValPair	engine/include/data.h	/^} EnumValPair;$/;"	t	typeref:struct:__anon34
+Error	engine/include/errors.h	/^typedef enum Error {$/;"	g
+Error	engine/include/errors.h	/^} Error;$/;"	t	typeref:enum:Error
+Error	engine/include/jbOld.h	/^typedef Sint8 Error;$/;"	t
+Event	engine/include/xParent.h	/^} Event;$/;"	t	typeref:struct:__anon31
+FAILED	engine/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon22
+FIRST_ACTIVITY	engine/include/ecs.h	5;"	d
+FPS	engine/include/jbOld.h	25;"	d
+FRAME_DURATION	engine/include/jbOld.h	26;"	d
+FlagInfo	engine/include/data.h	/^} FlagInfo;$/;"	t	typeref:struct:__anon36
+FlipSet	engine/include/xRender.h	/^} FlipSet;$/;"	t	typeref:struct:__anon4
+GAMEBUILDDIR	engine/Makefile	/^GAMEBUILDDIR     = $(BUILDDIR)game\/$/;"	m
+GAMEDIR	engine/Makefile	/^GAMEDIR          = $(JBDIR)game\/$/;"	m
+GAMEINCLUDEDIR	engine/Makefile	/^GAMEINCLUDEDIR   = $(GAMEDIR)include\/$/;"	m
+GAME_INCLUDES	engine/Makefile	/^GAME_INCLUDES    = $(GAMEINCLUDEDIR)*.h$/;"	m
+GAME_OBJS	engine/Makefile	/^GAME_OBJS   = $(GAME_SRC:%.c=%.o)$/;"	m
+GAME_SRC	engine/Makefile	/^GAME_SRC      = $(shell find $(GAMEDIR) -name "*.c") $/;"	m
+GENES_	engine/include/genome.h	2;"	d
+GENES_	engine/include/image.h	2;"	d
+Genome	engine/include/genome.h	/^} Genome;$/;"	t	typeref:struct:__anon33
+Genome_	engine/include/genome.h	5;"	d
+HardCodedArray	engine/include/data.h	/^} HardCodedArray;$/;"	t	typeref:struct:__anon35
+HardCodedArray_	engine/include/data.h	50;"	d
+HardCodedMap	engine/include/data.h	/^} HardCodedMap;$/;"	t	typeref:struct:__anon39
+HardCodedMap_	engine/include/data.h	68;"	d
+IFLAGS	engine/Makefile	/^IFLAGS        = -I$(GAMEINCLUDEDIR) -I$(ENGINEINCLUDEDIR)$/;"	m
+INSTALLDIR	engine/Makefile	/^INSTALLDIR       = $(JBDIR)$/;"	m
+Image	engine/include/jbOld.h	/^} Image;$/;"	t	typeref:struct:Image_t
+Image	engine/include/xRender.h	/^} Image; $/;"	t	typeref:struct:__anon8
+Image_t	engine/include/jbOld.h	/^typedef struct Image_t {$/;"	s
+Inflatable	engine/include/data.h	/^} Inflatable;$/;"	t	typeref:struct:__anon40
+IniSysFP	engine/include/jbOld.h	/^typedef void (*IniSysFP)(System *sys_p);$/;"	t
+JBDIR	engine/Makefile	/^JBDIR = \/home\/$(USER)\/hack\/jollybean\/$/;"	m
+JB_	engine/include/jb.h	2;"	d
+JB_H	engine/include/jbOld.h	2;"	d
+Key	engine/include/data.h	/^typedef U8 Key;$/;"	t
+KeyValPair	engine/include/data.h	/^} KeyValPair;$/;"	t	typeref:struct:__anon37
+LFLAGS	engine/Makefile	/^LFLAGS        = -Wl,--gc-sections -Wl,-z,norelro \\$/;"	m
+LeafNode_	engine/include/bt.h	45;"	d
+LinkedList	engine/include/jbOld.h	/^typedef struct LinkedList {$/;"	s
+LinkedList	engine/include/jbOld.h	/^} LinkedList;$/;"	t	typeref:struct:LinkedList
+ListNode	engine/include/jbOld.h	/^typedef struct ListNode {$/;"	s
+ListNode	engine/include/jbOld.h	/^} ListNode;$/;"	t	typeref:struct:ListNode
+MINIZ_HAS_64BIT_REGISTERS	engine/data.c	389;"	d	file:
+MINIZ_LITTLE_ENDIAN	engine/data.c	384;"	d	file:
+MINIZ_USE_UNALIGNED_LOADS_AND_STORES	engine/data.c	382;"	d	file:
+MZ_CLEAR_OBJ	engine/data.c	511;"	d	file:
+MZ_FREE	engine/data.c	501;"	d	file:
+MZ_FREE	engine/data.c	505;"	d	file:
+MZ_MACRO_END	engine/data.c	394;"	d	file:
+MZ_MACRO_END	engine/data.c	396;"	d	file:
+MZ_MALLOC	engine/data.c	500;"	d	file:
+MZ_MALLOC	engine/data.c	504;"	d	file:
+MZ_MAX	engine/data.c	509;"	d	file:
+MZ_MIN	engine/data.c	510;"	d	file:
+MZ_READ_LE16	engine/data.c	514;"	d	file:
+MZ_READ_LE16	engine/data.c	517;"	d	file:
+MZ_READ_LE32	engine/data.c	515;"	d	file:
+MZ_READ_LE32	engine/data.c	518;"	d	file:
+MZ_REALLOC	engine/data.c	502;"	d	file:
+MZ_REALLOC	engine/data.c	506;"	d	file:
+Mailbox	engine/include/ecs.h	/^} Mailbox;$/;"	t	typeref:struct:__anon18
+Map	engine/include/data.h	/^} Map;$/;"	t	typeref:struct:__anon38
+MediaInfo	engine/include/jbOld.h	/^typedef struct MediaInfo {$/;"	s
+MediaInfo	engine/include/jbOld.h	/^} MediaInfo ;$/;"	t	typeref:struct:MediaInfo
+Message	engine/include/ecs.h	/^} Message;  $/;"	t	typeref:struct:__anon14
+NECTAR_	game/include/nectar.h	2;"	d
+NECTAR_IMAGE_	game/include/nectar_image.h	2;"	d
+NO_CHILDREN	engine/include/bt.h	5;"	d
+NO_OUTPUT	engine/include/ecs.h	/^typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;$/;"	e	enum:__anon13
+NO_SIBLINGS_LEFT	engine/include/bt.h	6;"	d
+NUM_OUTPUTS	engine/include/ecs.h	/^typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;$/;"	e	enum:__anon13
+Node	engine/include/bt.h	/^typedef struct Node {$/;"	s
+Node	engine/include/bt.h	/^} Node;$/;"	t	typeref:struct:Node
+NodeA	engine/include/bt.h	/^typedef struct NodeA {$/;"	s
+NodeA	engine/include/bt.h	/^} NodeA;$/;"	t	typeref:struct:NodeA
+NodeCB	engine/include/bt.h	/^typedef NodeStat (*NodeCB)(struct Node *rootP, struct Node *currNodeP, Blackboard *bbP);  $/;"	t
+NodeCb_	engine/bt.c	/^NodeCb_(btSelector) {$/;"	f
+NodeCb_	engine/bt.c	/^NodeCb_(btSequence) {$/;"	f
+NodeCb_	engine/bt.c	/^NodeCb_(btXCondition) {$/;"	f
+NodeCb_	engine/bt.c	/^static NodeCb_(_nodeRun) {$/;"	f	file:
+NodeCb_	engine/include/bt.h	70;"	d
+NodeCb_	game/biome/seed/personality/tree/node/a.c	/^NodeCb_(cb1) {$/;"	f
+NodeCb_	game/biome/seed/personality/tree/node/b.c	/^NodeCb_(cb2) {$/;"	f
+NodeCb_	game/biome/seed/personality/tree/node/c.c	/^NodeCb_(cb3) {$/;"	f
+NodeCb_	game/biome/seed/personality/tree/node/d.c	/^NodeCb_(cb4) {$/;"	f
+NodeCb_	game/biome/seed/personality/tree/node/e.c	/^NodeCb_(cb5) {$/;"	f
+NodeStat	engine/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	t	typeref:enum:__anon22
+OBJS	engine/Makefile	/^OBJS        = $(ENGINE_OBJS) $(GAME_OBJS) $/;"	m
+OUTPUTFILE	engine/Makefile	/^OUTPUTFILE  = o$/;"	m
+Output	engine/include/ecs.h	/^typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;$/;"	t	typeref:enum:__anon13
+PERSONALITY_	engine/include/personality.h	2;"	d
+PERSONALITY_	game/include/nectar_personality.h	2;"	d
+Personality_	game/include/nectar_personality.h	9;"	d
+Position	engine/include/jbOld.h	/^typedef struct Position {$/;"	s
+Position	engine/include/jbOld.h	/^} Position;  \/* Used by Motion to point at X & Y portion of SDL_Rect *\/$/;"	t	typeref:struct:Position
+QuadNode	engine/include/jbOld.h	/^} QuadNode;$/;"	t	typeref:struct:_QuadNode
+QuadTree	engine/include/jbOld.h	/^typedef struct QuadTree {$/;"	s
+QuadTree	engine/include/jbOld.h	/^} QuadTree;$/;"	t	typeref:struct:QuadTree
+READY	engine/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon22
+RUNNING	engine/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon22
+RunSysLoopFP	engine/include/jbOld.h	/^typedef Error (*RunSysLoopFP)(void *componentArry, void);$/;"	t
+S16	engine/include/data.h	/^typedef short S16;$/;"	t
+S32	engine/include/data.h	/^typedef int S32;$/;"	t
+S8	engine/include/data.h	/^typedef char S8;$/;"	t
+SDL_CFLAGS	engine/Makefile	/^SDL_CFLAGS    = $(shell sdl2-config --cflags)$/;"	m
+SDL_LFLAGS	engine/Makefile	/^SDL_LFLAGS    = $(shell sdl2-config --libs)$/;"	m
+SParentIniSParams	engine/include/xParent.h	/^} SParentIniSParams;$/;"	t	typeref:struct:__anon32
+SUCCESS	engine/include/errors.h	/^	SUCCESS,$/;"	e	enum:Error
+SYS_CONTROL	engine/include/xControl.h	2;"	d
+SYS_RENDER	engine/include/xRender.h	2;"	d
+Seed	engine/include/seed.h	/^} Seed;$/;"	t	typeref:struct:__anon41
+SelectorNode_	engine/include/bt.h	53;"	d
+SequenceNode_	engine/include/bt.h	61;"	d
+SrcNode	engine/include/bt.h	/^typedef struct SrcNode {$/;"	s
+SrcNode	engine/include/bt.h	/^} SrcNode;$/;"	t	typeref:struct:SrcNode
+Strip	engine/include/jbOld.h	/^typedef struct Strip {$/;"	s
+Strip	engine/include/jbOld.h	/^} Strip;$/;"	t	typeref:struct:Strip
+StripMap	engine/include/xRender.h	/^} StripMap;$/;"	t	typeref:struct:__anon6
+StripSet	engine/include/xRender.h	/^} StripSet;$/;"	t	typeref:struct:__anon5
+SysFP	engine/include/ecs.h	/^typedef Error (*SysFP)(struct _Activity *aP);$/;"	t
+SysIniCFP	engine/include/ecs.h	/^typedef Error (*SysIniCFP)(XHeader *xhP);$/;"	t
+SysIniFP	engine/include/ecs.h	/^typedef Error (*SysIniFP)(void* sParamsP);$/;"	t
+System	engine/include/ecs.h	/^} System;$/;"	t	typeref:struct:_System
+System	engine/include/jbOld.h	/^typedef struct System {$/;"	s
+System	engine/include/jbOld.h	/^} System;$/;"	t	typeref:struct:System
+System_	engine/include/ecs.h	16;"	d
+TEST_	game/include/test.h	2;"	d
+TILE_H	engine/include/jbOld.h	14;"	d
+TILE_W	engine/include/jbOld.h	13;"	d
+TINFL_BITBUF_SIZE	engine/data.c	475;"	d	file:
+TINFL_BITBUF_SIZE	engine/data.c	478;"	d	file:
+TINFL_CR_BEGIN	engine/data.c	524;"	d	file:
+TINFL_CR_FINISH	engine/data.c	527;"	d	file:
+TINFL_CR_RETURN	engine/data.c	525;"	d	file:
+TINFL_CR_RETURN_FOREVER	engine/data.c	526;"	d	file:
+TINFL_DECOMPRESS_MEM_TO_MEM_FAILED	engine/data.c	424;"	d	file:
+TINFL_FAST_LOOKUP_BITS	engine/data.c	/^  TINFL_FAST_LOOKUP_BITS = 10, TINFL_FAST_LOOKUP_SIZE = 1 << TINFL_FAST_LOOKUP_BITS$/;"	e	enum:__anon44	file:
+TINFL_FAST_LOOKUP_SIZE	engine/data.c	/^  TINFL_FAST_LOOKUP_BITS = 10, TINFL_FAST_LOOKUP_SIZE = 1 << TINFL_FAST_LOOKUP_BITS$/;"	e	enum:__anon44	file:
+TINFL_FLAG_COMPUTE_ADLER32	engine/data.c	/^  TINFL_FLAG_COMPUTE_ADLER32 = 8$/;"	e	enum:__anon42	file:
+TINFL_FLAG_HAS_MORE_INPUT	engine/data.c	/^  TINFL_FLAG_HAS_MORE_INPUT = 2,$/;"	e	enum:__anon42	file:
+TINFL_FLAG_PARSE_ZLIB_HEADER	engine/data.c	/^  TINFL_FLAG_PARSE_ZLIB_HEADER = 1,$/;"	e	enum:__anon42	file:
+TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF	engine/data.c	/^  TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF = 4,$/;"	e	enum:__anon42	file:
+TINFL_GET_BITS	engine/data.c	549;"	d	file:
+TINFL_GET_BYTE	engine/data.c	531;"	d	file:
+TINFL_HEADER_INCLUDED	engine/data.c	371;"	d	file:
+TINFL_HUFF_BITBUF_FILL	engine/data.c	555;"	d	file:
+TINFL_HUFF_DECODE	engine/data.c	574;"	d	file:
+TINFL_LZ_DICT_SIZE	engine/data.c	435;"	d	file:
+TINFL_MAX_HUFF_SYMBOLS_0	engine/data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINFL_MAX_HUFF_SYMBOLS_2 = 19,$/;"	e	enum:__anon44	file:
+TINFL_MAX_HUFF_SYMBOLS_1	engine/data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINFL_MAX_HUFF_SYMBOLS_2 = 19,$/;"	e	enum:__anon44	file:
+TINFL_MAX_HUFF_SYMBOLS_2	engine/data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINFL_MAX_HUFF_SYMBOLS_2 = 19,$/;"	e	enum:__anon44	file:
+TINFL_MAX_HUFF_TABLES	engine/data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINFL_MAX_HUFF_SYMBOLS_2 = 19,$/;"	e	enum:__anon44	file:
+TINFL_MEMCPY	engine/data.c	521;"	d	file:
+TINFL_MEMSET	engine/data.c	522;"	d	file:
+TINFL_NEED_BITS	engine/data.c	547;"	d	file:
+TINFL_SKIP_BITS	engine/data.c	548;"	d	file:
+TINFL_STATUS_ADLER32_MISMATCH	engine/data.c	/^  TINFL_STATUS_ADLER32_MISMATCH = -2,$/;"	e	enum:__anon43	file:
+TINFL_STATUS_BAD_PARAM	engine/data.c	/^  TINFL_STATUS_BAD_PARAM = -3,$/;"	e	enum:__anon43	file:
+TINFL_STATUS_DONE	engine/data.c	/^  TINFL_STATUS_DONE = 0,$/;"	e	enum:__anon43	file:
+TINFL_STATUS_FAILED	engine/data.c	/^  TINFL_STATUS_FAILED = -1,$/;"	e	enum:__anon43	file:
+TINFL_STATUS_HAS_MORE_OUTPUT	engine/data.c	/^  TINFL_STATUS_HAS_MORE_OUTPUT = 2$/;"	e	enum:__anon43	file:
+TINFL_STATUS_NEEDS_MORE_INPUT	engine/data.c	/^  TINFL_STATUS_NEEDS_MORE_INPUT = 1,$/;"	e	enum:__anon43	file:
+TINFL_USE_64BIT_BITBUF	engine/data.c	470;"	d	file:
+Test	game/biome/seed/personality/bb/mb.c	/^} Test;$/;"	t	typeref:struct:__anon2	file:
+Tilemap	engine/include/jbOld.h	/^typedef struct Tilemap {$/;"	s
+Tilemap	engine/include/jbOld.h	/^} Tilemap;$/;"	t	typeref:struct:Tilemap
+Tileset	engine/include/jbOld.h	/^typedef struct Tileset {$/;"	s
+Tileset	engine/include/jbOld.h	/^} Tileset;$/;"	t	typeref:struct:Tileset
+Trigger	game/include/nectar_personality.h	/^} Trigger;$/;"	t	typeref:struct:__anon1
+U16	engine/include/data.h	/^typedef unsigned short U16;$/;"	t
+U32	engine/include/data.h	/^typedef unsigned int U32;$/;"	t
+U8	engine/include/data.h	/^typedef unsigned char U8;$/;"	t
+WINDOW_HEIGHT	engine/include/jbOld.h	11;"	d
+WINDOW_WIDTH	engine/include/jbOld.h	10;"	d
+XCmd	engine/include/xParent.h	/^} XCmd;$/;"	t	typeref:struct:__anon28
+XCmdSet	engine/include/xParent.h	/^} XCmdSet;$/;"	t	typeref:struct:__anon29
+XControlActivityID	engine/include/xControl.h	/^} XControlActivityID;$/;"	t	typeref:enum:__anon20
+XControlC	engine/include/xControl.h	/^} XControlC;$/;"	t	typeref:struct:__anon21
+XHeader	engine/include/ecs.h	/^} XHeader;$/;"	t	typeref:struct:__anon10
+XParentC	engine/include/xParent.h	/^typedef System XParentC;$/;"	t
+XRENDER	engine/include/xRender.h	/^	XRENDER = 1$/;"	e	enum:__anon3
+XRenderActivityID	engine/include/xRender.h	/^} XRenderActivityID;$/;"	t	typeref:enum:__anon3
+XRenderC	engine/include/xRender.h	/^} XRenderC;$/;"	t	typeref:struct:__anon9
+_Activity	engine/include/ecs.h	/^typedef struct _Activity {$/;"	s
+_CDirEntry	engine/include/ecs.h	/^typedef struct _CDirEntry {$/;"	s
+_QuadNode	engine/include/jbOld.h	/^typedef struct _QuadNode {$/;"	s
+_System	engine/include/ecs.h	/^typedef struct _System {$/;"	s
+_arrayGetVoidElemPtr	engine/data.c	/^inline static void* _arrayGetVoidElemPtr(const void *arryP, S32 idx) {$/;"	f	file:
+_clrMailbox	engine/ecs.c	/^static void _clrMailbox(Mailbox *mailboxP) {$/;"	f	file:
+_cmClr	engine/xRender.c	/^void _cmClr(Colormap *cmP) {$/;"	f
+_cmGen	engine/xRender.c	/^Error _cmGen(Colormap *cmP) {$/;"	f
+_countNodes	engine/bt.c	/^static U32 _countNodes(Node *rootP, Node *currNodeP) {$/;"	f	file:
+_countSpecificNodes	engine/bt.c	/^static U32 _countSpecificNodes(Node *rootP, Node *currNodeP, NodeCB nodeCB) {$/;"	f	file:
+_countSrcNodes	engine/bt.c	/^static U32 _countSrcNodes(SrcNode *nodeP) {$/;"	f	file:
+_countU8Bits	engine/data.c	/^inline static U8 _countU8Bits(U8 byte) {$/;"	f	file:
+_distributeGenes	engine/xParent.c	/^static Error _distributeGenes(System *sParentP, Biome *biomeP) {$/;"	f	file:
+_elemSz	engine/include/data.h	/^	U32         _elemSz;$/;"	m	struct:__anon35
+_elemSz	engine/include/data.h	/^	U8         _elemSz;$/;"	m	struct:__anon39
+_enum	engine/include/data.h	/^	Key _enum;$/;"	m	struct:__anon34
+_fast_arrayGetElemSz	engine/data.c	/^static inline U32 _fast_arrayGetElemSz(const void *arryP) {$/;"	f	file:
+_fast_arrayGetVoidElemPtr	engine/data.c	/^static inline void* _fast_arrayGetVoidElemPtr(const void *arryP, U8 idx) {$/;"	f	file:
+_getActDirEntry	engine/ecs.c	/^inline static ActDirEntry* _getActDirEntry(System *sP, Key actID) {$/;"	f	file:
+_getCDirEntry	engine/ecs.c	/^inline static CDirEntry* _getCDirEntry(System *sP, Entity entity) {$/;"	f	file:
+_getCPByIndex	engine/ecs.c	/^inline static void* _getCPByIndex(const System *sP, Activity *aP, U8 cIdx) {$/;"	f	file:
+_getE	engine/ecs.c	/^inline static Entity _getE(const void *cmpP) {$/;"	f	file:
+_getElemIdx	engine/data.c	/^inline static U32 _getElemIdx(const FlagInfo f, const U8 key) {$/;"	f	file:
+_getElemP	engine/data.c	/^inline static void* _getElemP(const Map *mapP, const FlagInfo f, const U8 key) {$/;"	f	file:
+_getFlagInfo	engine/data.c	/^inline static FlagInfo _getFlagInfo(const Map *mapP, const U8 key) {$/;"	f	file:
+_getMapElemSz	engine/data.c	/^inline static U32 _getMapElemSz(const Map *mapP) {$/;"	f	file:
+_getNBitsSet	engine/data.c	/^inline static U32 _getNBitsSet(const Map *mapP) {$/;"	f	file:
+_histoGeneTypes	engine/xParent.c	/^static Error _histoGeneTypes(U32 *histoA, Biome *biomeP) {$/;"	f	file:
+_idxIsPopulated	engine/data.c	/^inline static U8 _idxIsPopulated(const U8 nBitsSet, U32 idx) {$/;"	f	file:
+_iniCondKeys	engine/bt.c	/^static Error _iniCondKeys(Node *rootP, Node *currNodeP, NodeCB nodeCB, Map *mapP) {$/;"	f	file:
+_isFlagSet	engine/data.c	/^inline static U8 _isFlagSet(const U8 flags, const U8 key) {$/;"	f	file:
+_isKeyValid	engine/data.c	/^inline static U8 _isKeyValid(const U8 key) {$/;"	f	file:
+_isMapValid	engine/data.c	/^inline static U8 _isMapValid(const Map *mapP) {$/;"	f	file:
+_mvActivity	engine/ecs.c	/^static Error _mvActivity(System *sP, Activity *srcActP, U8 dstActIdx) {$/;"	f	file:
+_mvC	engine/ecs.c	/^static Error _mvC(System *sP, void *srcCP, void *dstCP, Key dstActID, U8 dstCIdx) {$/;"	f	file:
+_nEnumValPairs	engine/include/data.h	/^	U32         _nEnumValPairs;$/;"	m	struct:__anon35
+_nKeyValPairs	engine/include/data.h	/^	Key        _nKeyValPairs;$/;"	m	struct:__anon39
+_nodePush	engine/bt.c	/^static void _nodePush(SrcNode *srcNodeP, Node *rootP, U8 *nextAvailIdxP) {$/;"	f	file:
+_sClrActivities	engine/ecs.c	/^static void _sClrActivities(System *sP) {$/;"	f	file:
+_sClrMailboxes	engine/ecs.c	/^static void _sClrMailboxes(System *sP) {$/;"	f	file:
+_sPA	engine/xParent.c	/^static System **_sPA;$/;"	v	file:
+_sReadInbox	engine/ecs.c	/^void _sReadInbox(System *sP) {$/;"	f
+_sReadMessage	engine/ecs.c	/^static void _sReadMessage(System *sP, Message *msgP) {$/;"	f	file:
+_subscriberAMP	engine/xParent.c	/^static Map *_subscriberAMP;$/;"	v	file:
+_swapActivities	engine/ecs.c	/^static Error _swapActivities(System *sP, Key srcActID, U8 dstActIdx) {$/;"	f	file:
+_trigger	engine/xParent.c	/^static Error _trigger(System *sParentP, Message *msgP) {$/;"	f	file:
+_triggerGroup	engine/xParent.c	/^static Error _triggerGroup(System *sParentP, Message *msgP) {$/;"	f	file:
+_updateActDirEntry	engine/ecs.c	/^static Error _updateActDirEntry(System *sP, Key actID, U8 dstActIdx, Activity *dstActP) {$/;"	f	file:
+_updateCDirEntry	engine/ecs.c	/^static Error  _updateCDirEntry(System *sP, Entity entity, U8 dstActID, U8 dstCIdx, void *dstCP) {$/;"	f	file:
+_validateActivityIdx	engine/ecs.c	/^inline static U8 _validateActivityIdx(const System *sP, const U8 activityIdx) { $/;"	f	file:
+actDirectoryP	engine/include/ecs.h	/^  Map         *actDirectoryP;       \/* maps component IDs to an element in an array of CmpAddresses *\/$/;"	m	struct:_System
+activityA	engine/include/ecs.h	/^  Activity    *activityA;           \/* Array of activities that loop through their components *\/$/;"	m	struct:_System
+activityID	engine/include/ecs.h	/^			Key activityID;$/;"	m	struct:__anon14::__anon15::__anon17
+activityID	engine/include/ecs.h	/^  U8 activityID;$/;"	m	struct:_CDirEntry
+activityID	engine/include/xParent.h	/^  Key activityID;$/;"	m	struct:__anon28
+activityIdx	engine/include/ecs.h	/^  U8 activityIdx;$/;"	m	struct:__anon12
+activityP	engine/include/ecs.h	/^  struct _Activity *activityP; \/* Systems that use pointers to other systems' components may use double pointers to avoid requesting updated info. *\/$/;"	m	struct:__anon12	typeref:struct:__anon12::_Activity
+agentBbP	engine/include/bt.h	/^  Map      *agentBbP;     \/\/ maps an enum'd state name to a void pointer. Anything truly global should be accessed directly.$/;"	m	struct:__anon24
+arrayDel	engine/data.c	/^void arrayDel(void **arryPP) {$/;"	f
+arrayGetElemSz	engine/data.c	/^U32 arrayGetElemSz(const void *arryP) {$/;"	f
+arrayGetNElems	engine/data.c	/^U32 arrayGetNElems(const void *arryP) {$/;"	f
+arrayGetVoidElemPtr	engine/data.c	/^void* arrayGetVoidElemPtr(const void *arryP, S32 idx) {$/;"	f
+arrayIni	engine/data.c	/^Error arrayIni(void **arryPP, HardCodedArray *hcaP) {$/;"	f
+arrayIniPtrs	engine/data.c	/^void arrayIniPtrs(const void *arryP, void **startP, void **endP, S32 endIdx) {$/;"	f
+arrayNew	engine/data.c	/^Error arrayNew(void **arryPP, U32 elemSz, U32 nElems) {$/;"	f
+arrayP	engine/include/data.h	/^	void        *arrayP;       \/\/ defaults to NULL to prevent copies $/;"	m	struct:__anon35
+arraySetVoidElem	engine/data.c	/^Error arraySetVoidElem(void *arrayP, U32 idx, const void *elemSrcP) {$/;"	f
+bbDel	engine/bt.c	/^void bbDel(Blackboard **bbPP) {$/;"	f
+bbNew	engine/bt.c	/^Error bbNew(Blackboard **bbPP, Node *rootP, BBSeed *bbSeedP) {$/;"	f
+biggerCM	game/biome/seed/genome/Image/ColorMap/biggerCM.c	/^Colormap biggerCM = {$/;"	v
+biggerColorSet	game/biome/seed/genome/Image/ColorPalette/biggerCP.c	/^SDL_Color biggerColorSet[] = { {0x11, 0x00, 0x00, 0x00},  {0xFF, 0xf0, 0xf0, 0xFF},	{0x0F, 0x00, 0x00, 0xFF},  {0x35, 0x46, 0x00, 0xFF},$/;"	v
+biggerImg	game/biome/seed/genome/Image/biggerImg.c	/^Image biggerImg = {$/;"	v
+biggerStripMap	game/biome/seed/genome/Image/StripMap/biggerStripMap.c	/^StripMap biggerStripMap = {$/;"	v
+biggerStripMapInf	game/biome/seed/genome/Image/StripMap/biggerStripMap.c	/^Inflatable biggerStripMapInf = {$/;"	v
+biggerStripSet	game/biome/seed/genome/Image/StripSet/biggerStripSet.c	/^StripSet biggerStripSet = {$/;"	v
+biggerStripSetInf	game/biome/seed/genome/Image/StripSet/biggerStripSet.c	/^Inflatable biggerStripSetInf = {$/;"	v
+biggerXRenderC	game/biome/seed/genome/Image/biggerImg.c	/^XRenderC biggerXRenderC = {$/;"	v
+biomeP	engine/include/xParent.h	/^	Biome *biomeP;$/;"	m	struct:__anon32
+blit_coords	engine/include/jbOld.h	/^	SDL_Rect        blit_coords;$/;"	m	struct:Animation_t
+blit_coords	engine/include/jbOld.h	/^	SDL_Rect     *blit_coords;$/;"	m	struct:Strip
+bpp	engine/include/jbOld.h	/^	Uint8     bpp;$/;"	m	struct:Tileset
+bpp	engine/include/xRender.h	/^	U8 bpp;$/;"	m	struct:__anon7
+br_corner	engine/include/jbOld.h	/^	Vector2 tl_corner, br_corner;$/;"	m	struct:_QuadNode
+btCondition	engine/include/bt.h	/^NodeCb_(btCondition);   \/\/ easy-to-check condition (e.g. world state)$/;"	v
+btDel	engine/bt.c	/^void btDel(BTree **treePP) {$/;"	f
+btNew	engine/bt.c	/^Error btNew(SrcNode *srcNodeP, U8 priority, BTree **treePP) {$/;"	f
+btRun	engine/bt.c	/^NodeStat btRun(BTree *treeP, Blackboard *bbP) {$/;"	f
+btSelector	engine/include/bt.h	/^NodeCb_(btSelector);$/;"	v
+btSequence	engine/include/bt.h	/^NodeCb_(btSequence);$/;"	v
+btXCondition	engine/include/bt.h	/^NodeCb_(btXCondition);  \/\/ ECS-based condition$/;"	v
+btreeSingleton	game/include/nectar_personality.h	/^	BTreeSingleton btreeSingleton;$/;"	m	struct:__anon1
+buttonsDown	engine/include/xControl.h	/^	U32 buttonsDown;$/;"	m	struct:__anon21
+buttonsPressed	engine/xControl.c	/^U32 buttonsPressed;$/;"	v
+cA	engine/include/ecs.h	/^  void *cA;  \/* components the above function operates on *\/$/;"	m	struct:_Activity
+cDirectoryP	engine/include/ecs.h	/^  Map         *cDirectoryP;         \/* maps component IDs to an element in an array of CmpAddresses *\/$/;"	m	struct:_System
+cIdx	engine/include/ecs.h	/^  U8 cIdx;$/;"	m	struct:_CDirEntry
+cP	engine/include/ecs.h	/^  void *cP; \/* Systems that use pointers to other systems' components may use double pointers to avoid requesting updated info. *\/$/;"	m	struct:_CDirEntry
+cSz	engine/include/ecs.h	/^  U8           cSz;                 \/* components are the same size in all of this system's activities *\/$/;"	m	struct:_System
+cbIdx	engine/include/ecs.h	/^  Bln    cbIdx;                 \/\/ index to FP instead of FP itself to prevent external functions$/;"	m	struct:__anon11
+cdeP	engine/include/ecs.h	/^  struct _CDirEntry *cdeP;      \/\/ keep tabs on component's location$/;"	m	struct:__anon11	typeref:struct:__anon11::_CDirEntry
+checkA	engine/include/ecs.h	/^  Check *checkA;$/;"	m	struct:__anon19
+checkIdx	engine/include/ecs.h	/^  U8 checkIdx;  \/\/ index of check$/;"	m	struct:_CDirEntry
+checkers	engine/include/ecs.h	/^  Checkers     checkers;            \/* Array of checks; similar to Activity without exlusive C-access *\/$/;"	m	struct:_System
+childSysArry	engine/include/jbOld.h	/^	System      *childSysArry;$/;"	m	struct:System
+childrenPA	engine/include/bt.h	/^  struct SrcNode **childrenPA;$/;"	m	struct:SrcNode	typeref:struct:SrcNode::SrcNode
+cmd	engine/include/ecs.h	/^		} cmd;$/;"	m	union:__anon14::__anon15	typeref:struct:__anon14::__anon15::__anon17
+cmp	engine/include/jbOld.h	/^typedef SDL_bool (*cmp)(struct Sprite_t*, struct Sprite_t*);$/;"	t
+colorA	engine/include/xRender.h	/^	SDL_Color *colorA;$/;"	m	struct:__anon8
+colorMapP	engine/include/xRender.h	/^	Colormap *colorMapP;$/;"	m	struct:__anon8
+componentArry	engine/include/jbOld.h	/^	void        *componentArry;$/;"	m	struct:System
+compressedData	engine/include/data.h	/^	U8  compressedData[];$/;"	m	struct:__anon40
+compressedLen	engine/include/data.h	/^	U32 compressedLen;$/;"	m	struct:__anon40
+compressed_len	engine/include/jbOld.h	/^	Uint32 offset, uncompressed_len, compressed_len;$/;"	m	struct:MediaInfo
+condition	engine/include/bt.h	/^  U8 condition;       \/\/ bit-flag conditions which must be met to run this node$/;"	m	struct:Node
+condition	engine/include/bt.h	/^  U8 condition;$/;"	m	struct:SrcNode
+conditionA	engine/include/bt.h	/^  U8 *conditionA;$/;"	m	struct:NodeA
+conditionMP	engine/include/bt.h	/^  Map      *conditionMP;  \/\/ maps node indices to U32 condition flags specifically enumerated for the condition node$/;"	m	struct:__anon24
+conditionP	engine/include/ecs.h	/^  U8    *conditionP;            \/\/ condition to update through a simple pointer$/;"	m	struct:__anon11
+contents	engine/include/ecs.h	/^	} contents;$/;"	m	struct:__anon14	typeref:union:__anon14::__anon15
+cp_arry	engine/include/jbOld.h	/^	SDL_Color *cp_arry;$/;"	m	struct:ColorPalette
+cp_idx	engine/include/jbOld.h	/^	Uint8         cp_idx;     \/* index into color palette table *\/$/;"	m	struct:Image_t
+ctrlListen	engine/xControl.c	/^Error ctrlListen(Activity *aP) {$/;"	f
+currRoot	engine/include/xParent.h	/^  U8 currRoot;$/;"	m	struct:__anon30
+curr_duration	engine/include/jbOld.h	/^	Uint32          curr_duration;$/;"	m	struct:Animation_t
+curr_frame_num	engine/include/jbOld.h	/^	Uint8           curr_frame_num;$/;"	m	struct:Animation_t
+curr_strip_p	engine/include/jbOld.h	/^	Strip          *curr_strip_p;$/;"	m	struct:Animation_t
+data	engine/include/jbOld.h	/^	void *data;$/;"	m	struct:ListNode
+dataP	engine/include/xRender.h	/^	U8 *dataP;    \/\/ JB only supports 8-bit colormap. If image requires neither strips nor bit-unpacking, this simply points at the inflatable data.$/;"	m	struct:__anon7
+def	game/biome/seed/personality/bb/mb.c	/^	U16 def;$/;"	m	struct:__anon2	file:
+depth	engine/include/jbOld.h	/^	Uint8 n_elems, depth;$/;"	m	struct:_QuadNode
+dimensions	engine/include/jbOld.h	/^	Vector2        dimensions;  \/* in units of tiles *\/$/;"	m	struct:Tilemap
+dstRectPP	engine/include/xRender.h	/^	SDL_Rect **dstRectPP;$/;"	m	struct:__anon9
+durations	engine/include/jbOld.h	/^	Uint16       *durations;$/;"	m	struct:Strip
+elems	engine/include/jbOld.h	/^	LinkedList *elems;$/;"	m	struct:_QuadNode
+entity	engine/include/ecs.h	/^  Entity entity;                \/\/ entity this check regards$/;"	m	struct:__anon11
+entityDirectory	engine/include/jbOld.h	/^	dirEntry    *entityDirectory;  \/\/ a system reads inbox and delivers messages to its components. Multiple entities may send message to the same component. $/;"	m	struct:System
+enumIndices_	engine/include/data.h	16;"	d
+enumKeys_	engine/include/data.h	15;"	d
+enumValA	engine/include/data.h	/^	EnumValPair  enumValA[];$/;"	m	struct:__anon35
+event	engine/include/ecs.h	/^		} event;$/;"	m	union:__anon14::__anon15	typeref:struct:__anon14::__anon15::__anon16
+event	game/include/nectar_personality.h	/^	U8 event;  \/\/ at load time, event maps to the initialized Tree* treeP member of btreeSingleton.$/;"	m	struct:__anon1
+firstChildIdx	engine/include/bt.h	/^  U8 firstChildIdx;$/;"	m	struct:Node
+firstChildIdxA	engine/include/bt.h	/^  U8 *firstChildIdxA;$/;"	m	struct:NodeA
+firstEmptyIdx	engine/include/ecs.h	/^  U8 firstEmptyIdx; \/* marks the first empty element's index *\/$/;"	m	struct:_Activity
+firstEmptyIdx	engine/include/ecs.h	/^  U8 firstEmptyIdx; \/* marks the first empty element's index *\/$/;"	m	struct:__anon19
+firstInactiveActIdx	engine/include/ecs.h	/^  Key          firstInactiveActIdx; \/* index of first inactive activity *\/$/;"	m	struct:_System
+firstInactiveIdx	engine/include/ecs.h	/^  U8 firstInactiveIdx; \/* marks the first inactive element's index *\/$/;"	m	struct:_Activity
+firstInactiveIdx	engine/include/ecs.h	/^  U8 firstInactiveIdx; \/* marks the first inactive element's index *\/$/;"	m	struct:__anon19
+flagA	engine/include/data.h	/^	FlagInfo flagA[nFlagBytes_];  \/\/ "A" means "Array" for JB's naming standards $/;"	m	struct:__anon38
+flags	engine/include/data.h	/^	U8 flags;$/;"	m	struct:__anon36
+flipIdxA	engine/include/xRender.h	/^	U16 flipIdxA[];$/;"	m	struct:__anon4
+flipSetP	engine/include/xRender.h	/^	FlipSet *flipSetP;$/;"	m	struct:__anon5
+game_over	engine/include/jbOld.h	/^SDL_bool game_over;$/;"	v
+genePA	engine/include/genome.h	/^  XHeader *genePA[];$/;"	m	struct:__anon33
+genomeP	engine/include/seed.h	/^	Genome *genomeP;$/;"	m	struct:__anon41
+genomePA	engine/include/biome.h	/^  Genome *genomePA[];$/;"	m	struct:__anon27
+h	engine/include/xRender.h	/^	U16 w, h, pitch;  \/\/ in pixel units; determine actual step size by pixel format$/;"	m	struct:__anon7
+hcArrayIni	engine/data.c	/^Error hcArrayIni(HardCodedArray *hcaP) {$/;"	f
+hcMapIni	engine/data.c	/^Error hcMapIni(HardCodedMap *hcmP) {$/;"	f
+hcmP	engine/include/ecs.h	/^	HardCodedMap *hcmP;  \/\/ Some types of components' values change under various circumstances.$/;"	m	struct:_CDirEntry
+head	engine/include/jbOld.h	/^	ListNode *head;$/;"	m	struct:LinkedList
+histoDel	engine/data.c	/^void histoDel(U32 **histoPP) {$/;"	f
+histoNew	engine/data.c	/^Error histoNew(U32 **histoPP, const U32 maxVal) {$/;"	f
+hp	game/biome/seed/personality/bb/mb.c	/^U32 hp = 200;$/;"	v
+id	engine/include/ecs.h	/^			Key id;  \/\/ event ID$/;"	m	struct:__anon14::__anon15::__anon16
+id	engine/include/ecs.h	/^  U8           id;                  \/* this is needed to ensure messages are sent to the correct system *\/$/;"	m	struct:_System
+id	engine/include/ecs.h	/^  U8 id;  \/* ID of activity *\/$/;"	m	struct:_Activity
+id	engine/include/xParent.h	/^  Key id;$/;"	m	struct:__anon31
+ii	engine/xRender.c	/^static U8 ii = 0;$/;"	v	file:
+imgP	engine/include/xRender.h	/^	Image *imgP;$/;"	m	struct:__anon9
+inbox	engine/include/ecs.h	/^  Mailbox      inbox;               \/* Where commands come in from the outside world *\/$/;"	m	struct:_System
+inbox	engine/include/jbOld.h	/^	Message     *inbox;$/;"	m	struct:System
+inflate	engine/data.c	/^Error inflate(Inflatable *inflatableP) {$/;"	f
+inflatedDataP	engine/include/data.h	/^	void *inflatedDataP;$/;"	m	struct:__anon40
+inflatedLen	engine/include/data.h	/^	U32 inflatedLen;$/;"	m	struct:__anon40
+inline	engine/include/data.h	13;"	d
+jbAlloc	engine/data.c	/^inline Error jbAlloc(void **voidPP, U32 elemSz, U32 nElems) {$/;"	f
+jbFree	engine/data.c	/^inline void jbFree(void **voidPP) {$/;"	f
+key	engine/include/data.h	/^	Key key;$/;"	m	struct:__anon37
+key	engine/include/ecs.h	/^			Key key;  \/\/ tells activity what specifically to do with component every loop $/;"	m	struct:__anon14::__anon15::__anon17
+key	engine/include/xParent.h	/^  Key key;$/;"	m	struct:__anon28
+keyValA	engine/include/data.h	/^	KeyValPair  keyValA[];$/;"	m	struct:__anon39
+keyValPairA	engine/include/bt.h	/^  KeyValPair *keyValPairA;$/;"	m	struct:__anon23
+lastFlagByteIdx_	engine/include/data.h	11;"	d
+last_modified_tm	engine/include/jbOld.h	/^	Uint32    last_modified_tm;$/;"	m	struct:Tileset
+m_bit_buf	engine/data.c	/^  tinfl_bit_buf_t m_bit_buf;$/;"	m	struct:tinfl_decompressor_tag	file:
+m_check_adler32	engine/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_code_size	engine/data.c	/^  mz_uint8 m_code_size[TINFL_MAX_HUFF_SYMBOLS_0];$/;"	m	struct:__anon45	file:
+m_counter	engine/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_dist	engine/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_dist_from_out_buf_start	engine/data.c	/^  size_t m_dist_from_out_buf_start;$/;"	m	struct:tinfl_decompressor_tag	file:
+m_final	engine/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_len_codes	engine/data.c	/^  mz_uint8 m_raw_header[4], m_len_codes[TINFL_MAX_HUFF_SYMBOLS_0 + TINFL_MAX_HUFF_SYMBOLS_1 + 137];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_look_up	engine/data.c	/^  mz_int16 m_look_up[TINFL_FAST_LOOKUP_SIZE], m_tree[TINFL_MAX_HUFF_SYMBOLS_0 * 2];$/;"	m	struct:__anon45	file:
+m_n_bits	engine/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_num_extra	engine/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_raw_header	engine/data.c	/^  mz_uint8 m_raw_header[4], m_len_codes[TINFL_MAX_HUFF_SYMBOLS_0 + TINFL_MAX_HUFF_SYMBOLS_1 + 137];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_state	engine/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_table_sizes	engine/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_tables	engine/data.c	/^  tinfl_huff_table m_tables[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_tree	engine/data.c	/^  mz_int16 m_look_up[TINFL_FAST_LOOKUP_SIZE], m_tree[TINFL_MAX_HUFF_SYMBOLS_0 * 2];$/;"	m	struct:__anon45	file:
+m_type	engine/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_z_adler32	engine/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_zhdr0	engine/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+m_zhdr1	engine/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
+main	engine/jb.c	/^int main() {$/;"	f
+mapA	engine/include/data.h	/^	void  *mapA;  $/;"	m	struct:__anon38
+mapDel	engine/data.c	/^void mapDel(Map **mapPP) {$/;"	f
+mapGet	engine/data.c	/^extern void* mapGet(const Map *mapP, const U8 key) {$/;"	f
+mapIni	engine/data.c	/^Error mapIni(Map **mapPP, HardCodedMap *hcMapP) {$/;"	f
+mapNew	engine/data.c	/^Error mapNew(Map **mapPP, const U8 elemSz, const U16 nElems) {$/;"	f
+mapP	engine/include/data.h	/^	Map        *mapP;       \/\/ defaults to NULL to prevent copies $/;"	m	struct:__anon39
+mapRem	engine/data.c	/^Error mapRem(Map *mapP, const U8 key) {$/;"	f
+mapSet	engine/data.c	/^Error mapSet(Map *mapP, const U8 key, const void *valP) {$/;"	f
+max_depth	engine/include/jbOld.h	/^	Uint8 max_depth, max_n_elems;$/;"	m	struct:QuadTree
+max_frame_idx	engine/include/jbOld.h	/^	Uint8         max_frame_idx;  \/* awkward var name, because i don't want to subtract by one in animate(). *\/$/;"	m	struct:Strip
+max_n_elems	engine/include/jbOld.h	/^	Uint8 max_depth, max_n_elems;$/;"	m	struct:QuadTree
+mi_idx	engine/include/jbOld.h	/^	Uint16    mi_idx;     \/* index into the media info table *\/$/;"	m	struct:Tileset
+mp	game/biome/seed/personality/bb/mb.c	/^U32 mp = 300;$/;"	v
+msgA	engine/include/ecs.h	/^  Message *msgA;$/;"	m	struct:__anon18
+mz_int16	engine/data.c	/^typedef signed short mz_int16;$/;"	t	file:
+mz_uint	engine/data.c	/^typedef unsigned int mz_uint;$/;"	t	file:
+mz_uint16	engine/data.c	/^typedef unsigned short mz_uint16;$/;"	t	file:
+mz_uint32	engine/data.c	/^typedef unsigned int mz_uint32;$/;"	t	file:
+mz_uint64	engine/data.c	/^typedef unsigned long long mz_uint64;$/;"	t	file:
+mz_uint8	engine/data.c	/^typedef unsigned char mz_uint8;$/;"	t	file:
+nActivities	engine/include/ecs.h	/^  U8           nActivities;         \/* Number of activities in activityA[] *\/$/;"	m	struct:_System
+nArgs_	engine/include/data.h	17;"	d
+nChildren	engine/include/bt.h	/^  U8 nChildren;$/;"	m	struct:SrcNode
+nCmds	engine/include/xParent.h	/^  U8 nCmds;$/;"	m	struct:__anon29
+nColors	engine/include/xRender.h	/^	U8 nColors;$/;"	m	struct:__anon8
+nEntities	engine/include/biome.h	/^  U32 nEntities;$/;"	m	struct:__anon27
+nFlagBits_	engine/include/data.h	12;"	d
+nFlagBytes_	engine/include/data.h	10;"	d
+nFlips	engine/include/xRender.h	/^	U16 nFlips;$/;"	m	struct:__anon4
+nGenes	engine/include/genome.h	/^  U32 nGenes;$/;"	m	struct:__anon33
+nIndices	engine/include/xRender.h	/^	U16 nIndices;$/;"	m	struct:__anon6
+nKeyValPairs	engine/include/bt.h	/^  U8 nKeyValPairs;$/;"	m	struct:__anon23
+nMsgs	engine/include/ecs.h	/^  U32 nMsgs;$/;"	m	struct:__anon18
+nStrips	engine/include/xRender.h	/^	U16 nStrips;    \/\/ number of 64-pixel strips in strip set$/;"	m	struct:__anon5
+nSystems	engine/include/xParent.h	/^	Entity nSystems;$/;"	m	struct:__anon32
+n_colors	engine/include/jbOld.h	/^	Uint8      n_colors;$/;"	m	struct:ColorPalette
+n_elems	engine/include/jbOld.h	/^	Uint8 n_elems, depth;$/;"	m	struct:_QuadNode
+n_tiles	engine/include/jbOld.h	/^	Uint16    n_tiles;$/;"	m	struct:Tileset
+next	engine/include/jbOld.h	/^	struct ListNode *next, *prev;$/;"	m	struct:ListNode	typeref:struct:ListNode::ListNode
+nextSiblingIdx	engine/include/bt.h	/^  U8 nextSiblingIdx;  \/\/ allows easy "while(nodeP->nextSibling)" condition-check$/;"	m	struct:Node
+nextSiblingIdxA	engine/include/bt.h	/^  U8 *nextSiblingIdxA;  \/\/ allows easy "while(nodeP->nextSibling)" condition-check$/;"	m	struct:NodeA
+nodeCB	engine/include/bt.h	/^  NodeCB nodeCB;      \/\/ because nobody points at root @ index 0 as sibling or child$/;"	m	struct:Node
+nodeCB	engine/include/bt.h	/^  NodeCB nodeCB;$/;"	m	struct:SrcNode
+nodeCbA	engine/include/bt.h	/^  NodeCB *nodeCbA;      \/\/ because nobody points at root @ index 0 as sibling or child$/;"	m	struct:NodeA
+nodeStatA	engine/include/bt.h	/^  NodeStat *nodeStatA;$/;"	m	struct:__anon24
+nodes	engine/include/jbOld.h	/^	struct _QuadNode *nodes[4];$/;"	m	struct:_QuadNode	typeref:struct:_QuadNode::_QuadNode
+offset	engine/include/jbOld.h	/^	Uint32 offset, uncompressed_len, compressed_len;$/;"	m	struct:MediaInfo
+otherEntity	engine/include/ecs.h	/^			Entity otherEntity;  \/\/ needed by systems like motion if tracking someone$/;"	m	struct:__anon14::__anon15::__anon16
+otherEntity	engine/include/xParent.h	/^  Entity otherEntity;$/;"	m	struct:__anon31
+outbox	engine/include/ecs.h	/^  Mailbox      outbox;              \/* Where this system talks to the outside world *\/$/;"	m	struct:_System
+outbox	engine/include/jbOld.h	/^	Message     *outbox;$/;"	m	struct:System
+outputIfTrue	engine/include/ecs.h	/^  U8     outputIfTrue;          \/\/ condition flag to be OR'd into if true$/;"	m	struct:__anon11
+owner	engine/include/ecs.h	/^  Entity owner;$/;"	m	struct:__anon10
+ownerP	engine/include/ecs.h	/^  struct _System *ownerP;$/;"	m	struct:_Activity	typeref:struct:_Activity::_System
+pitch	engine/include/xRender.h	/^	U16 w, h, pitch;  \/\/ in pixel units; determine actual step size by pixel format$/;"	m	struct:__anon7
+preMapSet	engine/data.c	/^static Error preMapSet(const Map *mapP, const U8 key, void **elemPP, void **nextElemPP, U32 *nBytesTMoveP) {$/;"	f	file:
+prev	engine/include/jbOld.h	/^	struct ListNode *next, *prev;$/;"	m	struct:ListNode	typeref:struct:ListNode::
+prevBitCount	engine/include/data.h	/^	U8 prevBitCount;$/;"	m	struct:__anon36
+priority	engine/include/bt.h	/^	U8 priority;$/;"	m	struct:__anon26
+priority	engine/include/bt.h	/^  U8 priority;$/;"	m	struct:__anon25
+reactionMP	engine/include/seed.h	/^	Map *reactionMP; $/;"	m	struct:__anon41
+rect1	engine/xRender.c	/^SDL_Rect rect1 = {0, 0, 100, 200};$/;"	v
+rect1P	engine/xRender.c	/^SDL_Rect *rect1P = &rect1;$/;"	v
+rect2	engine/xRender.c	/^SDL_Rect rect2 = {50, 100, 200, 200};$/;"	v
+rect2P	engine/xRender.c	/^SDL_Rect *rect2P = &rect2;$/;"	v
+rect3	engine/xRender.c	/^SDL_Rect rect3 = {100, 150, 150, 150};$/;"	v
+rect3P	engine/xRender.c	/^SDL_Rect *rect3P = &rect3;$/;"	v
+rendererP	engine/xRender.c	/^static SDL_Renderer *rendererP = NULL;$/;"	v	file:
+repeat	engine/include/jbOld.h	/^	SDL_bool      repeat;$/;"	m	struct:Strip
+root	engine/include/ecs.h	/^  Key    root;                  \/\/ root of behavior tree to fire$/;"	m	struct:__anon11
+root	engine/include/jbOld.h	/^	QuadNode *root;$/;"	m	struct:QuadTree
+rootMP	engine/include/xParent.h	/^  Map *rootMP;$/;"	m	struct:__anon30
+rootP	engine/include/bt.h	/^  Node *rootP;$/;"	m	struct:__anon25
+rootSrcP	engine/include/bt.h	/^	SrcNode *rootSrcP;$/;"	m	struct:__anon26
+runLoop	engine/include/jbOld.h	/^	RunSysLoopFP runLoop;$/;"	m	struct:System
+sActivateActivity	engine/ecs.c	/^Error sActivateActivity(System *sP, Key activityID) {$/;"	f
+sActivateC	engine/ecs.c	/^Error sActivateC(System *sP, Entity entity) {$/;"	f
+sAddC	engine/ecs.c	/^Error sAddC(System *sP, Entity entity, XHeader *xhP) {$/;"	f
+sClr	engine/ecs.c	/^void sClr(System *sP) {$/;"	f
+sComponentIsActive	engine/ecs.c	/^U8 sComponentIsActive(System *sP, Entity entity) {$/;"	f
+sDeactivateActivity	engine/ecs.c	/^Error sDeactivateActivity(System *sP, Key activityID) {$/;"	f
+sDeactivateC	engine/ecs.c	/^Error sDeactivateC(System *sP, Entity entity) {$/;"	f
+sFP	engine/include/ecs.h	/^  SysFP sFP; \/* function that runs on these components *\/$/;"	m	struct:_Activity
+sGetActivity	engine/ecs.c	/^Activity* sGetActivity(System *sP, Key actID) {$/;"	f
+sGetActivityFromE	engine/ecs.c	/^Activity* sGetActivityFromE(System *sP, Entity entity) {$/;"	f
+sGetC	engine/ecs.c	/^void* sGetC(System *sP, Entity entity) {$/;"	f
+sGetNComponents	engine/ecs.c	/^U32 sGetNComponents(System *sP) {$/;"	f
+sIni	engine/ecs.c	/^Error sIni(System *sP, U32 nComps, void *miscP) {$/;"	f
+sIniActivity	engine/ecs.c	/^Error sIniActivity(System *sP, Activity *aP, U32 nComps) {$/;"	f
+sIniCFP	engine/include/ecs.h	/^  SysIniCFP    sIniCFP;             \/* Some systems need to inflate components before using them. *\/$/;"	m	struct:_System
+sIniSFP	engine/include/ecs.h	/^  SysIniFP     sIniSFP;             \/* System init function pointer *\/$/;"	m	struct:_System
+sIniSParamsP	engine/include/ecs.h	/^	void        *sIniSParamsP;        \/* whatever sIniSFP() needs to properly initialize this system *\/$/;"	m	struct:_System
+sNewActDirectory	engine/ecs.c	/^Error sNewActDirectory(System *sP) {$/;"	f
+sNewCDirectory	engine/ecs.c	/^Error sNewCDirectory(System *sP, U8 nElems) {$/;"	f
+sNewMailbox	engine/ecs.c	/^Error sNewMailbox(Mailbox **mailboxPP, U32 nMailSlots) {$/;"	f
+sPA	engine/jb.c	/^static System *sPA[] = {$/;"	v	file:
+sParentReact	engine/xParent.c	/^Error sParentReact(Activity *aP) {$/;"	f
+sParentTick	engine/xParent.c	/^Error sParentTick(Activity *aP) {$/;"	f
+sReset	engine/ecs.c	/^void sReset(System *sP) {$/;"	f
+sRun	engine/ecs.c	/^void sRun(System *sP) {$/;"	f
+sSendMessage	engine/ecs.c	/^void sSendMessage(System *sP, Message *msgP) {$/;"	f
+sStartCActivity	engine/ecs.c	/^Error sStartCActivity(System *sP, Entity entity, Key dstActivityID) {$/;"	f
+sendSysMessage	engine/xParent.c	/^Error sendSysMessage(const Entity entity, const Key sID, const Key aID, const Key k) {$/;"	f
+srcRectPP	engine/include/xRender.h	/^	SDL_Rect **srcRectPP;$/;"	m	struct:__anon9
+stat	game/biome/seed/personality/bb/mb.c	/^	U8 stat;$/;"	m	struct:__anon2	file:
+stripMapInfP	engine/include/xRender.h	/^	Inflatable *stripMapInfP;$/;"	m	struct:__anon6
+stripMapP	engine/include/xRender.h	/^	StripMap *stripMapP;$/;"	m	struct:__anon7
+stripSetInfP	engine/include/xRender.h	/^	Inflatable *stripSetInfP;  \/\/ strip set's compressed source data$/;"	m	struct:__anon5
+stripSetP	engine/include/xRender.h	/^	StripSet *stripSetP;$/;"	m	struct:__anon7
+surface_p	engine/include/jbOld.h	/^	SDL_Surface  *surface_p;  \/* ptr to loaded surface; results loaded tileset building img w\/ tilemap & colors *\/$/;"	m	struct:Image_t
+surface_p	engine/include/jbOld.h	/^	SDL_Surface *surface_p;$/;"	m	struct:Tileset
+swapPlaceholderP	engine/include/ecs.h	/^  void        *swapPlaceholderP;    \/* Avoids allocating a new placeholder every EC-swap. *\/$/;"	m	struct:_System
+sysDel	engine/include/jbOld.h	/^void  sysDel;$/;"	v
+sysID	engine/include/ecs.h	/^			Key sysID;$/;"	m	struct:__anon14::__anon15::__anon17
+sysID	engine/include/xParent.h	/^  Key sysID;$/;"	m	struct:__anon28
+sysPA	engine/include/xParent.h	/^	System **sysPA;$/;"	m	struct:__anon32
+tail	engine/include/jbOld.h	/^	ListNode *tail;$/;"	m	struct:LinkedList
+test	game/biome/seed/personality/bb/mb.c	/^Test test = {1, 2, 3};$/;"	v
+textureP	engine/include/xRender.h	/^	SDL_Texture *textureP;$/;"	m	struct:__anon8
+thisIdx	engine/include/bt.h	/^  U8 thisIdx;         \/\/ allows updating of its own NodeStat and for keying condition map$/;"	m	struct:Node
+thisIdxA	engine/include/bt.h	/^  U8 *thisIdxA;         \/\/ allows updating of its own NodeStat and for keying condition map$/;"	m	struct:NodeA
+tinflIni	engine/data.c	449;"	d	file:
+tinfl_bit_buf_t	engine/data.c	/^  typedef mz_uint32 tinfl_bit_buf_t;$/;"	t	file:
+tinfl_bit_buf_t	engine/data.c	/^  typedef mz_uint64 tinfl_bit_buf_t;$/;"	t	file:
+tinfl_decompress	engine/data.c	/^tinfl_status tinfl_decompress(tinfl_decompressor *r, const mz_uint8 *pIn_buf_next, size_t *pIn_buf_size, mz_uint8 *pOut_buf_start, mz_uint8 *pOut_buf_next, size_t *pOut_buf_size, const mz_uint32 decomp_flags)$/;"	f
+tinfl_decompress_mem_to_heap	engine/data.c	/^void *tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_len, size_t *pOut_len, int flags) {$/;"	f
+tinfl_decompressor	engine/data.c	/^struct tinfl_decompressor_tag; typedef struct tinfl_decompressor_tag tinfl_decompressor;$/;"	t	typeref:struct:tinfl_decompressor_tag	file:
+tinfl_decompressor_tag	engine/data.c	/^struct tinfl_decompressor_tag$/;"	s	file:
+tinfl_get_adler32	engine/data.c	450;"	d	file:
+tinfl_huff_table	engine/data.c	/^} tinfl_huff_table;$/;"	t	typeref:struct:__anon45	file:
+tinfl_put_buf_func_ptr	engine/data.c	/^typedef int (*tinfl_put_buf_func_ptr)(const void* pBuf, int len, void *pUser);$/;"	t	file:
+tinfl_status	engine/data.c	/^} tinfl_status;$/;"	t	typeref:enum:__anon43	file:
+tl_corner	engine/include/jbOld.h	/^	Vector2 tl_corner, br_corner;$/;"	m	struct:_QuadNode
+tm_arry	engine/include/jbOld.h	/^	Uint16        *tm_arry;$/;"	m	struct:Tilemap
+tm_idx	engine/include/jbOld.h	/^	Uint16        tm_idx;     \/* index into tilemap table *\/$/;"	m	struct:Image_t
+to	engine/include/ecs.h	/^	Entity to;$/;"	m	struct:__anon14
+toggle	engine/include/ecs.h	/^  Bln    toggle;                \/\/ opposite of toggle is latch, in which case thee condition only needs to have been true once$/;"	m	struct:__anon11
+treeP	engine/include/bt.h	/^	BTree *treeP;  \/\/ NULL if yet unimplemented.$/;"	m	struct:__anon26
+ts_idx	engine/include/jbOld.h	/^	Uint16         ts_idx;      \/* index into tileset table *\/$/;"	m	struct:Tilemap
+type	engine/include/ecs.h	/^			U8 type;  \/\/ needed by systems like collision, battle, etc.$/;"	m	struct:__anon14::__anon15::__anon16
+type	engine/include/ecs.h	/^  U8 type;$/;"	m	struct:__anon10
+type	engine/include/xParent.h	/^  U8 type;$/;"	m	struct:__anon31
+type	game/biome/seed/personality/bb/mb.c	/^	U32 type;$/;"	m	struct:__anon2	file:
+uncompressed_len	engine/include/jbOld.h	/^	Uint32 offset, uncompressed_len, compressed_len;$/;"	m	struct:MediaInfo
+unused_	engine/include/data.h	14;"	d
+valP	engine/include/data.h	/^	void *valP;$/;"	m	struct:__anon34
+valueP	engine/include/data.h	/^	void *valueP;$/;"	m	struct:__anon37
+w	engine/include/xRender.h	/^	U16 w, h, pitch;  \/\/ in pixel units; determine actual step size by pixel format$/;"	m	struct:__anon7
+wSurfP	engine/xRender.c	/^static SDL_Surface *wSurfP = NULL;$/;"	v	file:
+windowP	engine/xRender.c	/^static SDL_Window *windowP = NULL;$/;"	v	file:
+x	engine/include/jbOld.h	/^	Sint32 x;$/;"	m	struct:Position
+xCmdA	engine/include/xParent.h	/^  XCmd *xCmdA;$/;"	m	struct:__anon29
+xControlIniC	engine/xControl.c	/^Error xControlIniC(XHeader *xhP) {$/;"	f
+xControlIniS	engine/xControl.c	/^Error xControlIniS() {$/;"	f
+xHeader	engine/include/ecs.h	/^  XHeader      xHeader;             \/* This allows (sub)systems to be components of other systems! *\/$/;"	m	struct:_System
+xHeader	engine/include/xControl.h	/^	XHeader xHeader;$/;"	m	struct:__anon21
+xHeader	engine/include/xRender.h	/^	XHeader xHeader;$/;"	m	struct:__anon9
+xIni	engine/xParent.c	/^Error xIni(System **sPA, U16 nSystems, Biome *biomeP) {$/;"	f
+xParentIniC	engine/xParent.c	/^Error xParentIniC(XHeader *xhP) {$/;"	f
+xParentIniS	engine/xParent.c	/^Error xParentIniS(void *sParamsP) {$/;"	f
+xRender	engine/xRender.c	/^Error xRender(Activity *aP) {$/;"	f
+xRenderIniC	engine/xRender.c	/^Error xRenderIniC(XHeader *xhP) {$/;"	f
+xRenderIniS	engine/xRender.c	/^Error xRenderIniS() {$/;"	f
+y	engine/include/jbOld.h	/^	Sint32 y;$/;"	m	struct:Position

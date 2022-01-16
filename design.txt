@@ -70,3 +70,22 @@ What happens when someone passes a key to part of the map inside of a system? e.
 What about walking left then walking right? I pass the K_CMP_WALK_RIGHT key for E1 in K_SYS_MOTION, the system accesses the map the component has a pointer to and replaces the components data with the returned value. The system stores the current address of the component in its bowels. After you get the value, you get the component's address with its ID (an ID key incremented system-wide at load-time) and stick the value there. No maps are copied. Ever. 
 
 Are there any components that won't use maps? Velocity and animation will. Battle moves will too; they contain sequence keys. Battle stats won't. Images won't. Audio will; things like "K_TAKE_DAMAGE" triggers a roar from one monster and a low "ARGH" from a grown, male human. 
+
+
+
+How to associate BBs with BTs
+	A BB can correspond to multiple BTs. 
+	BT1 --> BB1, BB2, BB3
+	This means BB enums can be widely ranging. 
+	To prevent huge gaps, each tree should have its own BB. 
+	Should an attribute be allowed to belong to multiple BBs? Should HP belong to stats and something else?
+	In the current design, all a BT cares about is whether the key brings a value back. 
+	SEPARATION OF RESPONSIBILITIES: Don't forget this principle! 
+		I could see multiple trees corresponding to a single BB. A grove. This grove could have its own defined BB. For example, a lot of trees that interact with battle stats would be TakeDamageTree, CastSpellTree, GetSpellbookTree, ChooseActionTree, etc. As you can see, some of these can be sub-trees of others. That's good; they're modular and reusable. It's HIGHLY desirable, however, to instantiate each distinct tree once and only once for ultimate-fast load times. So when we encounter a subtree node, we call btRun() on that tree recursively. That's beautiful. Now, if a node must call a subtree from a different grove, the BB for that grove must be known about from this grove. Even as that may be the case, if the subtree is still conceptually a node of this tree, then this grove's BB ought to incorporate a pointer to the other grove's BB. As we initialize, then, how do we get these blackboards? Oh yeah: gt
+
+	Here's a compromise: a struct could be associated with a grove, and that struct can be grabbed out of the blackboard. However, we still have the flexibility to grab other items out as well, which gives us the ability to pass the same blackboard to other trees.
+
+All we have to do for a composite node is include the root of another tree. That's all there is to it. I coded this better than I thought I did. I spent all day obsessing over this for this simple outcome: 
+	1) Bundle up grove-related items into a single struct so only one key is needed for it. 
+	2) Just point to other source nodes, which may or may not include sub-trees.
+	3) ... You might as well throw a check mechanism in there somewhere. 
