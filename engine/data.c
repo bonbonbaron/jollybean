@@ -177,7 +177,7 @@ Error mapNew(Map **mapPP, const U8 elemSz, const U16 nElems) {
 	if (!e)
 		e = arrayNew(&(*mapPP)->mapA, elemSz, nElems);
   if (!e) 
-    memset((*mapPP)->flagA, 0, sizeof(FlagInfo) * N_FLAG_BYTES);
+    memset((*mapPP)->flagA, 0, sizeof(FlagInfo) * N_FLAG_BYTES_);
   else {
     arrayDel((*mapPP)->mapA);
     jbFree((void**)mapPP);
@@ -244,7 +244,7 @@ inline static U32 _getMapElemSz(const Map *mapP) {
 }
 
 inline static U32 _getNBitsSet(const Map *mapP) {
-  return mapP->flagA[LAST_FLAG_BYTE_IDX].prevBitCount + _countU8Bits(mapP->flagA[LAST_FLAG_BYTE_IDX].flags);
+  return mapP->flagA[LAST_FLAG_BYTE_IDX_].prevBitCount + _countU8Bits(mapP->flagA[LAST_FLAG_BYTE_IDX_].flags);
 }
 
 extern void* mapGet(const Map *mapP, const U8 key) {
@@ -304,7 +304,7 @@ Error mapSet(Map *mapP, const U8 key, const void *valP) {
 		U8 byteIdx = BYTE_IDX(key);
 		mapP->flagA[byteIdx].flags |= BIT_FLAG(key);  /* flagNum & 0x07 gives you # of bits in the Nth byte */
 		/* Increment all prevBitCounts in bytes above affected one. */
-		while (++byteIdx < N_FLAG_BYTES) 
+		while (++byteIdx < N_FLAG_BYTES_) 
 		  ++mapP->flagA[byteIdx].prevBitCount;
 	}
 	return e;
@@ -321,7 +321,7 @@ Error mapRem(Map *mapP, const U8 key) {
 		U8 byteIdx = BYTE_IDX(key);
 		mapP->flagA[byteIdx].flags &= ~BIT_FLAG(key);  /* key's bit position byteIdx'th byte */
 		/* Increment all prevBitCounts in bytes above affected one. */
-		while (++byteIdx < N_FLAG_BYTES) 
+		while (++byteIdx < N_FLAG_BYTES_) 
 			--mapP->flagA[byteIdx].prevBitCount;
 	}
 	return e;

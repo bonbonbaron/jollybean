@@ -1,91 +1,9 @@
-PERSONALITIES:
-	P {
-		B { 
-			T1 --> R1 {
-				Step1 {
-					{SysKey1, FuncEnum1, UniversalParam, Output}  <-- UniversalParam example: Key to animation strip in map of strips
-					{SysKey2, FuncEnum2, UniversalParam, Output}
-				},
-				Step 2 {
-					{SysKey3, FuncEnum3, UniversalParam, Output}
-					{SysKey4, FuncEnum4, UniversalParam, Output}
-					{SysKey5, FuncEnum5, UniversalParam, Output}
-				},
-				Step 3 {
-					{SysKey6, FuncEnum6, UniversalParam, Output}
-				}
-			}
-			T2 --> R2 {
-				Step 1 {
-					{SysKey7, FuncEnum7, UniversalParam, Output}
-					{SysKey8, FuncEnum8, UniversalParam, Output}
-				}
-			}
-		}
-		B2...
-		etc.
-	}
+Trees are unwieldy at the moment; their parts are split across multiple files stored in separate directories. I still agree with that organizational structure, but I need a way to see the whole tree at once and easily change it. But moreover, I need a way to preview what each node does, and which nodes are available to use.
 
-	Keys seem all-powerful! So cool!
+There's also the matter of biomes. I need an easy way to manipulate these as well for the same reason above. 
 
-	So it's settled: Parameters go together with their functions for clarity. Genes are really just components (except for inflatable media). I would like for these personalities to be stored in one place as well instead of copied. That way everybody who uses them points at them.   
+The obvious route is to build a GUI; this'd risk evolving into a whole game engine GUI. I don't want that; I want to finish the damn engine and start making games. So the less obvious, yet simplest route is to have Python parse a simple text file. Or even have C do it; in fact, I'd eventually like to get rid of all Python functionality altogether in order to make truly portable software. (Scope creep again.) I don't need to do that; I can do that WAY later. I only need to finish the engine itself, which doesn't include the python stuff.  
 
-GENES
-	This is the tricky part: making an entity have all kinds of components in an easy, organized way. E1 can have animation, motion, image, and control. What's an easy way to do that? 
+So the best route to take for Trees is to make a text file parsed by a Python script. 
 
-	Entity { 
-		Genes {
-			&CMotion ({SysKey, component size, void pointer to component} (Use sizeof() since sub-arrays are in same file.)
-			&CAnimation ({SysKey, component size, void pointer to component} (Use sizeof() since sub-arrays are in same file.)
-			&CImage ({SysKey, component size, void pointer to component} (Use sizeof() since sub-arrays are in same file.)
-			&CControl ({SysKey, component size, void pointer to component} (Use sizeof() since sub-arrays are in same file.)
-			NULL
-		}
-		&personality
-	}
-
-
-	Then you iterate through the genes and send each system the component.
-	Entity is a struct of Gene and Personality pointers. This fact determines my road map:
-
-	TEST each one before moving on to the next one:
-		Enum system keys (for director to check whether they've been created yet)
-			System (generic)
-				Director system with populated struct, functions, and enums
-					A more specific system with populated struct, functions, and enums
-		Component (arbitrary, choose anything to test on. Most rewarding would be image)
-			Gene struct (e.g. Velocity, Image, etc.)
-				Trigger enum
-					Response struct
-						Behavior struct
-							Personality struct
-								Entity struct
-									Decide how positions will be apportioned... 
-
-
-What about components that have multiple parts? Motion has multiple parts; so does animation, and the number of parts varies from entity to entity. Therefore, I need to be able to construct maps easily of these parts. 
-
-What happens when someone passes a key to part of the map inside of a system? e.g. I've been walking left, and now I want to jump up. In the animation system, this is a matter of replacing the entire animation inside the animation loop with the jumping animation. This is how multiple entities can share data without having multiple copies of the same map everywhere; they only copy pieces of that map to each slot in the component array. (A system like animation will only have one function.)
-
-What about walking left then walking right? I pass the K_CMP_WALK_RIGHT key for E1 in K_SYS_MOTION, the system accesses the map the component has a pointer to and replaces the components data with the returned value. The system stores the current address of the component in its bowels. After you get the value, you get the component's address with its ID (an ID key incremented system-wide at load-time) and stick the value there. No maps are copied. Ever. 
-
-Are there any components that won't use maps? Velocity and animation will. Battle moves will too; they contain sequence keys. Battle stats won't. Images won't. Audio will; things like "K_TAKE_DAMAGE" triggers a roar from one monster and a low "ARGH" from a grown, male human. 
-
-
-
-How to associate BBs with BTs
-	A BB can correspond to multiple BTs. 
-	BT1 --> BB1, BB2, BB3
-	This means BB enums can be widely ranging. 
-	To prevent huge gaps, each tree should have its own BB. 
-	Should an attribute be allowed to belong to multiple BBs? Should HP belong to stats and something else?
-	In the current design, all a BT cares about is whether the key brings a value back. 
-	SEPARATION OF RESPONSIBILITIES: Don't forget this principle! 
-		I could see multiple trees corresponding to a single BB. A grove. This grove could have its own defined BB. For example, a lot of trees that interact with battle stats would be TakeDamageTree, CastSpellTree, GetSpellbookTree, ChooseActionTree, etc. As you can see, some of these can be sub-trees of others. That's good; they're modular and reusable. It's HIGHLY desirable, however, to instantiate each distinct tree once and only once for ultimate-fast load times. So when we encounter a subtree node, we call btRun() on that tree recursively. That's beautiful. Now, if a node must call a subtree from a different grove, the BB for that grove must be known about from this grove. Even as that may be the case, if the subtree is still conceptually a node of this tree, then this grove's BB ought to incorporate a pointer to the other grove's BB. As we initialize, then, how do we get these blackboards? Oh yeah: gt
-
-	Here's a compromise: a struct could be associated with a grove, and that struct can be grabbed out of the blackboard. However, we still have the flexibility to grab other items out as well, which gives us the ability to pass the same blackboard to other trees.
-
-All we have to do for a composite node is include the root of another tree. That's all there is to it. I coded this better than I thought I did. I spent all day obsessing over this for this simple outcome: 
-	1) Bundle up grove-related items into a single struct so only one key is needed for it. 
-	2) Just point to other source nodes, which may or may not include sub-trees.
-	3) ... You might as well throw a check mechanism in there somewhere. 
+The best route for biomes is to use TileD's output; it'll auto-determine all graphical entities' positions. For that, [TODO: design biome construction tied with TileD.]

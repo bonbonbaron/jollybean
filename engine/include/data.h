@@ -7,9 +7,9 @@
 
 // For-each macro, which allows per-element macro-processing on variadic arguments
 
-#define nFlagBytes_ (32)  // This times 8 is the number of items JB's hash map can hold. Increase as necessary. 
-#define lastFlagByteIdx_ (nFlagBytes_ - 1)
-#define nFlagBits_ (8 * nFlagBytes_)
+#define N_FLAG_BYTES_ (256 / sizeof(U8))  // This times 8 is the number of items JB's hash map can hold. Increase as necessary. 
+#define LAST_FLAG_BYTE_IDX_ (N_FLAG_BYTES_ - 1)
+#define N_FLAG_BITS_ (8 * N_FLAG_BYTES_)
 #define inline __attribute__((always_inline)) __inline
 #define unused_(x) (void)(x)
 #define enumKeys_(first, ...) typedef enum {first = 1, __VA_ARGS__} 
@@ -83,7 +83,7 @@ typedef struct {
 } KeyValPair;
 
 typedef struct {
-	FlagInfo flagA[nFlagBytes_];  // "A" means "Array" for JB's naming standards 
+	FlagInfo flagA[N_FLAG_BYTES_];  // "A" means "Array" for JB's naming standards 
 	void  *mapA;  
 } Map;
 
@@ -106,9 +106,9 @@ void histoDel(U32 **histoPP);
 
 // Inflatables 
 typedef struct {
+	void *inflatedDataP;
 	U32 compressedLen;
 	U32 inflatedLen;
-	void *inflatedDataP;
 	U8  compressedData[];
 } Inflatable;
 
