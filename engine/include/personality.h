@@ -6,15 +6,8 @@
 
 typedef struct {
 	U8 key;
-	BTreeSingleton_ *treeSgtonP;
+	BTreeSingleton *treeSgtonP;
 } TriggerPair;
-
-#define HardCodedArray_(_type, ...) { \
-	sizeof(_type), \
-	nArgs_(EnumValPair, __VA_ARGS__), \
-	NULL, /* prevents multiple copies */ \
-	{__VA_ARGS__} \
-}
 
 // in a hard-coded ARRAY, store the key-bTreeSgton pairs as a PersonalitySeed (you gotta typedef it to keep key together)
 // for each member in the above array... 

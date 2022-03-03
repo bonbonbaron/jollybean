@@ -1,4 +1,4 @@
-#include "personality.h"
+#include "nectar.h"
 
 NodeCb_(cb1) {
   printf("node 1\n");
