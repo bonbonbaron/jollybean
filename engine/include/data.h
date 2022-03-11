@@ -114,4 +114,21 @@ typedef struct {
 
 Error inflate(Inflatable *inflatableP);
 
+
+// Communcications
+typedef struct {
+	U8  to;     // e.g. motion system
+	U8  attn;   // e.g. motion system's translate activity
+	U8  topic;  // e.g. this is for entity 42
+	Key msg;    // e.g. move entity 42 with key FAST_LEFT
+} Message;  
+
+typedef struct {
+  Message *msgA;
+  U32 nMsgs;
+} Mailbox;
+
+Error mailboxNew(Mailbox **mailboxPP, U32 nSlots);
+void mailboxDel(Mailbox **mailboxPP);
+Error mailboxWrite(Mailbox *mailboxP, U8 to, U8 attn, U8 topic, U8 msg);
 #endif

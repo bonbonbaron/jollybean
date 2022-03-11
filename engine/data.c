@@ -951,3 +951,42 @@ Error inflate(Inflatable *inflatableP) {
 	}
   return e;
 }
+
+
+// Messaging
+Error mailboxNew(Mailbox **mailboxPP, U32 nSlots) {
+	if (mailboxPP == NULL || nSlots == 0) 
+		return E_BAD_ARGS;
+	Error e = jbAlloc((void**)  mailboxPP, sizeof(Mailbox), 1);
+	if (!e)
+		e = arrayNew((void**) &(*mailboxPP)->msgA, sizeof(Message), nSlots);
+	if (!e)
+		(*mailboxPP)->nMsgs = 0;
+	else 
+		mailboxDel(mailboxPP);
+	return e;
+}
+
+void mailboxDel(Mailbox **mailboxPP) {
+	if (mailboxPP) {
+		arrayDel((void**) (*mailboxPP)->msgA);
+		jbFree((void**) mailboxPP);
+	}
+}
+
+void mailboxClr(Mailbox *mailboxP) {
+  memset(mailboxP->msgA, 0, sizeof(Message) * arrayGetNElems(mailboxP));
+}
+
+Error mailboxWrite(Mailbox *mailboxP, U8 to, U8 attn, U8 topic, U8 msg) {
+	if (mailboxP->nMsgs >= arrayGetNElems((const void*) mailboxP->msgA))
+		return E_MAILBOX_FULL;
+
+	mailboxP->msgA[mailboxP->nMsgs].to      = to;
+	mailboxP->msgA[mailboxP->nMsgs].attn    = attn;
+	mailboxP->msgA[mailboxP->nMsgs].topic   = topic;
+	mailboxP->msgA[mailboxP->nMsgs++].msg   = msg;
+
+	return SUCCESS;
+}
+

@@ -16,7 +16,7 @@
 // Child systems
 #include "xRender.h"
 #include "xControl.h"
-#include "xParent.h"
+#include "xSystem.h"
 
 /* Keys */
 enumKeys_(CONTROL, POSITION, MOTION, ANIMATION, COLLISION, RENDER, JOLLYBEAN, N_SYS_TYPES) SystemKey; 

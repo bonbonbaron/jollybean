@@ -138,32 +138,8 @@ typedef struct {
 
 typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;
 
-
-// What's the most succinct yet powerful way to write messages?
-// To, from, priority, urgency, contents
-// If the hero moves, the camera must be told of it. How does the camera listen? To avoid the dilemma of every single entity's movement flooding the motion system's outbox, we could have the one specific entity programmed to send that message on its movements. However, the camera make want to switch targets to follow. In such case, we must be flexible in who sends that message. So outputs must be configurable on the fly. 
-typedef struct {
-	Entity to;
-	union {
-		struct {
-			Key id;  // event ID
-			U8 type;  // needed by systems like collision, battle, etc.
-			Entity otherEntity;  // needed by systems like motion if tracking someone
-		} event;
-		struct {
-			Key sysID;
-			Key activityID;
-			Key key;  // tells activity what specifically to do with component every loop 
-		} cmd;
-	} contents;
-} Message;  
 // When an external function wants to trigger a sprite walk animation and motion, the user only needs to call go(entity, WALK_LEFT). That function then starts two messages: one for the animation system (animMsg = {.contents.cmd = {ANIMATE, goKey}}). 
 // Go can wrap animate() and move(). Those in turn can wrap writeMessage(), to which they tell the correct 
-
-typedef struct {
-  Message *msgA;
-  U32 nMsgs;
-} Mailbox;
 
 typedef struct _Activity {
   U8 id;  /* ID of activity */
@@ -219,7 +195,6 @@ U8 sComponentIsActive(System *sP, Entity entity);
 Activity* sGetActivity(System *sP, Key actID);
 Error sActivateActivity(System *sP, Key activityID);
 Error sDeactivateActivity(System *sP, Key activityID);
-void sSendMessage(System *sP, Message *msgP);
 void sAct(System *sP);
 U32 sGetNComponents(System *sP);
 #endif

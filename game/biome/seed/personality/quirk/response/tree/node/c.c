@@ -1,7 +1,7 @@
 #include "nectar.h"
 
 
-NodeCb_(cb3) {
+Node_(cb3) {
   printf("node 3\n");
   return COMPLETE;
 }

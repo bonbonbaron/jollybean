@@ -11,4 +11,5 @@ typedef enum Error {
 	E_UNSUPPORTED_PIXEL_FORMAT,
 	E_SYS_CMP_MISMATCH,
 	E_NULL_VAR,
+	E_MAILBOX_FULL
 } Error;

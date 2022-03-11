@@ -286,17 +286,6 @@ Error sAddC(System *sP, Entity entity, XHeader *xhP) {
   return e;
 }
 
-Error sNewMailbox(Mailbox **mailboxPP, U32 nMailSlots) {
-  Error e = jbAlloc((void**)mailboxPP, sizeof(Mailbox), 1);
-  if (!e)
-    e = arrayNew((void**) mailboxPP, sizeof(Message), nMailSlots);
-  if (e) {
-    arrayDel((void**) mailboxPP);
-    jbFree((void**)mailboxPP);
-  }
-  return e;
-}
-    
 static void _clrMailbox(Mailbox *mailboxP) {
   memset(mailboxP->msgA, 0, sizeof(Message) * arrayGetNElems(mailboxP));
 }
@@ -308,28 +297,18 @@ static void _sClrMailboxes(System *sP) {
   sP->outbox.nMsgs = 0;
 }
 
-void sReset(System *sP) {
-  /* TODO */
-}
-
-void sClr(System *sP) {
-  _sClrMailboxes(sP);
-  _sClrActivities(sP);
-  mapDel(&sP->cDirectoryP);
-}
-
 static void _sReadMessage(System *sP, Message *msgP) {
 	// If message tells you to change the component, do it.
-	if (msgP->contents.cmd.key) {
+	if (msgP->msg) {
     // Get entity's directory listing.
 		CDirEntry *cdeP = (CDirEntry*) mapGet(sP->cDirectoryP, msgP->to);
 		assert(cdeP && cdeP->hcmP && cdeP->hcmP->mapP);
 		const void *newComponentValP = mapGet(cdeP->hcmP->mapP, 
-				                                  msgP->contents.cmd.key);
+				                                  msgP->msg);
     if (newComponentValP)
       memcpy(cdeP->cP, newComponentValP, sP->cSz);
 	}
-	sStartCActivity(sP, msgP->to, msgP->contents.cmd.activityID);
+	sStartCActivity(sP, msgP->to, msgP->attn);
 }
 
 void _sReadInbox(System *sP) {
@@ -340,6 +319,18 @@ void _sReadInbox(System *sP) {
       _sReadMessage(sP, msgP++);
   }
 }
+
+void sReset(System *sP) {
+  /* TODO */
+}
+
+
+void sClr(System *sP) {
+  _sClrMailboxes(sP);
+  _sClrActivities(sP);
+  mapDel(&sP->cDirectoryP);
+}
+
 
 // Outbox messages... Child systems may not deliver messages.
 void sSendMessage(System *sP, Message *msgP) {

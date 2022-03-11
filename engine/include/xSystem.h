@@ -1,7 +1,9 @@
+#ifndef X_SYSTEM_
+#define X_SYSTEM_
 #include "jb.h"
 
 /**************************/
-/***** Parent systems *****/
+/***** System systems *****/
 /**************************/
 // Reactions
 enumKeys_(TICK, REACT) JBActivities; 
@@ -29,18 +31,19 @@ typedef struct {
   
 // Activities output unconditional signals and/or conditional ones. Who sets the conditional ones?
 
-typedef System XParentC;
+typedef System XSystemC;
 
 typedef struct {
 	Entity nSystems;
 	Biome *biomeP;
 	System **sysPA;
-} SParentIniSParams;
+} SSystemIniSParams;
 
-Error xParentIniS();
-Error xParentIniC();
+Error xSystemIniS();
+Error xSystemIniC();
 Error xIni(System **sPA, U16 nSystems, Biome *genomeGroupP);
 Error xRun();
-Error xParentDeliverMessage(Message *msgP);
+Error xSysDeliverMessage(Message *msgP);
 
-extern System sParent;
+extern System sSystem;
+#endif

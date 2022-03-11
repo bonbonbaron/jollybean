@@ -27,9 +27,10 @@ typedef struct {
 } BBSeed;
 
 typedef struct {
-  NodeStat *nodeStatA;
+  NodeStat *nodeStatA;  // tree node's status (complete, failed, running, error, etc.)
   Map      *conditionMP;  // maps node indices to U32 condition flags specifically enumerated for the condition node
-  Map      *agentBbP;     // maps an enum'd state name to a void pointer. Anything truly global should be accessed directly.
+  Map      *agentBbMP;     // maps an enum'd state name to a void pointer. Anything truly global should be accessed directly.
+	Mailbox  *outboxP;
 } Blackboard;
 
 typedef NodeStat (*NodeCB)(struct Node *rootP, struct Node *currNodeP, Blackboard *bbP);  
@@ -66,8 +67,8 @@ typedef struct SrcNode {
     .childrenPA = name_##ChildrenA\
   };
 
-// NodeCb_ enforces conformity to node callback
-#define NodeCb_(name_) NodeStat name_(Node *rootP, Node *currNodeP, Blackboard *bbP) 
+// Node_ enforces conformity to node signatures. This way you don't have to remember how to implement a callback node.
+#define Node_(name_) NodeStat name_(Node *rootP, Node *currNodeP, Blackboard *bbP) 
 
 typedef struct Node {
   U8 firstChildIdx;
@@ -109,8 +110,8 @@ void btDel(BTree **treePP);
 Error bbNew(Blackboard **bbPP, Node *rootP, BBSeed *bbSeedP);
 void  bbDel(Blackboard **bbPP);
 NodeStat btRun(BTree *treeP, Blackboard *bbP);
-NodeCb_(btSequence);
-NodeCb_(btSelector);
-NodeCb_(btCondition);   // easy-to-check condition (e.g. world state)
-NodeCb_(btXCondition);  // ECS-based condition
+Node_(btSequence);
+Node_(btSelector);
+Node_(btCondition);   // easy-to-check condition (e.g. world state)
+Node_(btXCondition);  // ECS-based condition
 #endif

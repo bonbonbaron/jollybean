@@ -1,16 +1,16 @@
 #include "jb.h"
 //***************************************************
-//** Parent systems *********************************
+//** System systems *********************************
 //***************************************************
-static Error sParentReact(Activity *aP);
-static Error sParentTick(Activity *aP);
+static Error sSystemReact(Activity *aP);
+static Error sSystemTick(Activity *aP);
 //static Map **_entityReactionMA;
 static Map *_subscriberAMP;
 static System **_sPA = NULL;  // an array of pointers to all the children systems
 
-System_(Parent, 0, 
-	Activity_(REACT, sParentReact),
-	Activity_(TICK, sParentTick),
+System_(System, 0, 
+	Activity_(REACT, sSystemReact),
+	Activity_(TICK, sSystemTick),
 );
 
 // =====================================================================
@@ -34,7 +34,7 @@ static Error _histoGeneTypes(U32 *histoA, Biome *biomeP) {
 // =====================================================================
 // Distribute all genes to their appropriate subsystems.
 // =====================================================================
-static Error _distributeGenes(System *sParentP, Biome *biomeP) {
+static Error _distributeGenes(System *sSystemP, Biome *biomeP) {
 	Genome **gPP = &biomeP->genomePA[0];					// pointer to an array of genomes
 	Genome **gEndPP = gPP + biomeP->nEntities;   // pointer to the end of the above array
 	XHeader **xhPP, **xhEndPP;   // pointers to an array of X-header pointers and its end
@@ -45,7 +45,7 @@ static Error _distributeGenes(System *sParentP, Biome *biomeP) {
 		xhEndPP = xhPP + (*gPP)->nGenes;
 		// Loop through current genome's genes
 		for (System *sP = NULL; !e && xhPP < xhEndPP; xhPP++) {  // xhPP is a pointer to a pointer to a global singleton of a component
-			sP = (System*) sGetC(sParentP, (*xhPP)->type);  // We don't set the owner of the gene pool.
+			sP = (System*) sGetC(sSystemP, (*xhPP)->type);  // We don't set the owner of the gene pool.
 			e = sAddC(sP, entityCounter, *xhPP);
 		}
 	}
@@ -53,25 +53,25 @@ static Error _distributeGenes(System *sParentP, Biome *biomeP) {
 }
 
 // =====================================================================
-// Initialize the Parent system.
+// Initialize the System system.
 // =====================================================================
-Error xParentIniS(void *sParamsP) {
+Error xSystemIniS(void *sParamsP) {
 	if (!sParamsP)
 		return E_BAD_ARGS;
 
-	SParentIniSParams *sParentIniSPrmsP = (SParentIniSParams*) sParamsP;
+	SSystemIniSParams *sSystemIniSPrmsP = (SSystemIniSParams*) sParamsP;
 	// Histogram gene types
 	U32 *histoP = NULL;
 	Error e = histoNew(&histoP, N_SYS_TYPES);
 	if (!e)
-		e = _histoGeneTypes(histoP, sParentIniSPrmsP->biomeP);
+		e = _histoGeneTypes(histoP, sSystemIniSPrmsP->biomeP);
 	
-	// Add subsystems as components to Parent system.
+	// Add subsystems as components to System system.
 	extern System sControl;
-	sAddC(&sParent, sControl.id, &sControl.xHeader); // Add control sys no matter what
-	for (U32 i = 0; !e && i < sParentIniSPrmsP->nSystems; i++) 
+	sAddC(&sSystem, sControl.id, &sControl.xHeader); // Add control sys no matter what
+	for (U32 i = 0; !e && i < sSystemIniSPrmsP->nSystems; i++) 
 		if (_sPA[i])
-			e = sAddC(&sParent, _sPA[i]->id, &_sPA[i]->xHeader);
+			e = sAddC(&sSystem, _sPA[i]->id, &_sPA[i]->xHeader);
 
 	// Initialize subsystems before we throw genes in.
 	if (!e) {
@@ -79,7 +79,7 @@ Error xParentIniS(void *sParamsP) {
 		arrayIniPtrs(histoP, (void**) &hP, (void**) &hEndP, -1);
 		for (Entity sID = 0; !e && hP < hEndP; hP++, sID++) 
 			if (*hP)  {  // i.e. if any entities exist having components for this system...
-				System *sP = (System*) sGetC(&sParent, sID);
+				System *sP = (System*) sGetC(&sSystem, sID);
 				if (sP)
 					e = sIni(sP, *hP, sP->sIniSParamsP);  // makes subsystem's EC map and activities
 			}
@@ -87,7 +87,7 @@ Error xParentIniS(void *sParamsP) {
 	
 	// Distribute the genes to the proper systems.
 	if (!e)
-		e = _distributeGenes(&sParent, sParentIniSPrmsP->biomeP);
+		e = _distributeGenes(&sSystem, sSystemIniSPrmsP->biomeP);
 
 	// BLACKBOARDS AND B-TREES:
 	//	First thing we need is an array of seeds to use for this scene.
@@ -95,7 +95,7 @@ Error xParentIniS(void *sParamsP) {
 	//	Personality includes BB and Trigger Map.
 	//	
 	
-	sParent.firstInactiveActIdx = 2;
+	sSystem.firstInactiveActIdx = 2;  // TODO bogus
 	// Clean up.
 	histoDel(&histoP);
 
@@ -103,32 +103,17 @@ Error xParentIniS(void *sParamsP) {
 }
 
 // ====================================================================================
-// Placeholder for component-initialization; this has to be handled in xParentIniS().
+// Placeholder for component-initialization; this has to be handled in xSystemIniS().
 // ====================================================================================
-Error xParentIniC(XHeader *xhP) {
+Error xSystemIniC(XHeader *xhP) {
 	unused_(xhP);
 	return SUCCESS;
-}
-// Only parents are allowed to deliver messages to child systems.
-// This is how callbacks will start ECS loops.
-Error sendSysMessage(const Entity entity, const Key sID, const Key aID, const Key k) {
-	// Get child system.
-	System *sChildP = (System*) sGetC(&sParent, sID);
-  if (!sChildP)
-    return E_BAD_ARGS;
-  // Write into its next available mailbox slot.
-  Message *msgP = &sChildP->inbox.msgA[sChildP->inbox.nMsgs++];
-  msgP->to = entity,
-  msgP->contents.cmd.sysID = sID,
-  msgP->contents.cmd.activityID = aID,
-  msgP->contents.cmd.key = k;
-  return SUCCESS;
 }
 
 // msgP may contain information the triggered callback finds pertinent; e.g. "Who collided w/ me?"
 //TODO: make a way to stop all active components of an entity, and no more than that, in order to efficiently switch between an entity's reactions
-static Error _trigger(System *sParentP, Message *msgP) {
-	U32 nComponents = sGetNComponents(sParentP); // TODO: get rid of this in release version
+static Error _trigger(System *sSystemP, Message *msgP) {
+	U32 nComponents = sGetNComponents(sSystemP); // TODO: get rid of this in release version
 	// Requested reaction
 	assert(msgP->to >= nComponents && msgP->to >= N_SYS_TYPES);  // highest system will have entity ID <= N_SYS_TYPES
 	//Map *mapP = _entityReactionMA[msgP->to];  // toID is an entity
@@ -136,12 +121,12 @@ static Error _trigger(System *sParentP, Message *msgP) {
 	Reaction *requestedReactionP = (Reaction*) mapGet(mapP, msgP->contents.event.id);
 	// Ongoing reaction, if one exists
 	assert(requestedReactionP);
-	Reaction *ongoingReactionP = (Reaction*) sGetC(&sParent, msgP->to);
+	Reaction *ongoingReactionP = (Reaction*) sGetC(&sSystem, msgP->to);
 	assert(ongoingReactionP);
 	// If entity is busy, see if we're allowed to interrupt it.
-	Activity *currActivityP = sGetActivityFromE(&sParent, msgP->to);
+	Activity *currActivityP = sGetActivityFromE(&sSystem, msgP->to);
 	assert(currActivityP);
-	if (currActivityP->id == TICK && sComponentIsActive(&sParent, msgP->to)) 
+	if (currActivityP->id == TICK && sComponentIsActive(&sSystem, msgP->to)) 
 		if (requestedReactionP->priority < ongoingReactionP->priority)  // request is lower priority than current activity
 			return SUCCESS;
 	// Entity is either idle or doing something less important. Give it something better to do.
@@ -149,26 +134,26 @@ static Error _trigger(System *sParentP, Message *msgP) {
 	ongoingReactionP->msg = *msgP;
 #endif
 	// The callbacks will be called in the REACT activity.
-	return sStartCActivity(&sParent, msgP->to, REACT);
+	return sStartCActivity(&sSystem, msgP->to, REACT);
 }
 
-static Error _triggerGroup(System *sParentP, Message *msgP) {
+static Error _triggerGroup(System *sSystemP, Message *msgP) {
 	assert(msgP);
 	Error e = SUCCESS;
-	Entity *eA = (Entity*) mapGet(_subscriberAMP, msgP->contents.event.id);
+	Entity *eA = (Entity*) mapGet(_subscriberAMP, msgP->topic);
 	assert(eA);
 	Entity *eP, *eEndP;
 	arrayIniPtrs((void*) eA, (void**) &eP, (void**) &eEndP, -1);
 	for (; !e && eP < eEndP; eP++) {
     msgP->to = *eP;
-		e = _trigger(sParentP, msgP);
+		e = _trigger(sSystemP, msgP);
   }
 	return e;
 }
 
-Error sParentReact(Activity *aP) {
+Error sSystemReact(Activity *aP) {
 	assert(aP);
-	XParentC *cP, *cEndP;
+	XSystemC *cP, *cEndP;
 	Error e = SUCCESS;
 	// Check active subsystems' outboxes. Their callbacks populate systems and JB's reaction activity.
 	arrayIniPtrs(aP->cA, (void**) &cP, (void**) &cEndP, aP->firstInactiveIdx);
@@ -186,22 +171,22 @@ Error sParentReact(Activity *aP) {
 	//arrayIniPtrs(rcaP->cA, (void**) &cP, (void**) cEndP, rcaP->firstInactiveIdx);
 	//for (; !e && cP < cEndP; cP++)
 		//if (cP->r.cb(&cP->r.msg, cP->r.paramsP) == COMPLETE) 
-			//sDeactivateC(&sParent, cP->r.msg.to);
+			//sDeactivateC(&sSystem, cP->r.msg.to);
 
 	return SUCCESS;
 }
 
-// This runs Parent's subsystems.
-Error sParentTick(Activity *aP) {
+// This runs System's subsystems.
+Error sSystemTick(Activity *aP) {
 	assert(aP);
-	XParentC *cP, *cEndP;
+	XSystemC *cP, *cEndP;
 	Error e = SUCCESS;
 	arrayIniPtrs(aP->cA, (void**) &cP, (void**) &cEndP, aP->firstInactiveIdx);
 	for (cP = aP->cA; !e && cP < cEndP; cP++) {
 		e = sRun(cP);
 		// Put idle systems to sleep.
 		if (!e && cP->firstInactiveActIdx == 0)
-			e = sDeactivateC(&sParent, cP->id);
+			e = sDeactivateC(&sSystem, cP->id);
 	}
 	return e;
 }
@@ -231,12 +216,12 @@ Error xIni(System **sPA, U16 nSystems, Biome *biomeP) {
 
 	_sPA = sPA;
 
-	SParentIniSParams sParentIniSPrms = {
+	SSystemIniSParams sSystemIniSPrms = {
 		.nSystems = nSystems,
 		.biomeP = biomeP,
 		.sysPA = sPA
 	};
 
-	return sIni(&sParent, N_SYS_TYPES, (void*) &sParentIniSPrms);
+	return sIni(&sSystem, N_SYS_TYPES, (void*) &sSystemIniSPrms);
 	// TODO: kick off the parent system activities here
 }
