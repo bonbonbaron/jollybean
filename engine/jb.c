@@ -1,17 +1,15 @@
 #include "jb.h"
 
+extern Biome biome1;
 static System *sPA[] = {
 	&sRender
 }; 
 
 int main() {
-	Error e = SUCCESS;
-
-  if (!e)
-    e = xIni(sPA, sizeof(sPA) / sizeof(sPA[0]), &biome1);
+	Error e = xIni(sPA, sizeof(sPA) / sizeof(sPA[0]), &biome1);
 
 	while (!e) {
-		sRun(&sParent);
+		e = sRun(&sParent);
   }
 
   return e;

@@ -6,7 +6,7 @@ static Error sParentReact(Activity *aP);
 static Error sParentTick(Activity *aP);
 //static Map **_entityReactionMA;
 static Map *_subscriberAMP;
-static System **_sPA;
+static System **_sPA = NULL;  // an array of pointers to all the children systems
 
 System_(Parent, 0, 
 	Activity_(REACT, sParentReact),
@@ -106,7 +106,7 @@ Error xParentIniS(void *sParamsP) {
 // Placeholder for component-initialization; this has to be handled in xParentIniS().
 // ====================================================================================
 Error xParentIniC(XHeader *xhP) {
-	UNUSED_(xhP);
+	unused_(xhP);
 	return SUCCESS;
 }
 // Only parents are allowed to deliver messages to child systems.
@@ -198,9 +198,9 @@ Error sParentTick(Activity *aP) {
 	Error e = SUCCESS;
 	arrayIniPtrs(aP->cA, (void**) &cP, (void**) &cEndP, aP->firstInactiveIdx);
 	for (cP = aP->cA; !e && cP < cEndP; cP++) {
-		sRun(cP);
+		e = sRun(cP);
 		// Put idle systems to sleep.
-		if (cP->firstInactiveActIdx == 0)
+		if (!e && cP->firstInactiveActIdx == 0)
 			e = sDeactivateC(&sParent, cP->id);
 	}
 	return e;
@@ -226,8 +226,10 @@ Error sParentTick(Activity *aP) {
 Error xIni(System **sPA, U16 nSystems, Biome *biomeP) {
 	// sIni() takes no arguments, yet the parent system needs to know some outside factors.
 	// So we use static variables here. 
-	if (!sPA || nSystems <= 1 || !biomeP)
+	if (!sPA || nSystems < 1 || !biomeP)
 		return E_BAD_ARGS;
+
+	_sPA = sPA;
 
 	SParentIniSParams sParentIniSPrms = {
 		.nSystems = nSystems,

@@ -3,7 +3,7 @@
 U32 buttonsPressed;
 
 Error ctrlListen(Activity *aP) {
-	UNUSED_(aP);
+	unused_(aP);
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
 		if (event.type == SDL_QUIT) {
@@ -83,7 +83,7 @@ Error xControlIniS() {
 }
 
 Error xControlIniC(XHeader *xhP) {
-	UNUSED_(xhP);
+	unused_(xhP);
 	return SUCCESS;
 }
 

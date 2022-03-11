@@ -1,0 +1,6 @@
+*.o
+*.a
+.*swo
+.*swp
+compile_commands.json
+.*~

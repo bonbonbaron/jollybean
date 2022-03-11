@@ -3,7 +3,7 @@
 #include "jb.h"
 
 #define Biome_(name_, ...) Biome name_ = {\
-  .nEntities = NUM_ARGS_(Genome*, __VA_ARGS__),\
+  .nEntities = nArgs_(Genome*, __VA_ARGS__),\
   .genomePA = {__VA_ARGS__}\
 }
 

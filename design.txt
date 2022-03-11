@@ -7,3 +7,8 @@ The obvious route is to build a GUI; this'd risk evolving into a whole game engi
 So the best route to take for Trees is to make a text file parsed by a Python script. 
 
 The best route for biomes is to use TileD's output; it'll auto-determine all graphical entities' positions. For that, [TODO: design biome construction tied with TileD.]
+
+
+TODO
+====
+You left off on getting sRun() to loop forever. You'd apparently changed things around; it's trying to trigger reactions from subsystems' outboxes. So in order to move forward, you're going to need to design the interface between trees and subsystems.

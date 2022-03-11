@@ -155,14 +155,15 @@ Error _cmGen(Colormap *cmP) {
 }
 
 static SDL_Window *windowP = NULL;
-static SDL_Surface *wSurfP = NULL;
+//static SDL_Surface *wSurfP = NULL;
 static SDL_Renderer *rendererP = NULL;
 
 //======================================================
 // Initialize xRender's system.
 //======================================================
 Error xRenderIniS() {
-	if (!rendererP && !wSurfP && !windowP) {
+	//if (!rendererP && !wSurfP && !windowP) {
+	if (!rendererP && !windowP) {
 		// Init SDL
 		if (SDL_Init(SDL_INIT_VIDEO) != SUCCESS)
 			return EXIT_FAILURE;
@@ -171,13 +172,14 @@ Error xRenderIniS() {
 		windowP = SDL_CreateWindow("Hello world!", 100, 100, 1080, 700, SDL_WINDOW_SHOWN);
 		if (!windowP)
 			return EXIT_FAILURE;
-		wSurfP = SDL_GetWindowSurface(windowP);
+		//wSurfP = SDL_GetWindowSurface(windowP);  
 
 		// Init renderer
 		rendererP = SDL_CreateRenderer(windowP, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 		if (!rendererP) {
 			SDL_DestroyWindow(windowP);
 			SDL_Quit();
+			printf("SDL init error: %s\n", SDL_GetError());
 			return EXIT_FAILURE;
 		}
 	}

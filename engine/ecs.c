@@ -217,6 +217,12 @@ Error sIni(System *sP, U32 nComps, void *miscP) {
   if (!e) 
     for (U8 i = 0; !e && i < sP->nActivities; i++) 
       e = sIniActivity(sP, &sP->activityA[i], nComps);
+
+	// Allocate maiboxes.
+	if (!e)
+		e = arrayNew((void**) &sP->inbox.msgA, sizeof(Message), nComps);
+	if (!e)
+		e = arrayNew((void**) &sP->outbox.msgA, sizeof(Message), nComps);
   
   // Make activity directory.
   if (!e)
@@ -341,18 +347,21 @@ void sSendMessage(System *sP, Message *msgP) {
 }
 
 /* This is how the entire ECS framework works. */
-void sRun(System *sP) {
+Error sRun(System *sP) {
   _sReadInbox(sP);
   _clrMailbox(&sP->inbox);
   Activity *aP = &sP->activityA[0];
   Activity *aEndP = aP + sP->firstInactiveActIdx;
+	Error e = SUCCESS;
 
   // Run all live activities.
-  for (; aP < aEndP; aP++) {
-    (*aP->sFP)(aP);
+  for (; !e && aP < aEndP; aP++) {
+    e = (*aP->sFP)(aP);
     // TODO add checks array traversal 
     // Move dead activities out of the way.
     if (aP->firstInactiveIdx == 0)
       sDeactivateActivity(sP, aP->id);  
   }
+
+	return e;
 }

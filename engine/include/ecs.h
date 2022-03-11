@@ -205,7 +205,7 @@ typedef struct _System {
 void  sIniPtrs(System *sP, Activity *aP, void **startPP, void **endPP);
 Error sNew(System **sPP, const U8 cSz, U8 nFuncs);
 Error sIni(System *sP, U32 nComps, void *miscP);
-void  sRun(System *sP);
+Error sRun(System *sP);
 void  sClr(System *sP);
 Error sIniActivity(System *sP, Activity *aP, U32 nComps);
 Error sIniActivityC(System *sP, const U8 activityIdx, const Entity entity, const void *cmpP);
