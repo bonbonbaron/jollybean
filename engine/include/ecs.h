@@ -26,8 +26,8 @@
 		.cSz              = sizeof(X##name_##C),\
 		.swapPlaceholderP = &x##name_##SwapPH,\
 		.cDirectoryP      = NULL,\
-		.inbox            = {NULL, 0},\
-		.outbox           = {NULL, 0},\
+		.inboxP           = NULL,\
+		.outboxP          = NULL,\
 		.nActivities      = nArgs_(Activity, __VA_ARGS__),\
 		.activityA        = &x##name_##ActivityA[0]\
 	}
@@ -35,7 +35,7 @@
 /**********/
 /* Entity */
 /**********/
-typedef U8 Entity;  
+typedef Key Entity;  
 
 struct _CDirEntry;
 
@@ -169,8 +169,8 @@ typedef struct _System {
 	void        *sIniSParamsP;        /* whatever sIniSFP() needs to properly initialize this system */
   SysIniFP     sIniSFP;             /* System init function pointer */
   SysIniCFP    sIniCFP;             /* Some systems need to inflate components before using them. */
-  Mailbox      inbox;               /* Where commands come in from the outside world */
-  Mailbox      outbox;              /* Where this system talks to the outside world */
+  Mailbox     *inboxP;               /* Where commands come in from the outside world */
+  Mailbox     *outboxP;              /* Where this system talks to the outside world */
   Checkers     checkers;            /* Array of checks; similar to Activity without exlusive C-access */
   Activity    *activityA;           /* Array of activities that loop through their components */
 } System;

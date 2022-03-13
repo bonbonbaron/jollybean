@@ -954,14 +954,16 @@ Error inflate(Inflatable *inflatableP) {
 
 
 // Messaging
-Error mailboxNew(Mailbox **mailboxPP, U32 nSlots) {
+Error mailboxNew(Mailbox **mailboxPP, Key ownerID, U16 nSlots) {
 	if (mailboxPP == NULL || nSlots == 0) 
 		return E_BAD_ARGS;
 	Error e = jbAlloc((void**)  mailboxPP, sizeof(Mailbox), 1);
 	if (!e)
 		e = arrayNew((void**) &(*mailboxPP)->msgA, sizeof(Message), nSlots);
-	if (!e)
+	if (!e) {
 		(*mailboxPP)->nMsgs = 0;
+		(*mailboxPP)->ownerID = ownerID;
+	}
 	else 
 		mailboxDel(mailboxPP);
 	return e;

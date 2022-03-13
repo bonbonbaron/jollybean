@@ -9,7 +9,7 @@
 
 typedef struct {
   U32 nEntities;
-  Genome *genomePA[];
+  Seed *seedPA[];
 } Biome;
 
 #endif

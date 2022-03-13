@@ -3,14 +3,23 @@
 #include "jb.h"
 
 #define Genome_(name_, ...) Genome name_ = {\
-  .nGenes = nArgs_(XHeader*, __VA_ARGS__),\
+  .nGenes = nArgs_(GeneHeader*, __VA_ARGS__),\
   .genePA = {__VA_ARGS__}\
 }
 
+typedef enum {ECS_COMPONENT, ECS_SHARED, BLACKBOARD} GeneClass;
+
+// Note: this header is for each individual gene.
 typedef struct {
-  U32 nGenes;
-  XHeader *genePA[];
+	U8 geneClass;
+	U8 type;
+	U8 size;
+	U8 _padding_;
+} GeneHeader;
+
+typedef struct {
+  U8 nGenes;
+	GeneHeader *genePA[];
 } Genome;
 
-extern Genome bigger;
 #endif

@@ -26,7 +26,6 @@ void _cmClr(Colormap *cmP) {
 Error _cmGen(Colormap *cmP) {
 	Error e;
 	register U32 dstFlip;
-	printf("cmgen\n");
 
 	if (cmP != NULL) {
 		// Check if the image has already been reconstructed. If so, get out.

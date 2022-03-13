@@ -124,11 +124,13 @@ typedef struct {
 } Message;  
 
 typedef struct {
+	Key ownerID;
+  U16 nMsgs;
   Message *msgA;
-  U32 nMsgs;
 } Mailbox;
 
-Error mailboxNew(Mailbox **mailboxPP, U32 nSlots);
+Error mailboxNew(Mailbox **mailboxPP, Key ownerID, U16 nSlots);
+void mailboxClr(Mailbox *mailboxP);
 void mailboxDel(Mailbox **mailboxPP);
 Error mailboxWrite(Mailbox *mailboxP, U8 to, U8 attn, U8 topic, U8 msg);
 #endif

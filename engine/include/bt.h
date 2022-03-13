@@ -33,20 +33,20 @@ typedef struct {
 	Mailbox  *outboxP;
 } Blackboard;
 
-typedef NodeStat (*NodeCB)(struct Node *rootP, struct Node *currNodeP, Blackboard *bbP);  
+typedef NodeStat (*NodeCb)(struct Node *rootP, struct Node *currNodeP, Blackboard *bbP, Mailbox *outboxP);  
 
 // SrcNode is read-only memory. It gets translated to Node stored in an array at load-time.
 typedef struct SrcNode {
   U8 nChildren;
   U8 condition;
-  NodeCB nodeCB;
+  NodeCb nodeCb;
   struct SrcNode **childrenPA;
 } SrcNode;
 
 #define LeafNode_(name_, cb_, ...)\
   SrcNode *name_##ChildrenA[] = {__VA_ARGS__};\
   SrcNode name_ = {\
-    .nodeCB = cb_,\
+    .nodeCb = cb_,\
     .nChildren = nArgs_(SrcNode*, __VA_ARGS__),\
     .childrenPA = name_##ChildrenA\
   };
@@ -54,7 +54,7 @@ typedef struct SrcNode {
 #define SelectorNode_(name_, ...)\
   SrcNode *name_##ChildrenA[] = {__VA_ARGS__};\
   SrcNode name_ = {\
-    .nodeCB = btSelector,\
+    .nodeCb = btSelector,\
     .nChildren = nArgs_(SrcNode*, __VA_ARGS__),\
     .childrenPA = name_##ChildrenA\
   };
@@ -62,20 +62,20 @@ typedef struct SrcNode {
 #define SequenceNode_(name_, ...)\
   SrcNode *name_##ChildrenA[] = {__VA_ARGS__};\
   SrcNode name_ = {\
-    .nodeCB = btSequence,\
+    .nodeCb = btSequence,\
     .nChildren = nArgs_(SrcNode*, __VA_ARGS__),\
     .childrenPA = name_##ChildrenA\
   };
 
 // Node_ enforces conformity to node signatures. This way you don't have to remember how to implement a callback node.
-#define Node_(name_) NodeStat name_(Node *rootP, Node *currNodeP, Blackboard *bbP) 
+#define Node_(name_) NodeStat name_(Node *rootP, Node *currNodeP, Blackboard *bbP, Mailbox *outboxP) 
 
 typedef struct Node {
   U8 firstChildIdx;
   U8 nextSiblingIdx;  // allows easy "while(nodeP->nextSibling)" condition-check
   U8 thisIdx;         // allows updating of its own NodeStat and for keying condition map
   U8 condition;       // bit-flag conditions which must be met to run this node
-  NodeCB nodeCB;      // because nobody points at root @ index 0 as sibling or child
+  NodeCb nodeCb;      // because nobody points at root @ index 0 as sibling or child
 } Node;
 
 typedef struct NodeA {
@@ -83,13 +83,13 @@ typedef struct NodeA {
   U8 *nextSiblingIdxA;  // allows easy "while(nodeP->nextSibling)" condition-check
   U8 *thisIdxA;         // allows updating of its own NodeStat and for keying condition map
   U8 *conditionA;
-  NodeCB *nodeCbA;      // because nobody points at root @ index 0 as sibling or child
+  NodeCb *nodeCbA;      // because nobody points at root @ index 0 as sibling or child
 } NodeA;
 
 typedef struct {
   U8 priority;
   Node *rootP;
-} BTree;
+} BTree;  
 
 typedef struct {
 	U8 priority;
@@ -107,9 +107,14 @@ typedef struct {
 // Functions
 Error btNew(SrcNode *srcNodeP, U8 priority, BTree **treePP);
 void btDel(BTree **treePP);
-Error bbNew(Blackboard **bbPP, Node *rootP, BBSeed *bbSeedP);
+Error bbNew(Blackboard **bbPP, Node *rootP, Key ownerId, BBSeed *bbSeedP);
 void  bbDel(Blackboard **bbPP);
-NodeStat btRun(BTree *treeP, Blackboard *bbP);
+NodeStat btRun(BTree *treeP, Blackboard *bbP, Mailbox *outboxP);  
+// Entity will be passed in as well as outbox. But it'll only ever be used to fill out the outbox messages. 
+// However, btRun is separate from Nodes. That doesn't matter if every callback wants to know how to send a
+// message to whatever system each is interested in. Guess I have to kiss my beautiful simple design goodbye.
+//
+//
 Node_(btSequence);
 Node_(btSelector);
 Node_(btCondition);   // easy-to-check condition (e.g. world state)

@@ -8,8 +8,10 @@ static System *sPA[] = {
 int main() {
 	Error e = xIni(sPA, sizeof(sPA) / sizeof(sPA[0]), &biome1);
 
-	while (!e) 
+	while (!e) {
 		e = sRun(&sSystem);
+		break;
+	}
 
   return e;
 }

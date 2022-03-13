@@ -220,9 +220,9 @@ Error sIni(System *sP, U32 nComps, void *miscP) {
 
 	// Allocate maiboxes.
 	if (!e)
-		e = arrayNew((void**) &sP->inbox.msgA, sizeof(Message), nComps);
-	if (!e)
-		e = arrayNew((void**) &sP->outbox.msgA, sizeof(Message), nComps);
+		e = mailboxNew(&sP->inboxP, sP->id, nComps);
+	if (!e)  //TODO: may need more than nComps outboxP->slots to accommodate check messages
+		e = mailboxNew(&sP->outboxP, sP->id, nComps);  
   
   // Make activity directory.
   if (!e)
@@ -286,17 +286,6 @@ Error sAddC(System *sP, Entity entity, XHeader *xhP) {
   return e;
 }
 
-static void _clrMailbox(Mailbox *mailboxP) {
-  memset(mailboxP->msgA, 0, sizeof(Message) * arrayGetNElems(mailboxP));
-}
-
-static void _sClrMailboxes(System *sP) {
-  arrayDel((void**)&sP->inbox.msgA);
-  arrayDel((void**)&sP->outbox.msgA);
-  sP->inbox.nMsgs = 0;
-  sP->outbox.nMsgs = 0;
-}
-
 static void _sReadMessage(System *sP, Message *msgP) {
 	// If message tells you to change the component, do it.
 	if (msgP->msg) {
@@ -312,9 +301,9 @@ static void _sReadMessage(System *sP, Message *msgP) {
 }
 
 void _sReadInbox(System *sP) {
-  if (sP != NULL && sP->inbox.msgA != NULL) {
+  if (sP != NULL && sP->inboxP->msgA != NULL) {
     Message *msgP, *msgLastP;
-    arrayIniPtrs(sP->inbox.msgA, (void**) &msgP, (void**) &msgLastP, sP->inbox.nMsgs);
+    arrayIniPtrs(sP->inboxP->msgA, (void**) &msgP, (void**) &msgLastP, sP->inboxP->nMsgs);
     while (msgP < msgLastP)
       _sReadMessage(sP, msgP++);
   }
@@ -326,7 +315,8 @@ void sReset(System *sP) {
 
 
 void sClr(System *sP) {
-  _sClrMailboxes(sP);
+	mailboxClr(sP->inboxP);
+	mailboxClr(sP->outboxP);
   _sClrActivities(sP);
   mapDel(&sP->cDirectoryP);
 }
@@ -334,13 +324,13 @@ void sClr(System *sP) {
 
 // Outbox messages... Child systems may not deliver messages.
 void sSendMessage(System *sP, Message *msgP) {
-  memcpy((void*) &sP->outbox.msgA[sP->outbox.nMsgs++], msgP, sizeof(Message));
+  memcpy((void*) &sP->outboxP->msgA[sP->outboxP->nMsgs++], msgP, sizeof(Message));
 }
 
 /* This is how the entire ECS framework works. */
 Error sRun(System *sP) {
   _sReadInbox(sP);
-  _clrMailbox(&sP->inbox);
+  mailboxClr(sP->inboxP);
   Activity *aP = &sP->activityA[0];
   Activity *aEndP = aP + sP->firstInactiveActIdx;
 	Error e = SUCCESS;

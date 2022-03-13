@@ -3,7 +3,7 @@
 // Design-wise it bothers me how I have multiple functions traversing BTs the same way just to perform a different action on them.
 static void _nodePush(SrcNode *srcNodeP, Node *rootP, U8 *nextAvailIdxP) {
   Node *dstNodeP = &rootP[*nextAvailIdxP];
-  dstNodeP->nodeCB = srcNodeP->nodeCB;
+  dstNodeP->nodeCb = srcNodeP->nodeCb;
   dstNodeP->thisIdx = *nextAvailIdxP;
   ++*nextAvailIdxP;
   // If node has children, add all its descendants to the array recursively.
@@ -18,16 +18,16 @@ static void _nodePush(SrcNode *srcNodeP, Node *rootP, U8 *nextAvailIdxP) {
   }
 }
 
-static U32 _countSrcNodes(SrcNode *nodeP) {
-  U8 count = 1;  // counting this node
+static U16 _countSrcNodes(SrcNode *nodeP) {
+  U16 count = 1;  // counting this node
   if (nodeP->nChildren > 0) 
     for (U8 childCount = 0; childCount < nodeP->nChildren; childCount++) 
       count += _countSrcNodes(nodeP->childrenPA[childCount]);  // counting node's descendants
   return count;
 }
 
-static U32 _countNodes(Node *rootP, Node *startFromNodeP) {
-  U8 count = 1;  // counting this node
+static U16 _countNodes(Node *rootP, Node *startFromNodeP) {
+  U16 count = 1;  // counting this node
   if (startFromNodeP->firstChildIdx) 
     for (Node *childNodeP = &rootP[startFromNodeP->firstChildIdx];
          childNodeP != rootP;
@@ -36,29 +36,29 @@ static U32 _countNodes(Node *rootP, Node *startFromNodeP) {
   return count;
 }
 
-static U32 _countSpecificNodes(Node *rootP, Node *startFromNodeP, NodeCB nodeCB) {
-  U8 count = (startFromNodeP->nodeCB == nodeCB);
+static U16 _countSpecificNodes(Node *rootP, Node *startFromNodeP, NodeCb nodeCb) {
+  U16 count = (startFromNodeP->nodeCb == nodeCb);
   if (startFromNodeP->firstChildIdx) 
     for (Node *childNodeP = &rootP[startFromNodeP->firstChildIdx];
          childNodeP != rootP;
          childNodeP = &rootP[childNodeP->nextSiblingIdx])
-      count += _countSpecificNodes(rootP, childNodeP, nodeCB);  // counting node's descendants
+      count += _countSpecificNodes(rootP, childNodeP, nodeCb);  // counting node's descendants
   return count;
 }
 
 // Recursively map conditional nodes' indices to condition bytes.
-static Error _iniCondKeys(Node *rootP, Node *startFromNodeP, NodeCB nodeCB, Map *mapP) {
+static Error _iniCondKeys(Node *rootP, Node *startFromNodeP, NodeCb nodeCb, Map *mapP) {
   U8 tmp = 0;
   Error e = SUCCESS;
 	// This node's index maps to a byte's worth of condition flags.
-  if (startFromNodeP->nodeCB == nodeCB)
+  if (startFromNodeP->nodeCb == nodeCb)
     mapSet(mapP, startFromNodeP->thisIdx, (void*) &tmp);
-	// If this node has any children, recursively call this function on those matching the specified node (nodeCB).
+	// If this node has any children, recursively call this function on those matching the specified node (nodeCb).
   if (startFromNodeP->firstChildIdx)
     for (Node *childNodeP = &rootP[startFromNodeP->firstChildIdx];
          !e && childNodeP != rootP;
          childNodeP = &rootP[childNodeP->nextSiblingIdx])
-      e = _iniCondKeys(rootP, childNodeP, nodeCB, mapP);  // counting node's descendants
+      e = _iniCondKeys(rootP, childNodeP, nodeCb, mapP);  // counting node's descendants
   return e;
 }
 
@@ -80,20 +80,23 @@ void btDel(BTree **treePP) {
   jbFree((void**) treePP);
 }
 
-//Blackboard; these can only be made after their related trees are made.
-Error bbNew(Blackboard **bbPP, Node *rootP, BBSeed *bbSeedP) {
+// Blackboard
+// These can only be made after their related trees are made.
+// The reason is because it has to count the number of nodes the tree has
+// as well as the number of condition nodes.
+Error bbNew(Blackboard **bbPP, Node *rootP, Key ownerId, BBSeed *bbSeedP) {
   // Blackboard
   Error e = jbAlloc((void**) bbPP, sizeof(Blackboard), 1);
   Blackboard *bbP;
   /// Node status array
-	U32 nNodes = _countNodes(rootP, rootP);
+	U16 nNodes = _countNodes(rootP, rootP);
   if (!e) {
     bbP = *bbPP;
     e = arrayNew((void**) &bbP->nodeStatA, sizeof(NodeStat), nNodes);
   }
 	
 	if (!e)
-		e = mailboxNew(&bbP->outboxP, nNodes);
+		e = mailboxNew(&bbP->outboxP, ownerId, nNodes);
   // X-Condition nodes: These nodes run based on bit-flag conditions set externally.
   if (!e) {
     U8 nXCondNodes = _countSpecificNodes(rootP, rootP, btXCondition);
@@ -130,12 +133,12 @@ void bbDel(Blackboard **bbPP) {
 static Node_(_nodeRun) {
   NodeStat stat = bbP->nodeStatA[currNodeP->thisIdx];
   if (stat < COMPLETE)  // Less than COMPLETE is either READY or RUNNING.
-    return currNodeP->nodeCB(rootP, currNodeP, bbP);
+    return currNodeP->nodeCb(rootP, currNodeP, bbP, outboxP);
   return stat;
 }
 
-NodeStat btRun(BTree *treeP, Blackboard *bbP) {
-  return _nodeRun(treeP->rootP, treeP->rootP, bbP);
+NodeStat btRun(BTree *treeP, Blackboard *bbP, Mailbox *outboxP) {
+  return _nodeRun(treeP->rootP, treeP->rootP, bbP, outboxP);
 }
 
 /************ Specific node types ************/
@@ -144,7 +147,7 @@ Node_(btSequence) {
   for (Node *childNodeP = &rootP[currNodeP->firstChildIdx];
        stat == COMPLETE && childNodeP != rootP;
        childNodeP = &rootP[childNodeP->nextSiblingIdx]) 
-    stat = _nodeRun(rootP, childNodeP, bbP);
+    stat = _nodeRun(rootP, childNodeP, bbP, outboxP);
   return stat;
 }
 
@@ -153,7 +156,7 @@ Node_(btSelector) {
   for (Node *childNodeP = &rootP[currNodeP->firstChildIdx];
        stat != COMPLETE && childNodeP != rootP;
        childNodeP = &rootP[childNodeP->nextSiblingIdx])
-    stat = _nodeRun(rootP, childNodeP, bbP);
+    stat = _nodeRun(rootP, childNodeP, bbP, outboxP);
   return stat;
 }
 
@@ -162,6 +165,6 @@ Node_(btXCondition) {
   for (Node *childNodeP = &rootP[currNodeP->firstChildIdx];
        stat != COMPLETE && childNodeP != rootP;
        childNodeP = &rootP[childNodeP->nextSiblingIdx])
-    stat = _nodeRun(rootP, childNodeP, bbP);
+    stat = _nodeRun(rootP, childNodeP, bbP, outboxP);
   return stat;
 }
