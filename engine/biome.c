@@ -28,14 +28,16 @@ static Error _histoGeneTypes(XHistoElem *metaA, Biome *biomeP) {
 	if (!metaA || !biomeP)
 		return E_BAD_ARGS;
 
-	Genome **gPP = &biomeP->genomePA[0];					// pointer to an array of genomes
-	Genome **gEndPP = gPP + biomeP->nEntities;   // pointer to the end of the above array
+	Seed **seedPP = biomeP->seedPA;
+	Seed **seedEndPP = seedPP + biomeP->nEntities;   // pointer to the end of the above array
+	Genome *genomeP;
 	GeneHeader **ghPP, **ghEndPP;   // pointers to an array of gene header pointers and its end
 	GeneHeader gh;  // faster access to double pointer'd gene header
 	// Loop through genomes
-	for (; gPP < gEndPP; gPP++) {
-		ghPP = &(*gPP)->genePA[0];
-		ghEndPP = ghPP + (*gPP)->nGenes;
+	for (; seedPP < seedEndPP; seedPP++) {
+		genomeP = (*seedPP)->genomeP;
+		ghPP = &genomeP->genePA[0];
+		ghEndPP = ghPP + genomeP->nGenes;
 		// Histo genome's genes that aren't blackboard items.
 		for (; ghPP < ghEndPP; ghPP++) {
 			gh = **ghPP;
@@ -53,19 +55,22 @@ static Error _histoGeneTypes(XHistoElem *metaA, Biome *biomeP) {
 // Distribute all genes to their appropriate subsystems.
 // =====================================================================
 static Error _distributeGenes(System *sSystemP, Biome *biomeP) {
-	Genome **gPP = &biomeP->genomePA[0];					// pointer to an array of genomes
-	Genome **gEndPP = gPP + biomeP->nEntities;   // pointer to the end of the above array
-	GeneHeader **ghPP, **ghEndPP;   // pointers to an array of X-header pointers and its end
+	Seed **seedPP = biomeP->seedPA;
+	Seed **seedEndPP = seedPP + biomeP->nEntities;   // pointer to the end of the above array
+	Genome *genomeP;
+	GeneHeader **ghPP, **ghEndPP;   // pointers to an array of gene header pointers and its end
+	GeneHeader gh;  // faster access to double pointer'd gene header
 	XHeader xh = {0};
 	U8 componentType;
 	Error e = SUCCESS;
-	// Loop through genomes
-	for (Entity entityCounter = N_COMPONENT_TYPES; !e && gPP < gEndPP; gPP++, entityCounter++) {
-		ghPP = &(*gPP)->genePA[0];
-		ghEndPP = ghPP + (*gPP)->nGenes;
+	// Loop through seeds
+	for (Entity entityCounter = N_COMPONENT_TYPES; !e && seedPP < seedEndPP; seedPP++, entityCounter++) {
+		genomeP = (*seedPP)->genomeP;
+		ghPP = (*seedPP)->genomeP->genePA;
+		ghEndPP = ghPP + genomeP->nGenes;
 		// Loop through current genome's genes
 		for (System *sP = NULL; !e && ghPP < ghEndPP; ghPP++) {  // ghPP is a pointer to a pointer to a global singleton of a component
-			GeneHeader gh = **ghPP;
+			gh = **ghPP;
 			switch (gh.geneClass) {
 				case ECS_COMPONENT:
 					componentType = (*ghPP)->type;
@@ -74,13 +79,14 @@ static Error _distributeGenes(System *sSystemP, Biome *biomeP) {
 					e = sAddC(sP, entityCounter, &xh);
 					break;
 				case ECS_SHARED:
+					e = mapSet(_sharedMP, gh.type, (const void*) *ghPP);  //*ghPP expands out to the size of the gene.
 					break;
 				case BLACKBOARD:
+
 					break;
 				default:
 					break;
 			}
-
 		}
 	}
 	return e;
@@ -120,10 +126,6 @@ Error xSystemIniS(void *sParamsP) {
 			}
 	}
 
-	// Distribute the genes to the proper systems.
-	if (!e)
-		e = _distributeGenes(&sSystem, sSystemIniSPrmsP->biomeP);
-
 	/******************************************
 	************* Shared Components ***********
 	******************************************/
@@ -157,6 +159,20 @@ Error xSystemIniS(void *sParamsP) {
 	/***************************************
 	************* Behavior Trees ***********
 	***************************************/
+	if (!e) {
+		Seed **seedPP = sSystemIniSPrmsP->biomeP->seedPA;
+		Seed **seedEndPP = seedPP + sSystemIniSPrmsP->biomeP->nEntities;
+		Genome *genomeP;
+		GeneHeader **ghPP, **ghEndPP;   // pointers to an array of gene header pointers and its end
+		GeneHeader gh;  // faster access to double pointer'd gene header
+		Error e = SUCCESS;
+		// Loop through seeds
+		for (; !e && seedPP < seedEndPP; seedPP++) {
+			genomeP = (*seedPP)->genomeP;
+			ghPP = (*seedPP)->genomeP->genePA;
+			ghEndPP = ghPP + genomeP->nGenes;
+			// Loop through current genome's genes
+			for (System *sP = NULL; !e && ghPP < ghEndPP; ghPP++) {  // ghPP is a pointer to a pointer to a global singleton of a component
 
 	/************************************
 	************* Blackboards ***********
@@ -164,6 +180,12 @@ Error xSystemIniS(void *sParamsP) {
 	//TODO btNew() all tree singletons
 	//TODO allocate array of blackboards with # elems = # entities
 	
+
+	// ===========================================
+	// Distribute the genes to the proper systems.
+	// ===========================================
+	if (!e)
+		e = _distributeGenes(&sSystem, sSystemIniSPrmsP->biomeP);
 
 	return e;
 }

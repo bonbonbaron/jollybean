@@ -25,7 +25,21 @@ typedef int S32;
 typedef U8 Key;
 typedef U8 Bln;   // Boolean
 
-#include "errors.h"
+typedef enum Error {
+	SUCCESS,
+	E_BAD_ARGS,
+	E_NO_MEMORY,
+	E_BAD_INDEX,
+	E_BAD_KEY,
+	E_MSG_TO_ECS_TYPE_MISMATCH,
+	E_MSG_TO_ID_MISMATCH,
+	E_MSG_INVALID_CMD,
+	E_UNEXPECTED_DCMP_SZ,
+	E_UNSUPPORTED_PIXEL_FORMAT,
+	E_SYS_CMP_MISMATCH,
+	E_NULL_VAR,
+	E_MAILBOX_FULL
+} Error;
 
 // Basic utils 
 Error jbAlloc(void **voidPP, U32 elemSz, U32 nElems);

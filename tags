@@ -4,32 +4,33 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
-ActDirEntry	engine/include/ecs.h	/^} ActDirEntry;$/;"	t	typeref:struct:__anon30
+ActDirEntry	engine/include/ecs.h	/^} ActDirEntry;$/;"	t	typeref:struct:__anon33
 Activity	engine/include/ecs.h	/^} Activity;$/;"	t	typeref:struct:_Activity
 Activity_	engine/include/ecs.h	7;"	d
 AnimSequence	utils/img.py	/^class AnimSequence:$/;"	c
 Animation	engine/include/jbOld.h	/^} Animation;$/;"	t	typeref:struct:Animation_t
 Animation_t	engine/include/jbOld.h	/^typedef struct Animation_t {$/;"	s
-BBSeed	engine/include/bt.h	/^} BBSeed;$/;"	t	typeref:struct:__anon23
+BBSeed	engine/include/bt.h	/^} BBSeed;$/;"	t	typeref:struct:__anon26
 BBSeed_	engine/include/bt.h	8;"	d
 BIOME_	engine/include/biome.h	2;"	d
+BLACKBOARD	engine/include/genome.h	/^typedef enum {ECS_COMPONENT, ECS_SHARED, BLACKBOARD} GeneClass;$/;"	e	enum:__anon9
 BT_H	engine/include/bt.h	2;"	d
-BTree	engine/include/bt.h	/^} BTree;  $/;"	t	typeref:struct:__anon25
-BTreeSingleton	engine/include/bt.h	/^} BTreeSingleton;$/;"	t	typeref:struct:__anon26
+BTree	engine/include/bt.h	/^} BTree;  $/;"	t	typeref:struct:__anon28
+BTreeSingleton	engine/include/bt.h	/^} BTreeSingleton;$/;"	t	typeref:struct:__anon29
 BTreeSingleton_	engine/include/bt.h	100;"	d
 BUILDDIR	Makefile	/^BUILDDIR         = $(JBDIR)build\/$/;"	m
 BYTEORDER	utils/img.py	/^BYTEORDER = "little"  # since that's the order files are written in$/;"	v
 BYTEORDER	utils/imgStrip.py	/^BYTEORDER = "little"  # since that's the order files are written in$/;"	v
-Biome	engine/include/biome.h	/^} Biome;$/;"	t	typeref:struct:__anon27
+Biome	engine/include/biome.h	/^} Biome;$/;"	t	typeref:struct:__anon30
 Biome_	engine/include/biome.h	5;"	d
-Blackboard	engine/include/bt.h	/^} Blackboard;$/;"	t	typeref:struct:__anon24
+Blackboard	engine/include/bt.h	/^} Blackboard;$/;"	t	typeref:struct:__anon27
 Bln	engine/include/data.h	/^typedef U8 Bln;   \/\/ Boolean$/;"	t
 CC	Makefile	/^CC=cc$/;"	m
 CDirEntry	engine/include/ecs.h	/^} CDirEntry;$/;"	t	typeref:struct:_CDirEntry
 CFLAGS_COMMON	Makefile	/^CFLAGS_COMMON = -g -Wall $(SDL_CFLAGS) \\$/;"	m
 CFLAGS_FAST	Makefile	/^CFLAGS_FAST   = $(CFLAGS_COMMON) #-Ofast    #TODO: uncomment when ready for relase$/;"	m
 CFLAGS_TINY	Makefile	/^CFLAGS_TINY   = $(CFLAGS_COMMON) #-Os    #TODO: uncomment when ready for relase$/;"	m
-COMPLETE	engine/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon22
+COMPLETE	engine/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon25
 CTRL_A	engine/include/jbOld.h	20;"	d
 CTRL_A	engine/include/xControl.h	19;"	d
 CTRL_B	engine/include/jbOld.h	21;"	d
@@ -38,7 +39,7 @@ CTRL_D	engine/include/jbOld.h	17;"	d
 CTRL_DOWN	engine/include/xControl.h	18;"	d
 CTRL_L	engine/include/jbOld.h	18;"	d
 CTRL_LEFT	engine/include/xControl.h	15;"	d
-CTRL_LISTEN	engine/include/xControl.h	/^	CTRL_LISTEN = 1$/;"	e	enum:__anon6
+CTRL_LISTEN	engine/include/xControl.h	/^	CTRL_LISTEN = 1$/;"	e	enum:__anon7
 CTRL_R	engine/include/jbOld.h	19;"	d
 CTRL_RIGHT	engine/include/xControl.h	16;"	d
 CTRL_S	engine/include/jbOld.h	23;"	d
@@ -47,15 +48,17 @@ CTRL_START	engine/include/xControl.h	21;"	d
 CTRL_U	engine/include/jbOld.h	16;"	d
 CTRL_UP	engine/include/xControl.h	17;"	d
 CTRL_X	engine/include/jbOld.h	22;"	d
-Check	engine/include/ecs.h	/^} Check;$/;"	t	typeref:struct:__anon29
+Check	engine/include/ecs.h	/^} Check;$/;"	t	typeref:struct:__anon32
 CheckCBP	engine/include/ecs.h	/^typedef Bln (*CheckCBP)(XHeader *xhP, void *operandP); $/;"	t
-Checkers	engine/include/ecs.h	/^} Checkers;$/;"	t	typeref:struct:__anon32
+Checkers	engine/include/ecs.h	/^} Checkers;$/;"	t	typeref:struct:__anon35
 ColorPalette	engine/include/jbOld.h	/^typedef struct ColorPalette {$/;"	s
 ColorPalette	engine/include/jbOld.h	/^} ColorPalette;$/;"	t	typeref:struct:ColorPalette
-Colormap	engine/include/xRender.h	/^} Colormap;     \/\/ When the inflatable requires neither unpacking nor strip-mapping, go ahead and memcpy over. I can't think of any cleaner way to do it.$/;"	t	typeref:struct:__anon13
+Colormap	engine/include/xRender.h	/^} Colormap;     \/\/ When the inflatable requires neither unpacking nor strip-mapping, go ahead and memcpy over. I can't think of any cleaner way to do it.$/;"	t	typeref:struct:__anon16
 DATA_H	engine/include/data.h	2;"	d
 DST_DATA_DIR	utils/py_defs.py	/^DST_DATA_DIR = GAME_DIR + "gameData" + SEP$/;"	v
+ECS_COMPONENT	engine/include/genome.h	/^typedef enum {ECS_COMPONENT, ECS_SHARED, BLACKBOARD} GeneClass;$/;"	e	enum:__anon9
 ECS_H	engine/include/ecs.h	2;"	d
+ECS_SHARED	engine/include/genome.h	/^typedef enum {ECS_COMPONENT, ECS_SHARED, BLACKBOARD} GeneClass;$/;"	e	enum:__anon9
 ENGINEBUILDDIR	Makefile	/^ENGINEBUILDDIR   = $(BUILDDIR)engine\/$/;"	m
 ENGINEDIR	Makefile	/^ENGINEDIR        = $(JBDIR)engine\/$/;"	m
 ENGINEINCLUDEDIR	Makefile	/^ENGINEINCLUDEDIR = $(ENGINEDIR)include\/$/;"	m
@@ -63,7 +66,7 @@ ENGINE_INCLUDES	Makefile	/^ENGINE_INCLUDES  = $(ENGINEINCLUDEDIR)*.h$/;"	m
 ENGINE_OBJS	Makefile	/^ENGINE_OBJS = $(ENGINE_SRC:%.c=%.o)$/;"	m
 ENGINE_SRC	Makefile	/^ENGINE_SRC    = $(shell find $(ENGINEDIR) -name "*.c") $/;"	m
 ENUM_NAME_PREFIX	utils/jb_enum.py	/^ENUM_NAME_PREFIX = "e"$/;"	v
-ERROR	engine/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon22
+ERROR	engine/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon25
 E_BAD_ARGS	engine/include/errors.h	/^	E_BAD_ARGS,$/;"	e	enum:Error
 E_BAD_INDEX	engine/include/errors.h	/^	E_BAD_INDEX,$/;"	e	enum:Error
 E_BAD_KEY	engine/include/errors.h	/^	E_BAD_KEY,$/;"	e	enum:Error
@@ -76,14 +79,14 @@ E_NULL_VAR	engine/include/errors.h	/^	E_NULL_VAR,$/;"	e	enum:Error
 E_SYS_CMP_MISMATCH	engine/include/errors.h	/^	E_SYS_CMP_MISMATCH,$/;"	e	enum:Error
 E_UNEXPECTED_DCMP_SZ	engine/include/errors.h	/^	E_UNEXPECTED_DCMP_SZ,$/;"	e	enum:Error
 E_UNSUPPORTED_PIXEL_FORMAT	engine/include/errors.h	/^	E_UNSUPPORTED_PIXEL_FORMAT,$/;"	e	enum:Error
-Entity	engine/include/ecs.h	/^typedef U8 Entity;  $/;"	t
-EntityState	engine/include/xSystem.h	/^} EntityState;$/;"	t	typeref:struct:__anon19
-EnumValPair	engine/include/data.h	/^} EnumValPair;$/;"	t	typeref:struct:__anon34
+Entity	engine/include/ecs.h	/^typedef Key Entity;  $/;"	t
+EntityState	engine/include/xSystem.h	/^} EntityState;$/;"	t	typeref:struct:__anon22
+EnumValPair	engine/include/data.h	/^} EnumValPair;$/;"	t	typeref:struct:__anon37
 Error	engine/include/errors.h	/^typedef enum Error {$/;"	g
 Error	engine/include/errors.h	/^} Error;$/;"	t	typeref:enum:Error
 Error	engine/include/jbOld.h	/^typedef Sint8 Error;$/;"	t
-Event	engine/include/xSystem.h	/^} Event;$/;"	t	typeref:struct:__anon20
-FAILED	engine/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon22
+Event	engine/include/xSystem.h	/^} Event;$/;"	t	typeref:struct:__anon23
+FAILED	engine/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon25
 FIRST_ACTIVITY	engine/include/ecs.h	5;"	d
 FLIP_DIAG	utils/img.py	/^FLIP_DIAG = 3 << 14$/;"	v
 FLIP_LR	utils/img.py	/^FLIP_LR   = 2 << 14$/;"	v
@@ -92,8 +95,8 @@ FLIP_NONE	utils/img.py	/^FLIP_NONE = 0$/;"	v
 FLIP_UD	utils/img.py	/^FLIP_UD   = 1 << 14$/;"	v
 FPS	engine/include/jbOld.h	25;"	d
 FRAME_DURATION	engine/include/jbOld.h	26;"	d
-FlagInfo	engine/include/data.h	/^} FlagInfo;$/;"	t	typeref:struct:__anon36
-FlipSet	engine/include/xRender.h	/^} FlipSet;$/;"	t	typeref:struct:__anon10
+FlagInfo	engine/include/data.h	/^} FlagInfo;$/;"	t	typeref:struct:__anon39
+FlipSet	engine/include/xRender.h	/^} FlipSet;$/;"	t	typeref:struct:__anon13
 GAMEBUILDDIR	Makefile	/^GAMEBUILDDIR     = $(BUILDDIR)game\/$/;"	m
 GAMEDIR	Makefile	/^GAMEDIR          = $(JBDIR)game\/$/;"	m
 GAMEINCLUDEDIR	Makefile	/^GAMEINCLUDEDIR   = $(GAMEDIR)include\/$/;"	m
@@ -103,11 +106,13 @@ GAME_NAME	utils/py_defs.py	/^GAME_NAME = "nectar"$/;"	v
 GAME_OBJS	Makefile	/^GAME_OBJS   = $(GAME_SRC:%.c=%.o)$/;"	m
 GAME_SRC	Makefile	/^GAME_SRC      = $(shell find $(GAMEDIR) -name "*.c") $/;"	m
 GENOME_	engine/include/genome.h	2;"	d
-Genome	engine/include/genome.h	/^} Genome;$/;"	t	typeref:struct:__anon8
+GeneClass	engine/include/genome.h	/^typedef enum {ECS_COMPONENT, ECS_SHARED, BLACKBOARD} GeneClass;$/;"	t	typeref:enum:__anon9
+GeneHeader	engine/include/genome.h	/^} GeneHeader;$/;"	t	typeref:struct:__anon10
+Genome	engine/include/genome.h	/^} Genome;$/;"	t	typeref:struct:__anon11
 Genome_	engine/include/genome.h	5;"	d
-HardCodedArray	engine/include/data.h	/^} HardCodedArray;$/;"	t	typeref:struct:__anon35
+HardCodedArray	engine/include/data.h	/^} HardCodedArray;$/;"	t	typeref:struct:__anon38
 HardCodedArray_	engine/include/data.h	50;"	d
-HardCodedMap	engine/include/data.h	/^} HardCodedMap;$/;"	t	typeref:struct:__anon39
+HardCodedMap	engine/include/data.h	/^} HardCodedMap;$/;"	t	typeref:struct:__anon42
 HardCodedMap_	engine/include/data.h	68;"	d
 IDX_B	utils/img.py	/^IDX_B                 =  2$/;"	v
 IDX_B	utils/imgStrip.py	/^IDX_B                 =  2$/;"	v
@@ -126,9 +131,9 @@ INSTALLDIR	Makefile	/^INSTALLDIR       = $(JBDIR)$/;"	m
 IS_LINUX	utils/py_defs.py	/^    IS_LINUX = True$/;"	v
 IS_WINDOWS	utils/py_defs.py	/^    IS_WINDOWS = True$/;"	v
 Image	engine/include/jbOld.h	/^} Image;$/;"	t	typeref:struct:Image_t
-Image	engine/include/xRender.h	/^} Image; $/;"	t	typeref:struct:__anon14
+Image	engine/include/xRender.h	/^} Image; $/;"	t	typeref:struct:__anon17
 Image_t	engine/include/jbOld.h	/^typedef struct Image_t {$/;"	s
-Inflatable	engine/include/data.h	/^} Inflatable;$/;"	t	typeref:struct:__anon40
+Inflatable	engine/include/data.h	/^} Inflatable;$/;"	t	typeref:struct:__anon43
 Inflatable	utils/img.py	/^class Inflatable:$/;"	c
 Inflatable	utils/imgStrip.py	/^class Inflatable:$/;"	c
 IniSysFP	engine/include/jbOld.h	/^typedef void (*IniSysFP)(System *sys_p);$/;"	t
@@ -136,7 +141,7 @@ JBDIR	Makefile	/^JBDIR = \/home\/$(USER)\/hack\/jollybean\/$/;"	m
 JB_	engine/include/jb.h	2;"	d
 JB_H	engine/include/jbOld.h	2;"	d
 Key	engine/include/data.h	/^typedef U8 Key;$/;"	t
-KeyValPair	engine/include/data.h	/^} KeyValPair;$/;"	t	typeref:struct:__anon37
+KeyValPair	engine/include/data.h	/^} KeyValPair;$/;"	t	typeref:struct:__anon40
 LAST_FLAG_BYTE_IDX	engine/include/data.h	11;"	d
 LFLAGS	Makefile	/^LFLAGS        = -Wl,--gc-sections -Wl,-z,norelro \\$/;"	m
 LeafNode_	engine/include/bt.h	46;"	d
@@ -162,11 +167,11 @@ MZ_READ_LE32	engine/data.c	515;"	d	file:
 MZ_READ_LE32	engine/data.c	518;"	d	file:
 MZ_REALLOC	engine/data.c	502;"	d	file:
 MZ_REALLOC	engine/data.c	506;"	d	file:
-Mailbox	engine/include/data.h	/^} Mailbox;$/;"	t	typeref:struct:__anon42
-Map	engine/include/data.h	/^} Map;$/;"	t	typeref:struct:__anon38
+Mailbox	engine/include/data.h	/^} Mailbox;$/;"	t	typeref:struct:__anon45
+Map	engine/include/data.h	/^} Map;$/;"	t	typeref:struct:__anon41
 MediaInfo	engine/include/jbOld.h	/^typedef struct MediaInfo {$/;"	s
 MediaInfo	engine/include/jbOld.h	/^} MediaInfo ;$/;"	t	typeref:struct:MediaInfo
-Message	engine/include/data.h	/^} Message;  $/;"	t	typeref:struct:__anon41
+Message	engine/include/data.h	/^} Message;  $/;"	t	typeref:struct:__anon44
 NBR_COLOR_CHANNELS	utils/img.py	/^NBR_COLOR_CHANNELS    =  3$/;"	v
 NBR_COLOR_CHANNELS	utils/imgStrip.py	/^NBR_COLOR_CHANNELS    =  3$/;"	v
 NECTAR_	game/include/nectar.h	2;"	d
@@ -175,31 +180,31 @@ NECTAR_NODE_	game/include/nectar_node.h	2;"	d
 NECTAR_PERSONALITY_	game/include/nectar_personality.h	2;"	d
 NECTAR_SEED_	game/include/nectar_seed.h	2;"	d
 NO_CHILDREN	engine/include/bt.h	5;"	d
-NO_OUTPUT	engine/include/ecs.h	/^typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;$/;"	e	enum:__anon31
+NO_OUTPUT	engine/include/ecs.h	/^typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;$/;"	e	enum:__anon34
 NO_SIBLINGS_LEFT	engine/include/bt.h	6;"	d
 NUM_JB_ATTRS	utils/jb_db.py	/^NUM_JB_ATTRS = len(list_attributes(tmp))$/;"	v
-NUM_OUTPUTS	engine/include/ecs.h	/^typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;$/;"	e	enum:__anon31
+NUM_OUTPUTS	engine/include/ecs.h	/^typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;$/;"	e	enum:__anon34
 N_FLAG_BITS	engine/include/data.h	12;"	d
 N_FLAG_BYTES	engine/include/data.h	10;"	d
 Node	engine/include/bt.h	/^typedef struct Node {$/;"	s
 Node	engine/include/bt.h	/^} Node;$/;"	t	typeref:struct:Node
 NodeA	engine/include/bt.h	/^typedef struct NodeA {$/;"	s
 NodeA	engine/include/bt.h	/^} NodeA;$/;"	t	typeref:struct:NodeA
-NodeCb	engine/include/bt.h	/^typedef NodeStat (*NodeCb)(struct Node *rootP, struct Node *currNodeP, Blackboard *bbP, U8 actorID, Mailbox *outboxP);  $/;"	t
-NodeStat	engine/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	t	typeref:enum:__anon22
+NodeCb	engine/include/bt.h	/^typedef NodeStat (*NodeCb)(struct Node *rootP, struct Node *currNodeP, Blackboard *bbP, Mailbox *outboxP);  $/;"	t
+NodeStat	engine/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	t	typeref:enum:__anon25
 Node_	engine/bt.c	/^Node_(btSelector) {$/;"	f
 Node_	engine/bt.c	/^Node_(btSequence) {$/;"	f
 Node_	engine/bt.c	/^Node_(btXCondition) {$/;"	f
 Node_	engine/bt.c	/^static Node_(_nodeRun) {$/;"	f	file:
 Node_	engine/include/bt.h	71;"	d
-Node_	game/biome/seed/personality/quirk/response/tree/node/a.c	/^Node_(cb1) {$/;"	f
-Node_	game/biome/seed/personality/quirk/response/tree/node/b.c	/^Node_(cb2) {$/;"	f
-Node_	game/biome/seed/personality/quirk/response/tree/node/c.c	/^Node_(cb3) {$/;"	f
-Node_	game/biome/seed/personality/quirk/response/tree/node/d.c	/^Node_(cb4) {$/;"	f
-Node_	game/biome/seed/personality/quirk/response/tree/node/e.c	/^Node_(cb5) {$/;"	f
+Node_	game/biome/seed/personality/quirk/tree/node/a.c	/^Node_(cb1) {$/;"	f
+Node_	game/biome/seed/personality/quirk/tree/node/b.c	/^Node_(cb2) {$/;"	f
+Node_	game/biome/seed/personality/quirk/tree/node/c.c	/^Node_(cb3) {$/;"	f
+Node_	game/biome/seed/personality/quirk/tree/node/d.c	/^Node_(cb4) {$/;"	f
+Node_	game/biome/seed/personality/quirk/tree/node/e.c	/^Node_(cb5) {$/;"	f
 OBJS	Makefile	/^OBJS        = $(ENGINE_OBJS) $(GAME_OBJS) $/;"	m
 OUTPUTFILE	Makefile	/^OUTPUTFILE  = o$/;"	m
-Output	engine/include/ecs.h	/^typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;$/;"	t	typeref:enum:__anon31
+Output	engine/include/ecs.h	/^typedef enum {NO_OUTPUT, NUM_OUTPUTS} Output;$/;"	t	typeref:enum:__anon34
 PERSONALITY_	engine/include/personality.h	2;"	d
 PNG_BITDEPTH_DATA_SZ	utils/img.py	/^PNG_BITDEPTH_DATA_SZ  = 1$/;"	v
 PNG_BITDEPTH_DATA_SZ	utils/imgStrip.py	/^PNG_BITDEPTH_DATA_SZ  = 1$/;"	v
@@ -223,14 +228,18 @@ PNG_PLTE_CHUNK_TYPE	utils/img.py	/^PNG_PLTE_CHUNK_TYPE   = bytearray([80, 76, 84
 PNG_PLTE_CHUNK_TYPE	utils/imgStrip.py	/^PNG_PLTE_CHUNK_TYPE   = bytearray([80, 76, 84, 69])$/;"	v
 PNG_SIGNATURE	utils/img.py	/^PNG_SIGNATURE         = bytearray([137, 80, 78, 71, 13, 10, 26, 10])$/;"	v
 PNG_SIGNATURE	utils/imgStrip.py	/^PNG_SIGNATURE         = bytearray([137, 80, 78, 71, 13, 10, 26, 10])$/;"	v
+Personality	engine/include/personality.h	/^} Personality;$/;"	t	typeref:struct:__anon36
 Position	engine/include/jbOld.h	/^typedef struct Position {$/;"	s
 Position	engine/include/jbOld.h	/^} Position;  \/* Used by Motion to point at X & Y portion of SDL_Rect *\/$/;"	t	typeref:struct:Position
 QuadNode	engine/include/jbOld.h	/^} QuadNode;$/;"	t	typeref:struct:_QuadNode
 QuadTree	engine/include/jbOld.h	/^typedef struct QuadTree {$/;"	s
 QuadTree	engine/include/jbOld.h	/^} QuadTree;$/;"	t	typeref:struct:QuadTree
-READY	engine/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon22
+Quirk	engine/include/quirk.h	/^} Quirk;$/;"	t	typeref:struct:__anon6
+Quirk_	engine/include/quirk.h	5;"	d
+READY	engine/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon25
+RESPONSE_	engine/include/quirk.h	2;"	d
 ROOT_DIR	utils/py_defs.py	/^ROOT_DIR = "\/home\/bonbonbaron\/games\/"$/;"	v
-RUNNING	engine/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon22
+RUNNING	engine/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon25
 RunSysLoopFP	engine/include/jbOld.h	/^typedef Error (*RunSysLoopFP)(void *componentArry, void);$/;"	t
 S16	engine/include/data.h	/^typedef short S16;$/;"	t
 S32	engine/include/data.h	/^typedef int S32;$/;"	t
@@ -240,21 +249,21 @@ SDL_LFLAGS	Makefile	/^SDL_LFLAGS    = $(shell sdl2-config --libs)$/;"	m
 SEP	utils/py_defs.py	/^    SEP = "\/"$/;"	v
 SEP	utils/py_defs.py	/^    SEP = "\\\\"$/;"	v
 SRC_DATA_DIR	utils/py_defs.py	/^SRC_DATA_DIR = GAME_DIR + "srcData" + SEP$/;"	v
-SSystemIniSParams	engine/include/xSystem.h	/^} SSystemIniSParams;$/;"	t	typeref:struct:__anon21
+SSystemIniSParams	engine/include/xSystem.h	/^} SSystemIniSParams;$/;"	t	typeref:struct:__anon24
 STRP_N_PIXELS	utils/imgStrip.py	/^STRP_N_PIXELS = 64  # images will use 8x8 s to ensure pixel count is multiple of STRP_N_PIXELS$/;"	v
 SUCCESS	engine/include/errors.h	/^	SUCCESS,$/;"	e	enum:Error
 SYS_CONTROL	engine/include/xControl.h	2;"	d
 SYS_RENDER	engine/include/xRender.h	2;"	d
-Seed	engine/include/seed.h	/^} Seed;$/;"	t	typeref:struct:__anon16
+Seed	engine/include/seed.h	/^} Seed;$/;"	t	typeref:struct:__anon19
 SelectorNode_	engine/include/bt.h	54;"	d
 SequenceNode_	engine/include/bt.h	62;"	d
 SrcNode	engine/include/bt.h	/^typedef struct SrcNode {$/;"	s
 SrcNode	engine/include/bt.h	/^} SrcNode;$/;"	t	typeref:struct:SrcNode
 Strip	engine/include/jbOld.h	/^typedef struct Strip {$/;"	s
 Strip	engine/include/jbOld.h	/^} Strip;$/;"	t	typeref:struct:Strip
-StripMap	engine/include/xRender.h	/^} StripMap;$/;"	t	typeref:struct:__anon12
+StripMap	engine/include/xRender.h	/^} StripMap;$/;"	t	typeref:struct:__anon15
 StripMap	utils/imgStrip.py	/^class StripMap:$/;"	c
-StripSet	engine/include/xRender.h	/^} StripSet;$/;"	t	typeref:struct:__anon11
+StripSet	engine/include/xRender.h	/^} StripSet;$/;"	t	typeref:struct:__anon14
 SysFP	engine/include/ecs.h	/^typedef Error (*SysFP)(struct _Activity *aP);$/;"	t
 SysIniCFP	engine/include/ecs.h	/^typedef Error (*SysIniCFP)(XHeader *xhP);$/;"	t
 SysIniFP	engine/include/ecs.h	/^typedef Error (*SysIniFP)(void* sParamsP);$/;"	t
@@ -305,25 +314,25 @@ TINFL_STATUS_FAILED	engine/data.c	/^  TINFL_STATUS_FAILED = -1,$/;"	e	enum:__ano
 TINFL_STATUS_HAS_MORE_OUTPUT	engine/data.c	/^  TINFL_STATUS_HAS_MORE_OUTPUT = 2$/;"	e	enum:__anon3	file:
 TINFL_STATUS_NEEDS_MORE_INPUT	engine/data.c	/^  TINFL_STATUS_NEEDS_MORE_INPUT = 1,$/;"	e	enum:__anon3	file:
 TINFL_USE_64BIT_BITBUF	engine/data.c	470;"	d	file:
-Test	game/biome/seed/personality/bb/mb.c	/^} Test;$/;"	t	typeref:struct:__anon1	file:
+Test	game/biome/seed/genome/blackboard/mb.c	/^} Test;$/;"	t	typeref:struct:__anon1	file:
 Tilemap	engine/include/jbOld.h	/^typedef struct Tilemap {$/;"	s
 Tilemap	engine/include/jbOld.h	/^} Tilemap;$/;"	t	typeref:struct:Tilemap
 Tileset	engine/include/jbOld.h	/^typedef struct Tileset {$/;"	s
 Tileset	engine/include/jbOld.h	/^} Tileset;$/;"	t	typeref:struct:Tileset
-TriggerPair	engine/include/personality.h	/^} TriggerPair;$/;"	t	typeref:struct:__anon33
 U16	engine/include/data.h	/^typedef unsigned short U16;$/;"	t
 U32	engine/include/data.h	/^typedef unsigned int U32;$/;"	t
 U8	engine/include/data.h	/^typedef unsigned char U8;$/;"	t
 WINDOW_HEIGHT	engine/include/jbOld.h	11;"	d
 WINDOW_WIDTH	engine/include/jbOld.h	10;"	d
-XCmd	engine/include/xSystem.h	/^} XCmd;$/;"	t	typeref:struct:__anon17
-XCmdSet	engine/include/xSystem.h	/^} XCmdSet;$/;"	t	typeref:struct:__anon18
-XControlActivityID	engine/include/xControl.h	/^} XControlActivityID;$/;"	t	typeref:enum:__anon6
-XControlC	engine/include/xControl.h	/^} XControlC;$/;"	t	typeref:struct:__anon7
-XHeader	engine/include/ecs.h	/^} XHeader;$/;"	t	typeref:struct:__anon28
-XRENDER	engine/include/xRender.h	/^	XRENDER = 1$/;"	e	enum:__anon9
-XRenderActivityID	engine/include/xRender.h	/^} XRenderActivityID;$/;"	t	typeref:enum:__anon9
-XRenderC	engine/include/xRender.h	/^} XRenderC;$/;"	t	typeref:struct:__anon15
+XCmd	engine/include/xSystem.h	/^} XCmd;$/;"	t	typeref:struct:__anon20
+XCmdSet	engine/include/xSystem.h	/^} XCmdSet;$/;"	t	typeref:struct:__anon21
+XControlActivityID	engine/include/xControl.h	/^} XControlActivityID;$/;"	t	typeref:enum:__anon7
+XControlC	engine/include/xControl.h	/^} XControlC;$/;"	t	typeref:struct:__anon8
+XHeader	engine/include/ecs.h	/^} XHeader;$/;"	t	typeref:struct:__anon31
+XHistoElem	engine/xSystem.c	/^} XHistoElem;$/;"	t	typeref:struct:__anon46	file:
+XRENDER	engine/include/xRender.h	/^	XRENDER = 1$/;"	e	enum:__anon12
+XRenderActivityID	engine/include/xRender.h	/^} XRenderActivityID;$/;"	t	typeref:enum:__anon12
+XRenderC	engine/include/xRender.h	/^} XRenderC;$/;"	t	typeref:struct:__anon18
 XSystemC	engine/include/xSystem.h	/^typedef System XSystemC;$/;"	t
 X_SYSTEM_	engine/include/xSystem.h	2;"	d
 _Activity	engine/include/ecs.h	/^typedef struct _Activity {$/;"	s
@@ -335,17 +344,16 @@ __init__	utils/img.py	/^    def __init__(self, name, cmpLen, decompLen, cmpData)
 __init__	utils/imgStrip.py	/^    def __init__(self, nBytes, pitch, bpp, idxFlipA, idxA):$/;"	m	class:StripMap
 __init__	utils/imgStrip.py	/^    def __init__(self, name, cmpLen, decompLen, cmpData):$/;"	m	class:Inflatable
 _arrayGetVoidElemPtr	engine/data.c	/^inline static void* _arrayGetVoidElemPtr(const void *arryP, S32 idx) {$/;"	f	file:
-_clrMailbox	engine/ecs.c	/^static void _clrMailbox(Mailbox *mailboxP) {$/;"	f	file:
 _cmClr	engine/xRender.c	/^void _cmClr(Colormap *cmP) {$/;"	f
 _cmGen	engine/xRender.c	/^Error _cmGen(Colormap *cmP) {$/;"	f
-_countNodes	engine/bt.c	/^static U32 _countNodes(Node *rootP, Node *startFromNodeP) {$/;"	f	file:
-_countSpecificNodes	engine/bt.c	/^static U32 _countSpecificNodes(Node *rootP, Node *startFromNodeP, NodeCb nodeCb) {$/;"	f	file:
-_countSrcNodes	engine/bt.c	/^static U32 _countSrcNodes(SrcNode *nodeP) {$/;"	f	file:
+_countNodes	engine/bt.c	/^static U16 _countNodes(Node *rootP, Node *startFromNodeP) {$/;"	f	file:
+_countSpecificNodes	engine/bt.c	/^static U16 _countSpecificNodes(Node *rootP, Node *startFromNodeP, NodeCb nodeCb) {$/;"	f	file:
+_countSrcNodes	engine/bt.c	/^static U16 _countSrcNodes(SrcNode *nodeP) {$/;"	f	file:
 _countU8Bits	engine/data.c	/^inline static U8 _countU8Bits(U8 byte) {$/;"	f	file:
 _distributeGenes	engine/xSystem.c	/^static Error _distributeGenes(System *sSystemP, Biome *biomeP) {$/;"	f	file:
-_elemSz	engine/include/data.h	/^	U32         _elemSz;$/;"	m	struct:__anon35
-_elemSz	engine/include/data.h	/^	U8         _elemSz;$/;"	m	struct:__anon39
-_enum	engine/include/data.h	/^	Key _enum;$/;"	m	struct:__anon34
+_elemSz	engine/include/data.h	/^	U32         _elemSz;$/;"	m	struct:__anon38
+_elemSz	engine/include/data.h	/^	U8         _elemSz;$/;"	m	struct:__anon42
+_enum	engine/include/data.h	/^	Key _enum;$/;"	m	struct:__anon37
 _fast_arrayGetElemSz	engine/data.c	/^static inline U32 _fast_arrayGetElemSz(const void *arryP) {$/;"	f	file:
 _fast_arrayGetVoidElemPtr	engine/data.c	/^static inline void* _fast_arrayGetVoidElemPtr(const void *arryP, U8 idx) {$/;"	f	file:
 _getActDirEntry	engine/ecs.c	/^inline static ActDirEntry* _getActDirEntry(System *sP, Key actID) {$/;"	f	file:
@@ -357,22 +365,25 @@ _getElemP	engine/data.c	/^inline static void* _getElemP(const Map *mapP, const F
 _getFlagInfo	engine/data.c	/^inline static FlagInfo _getFlagInfo(const Map *mapP, const U8 key) {$/;"	f	file:
 _getMapElemSz	engine/data.c	/^inline static U32 _getMapElemSz(const Map *mapP) {$/;"	f	file:
 _getNBitsSet	engine/data.c	/^inline static U32 _getNBitsSet(const Map *mapP) {$/;"	f	file:
-_histoGeneTypes	engine/xSystem.c	/^static Error _histoGeneTypes(U32 *histoA, Biome *biomeP) {$/;"	f	file:
+_histoGeneTypes	engine/xSystem.c	/^static Error _histoGeneTypes(XHistoElem *metaA, Biome *biomeP) {$/;"	f	file:
 _idxIsPopulated	engine/data.c	/^inline static U8 _idxIsPopulated(const U8 nBitsSet, U32 idx) {$/;"	f	file:
 _iniCondKeys	engine/bt.c	/^static Error _iniCondKeys(Node *rootP, Node *startFromNodeP, NodeCb nodeCb, Map *mapP) {$/;"	f	file:
 _isFlagSet	engine/data.c	/^inline static U8 _isFlagSet(const U8 flags, const U8 key) {$/;"	f	file:
+_isHigherPriority	engine/xSystem.c	/^inline static U8 _isHigherPriority(U8 newPriority, U8 existingPriority) {$/;"	f	file:
 _isKeyValid	engine/data.c	/^inline static U8 _isKeyValid(const U8 key) {$/;"	f	file:
 _isMapValid	engine/data.c	/^inline static U8 _isMapValid(const Map *mapP) {$/;"	f	file:
 _mvActivity	engine/ecs.c	/^static Error _mvActivity(System *sP, Activity *srcActP, U8 dstActIdx) {$/;"	f	file:
 _mvC	engine/ecs.c	/^static Error _mvC(System *sP, void *srcCP, void *dstCP, Key dstActID, U8 dstCIdx) {$/;"	f	file:
-_nEnumValPairs	engine/include/data.h	/^	U32         _nEnumValPairs;$/;"	m	struct:__anon35
-_nKeyValPairs	engine/include/data.h	/^	Key        _nKeyValPairs;$/;"	m	struct:__anon39
+_nEnumValPairs	engine/include/data.h	/^	U32         _nEnumValPairs;$/;"	m	struct:__anon38
+_nKeyValPairs	engine/include/data.h	/^	Key        _nKeyValPairs;$/;"	m	struct:__anon42
 _nodePush	engine/bt.c	/^static void _nodePush(SrcNode *srcNodeP, Node *rootP, U8 *nextAvailIdxP) {$/;"	f	file:
+_padding_	engine/include/genome.h	/^	U8 _padding_;$/;"	m	struct:__anon10
+_readOutboxes	engine/xSystem.c	/^static Error _readOutboxes(Activity *aP) {$/;"	f	file:
 _sClrActivities	engine/ecs.c	/^static void _sClrActivities(System *sP) {$/;"	f	file:
-_sClrMailboxes	engine/ecs.c	/^static void _sClrMailboxes(System *sP) {$/;"	f	file:
 _sPA	engine/xSystem.c	/^static System **_sPA = NULL;  \/\/ an array of pointers to all the children systems$/;"	v	file:
 _sReadInbox	engine/ecs.c	/^void _sReadInbox(System *sP) {$/;"	f
 _sReadMessage	engine/ecs.c	/^static void _sReadMessage(System *sP, Message *msgP) {$/;"	f	file:
+_sharedMP	engine/xSystem.c	/^static Map *_sharedMP = NULL;         \/\/ map of maps of shared "components"$/;"	v	file:
 _subscriberAMP	engine/xSystem.c	/^static Map *_subscriberAMP;$/;"	v	file:
 _swapActivities	engine/ecs.c	/^static Error _swapActivities(System *sP, Key srcActID, U8 dstActIdx) {$/;"	f	file:
 _trigger	engine/xSystem.c	/^static Error _trigger(System *sSystemP, Message *msgP) {$/;"	f	file:
@@ -383,10 +394,10 @@ _validateActivityIdx	engine/ecs.c	/^inline static U8 _validateActivityIdx(const 
 actDirectoryP	engine/include/ecs.h	/^  Map         *actDirectoryP;       \/* maps component IDs to an element in an array of CmpAddresses *\/$/;"	m	struct:_System
 activityA	engine/include/ecs.h	/^  Activity    *activityA;           \/* Array of activities that loop through their components *\/$/;"	m	struct:_System
 activityID	engine/include/ecs.h	/^  U8 activityID;$/;"	m	struct:_CDirEntry
-activityID	engine/include/xSystem.h	/^  Key activityID;$/;"	m	struct:__anon17
-activityIdx	engine/include/ecs.h	/^  U8 activityIdx;$/;"	m	struct:__anon30
-activityP	engine/include/ecs.h	/^  struct _Activity *activityP; \/* Systems that use pointers to other systems' components may use double pointers to avoid requesting updated info. *\/$/;"	m	struct:__anon30	typeref:struct:__anon30::_Activity
-agentBbMP	engine/include/bt.h	/^  Map      *agentBbMP;     \/\/ maps an enum'd state name to a void pointer. Anything truly global should be accessed directly.$/;"	m	struct:__anon24
+activityID	engine/include/xSystem.h	/^  Key activityID;$/;"	m	struct:__anon20
+activityIdx	engine/include/ecs.h	/^  U8 activityIdx;$/;"	m	struct:__anon33
+activityP	engine/include/ecs.h	/^  struct _Activity *activityP; \/* Systems that use pointers to other systems' components may use double pointers to avoid requesting updated info. *\/$/;"	m	struct:__anon33	typeref:struct:__anon33::_Activity
+agentBbMP	engine/include/bt.h	/^  Map      *agentBbMP;     \/\/ maps an enum'd state name to a void pointer. Anything truly global should be accessed directly.$/;"	m	struct:__anon27
 arrayDel	engine/data.c	/^void arrayDel(void **arryPP) {$/;"	f
 arrayGetElemSz	engine/data.c	/^U32 arrayGetElemSz(const void *arryP) {$/;"	f
 arrayGetNElems	engine/data.c	/^U32 arrayGetNElems(const void *arryP) {$/;"	f
@@ -394,36 +405,36 @@ arrayGetVoidElemPtr	engine/data.c	/^void* arrayGetVoidElemPtr(const void *arryP,
 arrayIni	engine/data.c	/^Error arrayIni(void **arryPP, HardCodedArray *hcaP) {$/;"	f
 arrayIniPtrs	engine/data.c	/^void arrayIniPtrs(const void *arryP, void **startP, void **endP, S32 endIdx) {$/;"	f
 arrayNew	engine/data.c	/^Error arrayNew(void **arryPP, U32 elemSz, U32 nElems) {$/;"	f
-arrayP	engine/include/data.h	/^	void        *arrayP;       \/\/ defaults to NULL to prevent copies $/;"	m	struct:__anon35
+arrayP	engine/include/data.h	/^	void        *arrayP;       \/\/ defaults to NULL to prevent copies $/;"	m	struct:__anon38
 arraySetVoidElem	engine/data.c	/^Error arraySetVoidElem(void *arrayP, U32 idx, const void *elemSrcP) {$/;"	f
-attn	engine/include/data.h	/^	U8  attn;   \/\/ e.g. motion system's translate activity$/;"	m	struct:__anon41
+attn	engine/include/data.h	/^	U8  attn;   \/\/ e.g. motion system's translate activity$/;"	m	struct:__anon44
 bbDel	engine/bt.c	/^void bbDel(Blackboard **bbPP) {$/;"	f
-bbNew	engine/bt.c	/^Error bbNew(Blackboard **bbPP, Node *rootP, BBSeed *bbSeedP) {$/;"	f
-biggerCM	game/biome/seed/genome/Image/ColorMap/biggerCM.c	/^Colormap biggerCM = {$/;"	v
-biggerColorSet	game/biome/seed/genome/Image/ColorPalette/biggerCP.c	/^SDL_Color biggerColorSet[] = { {0x11, 0x00, 0x00, 0x00},  {0xFF, 0xf0, 0xf0, 0xFF},	{0x0F, 0x00, 0x00, 0xFF},  {0x35, 0x46, 0x00, 0xFF},$/;"	v
-biggerImg	game/biome/seed/genome/Image/biggerImg.c	/^Image biggerImg = {$/;"	v
-biggerStripMap	game/biome/seed/genome/Image/StripMap/biggerStripMap.c	/^StripMap biggerStripMap = {$/;"	v
-biggerStripMapInf	game/biome/seed/genome/Image/StripMap/biggerStripMap.c	/^Inflatable biggerStripMapInf = {$/;"	v
-biggerStripSet	game/biome/seed/genome/Image/StripSet/biggerStripSet.c	/^StripSet biggerStripSet = {$/;"	v
-biggerStripSetInf	game/biome/seed/genome/Image/StripSet/biggerStripSet.c	/^Inflatable biggerStripSetInf = {$/;"	v
-biggerXRenderC	game/biome/seed/genome/Image/biggerImg.c	/^XRenderC biggerXRenderC = {$/;"	v
-biomeP	engine/include/xSystem.h	/^	Biome *biomeP;$/;"	m	struct:__anon21
+bbNew	engine/bt.c	/^Error bbNew(Blackboard **bbPP, Node *rootP, Key ownerId, BBSeed *bbSeedP) {$/;"	f
+biggerCM	game/biome/seed/genome/ecs_component/Image/ColorMap/biggerCM.c	/^Colormap biggerCM = {$/;"	v
+biggerColorSet	game/biome/seed/genome/ecs_component/Image/ColorPalette/biggerCP.c	/^SDL_Color biggerColorSet[] = { {0x11, 0x00, 0x00, 0x00},  {0xFF, 0xf0, 0xf0, 0xFF},	{0x0F, 0x00, 0x00, 0xFF},  {0x35, 0x46, 0x00, 0xFF},$/;"	v
+biggerImg	game/biome/seed/genome/ecs_component/Image/biggerImg.c	/^Image biggerImg = {$/;"	v
+biggerStripMap	game/biome/seed/genome/ecs_component/Image/StripMap/biggerStripMap.c	/^StripMap biggerStripMap = {$/;"	v
+biggerStripMapInf	game/biome/seed/genome/ecs_component/Image/StripMap/biggerStripMap.c	/^Inflatable biggerStripMapInf = {$/;"	v
+biggerStripSet	game/biome/seed/genome/ecs_component/Image/StripSet/biggerStripSet.c	/^StripSet biggerStripSet = {$/;"	v
+biggerStripSetInf	game/biome/seed/genome/ecs_component/Image/StripSet/biggerStripSet.c	/^Inflatable biggerStripSetInf = {$/;"	v
+biggerXRenderC	game/biome/seed/genome/ecs_component/Image/biggerImg.c	/^XRenderC biggerXRenderC = {$/;"	v
+biomeP	engine/include/xSystem.h	/^	Biome *biomeP;$/;"	m	struct:__anon24
 bitFlagLUT	utils/bitFlagLUT.h	/^Uint8 bitFlagLUT[] = {$/;"	v
 bitFlag_	engine/data.c	4;"	d	file:
 bitMaskLUT	utils/bitMaskLUT.h	/^Uint8 bitMaskLUT[] = {$/;"	v
 blit_coords	engine/include/jbOld.h	/^	SDL_Rect        blit_coords;$/;"	m	struct:Animation_t
 blit_coords	engine/include/jbOld.h	/^	SDL_Rect     *blit_coords;$/;"	m	struct:Strip
 bpp	engine/include/jbOld.h	/^	Uint8     bpp;$/;"	m	struct:Tileset
-bpp	engine/include/xRender.h	/^	U8 bpp;$/;"	m	struct:__anon13
+bpp	engine/include/xRender.h	/^	U8 bpp;$/;"	m	struct:__anon16
 br_corner	engine/include/jbOld.h	/^	Vector2 tl_corner, br_corner;$/;"	m	struct:_QuadNode
 btCondition	engine/include/bt.h	/^Node_(btCondition);   \/\/ easy-to-check condition (e.g. world state)$/;"	v
 btDel	engine/bt.c	/^void btDel(BTree **treePP) {$/;"	f
 btNew	engine/bt.c	/^Error btNew(SrcNode *srcNodeP, U8 priority, BTree **treePP) {$/;"	f
-btRun	engine/bt.c	/^NodeStat btRun(BTree *treeP, Blackboard *bbP, U8 actorID, Mailbox *outboxP) {$/;"	f
+btRun	engine/bt.c	/^NodeStat btRun(BTree *treeP, Blackboard *bbP, Mailbox *outboxP) {$/;"	f
 btSelector	engine/include/bt.h	/^Node_(btSelector);$/;"	v
 btSequence	engine/include/bt.h	/^Node_(btSequence);$/;"	v
 btXCondition	engine/include/bt.h	/^Node_(btXCondition);  \/\/ ECS-based condition$/;"	v
-buttonsDown	engine/include/xControl.h	/^	U32 buttonsDown;$/;"	m	struct:__anon7
+buttonsDown	engine/include/xControl.h	/^	U32 buttonsDown;$/;"	m	struct:__anon8
 buttonsPressed	engine/xControl.c	/^U32 buttonsPressed;$/;"	v
 byteIdxLUT	utils/byteIdx.h	/^Uint8 byteIdxLUT[] = {$/;"	v
 byteIdx_	engine/data.c	3;"	d	file:
@@ -435,32 +446,34 @@ cSz	engine/include/ecs.h	/^  U8           cSz;                 \/* components ar
 calcExpDeflatedNBytes	utils/img.py	/^def calcExpDeflatedNBytes(w, h, bpp):$/;"	f
 calcExpDeflatedNBytes	utils/imgStrip.py	/^def calcExpDeflatedNBytes(w, h, bpp):$/;"	f
 cap	utils/jb_db.py	/^def cap(string):$/;"	f
-cbIdx	engine/include/ecs.h	/^  Bln    cbIdx;                 \/\/ index to FP instead of FP itself to prevent external functions$/;"	m	struct:__anon29
-cdeP	engine/include/ecs.h	/^  struct _CDirEntry *cdeP;      \/\/ keep tabs on component's location$/;"	m	struct:__anon29	typeref:struct:__anon29::_CDirEntry
-checkA	engine/include/ecs.h	/^  Check *checkA;$/;"	m	struct:__anon32
+cbIdx	engine/include/ecs.h	/^  Bln    cbIdx;                 \/\/ index to FP instead of FP itself to prevent external functions$/;"	m	struct:__anon32
+cdeP	engine/include/ecs.h	/^  struct _CDirEntry *cdeP;      \/\/ keep tabs on component's location$/;"	m	struct:__anon32	typeref:struct:__anon32::_CDirEntry
+checkA	engine/include/ecs.h	/^  Check *checkA;$/;"	m	struct:__anon35
 checkIdx	engine/include/ecs.h	/^  U8 checkIdx;  \/\/ index of check$/;"	m	struct:_CDirEntry
 checkers	engine/include/ecs.h	/^  Checkers     checkers;            \/* Array of checks; similar to Activity without exlusive C-access *\/$/;"	m	struct:_System
 childSysArry	engine/include/jbOld.h	/^	System      *childSysArry;$/;"	m	struct:System
 childrenPA	engine/include/bt.h	/^  struct SrcNode **childrenPA;$/;"	m	struct:SrcNode	typeref:struct:SrcNode::SrcNode
 clean_media_file	utils/jb_media.py	/^def clean_media_file():$/;"	f
+cmd	engine/include/quirk.h	/^	Key cmd;$/;"	m	struct:__anon6
 cmp	engine/include/jbOld.h	/^typedef SDL_bool (*cmp)(struct Sprite_t*, struct Sprite_t*);$/;"	t
-colorA	engine/include/xRender.h	/^	SDL_Color *colorA;$/;"	m	struct:__anon14
-colorMapP	engine/include/xRender.h	/^	Colormap *colorMapP;$/;"	m	struct:__anon14
+colorA	engine/include/xRender.h	/^	SDL_Color *colorA;$/;"	m	struct:__anon17
+colorMapP	engine/include/xRender.h	/^	Colormap *colorMapP;$/;"	m	struct:__anon17
 componentArry	engine/include/jbOld.h	/^	void        *componentArry;$/;"	m	struct:System
 compress_img	utils/img.py	/^def compress_img(img_name):$/;"	f
 compress_img	utils/imgStrip.py	/^def compress_img(img_name):$/;"	f
-compressedData	engine/include/data.h	/^	U8  compressedData[];$/;"	m	struct:__anon40
-compressedLen	engine/include/data.h	/^	U32 compressedLen;$/;"	m	struct:__anon40
+compressedData	engine/include/data.h	/^	U8  compressedData[];$/;"	m	struct:__anon43
+compressedLen	engine/include/data.h	/^	U32 compressedLen;$/;"	m	struct:__anon43
 compressed_len	engine/include/jbOld.h	/^	Uint32 offset, uncompressed_len, compressed_len;$/;"	m	struct:MediaInfo
 condition	engine/include/bt.h	/^  U8 condition;       \/\/ bit-flag conditions which must be met to run this node$/;"	m	struct:Node
 condition	engine/include/bt.h	/^  U8 condition;$/;"	m	struct:SrcNode
 conditionA	engine/include/bt.h	/^  U8 *conditionA;$/;"	m	struct:NodeA
-conditionMP	engine/include/bt.h	/^  Map      *conditionMP;  \/\/ maps node indices to U32 condition flags specifically enumerated for the condition node$/;"	m	struct:__anon24
-conditionP	engine/include/ecs.h	/^  U8    *conditionP;            \/\/ condition to update through a simple pointer$/;"	m	struct:__anon29
+conditionMP	engine/include/bt.h	/^  Map      *conditionMP;  \/\/ maps node indices to U32 condition flags specifically enumerated for the condition node$/;"	m	struct:__anon27
+conditionP	engine/include/ecs.h	/^  U8    *conditionP;            \/\/ condition to update through a simple pointer$/;"	m	struct:__anon32
 contains	utils/img.py	/^def contains(container, elem):$/;"	f
 contains	utils/imgStrip.py	/^def contains(container, elem):$/;"	f
 convertToRGBHex	utils/img.py	/^def convertToRGBHex(rgbNPArray):$/;"	f
 convertToRGBHex	utils/imgStrip.py	/^def convertToRGBHex(rgbNPArray):$/;"	f
+count	engine/xSystem.c	/^	U8 count; $/;"	m	struct:__anon46	file:
 counter1	utils/bitCountLUT.py	/^  counter1 = 0$/;"	v
 counter2	utils/bitCountLUT.py	/^  counter2 = 0$/;"	v
 cp_arry	engine/include/jbOld.h	/^	SDL_Color *cp_arry;$/;"	m	struct:ColorPalette
@@ -471,13 +484,13 @@ create_enum_file	utils/jb_enum.py	/^def create_enum_file():$/;"	f
 create_media_file	utils/jb_media.py	/^def create_media_file():$/;"	f
 create_tbl	utils/jb_db.py	/^def create_tbl(tbl_name):$/;"	f
 ctrlListen	engine/xControl.c	/^Error ctrlListen(Activity *aP) {$/;"	f
-currRoot	engine/include/xSystem.h	/^  U8 currRoot;$/;"	m	struct:__anon19
+currRoot	engine/include/xSystem.h	/^  U8 currRoot;$/;"	m	struct:__anon22
 curr_duration	engine/include/jbOld.h	/^	Uint32          curr_duration;$/;"	m	struct:Animation_t
 curr_frame_num	engine/include/jbOld.h	/^	Uint8           curr_frame_num;$/;"	m	struct:Animation_t
 curr_strip_p	engine/include/jbOld.h	/^	Strip          *curr_strip_p;$/;"	m	struct:Animation_t
 data	engine/include/jbOld.h	/^	void *data;$/;"	m	struct:ListNode
-dataP	engine/include/xRender.h	/^	U8 *dataP;    \/\/ JB only supports 8-bit colormap. If image requires neither strips nor bit-unpacking, this simply points at the inflatable data.$/;"	m	struct:__anon13
-def	game/biome/seed/personality/bb/mb.c	/^	U16 def;$/;"	m	struct:__anon1	file:
+dataP	engine/include/xRender.h	/^	U8 *dataP;    \/\/ JB only supports 8-bit colormap. If image requires neither strips nor bit-unpacking, this simply points at the inflatable data.$/;"	m	struct:__anon16
+def	game/biome/seed/genome/blackboard/mb.c	/^	U16 def;$/;"	m	struct:__anon1	file:
 delete	utils/jb_db.py	/^def delete(tbl_nm, idx=None, condition_str=None):$/;"	f
 delete	utils/jb_media.py	/^def delete(offset, length):$/;"	f
 delete_enum	utils/jb_enum.py	/^def delete_enum(enum_nm):$/;"	f
@@ -485,32 +498,32 @@ delete_enum_elem	utils/jb_enum.py	/^def delete_enum_elem(enum_nm, elem_nm):$/;"	
 delete_record	utils/jb_media.py	/^def delete_record():$/;"	f
 depth	engine/include/jbOld.h	/^	Uint8 n_elems, depth;$/;"	m	struct:_QuadNode
 dimensions	engine/include/jbOld.h	/^	Vector2        dimensions;  \/* in units of tiles *\/$/;"	m	struct:Tilemap
-dstRectPP	engine/include/xRender.h	/^	SDL_Rect **dstRectPP;$/;"	m	struct:__anon15
+dstRectPP	engine/include/xRender.h	/^	SDL_Rect **dstRectPP;$/;"	m	struct:__anon18
 durations	engine/include/jbOld.h	/^	Uint16       *durations;$/;"	m	struct:Strip
 elems	engine/include/jbOld.h	/^	LinkedList *elems;$/;"	m	struct:_QuadNode
 elems_equal	utils/img.py	/^def elems_equal(a, b):$/;"	f
 elems_equal	utils/imgStrip.py	/^def elems_equal(a, b):$/;"	f
 elems_to_enum	utils/jb_enum.py	/^def elems_to_enum(enum_nm, elems):$/;"	f
 ensure_json_exists	utils/jb_media.py	/^def ensure_json_exists():$/;"	f
-entity	engine/include/ecs.h	/^  Entity entity;                \/\/ entity this check regards$/;"	m	struct:__anon29
+entity	engine/include/ecs.h	/^  Entity entity;                \/\/ entity this check regards$/;"	m	struct:__anon32
 entityDirectory	engine/include/jbOld.h	/^	dirEntry    *entityDirectory;  \/\/ a system reads inbox and delivers messages to its components. Multiple entities may send message to the same component. $/;"	m	struct:System
 enumIndices_	engine/include/data.h	16;"	d
 enumKeys_	engine/include/data.h	15;"	d
-enumValA	engine/include/data.h	/^	EnumValPair  enumValA[];$/;"	m	struct:__anon35
+enumValA	engine/include/data.h	/^	EnumValPair  enumValA[];$/;"	m	struct:__anon38
 extract_record_items	utils/jb_db.py	/^def extract_record_items(record):$/;"	f
 f	utils/bitCountLUT.py	/^f = open("bitCountLUT.h", "w")$/;"	v
 find_enum_idx	utils/jb_enum.py	/^def find_enum_idx(enum_nm):$/;"	f
 firstChildIdx	engine/include/bt.h	/^  U8 firstChildIdx;$/;"	m	struct:Node
 firstChildIdxA	engine/include/bt.h	/^  U8 *firstChildIdxA;$/;"	m	struct:NodeA
 firstEmptyIdx	engine/include/ecs.h	/^  U8 firstEmptyIdx; \/* marks the first empty element's index *\/$/;"	m	struct:_Activity
-firstEmptyIdx	engine/include/ecs.h	/^  U8 firstEmptyIdx; \/* marks the first empty element's index *\/$/;"	m	struct:__anon32
+firstEmptyIdx	engine/include/ecs.h	/^  U8 firstEmptyIdx; \/* marks the first empty element's index *\/$/;"	m	struct:__anon35
 firstInactiveActIdx	engine/include/ecs.h	/^  Key          firstInactiveActIdx; \/* index of first inactive activity *\/$/;"	m	struct:_System
 firstInactiveIdx	engine/include/ecs.h	/^  U8 firstInactiveIdx; \/* marks the first inactive element's index *\/$/;"	m	struct:_Activity
-firstInactiveIdx	engine/include/ecs.h	/^  U8 firstInactiveIdx; \/* marks the first inactive element's index *\/$/;"	m	struct:__anon32
-flagA	engine/include/data.h	/^	FlagInfo flagA[N_FLAG_BYTES];  \/\/ "A" means "Array" for JB's naming standards $/;"	m	struct:__anon38
-flags	engine/include/data.h	/^	U8 flags;$/;"	m	struct:__anon36
-flipIdxA	engine/include/xRender.h	/^	U16 flipIdxA[];$/;"	m	struct:__anon10
-flipSetP	engine/include/xRender.h	/^	FlipSet *flipSetP;$/;"	m	struct:__anon11
+firstInactiveIdx	engine/include/ecs.h	/^  U8 firstInactiveIdx; \/* marks the first inactive element's index *\/$/;"	m	struct:__anon35
+flagA	engine/include/data.h	/^	FlagInfo flagA[N_FLAG_BYTES];  \/\/ "A" means "Array" for JB's naming standards $/;"	m	struct:__anon41
+flags	engine/include/data.h	/^	U8 flags;$/;"	m	struct:__anon39
+flipIdxA	engine/include/xRender.h	/^	U16 flipIdxA[];$/;"	m	struct:__anon13
+flipSetP	engine/include/xRender.h	/^	FlipSet *flipSetP;$/;"	m	struct:__anon14
 flip_diag	utils/img.py	/^def flip_diag(np_array):$/;"	f
 flip_funcs	utils/img.py	/^flip_funcs = {FLIP_NONE: flip_none, FLIP_UD: flip_ud, FLIP_LR: flip_lr, FLIP_DIAG: flip_diag}$/;"	v
 flip_lr	utils/img.py	/^flip_lr = np.fliplr$/;"	v
@@ -518,9 +531,10 @@ flip_none	utils/img.py	/^def flip_none(np_array):$/;"	f
 flip_ud	utils/img.py	/^flip_ud = np.flipud$/;"	v
 game_over	engine/include/jbOld.h	/^SDL_bool game_over;$/;"	v
 gen_local_vars_string	utils/jb_db.py	/^def gen_local_vars_string(tbl_nm, obj):$/;"	f
-genePA	engine/include/genome.h	/^  XHeader *genePA[];$/;"	m	struct:__anon8
-genomeP	engine/include/seed.h	/^	Genome *genomeP;$/;"	m	struct:__anon16
-genomePA	engine/include/biome.h	/^  Genome *genomePA[];$/;"	m	struct:__anon27
+geneClass	engine/include/genome.h	/^	U8 geneClass;$/;"	m	struct:__anon10
+geneClass	engine/xSystem.c	/^	U8 geneClass;$/;"	m	struct:__anon46	file:
+genePA	engine/include/genome.h	/^	GeneHeader *genePA[];$/;"	m	struct:__anon11
+genomeP	engine/include/seed.h	/^	Genome *genomeP;$/;"	m	struct:__anon19
 get_all_local_variables	utils/jb_db.py	/^def get_all_local_variables(tbl_nm):$/;"	f
 get_all_records	utils/jb_db.py	/^def get_all_records(tbl_nm):$/;"	f
 get_color_palette	utils/img.py	/^def get_color_palette(img):$/;"	f
@@ -534,24 +548,24 @@ get_keymap_psn	utils/imgStrip.py	/^def  get_keymap_psn(filename):$/;"	f
 get_proper_elem_nm	utils/jb_enum.py	/^def get_proper_elem_nm(enum_nm, elem_nm):$/;"	f
 get_proper_enum_nm	utils/jb_enum.py	/^def get_proper_enum_nm(nm):$/;"	f
 get_tbl	utils/jb_db.py	/^def get_tbl(tbl_nm):$/;"	f
-h	engine/include/xRender.h	/^	U16 w, h, pitch;  \/\/ in pixel units; determine actual step size by pixel format$/;"	m	struct:__anon13
+h	engine/include/xRender.h	/^	U16 w, h, pitch;  \/\/ in pixel units; determine actual step size by pixel format$/;"	m	struct:__anon16
 hcArrayIni	engine/data.c	/^Error hcArrayIni(HardCodedArray *hcaP) {$/;"	f
 hcMapIni	engine/data.c	/^Error hcMapIni(HardCodedMap *hcmP) {$/;"	f
 hcmP	engine/include/ecs.h	/^	HardCodedMap *hcmP;  \/\/ Some types of components' values change under various circumstances.$/;"	m	struct:_CDirEntry
 head	engine/include/jbOld.h	/^	ListNode *head;$/;"	m	struct:LinkedList
 histoDel	engine/data.c	/^void histoDel(U32 **histoPP) {$/;"	f
 histoNew	engine/data.c	/^Error histoNew(U32 **histoPP, const U32 maxVal) {$/;"	f
-hp	game/biome/seed/personality/bb/mb.c	/^U32 hp = 200;$/;"	v
+hp	game/biome/seed/genome/blackboard/mb.c	/^U32 hp = 200;$/;"	v
 id	engine/include/ecs.h	/^  U8           id;                  \/* this is needed to ensure messages are sent to the correct system *\/$/;"	m	struct:_System
 id	engine/include/ecs.h	/^  U8 id;  \/* ID of activity *\/$/;"	m	struct:_Activity
-id	engine/include/xSystem.h	/^  Key id;$/;"	m	struct:__anon20
+id	engine/include/xSystem.h	/^  Key id;$/;"	m	struct:__anon23
 ii	engine/xRender.c	/^static U8 ii = 0;$/;"	v	file:
-imgP	engine/include/xRender.h	/^	Image *imgP;$/;"	m	struct:__anon15
-inbox	engine/include/ecs.h	/^  Mailbox      inbox;               \/* Where commands come in from the outside world *\/$/;"	m	struct:_System
+imgP	engine/include/xRender.h	/^	Image *imgP;$/;"	m	struct:__anon18
 inbox	engine/include/jbOld.h	/^	Message     *inbox;$/;"	m	struct:System
+inboxP	engine/include/ecs.h	/^  Mailbox     *inboxP;               \/* Where commands come in from the outside world *\/$/;"	m	struct:_System
 inflate	engine/data.c	/^Error inflate(Inflatable *inflatableP) {$/;"	f
-inflatedDataP	engine/include/data.h	/^	void *inflatedDataP;$/;"	m	struct:__anon40
-inflatedLen	engine/include/data.h	/^	U32 inflatedLen;$/;"	m	struct:__anon40
+inflatedDataP	engine/include/data.h	/^	void *inflatedDataP;$/;"	m	struct:__anon43
+inflatedLen	engine/include/data.h	/^	U32 inflatedLen;$/;"	m	struct:__anon43
 iniColorMap	utils/img.py	/^def iniColorMap(img):$/;"	f
 iniColorMap	utils/imgStrip.py	/^def iniColorMap(img):$/;"	f
 inline	engine/include/data.h	13;"	d
@@ -562,11 +576,10 @@ insert_record	utils/jb_media.py	/^def insert_record():$/;"	f
 is_animated	utils/img.py	/^def is_animated(fp):$/;"	f
 jbAlloc	engine/data.c	/^inline Error jbAlloc(void **voidPP, U32 elemSz, U32 nElems) {$/;"	f
 jbFree	engine/data.c	/^inline void jbFree(void **voidPP) {$/;"	f
-key	engine/include/data.h	/^	Key key;$/;"	m	struct:__anon37
-key	engine/include/personality.h	/^	U8 key;$/;"	m	struct:__anon33
-key	engine/include/xSystem.h	/^  Key key;$/;"	m	struct:__anon17
-keyValA	engine/include/data.h	/^	KeyValPair  keyValA[];$/;"	m	struct:__anon39
-keyValPairA	engine/include/bt.h	/^  KeyValPair *keyValPairA;$/;"	m	struct:__anon23
+key	engine/include/data.h	/^	Key key;$/;"	m	struct:__anon40
+key	engine/include/xSystem.h	/^  Key key;$/;"	m	struct:__anon20
+keyValA	engine/include/data.h	/^	KeyValPair  keyValA[];$/;"	m	struct:__anon42
+keyValPairA	engine/include/bt.h	/^  KeyValPair *keyValPairA;$/;"	m	struct:__anon26
 last_modified_tm	engine/include/jbOld.h	/^	Uint32    last_modified_tm;$/;"	m	struct:Tileset
 list_attr_vals	utils/jb_db.py	/^def list_attr_vals(obj):$/;"	f
 list_attributes	utils/jb_db.py	/^def list_attributes(obj):$/;"	f
@@ -593,19 +606,19 @@ m_zhdr0	engine/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adl
 m_zhdr1	engine/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
 mailboxClr	engine/data.c	/^void mailboxClr(Mailbox *mailboxP) {$/;"	f
 mailboxDel	engine/data.c	/^void mailboxDel(Mailbox **mailboxPP) {$/;"	f
-mailboxNew	engine/data.c	/^Error mailboxNew(Mailbox **mailboxPP, U32 nSlots) {$/;"	f
+mailboxNew	engine/data.c	/^Error mailboxNew(Mailbox **mailboxPP, Key ownerID, U16 nSlots) {$/;"	f
 mailboxWrite	engine/data.c	/^Error mailboxWrite(Mailbox *mailboxP, U8 to, U8 attn, U8 topic, U8 msg) {$/;"	f
 main	engine/jb.c	/^int main() {$/;"	f
 main	utils/bitCountLUT.c	/^int main(int argc, char **argv) {$/;"	f
 main	utils/bitCountMaskLUT.c	/^int main(int argc, char **argv) {$/;"	f
 main	utils/bitFlagLUT.c	/^int main(int argc, char **argv) {$/;"	f
 main	utils/byteIdxLUT.c	/^int main(int argc, char **argv) {$/;"	f
-mapA	engine/include/data.h	/^	void  *mapA;  $/;"	m	struct:__anon38
+mapA	engine/include/data.h	/^	void  *mapA;  $/;"	m	struct:__anon41
 mapDel	engine/data.c	/^void mapDel(Map **mapPP) {$/;"	f
 mapGet	engine/data.c	/^extern void* mapGet(const Map *mapP, const U8 key) {$/;"	f
 mapIni	engine/data.c	/^Error mapIni(Map **mapPP, HardCodedMap *hcMapP) {$/;"	f
 mapNew	engine/data.c	/^Error mapNew(Map **mapPP, const U8 elemSz, const U16 nElems) {$/;"	f
-mapP	engine/include/data.h	/^	Map        *mapP;       \/\/ defaults to NULL to prevent copies $/;"	m	struct:__anon39
+mapP	engine/include/data.h	/^	Map        *mapP;       \/\/ defaults to NULL to prevent copies $/;"	m	struct:__anon42
 mapRem	engine/data.c	/^Error mapRem(Map *mapP, const U8 key) {$/;"	f
 mapSet	engine/data.c	/^Error mapSet(Map *mapP, const U8 key, const void *valP) {$/;"	f
 mapStrips	utils/imgStrip.py	/^def mapStrips(img):$/;"	f
@@ -614,9 +627,9 @@ max_depth	engine/include/jbOld.h	/^	Uint8 max_depth, max_n_elems;$/;"	m	struct:Q
 max_frame_idx	engine/include/jbOld.h	/^	Uint8         max_frame_idx;  \/* awkward var name, because i don't want to subtract by one in animate(). *\/$/;"	m	struct:Strip
 max_n_elems	engine/include/jbOld.h	/^	Uint8 max_depth, max_n_elems;$/;"	m	struct:QuadTree
 mi_idx	engine/include/jbOld.h	/^	Uint16    mi_idx;     \/* index into the media info table *\/$/;"	m	struct:Tileset
-mp	game/biome/seed/personality/bb/mb.c	/^U32 mp = 300;$/;"	v
-msg	engine/include/data.h	/^	Key msg;    \/\/ e.g. move entity 42 with key FAST_LEFT$/;"	m	struct:__anon41
-msgA	engine/include/data.h	/^  Message *msgA;$/;"	m	struct:__anon42
+mp	game/biome/seed/genome/blackboard/mb.c	/^U32 mp = 300;$/;"	v
+msg	engine/include/data.h	/^	Key msg;    \/\/ e.g. move entity 42 with key FAST_LEFT$/;"	m	struct:__anon44
+msgA	engine/include/data.h	/^  Message *msgA;$/;"	m	struct:__anon45
 mz_int16	engine/data.c	/^typedef signed short mz_int16;$/;"	t	file:
 mz_uint	engine/data.c	/^typedef unsigned int mz_uint;$/;"	t	file:
 mz_uint16	engine/data.c	/^typedef unsigned short mz_uint16;$/;"	t	file:
@@ -626,16 +639,16 @@ mz_uint8	engine/data.c	/^typedef unsigned char mz_uint8;$/;"	t	file:
 nActivities	engine/include/ecs.h	/^  U8           nActivities;         \/* Number of activities in activityA[] *\/$/;"	m	struct:_System
 nArgs_	engine/include/data.h	17;"	d
 nChildren	engine/include/bt.h	/^  U8 nChildren;$/;"	m	struct:SrcNode
-nCmds	engine/include/xSystem.h	/^  U8 nCmds;$/;"	m	struct:__anon18
-nColors	engine/include/xRender.h	/^	U8 nColors;$/;"	m	struct:__anon14
-nEntities	engine/include/biome.h	/^  U32 nEntities;$/;"	m	struct:__anon27
-nFlips	engine/include/xRender.h	/^	U16 nFlips;$/;"	m	struct:__anon10
-nGenes	engine/include/genome.h	/^  U32 nGenes;$/;"	m	struct:__anon8
-nIndices	engine/include/xRender.h	/^	U16 nIndices;$/;"	m	struct:__anon12
-nKeyValPairs	engine/include/bt.h	/^  U8 nKeyValPairs;$/;"	m	struct:__anon23
-nMsgs	engine/include/data.h	/^  U32 nMsgs;$/;"	m	struct:__anon42
-nStrips	engine/include/xRender.h	/^	U16 nStrips;    \/\/ number of 64-pixel strips in strip set$/;"	m	struct:__anon11
-nSystems	engine/include/xSystem.h	/^	Entity nSystems;$/;"	m	struct:__anon21
+nCmds	engine/include/xSystem.h	/^  U8 nCmds;$/;"	m	struct:__anon21
+nColors	engine/include/xRender.h	/^	U8 nColors;$/;"	m	struct:__anon17
+nEntities	engine/include/biome.h	/^  U32 nEntities;$/;"	m	struct:__anon30
+nFlips	engine/include/xRender.h	/^	U16 nFlips;$/;"	m	struct:__anon13
+nGenes	engine/include/genome.h	/^  U8 nGenes;$/;"	m	struct:__anon11
+nIndices	engine/include/xRender.h	/^	U16 nIndices;$/;"	m	struct:__anon15
+nKeyValPairs	engine/include/bt.h	/^  U8 nKeyValPairs;$/;"	m	struct:__anon26
+nMsgs	engine/include/data.h	/^  U16 nMsgs;$/;"	m	struct:__anon45
+nStrips	engine/include/xRender.h	/^	U16 nStrips;    \/\/ number of 64-pixel strips in strip set$/;"	m	struct:__anon14
+nSystems	engine/include/xSystem.h	/^	Entity nSystems;$/;"	m	struct:__anon24
 n_colors	engine/include/jbOld.h	/^	Uint8      n_colors;$/;"	m	struct:ColorPalette
 n_elems	engine/include/jbOld.h	/^	Uint8 n_elems, depth;$/;"	m	struct:_QuadNode
 n_tiles	engine/include/jbOld.h	/^	Uint16    n_tiles;$/;"	m	struct:Tileset
@@ -649,37 +662,39 @@ nibble2	utils/bitCountLUT.py	/^  nibble2 = max(counter2 - 1, 0);$/;"	v
 nodeCb	engine/include/bt.h	/^  NodeCb nodeCb;      \/\/ because nobody points at root @ index 0 as sibling or child$/;"	m	struct:Node
 nodeCb	engine/include/bt.h	/^  NodeCb nodeCb;$/;"	m	struct:SrcNode
 nodeCbA	engine/include/bt.h	/^  NodeCb *nodeCbA;      \/\/ because nobody points at root @ index 0 as sibling or child$/;"	m	struct:NodeA
-nodeStatA	engine/include/bt.h	/^  NodeStat *nodeStatA;  \/\/ tree node's status (complete, failed, running, error, etc.)$/;"	m	struct:__anon24
+nodeStatA	engine/include/bt.h	/^  NodeStat *nodeStatA;  \/\/ tree node's status (complete, failed, running, error, etc.)$/;"	m	struct:__anon27
 nodes	engine/include/jbOld.h	/^	struct _QuadNode *nodes[4];$/;"	m	struct:_QuadNode	typeref:struct:_QuadNode::_QuadNode
 obj_from_record	utils/jb_db.py	/^def obj_from_record(object_type, record):$/;"	f
 objs_from_records	utils/jb_db.py	/^def objs_from_records(tbl_nm):$/;"	f
 offset	engine/include/jbOld.h	/^	Uint32 offset, uncompressed_len, compressed_len;$/;"	m	struct:MediaInfo
-otherEntity	engine/include/xSystem.h	/^  Entity otherEntity;$/;"	m	struct:__anon20
-outbox	engine/include/ecs.h	/^  Mailbox      outbox;              \/* Where this system talks to the outside world *\/$/;"	m	struct:_System
+otherEntity	engine/include/xSystem.h	/^  Entity otherEntity;$/;"	m	struct:__anon23
 outbox	engine/include/jbOld.h	/^	Message     *outbox;$/;"	m	struct:System
-outboxP	engine/include/bt.h	/^	Mailbox  *outboxP;$/;"	m	struct:__anon24
-outputIfTrue	engine/include/ecs.h	/^  U8     outputIfTrue;          \/\/ condition flag to be OR'd into if true$/;"	m	struct:__anon29
+outboxP	engine/include/bt.h	/^	Mailbox  *outboxP;$/;"	m	struct:__anon27
+outboxP	engine/include/ecs.h	/^  Mailbox     *outboxP;              \/* Where this system talks to the outside world *\/$/;"	m	struct:_System
+outputIfTrue	engine/include/ecs.h	/^  U8     outputIfTrue;          \/\/ condition flag to be OR'd into if true$/;"	m	struct:__anon32
 outputStr	utils/bitCountLUT.py	/^outputStr = ""$/;"	v
-owner	engine/include/ecs.h	/^  Entity owner;$/;"	m	struct:__anon28
+owner	engine/include/ecs.h	/^  Entity owner;$/;"	m	struct:__anon31
+ownerID	engine/include/data.h	/^	Key ownerID;$/;"	m	struct:__anon45
 ownerP	engine/include/ecs.h	/^  struct _System *ownerP;$/;"	m	struct:_Activity	typeref:struct:_Activity::_System
 packBytes	utils/img.py	/^def packBytes(tileList, bpp):$/;"	f
 packBytes	utils/imgStrip.py	/^def packBytes(stripList, bpp):$/;"	f
-pitch	engine/include/xRender.h	/^	U16 w, h, pitch;  \/\/ in pixel units; determine actual step size by pixel format$/;"	m	struct:__anon13
+pitch	engine/include/xRender.h	/^	U16 w, h, pitch;  \/\/ in pixel units; determine actual step size by pixel format$/;"	m	struct:__anon16
 preMapSet	engine/data.c	/^static Error preMapSet(const Map *mapP, const U8 key, void **elemPP, void **nextElemPP, U32 *nBytesTMoveP) {$/;"	f	file:
 prev	engine/include/jbOld.h	/^	struct ListNode *next, *prev;$/;"	m	struct:ListNode	typeref:struct:ListNode::
-prevBitCount	engine/include/data.h	/^	U8 prevBitCount;$/;"	m	struct:__anon36
+prevBitCount	engine/include/data.h	/^	U8 prevBitCount;$/;"	m	struct:__anon39
 print_attrs	utils/jb_db.py	/^def print_attrs(obj):$/;"	f
 print_file	utils/jb_media.py	/^def print_file():$/;"	f
-priority	engine/include/bt.h	/^	U8 priority;$/;"	m	struct:__anon26
-priority	engine/include/bt.h	/^  U8 priority;$/;"	m	struct:__anon25
+priority	engine/include/bt.h	/^	U8 priority;$/;"	m	struct:__anon29
+priority	engine/include/bt.h	/^  U8 priority;$/;"	m	struct:__anon28
 proc_img	utils/img.py	/^def proc_img(img_name):$/;"	f
 proc_img	utils/imgStrip.py	/^def proc_img(img_name):$/;"	f
 query	utils/jb_db.py	/^def query(tbl_nm, obj):$/;"	f
 query_enum_elem	utils/jb_enum.py	/^def query_enum_elem(elems, elem_nm):$/;"	f
 query_media_tbl	utils/jb_media.py	/^def query_media_tbl(name):$/;"	f
+quirkPA	engine/include/personality.h	/^	Quirk **quirkPA;$/;"	m	struct:__anon36
 rank_elems	utils/img.py	/^def rank_elems(array):$/;"	f
 rank_elems	utils/imgStrip.py	/^def rank_elems(array):$/;"	f
-reactionMP	engine/include/seed.h	/^	Map *reactionMP; $/;"	m	struct:__anon16
+reactionMP	engine/include/seed.h	/^	Personality *reactionMP; $/;"	m	struct:__anon19
 read_enum_lines	utils/jb_enum.py	/^def read_enum_lines():$/;"	f
 reconstructImage	utils/img.py	/^def reconstructImage(colormapTileset, tilemap, colorPalette, imgShape, bpp):$/;"	f
 reconstructImage	utils/imgStrip.py	/^def reconstructImage(stripSet, stripMap, flipList, colorPalette, imgShape, bpp):$/;"	f
@@ -693,11 +708,11 @@ rect3P	engine/xRender.c	/^SDL_Rect *rect3P = &rect3;$/;"	v
 rendererP	engine/xRender.c	/^static SDL_Renderer *rendererP = NULL;$/;"	v	file:
 repeat	engine/include/jbOld.h	/^	SDL_bool      repeat;$/;"	m	struct:Strip
 rle	utils/img.py	/^def rle(tile):$/;"	f
-root	engine/include/ecs.h	/^  Key    root;                  \/\/ root of behavior tree to fire$/;"	m	struct:__anon29
+root	engine/include/ecs.h	/^  Key    root;                  \/\/ root of behavior tree to fire$/;"	m	struct:__anon32
 root	engine/include/jbOld.h	/^	QuadNode *root;$/;"	m	struct:QuadTree
-rootMP	engine/include/xSystem.h	/^  Map *rootMP;$/;"	m	struct:__anon19
-rootP	engine/include/bt.h	/^  Node *rootP;$/;"	m	struct:__anon25
-rootSrcP	engine/include/bt.h	/^	SrcNode *rootSrcP;$/;"	m	struct:__anon26
+rootMP	engine/include/xSystem.h	/^  Map *rootMP;$/;"	m	struct:__anon22
+rootP	engine/include/bt.h	/^  Node *rootP;$/;"	m	struct:__anon28
+rootSrcP	engine/include/bt.h	/^	SrcNode *rootSrcP;$/;"	m	struct:__anon29
 runLoop	engine/include/jbOld.h	/^	RunSysLoopFP runLoop;$/;"	m	struct:System
 sActivateActivity	engine/ecs.c	/^Error sActivateActivity(System *sP, Key activityID) {$/;"	f
 sActivateC	engine/ecs.c	/^Error sActivateC(System *sP, Entity entity) {$/;"	f
@@ -721,25 +736,28 @@ sNewCDirectory	engine/ecs.c	/^Error sNewCDirectory(System *sP, U8 nElems) {$/;"	
 sPA	engine/jb.c	/^static System *sPA[] = {$/;"	v	file:
 sReset	engine/ecs.c	/^void sReset(System *sP) {$/;"	f
 sRun	engine/ecs.c	/^Error sRun(System *sP) {$/;"	f
+sRunSystems	engine/xSystem.c	/^static Error sRunSystems(Activity *aP) {$/;"	f	file:
+sRunTasks	engine/xSystem.c	/^static Error sRunTasks(Activity *aP) {$/;"	f	file:
 sSendMessage	engine/ecs.c	/^void sSendMessage(System *sP, Message *msgP) {$/;"	f
 sStartCActivity	engine/ecs.c	/^Error sStartCActivity(System *sP, Entity entity, Key dstActivityID) {$/;"	f
-sSystemReact	engine/xSystem.c	/^Error sSystemReact(Activity *aP) {$/;"	f
-sSystemTick	engine/xSystem.c	/^Error sSystemTick(Activity *aP) {$/;"	f
-srcRectPP	engine/include/xRender.h	/^	SDL_Rect **srcRectPP;$/;"	m	struct:__anon15
-stat	game/biome/seed/personality/bb/mb.c	/^	U8 stat;$/;"	m	struct:__anon1	file:
-stripMapInfP	engine/include/xRender.h	/^	Inflatable *stripMapInfP;$/;"	m	struct:__anon12
-stripMapP	engine/include/xRender.h	/^	StripMap *stripMapP;$/;"	m	struct:__anon13
-stripSetInfP	engine/include/xRender.h	/^	Inflatable *stripSetInfP;  \/\/ strip set's compressed source data$/;"	m	struct:__anon11
-stripSetP	engine/include/xRender.h	/^	StripSet *stripSetP;$/;"	m	struct:__anon13
+seedPA	engine/include/biome.h	/^  Seed *seedPA[];$/;"	m	struct:__anon30
+size	engine/include/genome.h	/^	U8 size;$/;"	m	struct:__anon10
+size	engine/xSystem.c	/^	U8 size;$/;"	m	struct:__anon46	file:
+srcRectPP	engine/include/xRender.h	/^	SDL_Rect **srcRectPP;$/;"	m	struct:__anon18
+stat	game/biome/seed/genome/blackboard/mb.c	/^	U8 stat;$/;"	m	struct:__anon1	file:
+stripMapInfP	engine/include/xRender.h	/^	Inflatable *stripMapInfP;$/;"	m	struct:__anon15
+stripMapP	engine/include/xRender.h	/^	StripMap *stripMapP;$/;"	m	struct:__anon16
+stripSetInfP	engine/include/xRender.h	/^	Inflatable *stripSetInfP;  \/\/ strip set's compressed source data$/;"	m	struct:__anon14
+stripSetP	engine/include/xRender.h	/^	StripSet *stripSetP;$/;"	m	struct:__anon16
 surface_p	engine/include/jbOld.h	/^	SDL_Surface  *surface_p;  \/* ptr to loaded surface; results loaded tileset building img w\/ tilemap & colors *\/$/;"	m	struct:Image_t
 surface_p	engine/include/jbOld.h	/^	SDL_Surface *surface_p;$/;"	m	struct:Tileset
 swapPlaceholderP	engine/include/ecs.h	/^  void        *swapPlaceholderP;    \/* Avoids allocating a new placeholder every EC-swap. *\/$/;"	m	struct:_System
 sysDel	engine/include/jbOld.h	/^void  sysDel;$/;"	v
-sysID	engine/include/xSystem.h	/^  Key sysID;$/;"	m	struct:__anon17
-sysPA	engine/include/xSystem.h	/^	System **sysPA;$/;"	m	struct:__anon21
+sysID	engine/include/xSystem.h	/^  Key sysID;$/;"	m	struct:__anon20
+sysPA	engine/include/xSystem.h	/^	System **sysPA;$/;"	m	struct:__anon24
 tail	engine/include/jbOld.h	/^	ListNode *tail;$/;"	m	struct:LinkedList
-test	game/biome/seed/personality/bb/mb.c	/^Test test = {1, 2, 3};$/;"	v
-textureP	engine/include/xRender.h	/^	SDL_Texture *textureP;$/;"	m	struct:__anon14
+test	game/biome/seed/genome/blackboard/mb.c	/^Test test = {1, 2, 3};$/;"	v
+textureP	engine/include/xRender.h	/^	SDL_Texture *textureP;$/;"	m	struct:__anon17
 thisIdx	engine/include/bt.h	/^  U8 thisIdx;         \/\/ allows updating of its own NodeStat and for keying condition map$/;"	m	struct:Node
 thisIdxA	engine/include/bt.h	/^  U8 *thisIdxA;         \/\/ allows updating of its own NodeStat and for keying condition map$/;"	m	struct:NodeA
 throw_underscore_error	utils/img.py	/^def throw_underscore_error(fn):$/;"	f
@@ -758,15 +776,17 @@ tl_corner	engine/include/jbOld.h	/^	Vector2 tl_corner, br_corner;$/;"	m	struct:_
 tm_arry	engine/include/jbOld.h	/^	Uint16        *tm_arry;$/;"	m	struct:Tilemap
 tm_idx	engine/include/jbOld.h	/^	Uint16        tm_idx;     \/* index into tilemap table *\/$/;"	m	struct:Image_t
 tmp	utils/jb_db.py	/^tmp = JBObject()$/;"	v
-to	engine/include/data.h	/^	U8  to;     \/\/ e.g. motion system$/;"	m	struct:__anon41
-toggle	engine/include/ecs.h	/^  Bln    toggle;                \/\/ opposite of toggle is latch, in which case thee condition only needs to have been true once$/;"	m	struct:__anon29
-topic	engine/include/data.h	/^	U8  topic;  \/\/ e.g. this is for entity 42$/;"	m	struct:__anon41
-treeP	engine/include/bt.h	/^	BTree *treeP;  \/\/ NULL if yet unimplemented.$/;"	m	struct:__anon26
-treeSgtonP	engine/include/personality.h	/^	BTreeSingleton *treeSgtonP;$/;"	m	struct:__anon33
+to	engine/include/data.h	/^	U8  to;     \/\/ e.g. motion system$/;"	m	struct:__anon44
+toggle	engine/include/ecs.h	/^  Bln    toggle;                \/\/ opposite of toggle is latch, in which case thee condition only needs to have been true once$/;"	m	struct:__anon32
+topic	engine/include/data.h	/^	U8  topic;  \/\/ e.g. this is for entity 42$/;"	m	struct:__anon44
+treeP	engine/include/bt.h	/^	BTree *treeP;  \/\/ NULL if yet unimplemented.$/;"	m	struct:__anon29
+treeSP	engine/include/quirk.h	/^	BTreeSingleton *treeSP;$/;"	m	struct:__anon6
 ts_idx	engine/include/jbOld.h	/^	Uint16         ts_idx;      \/* index into tileset table *\/$/;"	m	struct:Tilemap
-type	engine/include/ecs.h	/^  U8 type;$/;"	m	struct:__anon28
-type	engine/include/xSystem.h	/^  U8 type;$/;"	m	struct:__anon20
-type	game/biome/seed/personality/bb/mb.c	/^	U32 type;$/;"	m	struct:__anon1	file:
+type	engine/include/ecs.h	/^  U8 type;$/;"	m	struct:__anon31
+type	engine/include/genome.h	/^	U8 type;$/;"	m	struct:__anon10
+type	engine/include/xSystem.h	/^  U8 type;$/;"	m	struct:__anon23
+type	engine/xSystem.c	/^	U8 type;$/;"	m	struct:__anon46	file:
+type	game/biome/seed/genome/blackboard/mb.c	/^	U32 type;$/;"	m	struct:__anon1	file:
 type_map	utils/jb_db.py	/^type_map = {"<type 'int'>": int, "<type 'str'>": str, "<type 'instance'>": None}$/;"	v
 udpate	utils/jb_db.py	/^def udpate(tbl_nm, update_str, idx=None, condition_str=None):$/;"	f
 uncompressed_len	engine/include/jbOld.h	/^	Uint32 offset, uncompressed_len, compressed_len;$/;"	m	struct:MediaInfo
@@ -776,21 +796,21 @@ unused_	engine/include/data.h	14;"	d
 update	utils/jb_media.py	/^def update(offset, length, new_data):$/;"	f
 update_enum_file	utils/jb_enum.py	/^def update_enum_file(enum_nm, new_enum):$/;"	f
 update_record	utils/jb_media.py	/^def update_record():$/;"	f
-valP	engine/include/data.h	/^	void *valP;$/;"	m	struct:__anon34
-valueP	engine/include/data.h	/^	void *valueP;$/;"	m	struct:__anon37
-w	engine/include/xRender.h	/^	U16 w, h, pitch;  \/\/ in pixel units; determine actual step size by pixel format$/;"	m	struct:__anon13
+valP	engine/include/data.h	/^	void *valP;$/;"	m	struct:__anon37
+valueP	engine/include/data.h	/^	void *valueP;$/;"	m	struct:__anon40
+w	engine/include/xRender.h	/^	U16 w, h, pitch;  \/\/ in pixel units; determine actual step size by pixel format$/;"	m	struct:__anon16
 windowP	engine/xRender.c	/^static SDL_Window *windowP = NULL;$/;"	v	file:
 write	utils/imgStrip.py	/^    def write(self, fp):$/;"	m	class:StripMap
 writeInflationData	utils/img.py	/^    def writeInflationData(self, fp):$/;"	m	class:Inflatable
 writeInflationData	utils/imgStrip.py	/^    def writeInflationData(self, fp, tsDims):$/;"	m	class:Inflatable
 write_to_tbl	utils/jb_db.py	/^def write_to_tbl(tbl_nm, loc_vars_str, objs):$/;"	f
 x	engine/include/jbOld.h	/^	Sint32 x;$/;"	m	struct:Position
-xCmdA	engine/include/xSystem.h	/^  XCmd *xCmdA;$/;"	m	struct:__anon18
+xCmdA	engine/include/xSystem.h	/^  XCmd *xCmdA;$/;"	m	struct:__anon21
 xControlIniC	engine/xControl.c	/^Error xControlIniC(XHeader *xhP) {$/;"	f
 xControlIniS	engine/xControl.c	/^Error xControlIniS() {$/;"	f
 xHeader	engine/include/ecs.h	/^  XHeader      xHeader;             \/* This allows (sub)systems to be components of other systems! *\/$/;"	m	struct:_System
-xHeader	engine/include/xControl.h	/^	XHeader xHeader;$/;"	m	struct:__anon7
-xHeader	engine/include/xRender.h	/^	XHeader xHeader;$/;"	m	struct:__anon15
+xHeader	engine/include/xControl.h	/^	XHeader xHeader;$/;"	m	struct:__anon8
+xHeader	engine/include/xRender.h	/^	XHeader xHeader;$/;"	m	struct:__anon18
 xIni	engine/xSystem.c	/^Error xIni(System **sPA, U16 nSystems, Biome *biomeP) {$/;"	f
 xRender	engine/xRender.c	/^Error xRender(Activity *aP) {$/;"	f
 xRenderIniC	engine/xRender.c	/^Error xRenderIniC(XHeader *xhP) {$/;"	f

@@ -41,4 +41,3 @@ So here we go: Communication is two-way:
 
 Actually, Message is an ECS object too. So if a cb wants an animation to change, it has to know that it has to know the proper system, activity, and command-key to use. So the only solution I can see to this is to move Message to data.h.; that way everybody can know about it. Its functions move to data.c. Besides, messaging isn't an ECS-specific concept; ECS is for systems iterating over components to process them really fast. That's it. Now BT can know about message-sending. But I'm still not content to have it message systems directly. It has to use an inbox-outbox system just like ECS does. Yeah... That's consistent.
 
-

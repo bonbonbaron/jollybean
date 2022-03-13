@@ -7,11 +7,11 @@
 #include "bt.h"
 
 // Entity DNA
+#include "quirk.h"
+#include "personality.h"
 #include "genome.h"
-#include "biome.h"
-#include "personality.h"
 #include "seed.h"
-#include "personality.h"
+#include "biome.h"
 
 // Child systems
 #include "xRender.h"

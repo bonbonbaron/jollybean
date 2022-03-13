@@ -291,7 +291,7 @@ static Error preMapSet(const Map *mapP, const U8 key, void **elemPP, void **next
     return E_BAD_ARGS;
 }
 
-Error mapSet(Map *mapP, const U8 key, const void *valP) {
+Error mapSet(Map *mapP, const Key key, const void *valP) {
 	void *elemP, *nextElemP;
   U32 nBytesToMove;
   Error e = preMapSet(mapP, key, &elemP, &nextElemP, &nBytesToMove);

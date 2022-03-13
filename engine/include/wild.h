@@ -87,25 +87,22 @@ typedef struct NodeA {
 } NodeA;
 
 typedef struct {
-  U8 priority;
   Node *rootP;
 } BTree;  
 
 typedef struct {
-	U8 priority;
 	BTree *treeP;  // NULL if yet unimplemented.
 	SrcNode *rootSrcP;
 } BTreeSingleton;
 
-#define BTreeSingleton_(name_, priority_, root_) \
+#define BTreeSingleton_(name_, root_) \
 	BTreeSingleton name_ = {\
-		.priority = priority_,\
 		.treeP = NULL,\
 		.rootSrcP = root_\
 	}
 
 // Functions
-Error btNew(SrcNode *srcNodeP, U8 priority, BTree **treePP);
+Error btNew(SrcNode *srcNodeP, BTree **treePP);
 void btDel(BTree **treePP);
 Error bbNew(Blackboard **bbPP, Node *rootP, Key ownerId, BBSeed *bbSeedP);
 void  bbDel(Blackboard **bbPP);
@@ -119,4 +116,31 @@ Node_(btSequence);
 Node_(btSelector);
 Node_(btCondition);   // easy-to-check condition (e.g. world state)
 Node_(btXCondition);  // ECS-based condition
+
+
+// Quirk is just a mapping from trigger to reaction (behavior tree).
+#define Quirk_(name_, cmd_, priority_, treeSP_) \
+	Quirk name_ = {\
+		.cmd = cmd_,\
+		.priority = priority_,\
+		.treeSP = treeSP_\
+	};
+
+typedef struct {
+	Key cmd;
+	U8 priority;
+	BTreeSingleton *treeSP;
+} Quirk;
+
+// Personality is a hard-coded map from events to tree pointers. However, these tree pointers come from singletons. That means a function needs to see if the singleton is initialized, and if it isn't, initialize it. Then after it's init'd, store its non-null tree pointer in the runtime map with the trigger. A specialized function needs to do this for Personality.
+#define Personality_(name_, ...) \
+	Personality name_ = {\
+		.quirkPA = {__VA_ARGS__}\
+	};
+
+typedef struct {
+	Quirk **quirkPA;
+} Personality;
+
 #endif
+
