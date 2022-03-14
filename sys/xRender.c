@@ -1,4 +1,4 @@
-#include "jb.h"
+#include "xRender.h"
 
 // Compressed images are already in memory in JB. 
 // JB just reconstructs them from strips of staggered pixels. 
@@ -154,25 +154,20 @@ Error _cmGen(Colormap *cmP) {
 }
 
 static SDL_Window *windowP = NULL;
-//static SDL_Surface *wSurfP = NULL;
 static SDL_Renderer *rendererP = NULL;
 
 //======================================================
 // Initialize xRender's system.
 //======================================================
-Error xRenderIniS() {
-	//if (!rendererP && !wSurfP && !windowP) {
+Error xRenderIniSys() {
 	if (!rendererP && !windowP) {
 		// Init SDL
 		if (SDL_Init(SDL_INIT_VIDEO) != SUCCESS)
 			return EXIT_FAILURE;
-
 		// Init window
 		windowP = SDL_CreateWindow("Hello world!", 100, 100, 1080, 700, SDL_WINDOW_SHOWN);
 		if (!windowP)
 			return EXIT_FAILURE;
-		//wSurfP = SDL_GetWindowSurface(windowP);  
-
 		// Init renderer
 		rendererP = SDL_CreateRenderer(windowP, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 		if (!rendererP) {
@@ -188,27 +183,11 @@ Error xRenderIniS() {
 //======================================================
 // Initialize xRender's components, which are Images.
 //======================================================
-// TODO delete this debuggery garbage
-static U8 ii = 0;
-SDL_Rect rect1 = {0, 0, 100, 200};
-SDL_Rect rect2 = {50, 100, 200, 200};
-SDL_Rect rect3 = {100, 150, 150, 150};
-SDL_Rect *rect1P = &rect1;
-SDL_Rect *rect2P = &rect2;
-SDL_Rect *rect3P = &rect3;
-
-Error xRenderIniC(XHeader *xhP) {
+Error xRenderIniComp(XHeader *xhP) {
 	if (!xhP)
 		return E_BAD_ARGS;
 
-	XRenderC *cP = (XRenderC*) xhP;
-	if (ii == 0)
-		cP->dstRectPP = &rect1P;
-	else if (ii == 1)
-		cP->dstRectPP = &rect2P;
-	else 
-		cP->dstRectPP = &rect3P;
-	ii++;
+	XRenderComp *cP = (XRenderComp*) xhP;
 	if (cP->imgP->textureP) 
 		return SUCCESS;
 	// Build colormap.
@@ -229,7 +208,7 @@ Error xRenderIniC(XHeader *xhP) {
 	}
 
 	// Create texture from surface. 
-	if (!e && surfaceP != NULL)
+	if (!e && surfaceP)
 		cP->imgP->textureP = SDL_CreateTextureFromSurface(rendererP, surfaceP);
 
 	if (!e && !cP->imgP->textureP) 
@@ -257,24 +236,18 @@ Error xRenderIniC(XHeader *xhP) {
 //======================================================
 // Render activity
 //======================================================
-Error xRender(Activity *aP) {
+Error xRender(Focus *fP) {
 	Error e = SUCCESS;
-	XRenderC *cP, *cEndP;
-
-	// Clear the screen.
+	XRenderComp *cP, *cEndP;
+	// Clear screen.
 	SDL_SetRenderDrawColor(rendererP, 0, 0, 0, 0xff);
 	SDL_RenderClear(rendererP);
 
-
-	// Send GPU instructions on what to render.
-	//arrayIniPtrs((const void*) aP->ecA, (void**) &cP, (void**) &cEndP, (S32) aP->firstInactiveIdx);
-	cP = (XRenderC*) aP->cA;
-	cEndP = cP + aP->firstInactiveIdx;
-	// TODO get rid of these placeholder rectangles.
-	SDL_Rect *srcRectP = NULL;
+	cP = (XRenderComp*) fP->compA;
+	cEndP = cP + fP->firstInactiveIdx;
 
 	for (; !e && cP < cEndP; cP++) 
-		e = SDL_RenderCopy(rendererP, cP->imgP->textureP, srcRectP, *cP->dstRectPP);
+		e = SDL_RenderCopy(rendererP, cP->imgP->textureP, NULL, *cP->dstRectPP);
 		///e = SDL_RenderCopy(rendererP, cP->imgP->textureP, *cP->srcRectPP, *cP->dstRectPP);
 		//TODO: replace the above NULLs with pointers to rectangles from other systems
 
@@ -288,4 +261,4 @@ Error xRender(Activity *aP) {
 //======================================================
 // System definition
 //======================================================
-System_(Render, RENDER, Activity_(XRENDER, xRender));
+System_(Render, 1, Focus_(1, xRender));

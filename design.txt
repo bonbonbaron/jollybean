@@ -1,43 +1,8 @@
-Trees are unwieldy at the moment; their parts are split across multiple files stored in separate directories. I still agree with that organizational structure, but I need a way to see the whole tree at once and easily change it. But moreover, I need a way to preview what each node does, and which nodes are available to use.
-
-There's also the matter of biomes. I need an easy way to manipulate these as well for the same reason above. 
-
-The obvious route is to build a GUI; this'd risk evolving into a whole game engine GUI. I don't want that; I want to finish the damn engine and start making games. So the less obvious, yet simplest route is to have Python parse a simple text file. Or even have C do it; in fact, I'd eventually like to get rid of all Python functionality altogether in order to make truly portable software. (Scope creep again.) I don't need to do that; I can do that WAY later. I only need to finish the engine itself, which doesn't include the python stuff.  
-
-So the best route to take for Trees is to make a text file parsed by a Python script. 
-
-The best route for biomes is to use TileD's output; it'll auto-determine all graphical entities' positions. For that, [TODO: design biome construction tied with TileD.]
+3 layers:
+=========
+		 Biome
+	xWild xJb
+			 x
 
 
-NOTE
-====
-Don't worry about "unwieldy" trees and genes yet. Just finish the damn engine first; you can fuss over its dev interface later.
-
-
-TODO
-====
-You left off on getting sRun() to loop forever. You'd apparently changed things around; it's trying to trigger reactions from subsystems' outboxes. So in order to move forward, you're going to need to design the interface between trees and subsystems.
-
-So here we go: Communication is two-way:
-	BT -> X (A)
-	BT <- X (B)
-
-(A)> BT callbacks that want to interact with a system component have to send a message to a particular system. However, it just occurred to me that BT knows nothing about X; I did a good job decoupling them. So since BT won't know about any "send message" function, it'll have to fill a buffer with requested state changes. Since entity is an ECS-specific concept, a BB has to contain an array of external state change requests. Enter Message:  
-		typedef struct {
-			Entity to;
-			union {
-				struct {
-					Key id;  // event ID
-					U8 type;  // needed by systems like collision, e.g. "entity collided w/ type ABC"
-					Entity otherEntity;  // needed by systems like motion if tracking someone
-				} event;
-				struct {
-					Key sysID;
-					Key activityID;
-					Key key;  // tells activity what specifically to do with component every loop 
-				} cmd;
-			} contents;
-		} Message;  
-
-Actually, Message is an ECS object too. So if a cb wants an animation to change, it has to know that it has to know the proper system, activity, and command-key to use. So the only solution I can see to this is to move Message to data.h.; that way everybody can know about it. Its functions move to data.c. Besides, messaging isn't an ECS-specific concept; ECS is for systems iterating over components to process them really fast. That's it. Now BT can know about message-sending. But I'm still not content to have it message systems directly. It has to use an inbox-outbox system just like ECS does. Yeah... That's consistent.
-
+Stupid me. Wild is a system.

@@ -1,15 +1,15 @@
 #ifndef SYS_CONTROL
 #define SYS_CONTROL
-#include "ecs.h"
+#include "x.h"
 #include "SDL.h"
 typedef enum {
 	CTRL_LISTEN = 1
-} XControlActivityID;
+} XControlFocusID;
 
 typedef struct {
 	XHeader xHeader;
 	U32 buttonsDown;
-} XControlC;
+} XControlComp;
 
 extern U32 buttonsPressed;
 #define CTRL_LEFT   1 << 0
@@ -21,6 +21,6 @@ extern U32 buttonsPressed;
 #define CTRL_START  1 << 6
 #define CTRL_SELECT 1 << 7
 
-extern System sControl;
-Error ctrlListen(Activity *aP);
+extern System xControl;
+Error ctrlListen(Focus *fP);
 #endif

@@ -1,7 +1,7 @@
-#ifndef BIOME_
-#define BIOME_
-#include "ecs.h"
-#include "wild.h"
+#ifndef XMAIN_
+#define XMAIN_
+#include "x.h"
+#include "xTree.h"
 
 #define Biome_(name_, ...) Biome name_ = {\
   .nEntities = nArgs_(Genome*, __VA_ARGS__),\
@@ -38,4 +38,29 @@ typedef struct {
   Seed *seedPA[];
 } Biome;
 
+typedef System XMainComp;
+
+typedef struct {
+	U8 nSystemsMax;
+	U8 nSystems;
+	Biome *biomeP;
+	System **sysPA;
+} dunnoYet;
+
+typedef struct {
+	U8 nSystemsMax;
+	U8 nSystems;
+	Biome *biomeP;
+	System **sysPA;
+} XMainIniSysPrms;
+
+typedef struct {
+	System system;
+	Map *sharedMP;         // map of maps of shared "components"
+	Biome *biomeP;
+} XMainSystem; 
+
+Error xIni(System **sPA, U16 nSystems, U8 nSystemsMax, Biome *biomeP);
+Error xMainIniSys(System *sP, void *sParamsP);
+Error xMainIni(XMainSystem **xMainSysPP, System **sPA, U16 nSystems, U8 nSystemsMax, Biome *biomeP);
 #endif

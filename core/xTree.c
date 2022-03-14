@@ -1,4 +1,4 @@
-#include "wild.h"
+#include "xTree.h"
 
 // Design-wise it bothers me how I have multiple functions traversing BTs the same way just to perform a different action on them.
 static void _nodePush(SrcNode *srcNodeP, Node *rootP, U8 *nextAvailIdxP) {
@@ -63,14 +63,13 @@ static Error _iniCondKeys(Node *rootP, Node *startFromNodeP, NodeCb nodeCb, Map 
 }
 
 // B-Tree
-Error btNew(SrcNode *srcNodeP, U8 priority, BTree **treePP) {
+Error btNew(SrcNode *srcNodeP, BTree **treePP) {
   Error e = jbAlloc((void**) treePP, sizeof(BTree), 1);
   if (!e)
     e = arrayNew((void**) &(*treePP)->rootP, sizeof(Node), _countSrcNodes(srcNodeP));
   if (!e) {
     U8 nextAvailIdx = 0;
     _nodePush(srcNodeP, (*treePP)->rootP, &nextAvailIdx);
-    (*treePP)->priority = priority;
   }
   return e;
 }
@@ -168,3 +167,67 @@ Node_(btXCondition) {
     stat = _nodeRun(rootP, childNodeP, bbP, outboxP);
   return stat;
 }
+
+// msgP may contain information the triggered callback finds pertinent; e.g. "Who collided w/ me?"
+//TODO: make a way to stop all active components of an entity, and no more than that, in order to efficiently switch between an entity's reactions
+#if 0
+static Error _trigger(System *sP, Message *msgP) {
+	return xStartFocus(sP, msgP->to, 1);
+}
+
+static Error _triggerGroup(System *sP, Message *msgP) {
+	assert(msgP);
+	Error e = SUCCESS;
+	Entity *eA = (Entity*) mapGet(_subscriberAMP, msgP->topic);
+	assert(eA);
+	Entity *eP, *eEndP;
+	arrayIniPtrs((void*) eA, (void**) &eP, (void**) &eEndP, -1);
+	for (; !e && eP < eEndP; eP++) {
+    msgP->to = *eP;
+		e = _trigger(sP, msgP);
+  }
+	return e;
+}
+#endif
+
+inline static U8 _isHigherPriority(U8 newPriority, U8 existingPriority) {
+	return newPriority > existingPriority;
+}
+
+#if 0
+static Error _readOutboxes(Focus *fP) {
+	assert(fP);
+	System *cP, *cEndP;
+	Error e = SUCCESS;
+	// Check active subsystems' outboxes. Their callbacks populate systems and JB's reaction activity.
+	arrayIniPtrs(fP->compA, (void**) &cP, (void**) &cEndP, fP->firstInactiveIdx);
+	for (; !e && cP < cEndP; cP++) 
+		// Read outboxes
+		for (Message *msgP = cP->outboxP->msgA, *msgEndP = cP->outboxP->msgA + cP->outboxP->nMsgs;
+				 !e && msgP < msgEndP;
+				 msgP++) 
+			continue;
+			//if (msgP->to) 
+
+	return e;
+}
+
+static Error xTreeRunTasks(Focus *fP) {
+	assert(fP);
+	System *cP, *cEndP;
+	Error e = SUCCESS;
+	// Check active subsystems' outboxes. Their callbacks populate systems and JB's reaction activity.
+	arrayIniPtrs(fP->compA, (void**) &cP, (void**) &cEndP, fP->firstInactiveIdx);
+	for (; !e && cP < cEndP; cP++) 
+		// Read outboxes
+		for (Message *msgP = cP->outboxP->msgA, *msgEndP = cP->outboxP->msgA + cP->outboxP->nMsgs;
+				 !e && msgP < msgEndP;
+				 msgP++) 
+			if (msgP->to) 
+				e = _trigger(fP->ownerP, msgP);
+			else
+				e = _triggerGroup(fP->ownerP, msgP);
+	
+	return SUCCESS;
+}
+#endif

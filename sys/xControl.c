@@ -2,8 +2,8 @@
 
 U32 buttonsPressed;
 
-Error ctrlListen(Activity *aP) {
-	unused_(aP);
+Error ctrlListen(Focus *fP) {
+	unused_(fP);
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
 		if (event.type == SDL_QUIT) {
@@ -78,11 +78,11 @@ Error ctrlListen(Activity *aP) {
 	return SUCCESS;
 }
 
-Error xControlIniS() {
+Error xControlIniSys() {
 	return SUCCESS;
 }
 
-Error xControlIniC(XHeader *xhP) {
+Error xControlIniComp(XHeader *xhP) {
 	unused_(xhP);
 	return SUCCESS;
 }
@@ -90,4 +90,4 @@ Error xControlIniC(XHeader *xhP) {
 //======================================================
 // System definition
 //======================================================
-System_(Control, CONTROL, Activity_(CTRL_LISTEN, ctrlListen));
+System_(Control, CONTROL, Focus_(CTRL_LISTEN, ctrlListen));

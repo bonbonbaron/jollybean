@@ -1,6 +1,6 @@
 #ifndef BT_H
 #define BT_H
-#include "data.h"
+#include "x.h"
 
 #define NO_CHILDREN NO_SIBLINGS_LEFT 
 #define NO_SIBLINGS_LEFT (0)  /* Root can never be a sibling, so this works. */
@@ -142,5 +142,19 @@ typedef struct {
 	Quirk **quirkPA;
 } Personality;
 
+typedef struct {
+	Key         actorId;
+	U8          priority;
+	Blackboard *bbP;
+	BTree      *btP;
+} Activity;
+
+// Finally, the thing that holds them all together:
+typedef struct {
+	Personality *personalityA;
+	Activity    *activityA;  // different from ECS activity
+	Blackboard  *bbA;
+	Map         *hivemindMP; // maps triggers to arrays of 
+} dunnoyet;
 #endif
 

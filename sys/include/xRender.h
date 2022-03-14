@@ -1,11 +1,11 @@
 #ifndef SYS_RENDER
 #define SYS_RENDER
-#include "ecs.h"
+#include "x.h"
 #include "SDL.h"
 
 typedef enum {
 	XRENDER = 1
-} XRenderActivityID;
+} XRenderFocusID;
 
 typedef struct {
 	U16 nFlips;
@@ -45,12 +45,12 @@ typedef struct {
 	Image *imgP;
 	SDL_Rect **srcRectPP;
 	SDL_Rect **dstRectPP;
-} XRenderC;
+} XRenderComp;
 
 // Images
 Error cmGen(Colormap *imgP);
 void cmClr(Colormap *imgP);
-Error xRender(Activity *aP);
+Error xRender(Focus *fP);
 Error xRenderIniS();
 extern System sRender;
 #endif

@@ -1,15 +1,16 @@
 #include "jb.h"
 
 extern Biome biome1;
+XMainSystem *xmsP = NULL;
 static System *sPA[] = {
 	&sRender
 }; 
 
 int main() {
-	Error e = xIni(sPA, sizeof(sPA) / sizeof(sPA[0]), &biome1);
+	Error e = xMainIni(&xmsP, sPA, sizeof(sPA) / sizeof(sPA[0]), N_COMPONENT_TYPES, &biome1);
 
 	while (!e) {
-		e = sRun(&sSystem);
+		e = xRun(&xmsP->system);
 		break;
 	}
 
