@@ -27,6 +27,7 @@ typedef struct {
 } BBSeed;
 
 typedef struct {
+	Key       id;
   NodeStat *nodeStatA;  // tree node's status (complete, failed, running, error, etc.)
   Map      *conditionMP;  // maps node indices to U32 condition flags specifically enumerated for the condition node
   Map      *agentBbMP;     // maps an enum'd state name to a void pointer. Anything truly global should be accessed directly.

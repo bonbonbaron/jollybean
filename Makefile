@@ -43,7 +43,7 @@ CORE_OBJS   = $(CORE_SRC:%.c=%.o)
 ENGINE_OBJS = $(ENGINE_SRC:%.c=%.o)
 SYS_OBJS    = $(SYS_SRC:%.c=%.o)
 GAME_OBJS   = $(GAME_SRC:%.c=%.o)
-OBJS        = $(ENGINE_OBJS) $(GAME_OBJS) $(CORE_OBJS) $(SYS_OBJS)
+OBJS        = $(ENGINE_OBJS) $(CORE_OBJS) $(SYS_OBJS) $(GAME_OBJS) 
 
 OUTPUTFILE  = o
 

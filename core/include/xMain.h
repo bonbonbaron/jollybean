@@ -1,7 +1,7 @@
 #ifndef XMAIN_
 #define XMAIN_
 #include "x.h"
-#include "xTree.h"
+#include "bt.h"
 
 #define Biome_(name_, ...) Biome name_ = {\
   .nEntities = nArgs_(Genome*, __VA_ARGS__),\
