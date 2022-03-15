@@ -235,7 +235,7 @@ static void _xClrFocuses(System *sP) {
       arrayDel((void**) &sP->focusA[i].compA);
 }
 
-static Error xNewCompDirectory(System *sP, U8 nElems) {
+static Error xNewCompDirectory(System *sP, Key nElems) {
   return mapNew(&sP->compDirectoryP, sizeof(CompLocation), nElems);
 }
 

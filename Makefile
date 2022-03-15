@@ -3,25 +3,24 @@
 ##############################
 CC=cc
 # Directories
-JBDIR = /home/$(USER)/hack/jollybean/
-INSTALLDIR       = $(JBDIR)
+SRC_DIR = /home/$(USER)/hack/jollybean/src/
 
-COREDIR          = $(JBDIR)core/
-ENGINEDIR        = $(JBDIR)
-SYSDIR           = $(JBDIR)sys/
-GAMEDIR          = $(JBDIR)game/
+BOTOX_DIR        = $(SRC_DIR)botox/
+ENGINE_DIR       = $(SRC_DIR)engine/
+FRAMEWORK_DIR    = $(SRC_DIR)framework/
+X_DIR            = $(SRC_DIR)x/
 
-COREINCLUDEDIR   = $(COREDIR)include/
-ENGINEINCLUDEDIR = $(ENGINEDIR)/
-SYSINCLUDEDIR    = $(SYSDIR)include/
-GAMEINCLUDEDIR   = $(GAMEDIR)include/
+BOTOX_INC_DIR     = $(BOTOX_DIR)include/
+ENGINE_INC_DIR    = $(ENGINE_DIR)include/
+FRAMEWORK_INC_DIR = $(FRAMEWORK_DIR)include/
+X_INC_DIR         = $(X_DIR)include/
 # Input files
-CORE_INCLUDES    = $(COREINCLUDEDIR)*.h
-ENGINE_INCLUDES  = $(ENGINEINCLUDEDIR)*.h
-SYS_INCLUDES     = $(SYSINCLUDEDIR)*.h
-GAME_INCLUDES    = $(GAMEINCLUDEDIR)*.h
+BOTOX_INCLUDES     = $(BOTOX_INC_DIR)*.h
+ENGINE_INCLUDES    = $(ENGINE_INC_DIR)*.h
+FRAMEWORK_INCLUDES = $(FRAMEWORK_INC_DIR)*.h
+X_INCLUDES         = $(X_INC_DIR)*.h
 # Compile options
-IFLAGS        = -I$(COREINCLUDEDIR) -I$(ENGINEINCLUDEDIR) -I$(SYSINCLUDEDIR) -I$(GAMEINCLUDEDIR) 
+IFLAGS        = -I$(BOTOX_INC_DIR) -I$(ENGINE_INC_DIR) -I$(FRAMEWORK_INC_DIR) -I$(X_INC_DIR)
 SDL_CFLAGS    = $(shell sdl2-config --cflags)
 CFLAGS_COMMON = -g -Wall $(SDL_CFLAGS) \
 							  $(IFLAGS) -ffunction-sections \
@@ -33,17 +32,17 @@ SDL_LFLAGS    = $(shell sdl2-config --libs)
 LFLAGS        = -Wl,--gc-sections -Wl,-z,norelro \
 								-Wl,--build-id=none $(SDL_LFLAGS)
 # Source files
-CORE_SRC      = $(shell find $(COREDIR) -name "*.c") 
-ENGINE_SRC    = $(shell find $(ENGINEDIR) -name "jb.c")
-SYS_SRC       = $(shell find $(SYSDIR) -name "*.c") 
-GAME_SRC      = $(shell find $(GAMEDIR) -name "*.c") 
+BOTOX_SRC     = $(shell find $(BOTOX_DIR) -name "*.c") 
+ENGINE_SRC    = $(shell find $(ENGINE_DIR) -name "*.c")
+FRAMEWORK_SRC = $(shell find $(FRAMEWORK_DIR) -name "*.c") 
+X_SRC         = $(shell find $(X_DIR) -name "*.c") 
 
 # Output files
-CORE_OBJS   = $(CORE_SRC:%.c=%.o)
+BOTOX_OBJS   = $(BOTOX_SRC:%.c=%.o)
+X_OBJS   = $(X_SRC:%.c=%.o)
+FRAMEWORK_OBJS    = $(FRAMEWORK_SRC:%.c=%.o)
 ENGINE_OBJS = $(ENGINE_SRC:%.c=%.o)
-SYS_OBJS    = $(SYS_SRC:%.c=%.o)
-GAME_OBJS   = $(GAME_SRC:%.c=%.o)
-OBJS        = $(ENGINE_OBJS) $(CORE_OBJS) $(SYS_OBJS) $(GAME_OBJS) 
+OBJS        = $(BOTOX_OBJS) $(FRAMEWORK_OBJS) $(X_OBJS) $(ENGINE_OBJS)
 
 OUTPUTFILE  = o
 
@@ -58,21 +57,22 @@ $(OUTPUTFILE): $(OBJS)
 ##############################
 # Compiler
 ##############################
-$(COREDIR)%.o: $(COREDIR)%.c $(CORE_INCLUDES)
-	$(CC) $(CFLAGS_FAST) $(IFLAGS) -c $< -o $@
-	touch $@
-
-$(ENGINEDIR)%.o: $(ENGINEDIR)%.c $(ENGINE_INCLUDES)
-	$(CC) $(CFLAGS_FAST) $(IFLAGS) -c $< -o $@
+$(BOTOX_DIR)%.o: $(BOTOX_DIR)%.c $(BOTOX_INCLUDES)
+	$(CC) $(CFLAGS_FAST) -c $< -o $@
 	touch $@
 
 $(SYSDIR)%.o: $(SYSDIR)%.c $(SYS_INCLUDES)
-	$(CC) $(CFLAGS_FAST) $(IFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS_FAST) -c $< -o $@
 	touch $@
 	
-$(GAMEDIR)%.o: $(GAMEDIR)%.c $(GAME_INCLUDES) $(ENGINE_INCLUDES)
-	$(CC) $(CFLAGS_TINY) $(IFLAGS) -c $< -o $@
+$(X_DIR)%.o: $(X_DIR)%.c $(X_INCLUDES) $(FRAMEWORK_INCLUDES)
+	$(CC) $(CFLAGS_TINY) -c $< -o $@
 	touch $@
+
+$(ENGINE_DIR)%.o: $(ENGINE_DIR)%.c $(BOTOX_SRC) $(ENGINE_INCLUDES) $(BOTOX_INCLUDES)
+	$(CC) $(CFLAGS_FAST) -c $< -o $@
+	touch $@
+
 
 ##############################
 .PHONY: install

@@ -7,10 +7,10 @@ static Error xMainRunSystems(Focus *fP);
 //static Map **_entityReactionMA;
 
 typedef struct {
-	U8 size;
-	U8 count; 
-	U8 type;
-	U8 geneClass;
+	Key size;
+	Key count; 
+	Key type;
+	Key geneClass;
 } XHistoElem;
 
 // =====================================================================
@@ -46,7 +46,7 @@ static Error _histoGeneTypes(XHistoElem *metaA, Biome *biomeP) {
 // =====================================================================
 // Distribute all genes to their appropriate subsystems.
 // =====================================================================
-static Error _distributeGenes(XMainSystem *xMainSysP, U8 nSystemsMax) {
+static Error _distributeGenes(XMainSystem *xMainSysP, Key nSystemsMax) {
 
 	Seed **seedPP = xMainSysP->biomeP->seedPA;
 	Seed **seedEndPP = seedPP + xMainSysP->biomeP->nEntities;   // pointer to the end of the above array
@@ -54,7 +54,7 @@ static Error _distributeGenes(XMainSystem *xMainSysP, U8 nSystemsMax) {
 	GeneHeader **ghPP, **ghEndPP;   // pointers to an array of gene header pointers and its end
 	GeneHeader gh;  // faster access to double pointer'd gene header
 	XHeader xh = {0};
-	U8 componentType;
+	Key componentType;
 	System *sP = NULL;
 	Error e = SUCCESS;
 	
@@ -93,7 +93,7 @@ static Error _distributeGenes(XMainSystem *xMainSysP, U8 nSystemsMax) {
 // Initialize the System system.
 // =====================================================================
 Error xMainIniSys(System *sP, void *sParamsP) {
-	U8 nSharedMaps = 0;
+	Key nSharedMaps = 0;
 	XHistoElem *xheP, *xheEndP;
 	XMainSystem *xMainSysP = (XMainSystem*) sP;
 
@@ -229,7 +229,7 @@ static Error xMainRunSystems(Focus *fP) {
 }
 
 /* xIni() initializes the parent system as well as its children. */
-Error xMainIni(XMainSystem **xMainSysPP, System **sPA, U16 nSystems, U8 nSystemsMax, Biome *biomeP) {
+Error xMainIni(XMainSystem **xMainSysPP, System **sPA, U16 nSystems, Key nSystemsMax, Biome *biomeP) {
 	if (!sPA || nSystems < 1 || !biomeP)
 		return E_BAD_ARGS;
 

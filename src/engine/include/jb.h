@@ -2,9 +2,7 @@
 #define JB_
 
 // Core
-#include "SDL.h"
-#include "x.h"
-#include "bt.h"
+#include "botox.h"
 #include "xMain.h"
 
 // Child systems

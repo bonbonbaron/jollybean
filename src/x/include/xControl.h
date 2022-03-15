@@ -1,7 +1,8 @@
 #ifndef SYS_CONTROL
 #define SYS_CONTROL
-#include "x.h"
-#include "SDL.h"
+#include "botox.h"
+#include "jbInterface.h"
+
 typedef enum {
 	CTRL_LISTEN = 1
 } XControlFocusID;

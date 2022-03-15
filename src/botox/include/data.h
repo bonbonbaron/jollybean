@@ -5,17 +5,6 @@
 #include <string.h>
 #include <assert.h>
 
-// For-each macro, which allows per-element macro-processing on variadic arguments
-
-#define N_FLAG_BYTES (256 / 8)  // This times 8 is the number of items JB's hash map can hold. Increase as necessary. 
-#define LAST_FLAG_BYTE_IDX (N_FLAG_BYTES - 1)
-#define N_FLAG_BITS (8 * N_FLAG_BYTES)
-#define inline __attribute__((always_inline)) __inline
-#define unused_(x) (void)(x)
-#define enumKeys_(first, ...) typedef enum {first = 1, __VA_ARGS__} 
-#define enumIndices_(...) typedef enum {__VA_ARGS__} 
-#define nArgs_(type_, ...) sizeof((type_[]){__VA_ARGS__}) / sizeof(type_)
-
 typedef unsigned char U8;
 typedef char S8;
 typedef unsigned short U16;
@@ -24,6 +13,16 @@ typedef unsigned int U32;
 typedef int S32;
 typedef U8 Key;
 typedef U8 Bln;   // Boolean
+
+// For-each macro, which allows per-element macro-processing on variadic arguments
+#define N_FLAG_BYTES ((1 << (sizeof(Key) * 8)) / 8)  // This times 8 is the number of items JB's hash map can hold. Increase as necessary. 
+#define LAST_FLAG_BYTE_IDX (N_FLAG_BYTES - 1)
+#define N_FLAG_BITS (8 * N_FLAG_BYTES)
+#define inline __attribute__((always_inline)) __inline
+#define unused_(x) (void)(x)
+#define enumKeys_(first, ...) typedef enum {first = 1, __VA_ARGS__} 
+#define enumIndices_(...) typedef enum {__VA_ARGS__} 
+#define nArgs_(type_, ...) sizeof((type_[]){__VA_ARGS__}) / sizeof(type_)
 
 typedef enum Error {
 	SUCCESS,
@@ -86,9 +85,14 @@ Error arraySetVoidElem(void *arrayP, U32 idx, const void *elemSrcP);
 	{__VA_ARGS__} /* key pair array */  \
 }
 
+// A bit's position in a bitfield is the Key to the map. The number of bits behind it is
+// the index of the key's value in the array.
+// If you know you're only going to put four things in the map, you'll only need one byte.
+// If you're putting more than 255 things in there, you'll need to typedef Key to U16 or,
+// if you're crazy, U32.
 typedef struct {
-	U8 prevBitCount;
-	U8 flags;
+	Key prevBitCount;
+	Key flags;  
 } FlagInfo;
 
 typedef struct {
@@ -102,13 +106,13 @@ typedef struct {
 } Map;
 
 typedef struct {
-	U8         _elemSz;
+	Key        _elemSz;
 	Key        _nKeyValPairs;
 	Map        *mapP;       // defaults to NULL to prevent copies 
 	KeyValPair  keyValA[];
 } HardCodedMap;
 
-Error mapNew(Map **mapPP, const U8 elemSz, const U16 nElems);
+Error mapNew(Map **mapPP, const U8 elemSz, const Key nElems);
 void  mapDel(Map **mapPP);
 Error mapIni(Map **mapPP, HardCodedMap *hcMapP);   // from an array of KeyValPairs 
 Error mapSet(Map *mapP, const U8 key, const void *valP);
@@ -128,12 +132,11 @@ typedef struct {
 
 Error inflate(Inflatable *inflatableP);
 
-
-// Communcications
+// Communcication
 typedef struct {
-	U8  to;     // e.g. motion system
-	U8  attn;   // e.g. motion system's translate focus
-	U8  topic;  // e.g. this is for entity 42
+	Key to;     // e.g. motion system
+	Key attn;   // e.g. motion system's translate focus
+	Key topic;  // e.g. this is for entity 42
 	Key msg;    // e.g. move entity 42 with key FAST_LEFT
 } Message;  
 
@@ -146,7 +149,7 @@ typedef struct {
 Error mailboxNew(Mailbox **mailboxPP, Key ownerID, U16 nSlots);
 void mailboxClr(Mailbox *mailboxP);
 void mailboxDel(Mailbox **mailboxPP);
-Error mailboxWrite(Mailbox *mailboxP, U8 to, U8 attn, U8 topic, U8 msg);
+Error mailboxWrite(Mailbox *mailboxP, Key to, Key attn, Key topic, Key msg);
 typedef Error (*inboxRead)(Mailbox *mailboxP);  // only for self
 typedef Error (*outboxRead)(Mailbox *mailboxP);  // only of children
 

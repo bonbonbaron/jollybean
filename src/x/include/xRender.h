@@ -1,7 +1,7 @@
 #ifndef SYS_RENDER
 #define SYS_RENDER
-#include "x.h"
-#include "SDL.h"
+#include "botox.h"
+#include "jbInterface.h"
 
 typedef enum {
 	XRENDER = 1
@@ -35,16 +35,16 @@ typedef struct {
 
 typedef struct {
 	U8 nColors;
-	SDL_Color *colorA;
+	Color *colorA;
 	Colormap *colorMapP;
-	SDL_Texture *textureP;
+	Texture *textureP;
 } Image; 
 
 typedef struct {
 	XHeader xHeader;
 	Image *imgP;
-	SDL_Rect **srcRectPP;
-	SDL_Rect **dstRectPP;
+	Rect **srcRectPP;
+	Rect **dstRectPP;
 } XRenderComp;
 
 // Images
@@ -52,5 +52,11 @@ Error cmGen(Colormap *imgP);
 void cmClr(Colormap *imgP);
 Error xRender(Focus *fP);
 Error xRenderIniS();
-extern System sRender;
+
+typedef struct {
+	System system;
+	Window *windowP;
+	Renderer *rendererP;
+} XRender;
+extern XRender sRender;
 #endif

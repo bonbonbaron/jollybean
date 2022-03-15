@@ -169,7 +169,7 @@ Error hcompArrayIni(HardCodedArray *hcaP) {
 /***********************/
 /********* MAPS ********/
 /***********************/
-Error mapNew(Map **mapPP, const U8 elemSz, const U16 nElems) {
+Error mapNew(Map **mapPP, const U8 elemSz, const Key nElems) {
 	if (elemSz == 0 || nElems == 0) {
     return E_BAD_ARGS;
   }
@@ -214,28 +214,30 @@ inline static U8 _isMapValid(const Map *mapP) {
 	return (mapP != NULL && mapP->mapA != NULL); 
 }	
 
-inline static U8 _isKeyValid(const U8 key) {
+inline static U8 _isKeyValid(const Key key) {
   return (key > 0);
 }
 
 /* Map GETTING functions */
-inline static U8 _countU8Bits(U8 byte) {
-	register U8 count = (byte & 0x55) + (byte >> 1 & 0x55);
-	count = (count & 0x33) + (count >> 2 & 0x33);
-	return (count & 0x0f) + (count >> 4 & 0x0f);
+inline static U8 _countBits(Key bitfield) {
+	register Key count = bitfield - ((bitfield >> 1) & 0x55555555);
+	count = (count & 0x33333333) + ((count >> 2) & 0x33333333);
+	count = (count + (count >> 4)) & 0x0f0f0f0f;
+	return (count * 0x01010101) >> 24;
 }
-inline static FlagInfo _getFlagInfo(const Map *mapP, const U8 key) {
+inline static FlagInfo _getFlagInfo(const Map *mapP, const Key key) {
   return mapP->flagA[byteIdx_(key)];
 }
-inline static U8 _isFlagSet(const U8 flags, const U8 key) {
+
+inline static U8 _isFlagSet(const U8 flags, const Key key) {
 	return flags & (1 << ((key - 1) & 0x07));
 }
 
-inline static U32 _getElemIdx(const FlagInfo f, const U8 key) {
-	return f.prevBitCount + _countU8Bits(f.flags & (bitFlag_(key) - 1));
+inline static U32 _getElemIdx(const FlagInfo f, const Key key) {
+	return f.prevBitCount + _countBits(f.flags & (bitFlag_(key) - 1));
 }
 
-inline static void* _getElemP(const Map *mapP, const FlagInfo f, const U8 key) {
+inline static void* _getElemP(const Map *mapP, const FlagInfo f, const Key key) {
 	return _fast_arrayGetVoidElemPtr(mapP->mapA, _getElemIdx(f, key));
 }	
 
@@ -244,31 +246,38 @@ inline static U32 _getMapElemSz(const Map *mapP) {
 }
 
 inline static U32 _getNBitsSet(const Map *mapP) {
-  return mapP->flagA[LAST_FLAG_BYTE_IDX].prevBitCount + _countU8Bits(mapP->flagA[LAST_FLAG_BYTE_IDX].flags);
+  return mapP->flagA[LAST_FLAG_BYTE_IDX].prevBitCount + _countBits(mapP->flagA[LAST_FLAG_BYTE_IDX].flags);
 }
 
-extern void* mapGet(const Map *mapP, const U8 key) {
-	const register U8 keyMinus1 = key - 1;
+// TODO change bitmaks and bitcount based on sizeof(Key). Same with all of the functions above.
+extern void* mapGet(const Map *mapP, const Key key) {
+	const register Key keyMinus1 = key - 1;
 	const register FlagInfo f = mapP->flagA[keyMinus1 >> 3];
-	const register U8 bitFlag = 1 << (keyMinus1 & 0x07);
+	const register Key bitFlag = 1 << (keyMinus1 & 0x07);
 	// If the bit flag in question is set, that means a value exists for the input key.
 	if (f.flags & bitFlag) {
 		// Count all the bits set BEFORE the key'th bit (first bit is 1) to get the array index.
-		register U8 bitCount = f.flags & (bitFlag - 1);
-		bitCount = (bitCount & 0x55) + (bitCount >> 1 & 0x55);
-		bitCount = (bitCount & 0x33) + (bitCount >> 2 & 0x33);
-		bitCount = (bitCount & 0x0f) + (bitCount >> 4 & 0x0f);
-		return _fast_arrayGetVoidElemPtr(mapP->mapA, bitCount + f.prevBitCount);
+		//register U8 bitCount = f.flags & (bitFlag - 1);
+		//bitCount = (bitCount & 0x55) + (bitCount >> 1 & 0x55);
+		//bitCount = (bitCount & 0x33) + (bitCount >> 2 & 0x33);
+		//bitCount = (bitCount & 0x0f) + (bitCount >> 4 & 0x0f);
+		//return _fast_arrayGetVoidElemPtr(mapP->mapA, bitCount + f.prevBitCount);
+		register Key count = f.flags & (bitFlag - 1);
+		count = count - ((count >> 1) & 0x55555555);
+		count = (count & 0x33333333) + ((count >> 2) & 0x33333333);
+		count = (count + (count >> 4)) & 0x0f0f0f0f;
+		count = (count * 0x01010101) >> 24;
+		return _fast_arrayGetVoidElemPtr(mapP->mapA, count + f.prevBitCount);
 	}
 	return NULL;
 }
 /* Map SETTING functinos */
 /* If any bits exist to the left of the key's bit, array elements exist in target spot. */
-inline static U8 _idxIsPopulated(const U8 nBitsSet, U32 idx) {
+inline static U8 _idxIsPopulated(const U32 nBitsSet, U32 idx) {
   return (idx < nBitsSet);
 }
 
-static Error preMapSet(const Map *mapP, const U8 key, void **elemPP, void **nextElemPP, U32 *nBytesTMoveP) {
+static Error preMapSet(const Map *mapP, const Key key, void **elemPP, void **nextElemPP, U32 *nBytesTMoveP) {
   *nBytesTMoveP = 0;
   if (_isMapValid(mapP) && _isKeyValid(key)) {
     FlagInfo f;
@@ -301,7 +310,7 @@ Error mapSet(Map *mapP, const Key key, const void *valP) {
 		/* Write value to map element. */
 		memcpy(elemP, valP, _getMapElemSz(mapP));
 		/* Set flag. */
-		U8 byteIdx = byteIdx_(key);
+		Key byteIdx = byteIdx_(key);
 		mapP->flagA[byteIdx].flags |= bitFlag_(key);  /* flagNum & 0x07 gives you # of bits in the Nth byte */
 		/* Increment all prevBitCounts in bytes above affected one. */
 		while (++byteIdx < N_FLAG_BYTES) 
@@ -310,7 +319,7 @@ Error mapSet(Map *mapP, const Key key, const void *valP) {
 	return e;
 }
 
-Error mapRem(Map *mapP, const U8 key) {
+Error mapRem(Map *mapP, const Key key) {
 	void *elemP, *nextElemP;
   U32 nBytesToMove;
   Error e = preMapSet(mapP, key, &elemP, &nextElemP, &nBytesToMove);
@@ -980,7 +989,7 @@ void mailboxClr(Mailbox *mailboxP) {
   memset(mailboxP->msgA, 0, sizeof(Message) * arrayGetNElems(mailboxP));
 }
 
-Error mailboxWrite(Mailbox *mailboxP, U8 to, U8 attn, U8 topic, U8 msg) {
+Error mailboxWrite(Mailbox *mailboxP, Key to, Key attn, Key topic, Key msg) {
 	if (mailboxP->nMsgs >= arrayGetNElems((const void*) mailboxP->msgA))
 		return E_MAILBOX_FULL;
 

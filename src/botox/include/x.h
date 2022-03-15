@@ -44,24 +44,24 @@ typedef Error (*XIniSFP)(struct _System *sP, void* sParamsP);
 typedef Error (*XIniCompFP)(XHeader *xhP);
 
 typedef struct _Focus {
-	U8 id;
-  U8 firstInactiveIdx; /* marks the first inactive element's index */
-  U8 firstEmptyIdx;    /* marks the first empty element's index */
+	Key id;
+  Key firstInactiveIdx; /* marks the first inactive element's index */
+  Key firstEmptyIdx;    /* marks the first empty element's index */
   FocusFP focusFP;     /* function that runs on these components */
   void *compA;         /* components the above function operates on */
 	struct _System *ownerP;
 } Focus;
 
 typedef struct {
-  U8 focusID;
-  U8 compIdx;
-  U8 checkIdx;  // index of check
+  Key focusID;
+  Key compIdx;
+  Key checkIdx;  // index of check
 	HardCodedMap *hcmP;  // Some types of components' values change under various circumstances.
   void *compP; /* Systems that use pointers to other systems' components may use double pointers to avoid requesting updated info. */
 } CompLocation;
 
 typedef struct {
-  U8 focusIdx;
+  Key focusIdx;
   Focus *focusP; /* Systems that use pointers to other systems' components may use double pointers to avoid requesting updated info. */
 } FocusLocation;
 
@@ -91,16 +91,16 @@ typedef struct {
 //
 //TODO: ensure that when a latch-case (toggle = FALSE) check returns TRUE, the system deactivates the check.
 typedef struct {
+  Key firstInactiveIdx; /* marks the first inactive element's index */
+  Key firstEmptyIdx; /* marks the first empty element's index */
   Check *checkA;
-  U8 firstInactiveIdx; /* marks the first inactive element's index */
-  U8 firstEmptyIdx; /* marks the first empty element's index */
 } Checkers;
 
 typedef struct _System {
 	XHeader      xHeader;
-  U8           id;                  /* ID of focus */
-  U8           compSz;							/* components are the same size in all of this system's activities */
-  U8           nFocuses;            /* Number of activities in focusA[] */
+  Key          id;                  /* ID of focus */
+  Key          compSz;							/* components are the same size in all of this system's activities */
+  Key          nFocuses;            /* Number of activities in focusA[] */
   Key          firstInactiveActIdx; /* index of first inactive focus */
   void        *swapPlaceholderP;    /* Avoids allocating a new placeholder every EC-swap. */
 	Focus       *focusA;              // array of individual tasks to focus on. Comps can only be active in one focus at a time.

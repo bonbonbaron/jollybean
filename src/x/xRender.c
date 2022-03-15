@@ -153,31 +153,11 @@ Error _cmGen(Colormap *cmP) {
 	return e;
 }
 
-static SDL_Window *windowP = NULL;
-static SDL_Renderer *rendererP = NULL;
-
 //======================================================
 // Initialize xRender's system.
 //======================================================
 Error xRenderIniSys() {
-	if (!rendererP && !windowP) {
-		// Init SDL
-		if (SDL_Init(SDL_INIT_VIDEO) != SUCCESS)
-			return EXIT_FAILURE;
-		// Init window
-		windowP = SDL_CreateWindow("Hello world!", 100, 100, 1080, 700, SDL_WINDOW_SHOWN);
-		if (!windowP)
-			return EXIT_FAILURE;
-		// Init renderer
-		rendererP = SDL_CreateRenderer(windowP, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-		if (!rendererP) {
-			SDL_DestroyWindow(windowP);
-			SDL_Quit();
-			printf("SDL init error: %s\n", SDL_GetError());
-			return EXIT_FAILURE;
-		}
-	}
-	return SUCCESS;
+	guiIni();
 }
 
 //======================================================
@@ -193,29 +173,24 @@ Error xRenderIniComp(XHeader *xhP) {
 	// Build colormap.
 	Error e = _cmGen(cP->imgP->colorMapP);
 	// Make surface out of colormap and color palette.
-	SDL_Surface *surfaceP = NULL;
+	Surface *surfaceP = NULL;
 
 	if (!e)
-		surfaceP = SDL_CreateRGBSurfaceWithFormat(0, cP->imgP->colorMapP->w, cP->imgP->colorMapP->h, cP->imgP->colorMapP->bpp, SDL_PIXELFORMAT_INDEX8);
+		e = surfaceNew(&surfaceP);
 
 	// Apply color palette to color map.
-	if (!surfaceP) 
-		e = E_BAD_ARGS;
-	else {
-		SDL_Palette palette = {cP->imgP->nColors, (SDL_Color*) cP->imgP->colorA, 0, 0};
-		surfaceP->pixels = cP->imgP->colorMapP->dataP;
-		e = SDL_SetSurfacePalette(surfaceP, &palette);
-	}
+	if (!e)
+		e = iniSurfacePixels(surfaceP, cP);
 
 	// Create texture from surface. 
 	if (!e && surfaceP)
-		cP->imgP->textureP = SDL_CreateTextureFromSurface(rendererP, surfaceP);
+		e = iniTexture(&cP->imgP->textureP);
 
 	if (!e && !cP->imgP->textureP) 
 		e = E_BAD_ARGS;
 
 	if (!e) 
-		e = SDL_SetTextureBlendMode(cP->imgP->textureP, SDL_BLENDMODE_BLEND);
+		e = setTextureAlpha(cP->imgP->textureP);
 
 	if (!e)
 		cP->srcRectPP = NULL;
@@ -225,10 +200,8 @@ Error xRenderIniComp(XHeader *xhP) {
 	// Clean up if anything bad happened.
 	if (e) {
 		_cmClr(cP->imgP->colorMapP);
-		if (cP->imgP->textureP) {
-			SDL_DestroyTexture(cP->imgP->textureP);
-			cP->imgP->textureP = NULL;
-		}
+		if (cP->imgP->textureP) 
+			textureDel(&cP->imgP->textureP);
 	}
 	return e;
 }
@@ -239,21 +212,19 @@ Error xRenderIniComp(XHeader *xhP) {
 Error xRender(Focus *fP) {
 	Error e = SUCCESS;
 	XRenderComp *cP, *cEndP;
-	// Clear screen.
-	SDL_SetRenderDrawColor(rendererP, 0, 0, 0, 0xff);
-	SDL_RenderClear(rendererP);
+	XRender *xRenderSysP = (XRender*) fP->ownerP;
+
+	clearScreen(xRenderSysP->rendererP);
 
 	cP = (XRenderComp*) fP->compA;
 	cEndP = cP + fP->firstInactiveIdx;
 
 	for (; !e && cP < cEndP; cP++) 
-		e = SDL_RenderCopy(rendererP, cP->imgP->textureP, NULL, *cP->dstRectPP);
-		///e = SDL_RenderCopy(rendererP, cP->imgP->textureP, *cP->srcRectPP, *cP->dstRectPP);
-		//TODO: replace the above NULLs with pointers to rectangles from other systems
+		e = imageSet(xRenderSysP->rendererP, cP);
 
 	// Tell GPU to execute instructions.
 	if (!e)
-		SDL_RenderPresent(rendererP);
+		present(rendererP);
 
 	return e;
 }
