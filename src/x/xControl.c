@@ -83,7 +83,7 @@ Error xControlIniSys() {
 	return SUCCESS;
 }
 
-Error xControlIniComp(XHeader *xhP) {
+Error xControlIniComp(System *sP, XHeader *xhP) {
 	unused_(xhP);
 	return SUCCESS;
 }
@@ -91,4 +91,4 @@ Error xControlIniComp(XHeader *xhP) {
 //======================================================
 // System definition
 //======================================================
-System_(Control, CONTROL, Focus_(CTRL_LISTEN, ctrlListen));
+X_(Control, 5, Focus_(CTRL_LISTEN, ctrlListen));

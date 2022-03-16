@@ -1,12 +1,13 @@
 #include "jb.h"
 
 extern Biome biome1;
-XMainSystem *xmsP = NULL;
-static System *sPA[] = {
-	&sRender
-}; 
+XMain *xmsP = NULL;
 
 int main() {
+	System *sPA[] = {
+		sRenderP
+	}; 
+
 	Error e = xMainIni(&xmsP, sPA, sizeof(sPA) / sizeof(sPA[0]), N_COMPONENT_TYPES, &biome1);
 
 	while (!e) {
@@ -20,7 +21,7 @@ int main() {
 // TODO:
 // =====
 //  \1) test BB by making a tree that uses it.
-//  2) move behavior tree stuff to their own directory
+//  \2) move behavior tree stuff to their own directory
 //  3) load entity's behavior trees at scene start
 //  4) send message to system; at least just start an activity
 //  5) receive message from a system

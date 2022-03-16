@@ -4,56 +4,58 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.9~svn20110310	//
-Activity	src/botox/include/bt.h	/^} Activity;$/;"	t	typeref:struct:__anon31
+Activity	src/botox/include/bt.h	/^} Activity;$/;"	t	typeref:struct:__anon32
 AnimSequence	_utils/img.py	/^class AnimSequence:$/;"	c
-BBSeed	src/botox/include/bt.h	/^} BBSeed;$/;"	t	typeref:struct:__anon25
+BBSeed	src/botox/include/bt.h	/^} BBSeed;$/;"	t	typeref:struct:__anon26
 BBSeed_	src/botox/include/bt.h	8;"	d
-BLACKBOARD	src/framework/xMain.h	/^typedef enum {ECS_COMPONENT, ECS_SHARED, BLACKBOARD} GeneClass;$/;"	e	enum:__anon12
+BLACKBOARD	src/framework/include/xMain.h	/^typedef enum {ECS_COMPONENT, ECS_SHARED, BLACKBOARD} GeneClass;$/;"	e	enum:__anon13
+BOTOX_DIR	Makefile	/^BOTOX_DIR        = $(SRC_DIR)botox\/$/;"	m
+BOTOX_H	src/botox/include/botox.h	2;"	d
+BOTOX_INCLUDES	Makefile	/^BOTOX_INCLUDES     = $(BOTOX_INC_DIR)*.h$/;"	m
+BOTOX_INC_DIR	Makefile	/^BOTOX_INC_DIR     = $(BOTOX_DIR)include\/$/;"	m
+BOTOX_OBJS	Makefile	/^BOTOX_OBJS   = $(BOTOX_SRC:%.c=%.o)$/;"	m
+BOTOX_SRC	Makefile	/^BOTOX_SRC     = $(shell find $(BOTOX_DIR) -name "*.c") $/;"	m
 BT_H	src/botox/include/bt.h	2;"	d
-BTree	src/botox/include/bt.h	/^} BTree;  $/;"	t	typeref:struct:__anon27
-BTreeSingleton	src/botox/include/bt.h	/^} BTreeSingleton;$/;"	t	typeref:struct:__anon28
+BTree	src/botox/include/bt.h	/^} BTree;  $/;"	t	typeref:struct:__anon28
+BTreeSingleton	src/botox/include/bt.h	/^} BTreeSingleton;$/;"	t	typeref:struct:__anon29
 BTreeSingleton_	src/botox/include/bt.h	99;"	d
 BYTEORDER	_utils/img.py	/^BYTEORDER = "little"  # since that's the order files are written in$/;"	v
 BYTEORDER	_utils/imgStrip.py	/^BYTEORDER = "little"  # since that's the order files are written in$/;"	v
-Biome	src/framework/xMain.h	/^} Biome;$/;"	t	typeref:struct:__anon16
-Biome_	src/framework/xMain.h	6;"	d
-Blackboard	src/botox/include/bt.h	/^} Blackboard;$/;"	t	typeref:struct:__anon26
+Biome	src/framework/include/xMain.h	/^} Biome;$/;"	t	typeref:struct:__anon17
+Biome_	src/framework/include/xMain.h	6;"	d
+Blackboard	src/botox/include/bt.h	/^} Blackboard;$/;"	t	typeref:struct:__anon27
 Bln	src/botox/include/data.h	/^typedef U8 Bln;   \/\/ Boolean$/;"	t
 CC	Makefile	/^CC=cc$/;"	m
-CFLAGS_COMMON	Makefile	/^CFLAGS_COMMON = -g -Wall $(SDL_CFLAGS) \\$/;"	m
+CFLAGS_COMMON	Makefile	/^CFLAGS_COMMON = -g -Wall \\$/;"	m
 CFLAGS_FAST	Makefile	/^CFLAGS_FAST   = $(CFLAGS_COMMON) #-Ofast    #TODO: uncomment when ready for relase$/;"	m
 CFLAGS_TINY	Makefile	/^CFLAGS_TINY   = $(CFLAGS_COMMON) #-Os    #TODO: uncomment when ready for relase$/;"	m
-COMPLETE	src/botox/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon24
-COREDIR	Makefile	/^COREDIR          = $(JBDIR)core\/$/;"	m
-COREINCLUDEDIR	Makefile	/^COREINCLUDEDIR   = $(COREDIR)include\/$/;"	m
-CORE_INCLUDES	Makefile	/^CORE_INCLUDES    = $(COREINCLUDEDIR)*.h$/;"	m
-CORE_OBJS	Makefile	/^CORE_OBJS   = $(CORE_SRC:%.c=%.o)$/;"	m
-CORE_SRC	Makefile	/^CORE_SRC      = $(shell find $(COREDIR) -name "*.c") $/;"	m
-CTRL_A	src/x/include/xControl.h	19;"	d
-CTRL_B	src/x/include/xControl.h	20;"	d
-CTRL_DOWN	src/x/include/xControl.h	18;"	d
-CTRL_LEFT	src/x/include/xControl.h	15;"	d
+COMPLETE	src/botox/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon25
+CTRL_A	src/x/include/xControl.h	20;"	d
+CTRL_B	src/x/include/xControl.h	21;"	d
+CTRL_DOWN	src/x/include/xControl.h	19;"	d
+CTRL_LEFT	src/x/include/xControl.h	16;"	d
 CTRL_LISTEN	src/x/include/xControl.h	/^	CTRL_LISTEN = 1$/;"	e	enum:__anon2
-CTRL_RIGHT	src/x/include/xControl.h	16;"	d
-CTRL_SELECT	src/x/include/xControl.h	22;"	d
-CTRL_START	src/x/include/xControl.h	21;"	d
-CTRL_UP	src/x/include/xControl.h	17;"	d
-Check	src/botox/include/x.h	/^} Check;$/;"	t	typeref:struct:__anon45
+CTRL_RIGHT	src/x/include/xControl.h	17;"	d
+CTRL_SELECT	src/x/include/xControl.h	23;"	d
+CTRL_START	src/x/include/xControl.h	22;"	d
+CTRL_UP	src/x/include/xControl.h	18;"	d
+Check	src/botox/include/x.h	/^} Check;$/;"	t	typeref:struct:__anon46
 CheckCBP	src/botox/include/x.h	/^typedef Bln (*CheckCBP)(XHeader *xhP, void *operandP);$/;"	t
-Checkers	src/botox/include/x.h	/^} Checkers;$/;"	t	typeref:struct:__anon46
+Checkers	src/botox/include/x.h	/^} Checkers;$/;"	t	typeref:struct:__anon47
+Color	src/engine/include/jbInterface.h	/^typedef SDL_Color		 Color;     \/\/ r, g, b, & a are U8s$/;"	t
 Colormap	src/x/include/xRender.h	/^} Colormap;     \/\/ When the inflatable requires neither unpacking nor strip-mapping, go ahead and memcpy over. I can't think of any cleaner way to do it.$/;"	t	typeref:struct:__anon8
-CompLocation	src/botox/include/x.h	/^} CompLocation;$/;"	t	typeref:struct:__anon43
+CompLocation	src/botox/include/x.h	/^} CompLocation;$/;"	t	typeref:struct:__anon44
 DATA_H	src/botox/include/data.h	2;"	d
 DST_DATA_DIR	_utils/py_defs.py	/^DST_DATA_DIR = GAME_DIR + "gameData" + SEP$/;"	v
-ECS_COMPONENT	src/framework/xMain.h	/^typedef enum {ECS_COMPONENT, ECS_SHARED, BLACKBOARD} GeneClass;$/;"	e	enum:__anon12
-ECS_SHARED	src/framework/xMain.h	/^typedef enum {ECS_COMPONENT, ECS_SHARED, BLACKBOARD} GeneClass;$/;"	e	enum:__anon12
-ENGINEDIR	Makefile	/^ENGINEDIR        = $(JBDIR)$/;"	m
-ENGINEINCLUDEDIR	Makefile	/^ENGINEINCLUDEDIR = $(ENGINEDIR)\/$/;"	m
-ENGINE_INCLUDES	Makefile	/^ENGINE_INCLUDES  = $(ENGINEINCLUDEDIR)*.h$/;"	m
+ECS_COMPONENT	src/framework/include/xMain.h	/^typedef enum {ECS_COMPONENT, ECS_SHARED, BLACKBOARD} GeneClass;$/;"	e	enum:__anon13
+ECS_SHARED	src/framework/include/xMain.h	/^typedef enum {ECS_COMPONENT, ECS_SHARED, BLACKBOARD} GeneClass;$/;"	e	enum:__anon13
+ENGINE_DIR	Makefile	/^ENGINE_DIR       = $(SRC_DIR)engine\/$/;"	m
+ENGINE_INCLUDES	Makefile	/^ENGINE_INCLUDES    = $(ENGINE_INC_DIR)*.h$/;"	m
+ENGINE_INC_DIR	Makefile	/^ENGINE_INC_DIR    = $(ENGINE_DIR)include\/$/;"	m
 ENGINE_OBJS	Makefile	/^ENGINE_OBJS = $(ENGINE_SRC:%.c=%.o)$/;"	m
-ENGINE_SRC	Makefile	/^ENGINE_SRC    = $(shell find $(ENGINEDIR) -name "jb.c")$/;"	m
+ENGINE_SRC	Makefile	/^ENGINE_SRC    = $(shell find $(ENGINE_DIR) -name "*.c")$/;"	m
 ENUM_NAME_PREFIX	_utils/jb_enum.py	/^ENUM_NAME_PREFIX = "e"$/;"	v
-ERROR	src/botox/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon24
+ERROR	src/botox/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon25
 E_BAD_ARGS	src/botox/include/data.h	/^	E_BAD_ARGS,$/;"	e	enum:Error
 E_BAD_INDEX	src/botox/include/data.h	/^	E_BAD_INDEX,$/;"	e	enum:Error
 E_BAD_KEY	src/botox/include/data.h	/^	E_BAD_KEY,$/;"	e	enum:Error
@@ -67,35 +69,35 @@ E_SYS_CMP_MISMATCH	src/botox/include/data.h	/^	E_SYS_CMP_MISMATCH,$/;"	e	enum:Er
 E_UNEXPECTED_DCMP_SZ	src/botox/include/data.h	/^	E_UNEXPECTED_DCMP_SZ,$/;"	e	enum:Error
 E_UNSUPPORTED_PIXEL_FORMAT	src/botox/include/data.h	/^	E_UNSUPPORTED_PIXEL_FORMAT,$/;"	e	enum:Error
 Entity	src/botox/include/x.h	/^typedef Key Entity;$/;"	t
-EnumValPair	src/botox/include/data.h	/^} EnumValPair;$/;"	t	typeref:struct:__anon33
+EnumValPair	src/botox/include/data.h	/^} EnumValPair;$/;"	t	typeref:struct:__anon34
 Error	src/botox/include/data.h	/^typedef enum Error {$/;"	g
 Error	src/botox/include/data.h	/^} Error;$/;"	t	typeref:enum:Error
-FAILED	src/botox/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon24
+FAILED	src/botox/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon25
 FLIP_DIAG	_utils/img.py	/^FLIP_DIAG = 3 << 14$/;"	v
 FLIP_LR	_utils/img.py	/^FLIP_LR   = 2 << 14$/;"	v
 FLIP_MASK	_utils/img.py	/^FLIP_MASK = FLIP_DIAG$/;"	v
 FLIP_NONE	_utils/img.py	/^FLIP_NONE = 0$/;"	v
 FLIP_UD	_utils/img.py	/^FLIP_UD   = 1 << 14$/;"	v
-FlagInfo	src/botox/include/data.h	/^} FlagInfo;$/;"	t	typeref:struct:__anon35
+FRAMEWORK_DIR	Makefile	/^FRAMEWORK_DIR    = $(SRC_DIR)framework\/$/;"	m
+FRAMEWORK_INCLUDES	Makefile	/^FRAMEWORK_INCLUDES = $(FRAMEWORK_INC_DIR)*.h$/;"	m
+FRAMEWORK_INC_DIR	Makefile	/^FRAMEWORK_INC_DIR = $(FRAMEWORK_DIR)include\/$/;"	m
+FRAMEWORK_OBJS	Makefile	/^FRAMEWORK_OBJS    = $(FRAMEWORK_SRC:%.c=%.o)$/;"	m
+FRAMEWORK_SRC	Makefile	/^FRAMEWORK_SRC = $(shell find $(FRAMEWORK_DIR) -name "*.c") $/;"	m
+FlagInfo	src/botox/include/data.h	/^} FlagInfo;$/;"	t	typeref:struct:__anon36
 FlipSet	src/x/include/xRender.h	/^} FlipSet;$/;"	t	typeref:struct:__anon5
 Focus	src/botox/include/x.h	/^} Focus;$/;"	t	typeref:struct:_Focus
 FocusFP	src/botox/include/x.h	/^typedef Error (*FocusFP)(struct _Focus *aP);$/;"	t
-FocusLocation	src/botox/include/x.h	/^} FocusLocation;$/;"	t	typeref:struct:__anon44
+FocusLocation	src/botox/include/x.h	/^} FocusLocation;$/;"	t	typeref:struct:__anon45
 Focus_	src/botox/include/x.h	31;"	d
-GAMEDIR	Makefile	/^GAMEDIR          = $(JBDIR)game\/$/;"	m
-GAMEINCLUDEDIR	Makefile	/^GAMEINCLUDEDIR   = $(GAMEDIR)include\/$/;"	m
 GAME_DIR	_utils/py_defs.py	/^GAME_DIR = ROOT_DIR + GAME_NAME + SEP$/;"	v
-GAME_INCLUDES	Makefile	/^GAME_INCLUDES    = $(GAMEINCLUDEDIR)*.h$/;"	m
 GAME_NAME	_utils/py_defs.py	/^GAME_NAME = "nectar"$/;"	v
-GAME_OBJS	Makefile	/^GAME_OBJS   = $(GAME_SRC:%.c=%.o)$/;"	m
-GAME_SRC	Makefile	/^GAME_SRC      = $(shell find $(GAMEDIR) -name "*.c") $/;"	m
-GeneClass	src/framework/xMain.h	/^typedef enum {ECS_COMPONENT, ECS_SHARED, BLACKBOARD} GeneClass;$/;"	t	typeref:enum:__anon12
-GeneHeader	src/framework/xMain.h	/^} GeneHeader;$/;"	t	typeref:struct:__anon13
-Genome	src/framework/xMain.h	/^} Genome;$/;"	t	typeref:struct:__anon14
-Genome_	src/framework/xMain.h	11;"	d
-HardCodedArray	src/botox/include/data.h	/^} HardCodedArray;$/;"	t	typeref:struct:__anon34
+GeneClass	src/framework/include/xMain.h	/^typedef enum {ECS_COMPONENT, ECS_SHARED, BLACKBOARD} GeneClass;$/;"	t	typeref:enum:__anon13
+GeneHeader	src/framework/include/xMain.h	/^} GeneHeader;$/;"	t	typeref:struct:__anon14
+Genome	src/framework/include/xMain.h	/^} Genome;$/;"	t	typeref:struct:__anon15
+Genome_	src/framework/include/xMain.h	11;"	d
+HardCodedArray	src/botox/include/data.h	/^} HardCodedArray;$/;"	t	typeref:struct:__anon35
 HardCodedArray_	src/botox/include/data.h	63;"	d
-HardCodedMap	src/botox/include/data.h	/^} HardCodedMap;$/;"	t	typeref:struct:__anon38
+HardCodedMap	src/botox/include/data.h	/^} HardCodedMap;$/;"	t	typeref:struct:__anon39
 HardCodedMap_	src/botox/include/data.h	81;"	d
 IDX_B	_utils/img.py	/^IDX_B                 =  2$/;"	v
 IDX_B	_utils/imgStrip.py	/^IDX_B                 =  2$/;"	v
@@ -103,24 +105,23 @@ IDX_G	_utils/img.py	/^IDX_G                 =  1$/;"	v
 IDX_G	_utils/imgStrip.py	/^IDX_G                 =  1$/;"	v
 IDX_R	_utils/img.py	/^IDX_R                 =  0$/;"	v
 IDX_R	_utils/imgStrip.py	/^IDX_R                 =  0$/;"	v
-IFLAGS	Makefile	/^IFLAGS        = -I$(COREINCLUDEDIR) -I$(ENGINEINCLUDEDIR) -I$(SYSINCLUDEDIR) -I$(GAMEINCLUDEDIR) $/;"	m
+IFLAGS	Makefile	/^IFLAGS        = -I$(BOTOX_INC_DIR) -I$(ENGINE_INC_DIR) -I$(FRAMEWORK_INC_DIR) -I$(X_INC_DIR)$/;"	m
 IMG_DIR_IDX_LOCATION	_utils/img.py	/^IMG_DIR_IDX_LOCATION  = 1$/;"	v
 IMG_DIR_IDX_LOCATION	_utils/imgStrip.py	/^IMG_DIR_IDX_LOCATION  = 1$/;"	v
 IMG_DIR_IDX_NAME	_utils/img.py	/^IMG_DIR_IDX_NAME      = 0$/;"	v
 IMG_DIR_IDX_NAME	_utils/imgStrip.py	/^IMG_DIR_IDX_NAME      = 0$/;"	v
 IMG_DIR_IDX_NBR_TILES	_utils/img.py	/^IMG_DIR_IDX_NBR_TILES = 2$/;"	v
 IMG_DIR_IDX_NBR_TILES	_utils/imgStrip.py	/^IMG_DIR_IDX_NBR_TILES = 2$/;"	v
-INSTALLDIR	Makefile	/^INSTALLDIR       = $(JBDIR)$/;"	m
 IS_LINUX	_utils/py_defs.py	/^    IS_LINUX = True$/;"	v
 IS_WINDOWS	_utils/py_defs.py	/^    IS_WINDOWS = True$/;"	v
 Image	src/x/include/xRender.h	/^} Image; $/;"	t	typeref:struct:__anon9
 Inflatable	_utils/img.py	/^class Inflatable:$/;"	c
 Inflatable	_utils/imgStrip.py	/^class Inflatable:$/;"	c
-Inflatable	src/botox/include/data.h	/^} Inflatable;$/;"	t	typeref:struct:__anon39
-JBDIR	Makefile	/^JBDIR = \/home\/$(USER)\/hack\/jollybean\/$/;"	m
+Inflatable	src/botox/include/data.h	/^} Inflatable;$/;"	t	typeref:struct:__anon40
 JB_	src/engine/include/jb.h	2;"	d
+JB_INTERFACE	src/engine/include/jbInterface.h	2;"	d
 Key	src/botox/include/data.h	/^typedef U8 Key;$/;"	t
-KeyValPair	src/botox/include/data.h	/^} KeyValPair;$/;"	t	typeref:struct:__anon36
+KeyValPair	src/botox/include/data.h	/^} KeyValPair;$/;"	t	typeref:struct:__anon37
 LAST_FLAG_BYTE_IDX	src/botox/include/data.h	19;"	d
 LFLAGS	Makefile	/^LFLAGS        = -Wl,--gc-sections -Wl,-z,norelro \\$/;"	m
 LeafNode_	src/botox/include/bt.h	47;"	d
@@ -142,9 +143,9 @@ MZ_READ_LE32	src/botox/data.c	524;"	d	file:
 MZ_READ_LE32	src/botox/data.c	527;"	d	file:
 MZ_REALLOC	src/botox/data.c	511;"	d	file:
 MZ_REALLOC	src/botox/data.c	515;"	d	file:
-Mailbox	src/botox/include/data.h	/^} Mailbox;$/;"	t	typeref:struct:__anon41
-Map	src/botox/include/data.h	/^} Map;$/;"	t	typeref:struct:__anon37
-Message	src/botox/include/data.h	/^} Message;  $/;"	t	typeref:struct:__anon40
+Mailbox	src/botox/include/data.h	/^} Mailbox;$/;"	t	typeref:struct:__anon42
+Map	src/botox/include/data.h	/^} Map;$/;"	t	typeref:struct:__anon38
+Message	src/botox/include/data.h	/^} Message;  $/;"	t	typeref:struct:__anon41
 NBR_COLOR_CHANNELS	_utils/img.py	/^NBR_COLOR_CHANNELS    =  3$/;"	v
 NBR_COLOR_CHANNELS	_utils/imgStrip.py	/^NBR_COLOR_CHANNELS    =  3$/;"	v
 NECTAR_	game/include/nectar.h	2;"	d
@@ -162,7 +163,7 @@ Node	src/botox/include/bt.h	/^} Node;$/;"	t	typeref:struct:Node
 NodeA	src/botox/include/bt.h	/^typedef struct NodeA {$/;"	s
 NodeA	src/botox/include/bt.h	/^} NodeA;$/;"	t	typeref:struct:NodeA
 NodeCb	src/botox/include/bt.h	/^typedef NodeStat (*NodeCb)(struct Node *rootP, struct Node *currNodeP, Blackboard *bbP, Mailbox *outboxP);  $/;"	t
-NodeStat	src/botox/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	t	typeref:enum:__anon24
+NodeStat	src/botox/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	t	typeref:enum:__anon25
 Node_	game/biome/seed/personality/quirk/tree/node/a.c	/^Node_(cb1) {$/;"	f
 Node_	game/biome/seed/personality/quirk/tree/node/b.c	/^Node_(cb2) {$/;"	f
 Node_	game/biome/seed/personality/quirk/tree/node/c.c	/^Node_(cb3) {$/;"	f
@@ -173,8 +174,8 @@ Node_	src/botox/bt.c	/^Node_(btSequence) {$/;"	f
 Node_	src/botox/bt.c	/^Node_(btXCondition) {$/;"	f
 Node_	src/botox/bt.c	/^static Node_(_nodeRun) {$/;"	f	file:
 Node_	src/botox/include/bt.h	72;"	d
-OBJS	Makefile	/^OBJS        = $(ENGINE_OBJS) $(CORE_OBJS) $(SYS_OBJS) $(GAME_OBJS) $/;"	m
-OUTPUTFILE	Makefile	/^OUTPUTFILE  = o$/;"	m
+OBJS	Makefile	/^OBJS        = $(BOTOX_OBJS) $(FRAMEWORK_OBJS) $(X_OBJS) $(ENGINE_OBJS)$/;"	m
+OUTPUTFILE	Makefile	/^OUTPUTFILE  = m$/;"	m
 PNG_BITDEPTH_DATA_SZ	_utils/img.py	/^PNG_BITDEPTH_DATA_SZ  = 1$/;"	v
 PNG_BITDEPTH_DATA_SZ	_utils/imgStrip.py	/^PNG_BITDEPTH_DATA_SZ  = 1$/;"	v
 PNG_BITDEPTH_LOCATION	_utils/img.py	/^PNG_BITDEPTH_LOCATION = 24$/;"	v
@@ -197,31 +198,31 @@ PNG_PLTE_CHUNK_TYPE	_utils/img.py	/^PNG_PLTE_CHUNK_TYPE   = bytearray([80, 76, 8
 PNG_PLTE_CHUNK_TYPE	_utils/imgStrip.py	/^PNG_PLTE_CHUNK_TYPE   = bytearray([80, 76, 84, 69])$/;"	v
 PNG_SIGNATURE	_utils/img.py	/^PNG_SIGNATURE         = bytearray([137, 80, 78, 71, 13, 10, 26, 10])$/;"	v
 PNG_SIGNATURE	_utils/imgStrip.py	/^PNG_SIGNATURE         = bytearray([137, 80, 78, 71, 13, 10, 26, 10])$/;"	v
-Personality	src/botox/include/bt.h	/^} Personality;$/;"	t	typeref:struct:__anon30
+Palette	src/engine/include/jbInterface.h	/^typedef SDL_Palette  Palette;$/;"	t
+Personality	src/botox/include/bt.h	/^} Personality;$/;"	t	typeref:struct:__anon31
 Personality_	src/botox/include/bt.h	137;"	d
-Quirk	src/botox/include/bt.h	/^} Quirk;$/;"	t	typeref:struct:__anon29
+Quirk	src/botox/include/bt.h	/^} Quirk;$/;"	t	typeref:struct:__anon30
 Quirk_	src/botox/include/bt.h	123;"	d
-READY	src/botox/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon24
+READY	src/botox/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon25
 ROOT_DIR	_utils/py_defs.py	/^ROOT_DIR = "\/home\/bonbonbaron\/games\/"$/;"	v
-RUNNING	src/botox/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon24
+RUNNING	src/botox/include/bt.h	/^typedef enum {READY, RUNNING, COMPLETE, FAILED, ERROR} NodeStat;$/;"	e	enum:__anon25
+Rect	src/engine/include/jbInterface.h	/^typedef SDL_Rect		 Rect;		  \/\/ x, y, w, & h are S32s$/;"	t
+Renderer	src/engine/include/jbInterface.h	/^typedef SDL_Renderer Renderer;  \/\/ Arbitrary, but our system doesn't have to know that. $/;"	t
 S16	src/botox/include/data.h	/^typedef short S16;$/;"	t
 S32	src/botox/include/data.h	/^typedef int S32;$/;"	t
 S8	src/botox/include/data.h	/^typedef char S8;$/;"	t
+SDL	src/engine/include/jbInterface.h	6;"	d
 SDL_CFLAGS	Makefile	/^SDL_CFLAGS    = $(shell sdl2-config --cflags)$/;"	m
 SDL_LFLAGS	Makefile	/^SDL_LFLAGS    = $(shell sdl2-config --libs)$/;"	m
 SEP	_utils/py_defs.py	/^    SEP = "\/"$/;"	v
 SEP	_utils/py_defs.py	/^    SEP = "\\\\"$/;"	v
 SRC_DATA_DIR	_utils/py_defs.py	/^SRC_DATA_DIR = GAME_DIR + "srcData" + SEP$/;"	v
+SRC_DIR	Makefile	/^SRC_DIR = \/home\/$(USER)\/hack\/jollybean\/src\/$/;"	m
 STRP_N_PIXELS	_utils/imgStrip.py	/^STRP_N_PIXELS = 64  # images will use 8x8 s to ensure pixel count is multiple of STRP_N_PIXELS$/;"	v
 SUCCESS	src/botox/include/data.h	/^	SUCCESS,$/;"	e	enum:Error
-SYSDIR	Makefile	/^SYSDIR           = $(JBDIR)sys\/$/;"	m
-SYSINCLUDEDIR	Makefile	/^SYSINCLUDEDIR    = $(SYSDIR)include\/$/;"	m
 SYS_CONTROL	src/x/include/xControl.h	2;"	d
-SYS_INCLUDES	Makefile	/^SYS_INCLUDES     = $(SYSINCLUDEDIR)*.h$/;"	m
-SYS_OBJS	Makefile	/^SYS_OBJS    = $(SYS_SRC:%.c=%.o)$/;"	m
 SYS_RENDER	src/x/include/xRender.h	2;"	d
-SYS_SRC	Makefile	/^SYS_SRC       = $(shell find $(SYSDIR) -name "*.c") $/;"	m
-Seed	src/framework/xMain.h	/^} Seed;$/;"	t	typeref:struct:__anon15
+Seed	src/framework/include/xMain.h	/^} Seed;$/;"	t	typeref:struct:__anon16
 SelectorNode_	src/botox/include/bt.h	55;"	d
 SequenceNode_	src/botox/include/bt.h	63;"	d
 SrcNode	src/botox/include/bt.h	/^typedef struct SrcNode {$/;"	s
@@ -229,6 +230,7 @@ SrcNode	src/botox/include/bt.h	/^} SrcNode;$/;"	t	typeref:struct:SrcNode
 StripMap	_utils/imgStrip.py	/^class StripMap:$/;"	c
 StripMap	src/x/include/xRender.h	/^} StripMap;$/;"	t	typeref:struct:__anon7
 StripSet	src/x/include/xRender.h	/^} StripSet;$/;"	t	typeref:struct:__anon6
+Surface	src/engine/include/jbInterface.h	/^typedef SDL_Surface  Surface;$/;"	t
 System	src/botox/include/x.h	/^} System;$/;"	t	typeref:struct:_System
 System_	src/botox/include/x.h	12;"	d
 TEST_	game/include/test.h	2;"	d
@@ -245,51 +247,59 @@ TINFL_CR_FINISH	src/botox/data.c	536;"	d	file:
 TINFL_CR_RETURN	src/botox/data.c	534;"	d	file:
 TINFL_CR_RETURN_FOREVER	src/botox/data.c	535;"	d	file:
 TINFL_DECOMPRESS_MEM_TO_MEM_FAILED	src/botox/data.c	433;"	d	file:
-TINFL_FAST_LOOKUP_BITS	src/botox/data.c	/^  TINFL_FAST_LOOKUP_BITS = 10, TINFL_FAST_LOOKUP_SIZE = 1 << TINFL_FAST_LOOKUP_BITS$/;"	e	enum:__anon22	file:
-TINFL_FAST_LOOKUP_SIZE	src/botox/data.c	/^  TINFL_FAST_LOOKUP_BITS = 10, TINFL_FAST_LOOKUP_SIZE = 1 << TINFL_FAST_LOOKUP_BITS$/;"	e	enum:__anon22	file:
-TINFL_FLAG_COMPUTE_ADLER32	src/botox/data.c	/^  TINFL_FLAG_COMPUTE_ADLER32 = 8$/;"	e	enum:__anon20	file:
-TINFL_FLAG_HAS_MORE_INPUT	src/botox/data.c	/^  TINFL_FLAG_HAS_MORE_INPUT = 2,$/;"	e	enum:__anon20	file:
-TINFL_FLAG_PARSE_ZLIB_HEADER	src/botox/data.c	/^  TINFL_FLAG_PARSE_ZLIB_HEADER = 1,$/;"	e	enum:__anon20	file:
-TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF	src/botox/data.c	/^  TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF = 4,$/;"	e	enum:__anon20	file:
+TINFL_FAST_LOOKUP_BITS	src/botox/data.c	/^  TINFL_FAST_LOOKUP_BITS = 10, TINFL_FAST_LOOKUP_SIZE = 1 << TINFL_FAST_LOOKUP_BITS$/;"	e	enum:__anon23	file:
+TINFL_FAST_LOOKUP_SIZE	src/botox/data.c	/^  TINFL_FAST_LOOKUP_BITS = 10, TINFL_FAST_LOOKUP_SIZE = 1 << TINFL_FAST_LOOKUP_BITS$/;"	e	enum:__anon23	file:
+TINFL_FLAG_COMPUTE_ADLER32	src/botox/data.c	/^  TINFL_FLAG_COMPUTE_ADLER32 = 8$/;"	e	enum:__anon21	file:
+TINFL_FLAG_HAS_MORE_INPUT	src/botox/data.c	/^  TINFL_FLAG_HAS_MORE_INPUT = 2,$/;"	e	enum:__anon21	file:
+TINFL_FLAG_PARSE_ZLIB_HEADER	src/botox/data.c	/^  TINFL_FLAG_PARSE_ZLIB_HEADER = 1,$/;"	e	enum:__anon21	file:
+TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF	src/botox/data.c	/^  TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF = 4,$/;"	e	enum:__anon21	file:
 TINFL_GET_BITS	src/botox/data.c	558;"	d	file:
 TINFL_GET_BYTE	src/botox/data.c	540;"	d	file:
 TINFL_HEADER_INCLUDED	src/botox/data.c	380;"	d	file:
 TINFL_HUFF_BITBUF_FILL	src/botox/data.c	564;"	d	file:
 TINFL_HUFF_DECODE	src/botox/data.c	583;"	d	file:
 TINFL_LZ_DICT_SIZE	src/botox/data.c	444;"	d	file:
-TINFL_MAX_HUFF_SYMBOLS_0	src/botox/data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINFL_MAX_HUFF_SYMBOLS_2 = 19,$/;"	e	enum:__anon22	file:
-TINFL_MAX_HUFF_SYMBOLS_1	src/botox/data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINFL_MAX_HUFF_SYMBOLS_2 = 19,$/;"	e	enum:__anon22	file:
-TINFL_MAX_HUFF_SYMBOLS_2	src/botox/data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINFL_MAX_HUFF_SYMBOLS_2 = 19,$/;"	e	enum:__anon22	file:
-TINFL_MAX_HUFF_TABLES	src/botox/data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINFL_MAX_HUFF_SYMBOLS_2 = 19,$/;"	e	enum:__anon22	file:
+TINFL_MAX_HUFF_SYMBOLS_0	src/botox/data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINFL_MAX_HUFF_SYMBOLS_2 = 19,$/;"	e	enum:__anon23	file:
+TINFL_MAX_HUFF_SYMBOLS_1	src/botox/data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINFL_MAX_HUFF_SYMBOLS_2 = 19,$/;"	e	enum:__anon23	file:
+TINFL_MAX_HUFF_SYMBOLS_2	src/botox/data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINFL_MAX_HUFF_SYMBOLS_2 = 19,$/;"	e	enum:__anon23	file:
+TINFL_MAX_HUFF_TABLES	src/botox/data.c	/^  TINFL_MAX_HUFF_TABLES = 3, TINFL_MAX_HUFF_SYMBOLS_0 = 288, TINFL_MAX_HUFF_SYMBOLS_1 = 32, TINFL_MAX_HUFF_SYMBOLS_2 = 19,$/;"	e	enum:__anon23	file:
 TINFL_MEMCPY	src/botox/data.c	530;"	d	file:
 TINFL_MEMSET	src/botox/data.c	531;"	d	file:
 TINFL_NEED_BITS	src/botox/data.c	556;"	d	file:
 TINFL_SKIP_BITS	src/botox/data.c	557;"	d	file:
-TINFL_STATUS_ADLER32_MISMATCH	src/botox/data.c	/^  TINFL_STATUS_ADLER32_MISMATCH = -2,$/;"	e	enum:__anon21	file:
-TINFL_STATUS_BAD_PARAM	src/botox/data.c	/^  TINFL_STATUS_BAD_PARAM = -3,$/;"	e	enum:__anon21	file:
-TINFL_STATUS_DONE	src/botox/data.c	/^  TINFL_STATUS_DONE = 0,$/;"	e	enum:__anon21	file:
-TINFL_STATUS_FAILED	src/botox/data.c	/^  TINFL_STATUS_FAILED = -1,$/;"	e	enum:__anon21	file:
-TINFL_STATUS_HAS_MORE_OUTPUT	src/botox/data.c	/^  TINFL_STATUS_HAS_MORE_OUTPUT = 2$/;"	e	enum:__anon21	file:
-TINFL_STATUS_NEEDS_MORE_INPUT	src/botox/data.c	/^  TINFL_STATUS_NEEDS_MORE_INPUT = 1,$/;"	e	enum:__anon21	file:
+TINFL_STATUS_ADLER32_MISMATCH	src/botox/data.c	/^  TINFL_STATUS_ADLER32_MISMATCH = -2,$/;"	e	enum:__anon22	file:
+TINFL_STATUS_BAD_PARAM	src/botox/data.c	/^  TINFL_STATUS_BAD_PARAM = -3,$/;"	e	enum:__anon22	file:
+TINFL_STATUS_DONE	src/botox/data.c	/^  TINFL_STATUS_DONE = 0,$/;"	e	enum:__anon22	file:
+TINFL_STATUS_FAILED	src/botox/data.c	/^  TINFL_STATUS_FAILED = -1,$/;"	e	enum:__anon22	file:
+TINFL_STATUS_HAS_MORE_OUTPUT	src/botox/data.c	/^  TINFL_STATUS_HAS_MORE_OUTPUT = 2$/;"	e	enum:__anon22	file:
+TINFL_STATUS_NEEDS_MORE_INPUT	src/botox/data.c	/^  TINFL_STATUS_NEEDS_MORE_INPUT = 1,$/;"	e	enum:__anon22	file:
 TINFL_USE_64BIT_BITBUF	src/botox/data.c	479;"	d	file:
 Test	game/biome/seed/genome/blackboard/mb.c	/^} Test;$/;"	t	typeref:struct:__anon1	file:
+Texture	src/engine/include/jbInterface.h	/^typedef SDL_Texture  Texture;   \/\/ Arbitrary, but our system doesn't have to know that.$/;"	t
 U16	src/botox/include/data.h	/^typedef unsigned short U16;$/;"	t
 U32	src/botox/include/data.h	/^typedef unsigned int U32;$/;"	t
 U8	src/botox/include/data.h	/^typedef unsigned char U8;$/;"	t
+Window	src/engine/include/jbInterface.h	/^typedef SDL_Window   Window;    \/\/ Arbitrary, but our system doesn't have to know that.$/;"	t
 XControlComp	src/x/include/xControl.h	/^} XControlComp;$/;"	t	typeref:struct:__anon3
 XControlFocusID	src/x/include/xControl.h	/^} XControlFocusID;$/;"	t	typeref:enum:__anon2
-XHeader	src/botox/include/x.h	/^} XHeader;$/;"	t	typeref:struct:__anon42
-XHistoElem	src/framework/xMain.c	/^} XHistoElem;$/;"	t	typeref:struct:__anon11	file:
+XHeader	src/botox/include/x.h	/^} XHeader;$/;"	t	typeref:struct:__anon43
+XHistoElem	src/framework/xMain.c	/^} XHistoElem;$/;"	t	typeref:struct:__anon12	file:
 XIniCompFP	src/botox/include/x.h	/^typedef Error (*XIniCompFP)(XHeader *xhP);$/;"	t
 XIniSFP	src/botox/include/x.h	/^typedef Error (*XIniSFP)(struct _System *sP, void* sParamsP);$/;"	t
-XMAIN_	src/framework/xMain.h	2;"	d
-XMainComp	src/framework/xMain.h	/^typedef System XMainComp;$/;"	t
-XMainIniSysPrms	src/framework/xMain.h	/^} XMainIniSysPrms;$/;"	t	typeref:struct:__anon18
-XMainSystem	src/framework/xMain.h	/^} XMainSystem; $/;"	t	typeref:struct:__anon19
+XMAIN_	src/framework/include/xMain.h	2;"	d
+XMainComp	src/framework/include/xMain.h	/^typedef System XMainComp;$/;"	t
+XMainIniSysPrms	src/framework/include/xMain.h	/^} XMainIniSysPrms;$/;"	t	typeref:struct:__anon19
+XMainSystem	src/framework/include/xMain.h	/^} XMainSystem; $/;"	t	typeref:struct:__anon20
 XRENDER	src/x/include/xRender.h	/^	XRENDER = 1$/;"	e	enum:__anon4
+XRender	src/x/include/xRender.h	/^} XRender;$/;"	t	typeref:struct:__anon11
 XRenderComp	src/x/include/xRender.h	/^} XRenderComp;$/;"	t	typeref:struct:__anon10
 XRenderFocusID	src/x/include/xRender.h	/^} XRenderFocusID;$/;"	t	typeref:enum:__anon4
+X_DIR	Makefile	/^X_DIR            = $(SRC_DIR)x\/$/;"	m
 X_H	src/botox/include/x.h	2;"	d
+X_INCLUDES	Makefile	/^X_INCLUDES         = $(X_INC_DIR)*.h$/;"	m
+X_INC_DIR	Makefile	/^X_INC_DIR         = $(X_DIR)include\/$/;"	m
+X_OBJS	Makefile	/^X_OBJS   = $(X_SRC:%.c=%.o)$/;"	m
+X_SRC	Makefile	/^X_SRC         = $(shell find $(X_DIR) -name "*.c") $/;"	m
 _Focus	src/botox/include/x.h	/^typedef struct _Focus {$/;"	s
 _System	src/botox/include/x.h	/^typedef struct _System {$/;"	s
 __init__	_utils/img.py	/^    def __init__(self, blit_coords, frame_order, durations, repeat):$/;"	m	class:AnimSequence
@@ -304,9 +314,9 @@ _countNodes	src/botox/bt.c	/^static U16 _countNodes(Node *rootP, Node *startFrom
 _countSpecificNodes	src/botox/bt.c	/^static U16 _countSpecificNodes(Node *rootP, Node *startFromNodeP, NodeCb nodeCb) {$/;"	f	file:
 _countSrcNodes	src/botox/bt.c	/^static U16 _countSrcNodes(SrcNode *nodeP) {$/;"	f	file:
 _distributeGenes	src/framework/xMain.c	/^static Error _distributeGenes(XMainSystem *xMainSysP, Key nSystemsMax) {$/;"	f	file:
-_elemSz	src/botox/include/data.h	/^	Key        _elemSz;$/;"	m	struct:__anon38
-_elemSz	src/botox/include/data.h	/^	U32         _elemSz;$/;"	m	struct:__anon34
-_enum	src/botox/include/data.h	/^	Key _enum;$/;"	m	struct:__anon33
+_elemSz	src/botox/include/data.h	/^	Key        _elemSz;$/;"	m	struct:__anon39
+_elemSz	src/botox/include/data.h	/^	U32         _elemSz;$/;"	m	struct:__anon35
+_enum	src/botox/include/data.h	/^	Key _enum;$/;"	m	struct:__anon34
 _fast_arrayGetElemSz	src/botox/data.c	/^static inline U32 _fast_arrayGetElemSz(const void *arryP) {$/;"	f	file:
 _fast_arrayGetVoidElemPtr	src/botox/data.c	/^static inline void* _fast_arrayGetVoidElemPtr(const void *arryP, U8 idx) {$/;"	f	file:
 _getCompLocation	src/botox/x.c	/^inline static CompLocation* _getCompLocation(System *sP, Entity entity) {$/;"	f	file:
@@ -327,10 +337,10 @@ _isKeyValid	src/botox/data.c	/^inline static U8 _isKeyValid(const Key key) {$/;"
 _isMapValid	src/botox/data.c	/^inline static U8 _isMapValid(const Map *mapP) {$/;"	f	file:
 _mvC	src/botox/x.c	/^static Error _mvC(System *sP, void *srcCP, void *dstCP, Key dstFocusID, U8 dstCIdx) {$/;"	f	file:
 _mvFocus	src/botox/x.c	/^static Error _mvFocus(Focus *srcFocusP, U8 dstFocusIdx) {$/;"	f	file:
-_nEnumValPairs	src/botox/include/data.h	/^	U32         _nEnumValPairs;$/;"	m	struct:__anon34
-_nKeyValPairs	src/botox/include/data.h	/^	Key        _nKeyValPairs;$/;"	m	struct:__anon38
+_nEnumValPairs	src/botox/include/data.h	/^	U32         _nEnumValPairs;$/;"	m	struct:__anon35
+_nKeyValPairs	src/botox/include/data.h	/^	Key        _nKeyValPairs;$/;"	m	struct:__anon39
 _nodePush	src/botox/bt.c	/^static void _nodePush(SrcNode *srcNodeP, Node *rootP, U8 *nextAvailIdxP) {$/;"	f	file:
-_padding_	src/framework/xMain.h	/^	U8 _padding_;$/;"	m	struct:__anon13
+_padding_	src/framework/include/xMain.h	/^	U8 _padding_;$/;"	m	struct:__anon14
 _swapFocuses	src/botox/x.c	/^static Error _swapFocuses(Focus *fP, U8 dstFocusIdx) {$/;"	f	file:
 _updateCompLocation	src/botox/x.c	/^static Error  _updateCompLocation(System *sP, Entity entity, U8 dstFocusID, U8 dstCIdx, void *dstCP) {$/;"	f	file:
 _updateFocusLocation	src/botox/x.c	/^static Error _updateFocusLocation(System *sP, Key focusID, U8 dstFocusIdx, Focus *dstFocusP) {$/;"	f	file:
@@ -338,9 +348,9 @@ _validateFocusIdx	src/botox/x.c	/^inline static U8 _validateFocusIdx(const Syste
 _xClrFocuses	src/botox/x.c	/^static void _xClrFocuses(System *sP) {$/;"	f	file:
 _xReadInbox	src/botox/x.c	/^void _xReadInbox(System *sP) {$/;"	f
 _xReadMessage	src/botox/x.c	/^static void _xReadMessage(System *sP, Message *msgP) {$/;"	f	file:
-activityA	src/botox/include/bt.h	/^	Activity    *activityA;  \/\/ different from ECS activity$/;"	m	struct:__anon32
-actorId	src/botox/include/bt.h	/^	Key         actorId;$/;"	m	struct:__anon31
-agentBbMP	src/botox/include/bt.h	/^  Map      *agentBbMP;     \/\/ maps an enum'd state name to a void pointer. Anything truly global should be accessed directly.$/;"	m	struct:__anon26
+activityA	src/botox/include/bt.h	/^	Activity    *activityA;  \/\/ different from ECS activity$/;"	m	struct:__anon33
+actorId	src/botox/include/bt.h	/^	Key         actorId;$/;"	m	struct:__anon32
+agentBbMP	src/botox/include/bt.h	/^  Map      *agentBbMP;     \/\/ maps an enum'd state name to a void pointer. Anything truly global should be accessed directly.$/;"	m	struct:__anon27
 arrayDel	src/botox/data.c	/^void arrayDel(void **arryPP) {$/;"	f
 arrayGetElemSz	src/botox/data.c	/^U32 arrayGetElemSz(const void *arryP) {$/;"	f
 arrayGetNElems	src/botox/data.c	/^U32 arrayGetNElems(const void *arryP) {$/;"	f
@@ -348,13 +358,13 @@ arrayGetVoidElemPtr	src/botox/data.c	/^void* arrayGetVoidElemPtr(const void *arr
 arrayIni	src/botox/data.c	/^Error arrayIni(void **arryPP, HardCodedArray *hcaP) {$/;"	f
 arrayIniPtrs	src/botox/data.c	/^void arrayIniPtrs(const void *arryP, void **startP, void **endP, S32 endIdx) {$/;"	f
 arrayNew	src/botox/data.c	/^Error arrayNew(void **arryPP, U32 elemSz, U32 nElems) {$/;"	f
-arrayP	src/botox/include/data.h	/^	void        *arrayP;       \/\/ defaults to NULL to prevent copies $/;"	m	struct:__anon34
+arrayP	src/botox/include/data.h	/^	void        *arrayP;       \/\/ defaults to NULL to prevent copies $/;"	m	struct:__anon35
 arraySetVoidElem	src/botox/data.c	/^Error arraySetVoidElem(void *arrayP, U32 idx, const void *elemSrcompP) {$/;"	f
-attn	src/botox/include/data.h	/^	Key attn;   \/\/ e.g. motion system's translate focus$/;"	m	struct:__anon40
-bbA	src/botox/include/bt.h	/^	Blackboard  *bbA;$/;"	m	struct:__anon32
+attn	src/botox/include/data.h	/^	Key attn;   \/\/ e.g. motion system's translate focus$/;"	m	struct:__anon41
+bbA	src/botox/include/bt.h	/^	Blackboard  *bbA;$/;"	m	struct:__anon33
 bbDel	src/botox/bt.c	/^void bbDel(Blackboard **bbPP) {$/;"	f
 bbNew	src/botox/bt.c	/^Error bbNew(Blackboard **bbPP, Node *rootP, Key ownerId, BBSeed *bbSeedP) {$/;"	f
-bbP	src/botox/include/bt.h	/^	Blackboard *bbP;$/;"	m	struct:__anon31
+bbP	src/botox/include/bt.h	/^	Blackboard *bbP;$/;"	m	struct:__anon32
 biggerCM	game/biome/seed/genome/ecs_component/Image/ColorMap/biggerCM.c	/^Colormap biggerCM = {$/;"	v
 biggerColorSet	game/biome/seed/genome/ecs_component/Image/ColorPalette/biggerCP.c	/^SDL_Color biggerColorSet[] = { {0x11, 0x00, 0x00, 0x00},  {0xFF, 0xf0, 0xf0, 0xFF},	{0x0F, 0x00, 0x00, 0xFF},  {0x35, 0x46, 0x00, 0xFF},$/;"	v
 biggerImg	game/biome/seed/genome/ecs_component/Image/biggerImg.c	/^Image biggerImg = {$/;"	v
@@ -363,9 +373,9 @@ biggerStripMapInf	game/biome/seed/genome/ecs_component/Image/StripMap/biggerStri
 biggerStripSet	game/biome/seed/genome/ecs_component/Image/StripSet/biggerStripSet.c	/^StripSet biggerStripSet = {$/;"	v
 biggerStripSetInf	game/biome/seed/genome/ecs_component/Image/StripSet/biggerStripSet.c	/^Inflatable biggerStripSetInf = {$/;"	v
 biggerXRenderC	game/biome/seed/genome/ecs_component/Image/biggerImg.c	/^XRenderC biggerXRenderC = {$/;"	v
-biomeP	src/framework/xMain.h	/^	Biome *biomeP;$/;"	m	struct:__anon17
-biomeP	src/framework/xMain.h	/^	Biome *biomeP;$/;"	m	struct:__anon18
-biomeP	src/framework/xMain.h	/^	Biome *biomeP;$/;"	m	struct:__anon19
+biomeP	src/framework/include/xMain.h	/^	Biome *biomeP;$/;"	m	struct:__anon18
+biomeP	src/framework/include/xMain.h	/^	Biome *biomeP;$/;"	m	struct:__anon19
+biomeP	src/framework/include/xMain.h	/^	Biome *biomeP;$/;"	m	struct:__anon20
 bitFlagLUT	_utils/bitFlagLUT.h	/^Uint8 bitFlagLUT[] = {$/;"	v
 bitFlag_	src/botox/data.c	4;"	d	file:
 bitMaskLUT	_utils/bitMaskLUT.h	/^Uint8 bitMaskLUT[] = {$/;"	v
@@ -373,7 +383,7 @@ bpp	src/x/include/xRender.h	/^	U8 bpp;$/;"	m	struct:__anon8
 btCondition	src/botox/include/bt.h	/^Node_(btCondition);   \/\/ easy-to-check condition (e.g. world state)$/;"	v
 btDel	src/botox/bt.c	/^void btDel(BTree **treePP) {$/;"	f
 btNew	src/botox/bt.c	/^Error btNew(SrcNode *srcNodeP, BTree **treePP) {$/;"	f
-btP	src/botox/include/bt.h	/^	BTree      *btP;$/;"	m	struct:__anon31
+btP	src/botox/include/bt.h	/^	BTree      *btP;$/;"	m	struct:__anon32
 btRun	src/botox/bt.c	/^NodeStat btRun(BTree *treeP, Blackboard *bbP, Mailbox *outboxP) {$/;"	f
 btSelector	src/botox/include/bt.h	/^Node_(btSelector);$/;"	v
 btSequence	src/botox/include/bt.h	/^Node_(btSequence);$/;"	v
@@ -385,35 +395,36 @@ byteIdx_	src/botox/data.c	3;"	d	file:
 calcExpDeflatedNBytes	_utils/img.py	/^def calcExpDeflatedNBytes(w, h, bpp):$/;"	f
 calcExpDeflatedNBytes	_utils/imgStrip.py	/^def calcExpDeflatedNBytes(w, h, bpp):$/;"	f
 cap	_utils/jb_db.py	/^def cap(string):$/;"	f
-cbIdx	src/botox/include/x.h	/^  Bln    cbIdx;                 \/\/ index to FP instead of FP itself to prevent external functions$/;"	m	struct:__anon45
-checkA	src/botox/include/x.h	/^  Check *checkA;$/;"	m	struct:__anon46
-checkIdx	src/botox/include/x.h	/^  U8 checkIdx;  \/\/ index of check$/;"	m	struct:__anon43
+cbIdx	src/botox/include/x.h	/^  Bln    cbIdx;                 \/\/ index to FP instead of FP itself to prevent external functions$/;"	m	struct:__anon46
+checkA	src/botox/include/x.h	/^  Check *checkA;$/;"	m	struct:__anon47
+checkIdx	src/botox/include/x.h	/^  Key checkIdx;  \/\/ index of check$/;"	m	struct:__anon44
 checkers	src/botox/include/x.h	/^  Checkers     checkers;            \/* Array of checks; similar to Focus without exlusive C-access *\/$/;"	m	struct:_System
 childrenPA	src/botox/include/bt.h	/^  struct SrcNode **childrenPA;$/;"	m	struct:SrcNode	typeref:struct:SrcNode::SrcNode
 clean_media_file	_utils/jb_media.py	/^def clean_media_file():$/;"	f
-cmd	src/botox/include/bt.h	/^	Key cmd;$/;"	m	struct:__anon29
-colorA	src/x/include/xRender.h	/^	SDL_Color *colorA;$/;"	m	struct:__anon9
+clearScreen	src/engine/jbInterface.c	/^void clearScreen(Renderer *rendererP) {$/;"	f
+cmd	src/botox/include/bt.h	/^	Key cmd;$/;"	m	struct:__anon30
+colorA	src/x/include/xRender.h	/^	Color *colorA;$/;"	m	struct:__anon9
 colorMapP	src/x/include/xRender.h	/^	Colormap *colorMapP;$/;"	m	struct:__anon9
 compA	src/botox/include/x.h	/^  void *compA;         \/* components the above function operates on *\/$/;"	m	struct:_Focus
 compDirectoryP	src/botox/include/x.h	/^  Map         *compDirectoryP;      \/* maps component IDs to an element in an array of CmpAddresses *\/$/;"	m	struct:_System
-compIdx	src/botox/include/x.h	/^  U8 compIdx;$/;"	m	struct:__anon43
-compLocationP	src/botox/include/x.h	/^  struct Complocation *compLocationP;      \/\/ keep tabs on component's location$/;"	m	struct:__anon45	typeref:struct:__anon45::Complocation
-compP	src/botox/include/x.h	/^  void *compP; \/* Systems that use pointers to other systems' components may use double pointers to avoid requesting updated info. *\/$/;"	m	struct:__anon43
-compSz	src/botox/include/x.h	/^  U8           compSz;							\/* components are the same size in all of this system's activities *\/$/;"	m	struct:_System
+compIdx	src/botox/include/x.h	/^  Key compIdx;$/;"	m	struct:__anon44
+compLocationP	src/botox/include/x.h	/^  struct Complocation *compLocationP;      \/\/ keep tabs on component's location$/;"	m	struct:__anon46	typeref:struct:__anon46::Complocation
+compP	src/botox/include/x.h	/^  void *compP; \/* Systems that use pointers to other systems' components may use double pointers to avoid requesting updated info. *\/$/;"	m	struct:__anon44
+compSz	src/botox/include/x.h	/^  Key          compSz;							\/* components are the same size in all of this system's activities *\/$/;"	m	struct:_System
 compress_img	_utils/img.py	/^def compress_img(img_name):$/;"	f
 compress_img	_utils/imgStrip.py	/^def compress_img(img_name):$/;"	f
-compressedData	src/botox/include/data.h	/^	U8  compressedData[];$/;"	m	struct:__anon39
-compressedLen	src/botox/include/data.h	/^	U32 compressedLen;$/;"	m	struct:__anon39
+compressedData	src/botox/include/data.h	/^	U8  compressedData[];$/;"	m	struct:__anon40
+compressedLen	src/botox/include/data.h	/^	U32 compressedLen;$/;"	m	struct:__anon40
 condition	src/botox/include/bt.h	/^  U8 condition;       \/\/ bit-flag conditions which must be met to run this node$/;"	m	struct:Node
 condition	src/botox/include/bt.h	/^  U8 condition;$/;"	m	struct:SrcNode
 conditionA	src/botox/include/bt.h	/^  U8 *conditionA;$/;"	m	struct:NodeA
-conditionMP	src/botox/include/bt.h	/^  Map      *conditionMP;  \/\/ maps node indices to U32 condition flags specifically enumerated for the condition node$/;"	m	struct:__anon26
-conditionP	src/botox/include/x.h	/^  U8    *conditionP;            \/\/ condition to update through a simple pointer$/;"	m	struct:__anon45
+conditionMP	src/botox/include/bt.h	/^  Map      *conditionMP;  \/\/ maps node indices to U32 condition flags specifically enumerated for the condition node$/;"	m	struct:__anon27
+conditionP	src/botox/include/x.h	/^  U8    *conditionP;            \/\/ condition to update through a simple pointer$/;"	m	struct:__anon46
 contains	_utils/img.py	/^def contains(container, elem):$/;"	f
 contains	_utils/imgStrip.py	/^def contains(container, elem):$/;"	f
 convertToRGBHex	_utils/img.py	/^def convertToRGBHex(rgbNPArray):$/;"	f
 convertToRGBHex	_utils/imgStrip.py	/^def convertToRGBHex(rgbNPArray):$/;"	f
-count	src/framework/xMain.c	/^	Key count; $/;"	m	struct:__anon11	file:
+count	src/framework/xMain.c	/^	Key count; $/;"	m	struct:__anon12	file:
 counter1	_utils/bitCountLUT.py	/^  counter1 = 0$/;"	v
 counter2	_utils/bitCountLUT.py	/^  counter2 = 0$/;"	v
 create_anim_map	_utils/img.py	/^def create_anim_map(img_name):$/;"	f
@@ -429,29 +440,29 @@ delete	_utils/jb_media.py	/^def delete(offset, length):$/;"	f
 delete_enum	_utils/jb_enum.py	/^def delete_enum(enum_nm):$/;"	f
 delete_enum_elem	_utils/jb_enum.py	/^def delete_enum_elem(enum_nm, elem_nm):$/;"	f
 delete_record	_utils/jb_media.py	/^def delete_record():$/;"	f
-dstRectPP	src/x/include/xRender.h	/^	SDL_Rect **dstRectPP;$/;"	m	struct:__anon10
-dunnoYet	src/framework/xMain.h	/^} dunnoYet;$/;"	t	typeref:struct:__anon17
-dunnoyet	src/botox/include/bt.h	/^} dunnoyet;$/;"	t	typeref:struct:__anon32
+dstRectPP	src/x/include/xRender.h	/^	Rect **dstRectPP;$/;"	m	struct:__anon10
+dunnoYet	src/framework/include/xMain.h	/^} dunnoYet;$/;"	t	typeref:struct:__anon18
+dunnoyet	src/botox/include/bt.h	/^} dunnoyet;$/;"	t	typeref:struct:__anon33
 elems_equal	_utils/img.py	/^def elems_equal(a, b):$/;"	f
 elems_equal	_utils/imgStrip.py	/^def elems_equal(a, b):$/;"	f
 elems_to_enum	_utils/jb_enum.py	/^def elems_to_enum(enum_nm, elems):$/;"	f
 ensure_json_exists	_utils/jb_media.py	/^def ensure_json_exists():$/;"	f
-entity	src/botox/include/x.h	/^  Entity entity;                \/\/ entity this check regards$/;"	m	struct:__anon45
+entity	src/botox/include/x.h	/^  Entity entity;                \/\/ entity this check regards$/;"	m	struct:__anon46
 enumIndices_	src/botox/include/data.h	24;"	d
 enumKeys_	src/botox/include/data.h	23;"	d
-enumValA	src/botox/include/data.h	/^	EnumValPair  enumValA[];$/;"	m	struct:__anon34
+enumValA	src/botox/include/data.h	/^	EnumValPair  enumValA[];$/;"	m	struct:__anon35
 extract_record_items	_utils/jb_db.py	/^def extract_record_items(record):$/;"	f
 f	_utils/bitCountLUT.py	/^f = open("bitCountLUT.h", "w")$/;"	v
 find_enum_idx	_utils/jb_enum.py	/^def find_enum_idx(enum_nm):$/;"	f
 firstChildIdx	src/botox/include/bt.h	/^  U8 firstChildIdx;$/;"	m	struct:Node
 firstChildIdxA	src/botox/include/bt.h	/^  U8 *firstChildIdxA;$/;"	m	struct:NodeA
-firstEmptyIdx	src/botox/include/x.h	/^  U8 firstEmptyIdx;    \/* marks the first empty element's index *\/$/;"	m	struct:_Focus
-firstEmptyIdx	src/botox/include/x.h	/^  U8 firstEmptyIdx; \/* marks the first empty element's index *\/$/;"	m	struct:__anon46
+firstEmptyIdx	src/botox/include/x.h	/^  Key firstEmptyIdx;    \/* marks the first empty element's index *\/$/;"	m	struct:_Focus
+firstEmptyIdx	src/botox/include/x.h	/^  Key firstEmptyIdx; \/* marks the first empty element's index *\/$/;"	m	struct:__anon47
 firstInactiveActIdx	src/botox/include/x.h	/^  Key          firstInactiveActIdx; \/* index of first inactive focus *\/$/;"	m	struct:_System
-firstInactiveIdx	src/botox/include/x.h	/^  U8 firstInactiveIdx; \/* marks the first inactive element's index *\/$/;"	m	struct:_Focus
-firstInactiveIdx	src/botox/include/x.h	/^  U8 firstInactiveIdx; \/* marks the first inactive element's index *\/$/;"	m	struct:__anon46
-flagA	src/botox/include/data.h	/^	FlagInfo flagA[N_FLAG_BYTES];  \/\/ "A" means "Array" for JB's naming standards $/;"	m	struct:__anon37
-flags	src/botox/include/data.h	/^	Key flags;  $/;"	m	struct:__anon35
+firstInactiveIdx	src/botox/include/x.h	/^  Key firstInactiveIdx; \/* marks the first inactive element's index *\/$/;"	m	struct:_Focus
+firstInactiveIdx	src/botox/include/x.h	/^  Key firstInactiveIdx; \/* marks the first inactive element's index *\/$/;"	m	struct:__anon47
+flagA	src/botox/include/data.h	/^	FlagInfo flagA[N_FLAG_BYTES];  \/\/ "A" means "Array" for JB's naming standards $/;"	m	struct:__anon38
+flags	src/botox/include/data.h	/^	Key flags;  $/;"	m	struct:__anon36
 flipIdxA	src/x/include/xRender.h	/^	U16 flipIdxA[];$/;"	m	struct:__anon5
 flipSetP	src/x/include/xRender.h	/^	FlipSet *flipSetP;$/;"	m	struct:__anon6
 flip_diag	_utils/img.py	/^def flip_diag(np_array):$/;"	f
@@ -462,14 +473,14 @@ flip_ud	_utils/img.py	/^flip_ud = np.flipud$/;"	v
 focusA	src/botox/include/x.h	/^	Focus       *focusA;              \/\/ array of individual tasks to focus on. Comps can only be active in one focus at a time.$/;"	m	struct:_System
 focusDirectoryP	src/botox/include/x.h	/^  Map         *focusDirectoryP;      \/* maps component IDs to an element in an array of CmpAddresses *\/$/;"	m	struct:_System
 focusFP	src/botox/include/x.h	/^  FocusFP focusFP;     \/* function that runs on these components *\/$/;"	m	struct:_Focus
-focusID	src/botox/include/x.h	/^  U8 focusID;$/;"	m	struct:__anon43
-focusIdx	src/botox/include/x.h	/^  U8 focusIdx;$/;"	m	struct:__anon44
-focusP	src/botox/include/x.h	/^  Focus *focusP; \/* Systems that use pointers to other systems' components may use double pointers to avoid requesting updated info. *\/$/;"	m	struct:__anon44
+focusID	src/botox/include/x.h	/^  Key focusID;$/;"	m	struct:__anon44
+focusIdx	src/botox/include/x.h	/^  Key focusIdx;$/;"	m	struct:__anon45
+focusP	src/botox/include/x.h	/^  Focus *focusP; \/* Systems that use pointers to other systems' components may use double pointers to avoid requesting updated info. *\/$/;"	m	struct:__anon45
 gen_local_vars_string	_utils/jb_db.py	/^def gen_local_vars_string(tbl_nm, obj):$/;"	f
-geneClass	src/framework/xMain.c	/^	Key geneClass;$/;"	m	struct:__anon11	file:
-geneClass	src/framework/xMain.h	/^	U8 geneClass;$/;"	m	struct:__anon13
-genePA	src/framework/xMain.h	/^	GeneHeader *genePA[];$/;"	m	struct:__anon14
-genomeP	src/framework/xMain.h	/^	Genome *genomeP;$/;"	m	struct:__anon15
+geneClass	src/framework/include/xMain.h	/^	U8 geneClass;$/;"	m	struct:__anon14
+geneClass	src/framework/xMain.c	/^	Key geneClass;$/;"	m	struct:__anon12	file:
+genePA	src/framework/include/xMain.h	/^	GeneHeader *genePA[];$/;"	m	struct:__anon15
+genomeP	src/framework/include/xMain.h	/^	Genome *genomeP;$/;"	m	struct:__anon16
 get_all_local_variables	_utils/jb_db.py	/^def get_all_local_variables(tbl_nm):$/;"	f
 get_all_records	_utils/jb_db.py	/^def get_all_records(tbl_nm):$/;"	f
 get_color_palette	_utils/img.py	/^def get_color_palette(img):$/;"	f
@@ -483,25 +494,28 @@ get_keymap_psn	_utils/imgStrip.py	/^def  get_keymap_psn(filename):$/;"	f
 get_proper_elem_nm	_utils/jb_enum.py	/^def get_proper_elem_nm(enum_nm, elem_nm):$/;"	f
 get_proper_enum_nm	_utils/jb_enum.py	/^def get_proper_enum_nm(nm):$/;"	f
 get_tbl	_utils/jb_db.py	/^def get_tbl(tbl_nm):$/;"	f
+guiNew	src/engine/jbInterface.c	/^Error guiNew(Window **windowPP, Renderer **rendererPP) {$/;"	f
 h	src/x/include/xRender.h	/^	U16 w, h, pitch;  \/\/ in pixel units; determine actual step size by pixel format$/;"	m	struct:__anon8
 hcMapIni	src/botox/data.c	/^Error hcMapIni(HardCodedMap *hcmP) {$/;"	f
-hcmP	src/botox/include/x.h	/^	HardCodedMap *hcmP;  \/\/ Some types of components' values change under various circumstances.$/;"	m	struct:__anon43
+hcmP	src/botox/include/x.h	/^	HardCodedMap *hcmP;  \/\/ Some types of components' values change under various circumstances.$/;"	m	struct:__anon44
 hcompArrayIni	src/botox/data.c	/^Error hcompArrayIni(HardCodedArray *hcaP) {$/;"	f
 histoDel	src/botox/data.c	/^void histoDel(U32 **histoPP) {$/;"	f
 histoNew	src/botox/data.c	/^Error histoNew(U32 **histoPP, const U32 maxVal) {$/;"	f
-hivemindMP	src/botox/include/bt.h	/^	Map         *hivemindMP; \/\/ maps triggers to arrays of $/;"	m	struct:__anon32
+hivemindMP	src/botox/include/bt.h	/^	Map         *hivemindMP; \/\/ maps triggers to arrays of $/;"	m	struct:__anon33
 hp	game/biome/seed/genome/blackboard/mb.c	/^U32 hp = 200;$/;"	v
-id	src/botox/include/bt.h	/^	Key       id;$/;"	m	struct:__anon26
-id	src/botox/include/x.h	/^	U8 id;$/;"	m	struct:_Focus
+id	src/botox/include/bt.h	/^	Key       id;$/;"	m	struct:__anon27
+id	src/botox/include/x.h	/^	Key id;$/;"	m	struct:_Focus
 id	src/botox/include/x.h	/^  Key          id;                  \/* ID of focus *\/$/;"	m	struct:_System
+imageSet	src/engine/jbInterface.c	/^Error imageSet(Renderer *rendererP, XRenderComp *cP) {$/;"	f
 imgP	src/x/include/xRender.h	/^	Image *imgP;$/;"	m	struct:__anon10
 inboxP	src/botox/include/x.h	/^  Mailbox     *inboxP;               \/* Where commands come in from the outside world *\/$/;"	m	struct:_System
 inboxRead	src/botox/include/data.h	/^typedef Error (*inboxRead)(Mailbox *mailboxP);  \/\/ only for self$/;"	t
 inflate	src/botox/data.c	/^Error inflate(Inflatable *inflatableP) {$/;"	f
-inflatedDataP	src/botox/include/data.h	/^	void *inflatedDataP;$/;"	m	struct:__anon39
-inflatedLen	src/botox/include/data.h	/^	U32 inflatedLen;$/;"	m	struct:__anon39
+inflatedDataP	src/botox/include/data.h	/^	void *inflatedDataP;$/;"	m	struct:__anon40
+inflatedLen	src/botox/include/data.h	/^	U32 inflatedLen;$/;"	m	struct:__anon40
 iniColorMap	_utils/img.py	/^def iniColorMap(img):$/;"	f
 iniColorMap	_utils/imgStrip.py	/^def iniColorMap(img):$/;"	f
+iniSurfacePixels	src/engine/jbInterface.c	/^Error iniSurfacePixels(Surface *surfaceP, Colormap *cP) {$/;"	f
 inline	src/botox/include/data.h	21;"	d
 insert	_utils/jb_db.py	/^def insert(tbl_nm, obj):$/;"	f
 insert	_utils/jb_media.py	/^def insert(data):$/;"	f
@@ -510,28 +524,28 @@ insert_record	_utils/jb_media.py	/^def insert_record():$/;"	f
 is_animated	_utils/img.py	/^def is_animated(fp):$/;"	f
 jbAlloc	src/botox/data.c	/^inline Error jbAlloc(void **voidPP, U32 elemSz, U32 nElems) {$/;"	f
 jbFree	src/botox/data.c	/^inline void jbFree(void **voidPP) {$/;"	f
-key	src/botox/include/data.h	/^	Key key;$/;"	m	struct:__anon36
-keyValA	src/botox/include/data.h	/^	KeyValPair  keyValA[];$/;"	m	struct:__anon38
-keyValPairA	src/botox/include/bt.h	/^  KeyValPair *keyValPairA;$/;"	m	struct:__anon25
+key	src/botox/include/data.h	/^	Key key;$/;"	m	struct:__anon37
+keyValA	src/botox/include/data.h	/^	KeyValPair  keyValA[];$/;"	m	struct:__anon39
+keyValPairA	src/botox/include/bt.h	/^  KeyValPair *keyValPairA;$/;"	m	struct:__anon26
 list_attr_vals	_utils/jb_db.py	/^def list_attr_vals(obj):$/;"	f
 list_attributes	_utils/jb_db.py	/^def list_attributes(obj):$/;"	f
 local_arry_from_list	_utils/jb_db.py	/^def local_arry_from_list(_list, tbl_nm, attr_name, obj_name):$/;"	f
 m_bit_buf	src/botox/data.c	/^  tinfl_bit_buf_t m_bit_buf;$/;"	m	struct:tinfl_decompressor_tag	file:
 m_check_adler32	src/botox/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
-m_code_size	src/botox/data.c	/^  mz_uint8 m_code_size[TINFL_MAX_HUFF_SYMBOLS_0];$/;"	m	struct:__anon23	file:
+m_code_size	src/botox/data.c	/^  mz_uint8 m_code_size[TINFL_MAX_HUFF_SYMBOLS_0];$/;"	m	struct:__anon24	file:
 m_counter	src/botox/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
 m_dist	src/botox/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
 m_dist_from_out_buf_start	src/botox/data.c	/^  size_t m_dist_from_out_buf_start;$/;"	m	struct:tinfl_decompressor_tag	file:
 m_final	src/botox/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
 m_len_codes	src/botox/data.c	/^  mz_uint8 m_raw_header[4], m_len_codes[TINFL_MAX_HUFF_SYMBOLS_0 + TINFL_MAX_HUFF_SYMBOLS_1 + 137];$/;"	m	struct:tinfl_decompressor_tag	file:
-m_look_up	src/botox/data.c	/^  mz_int16 m_look_up[TINFL_FAST_LOOKUP_SIZE], m_tree[TINFL_MAX_HUFF_SYMBOLS_0 * 2];$/;"	m	struct:__anon23	file:
+m_look_up	src/botox/data.c	/^  mz_int16 m_look_up[TINFL_FAST_LOOKUP_SIZE], m_tree[TINFL_MAX_HUFF_SYMBOLS_0 * 2];$/;"	m	struct:__anon24	file:
 m_n_bits	src/botox/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
 m_num_extra	src/botox/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
 m_raw_header	src/botox/data.c	/^  mz_uint8 m_raw_header[4], m_len_codes[TINFL_MAX_HUFF_SYMBOLS_0 + TINFL_MAX_HUFF_SYMBOLS_1 + 137];$/;"	m	struct:tinfl_decompressor_tag	file:
 m_state	src/botox/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
 m_table_sizes	src/botox/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
 m_tables	src/botox/data.c	/^  tinfl_huff_table m_tables[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
-m_tree	src/botox/data.c	/^  mz_int16 m_look_up[TINFL_FAST_LOOKUP_SIZE], m_tree[TINFL_MAX_HUFF_SYMBOLS_0 * 2];$/;"	m	struct:__anon23	file:
+m_tree	src/botox/data.c	/^  mz_int16 m_look_up[TINFL_FAST_LOOKUP_SIZE], m_tree[TINFL_MAX_HUFF_SYMBOLS_0 * 2];$/;"	m	struct:__anon24	file:
 m_type	src/botox/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
 m_z_adler32	src/botox/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
 m_zhdr0	src/botox/data.c	/^  mz_uint32 m_state, m_n_bits, m_zhdr0, m_zhdr1, m_z_adler32, m_final, m_type, m_check_adler32, m_dist, m_counter, m_num_extra, m_table_sizes[TINFL_MAX_HUFF_TABLES];$/;"	m	struct:tinfl_decompressor_tag	file:
@@ -545,19 +559,19 @@ main	_utils/bitCountMaskLUT.c	/^int main(int argc, char **argv) {$/;"	f
 main	_utils/bitFlagLUT.c	/^int main(int argc, char **argv) {$/;"	f
 main	_utils/byteIdxLUT.c	/^int main(int argc, char **argv) {$/;"	f
 main	src/engine/jb.c	/^int main() {$/;"	f
-mapA	src/botox/include/data.h	/^	void  *mapA;  $/;"	m	struct:__anon37
+mapA	src/botox/include/data.h	/^	void  *mapA;  $/;"	m	struct:__anon38
 mapDel	src/botox/data.c	/^void mapDel(Map **mapPP) {$/;"	f
 mapGet	src/botox/data.c	/^extern void* mapGet(const Map *mapP, const Key key) {$/;"	f
 mapIni	src/botox/data.c	/^Error mapIni(Map **mapPP, HardCodedMap *hcMapP) {$/;"	f
 mapNew	src/botox/data.c	/^Error mapNew(Map **mapPP, const U8 elemSz, const Key nElems) {$/;"	f
-mapP	src/botox/include/data.h	/^	Map        *mapP;       \/\/ defaults to NULL to prevent copies $/;"	m	struct:__anon38
+mapP	src/botox/include/data.h	/^	Map        *mapP;       \/\/ defaults to NULL to prevent copies $/;"	m	struct:__anon39
 mapRem	src/botox/data.c	/^Error mapRem(Map *mapP, const Key key) {$/;"	f
 mapSet	src/botox/data.c	/^Error mapSet(Map *mapP, const Key key, const void *valP) {$/;"	f
 mapStrips	_utils/imgStrip.py	/^def mapStrips(img):$/;"	f
 map_tiles	_utils/img.py	/^def map_tiles(img):$/;"	f
 mp	game/biome/seed/genome/blackboard/mb.c	/^U32 mp = 300;$/;"	v
-msg	src/botox/include/data.h	/^	Key msg;    \/\/ e.g. move entity 42 with key FAST_LEFT$/;"	m	struct:__anon40
-msgA	src/botox/include/data.h	/^  Message *msgA;$/;"	m	struct:__anon41
+msg	src/botox/include/data.h	/^	Key msg;    \/\/ e.g. move entity 42 with key FAST_LEFT$/;"	m	struct:__anon41
+msgA	src/botox/include/data.h	/^  Message *msgA;$/;"	m	struct:__anon42
 mz_int16	src/botox/data.c	/^typedef signed short mz_int16;$/;"	t	file:
 mz_uint	src/botox/data.c	/^typedef unsigned int mz_uint;$/;"	t	file:
 mz_uint16	src/botox/data.c	/^typedef unsigned short mz_uint16;$/;"	t	file:
@@ -567,18 +581,18 @@ mz_uint8	src/botox/data.c	/^typedef unsigned char mz_uint8;$/;"	t	file:
 nArgs_	src/botox/include/data.h	25;"	d
 nChildren	src/botox/include/bt.h	/^  U8 nChildren;$/;"	m	struct:SrcNode
 nColors	src/x/include/xRender.h	/^	U8 nColors;$/;"	m	struct:__anon9
-nEntities	src/framework/xMain.h	/^  U32 nEntities;$/;"	m	struct:__anon16
+nEntities	src/framework/include/xMain.h	/^  U32 nEntities;$/;"	m	struct:__anon17
 nFlips	src/x/include/xRender.h	/^	U16 nFlips;$/;"	m	struct:__anon5
-nFocuses	src/botox/include/x.h	/^  U8           nFocuses;            \/* Number of activities in focusA[] *\/$/;"	m	struct:_System
-nGenes	src/framework/xMain.h	/^  U8 nGenes;$/;"	m	struct:__anon14
+nFocuses	src/botox/include/x.h	/^  Key          nFocuses;            \/* Number of activities in focusA[] *\/$/;"	m	struct:_System
+nGenes	src/framework/include/xMain.h	/^  U8 nGenes;$/;"	m	struct:__anon15
 nIndices	src/x/include/xRender.h	/^	U16 nIndices;$/;"	m	struct:__anon7
-nKeyValPairs	src/botox/include/bt.h	/^  U8 nKeyValPairs;$/;"	m	struct:__anon25
-nMsgs	src/botox/include/data.h	/^  U16 nMsgs;$/;"	m	struct:__anon41
+nKeyValPairs	src/botox/include/bt.h	/^  U8 nKeyValPairs;$/;"	m	struct:__anon26
+nMsgs	src/botox/include/data.h	/^  U16 nMsgs;$/;"	m	struct:__anon42
 nStrips	src/x/include/xRender.h	/^	U16 nStrips;    \/\/ number of 64-pixel strips in strip set$/;"	m	struct:__anon6
-nSystems	src/framework/xMain.h	/^	U8 nSystems;$/;"	m	struct:__anon17
-nSystems	src/framework/xMain.h	/^	U8 nSystems;$/;"	m	struct:__anon18
-nSystemsMax	src/framework/xMain.h	/^	U8 nSystemsMax;$/;"	m	struct:__anon17
-nSystemsMax	src/framework/xMain.h	/^	U8 nSystemsMax;$/;"	m	struct:__anon18
+nSystems	src/framework/include/xMain.h	/^	U8 nSystems;$/;"	m	struct:__anon18
+nSystems	src/framework/include/xMain.h	/^	U8 nSystems;$/;"	m	struct:__anon19
+nSystemsMax	src/framework/include/xMain.h	/^	U8 nSystemsMax;$/;"	m	struct:__anon18
+nSystemsMax	src/framework/include/xMain.h	/^	U8 nSystemsMax;$/;"	m	struct:__anon19
 nextSiblingIdx	src/botox/include/bt.h	/^  U8 nextSiblingIdx;  \/\/ allows easy "while(nodeP->nextSibling)" condition-check$/;"	m	struct:Node
 nextSiblingIdxA	src/botox/include/bt.h	/^  U8 *nextSiblingIdxA;  \/\/ allows easy "while(nodeP->nextSibling)" condition-check$/;"	m	struct:NodeA
 nibble1	_utils/bitCountLUT.py	/^  nibble1 = 0$/;"	v
@@ -588,66 +602,72 @@ nibble2	_utils/bitCountLUT.py	/^  nibble2 = max(counter2 - 1, 0);$/;"	v
 nodeCb	src/botox/include/bt.h	/^  NodeCb nodeCb;      \/\/ because nobody points at root @ index 0 as sibling or child$/;"	m	struct:Node
 nodeCb	src/botox/include/bt.h	/^  NodeCb nodeCb;$/;"	m	struct:SrcNode
 nodeCbA	src/botox/include/bt.h	/^  NodeCb *nodeCbA;      \/\/ because nobody points at root @ index 0 as sibling or child$/;"	m	struct:NodeA
-nodeStatA	src/botox/include/bt.h	/^  NodeStat *nodeStatA;  \/\/ tree node's status (complete, failed, running, error, etc.)$/;"	m	struct:__anon26
+nodeStatA	src/botox/include/bt.h	/^  NodeStat *nodeStatA;  \/\/ tree node's status (complete, failed, running, error, etc.)$/;"	m	struct:__anon27
 obj_from_record	_utils/jb_db.py	/^def obj_from_record(object_type, record):$/;"	f
 objs_from_records	_utils/jb_db.py	/^def objs_from_records(tbl_nm):$/;"	f
-outboxP	src/botox/include/bt.h	/^	Mailbox  *outboxP;$/;"	m	struct:__anon26
+outboxP	src/botox/include/bt.h	/^	Mailbox  *outboxP;$/;"	m	struct:__anon27
 outboxP	src/botox/include/x.h	/^  Mailbox     *outboxP;              \/* Where this system talks to the outside world *\/$/;"	m	struct:_System
 outboxRead	src/botox/include/data.h	/^typedef Error (*outboxRead)(Mailbox *mailboxP);  \/\/ only of children$/;"	t
-outputIfTrue	src/botox/include/x.h	/^  U8     outputIfTrue;          \/\/ condition flag to be OR'd into if true$/;"	m	struct:__anon45
+outputIfTrue	src/botox/include/x.h	/^  U8     outputIfTrue;          \/\/ condition flag to be OR'd into if true$/;"	m	struct:__anon46
 outputStr	_utils/bitCountLUT.py	/^outputStr = ""$/;"	v
-owner	src/botox/include/x.h	/^	Entity owner;$/;"	m	struct:__anon42
-ownerID	src/botox/include/data.h	/^	Key ownerID;$/;"	m	struct:__anon41
+owner	src/botox/include/x.h	/^	Entity owner;$/;"	m	struct:__anon43
+ownerID	src/botox/include/data.h	/^	Key ownerID;$/;"	m	struct:__anon42
 ownerP	src/botox/include/x.h	/^	struct _System *ownerP;$/;"	m	struct:_Focus	typeref:struct:_Focus::_System
 packBytes	_utils/img.py	/^def packBytes(tileList, bpp):$/;"	f
 packBytes	_utils/imgStrip.py	/^def packBytes(stripList, bpp):$/;"	f
-personalityA	src/botox/include/bt.h	/^	Personality *personalityA;$/;"	m	struct:__anon32
+personalityA	src/botox/include/bt.h	/^	Personality *personalityA;$/;"	m	struct:__anon33
 pitch	src/x/include/xRender.h	/^	U16 w, h, pitch;  \/\/ in pixel units; determine actual step size by pixel format$/;"	m	struct:__anon8
 preMapSet	src/botox/data.c	/^static Error preMapSet(const Map *mapP, const Key key, void **elemPP, void **nextElemPP, U32 *nBytesTMoveP) {$/;"	f	file:
-prevBitCount	src/botox/include/data.h	/^	Key prevBitCount;$/;"	m	struct:__anon35
+present	src/engine/jbInterface.c	/^typedef SDL_RenderPresent present;$/;"	t	file:
+prevBitCount	src/botox/include/data.h	/^	Key prevBitCount;$/;"	m	struct:__anon36
 print_attrs	_utils/jb_db.py	/^def print_attrs(obj):$/;"	f
 print_file	_utils/jb_media.py	/^def print_file():$/;"	f
-priority	src/botox/include/bt.h	/^	U8          priority;$/;"	m	struct:__anon31
-priority	src/botox/include/bt.h	/^	U8 priority;$/;"	m	struct:__anon29
+priority	src/botox/include/bt.h	/^	U8          priority;$/;"	m	struct:__anon32
+priority	src/botox/include/bt.h	/^	U8 priority;$/;"	m	struct:__anon30
 proc_img	_utils/img.py	/^def proc_img(img_name):$/;"	f
 proc_img	_utils/imgStrip.py	/^def proc_img(img_name):$/;"	f
 query	_utils/jb_db.py	/^def query(tbl_nm, obj):$/;"	f
 query_enum_elem	_utils/jb_enum.py	/^def query_enum_elem(elems, elem_nm):$/;"	f
 query_media_tbl	_utils/jb_media.py	/^def query_media_tbl(name):$/;"	f
-quirkPA	src/botox/include/bt.h	/^	Quirk **quirkPA;$/;"	m	struct:__anon30
+quirkPA	src/botox/include/bt.h	/^	Quirk **quirkPA;$/;"	m	struct:__anon31
 rank_elems	_utils/img.py	/^def rank_elems(array):$/;"	f
 rank_elems	_utils/imgStrip.py	/^def rank_elems(array):$/;"	f
-reactionMP	src/framework/xMain.h	/^	Personality *reactionMP; $/;"	m	struct:__anon15
+reactionMP	src/framework/include/xMain.h	/^	Personality *reactionMP; $/;"	m	struct:__anon16
 read_enum_lines	_utils/jb_enum.py	/^def read_enum_lines():$/;"	f
 reconstructImage	_utils/img.py	/^def reconstructImage(colormapTileset, tilemap, colorPalette, imgShape, bpp):$/;"	f
 reconstructImage	_utils/imgStrip.py	/^def reconstructImage(stripSet, stripMap, flipList, colorPalette, imgShape, bpp):$/;"	f
 record_from_obj	_utils/jb_db.py	/^def record_from_obj(obj):$/;"	f
-rendererP	src/x/xRender.c	/^static SDL_Renderer *rendererP = NULL;$/;"	v	file:
+rendererP	src/x/include/xRender.h	/^	Renderer *rendererP;$/;"	m	struct:__anon11
 rle	_utils/img.py	/^def rle(tile):$/;"	f
-root	src/botox/include/x.h	/^  Key    root;                  \/\/ root of behavior tree to fire$/;"	m	struct:__anon45
-rootP	src/botox/include/bt.h	/^  Node *rootP;$/;"	m	struct:__anon27
-rootSrcP	src/botox/include/bt.h	/^	SrcNode *rootSrcP;$/;"	m	struct:__anon28
+root	src/botox/include/x.h	/^  Key    root;                  \/\/ root of behavior tree to fire$/;"	m	struct:__anon46
+rootP	src/botox/include/bt.h	/^  Node *rootP;$/;"	m	struct:__anon28
+rootSrcP	src/botox/include/bt.h	/^	SrcNode *rootSrcP;$/;"	m	struct:__anon29
 sGetFocus	src/botox/x.c	/^Focus* sGetFocus(System *sP, Key focusID) {$/;"	f
 sIniCFP	src/botox/include/x.h	/^  XIniCompFP   sIniCFP;             \/* Some systems need to inflate components before using them. *\/$/;"	m	struct:_System
 sIniSFP	src/botox/include/x.h	/^  XIniSFP      sIniSFP;             \/* System init function pointer *\/$/;"	m	struct:_System
 sIniSParamsP	src/botox/include/x.h	/^	void        *sIniSParamsP;        \/* whatever sIniSFP() needs to properly initialize this system *\/$/;"	m	struct:_System
 sPA	src/engine/jb.c	/^static System *sPA[] = {$/;"	v	file:
-seedPA	src/framework/xMain.h	/^  Seed *seedPA[];$/;"	m	struct:__anon16
-sharedMP	src/framework/xMain.h	/^	Map *sharedMP;         \/\/ map of maps of shared "components"$/;"	m	struct:__anon19
-size	src/framework/xMain.c	/^	Key size;$/;"	m	struct:__anon11	file:
-size	src/framework/xMain.h	/^	U8 size;$/;"	m	struct:__anon13
-srcRectPP	src/x/include/xRender.h	/^	SDL_Rect **srcRectPP;$/;"	m	struct:__anon10
+seedPA	src/framework/include/xMain.h	/^  Seed *seedPA[];$/;"	m	struct:__anon17
+setTextureAlpha	src/engine/jbInterface.c	/^:rror setTextureAlpha(Texture *textureP) {$/;"	f
+sharedMP	src/framework/include/xMain.h	/^	Map *sharedMP;         \/\/ map of maps of shared "components"$/;"	m	struct:__anon20
+size	src/framework/include/xMain.h	/^	U8 size;$/;"	m	struct:__anon14
+size	src/framework/xMain.c	/^	Key size;$/;"	m	struct:__anon12	file:
+srcRectPP	src/x/include/xRender.h	/^	Rect **srcRectPP;$/;"	m	struct:__anon10
 stat	game/biome/seed/genome/blackboard/mb.c	/^	U8 stat;$/;"	m	struct:__anon1	file:
 stripMapInfP	src/x/include/xRender.h	/^	Inflatable *stripMapInfP;$/;"	m	struct:__anon7
 stripMapP	src/x/include/xRender.h	/^	StripMap *stripMapP;$/;"	m	struct:__anon8
 stripSetInfP	src/x/include/xRender.h	/^	Inflatable *stripSetInfP;  \/\/ strip set's compressed source data$/;"	m	struct:__anon6
 stripSetP	src/x/include/xRender.h	/^	StripSet *stripSetP;$/;"	m	struct:__anon8
+surfaceNew	src/engine/jbInterface.c	/^Error surfaceNew(Surface **surfacePP, Colormap *cP) {$/;"	f
 swapPlaceholderP	src/botox/include/x.h	/^  void        *swapPlaceholderP;    \/* Avoids allocating a new placeholder every EC-swap. *\/$/;"	m	struct:_System
-sysPA	src/framework/xMain.h	/^	System **sysPA;$/;"	m	struct:__anon17
-sysPA	src/framework/xMain.h	/^	System **sysPA;$/;"	m	struct:__anon18
-system	src/framework/xMain.h	/^	System system;$/;"	m	struct:__anon19
+sysPA	src/framework/include/xMain.h	/^	System **sysPA;$/;"	m	struct:__anon18
+sysPA	src/framework/include/xMain.h	/^	System **sysPA;$/;"	m	struct:__anon19
+system	src/framework/include/xMain.h	/^	System system;$/;"	m	struct:__anon20
+system	src/x/include/xRender.h	/^	System system;$/;"	m	struct:__anon11
 test	game/biome/seed/genome/blackboard/mb.c	/^Test test = {1, 2, 3};$/;"	v
-textureP	src/x/include/xRender.h	/^	SDL_Texture *textureP;$/;"	m	struct:__anon9
+textureDel	src/engine/jbInterface.c	/^void textureDel(Texture **texturePP) {$/;"	f
+textureNew	src/engine/jbInterface.c	/^Error textureNew(Texture **texturePP, Renderer *rendererP, Surface *surfaceP) {$/;"	f
+textureP	src/x/include/xRender.h	/^	Texture *textureP;$/;"	m	struct:__anon9
 thisIdx	src/botox/include/bt.h	/^  U8 thisIdx;         \/\/ allows updating of its own NodeStat and for keying condition map$/;"	m	struct:Node
 thisIdxA	src/botox/include/bt.h	/^  U8 *thisIdxA;         \/\/ allows updating of its own NodeStat and for keying condition map$/;"	m	struct:NodeA
 throw_underscore_error	_utils/img.py	/^def throw_underscore_error(fn):$/;"	f
@@ -659,19 +679,19 @@ tinfl_decompress_mem_to_heap	src/botox/data.c	/^void *tinfl_decompress_mem_to_he
 tinfl_decompressor	src/botox/data.c	/^struct tinfl_decompressor_tag; typedef struct tinfl_decompressor_tag tinfl_decompressor;$/;"	t	typeref:struct:tinfl_decompressor_tag	file:
 tinfl_decompressor_tag	src/botox/data.c	/^struct tinfl_decompressor_tag$/;"	s	file:
 tinfl_get_adler32	src/botox/data.c	459;"	d	file:
-tinfl_huff_table	src/botox/data.c	/^} tinfl_huff_table;$/;"	t	typeref:struct:__anon23	file:
+tinfl_huff_table	src/botox/data.c	/^} tinfl_huff_table;$/;"	t	typeref:struct:__anon24	file:
 tinfl_put_buf_func_ptr	src/botox/data.c	/^typedef int (*tinfl_put_buf_func_ptr)(const void* pBuf, int len, void *pUser);$/;"	t	file:
-tinfl_status	src/botox/data.c	/^} tinfl_status;$/;"	t	typeref:enum:__anon21	file:
+tinfl_status	src/botox/data.c	/^} tinfl_status;$/;"	t	typeref:enum:__anon22	file:
 tmp	_utils/jb_db.py	/^tmp = JBObject()$/;"	v
-to	src/botox/include/data.h	/^	Key to;     \/\/ e.g. motion system$/;"	m	struct:__anon40
-toggle	src/botox/include/x.h	/^  Bln    toggle;                \/\/ opposite of toggle is latch, in which case thee condition only needs to have been true once$/;"	m	struct:__anon45
-topic	src/botox/include/data.h	/^	Key topic;  \/\/ e.g. this is for entity 42$/;"	m	struct:__anon40
-treeP	src/botox/include/bt.h	/^	BTree *treeP;  \/\/ NULL if yet unimplemented.$/;"	m	struct:__anon28
-treeSP	src/botox/include/bt.h	/^	BTreeSingleton *treeSP;$/;"	m	struct:__anon29
+to	src/botox/include/data.h	/^	Key to;     \/\/ e.g. motion system$/;"	m	struct:__anon41
+toggle	src/botox/include/x.h	/^  Bln    toggle;                \/\/ opposite of toggle is latch, in which case thee condition only needs to have been true once$/;"	m	struct:__anon46
+topic	src/botox/include/data.h	/^	Key topic;  \/\/ e.g. this is for entity 42$/;"	m	struct:__anon41
+treeP	src/botox/include/bt.h	/^	BTree *treeP;  \/\/ NULL if yet unimplemented.$/;"	m	struct:__anon29
+treeSP	src/botox/include/bt.h	/^	BTreeSingleton *treeSP;$/;"	m	struct:__anon30
 type	game/biome/seed/genome/blackboard/mb.c	/^	U32 type;$/;"	m	struct:__anon1	file:
-type	src/botox/include/x.h	/^	U8 type;$/;"	m	struct:__anon42
-type	src/framework/xMain.c	/^	Key type;$/;"	m	struct:__anon11	file:
-type	src/framework/xMain.h	/^	U8 type;$/;"	m	struct:__anon13
+type	src/botox/include/x.h	/^	U8 type;$/;"	m	struct:__anon43
+type	src/framework/include/xMain.h	/^	U8 type;$/;"	m	struct:__anon14
+type	src/framework/xMain.c	/^	Key type;$/;"	m	struct:__anon12	file:
 type_map	_utils/jb_db.py	/^type_map = {"<type 'int'>": int, "<type 'str'>": str, "<type 'instance'>": None}$/;"	v
 udpate	_utils/jb_db.py	/^def udpate(tbl_nm, update_str, idx=None, condition_str=None):$/;"	f
 unpackBytes	_utils/img.py	/^def unpackBytes(packedBytes, w, h, bpp):$/;"	f
@@ -680,10 +700,10 @@ unused_	src/botox/include/data.h	22;"	d
 update	_utils/jb_media.py	/^def update(offset, length, new_data):$/;"	f
 update_enum_file	_utils/jb_enum.py	/^def update_enum_file(enum_nm, new_enum):$/;"	f
 update_record	_utils/jb_media.py	/^def update_record():$/;"	f
-valP	src/botox/include/data.h	/^	void *valP;$/;"	m	struct:__anon33
-valueP	src/botox/include/data.h	/^	void *valueP;$/;"	m	struct:__anon36
+valP	src/botox/include/data.h	/^	void *valP;$/;"	m	struct:__anon34
+valueP	src/botox/include/data.h	/^	void *valueP;$/;"	m	struct:__anon37
 w	src/x/include/xRender.h	/^	U16 w, h, pitch;  \/\/ in pixel units; determine actual step size by pixel format$/;"	m	struct:__anon8
-windowP	src/x/xRender.c	/^static SDL_Window *windowP = NULL;$/;"	v	file:
+windowP	src/x/include/xRender.h	/^	Window *windowP;$/;"	m	struct:__anon11
 write	_utils/imgStrip.py	/^    def write(self, fp):$/;"	m	class:StripMap
 writeInflationData	_utils/img.py	/^    def writeInflationData(self, fp):$/;"	m	class:Inflatable
 writeInflationData	_utils/imgStrip.py	/^    def writeInflationData(self, fp, tsDims):$/;"	m	class:Inflatable

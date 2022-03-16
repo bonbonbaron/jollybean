@@ -20,9 +20,9 @@ ENGINE_INCLUDES    = $(ENGINE_INC_DIR)*.h
 FRAMEWORK_INCLUDES = $(FRAMEWORK_INC_DIR)*.h
 X_INCLUDES         = $(X_INC_DIR)*.h
 # Compile options
-IFLAGS        = -I$(BOTOX_INC_DIR) -I$(ENGINE_INC_DIR) -I$(FRAMEWORK_INC_DIR) -I$(X_INC_DIR)
+IFLAGS        = -I$(BOTOX_INC_DIR) -I$(FRAMEWORK_INC_DIR) -I$(X_INC_DIR) -I$(ENGINE_INC_DIR) 
 SDL_CFLAGS    = $(shell sdl2-config --cflags)
-CFLAGS_COMMON = -g -Wall $(SDL_CFLAGS) \
+CFLAGS_COMMON = -g -Wall \
 							  $(IFLAGS) -ffunction-sections \
 								-fdata-sections -s -fno-ident -fmerge-all-constants \
 								-fomit-frame-pointer -fno-stack-protector 
@@ -43,8 +43,9 @@ X_OBJS   = $(X_SRC:%.c=%.o)
 FRAMEWORK_OBJS    = $(FRAMEWORK_SRC:%.c=%.o)
 ENGINE_OBJS = $(ENGINE_SRC:%.c=%.o)
 OBJS        = $(BOTOX_OBJS) $(FRAMEWORK_OBJS) $(X_OBJS) $(ENGINE_OBJS)
+#OBJS        = $(BOTOX_OBJS) $(X_OBJS)
 
-OUTPUTFILE  = o
+OUTPUTFILE  = m
 
 ##############################
 # Linker
@@ -57,20 +58,20 @@ $(OUTPUTFILE): $(OBJS)
 ##############################
 # Compiler
 ##############################
-$(BOTOX_DIR)%.o: $(BOTOX_DIR)%.c $(BOTOX_INCLUDES)
+$(BOTOX_DIR)%.o: $(BOTOX_DIR)%.c 
 	$(CC) $(CFLAGS_FAST) -c $< -o $@
 	touch $@
 
-$(SYSDIR)%.o: $(SYSDIR)%.c $(SYS_INCLUDES)
+$(FRAMEWORK_DIR)%.o: $(FRAMEWORK_DIR)%.c 
 	$(CC) $(CFLAGS_FAST) -c $< -o $@
 	touch $@
 	
-$(X_DIR)%.o: $(X_DIR)%.c $(X_INCLUDES) $(FRAMEWORK_INCLUDES)
-	$(CC) $(CFLAGS_TINY) -c $< -o $@
+$(X_DIR)%.o: $(X_DIR)%.c 
+	$(CC) $(CFLAGS_TINY) $(SDL_CFLAGS) -c $< -o $@
 	touch $@
 
-$(ENGINE_DIR)%.o: $(ENGINE_DIR)%.c $(BOTOX_SRC) $(ENGINE_INCLUDES) $(BOTOX_INCLUDES)
-	$(CC) $(CFLAGS_FAST) -c $< -o $@
+$(ENGINE_DIR)%.o: $(ENGINE_DIR)%.c 
+	$(CC) $(CFLAGS_FAST) $(SDL_CFLAGS) -c $< -o $@
 	touch $@
 
 

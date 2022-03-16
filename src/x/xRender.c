@@ -156,16 +156,22 @@ Error _cmGen(Colormap *cmP) {
 //======================================================
 // Initialize xRender's system.
 //======================================================
-Error xRenderIniSys() {
-	guiIni();
+Error xRenderIniSys(System *sP, void *sParamsP) {
+	unused_(sParamsP);
+	if (!sP)
+		return E_BAD_ARGS;
+	XRender *xRenderSysP = (XRender*) sP;
+	return guiNew(&xRenderSysP->windowP, &xRenderSysP->rendererP);
 }
 
 //======================================================
 // Initialize xRender's components, which are Images.
 //======================================================
-Error xRenderIniComp(XHeader *xhP) {
+Error xRenderIniComp(System *sP, XHeader *xhP) {
 	if (!xhP)
 		return E_BAD_ARGS;
+
+	XRender *xRenderSysP = (XRender*) sP;
 
 	XRenderComp *cP = (XRenderComp*) xhP;
 	if (cP->imgP->textureP) 
@@ -173,10 +179,10 @@ Error xRenderIniComp(XHeader *xhP) {
 	// Build colormap.
 	Error e = _cmGen(cP->imgP->colorMapP);
 	// Make surface out of colormap and color palette.
-	Surface *surfaceP = NULL;
+	Surface_ *surfaceP = NULL;
 
 	if (!e)
-		e = surfaceNew(&surfaceP);
+		e = surfaceNew(&surfaceP, cP);
 
 	// Apply color palette to color map.
 	if (!e)
@@ -184,7 +190,7 @@ Error xRenderIniComp(XHeader *xhP) {
 
 	// Create texture from surface. 
 	if (!e && surfaceP)
-		e = iniTexture(&cP->imgP->textureP);
+		e = textureNew(&cP->imgP->textureP, xRenderSysP->rendererP, surfaceP);
 
 	if (!e && !cP->imgP->textureP) 
 		e = E_BAD_ARGS;
@@ -209,10 +215,11 @@ Error xRenderIniComp(XHeader *xhP) {
 //======================================================
 // Render activity
 //======================================================
-Error xRender(Focus *fP) {
+Error render(Focus *fP) {
 	Error e = SUCCESS;
 	XRenderComp *cP, *cEndP;
 	XRender *xRenderSysP = (XRender*) fP->ownerP;
+	Renderer_ *rendererP = xRenderSysP->rendererP;
 
 	clearScreen(xRenderSysP->rendererP);
 
@@ -220,11 +227,11 @@ Error xRender(Focus *fP) {
 	cEndP = cP + fP->firstInactiveIdx;
 
 	for (; !e && cP < cEndP; cP++) 
-		e = imageSet(xRenderSysP->rendererP, cP);
+		e = copy_(rendererP, cP->imgP->textureP, NULL, *cP->dstRectPP);
 
 	// Tell GPU to execute instructions.
 	if (!e)
-		present(rendererP);
+		present_(rendererP);
 
 	return e;
 }
@@ -232,4 +239,4 @@ Error xRender(Focus *fP) {
 //======================================================
 // System definition
 //======================================================
-System_(Render, 1, Focus_(1, xRender));
+X_(Render, 1, Focus_(1, render));

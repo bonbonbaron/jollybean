@@ -35,28 +35,39 @@ typedef struct {
 
 typedef struct {
 	U8 nColors;
-	Color *colorA;
+	Color_ *colorA;
 	Colormap *colorMapP;
-	Texture *textureP;
+	Texture_ *textureP;
 } Image; 
 
 typedef struct {
 	XHeader xHeader;
 	Image *imgP;
-	Rect **srcRectPP;
-	Rect **dstRectPP;
+	Rect_ **srcRectPP;
+	Rect_ **dstRectPP;
 } XRenderComp;
 
 // Images
 Error cmGen(Colormap *imgP);
-void cmClr(Colormap *imgP);
-Error xRender(Focus *fP);
-Error xRenderIniS();
+void  cmClr(Colormap *imgP);
+Error xRenderRender(Focus *fP);
+Error xRenderIniS(System *sP, void *sParamsP);
+typedef void (*XRenderPresentFP)(Renderer_ *rendererP);
+extern XRenderPresentFP present;
+// Implemented by environment of choice (see #defines for each category above)
+Error guiNew(Window_ **windowPP, Renderer_ **rendererPP);
+Error surfaceNew(Surface_ **surfacePP, XRenderComp *cP);
+Error iniSurfacePixels(Surface_ *surfaceP, XRenderComp *cP);
+Error textureNew(Texture_ **texturePP, Renderer_ *rendererP, Surface_ *surfaceP);
+void textureDel(Texture_ **texturePP);
+Error setTextureAlpha(Texture_ *textureP);
+void clearScreen(Renderer_ *rendererP);
 
 typedef struct {
 	System system;
-	Window *windowP;
-	Renderer *rendererP;
+	Window_ *windowP;
+	Renderer_ *rendererP;
 } XRender;
-extern XRender sRender;
+
+extern System *sRenderP;
 #endif

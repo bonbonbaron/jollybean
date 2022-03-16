@@ -12,7 +12,7 @@ typedef struct {
 	U32 buttonsDown;
 } XControlComp;
 
-extern U32 buttonsPressed;
+// TODO maybe delete these when you have a solid design
 #define CTRL_LEFT   1 << 0
 #define CTRL_RIGHT  1 << 1
 #define CTRL_UP     1 << 2
@@ -22,6 +22,11 @@ extern U32 buttonsPressed;
 #define CTRL_START  1 << 6
 #define CTRL_SELECT 1 << 7
 
-extern System xControl;
 Error ctrlListen(Focus *fP);
+
+typedef struct {
+	System system;
+	U32 buttonsPressed;
+} XControl;
+
 #endif

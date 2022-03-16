@@ -1,7 +1,6 @@
 #ifndef XMAIN_
 #define XMAIN_
-#include "x.h"
-#include "bt.h"
+#include "botox.h"
 
 #define Biome_(name_, ...) Biome name_ = {\
   .nEntities = nArgs_(Genome*, __VA_ARGS__),\
@@ -58,9 +57,10 @@ typedef struct {
 	System system;
 	Map *sharedMP;         // map of maps of shared "components"
 	Biome *biomeP;
-} XMainSystem; 
+} XMain;
 
 Error xIni(System **sPA, U16 nSystems, U8 nSystemsMax, Biome *biomeP);
 Error xMainIniSys(System *sP, void *sParamsP);
-Error xMainIni(XMainSystem **xMainSysPP, System **sPA, U16 nSystems, U8 nSystemsMax, Biome *biomeP);
+Error xMainIniComp(System *sP, XHeader *xhP);
+Error xMainIni(XMain **xMainSysPP, System **sPA, U16 nSystems, U8 nSystemsMax, Biome *biomeP);
 #endif

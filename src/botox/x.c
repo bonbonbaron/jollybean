@@ -36,7 +36,7 @@ Error xAddComp(System *sP, Entity entity, XHeader *xhP) {
   
   // Assign this component to its entity and, if necessary, prepare it for the system.
   xhP->owner = entity;
-  Error e = (*sP->sIniCFP)(xhP);  // Inflatable components must be initialized before
+  Error e = (*sP->sIniCFP)(sP, xhP);  // Inflatable components must be initialized before
                                     // being added to any focus.
 
   // If index falls within system's array of activities...

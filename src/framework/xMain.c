@@ -5,6 +5,7 @@
 static Error xMainRunSystems(Focus *fP);
 //static Error xMainRunTasks(Focus *fP);
 //static Map **_entityReactionMA;
+X_(Main, 1, Focus_(0, xMainRunSystems));
 
 typedef struct {
 	Key size;
@@ -46,7 +47,7 @@ static Error _histoGeneTypes(XHistoElem *metaA, Biome *biomeP) {
 // =====================================================================
 // Distribute all genes to their appropriate subsystems.
 // =====================================================================
-static Error _distributeGenes(XMainSystem *xMainSysP, Key nSystemsMax) {
+static Error _distributeGenes(XMain *xMainSysP, Key nSystemsMax) {
 
 	Seed **seedPP = xMainSysP->biomeP->seedPA;
 	Seed **seedEndPP = seedPP + xMainSysP->biomeP->nEntities;   // pointer to the end of the above array
@@ -95,7 +96,7 @@ static Error _distributeGenes(XMainSystem *xMainSysP, Key nSystemsMax) {
 Error xMainIniSys(System *sP, void *sParamsP) {
 	Key nSharedMaps = 0;
 	XHistoElem *xheP, *xheEndP;
-	XMainSystem *xMainSysP = (XMainSystem*) sP;
+	XMain *xMainSysP = (XMain*) sP;
 
 	if (!sParamsP)
 		return E_BAD_ARGS;
@@ -207,8 +208,9 @@ Error xMainIniSys(System *sP, void *sParamsP) {
 // ====================================================================================
 // Placeholder for component-initialization; this has to be handled in xSystemIniS().
 // ====================================================================================
-Error xMainIniComp(XHeader *xhP) {
+Error xMainIniComp(System *sP, XHeader *xhP) {
 	unused_(xhP);
+	unused_(sP);
 	return SUCCESS;
 }
 
@@ -229,7 +231,7 @@ static Error xMainRunSystems(Focus *fP) {
 }
 
 /* xIni() initializes the parent system as well as its children. */
-Error xMainIni(XMainSystem **xMainSysPP, System **sPA, U16 nSystems, Key nSystemsMax, Biome *biomeP) {
+Error xMainIni(XMain **xMainSysPP, System **sPA, U16 nSystems, Key nSystemsMax, Biome *biomeP) {
 	if (!sPA || nSystems < 1 || !biomeP)
 		return E_BAD_ARGS;
 
@@ -240,7 +242,7 @@ Error xMainIni(XMainSystem **xMainSysPP, System **sPA, U16 nSystems, Key nSystem
 		.sysPA = sPA
   };
 
-	Error e = jbAlloc((void**) xMainSysPP, sizeof(XMainSystem), 1);
+	Error e = jbAlloc((void**) xMainSysPP, sizeof(XMain), 1);
 
 	if (!e)
 		e = xIniSys(&(*xMainSysPP)->system, nSystems, (void*) &xMainSysIniPrms);
@@ -249,4 +251,3 @@ Error xMainIni(XMainSystem **xMainSysPP, System **sPA, U16 nSystems, Key nSystem
 	// TODO: kick off the parent system activities here
 }
 
-System_(Main, 1, Focus_(0, xMainRunSystems));

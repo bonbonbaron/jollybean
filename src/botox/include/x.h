@@ -9,12 +9,17 @@ typedef struct {
 	U8 type;
 } XHeader;
 
-#define System_(name_, id_, ...) \
-	\
+#define X_(name_, id_, ...) \
 	X##name_##Comp x##name_##SwapPH;\
-	\
 	Focus x##name_##FocusA[] = {__VA_ARGS__};\
-	System s##name_ = {\
+	\
+	X##name_ x##name_ = { .system=System_(name_, id_, __VA_ARGS__) };\
+	\
+	System *s##name_##P = &x##name_.system
+	
+
+#define System_(name_, id_, ...) \
+	{\
 		.xHeader          = {.owner = 0, .type = 0},\
 		.id               = id_,\
 		.sIniSFP          = x##name_##IniSys,\
@@ -41,7 +46,7 @@ struct _System;
 
 typedef Error (*FocusFP)(struct _Focus *aP);
 typedef Error (*XIniSFP)(struct _System *sP, void* sParamsP);
-typedef Error (*XIniCompFP)(XHeader *xhP);
+typedef Error (*XIniCompFP)(struct _System *sP, XHeader *xhP);
 
 typedef struct _Focus {
 	Key id;
