@@ -5,7 +5,7 @@ XMain *xmsP = NULL;
 
 int main() {
 	System *sPA[] = {
-		sRenderP
+		sRenderP,
 	}; 
 
 	Error e = xMainIni(&xmsP, sPA, sizeof(sPA) / sizeof(sPA[0]), N_COMPONENT_TYPES, &biome1);

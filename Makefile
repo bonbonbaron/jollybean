@@ -8,7 +8,7 @@ SRC_DIR = /home/$(USER)/hack/jollybean/src/
 BOTOX_DIR        = $(SRC_DIR)botox/
 ENGINE_DIR       = $(SRC_DIR)engine/
 FRAMEWORK_DIR    = $(SRC_DIR)framework/
-X_DIR            = $(SRC_DIR)x/
+X_DIR            = $(SRC_DIR)xBuiltins/
 
 BOTOX_INC_DIR     = $(BOTOX_DIR)include/
 ENGINE_INC_DIR    = $(ENGINE_DIR)include/
