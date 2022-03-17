@@ -23,6 +23,7 @@ typedef struct {
 #define CTRL_SELECT 1 << 7
 
 Error ctrlListen(Focus *fP);
+Error xControlProcessMessage(System *sP, Message *msgP);
 
 typedef struct {
 	System system;

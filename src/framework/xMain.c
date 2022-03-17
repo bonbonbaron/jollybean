@@ -214,6 +214,11 @@ Error xMainIniComp(System *sP, XHeader *xhP) {
 	return SUCCESS;
 }
 
+Error xMainProcessMessage(System *sP, Message *msgP) {
+	unused_(sP);
+	unused_(msgP);
+	return SUCCESS;
+}
 
 // This runs System's subsystems.
 static Error xMainRunSystems(Focus *fP) {

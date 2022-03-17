@@ -186,7 +186,7 @@ Error xRenderIniComp(System *sP, XHeader *xhP) {
 
 	// Apply color palette to color map.
 	if (!e)
-		e = iniSurfacePixels(surfaceP, cP);
+		e = surfaceIni(surfaceP, cP);
 
 	// Create texture from surface. 
 	if (!e && surfaceP)
@@ -196,7 +196,7 @@ Error xRenderIniComp(System *sP, XHeader *xhP) {
 		e = E_BAD_ARGS;
 
 	if (!e) 
-		e = setTextureAlpha(cP->imgP->textureP);
+		e = textureSetAlpha(cP->imgP->textureP);
 
 	if (!e)
 		cP->srcRectPP = NULL;
@@ -210,6 +210,12 @@ Error xRenderIniComp(System *sP, XHeader *xhP) {
 			textureDel(&cP->imgP->textureP);
 	}
 	return e;
+}
+
+Error xRenderProcessMessage(System *sP, Message *msgP) {
+	unused_(sP);
+	unused_(msgP);
+	return SUCCESS;
 }
 
 //======================================================

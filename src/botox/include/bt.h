@@ -118,44 +118,5 @@ Node_(btSelector);
 Node_(btCondition);   // easy-to-check condition (e.g. world state)
 Node_(btXCondition);  // ECS-based condition
 
-
-// Quirk is just a mapping from trigger to reaction (behavior tree).
-#define Quirk_(name_, cmd_, priority_, treeSP_) \
-	Quirk name_ = {\
-		.cmd = cmd_,\
-		.priority = priority_,\
-		.treeSP = treeSP_\
-	};
-
-typedef struct {
-	Key cmd;
-	U8 priority;
-	BTreeSingleton *treeSP;
-} Quirk;
-
-// Personality is a hard-coded map from events to tree pointers. However, these tree pointers come from singletons. That means a function needs to see if the singleton is initialized, and if it isn't, initialize it. Then after it's init'd, store its non-null tree pointer in the runtime map with the trigger. A specialized function needs to do this for Personality.
-#define Personality_(name_, ...) \
-	Personality name_ = {\
-		.quirkPA = {__VA_ARGS__}\
-	};
-
-typedef struct {
-	Quirk **quirkPA;
-} Personality;
-
-typedef struct {
-	Key         actorId;
-	U8          priority;
-	Blackboard *bbP;
-	BTree      *btP;
-} Activity;
-
-// Finally, the thing that holds them all together:
-typedef struct {
-	Personality *personalityA;
-	Activity    *activityA;  // different from ECS activity
-	Blackboard  *bbA;
-	Map         *hivemindMP; // maps triggers to arrays of 
-} dunnoyet;
 #endif
 

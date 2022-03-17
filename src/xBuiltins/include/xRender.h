@@ -52,16 +52,17 @@ Error cmGen(Colormap *imgP);
 void  cmClr(Colormap *imgP);
 Error xRenderRender(Focus *fP);
 Error xRenderIniS(System *sP, void *sParamsP);
+Error xRenderProcessMessage(System *sP, Message *msgP);
 typedef void (*XRenderPresentFP)(Renderer_ *rendererP);
 extern XRenderPresentFP present;
 // Implemented by environment of choice (see #defines for each category above)
 Error guiNew(Window_ **windowPP, Renderer_ **rendererPP);
 Error surfaceNew(Surface_ **surfacePP, XRenderComp *cP);
-Error iniSurfacePixels(Surface_ *surfaceP, XRenderComp *cP);
+Error surfaceIni(Surface_ *surfaceP, XRenderComp *cP);
 Error textureNew(Texture_ **texturePP, Renderer_ *rendererP, Surface_ *surfaceP);
-void textureDel(Texture_ **texturePP);
-Error setTextureAlpha(Texture_ *textureP);
-void clearScreen(Renderer_ *rendererP);
+void  textureDel(Texture_ **texturePP);
+Error textureSetAlpha(Texture_ *textureP);
+void  clearScreen(Renderer_ *rendererP);
 
 typedef struct {
 	System system;

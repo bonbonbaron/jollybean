@@ -36,7 +36,7 @@ Error xAddComp(System *sP, Entity entity, XHeader *xhP) {
   
   // Assign this component to its entity and, if necessary, prepare it for the system.
   xhP->owner = entity;
-  Error e = (*sP->sIniCFP)(sP, xhP);  // Inflatable components must be initialized before
+  Error e = (*sP->sIniCompFP)(sP, xhP);  // Inflatable components must be initialized before
                                     // being added to any focus.
 
   // If index falls within system's array of activities...
@@ -64,6 +64,13 @@ void* xGetComp(System *sP, Entity entity) {
   CompLocation *compLocationP = (CompLocation*) _getCompLocation(sP, entity);
   if (compLocationP)
     return compLocationP->compP;
+  return NULL;
+}
+
+Map* xGetCompMapP(System *sP, Entity entity) {
+  CompLocation *compLocationP = (CompLocation*) _getCompLocation(sP, entity);
+  if (compLocationP)
+    return compLocationP->hcmP->mapP;
   return NULL;
 }
 
@@ -242,14 +249,21 @@ static Error xNewCompDirectory(System *sP, Key nElems) {
 static Error xNewFocusDirectory(System *sP) {
   return mapNew(&sP->focusDirectoryP, sizeof(FocusLocation), sP->nFocuses);
 }
+static Error xIniFocusDirectory(System *sP) {
+	Error e = SUCCESS;
+  for (Key i = 1; !e && i < sP->nFocuses; i++) {
+    FocusLocation focusLocation = {i, &sP->focusA[i]};
+    e = mapSet(sP->focusDirectoryP, sP->focusA[i].id, &focusLocation);
+  }
+	return e;
+}
 
 Error xIniSys(System *sP, U32 nComps, void *miscP) {
   // Sytems with system components need to initialize maps in sIniFP().
   Error e = xNewCompDirectory(sP, nComps);
   // Then allocate enough room for all components in every focus. 
-  if (!e) 
-    for (U8 i = 0; !e && i < sP->nFocuses; i++) 
-      e = xIniFocus(sP, &sP->focusA[i], nComps);
+	for (U8 i = 0; !e && i < sP->nFocuses; i++) 
+		e = xIniFocus(sP, &sP->focusA[i], nComps);
 
 	// Allocate maiboxes.
 	if (!e)
@@ -260,14 +274,12 @@ Error xIniSys(System *sP, U32 nComps, void *miscP) {
   // Make focus directory.
   if (!e)
     e = xNewFocusDirectory(sP);
-  for (Key i = 1; !e && i < sP->nFocuses; i++) {
-    FocusLocation focusLocation = {i, &sP->focusA[i]};
-    e = mapSet(sP->focusDirectoryP, sP->focusA[i].id, &focusLocation);
-  }
+  if (!e)
+		e = xIniFocusDirectory(sP);
 
   // Finally, call the system's unique initializer.
   if (!e)
-    e = (*sP->sIniSFP)(sP, miscP);
+    e = (*sP->sIniSysFP)(sP, miscP);
 
   // Clean up if there are any problems
   if (e) {
@@ -292,7 +304,7 @@ static void _xReadMessage(System *sP, Message *msgP) {
     if (newComponentValP)
       memcpy(compLocationP->compP, newComponentValP, sP->compSz);
 	}
-	xStartFocus(sP, msgP->to, msgP->attn);
+	xStartFocus(sP, msgP->topic, msgP->attn);  // topic = Entity, attn = focus
 }
 
 void _xReadInbox(System *sP) {

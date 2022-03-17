@@ -79,6 +79,12 @@ Error ctrlListen(Focus *fP) {
 	return SUCCESS;
 }
 
+Error xControlProcessMessage(System *sP, Message *msgP) {
+	unused_(sP);
+	unused_(msgP);
+	return SUCCESS;
+}
+
 Error xControlIniSys() {
 	return SUCCESS;
 }

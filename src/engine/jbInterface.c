@@ -31,7 +31,7 @@ Error surfaceNew(Surface_ **surfacePP, XRenderComp *cP) {
 	return SUCCESS;
 }
 
-Error iniSurfacePixels(Surface_ *surfaceP, XRenderComp *cP) {
+Error surfaceIni(Surface_ *surfaceP, XRenderComp *cP) {
 	Palette_ palette = {cP->imgP->nColors, (Color_*) cP->imgP->colorA, 0, 0};
 	surfaceP->pixels = cP->imgP->colorMapP->dataP;
 	return SDL_SetSurfacePalette(surfaceP, &palette);
@@ -53,7 +53,7 @@ void textureDel(Texture_ **texturePP) {
 	*texturePP = NULL;
 }
 
-Error setTextureAlpha(Texture_ *textureP) {
+Error textureSetAlpha(Texture_ *textureP) {
 	if (!textureP)
 		return E_BAD_ARGS;
 	return SDL_SetTextureBlendMode(textureP, SDL_BLENDMODE_BLEND);

@@ -1,6 +1,6 @@
 #ifndef XMAIN_
 #define XMAIN_
-#include "botox.h"
+#include "xGo.h"
 
 #define Biome_(name_, ...) Biome name_ = {\
   .nEntities = nArgs_(Genome*, __VA_ARGS__),\
@@ -63,4 +63,5 @@ Error xIni(System **sPA, U16 nSystems, U8 nSystemsMax, Biome *biomeP);
 Error xMainIniSys(System *sP, void *sParamsP);
 Error xMainIniComp(System *sP, XHeader *xhP);
 Error xMainIni(XMain **xMainSysPP, System **sPA, U16 nSystems, U8 nSystemsMax, Biome *biomeP);
+Error xMainProcessMessage(System *sP, Message *msgP);
 #endif
