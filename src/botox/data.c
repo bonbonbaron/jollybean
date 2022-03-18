@@ -336,7 +336,7 @@ Error mapRem(Map *mapP, const Key key) {
 	return e;
 }
 
-Error hcMapIni(HardCodedMap *hcmP) {
+Error hcMapNew(HardCodedMap *hcmP) {
 	if (!hcmP)
 		return E_BAD_ARGS;
 	// Don't bother if map's already been initialized.
@@ -345,12 +345,21 @@ Error hcMapIni(HardCodedMap *hcmP) {
 	
 	// Populate array.
 	Error e = mapNew(&hcmP->mapP, hcmP->_elemSz, hcmP->_nKeyValPairs);
-	if (!e)
-		for (U32 i = 0; !e && i < hcmP->_nKeyValPairs; i++) 
-			e = mapSet(hcmP->mapP, hcmP->keyValA[i].key, hcmP->keyValA[i].valueP);
-
 	return e;
 }
+
+Error hcMapIni(HardCodedMap *hcmP) {
+	Error e = SUCCESS;
+	for (U32 i = 0; !e && i < hcmP->_nKeyValPairs; i++) 
+		e = mapSet(hcmP->mapP, hcmP->keyValA[i].key, hcmP->keyValA[i].valueP);
+	return e;
+}
+
+void hcMapDel(HardCodedMap *hcmP) {
+	if (hcmP && hcmP->mapP)
+		mapDel(&hcmP->mapP);
+}
+
 /************************************/
 /************ HISTOGRAMS ************/
 /************************************/

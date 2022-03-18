@@ -24,6 +24,7 @@ typedef struct {
 	};
 
 typedef struct {
+	Key nQuirks;
 	Quirk **quirkPA;
 } Personality;
 
@@ -41,11 +42,26 @@ typedef struct {
 } Reaction;
 
 typedef struct {
+	Entity entity;
+	Personality *personalityP;
+	Blackboard *bbP;  // Why array of pointers and not BBs themselves? Because btRun() takes Blackboard*.
+} XGoIniSeed;
+
+typedef struct {
+	Key nSeeds;
+	Key nDistinctIndividualQuirks;
+	Key nDistinctHivemindQuirks;
+	XGoIniSeed *seedA;
+} XGoIniSeedPkg;
+
+typedef struct {
 	System system;
 	Key          nBBsSet;
 	Map         *triggerMP;
-	Blackboard  *bbA;
+	Blackboard **bbPA;
 	Map         *hiveMindMP; // maps triggers to arrays of 
 } XGo;
+
+void xGoClr(System *sP);
 
 #endif
