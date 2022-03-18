@@ -13,7 +13,7 @@
 typedef struct {
 	Key trigger;
 	U8 priority;
-	U8 hiveMinded;
+	// U8 hiveMinded; <--- If you decide to implement this, add check for this in _histoHiveMindTriggers().
 	BTreeSingleton *treeSP;
 } Quirk;
 

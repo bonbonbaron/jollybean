@@ -5,8 +5,6 @@
 //TODO histo all the direct-trigger quirks; histo'ing avoids dupes with total alongside affected accordingly at each step.
 //TODO count all the hiveMind quirks in the same way
 static Error xMainRunSystems(Focus *fP);
-//static Error xMainRunTasks(Focus *fP);
-//static Map **_entityReactionMA;
 X_(Main, 1, Focus_(0, xMainRunSystems));
 
 typedef struct {

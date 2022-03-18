@@ -168,31 +168,6 @@ Node_(btXCondition) {
   return stat;
 }
 
-// msgP may contain information the triggered callback finds pertinent; e.g. "Who collided w/ me?"
-//TODO: make a way to stop all active components of an entity, and no more than that, in order to efficiently switch between an entity's reactions
-#if 0
-static Error _trigger(System *sP, Message *msgP) {
-	return xStartFocus(sP, msgP->to, 1);
-}
-
-static Error _triggerGroup(System *sP, Message *msgP) {
-	assert(msgP);
-	Error e = SUCCESS;
-	Entity *eA = (Entity*) mapGet(_subscriberAMP, msgP->topic);
-	assert(eA);
-	Entity *eP, *eEndP;
-	arrayIniPtrs((void*) eA, (void**) &eP, (void**) &eEndP, -1);
-	for (; !e && eP < eEndP; eP++) {
-    msgP->to = *eP;
-		e = _trigger(sP, msgP);
-  }
-	return e;
-}
-#endif
-
-inline static U8 _isHigherPriority(U8 newPriority, U8 existingPriority) {
-	return newPriority > existingPriority;
-}
 
 #if 0
 static Error _readOutboxes(Focus *fP) {
