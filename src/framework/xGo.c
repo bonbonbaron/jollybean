@@ -84,11 +84,7 @@ Error xGoIniSys(System *sP, void *sParamsP) {
 
 	XGo *xGoSysP = (XGo*) sP;
 	XGoIniSeedPkg *seedPkgP = (XGoIniSeedPkg*) sParamsP;
-
-	//TODO move trigger() and triggerGroup() to here. 
-	//TODO figure out how to populate hcmP in compDirectory.
-	//TODO Then make trigger() call mapGet() on each entity's hcmP of BTreeSingletons for BT.
-
+	
 	// Allocate array of blackboard pointers.
 	Error e = arrayNew((void**) &xGoSysP->bbPA, sizeof(Blackboard*), seedPkgP->nSeeds);
 
@@ -108,22 +104,14 @@ Error xGoIniSys(System *sP, void *sParamsP) {
 	return e;
 }
 
-/*
-typedef struct {
-	System system;           // done
-	Key          nBBsSet;    // done
-	Blackboard **bbPA;			 // done
-	Map         *triggerMP;
-	Map         *hiveMindMP; 
-} XGo;
-*/
-
 Error xGoIniComp(System *sP, XGoComp *cP) {
 	XGo *xGoSysP = (XGo*) sP;
+	Entity entity = cP->xHeader.owner;
 	cP->bbIdx = xGoSysP->nBBsSet++;  // Assuming the caller populates sP->bbA.
 	cP->priority = 0;
 	cP->btP = NULL;  // Nobody starts out knowing what they'll do. 
-	return SUCCESS;	 // That's what the START event at scene-start is for.
+	// Initialize entity's hard-coded map of reactions if not already (note: singleton!).
+	return xIniCompMapP(sP, entity);
 }
 
 void xGoClr(System *sP) {
@@ -139,42 +127,56 @@ void xGoClr(System *sP) {
 	mapDel(&xGoSysP->triggerMP);
 }
 
-static Error _trigger(XGo *xGoSysP, Message *msgP) {
-	// TODO: implement btRun()
+inline static U8 _isHigherPriority(U8 newPriority, U8 existingPriority) {
+	return newPriority > existingPriority;
+}
+
+static Error _triggerIndividual(XGo *xGoSysP, Message *msgP) {
+	Entity entity = msgP->topic;
+	// Get entity's reaction to message's trigger.
+	XGoComp *compP = (XGoComp*) xGetComp(&xGoSysP->system, entity);
+	Map *compMapP = xGetCompMapP(&xGoSysP->system, entity);
+	if (!compMapP)
+		return E_BAD_KEY;
+	Reaction *reactionP = (Reaction*) mapGet(compMapP, msgP->msg);
+	if (!reactionP)
+		return E_BAD_KEY;
+
+	// Queue new action if it's higher priority than old or entity's inactive.
+	if (!xCompIsActive(&xGoSysP->system, entity) || 
+			_isHigherPriority(reactionP->priority, compP->priority)) {
+		compP->priority = reactionP->priority;
+		compP->btP = reactionP->btP;
+	}
 	return SUCCESS;
 }
 
-static Error _triggerGroup(System *sP, Message *msgP) {
+static Error _triggerHiveMind(XGo *xGoSysP, Message *msgP) {
 	assert(msgP);
 	Error e = SUCCESS;
-	Entity *eA = (Entity*) mapGet(_subscriberAMP, msgP->topic);
+	Entity *eA = (Entity*) mapGet(xGoSysP->hiveMindMP, msgP->msg);
+	if (!eA)
+		return E_BAD_KEY;
 	assert(eA);
 	Entity *eP, *eEndP;
 	arrayIniPtrs((void*) eA, (void**) &eP, (void**) &eEndP, -1);
 	for (; !e && eP < eEndP; eP++) {
     msgP->to = *eP;
-		e = _trigger(sP, msgP);
+		e = _triggerIndividual(xGoSysP, msgP);
   }
 	return e;
 }
 
-inline static U8 _isHigherPriority(U8 newPriority, U8 existingPriority) {
-	return newPriority > existingPriority;
-}
-
 // Entity acts on message if it's more urgent than its current activity.
 Error xGoProcessMessage(System *sP, Message *msgP) {
-	Error e = SUCCESS;
-	Entity entity = msgP->topic;
+	Error e;
 	XGo *xGoSysP = (XGo*) sP;
+	if (msgP->topic)
+		e = _triggerIndividual(xGoSysP, msgP);
+	else
+		e = _triggerHiveMind(xGoSysP, msgP);
 
-	Reaction *reactionP = (Reaction*) mapGet(xGoSysP->triggerMP, msgP->msg);
 	// Make sure the above reaction is higher priority than any active task.
-	XGoComp *compP = (XGoComp*) xGetComp(sP, entity);
-	if (!xCompIsActive(sP, entity) || reactionP->priority > compP->priority) {
-		compP->priority = reactionP->priority;
-		compP->btP = reactionP->btP;
-	}
 	return e;
 }
 

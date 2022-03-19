@@ -127,6 +127,7 @@ Error	 	 xIniComp(System *sP, const U8 focusIdx, const Entity entity, const void
 Error	 	 xAddComp(System *sP, Entity entity, XHeader *xhP);
 void*	 	 xGetComp(System *sP, Entity entity);
 Map*		 xGetCompMapP(System *sP, Entity entity);
+Error    xIniCompMapP(System *sP, Entity entity);
 U32      xGetNComps(System *sP);
 Error	 	 xActivateComp(System *sP, Entity entity);
 Error    xActivateFocus(Focus *fP);

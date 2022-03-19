@@ -74,6 +74,17 @@ Map* xGetCompMapP(System *sP, Entity entity) {
   return NULL;
 }
 
+Error xIniCompMapP(System *sP, Entity entity) {
+	Error e = SUCCESS;
+	CompLocation *compLocationP = _getCompLocation(sP, entity);
+	if (!compLocationP)
+		return E_BAD_KEY;
+	HardCodedMap *hcmP = compLocationP->hcmP;
+	if (!hcmP)
+		e = mapIni(&hcmP->mapP, hcmP);
+	return e;
+}
+
 Focus* sGetFocus(System *sP, Key focusID) {
   FocusLocation *focusLocationP = _getFocusLocation(sP, focusID);
   if (focusLocationP)
