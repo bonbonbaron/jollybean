@@ -81,13 +81,10 @@ static Error _distributeHiveMinds(XGo *xGoSysP, XGoIniSeedPkg *seedPkgP) {
 Error xGoIniSys(System *sP, void *sParamsP) {
 	if (!sP || !sParamsP)
 		return E_BAD_ARGS;
-
 	XGo *xGoSysP = (XGo*) sP;
 	XGoIniSeedPkg *seedPkgP = (XGoIniSeedPkg*) sParamsP;
-	
 	// Allocate array of blackboard pointers.
 	Error e = arrayNew((void**) &xGoSysP->bbPA, sizeof(Blackboard*), seedPkgP->nSeeds);
-
 	// Add all components to system.
 	XGoIniSeed *seedP = seedPkgP->seedA;
 	XGoIniSeed *seedEndP = seedP + seedPkgP->nSeeds;;
@@ -97,10 +94,11 @@ Error xGoIniSys(System *sP, void *sParamsP) {
 		if (!e)
 			xGoSysP->bbPA[seedP->entity] = seedP->bbP;
 	}
-
+	// Init hive minds.
+	if (!e)
+		e = _distributeHiveMinds(xGoSysP, seedPkgP);
 	if (e)
 		xGoClr(sP);
-
 	return e;
 }
 
