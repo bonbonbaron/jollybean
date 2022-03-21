@@ -64,4 +64,5 @@ Error xMainIniSys(System *sP, void *sParamsP);
 Error xMainIniComp(System *sP, XHeader *xhP);
 Error xMainIni(XMain **xMainSysPP, System **sPA, U16 nSystems, U8 nSystemsMax, Biome *biomeP);
 Error xMainProcessMessage(System *sP, Message *msgP);
+Error xMainClr(System *sP);
 #endif

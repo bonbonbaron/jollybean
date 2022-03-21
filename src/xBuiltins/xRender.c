@@ -218,6 +218,12 @@ Error xRenderProcessMessage(System *sP, Message *msgP) {
 	return SUCCESS;
 }
 
+//TODO
+Error xRenderClr(System *sP) {
+  unused_(sP);
+  return SUCCESS;
+}
+
 //======================================================
 // Render activity
 //======================================================

@@ -80,7 +80,7 @@ Error xIniCompMapP(System *sP, Entity entity) {
 	if (!compLocationP)
 		return E_BAD_KEY;
 	HardCodedMap *hcmP = compLocationP->hcmP;
-	if (!hcmP)
+	if (!hcmP->mapP)
 		e = mapIni(&hcmP->mapP, hcmP);
 	return e;
 }
@@ -311,7 +311,7 @@ static void _xReadMessage(System *sP, Message *msgP) {
 		CompLocation *compLocationP = (CompLocation*) mapGet(sP->compDirectoryP, msgP->to);
 		assert(compLocationP && compLocationP->hcmP && compLocationP->hcmP->mapP);
 		const void *newComponentValP = mapGet(compLocationP->hcmP->mapP, 
-				                                  msgP->msg);
+																					msgP->msg);
     if (newComponentValP)
       memcpy(compLocationP->compP, newComponentValP, sP->compSz);
 	}

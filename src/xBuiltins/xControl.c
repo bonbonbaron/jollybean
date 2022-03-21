@@ -85,6 +85,12 @@ Error xControlProcessMessage(System *sP, Message *msgP) {
 	return SUCCESS;
 }
 
+//TODO
+Error xControlClr(System *sP) {
+  unused_(sP);
+  return SUCCESS;
+}
+
 Error xControlIniSys() {
 	return SUCCESS;
 }

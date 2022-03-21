@@ -2,25 +2,31 @@
 //***************************************************
 //** System systems *********************************
 //***************************************************
-//TODO histo all the direct-trigger quirks; histo'ing avoids dupes with total alongside affected accordingly at each step.
-//TODO count all the hiveMind quirks in the same way
 static Error xMainRunSystems(Focus *fP);
 X_(Main, 1, Focus_(0, xMainRunSystems));
 
 typedef struct {
 	Key size;
 	Key count; 
-	Key type;
+	Key geneType;
 	Key geneClass;
 } XHistoElem;
+
+typedef struct {
+  XHistoElem *xheA;
+  Key nDistinctShareds;
+  Key nDistinctBbs;
+} GeneHisto;
 
 // =====================================================================
 // Loop through each genome's genes and histogram their component types.
 // =====================================================================
-static Error _histoGeneTypes(XHistoElem *metaA, Biome *biomeP) {
-	if (!metaA || !biomeP)
+static Error _histoGeneTypes(GeneHisto *geneHistoP, Biome *biomeP) {
+	if (!geneHistoP || !geneHistoP->xheA || !biomeP)
 		return E_BAD_ARGS;
 
+  XHistoElem *histoA = geneHistoP->xheA;
+  XHistoElem *elemP;
 	Seed **seedPP = biomeP->seedPA;
 	Seed **seedEndPP = seedPP + biomeP->nEntities;   // pointer to the end of the above array
 	Genome *genomeP;
@@ -35,10 +41,15 @@ static Error _histoGeneTypes(XHistoElem *metaA, Biome *biomeP) {
 		for (; ghPP < ghEndPP; ghPP++) {
 			gh = **ghPP;
 			if (gh.geneClass != BLACKBOARD) {
-				metaA[gh.type].count++;
-				metaA[gh.type].size = gh.size;
-				metaA[gh.type].geneClass = gh.geneClass;
+        elemP = &histoA[gh.type];
+        if (!elemP->count && gh.geneClass == ECS_SHARED)
+          geneHistoP->nDistinctShareds++;
+				elemP->count++;
+				elemP->size = gh.size;
+				elemP->geneClass = gh.geneClass;
 			}
+      //if (gh.geneClass == BLACKBOARD)
+        //geneHistoP->nBbs++;
 		}
 	}
 	return SUCCESS;
@@ -48,7 +59,6 @@ static Error _histoGeneTypes(XHistoElem *metaA, Biome *biomeP) {
 // Distribute all genes to their appropriate subsystems.
 // =====================================================================
 static Error _distributeGenes(XMain *xMainSysP, Key nSystemsMax) {
-
 	Seed **seedPP = xMainSysP->biomeP->seedPA;
 	Seed **seedEndPP = seedPP + xMainSysP->biomeP->nEntities;   // pointer to the end of the above array
 	Genome *genomeP;
@@ -94,11 +104,10 @@ static Error _distributeGenes(XMain *xMainSysP, Key nSystemsMax) {
 // Initialize the System system.
 // =====================================================================
 Error xMainIniSys(System *sP, void *sParamsP) {
-	Key nSharedMaps = 0;
-	XHistoElem *xheP, *xheEndP;
+  GeneHisto geneHisto;
 	XMain *xMainSysP = (XMain*) sP;
 
-	if (!sParamsP)
+	if (!sP || !sParamsP)
 		return E_BAD_ARGS;
 
 	XMainIniSysPrms *xMainIniSysPrmsP = (XMainIniSysPrms*) sParamsP;
@@ -106,25 +115,28 @@ Error xMainIniSys(System *sP, void *sParamsP) {
 	if (!xMainIniSysPrmsP->biomeP || !xMainIniSysPrmsP->sysPA)
 		return E_BAD_ARGS;
 	
-
-	XHistoElem xHistoA[xMainIniSysPrmsP->nSystemsMax];
-	memset((void*) xHistoA, 0, xMainIniSysPrmsP->nSystemsMax * sizeof(XHistoElem));
-	xMainSysP->biomeP = xMainIniSysPrmsP->biomeP;
-	Error e = _histoGeneTypes(&xHistoA[0], xMainSysP->biomeP);
+  // Histo gene types.
+  Error e = arrayNew((void**) &geneHisto.xheA, sizeof(Key), xMainIniSysPrmsP->nSystems);
+  if (!e) { 
+    xMainSysP->biomeP = xMainIniSysPrmsP->biomeP;
+    e = _histoGeneTypes(&geneHisto, xMainSysP->biomeP);
+  }
 	
 	/****************************************
 	************* ECS Components  ***********
 	****************************************/
 	// Add subsystems as components to Main system.
-	if (xMainIniSysPrmsP)
+	if (!e && xMainIniSysPrmsP) {
 		for (U32 i = 0; !e && i < xMainIniSysPrmsP->nSystems; i++) 
 			if (xMainIniSysPrmsP->sysPA[i])
 				e = xAddComp(sP, xMainIniSysPrmsP->sysPA[i]->id, &xMainIniSysPrmsP->sysPA[i]->xHeader);
+  }
 
-	// Initialize subsystems before we throw genes in.
+	// Initialize subsystems before we put components in them.
+  XHistoElem *xheP, *xheEndP;
 	if (!e) {
-		xheP = &xHistoA[0];
-		xheEndP = xHistoA + xMainIniSysPrmsP->nSystemsMax;
+		xheP = &geneHisto.xheA[0];
+		xheEndP = xheP + xMainIniSysPrmsP->nSystemsMax;
 		for (Entity sID = 0; !e && xheP < xheEndP; xheP++, sID++) 
 			if (xheP->geneClass == ECS_COMPONENT && xheP->count)  {  // i.e. if any entities exist having components for this system...
 				System *_sP = (System*) xGetComp(sP, sID);
@@ -136,58 +148,31 @@ Error xMainIniSys(System *sP, void *sParamsP) {
 	/******************************************
 	************* Shared Components ***********
 	******************************************/
-	// Count the number of TYPES of shared items. 
-	if (!e) {
-		xheP = &xHistoA[0];
-		xheEndP = xHistoA + xMainIniSysPrmsP->nSystemsMax;
-		for (; !e && xheP < xheEndP; xheP++)
-			if (xheP->geneClass == ECS_SHARED && xheP->count)
-				++nSharedMaps;
-	}
-
-	// Allocate map of maps.
-	if (!e && nSharedMaps)
-		e = mapNew(&xMainSysP->sharedMP, sizeof(Map), nSharedMaps);
-
-	// Make a map of maps, one for each type (one map of positions, another of texts, etc.)
-	// If you needed to make a shared map, then fill it. 
+	// Allocate map of sub-maps of shared components before we put those in them.
+	if (!e && geneHisto.nDistinctShareds)
+		e = mapNew(&xMainSysP->sharedMP, sizeof(Map), geneHisto.nDistinctShareds);
 	if (!e && xMainSysP->sharedMP) {
-		xheP = &xHistoA[0];
-		xheEndP = xHistoA + xMainIniSysPrmsP->nSystemsMax;
+		xheP = &geneHisto.xheA[0];
+		xheEndP = xheP + xMainIniSysPrmsP->nSystemsMax;
 		Map *mapP = NULL;
 		for (; !e && xheP < xheEndP; xheP++)
 			if (xheP->geneClass == ECS_SHARED && xheP->count) {
 				e = mapNew(&mapP, xheP->size, xheP->count);
 				if (!e)
-					e = mapSet(xMainSysP->sharedMP, xheP->type, (void*) mapP);
+					e = mapSet(xMainSysP->sharedMP, xheP->geneType, (void*) mapP);
 			}
 	}
 
-	/***************************************
-	************* Behavior Trees ***********
-	***************************************/
-#if 0
+	/**************************************
+	************ Behavior Trees ***********
+	**************************************/
 	if (!e) {
-		Seed **seedPP = xMainIniSysPrmsP->biomeP->seedPA;
-		Seed **seedEndPP = seedPP + xMainIniSysPrmsP->biomeP->nEntities;
-		Genome *genomeP;
-		GeneHeader **ghPP, **ghEndPP;   // pointers to an array of gene header pointers and its end
-		GeneHeader gh;  // faster access to double pointer'd gene header
-		Error e = SUCCESS;
-		// Loop through seeds
-		for (; !e && seedPP < seedEndPP; seedPP++) {
-			genomeP = (*seedPP)->genomeP;
-			ghPP = (*seedPP)->genomeP->genePA;
-			ghEndPP = ghPP + genomeP->nGenes;
-			// Loop through current genome's genes
-			for (System *sP = NULL; !e && ghPP < ghEndPP; ghPP++) {  // ghPP is a pointer to a pointer to a global singleton of a component
-				unused_(sP);
-				unused_();
-				continue;  // TODO
-			}
-		}
+    // What am I actually doing here?
+    // I'm not convinced this is necessary.
+    // I'm already allocating the map of behavior trees in xIniCompMapP().
+    // But it's not actually created yet; grep shows I'm not calling btNew yet.
+    // Let xGo do that. It's not officially done until you do so.
 	}
-#endif
 
 	/************************************
 	************* Blackboards ***********
@@ -201,6 +186,12 @@ Error xMainIniSys(System *sP, void *sParamsP) {
 	// ===========================================
 	if (!e) 
 		e = _distributeGenes(xMainSysP, xMainIniSysPrmsP->nSystemsMax);
+  //if (!e)
+		//e = _distributePersonalities(xMainSysP);
+
+
+  nevermind:
+  arrayDel((void**) &geneHisto.xheA);
 
 	return e;
 }
@@ -235,6 +226,12 @@ static Error xMainRunSystems(Focus *fP) {
 	return e;
 }
 
+// make interface happy for now
+Error xMainClr(System *sP) {
+  unused_(sP);
+  return SUCCESS;
+}
+
 /* xIni() initializes the parent system as well as its children. */
 Error xMainIni(XMain **xMainSysPP, System **sPA, U16 nSystems, Key nSystemsMax, Biome *biomeP) {
 	if (!sPA || nSystems < 1 || !biomeP)
@@ -256,3 +253,11 @@ Error xMainIni(XMain **xMainSysPP, System **sPA, U16 nSystems, Key nSystemsMax, 
 	// TODO: kick off the parent system activities here
 }
 
+// TODOs
+//
+// make shareds pipeline
+// make xGo in separate focus
+// make all the entities' genes' systems in the other focus
+// make sure all genes are being made & distributed appropriately
+// pass messages back and forth between two activites' systems
+// send START message to xGo

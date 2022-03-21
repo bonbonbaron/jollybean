@@ -5,34 +5,35 @@
 typedef Key Entity;
 
 typedef struct {
-	Entity owner;
-	U8 type;
+  Entity owner;
+  U8 type;
 } XHeader;
 
 #define X_(name_, id_, ...) \
-	X##name_##Comp x##name_##SwapPH;\
-	Focus x##name_##FocusA[] = {__VA_ARGS__};\
-	\
-	X##name_ x##name_ = { .system=System_(name_, id_, __VA_ARGS__) };\
-	\
-	System *s##name_##P = &x##name_.system
-	
+  X##name_##Comp x##name_##SwapPH;\
+  Focus x##name_##FocusA[] = {__VA_ARGS__};\
+  \
+  X##name_ x##name_ = { .system=System_(name_, id_, __VA_ARGS__) };\
+  \
+  System *s##name_##P = &x##name_.system
+  
 
 #define System_(name_, id_, ...) \
-	{\
-		.xHeader           = {.owner = 0, .type = 0},\
-		.id                = id_,\
-		.sIniSysFP         = x##name_##IniSys,\
-		.sIniCompFP        = x##name_##IniComp,\
-		.sProcessMessageFP = x##name_##ProcessMessage,\
-		.compSz            = sizeof(X##name_##Comp),\
-		.swapPlaceholderP  = &x##name_##SwapPH,\
-		.compDirectoryP    = NULL,\
-		.inboxP            = NULL,\
-		.outboxP           = NULL,\
-		.nFocuses          = nArgs_(Focus, __VA_ARGS__),\
-		.focusA            = &x##name_##FocusA[0]\
-	}
+  {\
+    .xHeader           = {.owner = 0, .type = 0},\
+    .id                = id_,\
+    .sIniSysFP         = x##name_##IniSys,\
+    .sIniCompFP        = x##name_##IniComp,\
+    .sClrFP            = x##name_##Clr,\
+    .sProcessMessageFP = x##name_##ProcessMessage,\
+    .compSz            = sizeof(X##name_##Comp),\
+    .swapPlaceholderP  = &x##name_##SwapPH,\
+    .compDirectoryP    = NULL,\
+    .inboxP            = NULL,\
+    .outboxP           = NULL,\
+    .nFocuses          = nArgs_(Focus, __VA_ARGS__),\
+    .focusA            = &x##name_##FocusA[0]\
+  }
 
 #define Focus_(id_, sFP_) {\
   .id               = id_, \
@@ -48,22 +49,23 @@ struct _System;
 typedef Error (*FocusFP)(struct _Focus *aP);
 typedef Error (*XIniSFP)(struct _System *sP, void* sParamsP);
 typedef Error (*XIniCompFP)(struct _System *sP, XHeader *xhP);
+typedef Error (*XClrFP)(struct _System *sP);
 typedef Error (*XProcMsgFP)(struct _System *sP, Message *messageP);
 
 typedef struct _Focus {
-	Key id;
+  Key id;
   Key firstInactiveIdx; /* marks the first inactive element's index */
   Key firstEmptyIdx;    /* marks the first empty element's index */
   FocusFP focusFP;     /* function that runs on these components */
   void *compA;         /* components the above function operates on */
-	struct _System *ownerP;
+  struct _System *ownerP;
 } Focus;
 
 typedef struct {
   Key focusID;
   Key compIdx;
   Key checkIdx;  // index of check
-	HardCodedMap *hcmP;  // Some types of components' values change under various circumstances.
+  HardCodedMap *hcmP;  // Some types of components' values change under various circumstances.
   void *compP; /* Systems that use pointers to other systems' components may use double pointers to avoid requesting updated info. */
 } CompLocation;
 
@@ -104,17 +106,18 @@ typedef struct {
 } Checkers;
 
 typedef struct _System {
-	XHeader      xHeader;
+  XHeader      xHeader;
   Key          id;                  /* ID of focus */
-  Key          compSz;							/* components are the same size in all of this system's activities */
+  Key          compSz;              /* components are the same size in all of this system's activities */
   Key          nFocuses;            /* Number of activities in focusA[] */
   Key          firstInactiveActIdx; /* index of first inactive focus */
   void        *swapPlaceholderP;    /* Avoids allocating a new placeholder every EC-swap. */
-	Focus       *focusA;              // array of individual tasks to focus on. Comps can only be active in one focus at a time.
-	void        *sIniSParamsP;        /* whatever sIniSysFP() needs to properly initialize this system */
+  Focus       *focusA;              // array of individual tasks to focus on. Comps can only be active in one focus at a time.
+  void        *sIniSParamsP;        /* whatever sIniSysFP() needs to properly initialize this system */
   XIniSFP      sIniSysFP;             /* System init function pointer */
   XIniCompFP   sIniCompFP;             /* Some systems need to inflate components before using them. */
-	XProcMsgFP   sProcessMessageFP;   /* What to do in response to commands in inbox messages. */
+  XClrFP       sClrFP;
+  XProcMsgFP   sProcessMessageFP;   /* What to do in response to commands in inbox messages. */
   Mailbox     *inboxP;               /* Where commands come in from the outside world */
   Mailbox     *outboxP;              /* Where this system talks to the outside world */
   Map         *compDirectoryP;      /* maps component IDs to an element in an array of CmpAddresses */
@@ -123,15 +126,15 @@ typedef struct _System {
 } System;
 
 Error    xIniSys(System *sP, U32 nComps, void *miscP);
-Error	 	 xIniComp(System *sP, const U8 focusIdx, const Entity entity, const void *cmpP);
-Error	 	 xAddComp(System *sP, Entity entity, XHeader *xhP);
-void*	 	 xGetComp(System *sP, Entity entity);
-Map*		 xGetCompMapP(System *sP, Entity entity);
+Error    xIniComp(System *sP, const U8 focusIdx, const Entity entity, const void *cmpP);
+Error    xAddComp(System *sP, Entity entity, XHeader *xhP);
+void*    xGetComp(System *sP, Entity entity);
+Map*     xGetCompMapP(System *sP, Entity entity);
 Error    xIniCompMapP(System *sP, Entity entity);
 U32      xGetNComps(System *sP);
-Error	 	 xActivateComp(System *sP, Entity entity);
+Error    xActivateComp(System *sP, Entity entity);
 Error    xActivateFocus(Focus *fP);
-Error	 	 xDeactivateComp(System *sP, Entity entity);
+Error    xDeactivateComp(System *sP, Entity entity);
 Error    xDeactivateFocus(Focus *fP);
 U8       xCompIsActive(System *sP, Entity entity);
 Error    xStartFocus(System *sP, Entity entity, Key dstFocusID);
