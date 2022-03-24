@@ -109,7 +109,7 @@ Error xGoIniComp(System *sP, XGoComp *cP) {
   cP->priority = 0;
   cP->btP = NULL;  // Nobody starts out knowing what they'll do. 
   // Initialize entity's hard-coded map of reactions if not already (note: singleton!).
-  return xIniCompMapP(sP, entity);
+  return xIniCompMapP(sP, entity);  // TODO: no, this won't work with singletons. That has to be stored xSystem-level.
 }
 
 void xGoClr(System *sP) {
@@ -122,7 +122,7 @@ void xGoClr(System *sP) {
       arrayDel((void**) entityPP);
   }
   mapDel(&xGoSysP->hiveMindMP);
-  mapDel(&xGoSysP->triggerMP);
+  mapDel(&xGoSysP->bTreeMPA);
 }
 
 inline static U8 _isHigherPriority(U8 newPriority, U8 existingPriority) {

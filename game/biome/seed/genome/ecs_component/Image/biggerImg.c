@@ -1,5 +1,7 @@
 #include "nectar.h"
 
+// The time has come to enforce a singleton standard. 
+// 
 Image biggerImg = {
 	.colorMapP = &biggerCM,
 	.nColors   = 16,

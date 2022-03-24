@@ -57,7 +57,7 @@ typedef struct {
 typedef struct {
 	System system;
 	Key          nBBsSet;
-	Map         *triggerMP;
+	Map        **bTreeMPA;
 	Blackboard **bbPA;
 	Map         *hiveMindMP; // maps triggers to arrays of 
 } XGo;

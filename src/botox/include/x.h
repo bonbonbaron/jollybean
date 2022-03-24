@@ -25,6 +25,7 @@ typedef struct {
     .sIniSysFP         = x##name_##IniSys,\
     .sIniCompFP        = x##name_##IniComp,\
     .sClrFP            = x##name_##Clr,\
+    .sGetShareFP       = x##name_##GetShare,\
     .sProcessMessageFP = x##name_##ProcessMessage,\
     .compSz            = sizeof(X##name_##Comp),\
     .swapPlaceholderP  = &x##name_##SwapPH,\
@@ -51,6 +52,7 @@ typedef Error (*XIniSFP)(struct _System *sP, void* sParamsP);
 typedef Error (*XIniCompFP)(struct _System *sP, XHeader *xhP);
 typedef Error (*XClrFP)(struct _System *sP);
 typedef Error (*XProcMsgFP)(struct _System *sP, Message *messageP);
+typedef Error (*XGetShareFP)(struct _System *sP, void *shareP);
 
 typedef struct _Focus {
   Key id;
@@ -118,6 +120,7 @@ typedef struct _System {
   XIniCompFP   sIniCompFP;             /* Some systems need to inflate components before using them. */
   XClrFP       sClrFP;
   XProcMsgFP   sProcessMessageFP;   /* What to do in response to commands in inbox messages. */
+  XGetShareFP  sGetShareFP;           /* Some systems' components share pointers to common data. This is how it retrieves them by a parent system's call. */
   Mailbox     *inboxP;               /* Where commands come in from the outside world */
   Mailbox     *outboxP;              /* Where this system talks to the outside world */
   Map         *compDirectoryP;      /* maps component IDs to an element in an array of CmpAddresses */

@@ -55,7 +55,7 @@ typedef struct {
 
 typedef struct {
 	System system;
-	Map *sharedMP;         // map of maps of shared "components"
+	Map *sharedMMP;         // map of maps of shared "components"
 	Biome *biomeP;
 } XMain;
 
