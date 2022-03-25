@@ -78,31 +78,27 @@ static Error _distributeGenes(XMain *xMainSysP, Key nSystemsMax) {
 		// Loop through current genome's genes
 		for (; !e && ghPP < ghEndPP; ghPP++) {  // ghPP is a pointer to a pointer to a global singleton of a component
 			gh = **ghPP;
-			switch (gh.geneClass) {
-				case ECS_COMPONENT:
-					componentType = gh.type;
-					sP = (System*) xGetComp(sP, componentType);  // We don't set the owner of the gene pool.
-					if (sP) {
-						xh.type = componentType;
-						e = xAddComp(sP, entityCounter, &xh);
-					}
-					break;
-				case ECS_SHARED:
-          // Outer map is a map of maps. The key to it is the type of shared object.
-					innerMapP = (Map*) mapGet(xMainSysP->sharedMMP, gh.type);  // Inner map knows how big gene's header's container is.
-          if (innerMapP)
-            // Inner map is a map of components. Multiple systems' components point to them. 
-            e = mapSet(innerMapP, entityCounter, (const void*) *ghPP);  // Map knows how big gene's header's container is.
-          // TODO This is the hard part: automating sharing of these shared objects by injecting them into ready-made components. But there's always a way.
-					break;
-				case BLACKBOARD:
-
-					break;
-				default:
-					break;
-			}
+      if (gh.geneClass == ECS_COMPONENT) {
+        componentType = gh.type;
+        sP = (System*) xGetComp(sP, componentType);  // We don't set the owner of the gene pool.
+        if (sP) {
+          xh.type = componentType;
+          e = xAddComp(sP, entityCounter, &xh);
+        }
+      }
+      else if (gh.geneClass == ECS_SHARED) {
+        // Outer map is a map of maps. The key to it is the type of shared object.
+        innerMapP = (Map*) mapGet(xMainSysP->sharedMMP, gh.type);  // Inner map knows how big gene's header's container is.
+        if (innerMapP)
+          // Inner map is a map of components. Multiple systems' components point to them. 
+          e = mapSet(innerMapP, entityCounter, (const void*) *ghPP);  // Map knows how big gene's header's container is.
+      }
 		}
-	}
+    // Give each child system's components their shared members, if any.
+    System *subSysP = xMainSysP->system.compDirectoryP->mapA;
+    System *subSysEndP = subSysP + arrayGetNElems((void*)xMainSysP->system.compDirectoryP->mapA);
+		for (; subSysP < subSysEndP; subSysP++)   
+      (*subSysP->sGetShareFP)(sP, xMainSysP->sharedMMP);
 	return e;
 }
 

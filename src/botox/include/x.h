@@ -52,7 +52,7 @@ typedef Error (*XIniSFP)(struct _System *sP, void* sParamsP);
 typedef Error (*XIniCompFP)(struct _System *sP, XHeader *xhP);
 typedef Error (*XClrFP)(struct _System *sP);
 typedef Error (*XProcMsgFP)(struct _System *sP, Message *messageP);
-typedef Error (*XGetShareFP)(struct _System *sP, void *shareP);
+typedef Error (*XGetShareFP)(struct _System *sP, Map *shareMMP);
 
 typedef struct _Focus {
   Key id;
