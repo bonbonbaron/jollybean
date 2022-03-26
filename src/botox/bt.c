@@ -79,6 +79,11 @@ void btDel(BTree **treePP) {
   jbFree((void**) treePP);
 }
 
+void btSDel(BTreeS **btSPP) {
+  if ((*btSPP)->treeP)
+    btDel(&(*btSPP)->treeP);
+}
+
 // Blackboard
 // These can only be made after their related trees are made.
 // The reason is because it has to count the number of nodes the tree has
@@ -129,7 +134,7 @@ void bbDel(Blackboard **bbPP) {
   jbFree((void**) bbPP);
 }
 
-static Node_(_nodeRun) {
+static NodeFuncDef_(_nodeRun) {
   NodeStat stat = bbP->nodeStatA[currNodeP->thisIdx];
   if (stat < COMPLETE)  // Less than COMPLETE is either READY or RUNNING.
     return currNodeP->nodeCb(rootP, currNodeP, bbP, outboxP);
@@ -141,7 +146,7 @@ NodeStat btRun(BTree *treeP, Blackboard *bbP, Mailbox *outboxP) {
 }
 
 /************ Specific node types ************/
-Node_(btSequence) {
+NodeFuncDef_(btSequence) {
   NodeStat stat = COMPLETE;
   for (Node *childNodeP = &rootP[currNodeP->firstChildIdx];
        stat == COMPLETE && childNodeP != rootP;
@@ -150,7 +155,7 @@ Node_(btSequence) {
   return stat;
 }
 
-Node_(btSelector) {
+NodeFuncDef_(btSelector) {
   NodeStat stat = FAILED;
   for (Node *childNodeP = &rootP[currNodeP->firstChildIdx];
        stat != COMPLETE && childNodeP != rootP;
@@ -159,7 +164,7 @@ Node_(btSelector) {
   return stat;
 }
 
-Node_(btXCondition) {
+NodeFuncDef_(btXCondition) {
   NodeStat stat = FAILED;
   for (Node *childNodeP = &rootP[currNodeP->firstChildIdx];
        stat != COMPLETE && childNodeP != rootP;

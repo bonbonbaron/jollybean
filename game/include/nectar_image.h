@@ -6,9 +6,9 @@
 extern SDL_Color biggerColorSet[];
 
 // Bigger
-extern StripSet biggerStripSet; 
-extern StripMap biggerStripMap; 
-extern Colormap biggerCM;
-extern Image biggerImg;
+extern StripSetS biggerStripSetS; 
+extern StripMapS biggerStripMapS; 
+extern ColormapS biggerCM;
+extern ImageS biggerImg;
 extern XRenderC biggerXRenderC;
 #endif

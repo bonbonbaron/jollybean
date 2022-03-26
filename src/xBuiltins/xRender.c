@@ -7,7 +7,7 @@
 // =========================================
 // Clear color map and all its related data.
 // =========================================
-void _cmClr(Colormap *cmP) {
+void _cmClr(ColormapS *cmP) {
 	if (cmP != NULL) {
 	 	if (cmP->dataP != NULL)    // But if the double pointer is null, avoid any processing.
 			jbFree((void**) &cmP->dataP);
@@ -23,13 +23,13 @@ void _cmClr(Colormap *cmP) {
 // =====================================================================
 // Build color map by inflating, unpacking, and piecing together strips.
 // =====================================================================
-Error _cmGen(Colormap *cmP) {
+Error _cmGen(ColormapS *cmP) {
 	Error e;
 	register U32 dstFlip;
 
 	if (cmP != NULL) {
 		// Check if the image has already been reconstructed. If so, get out.
-		if (cmP->dataP != NULL)   // Colormap has already been reconstructed.
+		if (cmP->dataP != NULL)   // ColormapS has already been reconstructed.
 			return SUCCESS;  
 		// If not reconstructed yet, inflate strip set if it's still compressed (inflate() checks internally).
 		if (cmP->stripSetP)
@@ -199,7 +199,7 @@ Error xRenderIniComp(System *sP, XHeader *xhP) {
 		e = textureSetAlpha(cP->imgP->textureP);
 
 	if (!e)
-		cP->srcRectPP = NULL;
+		cP->srcRectP = NULL;
 
 	//SDL_FreeSurface(surfaceP);  // Program crashes when I do this. Maybe textureP needs it?
 
@@ -224,6 +224,26 @@ Error xRenderClr(System *sP) {
   return SUCCESS;
 }
 
+#define RECT (4)  /* TODO: move to enum */
+XGetShareFuncDef_(Render) {
+  Error e = SUCCESS;
+  Map *rectMP = (Map*) mapGet(shareMMP, RECT);
+  if (!rectMP)
+    return E_BAD_KEY;
+  Focus *fP = sP->focusA;
+  Focus *fEndP = fP + arrayGetNElems(sP->focusA);
+  for (; !e && fP < fEndP; fP++) {
+    XRenderComp *cP = fP->compA;
+    XRenderComp *cEndP = cP + arrayGetNElems(fP->compA);
+    for (; !e && cP < cEndP; cP++) {
+      cP->srcRectP = (Rect_*) mapGet(rectMP, cP->xHeader.owner);
+      if (!cP->srcRectP)
+        e = E_BAD_ARGS;
+    }
+  }
+  return e;
+}
+
 //======================================================
 // Render activity
 //======================================================
@@ -239,7 +259,7 @@ Error render(Focus *fP) {
 	cEndP = cP + fP->firstInactiveIdx;
 
 	for (; !e && cP < cEndP; cP++) 
-		e = copy_(rendererP, cP->imgP->textureP, NULL, *cP->dstRectPP);
+		e = copy_(rendererP, cP->imgP->textureP, NULL, cP->dstRectP);
 
 	// Tell GPU to execute instructions.
 	if (!e)

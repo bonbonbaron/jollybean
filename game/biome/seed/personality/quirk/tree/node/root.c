@@ -1,3 +1,3 @@
 #include "nectar.h"
 
-SequenceNode_(root, &sel, &e);
+SequenceNodeFuncDef_(root, &sel, &e);

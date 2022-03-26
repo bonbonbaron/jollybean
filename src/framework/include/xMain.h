@@ -43,14 +43,7 @@ typedef struct {
 	U8 nSystemsMax;
 	U8 nSystems;
 	Biome *biomeP;
-	System **sysPA;
-} dunnoYet;
-
-typedef struct {
-	U8 nSystemsMax;
-	U8 nSystems;
-	Biome *biomeP;
-	System **sysPA;
+	System **sysPA;  // This array contains all the systems this app will ever need.
 } XMainIniSysPrms;
 
 typedef struct {
@@ -63,6 +56,7 @@ Error xIni(System **sPA, U16 nSystems, U8 nSystemsMax, Biome *biomeP);
 Error xMainIniSys(System *sP, void *sParamsP);
 Error xMainIniComp(System *sP, XHeader *xhP);
 Error xMainIni(XMain **xMainSysPP, System **sPA, U16 nSystems, U8 nSystemsMax, Biome *biomeP);
+Error xMainGetShare(System *sP, Map *shareMMP);
 Error xMainProcessMessage(System *sP, Message *msgP);
 Error xMainClr(System *sP);
 #endif

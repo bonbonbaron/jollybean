@@ -10,10 +10,8 @@ int main() {
 
 	Error e = xMainIni(&xmsP, sPA, sizeof(sPA) / sizeof(sPA[0]), N_COMPONENT_TYPES, &biome1);
 
-	while (!e) {
+	while (!e) 
 		e = xRun(&xmsP->system);
-		break;
-	}
 
   return e;
 }

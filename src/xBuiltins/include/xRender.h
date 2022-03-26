@@ -10,46 +10,47 @@ typedef enum {
 typedef struct {
 	U16 nFlips;
 	U16 flipIdxA[];
-} FlipSet;
+} FlipSetS;
 
 // Strip set's inflated data is in U32 format.
 typedef struct {
-	FlipSet *flipSetP;
+	FlipSetS *flipSetP;
 	U16 nStrips;    // number of 64-pixel strips in strip set
 	Inflatable *stripSetInfP;  // strip set's compressed source data
-} StripSet;
+} StripSetS;
 
-// StripMap's inflated data is in U16 format.
+// StripMapS's inflated data is in U16 format.
 typedef struct {
 	U16 nIndices;
 	Inflatable *stripMapInfP;
-} StripMap;
+} StripMapS;
 
 typedef struct {
 	U8 bpp;
 	U16 w, h, pitch;  // in pixel units; determine actual step size by pixel format
-	StripSet *stripSetP;
-	StripMap *stripMapP;
+	StripSetS *stripSetP;
+	StripMapS *stripMapP;
 	U8 *dataP;    // JB only supports 8-bit colormap. If image requires neither strips nor bit-unpacking, this simply points at the inflatable data.
-} Colormap;     // When the inflatable requires neither unpacking nor strip-mapping, go ahead and memcpy over. I can't think of any cleaner way to do it.
+} ColormapS;     // When the inflatable requires neither unpacking nor strip-mapping, go ahead and memcpy over. I can't think of any cleaner way to do it.
 
 typedef struct {
 	U8 nColors;
 	Color_ *colorA;
-	Colormap *colorMapP;
-	Texture_ *textureP;
-} Image; 
+	ColormapS *colorMapP;
+	TextureS_ *textureP;
+} ImageS; 
 
+// Seems important that every component has its singleton source to enable easy cleanup.
 typedef struct {
 	XHeader xHeader;
-	Image *imgP;
-	Rect_ **srcRectPP;
-	Rect_ **dstRectPP;
+	ImageS *imgP;
+	Rect_ *srcRectP;
+	Rect_ *dstRectP;
 } XRenderComp;
 
 // Images
-Error cmGen(Colormap *imgP);
-void  cmClr(Colormap *imgP);
+Error cmGen(ColormapS *imgP);
+void  cmClr(ColormapS *imgP);
 Error xRenderRender(Focus *fP);
 Error xRenderIniS(System *sP, void *sParamsP);
 Error xRenderProcessMessage(System *sP, Message *msgP);
@@ -59,9 +60,9 @@ extern XRenderPresentFP present;
 Error guiNew(Window_ **windowPP, Renderer_ **rendererPP);
 Error surfaceNew(Surface_ **surfacePP, XRenderComp *cP);
 Error surfaceIni(Surface_ *surfaceP, XRenderComp *cP);
-Error textureNew(Texture_ **texturePP, Renderer_ *rendererP, Surface_ *surfaceP);
-void  textureDel(Texture_ **texturePP);
-Error textureSetAlpha(Texture_ *textureP);
+Error textureNew(TextureS_ **texturePP, Renderer_ *rendererP, Surface_ *surfaceP);
+void  textureDel(TextureS_ **texturePP);
+Error textureSetAlpha(TextureS_ *textureP);
 void  clearScreen(Renderer_ *rendererP);
 
 typedef struct {

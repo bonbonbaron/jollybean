@@ -87,7 +87,7 @@ Error xGoIniSys(System *sP, void *sParamsP) {
   Error e = arrayNew((void**) &xGoSysP->bbPA, sizeof(Blackboard*), seedPkgP->nSeeds);
   // Add all components to system.
   XGoIniSeed *seedP = seedPkgP->seedA;
-  XGoIniSeed *seedEndP = seedP + seedPkgP->nSeeds;;
+  const XGoIniSeed *seedEndP = seedP + seedPkgP->nSeeds;;
   XGoComp dummyComp = {.xHeader = { .type = sP->id }};
   for (; !e && seedP < seedEndP; seedP++) {
     e = xAddComp(sP, seedP->entity, &dummyComp.xHeader);
@@ -97,6 +97,30 @@ Error xGoIniSys(System *sP, void *sParamsP) {
   // Init hive minds.
   if (!e)
     e = _distributeHiveMinds(xGoSysP, seedPkgP);
+  // Make the array that'll hold the map pointers.
+  if (!e) 
+    e = arrayNew((void**) &xGoSysP->bTreeSMPA, sizeof(Map*), seedPkgP->nSeeds);
+  if (!e) {
+    seedP = seedPkgP->seedA;
+    for (Map **mapPP = xGoSysP->bTreeSMPA; !e && seedP < seedEndP; seedP++, mapPP++) {
+      // Make the map that'll hold all the trigger-to-BT singleton mappings.
+      e = mapNew(mapPP, sizeof(BTreeS*), seedP->personalityP->nQuirks);
+      if (!e) {
+        Map *mapP = *mapPP;
+        Quirk **quirkPP = seedP->personalityP->quirkPA;
+        Quirk **quirkEndPP = quirkPP + seedP->personalityP->nQuirks;
+        // Map all the triggers to their respective BT singletons.
+        for (; !e && quirkPP < quirkEndPP; quirkPP++) {
+          Quirk *quirkP = *quirkPP;
+          if (!quirkP->treeSP->treeP) 
+            e = btNew(quirkP->treeSP->rootSrcP, &quirkP->treeSP->treeP);
+          if (!e)
+            e = mapSet(mapP, quirkP->trigger, quirkP->
+            //TODO make sure you put reactions in there, not BTrees. Make sure reactions have BTree SINGLETONS too for erasure later.
+        }
+      }
+    }
+  }
   if (e)
     xGoClr(sP);
   return e;
@@ -104,17 +128,21 @@ Error xGoIniSys(System *sP, void *sParamsP) {
 
 Error xGoIniComp(System *sP, XGoComp *cP) {
   XGo *xGoSysP = (XGo*) sP;
-  Entity entity = cP->xHeader.owner;
   cP->bbIdx = xGoSysP->nBBsSet++;  // Assuming the caller populates sP->bbA.
   cP->priority = 0;
   cP->btP = NULL;  // Nobody starts out knowing what they'll do. 
-  // Initialize entity's hard-coded map of reactions if not already (note: singleton!).
-  return xIniCompMapP(sP, entity);  // TODO: no, this won't work with singletons. That has to be stored xSystem-level.
+  return SUCCESS;
 }
 
 void xGoClr(System *sP) {
   XGo *xGoSysP = (XGo*) sP;
+  // Delete blackboards and the array containing them
+  Blackboard **bbPP = xGoSysP->bbPA;
+  Blackboard **bbEndPP = bbPP + arrayGetNElems(xGoSysP->bbPA);
+  for (; bbPP < bbEndPP; bbPP++) 
+    bbDel(bbPP);
   arrayDel((void**) &xGoSysP->bbPA);
+  // Delete hive minds and their map container
   if (xGoSysP->hiveMindMP && xGoSysP->hiveMindMP->mapA) {
     Entity **entityPP = xGoSysP->hiveMindMP->mapA;
     Entity **entityEndPP = xGoSysP->hiveMindMP->mapA;
@@ -122,7 +150,18 @@ void xGoClr(System *sP) {
       arrayDel((void**) entityPP);
   }
   mapDel(&xGoSysP->hiveMindMP);
-  mapDel(&xGoSysP->bTreeMPA);
+  // Delete tree singletons, the maps containing them, and the array containing the maps.
+  Map **mapPP = xGoSysP->bTreeSMPA;
+  Map **mapEndPP = mapPP + arrayGetNElems(xGoSysP->bTreeSMPA);
+  for (; mapPP < mapEndPP; mapPP++) {
+    BTreeS *treeSP = (BTreeS*) (*mapPP)->mapA;
+    BTreeS *treeEndSP = treeSP + arrayGetNElems((*mapPP)->mapA);
+    for (; treeSP < treeEndSP; treeSP++)
+      if (treeSP->treeP)
+        btDel(&treeSP->treeP);
+    mapDel(mapPP);
+  }
+  arrayDel((void**) &xGoSysP->bTreeSMPA);
 }
 
 inline static U8 _isHigherPriority(U8 newPriority, U8 existingPriority) {
@@ -164,6 +203,8 @@ static Error _triggerHiveMind(XGo *xGoSysP, Message *msgP) {
   }
   return e;
 }
+
+XGetShareFuncDefUnused_(Go);
 
 // Entity acts on message if it's more urgent than its current activity.
 Error xGoProcessMessage(System *sP, Message *msgP) {

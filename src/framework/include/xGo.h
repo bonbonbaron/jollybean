@@ -14,7 +14,7 @@ typedef struct {
 	Key trigger;
 	U8 priority;
 	// U8 hiveMinded; <--- If you decide to implement this, add check for this in _histoHiveMindTriggers().
-	BTreeSingleton *treeSP;
+	BTreeS *treeSP;
 } Quirk;
 
 // Personality is a hard-coded mapping of Key events to tree pointers. 
@@ -37,7 +37,7 @@ typedef struct {
 } XGoComp;
 
 typedef struct {
-	BTree *btP;
+	BTreeS *btSP;
 	U8 priority;
 } Reaction;
 
@@ -57,7 +57,7 @@ typedef struct {
 typedef struct {
 	System system;
 	Key          nBBsSet;
-	Map        **bTreeMPA;
+	Map        **bTreeSMPA;   // array of maps; array indices = entity, maps = trigger-BTreeS pairs
 	Blackboard **bbPA;
 	Map         *hiveMindMP; // maps triggers to arrays of 
 } XGo;

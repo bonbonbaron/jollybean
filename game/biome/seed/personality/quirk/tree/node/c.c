@@ -1,9 +1,9 @@
 #include "nectar.h"
 
 
-Node_(cb3) {
+NodeFuncDef_(cb3) {
   printf("node 3\n");
   return COMPLETE;
 }
 
-LeafNode_(c, cb3);
+LeafNodeFuncDef_(c, cb3);

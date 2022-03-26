@@ -5,7 +5,7 @@
 // Video
 #define Color_ SDL_Color
 #define Rect_ SDL_Rect
-#define Texture_ SDL_Texture
+#define TextureS_ SDL_Texture
 #define Window_ SDL_Window
 #define Renderer_ SDL_Renderer
 #define Surface_ SDL_Surface

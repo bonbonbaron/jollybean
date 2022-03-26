@@ -45,7 +45,7 @@ ENGINE_OBJS = $(ENGINE_SRC:%.c=%.o)
 OBJS        = $(BOTOX_OBJS) $(FRAMEWORK_OBJS) $(X_OBJS) $(ENGINE_OBJS)
 #OBJS        = $(BOTOX_OBJS) $(X_OBJS)
 
-OUTPUTFILE  = m
+OUTPUTFILE  = o
 
 ##############################
 # Linker

@@ -2,7 +2,7 @@
 
 // The time has come to enforce a singleton standard. 
 // 
-Image biggerImg = {
+ImageS biggerImg = {
 	.colorMapP = &biggerCM,
 	.nColors   = 16,
 	.colorA    = &biggerColorSet[0],

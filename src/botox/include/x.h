@@ -54,6 +54,17 @@ typedef Error (*XClrFP)(struct _System *sP);
 typedef Error (*XProcMsgFP)(struct _System *sP, Message *messageP);
 typedef Error (*XGetShareFP)(struct _System *sP, Map *shareMMP);
 
+#define XIniSysFuncDef_(name_)   Error x##name_##IniSys(System *sP, void *sParamsP)
+#define XIniCompFuncDef_(name_)  Error x##name_##IniComp(System *sP, XHeader *xhP)
+#define XClrFuncDef_(name_)      Error x##name_##Clr(System *sP)
+#define XProcMsgFuncDef_(name_)  Error x##name_##ProcessMessage(System *sP, Message *msgP)
+#define XGetShareFuncDefUnused_(name_) Error x##name_##GetShare(System *sP, Map *shareMMP) {\
+  unused_(sP); \
+  unused_(shareMMP); \
+  return SUCCESS; \
+}
+#define XGetShareFuncDef_(name_) Error x##name_##GetShare(System *sP, Map *shareMMP)
+
 typedef struct _Focus {
   Key id;
   Key firstInactiveIdx; /* marks the first inactive element's index */

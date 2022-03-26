@@ -94,11 +94,14 @@ static Error _distributeGenes(XMain *xMainSysP, Key nSystemsMax) {
           e = mapSet(innerMapP, entityCounter, (const void*) *ghPP);  // Map knows how big gene's header's container is.
       }
 		}
+  }
+  if (!e) {
     // Give each child system's components their shared members, if any.
     System *subSysP = xMainSysP->system.compDirectoryP->mapA;
     System *subSysEndP = subSysP + arrayGetNElems((void*)xMainSysP->system.compDirectoryP->mapA);
-		for (; subSysP < subSysEndP; subSysP++)   
+    for (; subSysP < subSysEndP; subSysP++)   
       (*subSysP->sGetShareFP)(sP, xMainSysP->sharedMMP);
+  }
 	return e;
 }
 
@@ -216,7 +219,7 @@ Error xMainIniSys(System *sP, void *sParamsP) {
 	if (!e) {
     XGo *xGoSysP = (XGo*) xGetComp(&xMainSysP->system, 6); // TODO replace 6 with enum
     if (xGoSysP)
-      e = arrayNew((void**) &xGoSysP->bTreeMPA, sizeof(Map*), xMainIniSysPrmsP->biomeP->nEntities);
+      e = arrayNew((void**) &xGoSysP->bTreeSMPA, sizeof(Map*), xMainIniSysPrmsP->biomeP->nEntities);
 	}
 
 	// ===========================================
@@ -227,8 +230,6 @@ Error xMainIniSys(System *sP, void *sParamsP) {
   if (!e)
 		e = _distributePersonalities(xMainSysP);
 
-
-  nevermind:
   arrayDel((void**) &geneHisto.xheA);
 
 	return e;
@@ -242,6 +243,8 @@ Error xMainIniComp(System *sP, XHeader *xhP) {
 	unused_(sP);
 	return SUCCESS;
 }
+
+XGetShareFuncDefUnused_(Main);
 
 Error xMainProcessMessage(System *sP, Message *msgP) {
 	unused_(sP);

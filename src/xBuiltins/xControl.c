@@ -100,6 +100,8 @@ Error xControlIniComp(System *sP, XHeader *xhP) {
 	return SUCCESS;
 }
 
+XGetShareFuncDefUnused_(Control);
+
 //======================================================
 // System definition
 //======================================================

@@ -44,7 +44,7 @@ typedef struct SrcNode {
   struct SrcNode **childrenPA;
 } SrcNode;
 
-#define LeafNode_(name_, cb_, ...)\
+#define LeafNodeFuncDef_(name_, cb_, ...)\
   SrcNode *name_##ChildrenA[] = {__VA_ARGS__};\
   SrcNode name_ = {\
     .nodeCb = cb_,\
@@ -52,7 +52,7 @@ typedef struct SrcNode {
     .childrenPA = name_##ChildrenA\
   };
 
-#define SelectorNode_(name_, ...)\
+#define SelectorNodeFuncDef_(name_, ...)\
   SrcNode *name_##ChildrenA[] = {__VA_ARGS__};\
   SrcNode name_ = {\
     .nodeCb = btSelector,\
@@ -60,7 +60,7 @@ typedef struct SrcNode {
     .childrenPA = name_##ChildrenA\
   };
 
-#define SequenceNode_(name_, ...)\
+#define SequenceNodeFuncDef_(name_, ...)\
   SrcNode *name_##ChildrenA[] = {__VA_ARGS__};\
   SrcNode name_ = {\
     .nodeCb = btSequence,\
@@ -68,8 +68,8 @@ typedef struct SrcNode {
     .childrenPA = name_##ChildrenA\
   };
 
-// Node_ enforces conformity to node signatures. This way you don't have to remember how to implement a callback node.
-#define Node_(name_) NodeStat name_(Node *rootP, Node *currNodeP, Blackboard *bbP, Mailbox *outboxP) 
+// NodeFuncDef_ enforces conformity to node signatures. This way you don't have to remember how to implement a callback node.
+#define NodeFuncDef_(name_) NodeStat name_(Node *rootP, Node *currNodeP, Blackboard *bbP, Mailbox *outboxP) 
 
 typedef struct Node {
   U8 firstChildIdx;
@@ -94,10 +94,10 @@ typedef struct {
 typedef struct {
 	BTree *treeP;  // NULL if yet unimplemented.
 	SrcNode *rootSrcP;
-} BTreeSingleton;
+} BTreeS;
 
-#define BTreeSingleton_(name_, root_) \
-	BTreeSingleton name_ = {\
+#define BTreeS_(name_, root_) \
+	BTreeS name_ = {\
 		.treeP = NULL,\
 		.rootSrcP = root_\
 	}
@@ -113,10 +113,10 @@ NodeStat btRun(BTree *treeP, Blackboard *bbP, Mailbox *outboxP);
 // message to whatever system each is interested in. Guess I have to kiss my beautiful simple design goodbye.
 //
 //
-Node_(btSequence);
-Node_(btSelector);
-Node_(btCondition);   // easy-to-check condition (e.g. world state)
-Node_(btXCondition);  // ECS-based condition
+NodeFuncDef_(btSequence);
+NodeFuncDef_(btSelector);
+NodeFuncDef_(btCondition);   // easy-to-check condition (e.g. world state)
+NodeFuncDef_(btXCondition);  // ECS-based condition
 
 #endif
 
