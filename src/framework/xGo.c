@@ -89,10 +89,15 @@ Error xGoIniSys(System *sP, void *sParamsP) {
   XGoIniSeed *seedP = seedPkgP->seedA;
   const XGoIniSeed *seedEndP = seedP + seedPkgP->nSeeds;;
   XGoComp dummyComp = {.xHeader = { .type = sP->id }};
+  Blackboard *bbP = NULL;
   for (; !e && seedP < seedEndP; seedP++) {
     e = xAddComp(sP, seedP->entity, &dummyComp.xHeader);
-    if (!e)
-      xGoSysP->bbPA[seedP->entity] = seedP->bbP;
+    if (!e) 
+      e = bbNew(&bbP, seedP->personalityP->quirkPA[seedP->entity]->reaction.treeSP->treeP->rootP, seedP->entity, seedP->bbSeedP);
+    if (!e && bbP) 
+      xGoSysP->bbPA[seedP->entity] = bbP;
+    else
+      e = E_BAD_INDEX;
   }
   // Init hive minds.
   if (!e)
@@ -104,19 +109,18 @@ Error xGoIniSys(System *sP, void *sParamsP) {
     seedP = seedPkgP->seedA;
     for (Map **mapPP = xGoSysP->bTreeSMPA; !e && seedP < seedEndP; seedP++, mapPP++) {
       // Make the map that'll hold all the trigger-to-BT singleton mappings.
-      e = mapNew(mapPP, sizeof(BTreeS*), seedP->personalityP->nQuirks);
+      e = mapNew(mapPP, sizeof(Reaction*), seedP->personalityP->nQuirks);
       if (!e) {
         Map *mapP = *mapPP;
         Quirk **quirkPP = seedP->personalityP->quirkPA;
         Quirk **quirkEndPP = quirkPP + seedP->personalityP->nQuirks;
-        // Map all the triggers to their respective BT singletons.
+        // Map all the triggers to their respective behavior tree singletons.
         for (; !e && quirkPP < quirkEndPP; quirkPP++) {
           Quirk *quirkP = *quirkPP;
-          if (!quirkP->treeSP->treeP) 
-            e = btNew(quirkP->treeSP->rootSrcP, &quirkP->treeSP->treeP);
+          if (!quirkP->reaction.treeSP->treeP) 
+            e = btNew(quirkP->reaction.treeSP->rootSrcP, &quirkP->reaction.treeSP->treeP);
           if (!e)
-            e = mapSet(mapP, quirkP->trigger, quirkP->
-            //TODO make sure you put reactions in there, not BTrees. Make sure reactions have BTree SINGLETONS too for erasure later.
+            e = mapSet(mapP, quirkP->trigger, &quirkP->reaction);
         }
       }
     }
@@ -154,11 +158,11 @@ void xGoClr(System *sP) {
   Map **mapPP = xGoSysP->bTreeSMPA;
   Map **mapEndPP = mapPP + arrayGetNElems(xGoSysP->bTreeSMPA);
   for (; mapPP < mapEndPP; mapPP++) {
-    BTreeS *treeSP = (BTreeS*) (*mapPP)->mapA;
-    BTreeS *treeEndSP = treeSP + arrayGetNElems((*mapPP)->mapA);
-    for (; treeSP < treeEndSP; treeSP++)
-      if (treeSP->treeP)
-        btDel(&treeSP->treeP);
+    Reaction *reactionP = (Reaction*) (*mapPP)->mapA;
+    Reaction *reactionEndSP = reactionP + arrayGetNElems((*mapPP)->mapA);
+    for (; reactionP < reactionEndSP; reactionP++)
+      if (reactionP->treeSP->treeP)
+        btDel(&reactionP->treeSP->treeP);
     mapDel(mapPP);
   }
   arrayDel((void**) &xGoSysP->bTreeSMPA);
@@ -183,7 +187,7 @@ static Error _triggerIndividual(XGo *xGoSysP, Message *msgP) {
   if (!xCompIsActive(&xGoSysP->system, entity) || 
       _isHigherPriority(reactionP->priority, compP->priority)) {
     compP->priority = reactionP->priority;
-    compP->btP = reactionP->btP;
+    compP->btP = reactionP->treeSP->treeP;
   }
   return SUCCESS;
 }
@@ -207,15 +211,13 @@ static Error _triggerHiveMind(XGo *xGoSysP, Message *msgP) {
 XGetShareFuncDefUnused_(Go);
 
 // Entity acts on message if it's more urgent than its current activity.
-Error xGoProcessMessage(System *sP, Message *msgP) {
+XProcMsgFuncDef_(Go) {
   Error e;
   XGo *xGoSysP = (XGo*) sP;
   if (msgP->topic)
     e = _triggerIndividual(xGoSysP, msgP);
   else
     e = _triggerHiveMind(xGoSysP, msgP);
-
-  // Make sure the above reaction is higher priority than any active task.
   return e;
 }
 
@@ -231,5 +233,3 @@ Error xGoRun(Focus *fP) {
 
   return SUCCESS;
 }
-
-// XMain has to distribute stuff; that's the last challenge: to do so properly. Every system has to be able to clear its stuff (adding that rule standard)

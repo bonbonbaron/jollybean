@@ -29,7 +29,8 @@ typedef struct {
 
 typedef struct {
 	Genome *genomeP;
-	Personality *reactionMP; 
+  BBSeed *bbSeedP;
+	Personality *personalityP; 
 } Seed;
 
 typedef struct {
@@ -40,10 +41,11 @@ typedef struct {
 typedef System XMainComp;
 
 typedef struct {
-	U8 nSystemsMax;
-	U8 nSystems;
+	U8 nXSystemsMax;
+	U8 nXSystems;
 	Biome *biomeP;
-	System **sysPA;  // This array contains all the systems this app will ever need.
+	System **xSysPA;  // This array contains all the systems this app will ever need.
+  System *behaviorSysP;
 } XMainIniSysPrms;
 
 typedef struct {

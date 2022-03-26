@@ -279,8 +279,10 @@ Error xIniSys(System *sP, U32 nComps, void *miscP) {
 	// Allocate maiboxes.
 	if (!e)
 		e = mailboxNew(&sP->inboxP, sP->id, nComps);
+#if 0  // For efficient message-sending, point outboxes at others' inboxes.
 	if (!e)  //TODO: may need more than nComps outboxP->slots to accommodate check messages
 		e = mailboxNew(&sP->outboxP, sP->id, nComps);  
+#endif
   
   // Make focus directory.
   if (!e)
@@ -304,14 +306,60 @@ Error xIniSys(System *sP, U32 nComps, void *miscP) {
   return e;
 }
 
+/*typedef Bln (*CheckCBP)(XHeader *xhP, void *operandP);
+typedef struct {
+  Bln    cbIdx;                 // index to FP instead of FP itself to prevent external functions
+  Bln    toggle;                // opposite of toggle is latch, in which case thee condition only needs to have been true once
+  U8     outputIfTrue;          // condition flag to be OR'd into if true
+  Key    root;                  // root of behavior tree to fire
+  U8    *conditionP;            // condition to update through a simple pointer
+  Entity entity;                // entity this check regards
+  struct Complocation *compLocationP;      // keep tabs on component's location
+} Check;
+
+//TODO: ensure that when a latch-case (toggle = FALSE) check returns TRUE, the system deactivates the check.
+typedef struct {
+  Key firstInactiveIdx; // marks the first inactive element's index 
+  Key firstEmptyIdx; // marks the first empty element's index 
+  Check *checkA;
+} Checkers; */
+
+static Error _xDoChecks(System *sP) {
+  Error e = SUCCESS;
+  Check *checkP = sP->checkers.checkA;
+  Check *checkEndP = checkP + sP->checkers.firstInactiveIdx;
+  // For each active check...
+  while (checkP < checkEndP) {
+    XHeader *xHeaderP = (XHeader*) checkP->compLocationP->compP;  // XHeader is first member of every component.
+    // Run check. If it returns true, update target flag. 
+    if (checkP->cbA[checkP->currCbIdx](xHeaderP, checkP->operandP)) {
+      *checkP->resultFlagsP |= checkP->outputIfTrueA[checkP->currCbIdx];
+      // Tell potentially sleeping tree to wake up.
+      e = mailboxWrite(sP->outboxP, checkP->entity, checkP->root, 0, 0);
+      // Toggle to alternate check if necessary. Otherwise, deactivate this check.
+      if (checkP->doesToggle) { 
+        checkP->currCbIdx = !checkP->currCbIdx;
+        checkP++;
+      }
+      else {
+        Check tmpCheck = *checkP;  // Put check we're deactivating in temp spot
+        *checkP = *checkEndP;      // Move last ACTIVE check out of the way.
+        *checkEndP = tmpCheck;
+        --checkEndP;
+        --sP->checkers.firstInactiveIdx;
+      }
+    }
+  }
+  return e;
+}
+
 static void _xReadMessage(System *sP, Message *msgP) {
 	// If message tells you to change the component, do it.
 	if (msgP->msg) {
     // Get entity's directory listing.
 		CompLocation *compLocationP = (CompLocation*) mapGet(sP->compDirectoryP, msgP->to);
 		assert(compLocationP && compLocationP->hcmP && compLocationP->hcmP->mapP);
-		const void *newComponentValP = mapGet(compLocationP->hcmP->mapP, 
-																					msgP->msg);
+		const void *newComponentValP = mapGet(compLocationP->hcmP->mapP, msgP->msg);
     if (newComponentValP)
       memcpy(compLocationP->compP, newComponentValP, sP->compSz);
 	}
@@ -333,17 +381,16 @@ Error xRun(System *sP) {
   mailboxClr(sP->inboxP);
   Focus *fP = &sP->focusA[0];
   Focus *fEndP = fP + sP->firstInactiveActIdx;
-
 	Error e = SUCCESS;
-	
   // Run all live activities.
   for (; !e && fP < fEndP; fP++) {
     e = (*fP->focusFP)(fP);
-    // TODO add checks array traversal 
+    // Perform active checks, if any.
+    if (!e && sP->checkers.firstInactiveIdx)
+      e = _xDoChecks(sP);
     // Move dead activities out of the way.
     if (fP->firstInactiveIdx == 0)
       xDeactivateFocus(fP);  
   }
-
 	return e;
 }

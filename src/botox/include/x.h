@@ -93,24 +93,24 @@ typedef struct {
 /************/
 /** Checks **/
 /************/
-//    Checks prevent a function from having to query all the components over and over
-// again every frame. The original vision was for external functions to query these
-// just to check conditions; now we're making that the responsibility of systems
-// themselves, who have more immediate access to these components.
-//    So, instead, we're spreading those conditions out across multiple systems.
-// And when preceding sequential steps are completed, we don't need to test their con-
-// ditions again. We just move on to the next step.
-typedef Bln (*CheckCBP)(XHeader *xhP, void *operandP);
+//    Checks prevent a function from having to test a condition on all the components 
+// again every frame. The original vision was for behavior tree nodes to test these
+// conditions; now we're making that the responsibility of systems
+// themselves. Because systems have more immediate access to these components.
+//    Therefore, we're spreading delegating these tests to the systems concerned.
+typedef Bln (*CheckCbP)(XHeader *xhP, void *operandP);
 typedef struct {
-  Bln    cbIdx;                 // index to FP instead of FP itself to prevent external functions
-  Bln    toggle;                // opposite of toggle is latch, in which case thee condition only needs to have been true once
-  U8     outputIfTrue;          // condition flag to be OR'd into if true
-  Key    root;                  // root of behavior tree to fire
-  U8    *conditionP;            // condition to update through a simple pointer
-  Entity entity;                // entity this check regards
-  struct Complocation *compLocationP;      // keep tabs on component's location
+  Bln    doesToggle;            // if true, switch back and forth between two callbacks on true; if false, retire this check after first time checkCb returns true.
+  Entity entity;                // entity this check regards... so you get entity's tree map, and you unlock the correct tree with the root key.
+  Key    root;                  // root of behavior tree to fire 
+  U8     outputIfTrueA[2];      // condition flag to be OR'd into if true
+  U8     currCbIdx;             // index to cbA
+  CheckCbP cbA[2];              // Up to two different callbacks based on whether it toggles.
+  U8    *resultFlagsP;          // condition to update through a simple pointer
+  void  *operandP;              // operand to pass into CheckCbP; gets assigned by tree node
+  CompLocation *compLocationP;      // keep tabs on component's location (has to be location struct to avoid updating multiple things)
 } Check;
-//
+
 //TODO: ensure that when a latch-case (toggle = FALSE) check returns TRUE, the system deactivates the check.
 typedef struct {
   Key firstInactiveIdx; /* marks the first inactive element's index */
@@ -133,7 +133,7 @@ typedef struct _System {
   XProcMsgFP   sProcessMessageFP;   /* What to do in response to commands in inbox messages. */
   XGetShareFP  sGetShareFP;           /* Some systems' components share pointers to common data. This is how it retrieves them by a parent system's call. */
   Mailbox     *inboxP;               /* Where commands come in from the outside world */
-  Mailbox     *outboxP;              /* Where this system talks to the outside world */
+  Mailbox     *outboxP;              /* Where this system talks to the outside world; can actually point to another system's inbox if you want */
   Map         *compDirectoryP;      /* maps component IDs to an element in an array of CmpAddresses */
   Map         *focusDirectoryP;      /* maps component IDs to an element in an array of CmpAddresses */
   Checkers     checkers;            /* Array of checks; similar to Focus without exlusive C-access */

@@ -37,7 +37,8 @@ typedef enum Error {
 	E_UNSUPPORTED_PIXEL_FORMAT,
 	E_SYS_CMP_MISMATCH,
 	E_NULL_VAR,
-	E_MAILBOX_FULL
+	E_MAILBOX_FULL,
+  E_MAILBOX_BAD_RECIPIENT
 } Error;
 
 // Basic utils 
@@ -150,7 +151,7 @@ Error mailboxNew(Mailbox **mailboxPP, Key ownerID, U16 nSlots);
 void mailboxClr(Mailbox *mailboxP);
 void mailboxDel(Mailbox **mailboxPP);
 Error mailboxWrite(Mailbox *mailboxP, Key to, Key attn, Key topic, Key msg);
+Error mailboxForward(Mailbox *mailboxP, Message *msgP);
 typedef Error (*inboxRead)(Mailbox *mailboxP);  // only for self
-typedef Error (*outboxRead)(Mailbox *mailboxP);  // only of children
 
 #endif

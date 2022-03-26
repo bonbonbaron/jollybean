@@ -2,8 +2,9 @@
 //***************************************************
 //** System systems *********************************
 //***************************************************
-static Error xMainRunSystems(Focus *fP);
-X_(Main, 1, Focus_(0, xMainRunSystems));
+static Error xMainRunXSystems(Focus *fP);
+static Error xMainRunTrees(Focus *fP);
+X_(Main, 1, Focus_(0, xMainRunXSystems), Focus_(1, xMainRunTrees));
 
 typedef struct {
 	Key size;
@@ -58,7 +59,7 @@ static Error _histoGeneTypes(GeneHisto *geneHistoP, Biome *biomeP) {
 // =====================================================================
 // Distribute all genes to their appropriate subsystems.
 // =====================================================================
-static Error _distributeGenes(XMain *xMainSysP, Key nSystemsMax) {
+static Error _distributeGenes(XMain *xMainSysP, Key nXSystemsMax) {
 	Seed **seedPP = xMainSysP->biomeP->seedPA;
 	Seed **seedEndPP = seedPP + xMainSysP->biomeP->nEntities;   // pointer to the end of the above array
 	Genome *genomeP;
@@ -71,7 +72,7 @@ static Error _distributeGenes(XMain *xMainSysP, Key nSystemsMax) {
 	Error e = SUCCESS;
 	
 	// Loop through each entity's seed
-	for (Entity entityCounter = nSystemsMax; !e && seedPP < seedEndPP; seedPP++, entityCounter++) {
+	for (Entity entityCounter = nXSystemsMax; !e && seedPP < seedEndPP; seedPP++, entityCounter++) {
 		genomeP = (*seedPP)->genomeP;
 		ghPP = (*seedPP)->genomeP->genePA;
 		ghEndPP = ghPP + genomeP->nGenes;
@@ -105,51 +106,48 @@ static Error _distributeGenes(XMain *xMainSysP, Key nSystemsMax) {
 	return e;
 }
 
-// =====================================================================
-// Distribute all personalities to their appropriate subsystems.
-// =====================================================================
-static Error _distributePersonalities(XMain *xMainSysP) {
-	Seed **seedPP = xMainSysP->biomeP->seedPA;
-	Seed **seedEndPP = seedPP + xMainSysP->biomeP->nEntities;   // pointer to the end of the above array
-	Genome *genomeP;
-	GeneHeader **ghPP, **ghEndPP;   // pointers to an array of gene header pointers and its end
-	GeneHeader gh;  // faster access to double pointer'd gene header
-	XHeader xh = {0};
-	Key componentType;
-	System *sP = NULL;
-	Error e = SUCCESS;
-	
-	// Loop through seeds
-	for (Entity entityCounter = xMainSysP->biomeP->nEntities; !e && seedPP < seedEndPP; seedPP++, entityCounter++) {
-		genomeP = (*seedPP)->genomeP;
-		ghPP = (*seedPP)->genomeP->genePA;
-		ghEndPP = ghPP + genomeP->nGenes;
-		// Loop through current genome's genes
-		for (; !e && ghPP < ghEndPP; ghPP++) {  // ghPP is a pointer to a pointer to a global singleton of a component
-			gh = **ghPP;
-			switch (gh.geneClass) {
-				case ECS_COMPONENT:
-					componentType = (*ghPP)->type;
-					sP = (System*) xGetComp(sP, componentType);  // We don't set the owner of the gene pool.
-					if (sP) {
-						xh.type = componentType;
-						e = xAddComp(sP, entityCounter, &xh);
-					}
-					break;
-				case ECS_SHARED:
-					e = mapSet(xMainSysP->sharedMMP, gh.type, (const void*) *ghPP);  //*ghPP expands out to the size of the gene.
-					break;
-				case BLACKBOARD:
 
-					break;
-				default:
-					break;
-			}
-		}
-	}
-	return e;
+  /* typedef struct {
+    Entity entity;
+    Personality *personalityP;
+    Blackboard *bbP;  // Why array of pointers and not BBs themselves? Because btRun() takes Blackboard*.
+  } XGoIniSeed; 
+
+  typedef struct {
+    Key nSeeds;
+    Key nDistinctIndividualQuirks;
+    Key nDistinctHivemindQuirks;
+    XGoIniSeed *seedA;
+  } XGoIniSeedPkg; */
+static Error _prepXGoIniSeedPkg(XGoIniSeedPkg **pkgPP, XMainIniSysPrms *mainIniPrmsP) {
+  if (!pkgPP)
+    return E_BAD_ARGS;
+
+  // alloate packge
+  Error e = jbAlloc((void**) pkgPP, sizeof(XGoIniSeedPkg), 1);
+  // allocate package's seed array
+  XGoIniSeedPkg *pkgP = NULL;
+  if (!e) {
+    pkgP = *pkgPP;
+    e = arrayNew((void**) &pkgP->seedA, sizeof(XGoIniSeed), mainIniPrmsP->biomeP->nEntities);
+  }
+  // populate each seed
+  if (!e && pkgP)
+    for (U32 i = 0; i < mainIniPrmsP->biomeP->nEntities; i++) {
+      XGoIniSeed *goSeedP = &pkgP->seedA[i];
+      Seed *seedP = mainIniPrmsP->biomeP->seedPA[i];
+      if (seedP && goSeedP) {
+        goSeedP->entity       = i;
+        goSeedP->personalityP = seedP->personalityP;
+        goSeedP->bbSeedP      = seedP->bbSeedP;
+      }
+      else {
+        e = E_BAD_INDEX;
+        break;
+      }
+    }
+  return e;
 }
-//
 // =====================================================================
 // Initialize the Main system.
 // =====================================================================
@@ -162,11 +160,11 @@ Error xMainIniSys(System *sP, void *sParamsP) {
 
 	XMainIniSysPrms *xMainIniSysPrmsP = (XMainIniSysPrms*) sParamsP;
 
-	if (!xMainIniSysPrmsP->biomeP || !xMainIniSysPrmsP->sysPA)
+	if (!xMainIniSysPrmsP->biomeP || !xMainIniSysPrmsP->xSysPA)
 		return E_BAD_ARGS;
 	
   // Histo gene types.
-  Error e = arrayNew((void**) &geneHisto.xheA, sizeof(Key), xMainIniSysPrmsP->nSystems);
+  Error e = arrayNew((void**) &geneHisto.xheA, sizeof(Key), xMainIniSysPrmsP->nXSystems);
   if (!e) { 
     xMainSysP->biomeP = xMainIniSysPrmsP->biomeP;
     e = _histoGeneTypes(&geneHisto, xMainSysP->biomeP);
@@ -177,16 +175,37 @@ Error xMainIniSys(System *sP, void *sParamsP) {
 	*********************************************************/
 	// Add subsystems as components to Main system.
 	if (!e && xMainIniSysPrmsP) {
-		for (U32 i = 0; !e && i < xMainIniSysPrmsP->nSystems; i++) 
-			if (xMainIniSysPrmsP->sysPA[i])
-				e = xAddComp(sP, xMainIniSysPrmsP->sysPA[i]->id, &xMainIniSysPrmsP->sysPA[i]->xHeader);
+		for (U32 i = 0; !e && i < xMainIniSysPrmsP->nXSystems; i++) 
+			if (xMainIniSysPrmsP->xSysPA[i])
+				e = xAddComp(sP, xMainIniSysPrmsP->xSysPA[i]->id, &xMainIniSysPrmsP->xSysPA[i]->xHeader);
   }
 
+	/***********************************************
+	************* Set up Behavior System ***********
+	***********************************************/
+  System *sGoP = NULL;
+  XGoIniSeedPkg *xGoSeedPkgP = NULL;
+  // Add Go System to Main's components.
+  if (!e && xMainIniSysPrmsP->behaviorSysP) {
+    sGoP = xMainIniSysPrmsP->behaviorSysP;
+    Entity goSysId = xMainIniSysPrmsP->behaviorSysP->id;
+    e = xAddComp(sP, goSysId, &xMainIniSysPrmsP->behaviorSysP->xHeader);
+  }
+  // Prepare initialization package for Go System.
+  if (!e)
+    _prepXGoIniSeedPkg(&xGoSeedPkgP, xMainIniSysPrmsP);
+  // Initialize Go System.
+  if (!e && sGoP && xGoSeedPkgP)
+    xIniSys(sGoP, xMainIniSysPrmsP->biomeP->nEntities, xGoSeedPkgP);
+  arrayDel((void**) &xGoSeedPkgP->seedA);
+  jbFree((void**) &xGoSeedPkgP);
+
 	// Initialize subsystems before we put components in them.
+#define SYS_TYPE_GO (8)  /* TODO move to enum */
   XHistoElem *xheP, *xheEndP;
 	if (!e) {
 		xheP = &geneHisto.xheA[0];
-		xheEndP = xheP + xMainIniSysPrmsP->nSystemsMax;
+		xheEndP = xheP + xMainIniSysPrmsP->nXSystemsMax;
 		for (Entity sID = 0; !e && xheP < xheEndP; xheP++, sID++) 
 			if (xheP->geneClass == ECS_COMPONENT && xheP->count)  {  // i.e. if any entities exist having components for this system...
 				System *_sP = (System*) xGetComp(sP, sID);
@@ -203,7 +222,7 @@ Error xMainIniSys(System *sP, void *sParamsP) {
 		e = mapNew(&xMainSysP->sharedMMP, sizeof(Map), geneHisto.nDistinctShareds);
 	if (!e && xMainSysP->sharedMMP) {
 		xheP = &geneHisto.xheA[0];
-		xheEndP = xheP + xMainIniSysPrmsP->nSystemsMax;
+		xheEndP = xheP + xMainIniSysPrmsP->nXSystemsMax;
 		Map *mapP = NULL;
 		for (; !e && xheP < xheEndP; xheP++)
 			if (xheP->geneClass == ECS_SHARED && xheP->count) {
@@ -213,22 +232,21 @@ Error xMainIniSys(System *sP, void *sParamsP) {
 			}
 	}
 
-	/**************************************
-	************ Allocate space for Behavior Trees ***********
-	**************************************/
-	if (!e) {
-    XGo *xGoSysP = (XGo*) xGetComp(&xMainSysP->system, 6); // TODO replace 6 with enum
-    if (xGoSysP)
-      e = arrayNew((void**) &xGoSysP->bTreeSMPA, sizeof(Map*), xMainIniSysPrmsP->biomeP->nEntities);
-	}
-
 	// ===========================================
 	// Distribute the genes to the proper systems.
 	// ===========================================
 	if (!e) 
-		e = _distributeGenes(xMainSysP, xMainIniSysPrmsP->nSystemsMax);
+		e = _distributeGenes(xMainSysP, xMainIniSysPrmsP->nXSystemsMax);
+
   if (!e)
-		e = _distributePersonalities(xMainSysP);
+    e = xStartFocus(&xMainSysP->system, xMainIniSysPrmsP->behaviorSysP->id, 1);
+
+  #define START (0)  /* TODO move to enum */
+  if (!e) {
+    System *xGoSysP = (System*) xGetComp(sP, xMainIniSysPrmsP->behaviorSysP->id);
+    if (xGoSysP)
+      e = mailboxWrite(xGoSysP->inboxP, 0, 0, 0, START);
+  }
 
   arrayDel((void**) &geneHisto.xheA);
 
@@ -247,13 +265,27 @@ Error xMainIniComp(System *sP, XHeader *xhP) {
 XGetShareFuncDefUnused_(Main);
 
 Error xMainProcessMessage(System *sP, Message *msgP) {
-	unused_(sP);
-	unused_(msgP);
-	return SUCCESS;
+  XMainComp *subsystemP = (XMainComp*) xGetComp(sP, msgP->topic);
+  if (!subsystemP)
+    return E_MAILBOX_BAD_RECIPIENT;
+  return mailboxForward(subsystemP->inboxP, msgP);
 }
 
-// This runs System's subsystems.
-static Error xMainRunSystems(Focus *fP) {
+static Error xMainRunTrees(Focus *fP) {
+  assert(fP);
+  Error e = SUCCESS;
+  System *sGoP = (System*) fP->compA;
+  // There's only ever going to be one component in this array.
+  if (fP->firstInactiveIdx)
+    e = xRun((System*) fP->compA);
+  // Put idle systems to sleep.
+  if (!e && sGoP->firstInactiveActIdx == 0)
+    e = xDeactivateComp(fP->ownerP, sGoP->id);
+  return e;
+}
+
+// This focus runs System's subsystems.
+static Error xMainRunXSystems(Focus *fP) {
 	assert(fP);
 	XMainComp *cP, *cEndP;
 	Error e = SUCCESS;
@@ -274,70 +306,21 @@ Error xMainClr(System *sP) {
 }
 
 /* xIni() initializes the parent system as well as its children. */
-Error xMainIni(XMain **xMainSysPP, System **sPA, U16 nSystems, Key nSystemsMax, Biome *biomeP) {
-	if (!sPA || nSystems < 1 || !biomeP)
+Error xMainIni(XMain **xMainSysPP, System **sPA, U16 nXSystems, Key nXSystemsMax, Biome *biomeP) {
+	if (!sPA || nXSystems < 1 || !biomeP)
 		return E_BAD_ARGS;
 
 	XMainIniSysPrms xMainSysIniPrms = {
-		.nSystemsMax = nSystemsMax,
-		.nSystems = nSystems,
+		.nXSystemsMax = nXSystemsMax,
+		.nXSystems = nXSystems,
 		.biomeP = biomeP,
-		.sysPA = sPA
+		.xSysPA = sPA
   };
 
 	Error e = jbAlloc((void**) xMainSysPP, sizeof(XMain), 1);
 
 	if (!e)
-		e = xIniSys(&(*xMainSysPP)->system, nSystems, (void*) &xMainSysIniPrms);
-
-	return e;
-	// TODO: kick off the parent system activities here
-}
-
-// TODOs
-//=======
-// Problem: No way to initialize singletons. Every Bigger instance pointed at the same image with its colormap for multiple colorations to be made. So for trees, could a similar data-side singleton enforcement occur?  
-//
-// make shareds pipeline
-// make xGo in separate focus
-// make all the entities' genes' systems in the other focus
-// make sure all genes are being made & distributed appropriately
-// pass messages back and forth between two activites' systems
-// send START message to xGo
-#if 0
-static Error _readOutboxes(Focus *fP) {
-	assert(fP);
-	System *cP, *cEndP;
-	Error e = SUCCESS;
-	// Check active subsystems' outboxes. Their callbacks populate systems and JB's reaction activity.
-	arrayIniPtrs(fP->compA, (void**) &cP, (void**) &cEndP, fP->firstInactiveIdx);
-	for (; !e && cP < cEndP; cP++) 
-		// Read outboxes
-		for (Message *msgP = cP->outboxP->msgA, *msgEndP = cP->outboxP->msgA + cP->outboxP->nMsgs;
-				 !e && msgP < msgEndP;
-				 msgP++) 
-			continue;
-			//if (msgP->to) 
+		e = xIniSys(&(*xMainSysPP)->system, nXSystems, (void*) &xMainSysIniPrms);
 
 	return e;
 }
-
-static Error xTreeRunTasks(Focus *fP) {
-	assert(fP);
-	System *cP, *cEndP;
-	Error e = SUCCESS;
-	// Check active subsystems' outboxes. Their callbacks populate systems and JB's reaction activity.
-	arrayIniPtrs(fP->compA, (void**) &cP, (void**) &cEndP, fP->firstInactiveIdx);
-	for (; !e && cP < cEndP; cP++) 
-		// Read outboxes
-		for (Message *msgP = cP->outboxP->msgA, *msgEndP = cP->outboxP->msgA + cP->outboxP->nMsgs;
-				 !e && msgP < msgEndP;
-				 msgP++) 
-			if (msgP->to) 
-				e = _trigger(fP->ownerP, msgP);
-			else
-				e = _triggerGroup(fP->ownerP, msgP);
-	
-	return SUCCESS;
-}
-#endif

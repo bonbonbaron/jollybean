@@ -10,11 +10,14 @@
 		.treeSP = treeSP_\
 	};
 
+typedef struct _Reaction {
+	BTreeS *treeSP;
+	U8 priority;
+} Reaction;
+
 typedef struct {
 	Key trigger;
-	U8 priority;
-	// U8 hiveMinded; <--- If you decide to implement this, add check for this in _histoHiveMindTriggers().
-	BTreeS *treeSP;
+  Reaction reaction;
 } Quirk;
 
 // Personality is a hard-coded mapping of Key events to tree pointers. 
@@ -37,14 +40,9 @@ typedef struct {
 } XGoComp;
 
 typedef struct {
-	BTreeS *btSP;
-	U8 priority;
-} Reaction;
-
-typedef struct {
 	Entity entity;
 	Personality *personalityP;
-	Blackboard *bbP;  // Why array of pointers and not BBs themselves? Because btRun() takes Blackboard*.
+	BBSeed *bbSeedP;  // Why array of pointers and not BBs themselves? Because btRun() takes Blackboard*.
 } XGoIniSeed;
 
 typedef struct {

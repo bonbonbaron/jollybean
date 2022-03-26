@@ -998,6 +998,7 @@ void mailboxClr(Mailbox *mailboxP) {
   memset(mailboxP->msgA, 0, sizeof(Message) * arrayGetNElems(mailboxP));
 }
 
+// There is no corresponding mailboxRead() function because that's specific to each implementer.
 Error mailboxWrite(Mailbox *mailboxP, Key to, Key attn, Key topic, Key msg) {
 	if (mailboxP->nMsgs >= arrayGetNElems((const void*) mailboxP->msgA))
 		return E_MAILBOX_FULL;
@@ -1009,3 +1010,11 @@ Error mailboxWrite(Mailbox *mailboxP, Key to, Key attn, Key topic, Key msg) {
 
 	return SUCCESS;
 }
+
+Error mailboxForward(Mailbox *mailboxP, Message *msgP) {
+	if (mailboxP->nMsgs >= arrayGetNElems((const void*) mailboxP->msgA))
+		return E_MAILBOX_FULL;
+  mailboxP->msgA[mailboxP->nMsgs++] = *msgP;
+  return SUCCESS;
+}
+
