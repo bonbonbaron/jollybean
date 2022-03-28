@@ -185,7 +185,7 @@ Error mapNew(Map **mapPP, const U8 elemSz, const Key nElems) {
 	return e;
 }
 
-Error mapIni(Map **mapPP, HardCodedMap *hcMapP) {
+Error mapIni(HardCodedMap *hcMapP) {
 	Error e = SUCCESS;
 	if (hcMapP == NULL) 
 		return E_BAD_ARGS;
@@ -193,13 +193,8 @@ Error mapIni(Map **mapPP, HardCodedMap *hcMapP) {
 		e = mapNew(&hcMapP->mapP, hcMapP->_elemSz, hcMapP->_nKeyValPairs);
 		if (!e) 
 			for (U32 i = 0; !e && i < hcMapP->_nKeyValPairs; i++) 
-				e = mapSet(*mapPP, hcMapP->keyValA[i].key, hcMapP->keyValA[i].valueP);
+				e = mapSet(hcMapP->mapP, hcMapP->keyValA[i].key, hcMapP->keyValA[i].valueP);
 	}
-	
-	/* Dev may or may not want to store the mapP somewhere else for easy access. */
-	if (!e && mapPP != NULL)
-		*mapPP = hcMapP->mapP;
-
 	return e;
 }
 

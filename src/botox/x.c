@@ -22,8 +22,24 @@ U32 xGetNComponents(System *sP) {
 	return arrayGetNElems(sP->compDirectoryP->mapA);
 }
 
-Error xAddComp(System *sP, Entity entity, XHeader *xhP) {
-  if (!sP || !xhP || !sP->compDirectoryP)
+static Error _xIniCompMapP(CompLocation *compLocationP, HardCodedMap *srcHcmP) {
+	if (compLocationP && srcHcmP) {
+    compLocationP->hcmP = srcHcmP;
+		return mapIni(compLocationP->hcmP);
+  }
+	return SUCCESS;
+}
+
+inline static void _compLocationIni(CompLocation *compLocationP, void *dstCP, Focus *fP) {
+  compLocationP->checkIdx = 0;
+  compLocationP->compIdx = fP->firstEmptyIdx++;
+  compLocationP->compP = dstCP;
+  compLocationP->focusID = fP->id;
+  //compLocationP->hcmP;
+}
+
+Error xAddComp(System *sP, Entity entity, Key compType, Bln isMap, void *srcCompRawDataP) {
+  if (!sP || !sP->compDirectoryP)
     return E_BAD_ARGS;
 
   // Skip entities who already have a component in this system.
@@ -31,31 +47,45 @@ Error xAddComp(System *sP, Entity entity, XHeader *xhP) {
     return SUCCESS;
 
   // Make sure the component belongs to this system. This is only checked at load-time.
-  if (xhP->type != sP->id)
+  if (compType != sP->id)
     return E_SYS_CMP_MISMATCH;
   
-  // Assign this component to its entity and, if necessary, prepare it for the system.
-  xhP->owner = entity;
-  Error e = (*sP->sIniCompFP)(sP, xhP);  // Inflatable components must be initialized before
-																				 // being added to any focus.
-
-  // If index falls within system's array of activities...
+  XHeader *xhP = NULL;
+  Focus *fP    = NULL;
+  void *dstCP  = NULL;
+  CompLocation compLocation;
   if (_validateFocusIdx(sP, 0)) {
-    Focus *fP = &sP->focusA[0];
-    // Copy component to first emtpy slot in specified focus
-    void *dstCP = _getCompPByIdx(fP, fP->firstEmptyIdx);
-    memcpy(dstCP, xhP, sP->compSz);
+    fP = &sP->focusA[0];
+    dstCP = _getCompPByIdx(fP, fP->firstEmptyIdx);
+    xhP = (XHeader*) dstCP;
+  }
+  // Initialize header of destination x-component.
+  xhP->owner = entity;
+  xhP->type = compType;
+  // Copy component to first emtpy slot in first focus. (Moves to proper focus later.)
+  // Assign this component to its entity and, if necessary, prepare it for the system.
+  Error e = (*sP->sIniCompFP)(sP, xhP);  // Init comp before adding it to focus.
+  if (!e && _validateFocusIdx(sP, 0)) 
+    fP = &sP->focusA[0];
+  // If index 0 falls within system's array of activities...
+  if (!e && fP && dstCP) {
+    // If there's no hard-coded map, copy a simple component into first available slot.
+    if (isMap) {  // example of hard-coded map is animation with WALK_LEFT, RUN_RIGHT, etc. strips
+      memset(dstCP, 0, sP->compSz);  // won't be set till later
+      _compLocationIni(&compLocation, dstCP, fP);
+      e = _xIniCompMapP(&compLocation, (HardCodedMap*) srcCompRawDataP);
+    }
+    else if (srcCompRawDataP != NULL) {  
+      void *dstCompRawDataP = ((U8*) dstCP) + sizeof(XHeader);
+      memcpy(dstCompRawDataP, srcCompRawDataP, sP->compSz - sizeof(XHeader));
+      _compLocationIni(&compLocation, dstCP, fP);
+    }
     // Add component's entity-lookup entry to the system's directory.
-    CompLocation compLocation = {
-      .focusID  = 0,
-      .compIdx        = fP->firstEmptyIdx++,  // this increments firstEmptyIdx 
-      .compP          = dstCP
-    };
-    e = mapSet(sP->compDirectoryP, entity, &compLocation);
-    fP->firstInactiveIdx++;  // TODO remove after developing the behavior tree
+    if (!e)
+      e = mapSet(sP->compDirectoryP, entity, &compLocation);
   }
   else 
-    e = E_BAD_INDEX;
+    e = E_BAD_INDEX;  // applies to either focus or component index
 
   return e;
 }
@@ -72,17 +102,6 @@ Map* xGetCompMapP(System *sP, Entity entity) {
   if (compLocationP)
     return compLocationP->hcmP->mapP;
   return NULL;
-}
-
-Error xIniCompMapP(System *sP, Entity entity) {
-	Error e = SUCCESS;
-	CompLocation *compLocationP = _getCompLocation(sP, entity);
-	if (!compLocationP)
-		return E_BAD_KEY;
-	HardCodedMap *hcmP = compLocationP->hcmP;
-	if (!hcmP->mapP)
-		e = mapIni(&hcmP->mapP, hcmP);
-	return e;
 }
 
 Focus* sGetFocus(System *sP, Key focusID) {
@@ -247,20 +266,37 @@ Error xIniFocus(System *sP, Focus *fP, U32 nComps) {
   return e;
 }
 
-static void _xClrFocuses(System *sP) {
+static void _focusAClr(System *sP) {
   if (sP->focusA != NULL)
     for (U8 i = 0, nFocuses = sP->nFocuses; i < nFocuses; i++) 
       arrayDel((void**) &sP->focusA[i].compA);
 }
 
-static Error xNewCompDirectory(System *sP, Key nElems) {
+static Error _compDirectoryNew(System *sP, Key nElems) {
   return mapNew(&sP->compDirectoryP, sizeof(CompLocation), nElems);
 }
 
-static Error xNewFocusDirectory(System *sP) {
+static void _compDirectoryDel(Map **compDirectoryPP) {
+  if (compDirectoryPP) {
+    Map *compDirectoryP = *compDirectoryPP;
+    CompLocation *compLocationP = compDirectoryP->mapA;
+    CompLocation *compLocationEndP = compLocationP + arrayGetNElems(compDirectoryP->mapA);
+    for (; compLocationP < compLocationEndP; compLocationP++) 
+      if (compLocationP->hcmP->mapP)
+        mapDel(&compLocationP->hcmP->mapP);
+    mapDel(compDirectoryPP);
+  }
+}
+
+static Error _focusDirectoryNew(System *sP) {
   return mapNew(&sP->focusDirectoryP, sizeof(FocusLocation), sP->nFocuses);
 }
-static Error xIniFocusDirectory(System *sP) {
+
+static void _focusDirectoryDel(Map **focusDirectoryPP) {
+  mapDel(focusDirectoryPP);
+}
+
+static Error _focusDirectoryIni(System *sP) {
 	Error e = SUCCESS;
   for (Key i = 1; !e && i < sP->nFocuses; i++) {
     FocusLocation focusLocation = {i, &sP->focusA[i]};
@@ -271,7 +307,7 @@ static Error xIniFocusDirectory(System *sP) {
 
 Error xIniSys(System *sP, U32 nComps, void *miscP) {
   // Sytems with system components need to initialize maps in sIniFP().
-  Error e = xNewCompDirectory(sP, nComps);
+  Error e = _compDirectoryNew(sP, nComps);
   // Then allocate enough room for all components in every focus. 
 	for (U8 i = 0; !e && i < sP->nFocuses; i++) 
 		e = xIniFocus(sP, &sP->focusA[i], nComps);
@@ -286,17 +322,17 @@ Error xIniSys(System *sP, U32 nComps, void *miscP) {
   
   // Make focus directory.
   if (!e)
-    e = xNewFocusDirectory(sP);
+    e = _focusDirectoryNew(sP);
   if (!e)
-		e = xIniFocusDirectory(sP);
+		e = _focusDirectoryIni(sP);
 
   // Finally, call the system's unique initializer.
   if (!e)
     e = (*sP->sIniSysFP)(sP, miscP);
 
-  // Clean up if there are any problems
+  // Clean up if there are any problems.
   if (e) {
-    _xClrFocuses(sP);
+    _focusAClr(sP);
     if (sP->compDirectoryP != NULL)
       mapDel(&sP->compDirectoryP);
     if (sP->focusDirectoryP != NULL)
@@ -306,23 +342,16 @@ Error xIniSys(System *sP, U32 nComps, void *miscP) {
   return e;
 }
 
-/*typedef Bln (*CheckCBP)(XHeader *xhP, void *operandP);
-typedef struct {
-  Bln    cbIdx;                 // index to FP instead of FP itself to prevent external functions
-  Bln    toggle;                // opposite of toggle is latch, in which case thee condition only needs to have been true once
-  U8     outputIfTrue;          // condition flag to be OR'd into if true
-  Key    root;                  // root of behavior tree to fire
-  U8    *conditionP;            // condition to update through a simple pointer
-  Entity entity;                // entity this check regards
-  struct Complocation *compLocationP;      // keep tabs on component's location
-} Check;
-
-//TODO: ensure that when a latch-case (toggle = FALSE) check returns TRUE, the system deactivates the check.
-typedef struct {
-  Key firstInactiveIdx; // marks the first inactive element's index 
-  Key firstEmptyIdx; // marks the first empty element's index 
-  Check *checkA;
-} Checkers; */
+// Don't erase everything in a system. Some things should be permanent.
+void xClr(System *sP) {
+  _focusAClr(sP);
+  _compDirectoryDel(&sP->compDirectoryP);
+  arrayDel((void**) &sP->checkers.checkA);
+  memset(&sP->checkers, 0, sizeof(Checkers));
+  mailboxDel(&sP->inboxP);
+  sP->outboxP = NULL;
+  _focusDirectoryDel(&sP->focusDirectoryP);
+}
 
 static Error _xDoChecks(System *sP) {
   Error e = SUCCESS;

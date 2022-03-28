@@ -1,4 +1,5 @@
 #include "xRender.h"
+#include "x.h"
 
 // Compressed images are already in memory in JB. 
 // JB just reconstructs them from strips of staggered pixels. 
@@ -167,13 +168,13 @@ Error xRenderIniSys(System *sP, void *sParamsP) {
 //======================================================
 // Initialize xRender's components, which are Images.
 //======================================================
-Error xRenderIniComp(System *sP, XHeader *xhP) {
-	if (!xhP)
+Error xRenderIniComp(System *sP, void *compDataP) {
+	if (!sP || !compDataP)
 		return E_BAD_ARGS;
 
 	XRender *xRenderSysP = (XRender*) sP;
 
-	XRenderComp *cP = (XRenderComp*) xhP;
+	XRenderCompData *cP = (XRenderCompData*) compDataP;
 	if (cP->imgP->textureP) 
 		return SUCCESS;
 	// Build colormap.
@@ -218,8 +219,8 @@ Error xRenderProcessMessage(System *sP, Message *msgP) {
 	return SUCCESS;
 }
 
-//TODO
-Error xRenderClr(System *sP) {
+// None of the render system's specials should be cleared as the main system owns them.
+XClrFuncDef_(Render) {
   unused_(sP);
   return SUCCESS;
 }
@@ -236,8 +237,8 @@ XGetShareFuncDef_(Render) {
     XRenderComp *cP = fP->compA;
     XRenderComp *cEndP = cP + arrayGetNElems(fP->compA);
     for (; !e && cP < cEndP; cP++) {
-      cP->srcRectP = (Rect_*) mapGet(rectMP, cP->xHeader.owner);
-      if (!cP->srcRectP)
+      cP->data.srcRectP = (Rect_*) mapGet(rectMP, cP->xHeader.owner);
+      if (!cP->data.srcRectP)
         e = E_BAD_ARGS;
     }
   }
@@ -259,7 +260,7 @@ Error render(Focus *fP) {
 	cEndP = cP + fP->firstInactiveIdx;
 
 	for (; !e && cP < cEndP; cP++) 
-		e = copy_(rendererP, cP->imgP->textureP, NULL, cP->dstRectP);
+		e = copy_(rendererP, cP->data.imgP->textureP, NULL, cP->data.dstRectP);
 
 	// Tell GPU to execute instructions.
 	if (!e)

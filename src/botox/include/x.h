@@ -6,7 +6,7 @@ typedef Key Entity;
 
 typedef struct {
   Entity owner;
-  U8 type;
+  Key type;
 } XHeader;
 
 #define X_(name_, id_, ...) \
@@ -20,7 +20,6 @@ typedef struct {
 
 #define System_(name_, id_, ...) \
   {\
-    .xHeader           = {.owner = 0, .type = 0},\
     .id                = id_,\
     .sIniSysFP         = x##name_##IniSys,\
     .sIniCompFP        = x##name_##IniComp,\
@@ -49,13 +48,13 @@ struct _System;
 
 typedef Error (*FocusFP)(struct _Focus *aP);
 typedef Error (*XIniSFP)(struct _System *sP, void* sParamsP);
-typedef Error (*XIniCompFP)(struct _System *sP, XHeader *xhP);
+typedef Error (*XIniCompFP)(struct _System *sP, void *dataP);
 typedef Error (*XClrFP)(struct _System *sP);
 typedef Error (*XProcMsgFP)(struct _System *sP, Message *messageP);
 typedef Error (*XGetShareFP)(struct _System *sP, Map *shareMMP);
 
 #define XIniSysFuncDef_(name_)   Error x##name_##IniSys(System *sP, void *sParamsP)
-#define XIniCompFuncDef_(name_)  Error x##name_##IniComp(System *sP, XHeader *xhP)
+#define XIniCompFuncDef_(name_)  Error x##name_##IniComp(System *sP, void *dataP)
 #define XClrFuncDef_(name_)      Error x##name_##Clr(System *sP)
 #define XProcMsgFuncDef_(name_)  Error x##name_##ProcessMessage(System *sP, Message *msgP)
 #define XGetShareFuncDefUnused_(name_) Error x##name_##GetShare(System *sP, Map *shareMMP) {\
@@ -119,7 +118,6 @@ typedef struct {
 } Checkers;
 
 typedef struct _System {
-  XHeader      xHeader;
   Key          id;                  /* ID of focus */
   Key          compSz;              /* components are the same size in all of this system's activities */
   Key          nFocuses;            /* Number of activities in focusA[] */
@@ -141,10 +139,9 @@ typedef struct _System {
 
 Error    xIniSys(System *sP, U32 nComps, void *miscP);
 Error    xIniComp(System *sP, const U8 focusIdx, const Entity entity, const void *cmpP);
-Error    xAddComp(System *sP, Entity entity, XHeader *xhP);
+Error    xAddComp(System *sP, Entity entity, Key compType, Bln isMap, void *compRawDataP);
 void*    xGetComp(System *sP, Entity entity);
 Map*     xGetCompMapP(System *sP, Entity entity);
-Error    xIniCompMapP(System *sP, Entity entity);
 U32      xGetNComps(System *sP);
 Error    xActivateComp(System *sP, Entity entity);
 Error    xActivateFocus(Focus *fP);
@@ -152,5 +149,6 @@ Error    xDeactivateComp(System *sP, Entity entity);
 Error    xDeactivateFocus(Focus *fP);
 U8       xCompIsActive(System *sP, Entity entity);
 Error    xStartFocus(System *sP, Entity entity, Key dstFocusID);
+void     xClr(System *sP);
 Error    xRun(System *sP);
 #endif

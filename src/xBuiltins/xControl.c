@@ -95,8 +95,9 @@ Error xControlIniSys() {
 	return SUCCESS;
 }
 
-Error xControlIniComp(System *sP, XHeader *xhP) {
-	unused_(xhP);
+XIniCompFuncDef_(Control) {
+  unused_(sP);
+	unused_(dataP);
 	return SUCCESS;
 }
 

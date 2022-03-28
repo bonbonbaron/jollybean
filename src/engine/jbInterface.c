@@ -23,15 +23,15 @@ Error guiNew(Window_ **windowPP, Renderer_ **rendererPP) {
 }
 
 
-Error surfaceNew(Surface_ **surfacePP, XRenderComp *cP) {
-	if (!surfacePP || !cP)
+Error surfaceNew(Surface_ **surfacePP, XRenderCompData *cP) {
+	if (surfacePP && cP)
 		*surfacePP = SDL_CreateRGBSurfaceWithFormat(0, cP->imgP->colorMapP->w, cP->imgP->colorMapP->h, cP->imgP->colorMapP->bpp, SDL_PIXELFORMAT_INDEX8);
 	if (!*surfacePP)
 		return E_UNSUPPORTED_PIXEL_FORMAT;
 	return SUCCESS;
 }
 
-Error surfaceIni(Surface_ *surfaceP, XRenderComp *cP) {
+Error surfaceIni(Surface_ *surfaceP, XRenderCompData *cP) {
 	Palette_ palette = {cP->imgP->nColors, (Color_*) cP->imgP->colorA, 0, 0};
 	surfaceP->pixels = cP->imgP->colorMapP->dataP;
 	return SDL_SetSurfacePalette(surfaceP, &palette);

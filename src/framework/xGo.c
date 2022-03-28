@@ -78,74 +78,80 @@ static Error _distributeHiveMinds(XGo *xGoSysP, XGoIniSeedPkg *seedPkgP) {
   return e;
 }
 
+static Error _reactionIni(Reaction *reactionP, XGoIniSeed *seedP) {
+  if (!reactionP || seedP)
+    return E_BAD_ARGS;
+  Error e = SUCCESS;
+  if (!reactionP->treeSP->treeP)  // Behavior tree init 
+    e = btNew(reactionP->treeSP->rootSrcP, &reactionP->treeSP->treeP);
+  if (!e)  // Blackboard init
+    e = bbNew(&reactionP->bbP, seedP->entity, seedP->bbSeedP);
+  if (!e)  // BTree Status init
+    e = btStatNew(&reactionP->btStatP, reactionP->treeSP->treeP->rootP);
+  return e;
+}
+
+static void _reactionClr(Reaction *reactionP) {
+  if (reactionP->treeSP->treeP)
+    btDel(&reactionP->treeSP->treeP);
+  bbDel(&reactionP->bbP);
+  btStatDel(&reactionP->btStatP);
+}
+
 Error xGoIniSys(System *sP, void *sParamsP) {
   if (!sP || !sParamsP)
     return E_BAD_ARGS;
   XGo *xGoSysP = (XGo*) sP;
   XGoIniSeedPkg *seedPkgP = (XGoIniSeedPkg*) sParamsP;
-  // Allocate array of blackboard pointers.
-  Error e = arrayNew((void**) &xGoSysP->bbPA, sizeof(Blackboard*), seedPkgP->nSeeds);
-  // Add all components to system.
+  // Init seed pointers.
   XGoIniSeed *seedP = seedPkgP->seedA;
   const XGoIniSeed *seedEndP = seedP + seedPkgP->nSeeds;;
-  XGoComp dummyComp = {.xHeader = { .type = sP->id }};
-  Blackboard *bbP = NULL;
-  for (; !e && seedP < seedEndP; seedP++) {
-    e = xAddComp(sP, seedP->entity, &dummyComp.xHeader);
-    if (!e) 
-      e = bbNew(&bbP, seedP->personalityP->quirkPA[seedP->entity]->reaction.treeSP->treeP->rootP, seedP->entity, seedP->bbSeedP);
-    if (!e && bbP) 
-      xGoSysP->bbPA[seedP->entity] = bbP;
-    else
-      e = E_BAD_INDEX;
-  }
-  // Init hive minds.
-  if (!e)
-    e = _distributeHiveMinds(xGoSysP, seedPkgP);
+  // Behavior trees must be created before blackboards due to the latter's init dependency.
   // Make the array that'll hold the map pointers.
-  if (!e) 
-    e = arrayNew((void**) &xGoSysP->bTreeSMPA, sizeof(Map*), seedPkgP->nSeeds);
+  Error e = arrayNew((void**) &xGoSysP->reactionMPA, sizeof(Map*), seedPkgP->nSeeds);
   if (!e) {
-    seedP = seedPkgP->seedA;
-    for (Map **mapPP = xGoSysP->bTreeSMPA; !e && seedP < seedEndP; seedP++, mapPP++) {
+    for (Map **mapPP = xGoSysP->reactionMPA; !e && seedP < seedEndP; seedP++, mapPP++) {
       // Make the map that'll hold all the trigger-to-BT singleton mappings.
       e = mapNew(mapPP, sizeof(Reaction*), seedP->personalityP->nQuirks);
       if (!e) {
-        Map *mapP = *mapPP;
+        Map *reactionMapP = *mapPP;
         Quirk **quirkPP = seedP->personalityP->quirkPA;
         Quirk **quirkEndPP = quirkPP + seedP->personalityP->nQuirks;
         // Map all the triggers to their respective behavior tree singletons.
         for (; !e && quirkPP < quirkEndPP; quirkPP++) {
           Quirk *quirkP = *quirkPP;
-          if (!quirkP->reaction.treeSP->treeP) 
-            e = btNew(quirkP->reaction.treeSP->rootSrcP, &quirkP->reaction.treeSP->treeP);
-          if (!e)
-            e = mapSet(mapP, quirkP->trigger, &quirkP->reaction);
+          Reaction *reactionP = &quirkP->reaction;
+          e = _reactionIni(reactionP, seedP);
+          // Put reaction composed of the above into reaction map
+          if (!e)  
+            e = mapSet(reactionMapP, quirkP->trigger, reactionP);
+          // Put initial component into system; it'll populate with behavior stuff when needed.
+          if (!e) { 
+            e = xAddComp(sP, seedP->entity, sP->id, FALSE, NULL);
+          }
         }
       }
     }
   }
+  // Add all components to system.
+  // (Dummy component gets filled in by XGoIniComp() through xAddComp() and added to xGo.)
+  // Init hive minds.
+  if (!e)
+    e = _distributeHiveMinds(xGoSysP, seedPkgP);
   if (e)
     xGoClr(sP);
   return e;
 }
 
 Error xGoIniComp(System *sP, XGoComp *cP) {
-  XGo *xGoSysP = (XGo*) sP;
-  cP->bbIdx = xGoSysP->nBBsSet++;  // Assuming the caller populates sP->bbA.
-  cP->priority = 0;
-  cP->btP = NULL;  // Nobody starts out knowing what they'll do. 
+  unused_(sP);
+  cP->data.activePriority = 0;
+  cP->data.activeBtP = NULL;  // Nobody starts out knowing what they'll do. 
   return SUCCESS;
 }
 
 void xGoClr(System *sP) {
   XGo *xGoSysP = (XGo*) sP;
-  // Delete blackboards and the array containing them
-  Blackboard **bbPP = xGoSysP->bbPA;
-  Blackboard **bbEndPP = bbPP + arrayGetNElems(xGoSysP->bbPA);
-  for (; bbPP < bbEndPP; bbPP++) 
-    bbDel(bbPP);
-  arrayDel((void**) &xGoSysP->bbPA);
   // Delete hive minds and their map container
   if (xGoSysP->hiveMindMP && xGoSysP->hiveMindMP->mapA) {
     Entity **entityPP = xGoSysP->hiveMindMP->mapA;
@@ -155,17 +161,16 @@ void xGoClr(System *sP) {
   }
   mapDel(&xGoSysP->hiveMindMP);
   // Delete tree singletons, the maps containing them, and the array containing the maps.
-  Map **mapPP = xGoSysP->bTreeSMPA;
-  Map **mapEndPP = mapPP + arrayGetNElems(xGoSysP->bTreeSMPA);
+  Map **mapPP = xGoSysP->reactionMPA;
+  Map **mapEndPP = mapPP + arrayGetNElems(xGoSysP->reactionMPA);
   for (; mapPP < mapEndPP; mapPP++) {
     Reaction *reactionP = (Reaction*) (*mapPP)->mapA;
-    Reaction *reactionEndSP = reactionP + arrayGetNElems((*mapPP)->mapA);
-    for (; reactionP < reactionEndSP; reactionP++)
-      if (reactionP->treeSP->treeP)
-        btDel(&reactionP->treeSP->treeP);
+    Reaction *reactionEndP = reactionP + arrayGetNElems((*mapPP)->mapA);
+    for (; reactionP < reactionEndP; reactionP++) 
+      _reactionClr(reactionP);
     mapDel(mapPP);
   }
-  arrayDel((void**) &xGoSysP->bTreeSMPA);
+  arrayDel((void**) &xGoSysP->reactionMPA);
 }
 
 inline static U8 _isHigherPriority(U8 newPriority, U8 existingPriority) {
@@ -185,9 +190,11 @@ static Error _triggerIndividual(XGo *xGoSysP, Message *msgP) {
 
   // Queue new action if it's higher priority than old or entity's inactive.
   if (!xCompIsActive(&xGoSysP->system, entity) || 
-      _isHigherPriority(reactionP->priority, compP->priority)) {
-    compP->priority = reactionP->priority;
-    compP->btP = reactionP->treeSP->treeP;
+      _isHigherPriority(reactionP->priority, compP->data.activePriority)) {
+    compP->data.activePriority = reactionP->priority;
+    compP->data.activeBtP = reactionP->treeSP->treeP;
+    compP->data.activeBbP = reactionP->bbP;
+    compP->data.activeBtStatusP = reactionP->btStatP;
   }
   return SUCCESS;
 }
@@ -229,7 +236,7 @@ Error xGoRun(Focus *fP) {
 
   // TODO: add logic for putting tree to sleep based on returned NodeStatus.
   for (; cP < cEndP; cP++) 
-    btRun(cP->btP, xGoSysP->bbPA[cP->bbIdx], xGoSysP->system.outboxP);
+    btRun(cP->data.activeBtP, cP->data.activeBtStatusP, cP->data.activeBbP, xGoSysP->system.outboxP);
 
   return SUCCESS;
 }

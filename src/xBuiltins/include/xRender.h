@@ -40,12 +40,16 @@ typedef struct {
 	TextureS_ *textureP;
 } ImageS; 
 
-// Seems important that every component has its singleton source to enable easy cleanup.
 typedef struct {
-	XHeader xHeader;
 	ImageS *imgP;
 	Rect_ *srcRectP;
 	Rect_ *dstRectP;
+} XRenderCompData;
+  
+// Seems important that every component has its singleton source to enable easy cleanup.
+typedef struct {
+	XHeader xHeader;
+  XRenderCompData data;
 } XRenderComp;
 
 // Images
@@ -58,8 +62,8 @@ typedef void (*XRenderPresentFP)(Renderer_ *rendererP);
 extern XRenderPresentFP present;
 // Implemented by environment of choice (see #defines for each category above)
 Error guiNew(Window_ **windowPP, Renderer_ **rendererPP);
-Error surfaceNew(Surface_ **surfacePP, XRenderComp *cP);
-Error surfaceIni(Surface_ *surfaceP, XRenderComp *cP);
+Error surfaceNew(Surface_ **surfacePP, XRenderCompData *cP);
+Error surfaceIni(Surface_ *surfaceP, XRenderCompData *cP);
 Error textureNew(TextureS_ **texturePP, Renderer_ *rendererP, Surface_ *surfaceP);
 void  textureDel(TextureS_ **texturePP);
 Error textureSetAlpha(TextureS_ *textureP);

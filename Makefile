@@ -63,7 +63,7 @@ $(BOTOX_DIR)%.o: $(BOTOX_DIR)%.c
 	touch $@
 
 $(FRAMEWORK_DIR)%.o: $(FRAMEWORK_DIR)%.c 
-	$(CC) $(CFLAGS_FAST) -c $< -o $@
+	$(CC) $(CFLAGS_FAST) $(SDL_CFLAGS) -c $< -o $@
 	touch $@
 	
 $(X_DIR)%.o: $(X_DIR)%.c 

@@ -23,7 +23,8 @@ typedef U8 Bln;   // Boolean
 #define enumKeys_(first, ...) typedef enum {first = 1, __VA_ARGS__} 
 #define enumIndices_(...) typedef enum {__VA_ARGS__} 
 #define nArgs_(type_, ...) sizeof((type_[]){__VA_ARGS__}) / sizeof(type_)
-
+#define TRUE (1)
+#define FALSE (0)
 typedef enum Error {
 	SUCCESS,
 	E_BAD_ARGS,
@@ -36,6 +37,7 @@ typedef enum Error {
 	E_UNEXPECTED_DCMP_SZ,
 	E_UNSUPPORTED_PIXEL_FORMAT,
 	E_SYS_CMP_MISMATCH,
+  E_BAD_COMPONENT_TYPE,
 	E_NULL_VAR,
 	E_MAILBOX_FULL,
   E_MAILBOX_BAD_RECIPIENT
@@ -115,7 +117,7 @@ typedef struct {
 
 Error mapNew(Map **mapPP, const U8 elemSz, const Key nElems);
 void  mapDel(Map **mapPP);
-Error mapIni(Map **mapPP, HardCodedMap *hcMapP);   // from an array of KeyValPairs 
+Error mapIni(HardCodedMap *hcMapP);   // from an array of KeyValPairs 
 Error mapSet(Map *mapP, const U8 key, const void *valP);
 void* mapGet(const Map *mapP, const U8 key);
 

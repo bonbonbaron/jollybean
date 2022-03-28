@@ -31,25 +31,25 @@ static Error _histoGeneTypes(GeneHisto *geneHistoP, Biome *biomeP) {
 	Seed **seedPP = biomeP->seedPA;
 	Seed **seedEndPP = seedPP + biomeP->nEntities;   // pointer to the end of the above array
 	Genome *genomeP;
-	GeneHeader **ghPP, **ghEndPP;   // pointers to an array of gene header pointers and its end
-	GeneHeader gh;  // faster access to double pointer'd gene header
+	Gene **genePP, **geneEndPP;   // pointers to an array of gene header pointers and its end
+	Gene gene;  // faster access to double pointer'd gene header
 	// Loop through genomes
 	for (; seedPP < seedEndPP; seedPP++) {
 		genomeP = (*seedPP)->genomeP;
-		ghPP = &genomeP->genePA[0];
-		ghEndPP = ghPP + genomeP->nGenes;
+		genePP = &genomeP->genePA[0];
+		geneEndPP = genePP + genomeP->nGenes;
 		// Histo genome's genes that aren't blackboard items.
-		for (; ghPP < ghEndPP; ghPP++) {
-			gh = **ghPP;
-			if (gh.geneClass != BLACKBOARD) {
-        elemP = &histoA[gh.type];
-        if (!elemP->count && gh.geneClass == ECS_SHARED)
+		for (; genePP < geneEndPP; genePP++) {
+			gene = **genePP;
+			if (gene.geneClass != BLACKBOARD) {
+        elemP = &histoA[gene.type];
+        if (!elemP->count && gene.geneClass == ECS_SHARED)
           geneHistoP->nDistinctShareds++;
 				elemP->count++;
-				elemP->size = gh.size;
-				elemP->geneClass = gh.geneClass;
+				elemP->size = gene.size;
+				elemP->geneClass = gene.geneClass;
 			}
-      //if (gh.geneClass == BLACKBOARD)
+      //if (gene.geneClass == BLACKBOARD)
         //geneHistoP->nBbs++;
 		}
 	}
@@ -63,10 +63,8 @@ static Error _distributeGenes(XMain *xMainSysP, Key nXSystemsMax) {
 	Seed **seedPP = xMainSysP->biomeP->seedPA;
 	Seed **seedEndPP = seedPP + xMainSysP->biomeP->nEntities;   // pointer to the end of the above array
 	Genome *genomeP;
-	GeneHeader **ghPP, **ghEndPP;   // pointers to an array of gene header pointers and its end
-	GeneHeader gh;  // faster access to double pointer'd gene header
-	XHeader xh = {0};
-	Key componentType;
+	Gene **genePP, **geneEndPP;   // pointers to an array of gene header pointers and its end
+	Gene gene;  // faster access to double pointer'd gene header
 	System *sP = NULL;
   Map *innerMapP;
 	Error e = SUCCESS;
@@ -74,25 +72,36 @@ static Error _distributeGenes(XMain *xMainSysP, Key nXSystemsMax) {
 	// Loop through each entity's seed
 	for (Entity entityCounter = nXSystemsMax; !e && seedPP < seedEndPP; seedPP++, entityCounter++) {
 		genomeP = (*seedPP)->genomeP;
-		ghPP = (*seedPP)->genomeP->genePA;
-		ghEndPP = ghPP + genomeP->nGenes;
+		genePP = (*seedPP)->genomeP->genePA;
+		geneEndPP = genePP + genomeP->nGenes;
 		// Loop through current genome's genes
-		for (; !e && ghPP < ghEndPP; ghPP++) {  // ghPP is a pointer to a pointer to a global singleton of a component
-			gh = **ghPP;
-      if (gh.geneClass == ECS_COMPONENT) {
-        componentType = gh.type;
-        sP = (System*) xGetComp(sP, componentType);  // We don't set the owner of the gene pool.
-        if (sP) {
-          xh.type = componentType;
-          e = xAddComp(sP, entityCounter, &xh);
-        }
-      }
-      else if (gh.geneClass == ECS_SHARED) {
-        // Outer map is a map of maps. The key to it is the type of shared object.
-        innerMapP = (Map*) mapGet(xMainSysP->sharedMMP, gh.type);  // Inner map knows how big gene's header's container is.
-        if (innerMapP)
+		for (; !e && genePP < geneEndPP; genePP++) {  // genePP is a pointer to a pointer to a global singleton of a component
+			gene = **genePP;
+      // Fabricate x-header on the fly.
+      switch (gene.geneClass) {
+        // Simple components' x-headers are just attached to simple objects.
+        case ECS_SIMPLE_COMPONENT:
+          sP = (System*) xGetComp(sP, gene.type);  // We don't set the owner of the gene pool.
+          if (sP) 
+            e = xAddComp(sP, entityCounter, gene.type, FALSE, gene.dataP);
+          break;
+        // In mapped components, the x-header is attached to a map, not a single component.
+        case ECS_MAPPED_COMPONENT:
+          sP = (System*) xGetComp(sP, gene.type);  // We don't set the owner of the gene pool.
+          if (sP) 
+            e = xAddComp(sP, entityCounter, gene.type, TRUE,  gene.dataP);
+          break;
+        // Shared objects are kept by the main system. Multiple subsystems' components' members can point at them.
+        case ECS_SHARED: 
+          // Outer map is a map of maps. The key to it is the type of shared object.
+          innerMapP = (Map*) mapGet(xMainSysP->sharedMMP, gene.type);  // Inner map knows how big gene's header's container is.
           // Inner map is a map of components. Multiple systems' components point to them. 
-          e = mapSet(innerMapP, entityCounter, (const void*) *ghPP);  // Map knows how big gene's header's container is.
+          if (innerMapP)
+            e = mapSet(innerMapP, entityCounter, (const void*) *genePP);  // Map knows how big gene's header's container is.
+          break;
+        default:
+          e = E_BAD_COMPONENT_TYPE;
+          break;
       }
 		}
   }
@@ -106,19 +115,6 @@ static Error _distributeGenes(XMain *xMainSysP, Key nXSystemsMax) {
 	return e;
 }
 
-
-  /* typedef struct {
-    Entity entity;
-    Personality *personalityP;
-    Blackboard *bbP;  // Why array of pointers and not BBs themselves? Because btRun() takes Blackboard*.
-  } XGoIniSeed; 
-
-  typedef struct {
-    Key nSeeds;
-    Key nDistinctIndividualQuirks;
-    Key nDistinctHivemindQuirks;
-    XGoIniSeed *seedA;
-  } XGoIniSeedPkg; */
 static Error _prepXGoIniSeedPkg(XGoIniSeedPkg **pkgPP, XMainIniSysPrms *mainIniPrmsP) {
   if (!pkgPP)
     return E_BAD_ARGS;
@@ -177,7 +173,7 @@ Error xMainIniSys(System *sP, void *sParamsP) {
 	if (!e && xMainIniSysPrmsP) {
 		for (U32 i = 0; !e && i < xMainIniSysPrmsP->nXSystems; i++) 
 			if (xMainIniSysPrmsP->xSysPA[i])
-				e = xAddComp(sP, xMainIniSysPrmsP->xSysPA[i]->id, &xMainIniSysPrmsP->xSysPA[i]->xHeader);
+				e = xAddComp(sP, xMainIniSysPrmsP->xSysPA[i]->id, sP->id, FALSE, (void*) xMainIniSysPrmsP->xSysPA[i]);
   }
 
 	/***********************************************
@@ -189,7 +185,7 @@ Error xMainIniSys(System *sP, void *sParamsP) {
   if (!e && xMainIniSysPrmsP->behaviorSysP) {
     sGoP = xMainIniSysPrmsP->behaviorSysP;
     Entity goSysId = xMainIniSysPrmsP->behaviorSysP->id;
-    e = xAddComp(sP, goSysId, &xMainIniSysPrmsP->behaviorSysP->xHeader);
+    e = xAddComp(sP, goSysId, sP->id, FALSE, (void*) sGoP);
   }
   // Prepare initialization package for Go System.
   if (!e)
@@ -201,13 +197,13 @@ Error xMainIniSys(System *sP, void *sParamsP) {
   jbFree((void**) &xGoSeedPkgP);
 
 	// Initialize subsystems before we put components in them.
-#define SYS_TYPE_GO (8)  /* TODO move to enum */
+  #define SYS_TYPE_GO (8)  /* TODO move to enum */
   XHistoElem *xheP, *xheEndP;
 	if (!e) {
 		xheP = &geneHisto.xheA[0];
 		xheEndP = xheP + xMainIniSysPrmsP->nXSystemsMax;
 		for (Entity sID = 0; !e && xheP < xheEndP; xheP++, sID++) 
-			if (xheP->geneClass == ECS_COMPONENT && xheP->count)  {  // i.e. if any entities exist having components for this system...
+			if (xheP->geneClass == ECS_SIMPLE_COMPONENT && xheP->count)  {  // i.e. if any entities exist having components for this system...
 				System *_sP = (System*) xGetComp(sP, sID);
 				if (_sP)
 					e = xIniSys(_sP, xheP->count, _sP->sIniSParamsP);  // makes subsystem's component directory and activities
@@ -249,6 +245,10 @@ Error xMainIniSys(System *sP, void *sParamsP) {
   }
 
   arrayDel((void**) &geneHisto.xheA);
+	// ===========================================
+	// Finally, start the GUI.
+	// ===========================================
+
 
 	return e;
 }
@@ -256,19 +256,19 @@ Error xMainIniSys(System *sP, void *sParamsP) {
 // ====================================================================================
 // Placeholder for component-initialization; this has to be handled in xSystemIniS().
 // ====================================================================================
-Error xMainIniComp(System *sP, XHeader *xhP) {
-	unused_(xhP);
+XIniCompFuncDef_(Main) {
 	unused_(sP);
+	unused_(dataP);
 	return SUCCESS;
 }
 
 XGetShareFuncDefUnused_(Main);
 
 Error xMainProcessMessage(System *sP, Message *msgP) {
-  XMainComp *subsystemP = (XMainComp*) xGetComp(sP, msgP->topic);
-  if (!subsystemP)
+  XMainComp *cP = (XMainComp*) xGetComp(sP, msgP->topic);
+  if (!cP)
     return E_MAILBOX_BAD_RECIPIENT;
-  return mailboxForward(subsystemP->inboxP, msgP);
+  return mailboxForward(cP->data.inboxP, msgP);
 }
 
 static Error xMainRunTrees(Focus *fP) {
@@ -293,8 +293,8 @@ static Error xMainRunXSystems(Focus *fP) {
 	for (cP = fP->compA; !e && cP < cEndP; cP++) {
 		e = xRun((System*) cP);
 		// Put idle systems to sleep.
-		if (!e && cP->firstInactiveActIdx == 0)
-			e = xDeactivateComp(fP->ownerP, cP->id);
+		if (!e && cP->data.firstInactiveActIdx == 0)
+			e = xDeactivateComp(fP->ownerP, cP->data.id);
 	}
 	return e;
 }

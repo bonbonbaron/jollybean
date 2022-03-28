@@ -1,6 +1,6 @@
 #include "bt.h"
 
-// Design-wise it bothers me how I have multiple functions traversing BTs the same way just to perform a different action on them.
+// Design-wise, it bothers me how I have multiple functions traversing BTs the same way just to perform a different action on them.
 static void _nodePush(SrcNode *srcNodeP, Node *rootP, U8 *nextAvailIdxP) {
   Node *dstNodeP = &rootP[*nextAvailIdxP];
   dstNodeP->nodeCb = srcNodeP->nodeCb;
@@ -88,61 +88,76 @@ void btSDel(BTreeS **btSPP) {
 // These can only be made after their related trees are made.
 // The reason is because it has to count the number of nodes the tree has
 // as well as the number of condition nodes.
-Error bbNew(Blackboard **bbPP, Node *rootP, Key ownerId, BBSeed *bbSeedP) {
+Error bbNew(Blackboard **bbPP, Key ownerId, BBSeed *bbSeedP) {
+  if (!bbPP || bbSeedP)
+    return E_BAD_ARGS;
   // Blackboard
   Error e = jbAlloc((void**) bbPP, sizeof(Blackboard), 1);
   Blackboard *bbP;
-  /// Node status array
-	U16 nNodes = _countNodes(rootP, rootP);
+  // Map agent's blackboard element enums to the actual elements.
   if (!e) {
     bbP = *bbPP;
-    e = arrayNew((void**) &bbP->nodeStatA, sizeof(NodeStat), nNodes);
+    e = mapNew(&bbP->agentBbMP, sizeof(void*), bbSeedP->nKeyValPairs);
   }
-	
-	if (!e)
-		e = mailboxNew(&bbP->outboxP, ownerId, nNodes);
-  // X-Condition nodes: These nodes run based on bit-flag conditions set externally.
   if (!e) {
-    U8 nXCondNodes = _countSpecificNodes(rootP, rootP, btXCondition);
-    if (nXCondNodes)
-      e = mapNew(&bbP->conditionMP, sizeof(U32), nXCondNodes);
-    else
-      bbP->conditionMP = NULL;
-  }
-	// Recursively map conditional nodes' indices to condition bytes.
-  if (!e && bbP->conditionMP)
-    _iniCondKeys(rootP, rootP, btXCondition, bbP->conditionMP);
-  // Map agent's blackboard element enums to the actual elements.
-  if (bbSeedP) {
-    if (!e)
-      e = mapNew(&bbP->agentBbMP, sizeof(void*), bbSeedP->nKeyValPairs);
-    if (!e) {
-      KeyValPair *kvpP = bbSeedP->keyValPairA;
-      KeyValPair *kvpEndP = kvpP + bbSeedP->nKeyValPairs;
-      for (; !e && kvpP < kvpEndP; kvpP++)
-        e = mapSet(bbP->agentBbMP, kvpP->key, kvpP->valueP);
-    }
+    KeyValPair *kvpP = bbSeedP->keyValPairA;
+    KeyValPair *kvpEndP = kvpP + bbSeedP->nKeyValPairs;
+    for (; !e && kvpP < kvpEndP; kvpP++)
+      e = mapSet(bbP->agentBbMP, kvpP->key, kvpP->valueP);
   }
   return e;
 }
 
+// Ini instead of new; I want an array or map of these later on.
+Error btStatNew(BTreeStatus **btStatPP, Node *rootP) {
+  if (!btStatPP || !rootP)
+    return E_BAD_ARGS;
+  Error e = jbAlloc((void**) btStatPP, sizeof(BTreeStatus), 1);
+  /// Node status array
+	U16 nNodes = _countNodes(rootP, rootP);
+  BTreeStatus *btStatP = NULL;
+  if (!e) {
+    btStatP = *btStatPP;
+    e = arrayNew((void**) &btStatP->nodeStatA, sizeof(NodeStat), nNodes);
+  }
+  // X-Condition nodes: These nodes run based on bit-flag conditions set externally.
+  if (!e) {
+    U8 nXCondNodes = _countSpecificNodes(rootP, rootP, btXCondition);
+    if (nXCondNodes)
+      e = mapNew(&btStatP->conditionMP, sizeof(U32), nXCondNodes);
+    else
+      btStatP->conditionMP = NULL;
+  }
+	// Recursively map conditional nodes' indices to condition bytes.
+  if (!e && btStatP->conditionMP)
+    _iniCondKeys(rootP, rootP, btXCondition, btStatP->conditionMP);
+  return e;
+}
+
+void btStatDel(BTreeStatus **btStatPP) {
+  if (btStatPP) {
+    BTreeStatus *btStatP = *btStatPP;
+    arrayDel((void*) &btStatP->nodeStatA);
+    mapDel(&btStatP->conditionMP);
+    jbFree((void**) btStatPP);
+  }
+}
+
 void bbDel(Blackboard **bbPP) {
-  Blackboard *bbP = *bbPP;
-  mapDel(&bbP->agentBbMP);
-  mapDel(&bbP->conditionMP);
-  arrayDel((void**) &bbP->nodeStatA);
+  Blackboard *btStatP = *bbPP;
+  mapDel(&btStatP->agentBbMP);
   jbFree((void**) bbPP);
 }
 
 static NodeFuncDef_(_nodeRun) {
-  NodeStat stat = bbP->nodeStatA[currNodeP->thisIdx];
+  NodeStat stat = btStatP->nodeStatA[currNodeP->thisIdx];
   if (stat < COMPLETE)  // Less than COMPLETE is either READY or RUNNING.
-    return currNodeP->nodeCb(rootP, currNodeP, bbP, outboxP);
+    return currNodeP->nodeCb(rootP, currNodeP, btStatP, bbP, outboxP);
   return stat;
 }
 
-NodeStat btRun(BTree *treeP, Blackboard *bbP, Mailbox *outboxP) {
-  return _nodeRun(treeP->rootP, treeP->rootP, bbP, outboxP);
+NodeStat btRun(BTree *treeP, BTreeStatus *btStatP, Blackboard *bbP, Mailbox *outboxP) {
+  return _nodeRun(treeP->rootP, treeP->rootP, btStatP, bbP, outboxP);
 }
 
 /************ Specific node types ************/
@@ -151,7 +166,7 @@ NodeFuncDef_(btSequence) {
   for (Node *childNodeP = &rootP[currNodeP->firstChildIdx];
        stat == COMPLETE && childNodeP != rootP;
        childNodeP = &rootP[childNodeP->nextSiblingIdx]) 
-    stat = _nodeRun(rootP, childNodeP, bbP, outboxP);
+    stat = _nodeRun(rootP, childNodeP, btStatP, bbP, outboxP);
   return stat;
 }
 
@@ -160,7 +175,7 @@ NodeFuncDef_(btSelector) {
   for (Node *childNodeP = &rootP[currNodeP->firstChildIdx];
        stat != COMPLETE && childNodeP != rootP;
        childNodeP = &rootP[childNodeP->nextSiblingIdx])
-    stat = _nodeRun(rootP, childNodeP, bbP, outboxP);
+    stat = nodeRun_;
   return stat;
 }
 
@@ -169,7 +184,7 @@ NodeFuncDef_(btXCondition) {
   for (Node *childNodeP = &rootP[currNodeP->firstChildIdx];
        stat != COMPLETE && childNodeP != rootP;
        childNodeP = &rootP[childNodeP->nextSiblingIdx])
-    stat = _nodeRun(rootP, childNodeP, bbP, outboxP);
+    stat = nodeRun_;
   return stat;
 }
 

@@ -1,6 +1,7 @@
 #ifndef XMAIN_
 #define XMAIN_
 #include "xGo.h"
+#include "jbInterface.h"
 
 #define Biome_(name_, ...) Biome name_ = {\
   .nEntities = nArgs_(Genome*, __VA_ARGS__),\
@@ -8,23 +9,24 @@
 }
 
 #define Genome_(name_, ...) Genome name_ = {\
-  .nGenes = nArgs_(GeneHeader*, __VA_ARGS__),\
+  .nGenes = nArgs_(Gene*, __VA_ARGS__),\
   .genePA = {__VA_ARGS__}\
 }
 
-typedef enum {ECS_COMPONENT, ECS_SHARED, BLACKBOARD} GeneClass;
+typedef enum {ECS_SIMPLE_COMPONENT, ECS_MAPPED_COMPONENT, ECS_SHARED, BLACKBOARD} GeneClass;
 
-// Note: this header is for each individual gene.
+// Note: this header is attached to each individual gene.
 typedef struct {
 	U8 geneClass;
 	U8 type;
 	U8 size;
-	U8 _padding_;
-} GeneHeader;
+	U8 padding;
+  void *dataP;
+} Gene;
 
 typedef struct {
   U8 nGenes;
-	GeneHeader *genePA[];
+	Gene *genePA[];
 } Genome;
 
 typedef struct {
@@ -38,7 +40,11 @@ typedef struct {
   Seed *seedPA[];
 } Biome;
 
-typedef System XMainComp;
+typedef System XMainCompData;
+typedef struct {
+  XHeader xHeader;
+  XMainCompData data;
+} XMainComp;
 
 typedef struct {
 	U8 nXSystemsMax;
@@ -52,11 +58,13 @@ typedef struct {
 	System system;
 	Map *sharedMMP;         // map of maps of shared "components"
 	Biome *biomeP;
+	Window_ *windowP;
+	Renderer_ *rendererP;
 } XMain;
 
 Error xIni(System **sPA, U16 nSystems, U8 nSystemsMax, Biome *biomeP);
 Error xMainIniSys(System *sP, void *sParamsP);
-Error xMainIniComp(System *sP, XHeader *xhP);
+Error xMainIniComp(System *sP, void *dataP);
 Error xMainIni(XMain **xMainSysPP, System **sPA, U16 nSystems, U8 nSystemsMax, Biome *biomeP);
 Error xMainGetShare(System *sP, Map *shareMMP);
 Error xMainProcessMessage(System *sP, Message *msgP);
