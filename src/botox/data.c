@@ -67,7 +67,7 @@ U32 arrayGetElemSz(const void *arryP) {
 	}
 }
 
-inline static void* _arrayGetVoidElemPtr(const void *arryP, S32 idx) {
+inline static void* _arrayGetElemByIdx(const void *arryP, S32 idx) {
   const U32 nElems = arrayGetNElems(arryP);
   /* If idx < 0, return void pointer past end of array. */
   if (idx < 0) 
@@ -105,13 +105,13 @@ Error arraySetVoidElem(void *arrayP, U32 idx, const void *elemSrcompP) {
 
 void arrayIniPtrs(const void *arryP, void **startP, void **endP, S32 endIdx) {
 	*startP = (void*) arryP;
-	*endP = _arrayGetVoidElemPtr(arryP, endIdx);
+	*endP = _arrayGetElemByIdx(arryP, endIdx);
 }
 
-static inline U32 _fast_arrayGetElemSz(const void *arryP) {
+inline static U32 _fast_arrayGetElemSz(const void *arryP) {
 	return *(((U32*)arryP) - 2);
 }
-static inline void* _fast_arrayGetVoidElemPtr(const void *arryP, U8 idx) {
+inline static void* _fast_arrayGetElemByIdx(const void *arryP, U32 idx) {
 	return (void*) ((U8*) arryP + (idx * _fast_arrayGetElemSz(arryP)));
 }
 
@@ -127,7 +127,7 @@ Error arrayIni(void **arryPP, HardCodedArray *hcaP) {
 		EnumValPair *evEndP = &hcaP->enumValA[hcaP->_nEnumValPairs];
 		U8 *dstP;
 		for (; evP < evEndP; evP++) {
-			dstP = _fast_arrayGetVoidElemPtr(*arryPP, evP->_enum);
+			dstP = _fast_arrayGetElemByIdx(*arryPP, evP->_enum);
 			if (dstP == NULL) {
 				e = E_BAD_INDEX;
 				break;
@@ -233,7 +233,7 @@ inline static U32 _getElemIdx(const FlagInfo f, const Key key) {
 }
 
 inline static void* _getElemP(const Map *mapP, const FlagInfo f, const Key key) {
-	return _fast_arrayGetVoidElemPtr(mapP->mapA, _getElemIdx(f, key));
+	return _fast_arrayGetElemByIdx(mapP->mapA, _getElemIdx(f, key));
 }	
 
 inline static U32 _getMapElemSz(const Map *mapP) {
@@ -256,13 +256,13 @@ extern void* mapGet(const Map *mapP, const Key key) {
 		//bitCount = (bitCount & 0x55) + (bitCount >> 1 & 0x55);
 		//bitCount = (bitCount & 0x33) + (bitCount >> 2 & 0x33);
 		//bitCount = (bitCount & 0x0f) + (bitCount >> 4 & 0x0f);
-		//return _fast_arrayGetVoidElemPtr(mapP->mapA, bitCount + f.prevBitCount);
+		//return _fast_arrayGetElemByIdx(mapP->mapA, bitCount + f.prevBitCount);
 		register Key count = f.flags & (bitFlag - 1);
 		count = count - ((count >> 1) & 0x55555555);
 		count = (count & 0x33333333) + ((count >> 2) & 0x33333333);
 		count = (count + (count >> 4)) & 0x0f0f0f0f;
 		count = (count * 0x01010101) >> 24;
-		return _fast_arrayGetVoidElemPtr(mapP->mapA, count + f.prevBitCount);
+		return _fast_arrayGetElemByIdx(mapP->mapA, count + f.prevBitCount);
 	}
 	return NULL;
 }
@@ -1013,3 +1013,97 @@ Error mailboxForward(Mailbox *mailboxP, Message *msgP) {
   return SUCCESS;
 }
 
+// Efficient Arrays (frays)
+#define N_PREFRAY_ELEMS (5)
+#define OFFSET_INACTIVE (N_PREFRAY_ELEMS)
+#define OFFSET_PAUSED   (N_PREFRAY_ELEMS - 1)
+#define OFFSET_EMPTY    (N_PREFRAY_ELEMS - 2)
+#define frayGetNElems_ arrayGetNElems
+#define frayGetElemSz_ arrayGetElemSz
+#define frayGetElemByIdx_ _fast_arrayGetElemByIdx
+Error frayNew(void **fPP, U32 elemSz, U32 nElems) {
+	if (elemSz <= 0 || nElems <= 0 || fPP == NULL) 
+		return E_BAD_ARGS;  
+	else {
+    // Add 1 more element for swaps. 
+		U32 *ptr = (U32*) malloc((elemSz * nElems) + ((N_PREFRAY_ELEMS + 1) * sizeof(U32)));
+		if (ptr == NULL) 
+			return E_NO_MEMORY;
+		ptr[0] = 0;       // fray's first inactive element
+		ptr[1] = nElems;  // fray's first paused element
+		ptr[2] = 0;       // fray's first empty element
+		ptr[3] = elemSz;
+		ptr[OFFSET_PAUSED] = nElems;
+		*fPP = (ptr + N_PREFRAY_ELEMS);
+		memset(*fPP, 0, elemSz * nElems);
+  }
+  return SUCCESS;
+}
+
+void frayDel(void **frayPP) {
+	if (frayPP != NULL && *frayPP != NULL) {
+		U32 *ptr = *frayPP;
+		free((ptr) - N_PREFRAY_ELEMS);
+		*frayPP = NULL;
+	}
+}
+
+// Pointers beat values. We usually inc/decrement it after using it. Avoids double-queries.
+inline static U32 _frayGetFirstInactiveIdx(const void *frayP) {
+  return *(((U32*) frayP - OFFSET_INACTIVE));
+}
+
+inline static U32* _frayGetFirstInactiveIdxP(const void *frayP) {
+  return ((U32*) frayP - OFFSET_INACTIVE);
+}
+
+inline static U32* _frayGetLastPausedIdxP(const void *frayP) {
+  return ((U32*) frayP - OFFSET_PAUSED);
+}
+
+inline static U32* _frayGetFirstEmptyIdxP(const void *frayP) {
+  return ((U32*) frayP - OFFSET_EMPTY);
+}
+
+/* Checks if the component, wherever it is in the jagged array, is before the function's stopping point in its array. */
+inline static U8 frayElemIsActive(const void *frayP, U32 idx) {
+  return idx < _frayGetFirstInactiveIdx(frayP);
+}
+
+// Returns new index of activated element 
+U32 frayActivate(const void *frayP, U32 idx) {
+  if (!frayElemIsActive(frayP, idx)) {
+    register U32  *firstInactiveIdx  = _frayGetFirstInactiveIdxP(frayP);
+    // Get source, destination, and placeholder
+    register void *elem1P       = frayGetElemByIdx_(frayP, idx);
+    register void *placeholderP = frayGetElemByIdx_(frayP, frayGetNElems_(frayP));
+    register void *elem2P       = frayGetElemByIdx_(frayP, (*firstInactiveIdx)++);
+    // Swap.
+    register U32   elemSz       = frayGetElemSz_(frayP);
+    memcpy(placeholderP, elem1P,       elemSz);
+    memcpy(elem1P,       elem2P,       elemSz);
+    memcpy(elem2P,       placeholderP, elemSz);
+    // Return index of activated element's new position.
+    return *firstInactiveIdx - 1;
+  }
+  return idx;
+}
+
+// Returns new index of deactivated element 
+U32 frayDeactivate(const void *frayP, U32 idx) {
+  if (frayElemIsActive(frayP, idx)) {
+    register U32  *firstInactiveIdx  = _frayGetFirstInactiveIdxP(frayP);
+    // Get source, destination, and placeholder
+    register void *elem1P       = frayGetElemByIdx_(frayP, idx);
+    register void *placeholderP = frayGetElemByIdx_(frayP, frayGetNElems_(frayP));
+    register void *elem2P       = frayGetElemByIdx_(frayP, --(*firstInactiveIdx));
+    // Swap.
+    register U32   elemSz       = frayGetElemSz_(frayP);
+    memcpy(placeholderP, elem1P,       elemSz);
+    memcpy(elem1P,       elem2P,       elemSz);
+    memcpy(elem2P,       placeholderP, elemSz);
+    // Return index of deactivated element's new position.
+    return *firstInactiveIdx + 1;
+  }
+  return idx;
+}

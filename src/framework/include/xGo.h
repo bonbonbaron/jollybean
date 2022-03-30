@@ -63,7 +63,7 @@ typedef struct {
 
 // (A) 
 typedef struct {
-	System system;
+	System       system;
 	Key          nBBsSet;
 	Map        **reactionMPA; // array of entities' reaction maps; comes packaged with requisite blackboard pointer
 	Map         *hiveMindMP; // maps triggers to arrays of 

@@ -156,4 +156,16 @@ Error mailboxWrite(Mailbox *mailboxP, Key to, Key attn, Key topic, Key msg);
 Error mailboxForward(Mailbox *mailboxP, Message *msgP);
 typedef Error (*inboxRead)(Mailbox *mailboxP);  // only for self
 
+// Efficient Arrays (frays)
+typedef struct {
+  Key           firstInactiveIdx;    /* index of first inactive component */
+  Key           firstEmptyIdx;       /* marks the first empty element's index */
+  Key           pausedIdx;           /* marks the END of all the paused items in order to return firstInactiveIdx to it upon unpause */
+  void         *voidA;               /* array */
+} Fray;
+
+Error frayNew(void **fPP, U32 elemSz, U32 nElems);
+void  frayDel(void **frayPP);
+U32 frayActivate(const void *frayP, U32 idx);
+U32 frayDeactivate(const void *frayP, U32 idx);
 #endif
