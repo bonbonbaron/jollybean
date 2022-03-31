@@ -152,12 +152,12 @@ void bbDel(Blackboard **bbPP) {
 static NodeFuncDef_(_nodeRun) {
   NodeStat stat = btStatP->nodeStatA[currNodeP->thisIdx];
   if (stat < COMPLETE)  // Less than COMPLETE is either READY or RUNNING.
-    return currNodeP->nodeCb(rootP, currNodeP, btStatP, bbP, outboxP);
+    return currNodeP->nodeCb(rootP, currNodeP, btStatP, bbP, outboxF);
   return stat;
 }
 
-NodeStat btRun(BTree *treeP, BTreeStatus *btStatP, Blackboard *bbP, Mailbox *outboxP) {
-  return _nodeRun(treeP->rootP, treeP->rootP, btStatP, bbP, outboxP);
+NodeStat btRun(BTree *treeP, BTreeStatus *btStatP, Blackboard *bbP, Message *outboxF) {
+  return _nodeRun(treeP->rootP, treeP->rootP, btStatP, bbP, outboxF);
 }
 
 /************ Specific node types ************/
@@ -166,7 +166,7 @@ NodeFuncDef_(btSequence) {
   for (Node *childNodeP = &rootP[currNodeP->firstChildIdx];
        stat == COMPLETE && childNodeP != rootP;
        childNodeP = &rootP[childNodeP->nextSiblingIdx]) 
-    stat = _nodeRun(rootP, childNodeP, btStatP, bbP, outboxP);
+    stat = _nodeRun(rootP, childNodeP, btStatP, bbP, outboxF);
   return stat;
 }
 

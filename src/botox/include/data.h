@@ -39,7 +39,7 @@ typedef enum Error {
 	E_SYS_CMP_MISMATCH,
   E_BAD_COMPONENT_TYPE,
 	E_NULL_VAR,
-	E_MAILBOX_FULL,
+	E_FRAY_FULL,
   E_MAILBOX_BAD_RECIPIENT
 } Error;
 
@@ -118,6 +118,7 @@ typedef struct {
 Error mapNew(Map **mapPP, const U8 elemSz, const Key nElems);
 void  mapDel(Map **mapPP);
 Error mapIni(HardCodedMap *hcMapP);   // from an array of KeyValPairs 
+void  mapClr(HardCodedMap *hcMapP);
 Error mapSet(Map *mapP, const U8 key, const void *valP);
 void* mapGet(const Map *mapP, const U8 key);
 
@@ -135,37 +136,30 @@ typedef struct {
 
 Error inflate(Inflatable *inflatableP);
 
+// Efficient Arrays (frays)
+Error frayNew(void **fPP, U32 elemSz, U32 nElems);
+void  frayDel(void **frayPP);
+Error frayAdd(const void *frayP, void *elemP, U32 *elemNewIdxP);
+U32   frayActivate(const void *frayP, U32 idx);
+U32   frayDeactivate(const void *frayP, U32 idx);
+U32   frayGetFirstInactiveIdx(const void *frayP);
+U32*  frayGetFirstInactiveIdxP(const void *frayP);
+U32*  frayGetLastPausedIdxP(const void *frayP);
+U32*  frayGetFirstEmptyIdxP(const void *frayP);
+
 // Communcication
 typedef struct {
 	Key to;     // e.g. motion system
 	Key attn;   // e.g. motion system's translate focus
 	Key topic;  // e.g. this is for entity 42
-	Key msg;    // e.g. move entity 42 with key FAST_LEFT
+	Key content;    // e.g. move entity 42 with key FAST_LEFT
 } Message;  
 
-typedef struct {
-	Key ownerID;
-  U16 nMsgs;
-  Message *msgA;
-} Mailbox;
+Error mailboxNew(Message **mailboxFP, Key ownerID, U16 nSlots);
+void mailboxClr(Message *mailboxF);
+void mailboxDel(Message **mailboxFP);
+Error mailboxWrite(Message *mailboxF, Key to, Key attn, Key topic, Key msg);
+Error mailboxForward(Message *mailboxF, Message *msgP);
+typedef Error (*inboxRead)(Message *mailboxF);  // only for self
 
-Error mailboxNew(Mailbox **mailboxPP, Key ownerID, U16 nSlots);
-void mailboxClr(Mailbox *mailboxP);
-void mailboxDel(Mailbox **mailboxPP);
-Error mailboxWrite(Mailbox *mailboxP, Key to, Key attn, Key topic, Key msg);
-Error mailboxForward(Mailbox *mailboxP, Message *msgP);
-typedef Error (*inboxRead)(Mailbox *mailboxP);  // only for self
-
-// Efficient Arrays (frays)
-typedef struct {
-  Key           firstInactiveIdx;    /* index of first inactive component */
-  Key           firstEmptyIdx;       /* marks the first empty element's index */
-  Key           pausedIdx;           /* marks the END of all the paused items in order to return firstInactiveIdx to it upon unpause */
-  void         *voidA;               /* array */
-} Fray;
-
-Error frayNew(void **fPP, U32 elemSz, U32 nElems);
-void  frayDel(void **frayPP);
-U32 frayActivate(const void *frayP, U32 idx);
-U32 frayDeactivate(const void *frayP, U32 idx);
 #endif

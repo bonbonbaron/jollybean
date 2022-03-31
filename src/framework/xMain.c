@@ -206,7 +206,7 @@ Error xMainIniSys(System *sP, void *sParamsP) {
 			if (xheP->geneClass == ECS_SIMPLE_COMPONENT && xheP->count)  {  // i.e. if any entities exist having components for this system...
 				System *_sP = (System*) xGetComp(sP, sID);
 				if (_sP)
-					e = xIniSys(_sP, xheP->count, _sP->sIniSParamsP);  // makes subsystem's component directory and activities
+					e = xIniSys(_sP, xheP->count, sParamsP);  // makes subsystem's component directory and activities
 			}
 	}
 
@@ -241,7 +241,7 @@ Error xMainIniSys(System *sP, void *sParamsP) {
   if (!e) {
     System *xGoSysP = (System*) xGetComp(sP, xMainIniSysPrmsP->behaviorSysP->id);
     if (xGoSysP)
-      e = mailboxWrite(xGoSysP->inboxP, 0, 0, 0, START);
+      e = mailboxWrite(xGoSysP->inboxF, 0, 0, 0, START);
   }
 
   arrayDel((void**) &geneHisto.xheA);
@@ -268,7 +268,7 @@ Error xMainProcessMessage(System *sP, Message *msgP) {
   XMainComp *cP = (XMainComp*) xGetComp(sP, msgP->topic);
   if (!cP)
     return E_MAILBOX_BAD_RECIPIENT;
-  return mailboxForward(cP->data.inboxP, msgP);
+  return mailboxForward(cP->data.inboxF, msgP);
 }
 
 static Error xMainRunTrees(Focus *fP) {

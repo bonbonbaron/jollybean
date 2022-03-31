@@ -15,12 +15,29 @@ inline static Key* _getCompIdxPByEntity(System *sP, Entity entity) {
 }
 
 inline static void* _getCompPByEntity(System *sP, Entity entity) {
-  register Key *cIdxP = _getCompIdxPByEntity(sP, entity);
-	return (void*) ((U8*) sP->cF + (*cIdxP * _fast_arrayGetElemSz(sP->cF)));
+	return (void*) ((U8*) sP->cF + (*_getCompIdxPByEntity(sP, entity) * _fast_arrayGetElemSz(sP->cF)));
 }
 
 inline static Entity _getEntityByCompIdx(System *sP, Key compIdx) {
   return sP->cIdx2eA[compIdx];
+}
+
+inline static HardCodedMap** _getMultiValMapPP(System *sP, Entity entity) {
+  return (HardCodedMap**) mapGet(sP->multiValMP, entity);
+}
+
+inline static Map* _getMultiValMapP(System *sP, Entity entity) {
+  HardCodedMap **hcmPP = _getMultiValMapPP(sP, entity);
+  if (hcmPP) 
+    return (*hcmPP)->mapP;
+  return NULL;
+}
+
+void* xGetMultiValP(System *sP, Entity entity, Key key) {
+  Map *mapP = _getMultiValMapP(sP, entity);
+  if (mapP)
+    return mapGet(mapP, key);
+  return NULL;
 }
 
 #define swap_(a, b) {a^=b; b^=a; a^=b;}
@@ -52,12 +69,11 @@ U32 xGetNComponents(System *sP) {
 	return arrayGetNElems(sP->cF);
 }
 
-static Error _xIniCompMapP(CompLocation *compLocationP, HardCodedMap *srcHcmP) {
-	if (compLocationP && srcHcmP) {
-    compLocationP->hcmP = srcHcmP;
-		return mapIni(compLocationP->hcmP);
-  }
-	return SUCCESS;
+inline static Error _iniMultiValMap(System *sP, Entity entity, HardCodedMap **srcHcmPP) {
+  Error e = mapIni(*srcHcmPP);
+  if (!e)
+    e = mapSet(sP->multiValMP, entity, (const void*) srcHcmPP); 
+  return e;
 }
 
 Error xAddComp(System *sP, Entity entity, Key compType, Bln isMap, void *srcCompRawDataP) {
@@ -71,43 +87,21 @@ Error xAddComp(System *sP, Entity entity, Key compType, Bln isMap, void *srcComp
   // Make sure the component belongs to this system. This is only checked at load-time.
   if (compType != sP->id)
     return E_SYS_CMP_MISMATCH;
-  
-  void *dstCP  = NULL;
-  dstCP = _getCompPByIdx(sP->cF, sP->firstEmptyIdx++);
-  // Copy component to system's first emtpy slot.
+  // Put component in first empty slot. (Will be garbage if this is a map. That's okay.)
+  U32 cIdx; 
+  Error e = frayAdd(sP->cF, srcCompRawDataP, &cIdx); 
   // Assign this component to its entity and, if necessary, prepare it for the system.
-  Error e = sP->iniComp(sP, (void*) srcCompRawDataP);  
-  // If index 0 falls within system's array of activities...
-  if (!e && dstCP) {
-    // If there's no hard-coded map, copy a simple component into first available slot.
-    if (isMap) {  // example of hard-coded map is animation with WALK_LEFT, RUN_RIGHT, etc. strips
-      memset(dstCP, 0, sP->compSz);  // won't be set till later
-      e = _xIniCompMapP(&compLocation, (HardCodedMap*) srcCompRawDataP);
-    }
-    else if (srcCompRawDataP != NULL) {  
-      memcpy(dstCompRawDataP, srcCompRawDataP, sP->compSz);
-      _compLocationIni(&compLocation, dstCP, fP);
-    }
-    // Add component's entity-lookup entry to the system's directory.
-    if (!e)
-      e = mapSet(sP->compDirectoryP, entity, &compLocation);
-  }
-  else 
-    e = E_BAD_INDEX;  // applies to either focus or component index
+  if (!e)
+    e = sP->iniComp(sP, (void*) srcCompRawDataP);  
+  if (!e && isMap)   
+    e = _iniMultiValMap(sP, entity, (HardCodedMap**) srcCompRawDataP);
+  // Add component's entity-lookup entry to the system's directory.
+  if (!e)
+    e = mapSet(sP->e2cIdxMP, entity, &cIdx);
+  if (!e)
+    sP->cIdx2eA[cIdx] = entity;
 
   return e;
-}
-
-void* xGetComp(System *sP, Entity entity) {
-  Key *cIdxP = (Key*) mapGet(sP->e2cIdxMP, entity);
-  return _getCompPByIdx(sP->cF, *cIdxP);
-}
-
-Map* xGetCompMapP(System *sP, Entity entity) {
-  CompLocation *compLocationP = (CompLocation*) _getCompLocation(sP, entity);
-  if (compLocationP)
-    return compLocationP->hcmP->mapP;
-  return NULL;
 }
 
 Error xIniSys(System *sP, U32 nComps, void *miscP) {
@@ -118,12 +112,12 @@ Error xIniSys(System *sP, U32 nComps, void *miscP) {
   if (!e)
     e = mapNew(&sP->e2cIdxMP, sizeof(Key), nComps);
   if (!e)
-    e = arrayNew((void**) &sP->hcmPA, sizeof(HardCodedMap), nComps);
+    e = mapNew(&sP->multiValMP, sizeof(Map), nComps);
   if (!e)
     e = frayNew((void**) &sP->checkF, sizeof(Check), nComps);
-	// Allocate inbox ONLY. Caller points sP->outboxP at another system's inboxP.
+	// Allocate inbox ONLY. Caller points sP->outboxF at another system's inboxF.
 	if (!e)
-		e = mailboxNew(&sP->inboxP, sP->id, nComps);
+		e = frayNew((void**) &sP->inboxF, sP->id, nComps);
   // Finally, call the system's unique initializer.
   if (!e)
     e = (*sP->iniSys)(sP, miscP);
@@ -140,8 +134,13 @@ void xClr(System *sP) {
   frayDel((void**) &sP->checkF);
   mapDel(&sP->e2cIdxMP);
   arrayDel((void**) &sP->cIdx2eA);
-  mailboxDel(&sP->inboxP);
-  sP->outboxP = NULL;
+  mailboxDel(&sP->inboxF);
+  sP->outboxF = NULL;
+  HardCodedMap **hcmPP = sP->multiValMP->mapA;
+  HardCodedMap **hcmEndPP = hcmPP + arrayGetNElems(sP->multiValMP->mapA);
+  for (; hcmPP <  hcmEndPP; hcmPP++)
+    mapClr(*hcmPP);
+  mapDel(&sP->multiValMP);
 }
 
 static Error _xDoChecks(System *sP) {
@@ -155,55 +154,34 @@ static Error _xDoChecks(System *sP) {
     if (checkP->cbA[checkP->currCbIdx](entity, checkP->operandP)) {
       *checkP->resultFlagsP |= checkP->outputIfTrueA[checkP->currCbIdx];
       // Tell potentially sleeping tree to wake up.
-      e = mailboxWrite(sP->outboxP, entity, checkP->root, 0, 0);
+      e = mailboxWrite(sP->outboxF, entity, checkP->root, 0, 0);
       // Toggle to alternate check if necessary. Otherwise, deactivate this check.
       if (checkP->doesToggle) { 
         checkP->currCbIdx = !checkP->currCbIdx;
         checkP++;
       }
       else {
-        Check tmpCheck = *checkP;  // Put check we're deactivating in temp spot
-        *checkP = *checkEndP;      // Move last ACTIVE check out of the way.
-        *checkEndP = tmpCheck;
+        frayDeactivate(sP->checkF, checkP - sP->checkF);
         --checkEndP;
-        frayDecrFirstInactiveIdx((void*) sP->checkF);
       }
     }
   }
   return e;
 }
 
-static void _xReadMessage(System *sP, Message *msgP) {
-	// If message tells you to change the component, do it.
-	if (msgP->msg) {
-		void *cP = _getCompPByEntity(sP, msgP->topic);
-		assert(cP && compLocationP->hcmP && compLocationP->hcmP->mapP);
-		const void *newComponentValP = mapGet(compLocationP->hcmP->mapP, msgP->msg);
-    if (newComponentValP)
-      memcpy(compLocationP->compP, newComponentValP, sP->compSz);
-	}
-	xStartFocus(sP, msgP->topic, msgP->attn);  // topic = Entity, attn = focus
-}
-
 void _xReadInbox(System *sP) {
-  if (sP != NULL && sP->inboxP->msgA != NULL) {
-    Message *msgP, *msgLastP;
-    arrayIniPtrs(sP->inboxP->msgA, (void**) &msgP, (void**) &msgLastP, sP->inboxP->nMsgs);
-    while (msgP < msgLastP)
-      _xReadMessage(sP, msgP++);
-  }
+  Message *msgP = sP->inboxF;
+  Message *msgEndP = msgP + frayGetFirstInactiveIdx(sP->inboxF);
+  while (msgP < msgEndP)
+    sP->processMessage(sP, msgP++);
 }
 
 /* This is how the entire ECS framework works. */
 Error xRun(System *sP) {
   _xReadInbox(sP);
-  mailboxClr(sP->inboxP);
-  Error e = sP->xRun(sP);
-  // Perform active checks, if any.
-  if (!e && sP->checkers.firstInactiveIdx)
+  mailboxClr(sP->inboxF);
+  Error e = sP->run(sP);
+  if (!e)
     e = _xDoChecks(sP);
-  // Move dead activities out of the way.
-  if (fP->firstInactiveIdx == 0)
-    xDeactivateFocus(fP);  
 	return e;
 }

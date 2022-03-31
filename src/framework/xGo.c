@@ -236,7 +236,7 @@ Error xGoRun(Focus *fP) {
 
   // TODO: add logic for putting tree to sleep based on returned NodeStatus.
   for (; cP < cEndP; cP++) 
-    btRun(cP->data.activeBtP, cP->data.activeBtStatusP, cP->data.activeBbP, xGoSysP->system.outboxP);
+    btRun(cP->data.activeBtP, cP->data.activeBtStatusP, cP->data.activeBbP, xGoSysP->system.outboxF);
 
   return SUCCESS;
 }

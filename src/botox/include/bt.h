@@ -36,7 +36,7 @@ typedef struct {
   Map      *agentBbMP;     // maps an enum'd state name to a void pointer. Anything truly global should be accessed directly.
 } Blackboard;
 
-typedef NodeStat (*NodeCb)(struct Node *rootP, struct Node *currNodeP, BTreeStatus *bTStatP, Blackboard *bbP, Mailbox *outboxP);  
+typedef NodeStat (*NodeCb)(struct Node *rootP, struct Node *currNodeP, BTreeStatus *bTStatP, Blackboard *bbP, Message *outboxF);  
 
 // SrcNode is read-only memory. It gets translated to Node stored in an array at load-time.
 typedef struct SrcNode {
@@ -73,8 +73,8 @@ typedef struct SrcNode {
   };
 
 // NodeFuncDef_ enforces conformity to node signatures. This way you don't have to remember how to implement a callback node.
-#define NodeFuncDef_(name_) NodeStat name_(Node *rootP, Node *currNodeP, BTreeStatus *btStatP, Blackboard *bbP, Mailbox *outboxP) 
-#define nodeRun_ _nodeRun(rootP, currNodeP, btStatP, bbP, outboxP)
+#define NodeFuncDef_(name_) NodeStat name_(Node *rootP, Node *currNodeP, BTreeStatus *btStatP, Blackboard *bbP, Message *outboxF) 
+#define nodeRun_ _nodeRun(rootP, currNodeP, btStatP, bbP, outboxF)
 
 typedef struct Node {
   U8 firstChildIdx;
@@ -112,7 +112,7 @@ Error btNew(SrcNode *srcNodeP, BTree **treePP);
 void btDel(BTree **treePP);
 Error bbNew(Blackboard **bbPP, Key ownerId, BBSeed *bbSeedP);
 void  bbDel(Blackboard **bbPP);
-NodeStat btRun(BTree *treeP, BTreeStatus *btStatP, Blackboard *bbP, Mailbox *outboxP);  
+NodeStat btRun(BTree *treeP, BTreeStatus *btStatP, Blackboard *bbP, Message *outboxF);  
 Error btStatNew(BTreeStatus **btStatPP, Node *rootP);
 void btStatDel(BTreeStatus **btStatPP);
 // Entity will be passed in as well as outbox. But it'll only ever be used to fill out the outbox messages. 

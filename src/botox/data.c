@@ -198,6 +198,11 @@ Error mapIni(HardCodedMap *hcMapP) {
 	return e;
 }
 
+void mapClr(HardCodedMap *hcMapP) {
+	if (hcMapP != NULL && hcMapP->mapP != NULL) 
+    mapDel(&hcMapP->mapP);
+}
+
 void mapDel(Map **mapPP) {
 	if (mapPP != NULL && *mapPP != NULL) {
 		arrayDel(&(*mapPP)->mapA);
@@ -966,53 +971,6 @@ Error inflate(Inflatable *inflatableP) {
 }
 
 
-// Messaging
-Error mailboxNew(Mailbox **mailboxPP, Key ownerID, U16 nSlots) {
-	if (mailboxPP == NULL || nSlots == 0) 
-		return E_BAD_ARGS;
-	Error e = jbAlloc((void**)  mailboxPP, sizeof(Mailbox), 1);
-	if (!e)
-		e = arrayNew((void**) &(*mailboxPP)->msgA, sizeof(Message), nSlots);
-	if (!e) {
-		(*mailboxPP)->nMsgs = 0;
-		(*mailboxPP)->ownerID = ownerID;
-	}
-	else 
-		mailboxDel(mailboxPP);
-	return e;
-}
-
-void mailboxDel(Mailbox **mailboxPP) {
-	if (mailboxPP) {
-		arrayDel((void**) (*mailboxPP)->msgA);
-		jbFree((void**) mailboxPP);
-	}
-}
-
-void mailboxClr(Mailbox *mailboxP) {
-  memset(mailboxP->msgA, 0, sizeof(Message) * arrayGetNElems(mailboxP));
-}
-
-// There is no corresponding mailboxRead() function because that's specific to each implementer.
-Error mailboxWrite(Mailbox *mailboxP, Key to, Key attn, Key topic, Key msg) {
-	if (mailboxP->nMsgs >= arrayGetNElems((const void*) mailboxP->msgA))
-		return E_MAILBOX_FULL;
-
-	mailboxP->msgA[mailboxP->nMsgs].to      = to;
-	mailboxP->msgA[mailboxP->nMsgs].attn    = attn;
-	mailboxP->msgA[mailboxP->nMsgs].topic   = topic;
-	mailboxP->msgA[mailboxP->nMsgs++].msg   = msg;
-
-	return SUCCESS;
-}
-
-Error mailboxForward(Mailbox *mailboxP, Message *msgP) {
-	if (mailboxP->nMsgs >= arrayGetNElems((const void*) mailboxP->msgA))
-		return E_MAILBOX_FULL;
-  mailboxP->msgA[mailboxP->nMsgs++] = *msgP;
-  return SUCCESS;
-}
-
 // Efficient Arrays (frays)
 #define N_PREFRAY_ELEMS (5)
 #define OFFSET_INACTIVE (N_PREFRAY_ELEMS)
@@ -1065,14 +1023,47 @@ inline static U32* _frayGetFirstEmptyIdxP(const void *frayP) {
   return ((U32*) frayP - OFFSET_EMPTY);
 }
 
+// Non-static versions of the above for global use
+U32 frayGetFirstInactiveIdx(const void *frayP) {
+  return _frayGetFirstInactiveIdx(frayP);
+}
+
+U32* frayGetFirstInactiveIdxP(const void *frayP) {
+  return _frayGetFirstInactiveIdxP(frayP);
+}
+
+U32* frayGetLastPausedIdxP(const void *frayP) {
+  return _frayGetLastPausedIdxP(frayP);
+}
+
+U32* frayGetFirstEmptyIdxP(const void *frayP) {
+  return _frayGetFirstEmptyIdxP(frayP);
+}
+
 /* Checks if the component, wherever it is in the jagged array, is before the function's stopping point in its array. */
-inline static U8 frayElemIsActive(const void *frayP, U32 idx) {
+inline static U8 _frayElemIsActive(const void *frayP, U32 idx) {
   return idx < _frayGetFirstInactiveIdx(frayP);
+}
+
+inline static U8 _frayHasRoom(const void *frayP) {
+  return (*_frayGetFirstEmptyIdxP(frayP) < frayGetNElems_(frayP));
+}
+
+// Returns index of added element
+Error frayAdd(const void *frayP, void *elemP, U32 *elemNewIdxP) {
+  if (!_frayHasRoom(frayP))
+    return E_FRAY_FULL;
+  U32 *firstEmptyIdxP = _frayGetFirstEmptyIdxP(frayP);
+  void *dstP = frayGetElemByIdx_(frayP, (*firstEmptyIdxP)++);
+  memcpy(dstP, elemP, frayGetElemSz_(frayP));
+  if (elemNewIdxP)
+    *elemNewIdxP = *firstEmptyIdxP - 1;
+  return SUCCESS;
 }
 
 // Returns new index of activated element 
 U32 frayActivate(const void *frayP, U32 idx) {
-  if (!frayElemIsActive(frayP, idx)) {
+  if (!_frayElemIsActive(frayP, idx)) {
     register U32  *firstInactiveIdx  = _frayGetFirstInactiveIdxP(frayP);
     // Get source, destination, and placeholder
     register void *elem1P       = frayGetElemByIdx_(frayP, idx);
@@ -1091,7 +1082,7 @@ U32 frayActivate(const void *frayP, U32 idx) {
 
 // Returns new index of deactivated element 
 U32 frayDeactivate(const void *frayP, U32 idx) {
-  if (frayElemIsActive(frayP, idx)) {
+  if (_frayElemIsActive(frayP, idx)) {
     register U32  *firstInactiveIdx  = _frayGetFirstInactiveIdxP(frayP);
     // Get source, destination, and placeholder
     register void *elem1P       = frayGetElemByIdx_(frayP, idx);
@@ -1107,3 +1098,25 @@ U32 frayDeactivate(const void *frayP, U32 idx) {
   }
   return idx;
 }
+
+void frayClr(void *fP) {
+  memset(fP, 0, frayGetElemSz_(fP) * arrayGetNElems(fP));
+  *frayGetFirstEmptyIdxP(fP) = 0;
+}
+
+// Messaging
+// There is no corresponding mailboxRead() function because that's specific to each implementer.
+Error mailboxWrite(Message *mailboxP, Key to, Key attn, Key topic, Key content) {
+  Message message = {
+    .to = to,
+    .attn = attn,
+    .topic = topic,
+    .content = content
+  };
+  return frayAdd((void*) mailboxP, &message, NULL);
+}
+
+Error mailboxForward(Message *mailboxP, Message *msgP) {
+  return frayAdd((void*) mailboxP, msgP, NULL);
+}
+
