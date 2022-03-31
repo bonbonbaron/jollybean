@@ -4,7 +4,7 @@
 
 typedef Key Entity;
 
-#define FLG_NO_COMPVALMAP (1 << 0)
+#define FLG_NO_SWITCHES   (1 << 0)
 #define FLG_NO_CF_SRC_A   (1 << 1)
 #define FLG_NO_CHECKS     (1 << 2)
 
@@ -21,7 +21,7 @@ typedef Key Entity;
     .cF                = NULL,\
     .cIdx2eA           = NULL,\
     .e2cIdxMp          = NULL,\
-    .multiValMP        = NULL,\
+    .switchMP        = NULL,\
     .checkF            = NULL,\
     .inboxF            = NULL,\
     .outboxF           = NULL,\
@@ -42,6 +42,7 @@ typedef Error (*XRunFP)(struct _System *sP);
 typedef Error (*XClrFP)(struct _System *sP);
 typedef Error (*XProcMsgFP)(struct _System *sP, Message *messageP);
 typedef Error (*XGetShareFP)(struct _System *sP, Map *shareMMP);
+typedef void* (*XSwitchCompFP)(Key key);
 
 #define XIniSysFuncDef_(name_)   Error x##name_##IniSys(System *sP, void *sParamsP)
 #define XIniCompFuncDef_(name_)  Error x##name_##IniComp(System *sP, void *dataP)
@@ -82,7 +83,7 @@ typedef struct _System {
   Key          *cIdx2eA;             // insert component index to get entity 
   Map          *e2cIdxMP;            // insert entity to get component index 
   void         *cFSrcA;              // array of components' sources; used for cleaning up and avoiding double-pointer traversal of singletons during run-time
-  Map          *multiValMP;          // you put an Entity in the first map to get the second map of possible values for its component
+  Map          *switchMP;          // you put an Entity in the first map to get the second map of possible values for its component
   Check        *checkF;              // Fray of checks; these check for conditions about component's and alert the world about them when true 
   Message      *inboxF;              // Where commands come in from the outside world 
   Message      *outboxF;             // Where this system talks to the outside world; can actually point to another system's inbox if you want 
@@ -97,9 +98,8 @@ typedef struct _System {
 
 Error    xIniSys(System *sP, U32 nComps, void *miscP);
 Error    xIniComp(System *sP, const Entity entity, const void *cmpP);
-Error    xAddComp(System *sP, Entity entity, Key compType, Bln isMap, void *compRawDataP);
+Error    xAddComp(System *sP, Entity entity, Key compType, void *srcCompRawDataP, XSwitchCompFP switchCompFP);
 void*    xGetComp(System *sP, Entity entity);
-Map*     xGetCompMapP(System *sP, Entity entity);
 U32      xGetNComps(System *sP);
 void*    xGetCompValP(System *sP, Entity entity, Key key);
 void     xActivateComponentByEntity(System *sP, Entity e1);

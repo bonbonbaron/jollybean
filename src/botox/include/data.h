@@ -140,6 +140,7 @@ Error inflate(Inflatable *inflatableP);
 Error frayNew(void **fPP, U32 elemSz, U32 nElems);
 void  frayDel(void **frayPP);
 Error frayAdd(const void *frayP, void *elemP, U32 *elemNewIdxP);
+void  frayClr(void *fP);
 U32   frayActivate(const void *frayP, U32 idx);
 U32   frayDeactivate(const void *frayP, U32 idx);
 U32   frayGetFirstInactiveIdx(const void *frayP);
@@ -155,9 +156,6 @@ typedef struct {
 	Key content;    // e.g. move entity 42 with key FAST_LEFT
 } Message;  
 
-Error mailboxNew(Message **mailboxFP, Key ownerID, U16 nSlots);
-void mailboxClr(Message *mailboxF);
-void mailboxDel(Message **mailboxFP);
 Error mailboxWrite(Message *mailboxF, Key to, Key attn, Key topic, Key msg);
 Error mailboxForward(Message *mailboxF, Message *msgP);
 typedef Error (*inboxRead)(Message *mailboxF);  // only for self

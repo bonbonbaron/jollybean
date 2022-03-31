@@ -23,7 +23,7 @@ inline static Entity _getEntityByCompIdx(System *sP, Key compIdx) {
 }
 
 inline static HardCodedMap** _getMultiValMapPP(System *sP, Entity entity) {
-  return (HardCodedMap**) mapGet(sP->multiValMP, entity);
+  return (HardCodedMap**) mapGet(sP->switchMP, entity);
 }
 
 inline static Map* _getMultiValMapP(System *sP, Entity entity) {
@@ -69,14 +69,7 @@ U32 xGetNComponents(System *sP) {
 	return arrayGetNElems(sP->cF);
 }
 
-inline static Error _iniMultiValMap(System *sP, Entity entity, HardCodedMap **srcHcmPP) {
-  Error e = mapIni(*srcHcmPP);
-  if (!e)
-    e = mapSet(sP->multiValMP, entity, (const void*) srcHcmPP); 
-  return e;
-}
-
-Error xAddComp(System *sP, Entity entity, Key compType, Bln isMap, void *srcCompRawDataP) {
+Error xAddComp(System *sP, Entity entity, Key compType, void *srcCompRawDataP, XSwitchCompFP switchCompFP) {
   if (!sP || !srcCompRawDataP)
     return E_BAD_ARGS;
 
@@ -93,9 +86,9 @@ Error xAddComp(System *sP, Entity entity, Key compType, Bln isMap, void *srcComp
   // Assign this component to its entity and, if necessary, prepare it for the system.
   if (!e)
     e = sP->iniComp(sP, (void*) srcCompRawDataP);  
-  if (!e && isMap)   
-    e = _iniMultiValMap(sP, entity, (HardCodedMap**) srcCompRawDataP);
-  // Add component's entity-lookup entry to the system's directory.
+  if (!e && switchCompFP)   
+    e = mapSet(sP->switchMP, entity, switchCompFP);
+  // Add lookups from C -> E and E -> C.
   if (!e)
     e = mapSet(sP->e2cIdxMP, entity, &cIdx);
   if (!e)
@@ -111,8 +104,8 @@ Error xIniSys(System *sP, U32 nComps, void *miscP) {
     e = arrayNew((void**) &sP->cIdx2eA, sizeof(Entity), nComps);
   if (!e)
     e = mapNew(&sP->e2cIdxMP, sizeof(Key), nComps);
-  if (!e)
-    e = mapNew(&sP->multiValMP, sizeof(Map), nComps);
+  if (!e && !(sP->flags & FLG_NO_SWITCHES))
+    e = mapNew(&sP->switchMP, sizeof(XSwitchCompFP), nComps);
   if (!e)
     e = frayNew((void**) &sP->checkF, sizeof(Check), nComps);
 	// Allocate inbox ONLY. Caller points sP->outboxF at another system's inboxF.
@@ -132,15 +125,12 @@ Error xIniSys(System *sP, U32 nComps, void *miscP) {
 void xClr(System *sP) {
   frayDel((void**) &sP->cF);
   frayDel((void**) &sP->checkF);
+  frayDel((void**) &sP->inboxF);
   mapDel(&sP->e2cIdxMP);
+  mapDel(&sP->switchMP);
   arrayDel((void**) &sP->cIdx2eA);
-  mailboxDel(&sP->inboxF);
   sP->outboxF = NULL;
-  HardCodedMap **hcmPP = sP->multiValMP->mapA;
-  HardCodedMap **hcmEndPP = hcmPP + arrayGetNElems(sP->multiValMP->mapA);
-  for (; hcmPP <  hcmEndPP; hcmPP++)
-    mapClr(*hcmPP);
-  mapDel(&sP->multiValMP);
+  sP->clr(sP);
 }
 
 static Error _xDoChecks(System *sP) {
@@ -179,7 +169,7 @@ void _xReadInbox(System *sP) {
 /* This is how the entire ECS framework works. */
 Error xRun(System *sP) {
   _xReadInbox(sP);
-  mailboxClr(sP->inboxF);
+  frayClr(sP->inboxF);
   Error e = sP->run(sP);
   if (!e)
     e = _xDoChecks(sP);
