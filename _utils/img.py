@@ -88,7 +88,8 @@ flip_lr = np.fliplr
 def flip_diag(np_array):
     return np_array[::-1, ::-1, :]
  
-flip_funcs = {FLIP_NONE: flip_none, FLIP_UD: flip_ud, FLIP_LR: flip_lr, FLIP_DIAG: flip_diag}
+# TODO: make an if-statement about system's endianness that conditionally swaps flip_none and flip_lr
+flip_funcs = {FLIP_NONE: flip_lr, FLIP_UD: flip_ud, FLIP_LR: flip_none, FLIP_DIAG: flip_diag}
  
 ###########################################
 # RLE format: one unsigned byte for count, one signed byte for difference between pixel values
@@ -352,15 +353,16 @@ def unpackBytes(packedBytes, w, h, bpp):
     return colormap.reshape((h, w))
 
 ###########################################
-def compress_img(img_name):
-    if "_" in img_name:
-        split_nm = img_name.split("_")  # Naming convention goes "ben_aqua" or [sprite name]_[color palette name]
-        img_nm   = split_nm[0]
-        cp_nm    = split_nm[1]
+def compress_img(img_fp):
+    img_tokens = img_fp.split(os.sep)
+    img_dir = (os.sep).join(img_tokens[:-1])
+    if "_" in img_tokens[-1]:
+        img_nm_tokens = img_tokens[-1].split("_")
+        img_nm   = img_nm_tokens[0].split(".")[0]
+        cp_nm    = img_nm_tokens[1]
     else:
-        img_nm = img_name
+        img_nm = img_tokens[-1].split(".")[0]
     # FOR DEBUGGING
-    img_fp   = "/home/bonbonbaron/hack/jollybean/utils/%s.png"%(img_name)
     origFileSz = os.path.getsize(img_fp)
 
     img = cv2.imread(img_fp)
@@ -399,8 +401,8 @@ def compress_img(img_name):
     print("inflated length: %d"%(len(d)))
     
     # Tell game engine how to deflate colormap tileset
-    inflatable = Inflatable(img_name, len(c), len(d), c)
-    inflatable.writeInflationData("./test.c")
+    inflatable = Inflatable(img_nm, len(c), len(d), c)
+    inflatable.writeInflationData("%s/%s.c"%(img_dir, img_nm))
 
     # Make sure the inflated image matches the input!       width                                   height         bpp
     colormapTileset = unpackBytes(flat_packed_tileset, len(tileList) * tileList[0].shape[1], tileList[0].shape[0], bpp)
@@ -433,23 +435,8 @@ def reconstructImage(colormapTileset, tilemap, colorPalette, imgShape, bpp):
     return img
             
 
-
-'''
-    All I've proven up to this point that I can reconstruct from the pre-compressed data. That means the tileset, tilemap, and color palette are good. So now the only suspects left is more likely the compression and less likely the inflation. I say that because I've tried inflation 3 ways, and they all give the same result.
-    
-    So next I'll check the arguments in my call to Writer.write(). As it expects rows, I think I'll try passing in the literal rows as lists, which it expects. If it knows the bpp, then I expect it to compress them on its own.
-
-    Image 
-        /change to grayscale
-        /extract color palette
-        extract gamma correction (follow idat_start example from png_data)
-        
-
-    Animation
-        test is_animated()
-
-'''
-
-
-
-proc_img("bigger")
+args = sys.argv
+if len(args) > 1:
+    print("running mkimg for each image in [" + ", ".join(args[1:])+ "].")
+    for arg in args[1:]:
+        proc_img(arg)

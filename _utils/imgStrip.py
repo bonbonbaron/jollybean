@@ -335,17 +335,17 @@ def unpackBytes(packedBytes, bpp):
     return colormap
 
 ###########################################
-def compress_img(img_name):
-    if "_" in img_name:
-        split_nm = img_name.split("_")  # Naming convention goes "ben_aqua" or [sprite name]_[color palette name]
-        img_nm   = split_nm[0]
-        cp_nm    = split_nm[1]
+def compress_img(img_fp):
+    img_tokens = img_fp.split(os.sep)
+    img_dir = (os.sep).join(img_tokens[:-1])
+    if "_" in img_tokens[-1]:
+        img_nm_tokens = img_tokens[-1].split("_")
+        img_nm   = img_nm_tokens[0].split(".")[0]
+        cp_nm    = img_nm_tokens[1]
     else:
-        img_nm = img_name
+        img_nm = img_tokens[-1].split(".")[0]
     # FOR DEBUGGING
-    img_fp   = "/home/bonbonbaron/hack/jollybean/utils/%s.png"%(img_name)
     origFileSz = os.path.getsize(img_fp)
-
     img = cv2.imread(img_fp)
      
     print("image shape: %d x %d"%(img.shape[0], img.shape[1]))
@@ -391,18 +391,16 @@ def compress_img(img_name):
         print("Image was worth mapping strips for. Compressing strip set.")
         print("number of strips: %d"%max(stripMap))
 
-    inflatable = Inflatable(img_name, len(c), len(d), c)
-    #inflatable.writeInflationData("./test.c", expectedStripSetDims)
+    inflatable = Inflatable(img_nm, len(c), len(d), c)
+    inflatable.writeInflationData("%s/%s.c"%(img_dir, img_nm), (w, h, pitch, bpp))
 
     # Give game engine the stripMap for this image if it applies.
-    #class StripMap:
-    #    def __init__(self, nBytes, pitch, bpp, idxFlipA, idxA):
-    #if stripMap is not None:  # pixel strips were worth whittling down further for zlib compressor
-        #sm = StripMap(img_name, STRP_N_PIXELS * len(stripMap), img.shape[1] * bpp // 8, bpp, flipList, stripMap)
-    #else:
-        #sm = StripMap(img_name, STRP_N_PIXELS * len(stripMap), img.shape[1] * bpp // 8, bpp, flipList, stripMap)
+    if stripMap is not None:  # pixel strips were worth whittling down further for zlib compressor
+        sm = StripMap(img_name, STRP_N_PIXELS * len(stripMap), img.shape[1] * bpp // 8, bpp, flipList, stripMap)
+    else:
+        sm = StripMap(img_name, STRP_N_PIXELS * len(stripMap), img.shape[1] * bpp // 8, bpp, flipList, stripMap)
         
-    #sm.write("./sm.c")
+    sm.write("%s/%sStripMap.c"%(img_dir, img_nm))
 
     # Make sure the inflated image matches the input!       
     stripSet = unpackBytes(stripSetPacked, bpp)
@@ -448,4 +446,8 @@ def reconstructImage(stripSet, stripMap, flipList, colorPalette, imgShape, bpp):
     return img
 
 
-proc_img("bigger")
+args = sys.argv
+if len(args) > 1:
+    print("running mkimg for each image in [" + ", ".join(args[1:])+ "].")
+    for arg in args[1:]:
+        proc_img(arg)

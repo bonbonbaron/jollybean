@@ -58,8 +58,8 @@ void  cmClr(ColormapS *imgP);
 Error xRenderRender(Focus *fP);
 Error xRenderIniS(System *sP, void *sParamsP);
 Error xRenderProcessMessage(System *sP, Message *msgP);
-typedef void (*XRenderPresentFP)(Renderer_ *rendererP);
-extern XRenderPresentFP present;
+typedef void (*XRenderPresentU)(Renderer_ *rendererP);
+extern XRenderPresentU present;
 // Implemented by environment of choice (see #defines for each category above)
 Error guiNew(Window_ **windowPP, Renderer_ **rendererPP);
 Error surfaceNew(Surface_ **surfacePP, XRenderCompData *cP);
