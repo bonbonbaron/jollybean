@@ -1,33 +1,30 @@
 #ifndef SYS_CONTROL
 #define SYS_CONTROL
 #include "botox.h"
-#include "jbInterface.h"
+#include "yoyoInterface.h"
+#include "xMaster.h"
+#include "jb.h"
 
-typedef enum {
-	CTRL_LISTEN = 1
-} XControlFocusID;
-
-typedef struct {
-	XHeader xHeader;
-	U32 buttonsDown;
-} XControlComp;
+typedef U32 XControlComp;
 
 // TODO maybe delete these when you have a solid design
-#define CTRL_LEFT   1 << 0
-#define CTRL_RIGHT  1 << 1
-#define CTRL_UP     1 << 2
-#define CTRL_DOWN   1 << 3
-#define CTRL_A      1 << 4
-#define CTRL_B      1 << 5
-#define CTRL_START  1 << 6
-#define CTRL_SELECT 1 << 7
+#define CTRL_LEFT_   1 << 0
+#define CTRL_RIGHT_  1 << 1
+#define CTRL_UP_     1 << 2
+#define CTRL_DOWN_   1 << 3
+#define CTRL_A_      1 << 4
+#define CTRL_B_      1 << 5
+#define CTRL_START_  1 << 6
+#define CTRL_SELECT_ 1 << 7
 
-Error ctrlListen(Focus *fP);
-Error xControlProcessMessage(System *sP, Message *msgP);
-
+// I know, I know... But it has to be a struct because of the macro.
 typedef struct {
-	System system;
-	U32 buttonsPressed;
-} XControl;
+  System system;  
+} XControl; 
+
+typedef struct {} XControlCompSrc;
+
+Error xControlRun(System *sP);
+Error xControlProcessMessage(System *sP, Message *msgP);
 
 #endif

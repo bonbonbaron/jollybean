@@ -2,77 +2,71 @@
 
 U32 buttonsPressed;
 
-// TODO: Assume nothing. Give dev the whole keyboard. Instead, map these to a bitfield.
-Error ctrlListen(Focus *fP) {
-	unused_(fP);
-	SDL_Event event;
-	while (SDL_PollEvent(&event)) {
-		if (event.type == SDL_QUIT) {
-			SDL_Quit();
-			return SUCCESS;
+// TODO_: Assume nothing. Give dev the whole keyboard. Instead, map these to a bitfield.
+Error xControlRun(System *sP) {
+	Event_ event;
+	while (pollEvent_(&event)) {
+		if (event.type == EVENT_QUIT_) {
+      return mailboxWrite(sP->outboxF, MASTER, 0, QUIT_ALL, QUIT_ALL);
 		}
-		else if (event.type == SDL_KEYUP) {
+		else if (event.type == EVENT_KEYUP_) {
 			switch(event.key.keysym.sym) {
-			case SDLK_a:
-				buttonsPressed &= ~CTRL_LEFT;
+			case KEY_a_:
+				buttonsPressed &= ~CTRL_LEFT_;
 				break;
-			case SDLK_s:
-				buttonsPressed &= ~CTRL_DOWN;
+			case KEY_s_:
+				buttonsPressed &= ~CTRL_DOWN_;
 				break;
-			case SDLK_w:
-				buttonsPressed &= ~CTRL_UP;
+			case KEY_w_:
+				buttonsPressed &= ~CTRL_UP_;
 				break;
-			case SDLK_d:
-				buttonsPressed &= ~CTRL_RIGHT;
+			case KEY_d_:
+				buttonsPressed &= ~CTRL_RIGHT_;
 				break;
-			case SDLK_j:
-        buttonsPressed &= ~CTRL_A;
+			case KEY_j_:
+        buttonsPressed &= ~CTRL_A_;
 				break;
-			case SDLK_k:
-        buttonsPressed &= ~CTRL_B;
+			case KEY_k_:
+        buttonsPressed &= ~CTRL_B_;
 				break;
-			case SDLK_SPACE:
-				buttonsPressed &= ~CTRL_START;
+			case KEY_SPACE_:
+				buttonsPressed &= ~CTRL_START_;
 				break;
-			case SDLK_LSHIFT:
-        buttonsPressed &= ~CTRL_SELECT;
+			case KEY_LSHIFT_:
+        buttonsPressed &= ~CTRL_SELECT_;
 				break;
-			case SDLK_ESCAPE:
-        buttonsPressed = 0xffffffff;
-				SDL_Quit();
-				return SUCCESS;
+			case KEY_ESCAPE_:
+        return mailboxWrite(sP->outboxF, MASTER, 0, QUIT_ALL, QUIT_ALL);
 			}
 		}
-		else if (event.type == SDL_KEYDOWN) {
+		else if (event.type == EVENT_KEYDOWN_) {
 			switch(event.key.keysym.sym) {
-      case SDLK_a:
-        buttonsPressed &= ~CTRL_LEFT;
+      case KEY_a_:
+        buttonsPressed &= ~CTRL_LEFT_;
         break;
-      case SDLK_s:
-        buttonsPressed &= ~CTRL_DOWN;
+      case KEY_s_:
+        buttonsPressed &= ~CTRL_DOWN_;
         break;
-      case SDLK_w:
-        buttonsPressed &= ~CTRL_UP;
+      case KEY_w_:
+        buttonsPressed &= ~CTRL_UP_;
         break;
-      case SDLK_d:
-        buttonsPressed &= ~CTRL_RIGHT;
+      case KEY_d_:
+        buttonsPressed &= ~CTRL_RIGHT_;
         break;
-      case SDLK_j:
-        buttonsPressed &= ~CTRL_A;
+      case KEY_j_:
+        buttonsPressed &= ~CTRL_A_;
         break;
-      case SDLK_k:
-        buttonsPressed &= ~CTRL_B;
+      case KEY_k_:
+        buttonsPressed &= ~CTRL_B_;
         break;
-      case SDLK_SPACE:
-        buttonsPressed &= ~CTRL_START;
+      case KEY_SPACE_:
+        buttonsPressed &= ~CTRL_START_;
         break;
-      case SDLK_LSHIFT:
-        buttonsPressed &= ~CTRL_SELECT;
+      case KEY_LSHIFT_:
+        buttonsPressed &= ~CTRL_SELECT_;
         break;
-      case SDLK_ESCAPE:
-        buttonsPressed = 0xff;
-        SDL_Quit();
-        return SUCCESS;
+      case KEY_ESCAPE_:
+        return mailboxWrite(sP->outboxF, MASTER, 0, QUIT_ALL, QUIT_ALL);
       }
 		}
 	}
@@ -106,4 +100,4 @@ XGetShareFuncDefUnused_(Control);
 //======================================================
 // System definition
 //======================================================
-X_(Control, 5, Focus_(CTRL_LISTEN, ctrlListen));
+X_(Control, 5, FLG_NO_SWITCHES_ | FLG_NO_CHECKS_ | FLG_NO_CF_SRC_A_);

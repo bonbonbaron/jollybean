@@ -1,44 +1,57 @@
 ##############################
 # Variables
 ##############################
-CC=cc
-LIBJOLLYBEAN=libjollybean.a
-JOLLYBEAN_SRC  = $(shell find ./src/ -name "*.c") 
-JOLLYBEAN_OBJS = $(shell basename -a $(JOLLYBEAN_SRC:%.c=%.o))
-JOLLYBEAN_INCLUDES = $(shell find -name "*.h")
-BUILDDIR=./build
-LIBDIR=./lib
-INCLUDEDIR=./src/include
-INSTALLDIR=/usr/lib
+CC             = cc
+SRCDIR         = ./src
+BUILDDIR       = ./build
+LIBDIR         = ./lib
+INCLUDEDIR     = ./src/include
+INSTALLDIR     = /usr/local/lib
+LIBJOLLBEAN       = ./lib/libjollybean.a
+JOLLBEANSRC      = $(shell find ./src -name "*.c") 
+#$(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.$(OBJEXT)))
+JOLLBEAN_OBJS     = $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(JOLLBEANSRC:.c=.o))
+JOLLBEAN_INCLUDES = $(shell find -name "*.h")
+TGTINCLUDDIR = /usr/local/include/jollybean/
+IFLAGS=-I/usr/local/include/botox -I/usr/local/include/yoyo -I./src/include/
 
-CFLAGS_COMMON = -Wall \
-								-lbotox \
-								-lyoyo \
-							  -I$(INCLUDEDIR) -ffunction-sections \
-								-fdata-sections -s -fno-ident -fmerge-all-constants \
-								-fomit-frame-pointer -fno-stack-protector 
-CFLAGS_TINY   = $(CFLAGS_COMMON) #-Os    #TODO: uncomment when ready for relase
-CFLAGS_FAST   = $(CFLAGS_COMMON) -Ofast    #TODO: uncomment when ready for relase
-SDL_LFLAGS    = $(shell sdl2-config --libs)
-LFLAGS        = -Wl,--gc-sections -Wl,-z,norelro \
+CFLAGS_COMMON  = -Wall \
+							   $(IFLAGS) -ffunction-sections \
+							 	 -fdata-sections -s -fno-ident -fmerge-all-constants \
+							 	 -fomit-frame-pointer -fno-stack-protector 
+CFLAGS_TINY    = $(CFLAGS_COMMON) #-Os    #TODO: uncomment when ready for relase
+CFLAGS_FAST    = $(CFLAGS_COMMON) #-Ofast    #TODO: uncomment when ready for relase
+SDL_CFLAGS     = $(shell sdl2-config --cflags)
+SDL_LFLAGS     = $(shell sdl2-config --libs)
+LFLAGS         = -Wl,--gc-sections -Wl,-z,norelro \
+
+##############################
+# Archiver
+##############################
+$(LIBJOLLBEAN): $(BUILDDIR) $(LIBDIR) $(JOLLBEAN_OBJS) $(JOLLBEAN_INCLUDES)
+	ar rcs $(LIBJOLLBEAN) $(JOLLBEAN_OBJS)
+	touch $@
 
 ##############################
 # Compiler
 ##############################
-$(LIBJOLLYBEAN): $(JOLLYBEAN_OBJS) $(JOLLYBEAN_INCLUDES)
-	ar rcs $(LIBDIR)/$(LIBJOLLYBEAN) $(BUILDDIR)/*
-	touch $(LIBDIR)/$(LIBJOLLYBEAN)
+$(BUILDDIR)/%.o: $(SRCDIR)/%.c $(JOLLBEAN_INCLUDES)
+	$(CC) $(SDL_CFLAGS) $(CFLAGS_FAST) -c $< -o $@
+	touch $@
 
-$(JOLLYBEAN_OBJS): $(JOLLYBEAN_SRC) $(JOLLYBEAN_INCLUDES)
-	$(CC) $(CFLAGS_FAST) -c $< -o $(BUILDDIR)/$@
-	touch $(BUILDDIR)/$@
-	
+$(BUILDDIR):
+	mkdir -p $(BUILDDIR)
+
+$(LIBDIR):
+	mkdir -p $(LIBDIR)
 ##############################
 .PHONY: install
 install:
-	cp $(LIBDIR)/$(LIBJOLLYBEAN) $(INSTALLDIR)
+	mkdir -p $(TGTINCLUDDIR)
+	cp $(JOLLBEAN_INCLUDES) $(TGTINCLUDDIR)
+	cp $(LIBJOLLBEAN) $(INSTALLDIR)
 
 .PHONY: clean
 clean:
-	rm -f $(BUILDDIR)/*
-	rm -f $(LIBDIR)/$(LIBJOLLYBEAN)
+	rm -f $(JOLLBEAN_OBJS)
+	rm -f $(LIBJOLLBEAN)

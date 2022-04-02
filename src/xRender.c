@@ -168,47 +168,60 @@ Error xRenderIniSys(System *sP, void *sParamsP) {
 //======================================================
 // Initialize xRender's components, which are Images.
 //======================================================
-Error xRenderIniComp(System *sP, void *compDataP) {
-	if (!sP || !compDataP)
+Error xRenderIniComp(System *sP, void *compDataP, void *compDataSrcP) {
+	if (!sP || !compDataP || !compDataSrcP)
 		return E_BAD_ARGS;
 
 	XRender *xRenderSysP = (XRender*) sP;
+	XRenderComp *cP = (XRenderComp*) compDataP;
+  XRenderCompSrc *imgP = (XRenderCompSrc*) compDataSrcP;
 
-	XRenderCompData *cP = (XRenderCompData*) compDataP;
-	if (cP->imgP->textureP) 
+  // Skip things that're already done.
+	if (cP->textureP) 
 		return SUCCESS;
+  else if (imgP->textureP) {
+    cP->textureP = imgP->textureP;
+    return SUCCESS;
+  }
 	// Build colormap.
-	Error e = _cmGen(cP->imgP->colorMapP);
+	Error e = _cmGen(imgP->colorMapP);
 	// Make surface out of colormap and color palette.
 	Surface_ *surfaceP = NULL;
 
 	if (!e)
-		e = surfaceNew(&surfaceP, cP);
+		e = surfaceNew(&surfaceP, imgP->colorMapP->w, imgP->colorMapP->h, imgP->colorMapP->bpp);
 
 	// Apply color palette to color map.
 	if (!e)
-		e = surfaceIni(surfaceP, cP);
+		e = surfaceIni(surfaceP, imgP->nColors, imgP->colorA, imgP->colorMapP->dataP);
 
 	// Create texture from surface. 
 	if (!e && surfaceP)
-		e = textureNew(&cP->imgP->textureP, xRenderSysP->rendererP, surfaceP);
+		e = textureNew(&imgP->textureP, xRenderSysP->rendererP, surfaceP);
 
-	if (!e && !cP->imgP->textureP) 
+	if (!e && !imgP->textureP) 
 		e = E_BAD_ARGS;
 
 	if (!e) 
-		e = textureSetAlpha(cP->imgP->textureP);
+		e = textureSetAlpha(imgP->textureP);
 
-	if (!e)
+  // Everything's ready to hand over to the component.
+	if (!e) {
 		cP->srcRectP = NULL;
+    cP->dstRectP->x = 0;
+    cP->dstRectP->y = 0;
+    cP->dstRectP->w = imgP->colorMapP->w;
+    cP->dstRectP->h = imgP->colorMapP->h;
+    cP->textureP = imgP->textureP;
+  }
 
 	//SDL_FreeSurface(surfaceP);  // Program crashes when I do this. Maybe textureP needs it?
 
 	// Clean up if anything bad happened.
 	if (e) {
-		_cmClr(cP->imgP->colorMapP);
-		if (cP->imgP->textureP) 
-			textureDel(&cP->imgP->textureP);
+		_cmClr(imgP->colorMapP);
+		if (imgP->textureP) 
+			textureDel(&imgP->textureP);
 	}
 	return e;
 }
@@ -225,20 +238,24 @@ XClrFuncDef_(Render) {
   return SUCCESS;
 }
 
-#define RECT (4)  /* TODO: move to enum */
+#define CLIP_RECT (4)  /* TODO: move to enum */
+#define POSSIZE_RECT (5)  /* TODO: move to enum */
 XGetShareFuncDef_(Render) {
   Error e = SUCCESS;
-  Map *rectMP = (Map*) mapGet(shareMMP, RECT);
-  if (!rectMP)
+  Map *srcRectMP = (Map*) mapGet(shareMMP, CLIP_RECT);
+  Map *dstRectMP = (Map*) mapGet(shareMMP, POSSIZE_RECT);
+  Entity entity = 0;
+  if (!srcRectMP || !dstRectMP)
     return E_BAD_KEY;
-  Focus *fP = sP->focusA;
-  Focus *fEndP = fP + arrayGetNElems(sP->focusA);
-  for (; !e && fP < fEndP; fP++) {
-    XRenderComp *cP = fP->compA;
-    XRenderComp *cEndP = cP + arrayGetNElems(fP->compA);
-    for (; !e && cP < cEndP; cP++) {
-      cP->data.srcRectP = (Rect_*) mapGet(rectMP, cP->xHeader.owner);
-      if (!cP->data.srcRectP)
+  XRenderComp *cP = sP->cF;
+  XRenderComp *cEndP = cP + arrayGetNElems(sP->cF);
+  for (; !e && cP < cEndP; cP++) {
+    cP->srcRectP = (Rect_*) mapGet(srcRectMP, entity);
+    if (!cP->srcRectP)
+      e = E_BAD_ARGS;
+    if (!e) {
+      cP->dstRectP = (Rect_*) mapGet(dstRectMP, sP->cIdx2eA[cP - (XRenderComp*) sP->cF]);
+      if (!cP->dstRectP) 
         e = E_BAD_ARGS;
     }
   }
@@ -248,21 +265,16 @@ XGetShareFuncDef_(Render) {
 //======================================================
 // Render activity
 //======================================================
-Error render(Focus *fP) {
+Error xRenderRun(System *sP) {
 	Error e = SUCCESS;
-	XRenderComp *cP, *cEndP;
-	XRender *xRenderSysP = (XRender*) fP->ownerP;
-	Renderer_ *rendererP = xRenderSysP->rendererP;
 
-	clearScreen(xRenderSysP->rendererP);
+	XRenderComp *cP = (XRenderComp*) sP->cF;
+	XRenderComp *cEndP = cP + frayGetFirstInactiveIdx(sP->cF);
+	Renderer_ *rendererP = ((XRender*) sP)->rendererP;
 
-	cP = (XRenderComp*) fP->compA;
-	cEndP = cP + fP->firstInactiveIdx;
-
+	clearScreen(rendererP);
 	for (; !e && cP < cEndP; cP++) 
-		e = copy_(rendererP, cP->data.imgP->textureP, NULL, cP->data.dstRectP);
-
-	// Tell GPU to execute instructions.
+		e = copy_(rendererP, cP->textureP, cP->srcRectP, cP->dstRectP);
 	if (!e)
 		present_(rendererP);
 
@@ -272,4 +284,4 @@ Error render(Focus *fP) {
 //======================================================
 // System definition
 //======================================================
-X_(Render, 1, Focus_(1, render));
+X_(Render, 1, FLG_NO_SWITCHES_);

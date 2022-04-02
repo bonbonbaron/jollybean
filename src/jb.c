@@ -2,13 +2,13 @@
 
 int main() {
   extern Biome biome1;
-  XMain *xmsP = NULL;
+  XMaster *xmsP = NULL;
 
 	System *sPA[] = {
 		sRenderP,
 	}; 
 
-	Error e = xMainIni(&xmsP, sPA, sizeof(sPA) / sizeof(sPA[0]), N_COMPONENT_TYPES, &biome1);
+	Error e = xMasterIni(&xmsP, sPA, sizeof(sPA) / sizeof(sPA[0]), N_COMPONENT_TYPES, &biome1);
 
 	while (!e) 
 		e = xRun(&xmsP->system);
