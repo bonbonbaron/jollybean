@@ -17,9 +17,13 @@ typedef U32 XControlComp;
 #define CTRL_START_  1 << 6
 #define CTRL_SELECT_ 1 << 7
 
+#define KD_(name_) name_##KEYDOWN_
+typedef enum {KD_(LEFT_), KD_(RIGHT_), KD_(UP_), KD_(DOWN_), KD_(A_), KD_(B_), KD_(START_), KD_(SELECT_)} XControlKeyEvent;
+
 // I know, I know... But it has to be a struct because of the macro.
 typedef struct {
   System system;  
+  Entity focus;   // this is the entity who has control's focus right now;
 } XControl; 
 
 typedef struct {} XControlCompSrc;
