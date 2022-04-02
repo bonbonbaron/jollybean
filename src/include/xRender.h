@@ -3,6 +3,11 @@
 #include "botox.h"
 #include "yoyoInterface.h"
 
+#define WINDOW_KEY_ (1)
+#define RENDERER_KEY_ (1)
+
+typedef enum{WINDOW_GENE_TYPE = 1, RENDERER_GENE_TYPE, N_MASTER_GENES} GeneType;
+
 typedef struct {
   U16 nFlips;
   U16 flipIdxA[];

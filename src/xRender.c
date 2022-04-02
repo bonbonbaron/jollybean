@@ -1,4 +1,5 @@
 #include "xRender.h"
+#include "xMaster.h"
 #include "x.h"
 
 // Compressed images are already in memory in JB. 
@@ -158,11 +159,9 @@ Error _cmGen(ColormapS *cmP) {
 // Initialize xRender's system.
 //======================================================
 Error xRenderIniSys(System *sP, void *sParamsP) {
+  return SUCCESS;
 	unused_(sParamsP);
-	if (!sP)
-		return E_BAD_ARGS;
-	XRender *xRenderSysP = (XRender*) sP;
-	return guiNew(&xRenderSysP->windowP, &xRenderSysP->rendererP);
+  unused_(sP);
 }
 
 //======================================================
@@ -241,10 +240,12 @@ XClrFuncDef_(Render) {
 #define CLIP_RECT (4)  /* TODO: move to enum */
 #define POSSIZE_RECT (5)  /* TODO: move to enum */
 XGetShareFuncDef_(Render) {
+  XRender *renderSysP = (XRender*) sP;
   Error e = SUCCESS;
   Map *srcRectMP = (Map*) mapGet(shareMMP, CLIP_RECT);
   Map *dstRectMP = (Map*) mapGet(shareMMP, POSSIZE_RECT);
   Entity entity = 0;
+  // Get clip and position-size rectangles for each render component.
   if (!srcRectMP || !dstRectMP)
     return E_BAD_KEY;
   XRenderComp *cP = sP->cF;
@@ -259,6 +260,29 @@ XGetShareFuncDef_(Render) {
         e = E_BAD_ARGS;
     }
   }
+  // Get window and renderer too! Kind important lol. 
+  // They're "bogus" because there's only one element per window/renderer map. 
+  // But we gotta stick with our awesome design!!
+  // Get window
+  Map *bogusWindowMP = NULL; 
+  Map *bogusRendererMP = NULL;
+  if (!e)
+    bogusWindowMP = (Map*) mapGet(shareMMP, WINDOW_GENE_TYPE);
+  if (!bogusWindowMP)
+    e = E_BAD_KEY;  
+  else 
+    renderSysP->windowP = (Window_*) mapGet(bogusWindowMP, WINDOW_KEY_);
+  // Get renderer
+  if (!e)
+    bogusRendererMP = (Map*) mapGet(shareMMP, RENDERER_GENE_TYPE);
+  if (!bogusRendererMP)
+    e = E_BAD_KEY;
+  else 
+    renderSysP->rendererP = (Renderer_*) mapGet(bogusRendererMP, RENDERER_KEY_);
+
+  if (!renderSysP->windowP || !renderSysP->rendererP)
+    e = E_BAD_KEY;
+
   return e;
 }
 
