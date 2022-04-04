@@ -1,52 +1,43 @@
 #!/bin/bash
 
-IMAGE=Image/{ColorMap,ColorPalette,StripMap,StripSet}
-PERSONALITY=personality/quirk/tree/node
+source ./scripts/sys
+
+IMAGESUBDIRS=Image/{ColorMap,ColorPalette,StripMap,StripSet}
+PERSONALITYSUBDIRS=personality/tree/node
 INCLUDE=include
+
 declare GAME
-function new {
-  mkdir -p ./$GAME/biome/seed/{genome/{blackboard,ecs_component/{$IMAGE},ecs_shared},$PERSONALITY} game/include
+
+function gameNew {
+  mkdir -p ./$GAME/biome/seed/{genome/{blackboard,ecs_component/{$IMAGESUBDIRS},ecs_shared},$PERSONALITYSUBDIRS} game/include
   echo 
 }
 
-function del {
+function gameDel {
   rm -rf ./$1
 }
 
-function img {
+function imgNew {
   python ./jollybean/_utils/imgStrip.py ${*:2}
   declare -a outputImgs=($(echo $* | sed "s/png/c/g"))
   mv ${outputImgs[*]} $GAME/biome/seed/$IMAGE
 }
 
-function sys {
-  if [ $1 ]; then
-    for i in ${*:1}; do
-      C_FILE=./src/x${i}.c
-      H_FILE=./src/include/x${i}.h
-      if [ ! -f $C_FILE ]; then
-        echo "creating $C_FILE..."
-        sed "s/REPLACEME/$1/g" ./templates/system.c > ./src/x${i}.c
-      else echo "$C_FILE already exists! Skipping..."
-      fi;
-      if [ ! -f $H_FILE ]; then
-        echo "creating $H_FILE..."
-        sed "s/REPLACEME/$1/g" ./templates/system.h > ./src/include/x${i}.h
-      else echo "$H_FILE already exists! Skipping..."
-      fi;
-    done;
-  fi;
+function imgDel {
+  echo hi;
 }
 
-#echo "${args[*]}"
+function lower () {
+  echo $1 | sed 's/.*/\L&/'
+}
 
-if [ $1 = new ]; then new $2;
-elif [ $1 = del ]; then del $2;
-elif [ $1 = img ]; then 
-  declare -a args=${@:2}
-  img ${args[*]};
-elif [ $1 = sys ]; then sys ${@:2};
-fi;
+mainArg=$(lower $1)
+case $mainArg in  
+  game) echo "got the word game";;
+  gene) echo "what the del";;
+  sys) exeSys ${*};;
+  *) echo "Command $mainArg not recognized.";;
+esac
 
 # TODO reimplement StripSet inside of imgStrip.py
 # TODO add -g argument for game to specify game; if absent, check env vars for $GAME
@@ -56,3 +47,4 @@ fi;
 # TODO if conflict exists, prompt user whether to replace it. 
 # TODO add -y to auto-accept replacements of conflicts
 # TODO add to/remove from headers
+#sed -E "/$a/s/([0-Z ]+=\s*)(\*?[0-Z ]+)(\s*[;,\n].*)/\1$b\3/g" test 

@@ -1,0 +1,60 @@
+#!/bin/bash
+ALREADY_EXISTS="already exists! Skipping its creation..."
+DOESNT_EXIST="doesn't exists! Skipping its removal..."
+function sysNew {
+  ALREADY_EXISTS="already exists! Skipping..."
+  if [ $1 ]; then
+    for i in ${*:1}; do
+      C_FILE=./src/x${i}.c
+      H_FILE=./src/include/x${i}.h
+      if [ ! -f $C_FILE ]; then
+        echo "creating $C_FILE..."
+        sed "s/REPLACEME/$1/g" ./templates/system.c > ./src/x${i}.c
+      else echo "$C_FILE $ALREADY_EXISTS"
+      fi;
+      if [ ! -f $H_FILE ]; then
+        echo "creating $H_FILE..."
+        sed "s/REPLACEME/$1/g" ./templates/system.h > ./src/include/x${i}.h
+      else echo "$H_FILE $ALREADY_EXISTS"
+      fi;
+    done;
+  else 
+    echo "No arguments supplied to sys()."
+  fi;
+}
+
+function sysDel {
+  if [ $1 ]; then
+    for i in ${*:1}; do
+      C_FILE=./src/x${i}.c
+      H_FILE=./src/include/x${i}.h
+      if [ -f $C_FILE ]; then
+        echo "deleting $C_FILE..."
+        rm ./src/x${i}.c
+      else echo "$C_FILE $DOESNT_EXIST"
+      fi;
+      if [ -f $H_FILE ]; then
+        echo "deleting $H_FILE..."
+        rm ./src/include/x${i}.h
+      else echo "$H_FILE $DOESNT_EXIST"
+      fi;
+    done;
+  else 
+    echo "No arguments supplied to sys()."
+  fi;
+}
+
+function sysLs {
+  declare -a a=$(ls ./src/*.c)
+  for aa in $a; do echo $(basename $aa .c); done;
+}
+
+function exeSys {
+  case $2 in
+    new) sysNew ${*:3};;
+    del|rm) sysDel ${*:3};;
+    ls)  sysLs;;
+    cat) sysCat;;
+      *) echo "sys has no command \"$2\".";;
+  esac
+}
