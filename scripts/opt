@@ -1,0 +1,100 @@
+#!/bin/bash
+JB=$HOME/.jb
+JB_CONFIG=$JB/config
+
+# $1 - key (option name)
+# $2 - filename (containing list of options)
+function optExists {
+  egrep -q "^\s*\<$1\>"
+}
+
+# $1 - key (option name)
+# $2 - filename (containing list of options)
+function optClr {
+  if [ -e $2 ]; then
+    sed -iE "/^\s*$1\>.*/s/(^\s*$1\>).*/\1/" $2
+  else
+    echo "Cannot get option $1 from non-existent file $2."
+    exit;
+  fi;
+}
+
+
+# $1 - key (option name)
+# $2 - filename (containing list of options)
+function optNew {
+  if [ -e $2 ]; then
+    sed -iE "/^\s*$1\>.*/s/(^\s*$1\>).*/\1/" $2
+  else
+    echo "Cannot get option $1 from non-existent file $2."
+    exit;
+  fi;
+}
+
+# $1 - key (option name)
+# $2 - filename (containing list of options)
+function optDel {
+  if [ -e $2 ]; then
+    sed -iE "/^\s*$1\>.*/s/(^\s*$1\>).*/\1/" $2
+  else
+    echo "Cannot get option $1 from non-existent file $2."
+    exit;
+  fi;
+}
+# $1 - key (option name)
+# $2 - filename (containing list of options)
+function optGet {
+  if [ -e $2 ]; then
+    cat $2 | sed -nE "/^\s*$1\>.*/s/^\s*$1\>(.*)/\1/ p"
+  else
+    echo "Cannot get option $1 from non-existent file $2."
+    exit;
+  fi;
+}
+
+# $1 - key (option name)
+# $2 - value (option value) 
+# $3 - filename (containing list of options)
+function optSet {
+  if egrep "^\s*$1\>" $3; then
+    echo "Changing option $1 from $(optGet $1) to $2."
+    sed -iE "/^\s*$1\>.*/s/(^\s*$1\>).*/\1 $1/" $3
+  else
+    echo "$3 has no option called $1. Changing nothing." 
+    exit;
+  fi;
+}
+
+function optExe {
+  key=""
+  val=""
+  file=""
+  # Extract value of command's option fields.
+  while getopts k:v:f: opt; do
+    case $opt in 
+      k) key=$OPTARG;;
+      v) val=$OPTARG;;
+      f) file=$OPTARG;;
+      *) echo "invalid option to optExe. Quitting..."
+         exit;;
+    esac
+  done;
+  # Ensure key and val got populated.
+  if [ ${#key} -eq 0 ]; then
+    echo "Invalid key-value pair. Quitting..."
+    exit;
+  fi;
+  # File input is optional; default is ~/.jb/config.
+  if [ ${#file} -eq 0 ]
+    file=$JB_CONFIG;
+  fi;
+  # Set or get the option.
+  case $1 in
+    get) optGet $key $file;;
+    set) if [ ! ${#val} -eq 0 ]; then
+           optSet $key $val $file;
+         fi;;
+    exists) optExists $key $file;;
+    *) echo "opt has no function $1. Available calls are opt [ get | set ]."
+  esac
+}

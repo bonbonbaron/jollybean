@@ -1,0 +1,81 @@
+#!/bin/bash
+IMAGESUBDIRS=Image/{ColorMap,ColorPalette,StripMap,StripSet}
+PERSONALITYSUBDIRS=personality/tree/node
+INCLUDE=include
+JB=$HOME/.jb
+JB_CONFIG=$JB/config
+GAMES_FILE=$JB/games
+
+source ./opt
+
+function gameGetPath {
+  $(optGet $1 $2)
+}
+
+function gameExists {
+  optExists $1 $GAMES_FILE && test -e $(gameGetPath $1)
+}
+
+function gameNew {
+  for game in $@; do
+    if ! gameExists $game; then
+      echo "Making directory structure for new game $1..."
+      mkdir -p ./$game/{biome/seed/{genome/{blackboard,ecs_component/Image/{ColorMap,ColorPalette,StripMap,StripSet},ecs_shared},personality/tree/node},include}
+      echo "$game $(pwd)/$game" >> $GAMES_FILE
+    else
+      echo "Game \"$game\" already exists in $(gameGetPath $game). Skipping..."
+    fi;
+  done;
+}
+
+function gameDel {
+  for game in $@; do
+    if gameExists $game; then
+      echo "Deleting $game..."
+      rm -rf $(gameGetPath $game)            # remove game directory structure
+      sed -iE "/^\s*$game\s/d" $GAMES_FILE   # clear its record from the game table
+    fi;
+  done;
+}
+
+function gameLs {
+  cat $GAMES_FILE | sed -nE "s/^\s*([A-Za-z0-9_]+)\s+.*/\1/ p"
+}
+
+function gameWhich {
+  for game in $@; do
+    echo $(gameGetPath $game);
+  done;
+}
+
+function gamePwg {
+  cat $JB/config
+}
+
+function gameSet {
+  local GAME_OPT="^s*GAME\>"
+  if gameExists $1; then
+    if egrep $GAME_OPT $JB_CONFIG; then
+      echo "setting current working game to $1"
+      sed -iE "/^\s*GAME\>.*/s/^\s*GAME\>.*/GAME $1/" $JB_CONFIG
+    else
+      echo "JB config file is missing option GAME."
+    fi;
+      echo hope
+  else
+    echo "Cannot set $1 as current game. It doesn't exist!"
+  fi
+}
+
+function gameExe {
+  case $1 in
+    new)    gameNew ${*:2};;
+    del|rm) gameDel ${*:2};;
+    ls)     gameLs;;
+    which)  gameWhich ${*:2};;
+    pwg)    gamePwg;;
+    set)    gameSet $2;;
+    *) echo "jb game has no subcommand $1. Available game commands are
+      jb game [ new | del | set ]." > /dev/stderr
+  esac
+}

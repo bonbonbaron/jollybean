@@ -1,21 +1,8 @@
 #!/bin/bash
 
+source ./scripts/ini
 source ./scripts/sys
-
-IMAGESUBDIRS=Image/{ColorMap,ColorPalette,StripMap,StripSet}
-PERSONALITYSUBDIRS=personality/tree/node
-INCLUDE=include
-
-declare GAME
-
-function gameNew {
-  mkdir -p ./$GAME/biome/seed/{genome/{blackboard,ecs_component/{$IMAGESUBDIRS},ecs_shared},$PERSONALITYSUBDIRS} game/include
-  echo 
-}
-
-function gameDel {
-  rm -rf ./$1
-}
+source ./scripts/game
 
 function imgNew {
   python ./jollybean/_utils/imgStrip.py ${*:2}
@@ -33,9 +20,9 @@ function lower () {
 
 mainArg=$(lower $1)
 case $mainArg in  
-  game) echo "got the word game";;
+  game) gameExe ${*:2};;
+  sys)  sysExe ${*};;
   gene) echo "what the del";;
-  sys) exeSys ${*};;
   *) echo "Command $mainArg not recognized.";;
 esac
 
