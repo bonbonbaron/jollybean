@@ -1,25 +1,25 @@
-#include "xAnim.h"
+#include "xMotionTrans.h"
 
 //======================================================
-// Initialize Anim's system.
+// Initialize MotionTrans's system.
 //======================================================
-Error xAnimIniSys(System *sP, void *sParamsP) {
+Error xMotionTransIniSys(System *sP, void *sParamsP) {
   return SUCCESS;
 	unused_(sParamsP);
   unused_(sP);
 }
 
 //======================================================
-// Initialize xAnim's components, which are Images.
+// Initialize xMotionTrans's components, which are Images.
 //======================================================
-Error xAnimIniComp(System *sP, void *compDataP, void *compDataSrcP) {
+Error xMotionTransIniComp(System *sP, void *compDataP, void *compDataSrcP) {
   unused_(sP);
   unused_(compDataP);
   unused_(compDataSrcP);
-	return SUCCESS;
+  return SUCCESS;
 }
 
-Error xAnimProcessMessage(System *sP, Message *msgP) {
+Error xMotionTransProcessMessage(System *sP, Message *msgP) {
   Error e = SUCCESS;
   // Get the entity's switch function. 
   // (Keep in mind this function can also just grab into an array if you tell it to.)
@@ -39,15 +39,15 @@ Error xAnimProcessMessage(System *sP, Message *msgP) {
 	return e;
 }
 
-XClrFuncDef_(Anim) {
+XClrFuncDef_(MotionTrans) {
   unused_(sP);
   return SUCCESS;
 }
 
-XGetShareFuncDef_(Anim) {
-	XAnimComp *cP = (XAnimComp*) sP->cF;
-  XAnimComp *cStartP = cP;
-	XAnimComp *cEndP = cP + frayGetFirstInactiveIdx(sP->cF);
+XGetShareFuncDef_(MotionTrans) {
+	XMotionTransComp *cP = (XMotionTransComp*) sP->cF;
+  XMotionTransComp *cStartP = cP;
+	XMotionTransComp *cEndP = cP + frayGetFirstInactiveIdx(sP->cF);
 
   for (; cP < cEndP; ++cP)
     cP->shareRectP = (Rect_*) mapGet(shareMMP, xGetEntityByCompIdx(sP, cP - cStartP));
@@ -56,27 +56,17 @@ XGetShareFuncDef_(Anim) {
 }
 
 //======================================================
-// Anim activity
+// MotionTrans activity
 //======================================================
-Error xAnimRun(System *sP) {
+Error xMotionTransRun(System *sP) {
 	Error e = SUCCESS;
 
-	XAnimComp *cP = (XAnimComp*) sP->cF;
-	XAnimComp *cStartP = cP;
-	XAnimComp *cEndP = cP + frayGetFirstInactiveIdx(sP->cF);
+	XMotionTransComp *cP = (XMotionTransComp*) sP->cF;
+	XMotionTransComp *cEndP = cP + frayGetFirstInactiveIdx(sP->cF);
 
-  // loop through elements and act on them here
-  while (cP < cEndP) {
-    if (!(--cP->timeLeft)) {
-      if (cP->repeat) {
-        cP->timeLeft = cP->timeA[cP->currIdx = 0];
-        *cP->shareRectP = cP->srcRectA[0];
-      } else {
-        xDeactivateComponentByIdx(sP, cP - cStartP);
-        --cEndP;
-      }
-    } else 
-      ++cP;
+  for (; cP < cEndP; cP++) {
+    cP->shareRectP->x += cP->x;
+    cP->shareRectP->y += cP->y;
   }
 
 	return e;
@@ -86,4 +76,4 @@ Error xAnimRun(System *sP) {
 // System definition
 //======================================================
 #define FLAGS_HERE (0)
-X_(Anim, 1, FLAGS_HERE);
+X_(MotionTrans, 1, FLAGS_HERE);

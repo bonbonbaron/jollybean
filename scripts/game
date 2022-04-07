@@ -6,7 +6,7 @@ JB=$HOME/.jb
 JB_CONFIG=$JB/config
 GAMES_FILE=$JB/games
 
-source ./opt
+source ./scripts/opt
 
 function gameGetPath {
   $(optGet $1 $2)

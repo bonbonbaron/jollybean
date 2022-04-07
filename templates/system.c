@@ -50,7 +50,9 @@ Error xREPLACEMERun(System *sP) {
 	XREPLACEMEComp *cP = (XREPLACEMEComp*) sP->cF;
 	XREPLACEMEComp *cEndP = cP + frayGetFirstInactiveIdx(sP->cF);
 
-  // loop through elements and act on them here
+  for (; cP < cEndP; cP++) {
+    // do something on each element here
+  }
 
 	return e;
 }

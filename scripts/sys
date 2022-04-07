@@ -49,7 +49,7 @@ function sysLs {
   for aa in $a; do echo $(basename $aa .c); done;
 }
 
-function exeSys {
+function sysExe {
   case $2 in
     new) sysNew ${*:3};;
     del|rm) sysDel ${*:3};;

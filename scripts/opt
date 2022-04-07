@@ -56,13 +56,12 @@ function optGet {
 # $2 - value (option value) 
 # $3 - filename (containing list of options)
 function optSet {
-  if egrep "^\s*$1\>" $3; then
-    echo "Changing option $1 from $(optGet $1) to $2."
-    sed -iE "/^\s*$1\>.*/s/(^\s*$1\>).*/\1 $1/" $3
-  else
-    echo "$3 has no option called $1. Changing nothing." 
-    exit;
+  if ! optExists $1 $3; then
+    echo "Creating new option, $1, in file $3."
+    optNew $1 $3;
   fi;
+  echo "Changing option $1 from $(optGet $1) to $2."
+  sed -iE "/^\s*$1\>.*/s/(^\s*$1\>).*/\1 $1/" $3
 }
 
 function optExe {
@@ -85,7 +84,7 @@ function optExe {
     exit;
   fi;
   # File input is optional; default is ~/.jb/config.
-  if [ ${#file} -eq 0 ]
+  if [ ${#file} -eq 0 ]; then 
     file=$JB_CONFIG;
   fi;
   # Set or get the option.
