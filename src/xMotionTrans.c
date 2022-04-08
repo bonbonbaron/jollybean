@@ -59,8 +59,6 @@ XGetShareFuncDef_(MotionTrans) {
 // MotionTrans activity
 //======================================================
 Error xMotionTransRun(System *sP) {
-	Error e = SUCCESS;
-
 	XMotionTransComp *cP = (XMotionTransComp*) sP->cF;
 	XMotionTransComp *cEndP = cP + frayGetFirstInactiveIdx(sP->cF);
 
@@ -69,7 +67,7 @@ Error xMotionTransRun(System *sP) {
     cP->shareRectP->y += cP->y;
   }
 
-	return e;
+	return SUCCESS;
 }
 
 //======================================================

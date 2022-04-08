@@ -2,6 +2,7 @@
 #include "xMaster.h"
 #include "x.h"
 
+//TODO Make bookmarks to indicate where images should when they switch layers.
 // Compressed images are already in memory in JB. 
 // JB just reconstructs them from strips of staggered pixels. 
 // Packed bits are staggered to allow JB to unpack and (if necessary) flip 4 color-mapped pixels at a time.
