@@ -68,24 +68,9 @@ Error xCollisionRun(System *sP) {
 #define FLAGS_HERE (0)
 X_(Collision, 1, FLAGS_HERE);
 
-// This is just a scratch-sheet area-- not part of the code above. I'll delete this later.
 typedef struct {
-  Entity entity;
-  Entity rectIdx;
-  Key currFineIdx;  // The medium- and coarse-grain indices follow from this. Faster to compute than look up!
-} XCollisionComp_Scratch;
+} QuadTree;
 
-// With two bytes per node (32 nodes per cache line), traversal is so fast that I may simplify my algorithm a bit.
-typedef struct {
-  Key count;
-  Key firstChild;
-} QtNode_Scratch;
-
-typedef struct {
-  U16 x1, y1, x2, y2;  // top-left and bottom-right corners of the rectangle
-} QtNodeInhabitant;
-
-Bln *traversedA;  // this is nEntities long. Prevents double-querying any node.
 U16 *collTypeA;  // This keeps track of the kinds of collisions everyone currently has. For messaging, cmd = COLLISION_[STARTED|ENDED]; arg = TYPE.
 
 
