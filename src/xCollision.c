@@ -41,6 +41,26 @@ XGetShareFuncDef_(Collision) {
   return e;
 }
 
+static Bln _collided(const register Rect_ *r1P, const register Rect_ *r2P) {
+  return r1P->x          < r2P->x + r2P->w &&
+         r1P->x + r1P->w > r2P->x          &&
+         r1P->y          < r2P->y + r2P->h &&
+         r1P->y + r1P->h > r2P->y;
+}
+
+static NodeRegion _getQtNodeRegionByComponent(XCollision *xCollSysP, XCollisionComp *cP, U8 granularity) {
+  register NodeRegion nr;
+  const register Rect_ *rectP = &xCollSysP->rectA[cP->rectIdx];
+  nr.node1Idx = (((rectP->x << DECIMAL_RES) * granularity) + 
+                 ((rectP->y << DECIMAL_RES) * granularity)) >> DECIMAL_RES;
+  nr.node2Idx = ((((rectP->x + rectP->w) << DECIMAL_RES) * xCollSysP->COARSE_SCALE) + 
+                 (((rectP->y + rectP->h) << DECIMAL_RES) * xCollSysP->COARSE_SCALE)) >> DECIMAL_RES;
+  nr.granularity = granularity;
+  return nr;
+}
+
+static void _removeNodeElement(Qt) {
+  elemP->nextElemIdx
 //======================================================
 // Collision activity
 //======================================================
@@ -58,6 +78,9 @@ Error xCollisionRun(System *sP) {
   // TODO search medium array
   // TODO search fine array
   // TODO search static grid
+  //
+  // TODO figure out how to check for onscreen in a fast way when cam or entity is moving; 
+  //      [de]activate accordingly
 
 	return e;
 }
@@ -74,26 +97,31 @@ typedef struct {
 U16 *collTypeA;  // This keeps track of the kinds of collisions everyone currently has. For messaging, cmd = COLLISION_[STARTED|ENDED]; arg = TYPE.
 
 
-/* Here we are, the collision system. I've been looking forward to this.
+/*
+ * Collision *components* aren't actually in either set of collision grids; they're used to update it.
+ * If I can get the collision component to 4 bytes, *perfect*.
+ * I want a single-array speed boost.
+ * Events COLLISION_BEGAN and COLLISION_ENDED should respond to motion events. In order to do so, it must keep a list of ongoing collisions. Don't iterate through that list; you must be able to key into it directly with the entity who moved. Should be a bitset since every entity has a unique number. This happens in the message processor (MP).
+ * That would be nice if I only checked on moving sprites rather than querying every node. But the problem arises when *everbody's* moving; I'd then have a horribly inefficient random-access pattern, and on three whole levels at that! So I have to pick and choose. However, I could have my cake and eat it too: I can switch the system's sRun() to something different depending on the situation! 
+ * 
+ * LET THE LOGICKE BEGINNNNN
+ * =========================
+ * 
+ * To only check onscreen moving entities for collisions, the camera must check for collisions.
+ * For the camera to check for collisions, the quadtree must already be initialized.
+ * For the quadtree to already be initiailzed, everybody in the world must be taken into account.
+ * 
+ * I think the overall beauty/justification of the onscreen method is that, for lower-end systems
+ * like the Pi Zero, onscreen-based collision lightens other systems' loads as well; that means
+ * animation, motion, AI, sound, etc. only have to operate on a fraction of the world's entities. 
+ * How well this'll actually play out remains to be seen. So we'll let experimentation decide. I'll
+ * still try to make this as fast and efficient as possible of course.
  *
- * An article I read the other day inspired me to take a 3-array approach: coarse, medium, and fine.  
- * One optimization it has is, for each row, check whether the row is NULL. But this won't be the case with
- * a straight-shot array I have in mind. I'll need something else, and I also don't want it to check every iteration.
  *
- * Each QtNode has index to first child in the next-level array. But what's more, I don't want to store big guys in 
- * every fine node they span; they should only inhabit nodes they're smaller than (to an extent). 
- *
- * (A) Does source author reference rectangles externally? If so, I'm in good shape, especially if by indices.
- * (B) Collision *components* aren't actually in either set of collision grids; they're used to update it.
- * (C) If I can get the collision component to 4 bytes, *perfect*.
- * (D) I want a single-array speed boost.
- * (E) Events COLLISION_BEGAN and COLLISION_ENDED should respond to motion events. In order to do so, it must keep a 
- *     list of ongoing collisions. Don't iterate through that list; you must be able to key into it directly with the
- *     entity who moved. Should be a bitset since every entity has a unique number. This happens in the message processor (MP).
- *     How do I decouple the MP from the motion system? I need to avoid saying "This object moved." Instead, I need to have it
- *     listen for a simple [DE]ACTIVATED message. This tells it a component is now worth checking. 
- * (F) That would be nice if I only checked on moving sprites rather than querying every node. But the problem arises when *everbody's*
- *     moving; I'd then have a horribly inefficient random-access pattern. So I have to pick and choose. However, I could have my cake and
- *     eat it too: I can switch the system's sRun() to something different depending on the situation! 
+ * So here's how it's going to work:
+ *    1) Compute active components' node ranges.
+ *    2) compare to old node ranges (in yet another array). 
+ *      a) if different, update quad tree nodes and their element lists.
+ *    3) 
  *
  */

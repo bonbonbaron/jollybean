@@ -1,7 +1,7 @@
 #ifndef SYS_MotionTrans
 #define SYS_MotionTrans
 #include "botox.h"
-#include "jbInterface.h"
+#include "yoyoInterface.h"
 
 typedef struct {
 } XMotionTransCompSrc; 

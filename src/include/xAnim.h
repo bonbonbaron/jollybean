@@ -1,7 +1,7 @@
 #ifndef SYS_Anim
 #define SYS_Anim
 #include "botox.h"
-#include "jbInterface.h"
+#include "yoyoInterface.h"
 
 typedef struct {
 } XAnimCompSrc; 
