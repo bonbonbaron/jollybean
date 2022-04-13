@@ -16,28 +16,19 @@ typedef struct {
 // This is just a scratch-sheet area-- not part of the code above. I'll delete this later.
 typedef struct {
   Entity entity;
-  Key    type;         // When someone collides with this element, they need to know what type of reaction to have.
+  Key    type;     // When someone collides with this element, they need to know what type of reaction to have.
   Key    rectIdx;
-  Key    currIdx;      // I don't know how feasible this is yet.
+  Key    elemIdx;  // Keeps track of where this is in the node elem array, which never changes.
 } XCollisionComp;
 
 // With two bytes per node (32 nodes per cache line), traversal is so fast that I may simplify my algorithm a bit.
-typedef struct {
-  Key count;       // If count > 1, *then* bother to drill into this node.
-  Key firstChild;  // If count < splitTrhesh (defined in XCollision struct), this points to 
-} QtNode;
+typedef Key QtNode;  // A node holds the value of its firstChild.
 
 typedef struct {
   Entity entity;   // entity is more stable than component index, preventing excess updates.
   Key prevElemIdx;   // This allows simple tree updates when an element leaves a QT node.
   Key nextElemIdx;
 } QtNodeElem;
-
-typedef struct {
-  U8 granularity;  // By this the  requestor can infer which array(s) to populate.
-  U32 node1Idx;
-  U32 node2Idx;
-} NodeRegion;
 
 /* How it works:
  *   If anybody moves, update the whole try by iterating through all of the moving entities

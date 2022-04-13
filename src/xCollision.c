@@ -1,5 +1,15 @@
 #include "xCollision.h"
 
+// Based on the "Performance Comparisons" link, we use brute force until
+// the number of moving elements exceeds 200. When it does, we switch to the box-
+// intersect algorithm found in link to the paper. 
+// ================================================
+// Performance Comparisons: https://0fps.net/2015/01/23/collision-detection-part-3-benchmarks/
+// Github:                  https://github.com/mikolalysenko/box-intersect
+// Paper:                   https://pub.ist.ac.at/~edels/Papers/2002-J-01-FastBoxIntersection.pdf
+// ================================================
+
+
 //======================================================
 // Initialize Collision's system.
 //======================================================
@@ -48,16 +58,15 @@ static Bln _collided(const register Rect_ *r1P, const register Rect_ *r2P) {
          r1P->y + r1P->h > r2P->y;
 }
 
-static NodeRegion _getQtNodeRegionByComponent(XCollision *xCollSysP, XCollisionComp *cP, U8 granularity) {
-  register NodeRegion nr;
-  const register Rect_ *rectP = &xCollSysP->rectA[cP->rectIdx];
-  nr.node1Idx = (((rectP->x << DECIMAL_RES) * granularity) + 
-                 ((rectP->y << DECIMAL_RES) * granularity)) >> DECIMAL_RES;
-  nr.node2Idx = ((((rectP->x + rectP->w) << DECIMAL_RES) * xCollSysP->COARSE_SCALE) + 
-                 (((rectP->y + rectP->h) << DECIMAL_RES) * xCollSysP->COARSE_SCALE)) >> DECIMAL_RES;
-  nr.granularity = granularity;
-  return nr;
+// returns index to SUBarray (not necessarily wrt array's beginning)
+static U8 _getNodeSubIdx(XCollision *xCollSysP, Rect_ *rectP, U8 granularity) {
+  return (((rectP->x << DECIMAL_RES) * granularity) + 
+          ((rectP->y << DECIMAL_RES) * granularity)   ) >> DECIMAL_RES;
 }
+// TODO make granularity access a pre-computed ratio as per your notebook
+// TODO use the above with a pointer to a subarray:
+//      subA = &array[50];
+//      subA[_getNodeSubIdx] = firstChild;
 
 static void _removeNodeElement(Qt) {
   elemP->nextElemIdx

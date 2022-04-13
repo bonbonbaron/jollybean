@@ -4,9 +4,9 @@
 // Initialize REPLACEME's system.
 //======================================================
 Error xREPLACEMEIniSys(System *sP, void *sParamsP) {
-  return SUCCESS;
 	unused_(sParamsP);
   unused_(sP);
+  return SUCCESS;
 }
 
 //======================================================

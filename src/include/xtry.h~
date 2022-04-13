@@ -1,0 +1,20 @@
+#ifndef SYS_try
+#define SYS_try
+#include "botox.h"
+
+typedef struct {
+} XtryCompSrc; 
+
+typedef struct {
+} XtryComp;
+
+// Images
+Error xtryIniS(System *sP, void *sParamsP);
+Error xtryProcessMessage(System *sP, Message *msgP);
+
+typedef struct {
+  System system;
+} Xtry;
+
+extern System *stryP;
+#endif
