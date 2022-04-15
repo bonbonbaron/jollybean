@@ -42,7 +42,7 @@ XGetShareFuncDef_(REPLACEME) {
 }
 
 //======================================================
-// REPLACEME activity
+// REPLACEME run function
 //======================================================
 Error xREPLACEMERun(System *sP) {
 	Error e = SUCCESS;
