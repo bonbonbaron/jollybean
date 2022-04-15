@@ -15,21 +15,16 @@ Error xTimerIniSys(System *sP, void *sParamsP) {
 // Initialize xTimer's components, which are Images.
 //======================================================
 Error xTimerIniComp(System *sP, void *compDataP, void *compDataSrcP) {
-	if (!sP || !compDataP || !compDataSrcP)
-		return E_BAD_ARGS;
-
-  Error e = SUCCESS;
-	XTimer *xTimerSysP = (XTimer*) sP;
-	XTimerComp *cP = (XTimerComp*) compDataP;
-  XTimerCompSrc *imgP = (XTimerCompSrc*) compDataSrcP;
-
-	return e;
+  unused_(sP);
+  unused_(compDataP);
+  unused_(compDataSrcP);
+	return SUCCESS;
 }
 
-#define START_TIMER (1)
 Error xTimerProcessMessage(System *sP, Message *msgP) {
   XTimerComp *cP = (XTimerComp*) xGetCompPByEntity(sP, msgP->attn);
   switch (msgP->cmd) {
+    // Pausing and stopping the timer are already implemented in built-in x.c message-processing.
     case START_TIMER:
       cP->timeLeft = cP->timeFull;
       xActivateComponentByEntity(sP, msgP->attn);
@@ -46,15 +41,14 @@ XClrFuncDef_(Timer) {
 }
 
 XGetShareFuncDef_(Timer) {
-  XTimer *xTimerSysP = (XTimer*) sP;
-  Error e = SUCCESS;
-  return e;
+  unused_(sP);
+  unused_(shareMMP);
+  return SUCCESS;
 }
 
 //======================================================
 // Timer run function
 //======================================================
-#define TIMES_UP (1) //TODO
 Error xTimerRun(System *sP) {
 	Error e = SUCCESS;
 
@@ -64,7 +58,7 @@ Error xTimerRun(System *sP) {
 
   while (cP < cEndP) {
     if (!--cP->timeLeft) {
-      mailboxWrite(sP->outboxF, sP->cIdx2eA[cP - cStartP], TIMES_UP, 0, 0);
+      mailboxWrite(sP->outboxF, sP->cIdx2eA[cP - cStartP], TIME_UP, 0, 0);
       if  (cP->repeat) {
         cP->timeLeft = cP->timeFull;
         ++cP;

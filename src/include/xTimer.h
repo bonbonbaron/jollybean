@@ -2,6 +2,8 @@
 #define SYS_Timer
 #include "botox.h"
 
+typedef enum {START_TIMER, PAUSE_TIMER, STOP_TIMER, TIME_UP} TimerKeychain;
+
 typedef struct {
 } XTimerCompSrc; 
 
