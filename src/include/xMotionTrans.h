@@ -9,7 +9,7 @@ typedef struct {
 typedef struct {
   S8 x;
   S8 y;
-  Rect_ *shareRectP;
+  Key rectIdx;
 } XMotionTransComp;
 
 // Images
@@ -18,6 +18,7 @@ Error xMotionTransProcessMessage(System *sP, Message *msgP);
 
 typedef struct {
   System system;
+  Rect_ *rectA;
 } XMotionTrans;
 
 extern System *sMotionTransP;

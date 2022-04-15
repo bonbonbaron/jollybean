@@ -44,14 +44,13 @@ XClrFuncDef_(MotionTrans) {
   return SUCCESS;
 }
 
+#define RECT 1  // TODO
 XGetShareFuncDef_(MotionTrans) {
-	XMotionTransComp *cP = (XMotionTransComp*) sP->cF;
-  XMotionTransComp *cStartP = cP;
-	XMotionTransComp *cEndP = cP + frayGetFirstInactiveIdx(sP->cF);
-
-  for (; cP < cEndP; ++cP)
-    cP->shareRectP = (Rect_*) mapGet(shareMMP, xGetEntityByCompIdx(sP, cP - cStartP));
-
+  XMotionTrans *xMotionSysP = (XMotionTrans*) sP;
+  Map *rectMP = (Map*) mapGet(shareMMP, RECT);
+  if (!rectMP)
+    return E_BAD_KEY;
+  xMotionSysP->rectA = rectMP->mapA;
   return SUCCESS;
 }
 
@@ -59,12 +58,15 @@ XGetShareFuncDef_(MotionTrans) {
 // MotionTrans activity
 //======================================================
 Error xMotionTransRun(System *sP) {
+  XMotionTrans *xMotionSysP = (XMotionTrans*) sP;
 	XMotionTransComp *cP = (XMotionTransComp*) sP->cF;
 	XMotionTransComp *cEndP = cP + frayGetFirstInactiveIdx(sP->cF);
+  Rect_ *rectA = xMotionSysP->rectA;
 
   for (; cP < cEndP; cP++) {
-    cP->shareRectP->x += cP->x;
-    cP->shareRectP->y += cP->y;
+    Rect_ *rectP = &rectA[cP->rectIdx];
+    rectP->x += cP->x;
+    rectP->y += cP->y;
   }
 
 	return SUCCESS;

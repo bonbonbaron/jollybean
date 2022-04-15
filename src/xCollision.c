@@ -1,6 +1,5 @@
 #include "xCollision.h"
 #include "data.h"
-#include "xControl.h"
 
 // Based on the "Performance Comparisons" link, we use brute force until
 // the number of moving elements exceeds 200. When it does, we switch to the box-
@@ -25,20 +24,36 @@ Error xCollisionIniSys(System *sP, void *sParamsP) {
 // Initialize xCollision's components, which are Images.
 //======================================================
 Error xCollisionIniComp(System *sP, void *compDataP, void *compDataSrcP) {
-	if (!sP || !compDataP || !compDataSrcP)
-		return E_BAD_ARGS;
-
-  Error e = SUCCESS;
-	XCollision *xCollisionSysP = (XCollision*) sP;
-	XCollisionComp *cP = (XCollisionComp*) compDataP;
-  XCollisionCompSrc *imgP = (XCollisionCompSrc*) compDataSrcP;
-
-	return e;
+  assert(sP && compDataP && compDataSrcP);
+  XCollisionComp *cP = (XCollisionComp*) compDataP;
+  cP->type = *((U8*) compDataSrcP);
+	return SUCCESS;
 }
 
+#define CHANGE_LAYER (1) //TODO
+#define ENTITY_STARTED_MOVING (2) //TODO
+#define ENTITY_STOPPED_MOVING (3) //TODO
 Error xCollisionProcessMessage(System *sP, Message *msgP) {
-	unused_(sP);
-	unused_(msgP);
+  assert(sP && msgP);
+  XCollisionComp *cP;
+  cP = xGetCompPByEntity(sP, msgP->attn);
+  switch (msgP->cmd) {
+    case CHANGE_LAYER:
+      if (cP)
+        cP->layer = msgP->arg;
+      else
+        return E_BAD_KEY;
+      break; 
+    // XColl pauses entities when they come onscreen (1 swap). If they start moving, simply unpause.
+    case ENTITY_STARTED_MOVING:
+      xUnpauseComponentByEntity(sP, msgP->attn);
+      break;
+    case ENTITY_STOPPED_MOVING:
+      xPauseComponentByEntity(sP, msgP->attn);
+      break;
+    default:
+      return E_BAD_ARGS;
+  }
 	return SUCCESS;
 }
 
@@ -47,9 +62,36 @@ XClrFuncDef_(Collision) {
   return SUCCESS;
 }
 
+#define RECT (1)  // TODO move to enum (call these "keychains")
+#define LAYER (2)  // TODO move to enum (call these "keychains")
 XGetShareFuncDef_(Collision) {
   XCollision *xCollisionSysP = (XCollision*) sP;
+  // Get system the rectangle array from master.
+  Map *rectMP = (Map*) mapGet(shareMMP, RECT);
+  if (!rectMP)
+    return E_BAD_KEY;
+  Map *layerMP = (Map*) mapGet(shareMMP, LAYER);
+  if (!layerMP)
+    return E_BAD_KEY;
+  xCollisionSysP->rectA = rectMP->mapA;
+  // Give each component the index to its rectangle.
+  XCollisionComp *cP = sP->cF;
+  XCollisionComp *cStartP = cP;
+  XCollisionComp *cEndP = cP + arrayGetNElems(sP->cF);
+  U8 *layerP;
   Error e = SUCCESS;
+  for (; !e && cP < cEndP; ++cP) {
+    cP->entity = sP->cIdx2eA[cP - cStartP];
+    e = cP->rectIdx = mapGetIndex(rectMP, cP->entity, &cP->rectIdx);
+    if (!e) {
+      layerP = (U8*) mapGet(layerMP, cP->entity);
+      if (!layerP)
+        e = E_BAD_KEY;
+      else
+        cP->layer = *layerP;
+    }
+  }
+
   return e;
 }
 
