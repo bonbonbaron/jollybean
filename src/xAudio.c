@@ -1,5 +1,6 @@
 #include "xAudio.h"
 
+// TODO research MIDI format to learn how/if you can compress it the way you do images.
 //======================================================
 // Initialize Audio's system.
 //======================================================
