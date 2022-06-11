@@ -459,6 +459,8 @@ void fluid_player_settings(fluid_settings_t *settings);
 /*
  * fluid_midi_file
  */
+// This doesn't contain any parsed information; it's really just file metadata.
+// It's fluid_player_t you're after-- y'know, the one you trashed lol.
 typedef struct
 {
     const char *buffer;           /* Entire contents of MIDI file (borrowed) */

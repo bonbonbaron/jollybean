@@ -1,0 +1,14 @@
+[aac @ 0x225f490] More than one AAC RDB per ADTS frame is not implemented. Update your FFmpeg version to the newest one from Git. If the problem still occurs, it means that your file has a feature which has not been implemented.
+[aac @ 0x225f490] channel element 2.14 is not allocated
+Input #0, aac, from 'http://stream.wriu.org/wriu-fm':
+  Metadata:
+    icy-br          : 96
+    icy-description : WRIU 90.3FM Kingston RI
+    icy-genre       : College Radio
+    icy-name        : WRIU-FM
+    icy-private     : 0
+    icy-pub         : 1
+    icy-url         : http://www.wriu.org
+    StreamTitle     : 
+  Duration: N/A, bitrate: 97 kb/s
+    Stream #0:0: Audio: aac (HE-AAC), 44100 Hz, stereo, fltp, 97 kb/s
