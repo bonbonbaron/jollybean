@@ -6,5 +6,5 @@ C_DEFINES =
 
 C_INCLUDES = -I/home/bonbonbaron/hack/jollybean/utils/sf3/src -I/home/bonbonbaron/hack/jollybean/utils/sf3/include -I/home/bonbonbaron/hack/jollybean/utils/sf3/stb -I/home/bonbonbaron/hack/jollybean/utils/sf3/libbotox/src/include
 
-C_FLAGS = -O3 -DNDEBUG
+C_FLAGS = -g
 

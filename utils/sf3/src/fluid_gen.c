@@ -22,7 +22,7 @@
 #include "fluid_gen.h"
 #include "fluid_chan.h"
 
-
+// Information *about* the generator. Theory of what it actually is still holds.
 /* See SFSpec21 $8.1.3 */
 fluid_gen_info_t fluid_gen_info[] = {
         /* number/name             init  scale         min        max         def */

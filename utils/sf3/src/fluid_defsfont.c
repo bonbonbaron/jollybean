@@ -452,14 +452,13 @@ void fluid_synth_set_preset_callback (void *callback) {
 
 /*
  * fluid_defsfont_load
- */
-int fluid_defsfont_load (fluid_defsfont_t * sfont, const char *file,
+ */ int fluid_defsfont_load (fluid_defsfont_t * sfont, const char *file,
 												 fluid_fileapi_t * fapi) {
-	SFData *sfdata;
+	SFData *sfontFileMetadataP;
 	fluid_list_t *p;
 	SFPreset *sfpreset;
-	SFSample *sfsample;
-	fluid_sample_t *sample;
+	SFSample *sampleSrcP;      // source sampleDstP data
+	fluid_sample_t *sampleDstP;  // destination sampleDstP data
 	fluid_defpreset_t *preset;
 
 	sfont->filename = FLUID_MALLOC (1 + FLUID_STRLEN (file));
@@ -470,46 +469,48 @@ int fluid_defsfont_load (fluid_defsfont_t * sfont, const char *file,
 	FLUID_STRCPY (sfont->filename, file);
 
 	/* This just opepns the file. */
-	sfdata = sfload_file (file, fapi);
-	if (sfdata == NULL) {
+	sfontFileMetadataP = sfload_file (file, fapi);
+	if (sfontFileMetadataP == NULL) {
 		FLUID_LOG (FLUID_ERR, "Couldn't load soundfont file");
 		return FLUID_FAILED;
 	}
 
-	/* Keep track of the position and size of the sample data because
+	/* Keep track of the position and size of the sampleDstP data because
 	   it's loaded separately (and might be unoaded/reloaded in future) */
-	sfont->samplepos = sfdata->samplepos;
-	sfont->samplesize = sfdata->samplesize;
+	sfont->samplepos = sfontFileMetadataP->samplepos;
+	sfont->samplesize = sfontFileMetadataP->samplesize;
 
-	/* load sample data in one block */
+  // Load all the samples' data in one, solid block.
 	if (fluid_defsfont_load_sampledata (sfont, fapi) != FLUID_OK)
 		goto err_exit;
 
-	/* Create all the sample headers */
-	p = sfdata->sample;
+  // Load samples and append them to the samples list.
+	p = sfontFileMetadataP->sampleDstP;
 	while (p != NULL) {
-		sfsample = (SFSample *) p->data;
+		sampleSrcP = (SFSample *) p->data;
 
-		sample = new_fluid_sample ();
-		if (sample == NULL)
+		sampleDstP = new_fluid_sample ();
+		if (sampleDstP == NULL)
 			goto err_exit;
 
-		if (fluid_sample_import_sfont (sample, sfsample, sfont) != FLUID_OK)
+		if (fluid_sample_import_sfont (sampleDstP, sampleSrcP, sfont) != FLUID_OK)
 			goto err_exit;
 
-		fluid_defsfont_add_sample (sfont, sample);
-		fluid_voice_optimize_sample (sample);
+    // append sample's destination data tp list of samples
+		fluid_defsfont_add_sample (sfont, sampleDstP);
+		fluid_voice_optimize_sample (sampleDstP);
 		p = fluid_list_next (p);
 	}
 
 	/* Load all the presets */
-	p = sfdata->preset;
+	p = sfontFileMetadataP->preset;
 	while (p != NULL) {
 		sfpreset = (SFPreset *) p->data;
 		preset = new_fluid_defpreset (sfont);
 		if (preset == NULL)
 			goto err_exit;
 
+    // This internally loads the instrument/zone data as well.
 		if (fluid_defpreset_import_sfont (preset, sfpreset, sfont) != FLUID_OK)
 			goto err_exit;
 
@@ -518,12 +519,12 @@ int fluid_defsfont_load (fluid_defsfont_t * sfont, const char *file,
 			preset_callback (preset->bank, preset->num, preset->name);
 		p = fluid_list_next (p);
 	}
-	sfont_close (sfdata, fapi);
+	sfont_close (sfontFileMetadataP, fapi);
 
 	return FLUID_OK;
 
 err_exit:
-	sfont_close (sfdata, fapi);
+	sfont_close (sfontFileMetadataP, fapi);
 	return FLUID_FAILED;
 }
 
@@ -1165,6 +1166,7 @@ fluid_defpreset_import_sfont (fluid_defpreset_t * preset,
 	preset->bank = sfpreset->bank;
 	preset->num = sfpreset->prenum;
 	p = sfpreset->zone;
+  // sfpreset is source data holding instrument/zone information. Dest preset loads this.
 	count = 0;
 	while (p != NULL) {
 		sfzone = (SFZone *) p->data;
@@ -1907,11 +1909,13 @@ int fluid_sample_in_rom (fluid_sample_t * sample) {
 /*
  * fluid_sample_import_sfont
  */
+// MB: the only reason you need to pass in sfont is to show where sample data's stored.
 int
 fluid_sample_import_sfont (fluid_sample_t * sample, SFSample * sfsample,
 													 fluid_defsfont_t * sfont) {
+  // copy the source sample's data into dest sample's
 	FLUID_STRCPY (sample->name, sfsample->name);
-	sample->data = sfont->sampledata;
+	sample->data = sfont->sampledata;  // pointer to giant block of all samples
 	sample->start = sfsample->start;
 	sample->end = sfsample->start + sfsample->end;
 	sample->loopstart = sfsample->start + sfsample->loopstart;
@@ -3047,7 +3051,7 @@ load_shdr (unsigned int size, SFData * sf, void *fd, fluid_fileapi_t * fapi) {
 	/* load all sample headers */
 	for (i = 0; i < size; i++) {
 		p = FLUID_NEW (SFSample);
-		sf->sample = fluid_list_append (sf->sample, p);
+		sf->sampleDstP = fluid_list_append (sf->sampleDstP, p);
 		READSTR (p->name, fd, fapi);
 		READD (p->start, fd, fapi);
 		READD (p->end, fd, fapi);		/* - end, loopstart and loopend */
@@ -3107,7 +3111,7 @@ static int fixup_igen (SFData * sf) {
 		while (p2) {								/* traverse instrument's zones */
 			z = (SFZone *) (p2->data);
 			if ((i = GPOINTER_TO_INT (z->instsamp))) {	/* load sample # */
-				p3 = fluid_list_nth (sf->sample, i - 1);
+				p3 = fluid_list_nth (sf->sampleDstP, i - 1);
 				if (!p3)
 					return (gerr (ErrCorr,
 												_("Instrument \"%s\": Invalid sample reference"),
@@ -3127,7 +3131,7 @@ static int fixup_sample (SFData * sf) {
 	fluid_list_t *p;
 	SFSample *sam;
 
-	p = sf->sample;
+	p = sf->sampleDstP;
 	while (p) {
 		sam = (SFSample *) (p->data);
 
@@ -3240,13 +3244,13 @@ void sfont_close (SFData * sf, fluid_fileapi_t * fapi) {
 	delete_fluid_list (sf->inst);
 	sf->inst = NULL;
 
-	p = sf->sample;
+	p = sf->sampleDstP;
 	while (p) {
 		FLUID_FREE (p->data);
 		p = fluid_list_next (p);
 	}
-	delete_fluid_list (sf->sample);
-	sf->sample = NULL;
+	delete_fluid_list (sf->sampleDstP);
+	sf->sampleDstP = NULL;
 
 	FLUID_FREE (sf);
 }

@@ -66,6 +66,7 @@ typedef struct _SFMod
 }
 SFMod;
 
+// Generator is the source of the sound (sample, sine wave, etc.)
 typedef union _SFGenAmount
 {				/* Generator amount structure */
   signed short sword;			/* signed 16 bit value */
@@ -147,7 +148,7 @@ typedef struct _SFData
   fluid_list_t *info;		     /* linked list of info strings (1st byte is ID) */
   fluid_list_t *preset;		/* linked list of preset info */
   fluid_list_t *inst;			/* linked list of instrument info */
-  fluid_list_t *sample;		/* linked list of sample info */
+  fluid_list_t *sampleDstP;		/* linked list of sample info */
 }
 SFData;
 

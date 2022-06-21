@@ -6,5 +6,5 @@ C_DEFINES = -DSF3_SUPPORT=SF3_STB_VORBIS -Dfluidlite_EXPORTS
 
 C_INCLUDES = -I/home/bonbonbaron/hack/jollybean/utils/sf3/src -I/home/bonbonbaron/hack/jollybean/utils/sf3/include -I/home/bonbonbaron/hack/jollybean/utils/sf3/stb -I/home/bonbonbaron/hack/jollybean/utils/sf3/libbotox/src/include
 
-C_FLAGS = -O3 -DNDEBUG -fPIC -std=gnu99
+C_FLAGS = -g -fPIC -std=gnu99
 

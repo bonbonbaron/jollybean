@@ -6,5 +6,5 @@ C_DEFINES = -DSF3_SUPPORT=SF3_STB_VORBIS
 
 C_INCLUDES = -I/home/bonbonbaron/hack/jollybean/utils/sf3/src -I/home/bonbonbaron/hack/jollybean/utils/sf3/include -I/home/bonbonbaron/hack/jollybean/utils/sf3/stb
 
-C_FLAGS = -O3 -DNDEBUG -std=gnu99
+C_FLAGS = -g -std=gnu99
 
