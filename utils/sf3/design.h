@@ -35,11 +35,10 @@ typedef struct {
 struct _Zone;
 
 typedef struct {
-  U8 nZones;
   struct _Zone *zoneA;
-} Instrument;  // 8 bytes
+} Instrument;  // 4 bytes
 
-typedef Instrument Preset;  // Both have the same structure.
+typedef Instrument Preset;  // Both have the same structure; so 4 bytes again!
 
 typedef struct _Zone {
   U8            nGenerators;
@@ -51,14 +50,12 @@ typedef struct _Zone {
 } Zone;  // 12 bytes
 
 typedef struct {
-  U8      nPresets;
   Preset *presetA;
-} Bank;  // 8 bytes
+} Bank;  // 4 bytes
 
 typedef struct {
-  U8    nBanks;
   Bank *bankA;
-} Soundfont;  // 8 bytes
+} Soundfont;  // 4 bytes
 
 // Seeds prevent duplicate data storage in ROM. Only samples are stored identical to runtime format.
 
