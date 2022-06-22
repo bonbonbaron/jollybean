@@ -61,7 +61,7 @@ typedef struct _SFMod
   unsigned short src;			/* source modulator */
   unsigned short dest;			/* destination generator */
   signed short amount;		/* signed, degree of modulation */
-  unsigned short amtsrc;		/* second source controls amnt of first */
+  unsigned short amtSrc;		/* second source controls amnt of first */
   unsigned short trans;		/* transform applied to source */
 }
 SFMod;
@@ -187,8 +187,7 @@ typedef enum
   Gen_CoarseTune, Gen_FineTune, Gen_SampleId, Gen_SampleModes,
   Gen_Reserved3, Gen_ScaleTune, Gen_ExclusiveClass, Gen_OverrideRootKey,
   Gen_Dummy
-}
-Gen_Type;
+} Gen_Type;
 
 #define Gen_MaxValid 	Gen_Dummy - 1	/* maximum valid generator */
 #define Gen_Count	Gen_Dummy	/* count of generators */
