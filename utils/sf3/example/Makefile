@@ -26,7 +26,7 @@ clean:
 	@rm -rf out
 
 out/example: src/main.c out/libfluidlite.a
-	@$(CC) -g -o $@ $< -I../include -Lout -lfluidlite
+	@$(CC) -g -o $@ $< -I../include -I../libbotox/src/include -Lout -lfluidlite -L../libbotox/lib -lbotox
 
 .PHONY: $(addprefix out/libfluidlite.,a so)
 $(addprefix out/libfluidlite.,a so):

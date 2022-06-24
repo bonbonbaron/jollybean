@@ -61,7 +61,8 @@ typedef struct {
 
 typedef struct {
   U8     nZones;
-  Zone **zonePA;
+  Zone   globalZone;
+  Zone  *zoneA;
 } InstrumentSeed;
 
 typedef InstrumentSeed PresetSeed;

@@ -333,6 +333,7 @@ int fluid_defsfont_sfont_iteration_next (fluid_sfont_t * sfont,
 	preset->noteon = fluid_defpreset_preset_noteon;
 	preset->notify = NULL;
 
+  // sfont is a list, so sfont->data is actually the sfont (HUGE eye-roll)
 	return fluid_defsfont_iteration_next ((fluid_defsfont_t *) sfont->data,
 																				preset);
 }
