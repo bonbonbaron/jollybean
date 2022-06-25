@@ -31,4 +31,5 @@ out/example: src/main.c out/libfluidlite.a
 .PHONY: $(addprefix out/libfluidlite.,a so)
 $(addprefix out/libfluidlite.,a so):
 	@mkdir -p out
-	@cd out && cmake $(cmake_args) ../../ && make
+	@cd out && make
+	#@cd out && cmake $(cmake_args) ../../ && make

@@ -1434,39 +1434,31 @@ fluid_voice_update_param(fluid_voice_t* voice, int gen)
  * @param cc flag to distinguish between a continous control and a channel control (pitch bend, ...)
  * @param ctrl the control number
  * */
-int fluid_voice_modulate(fluid_voice_t* voice, int cc, int ctrl)
-{
+int fluid_voice_modulate(fluid_voice_t* voice, int cc, int ctrl) {
   int i, k;
   fluid_mod_t* mod;
   int gen;
   fluid_real_t modval;
-
 /*    printf("Chan=%d, CC=%d, Src=%d, Val=%d\n", voice->channel->channum, cc, ctrl, val); */
-
   for (i = 0; i < voice->mod_count; i++) {
-
     mod = &voice->mod[i];
-
     /* step 1: find all the modulators that have the changed controller
      * as input source. */
     if (fluid_mod_has_source(mod, cc, ctrl)) {
-
       gen = fluid_mod_get_dest(mod);
       modval = 0.0;
-
       /* step 2: for every changed modulator, calculate the modulation
        * value of its associated generator */
       for (k = 0; k < voice->mod_count; k++) {
-	if (fluid_mod_has_dest(&voice->mod[k], gen)) {
-	  modval += fluid_mod_get_value(&voice->mod[k], voice->channel, voice);
-	}
+        if (fluid_mod_has_dest(&voice->mod[k], gen)) {
+          modval += fluid_mod_get_value(&voice->mod[k], voice->channel, voice);
+        }
       }
-
       fluid_gen_set_mod(&voice->gen[gen], modval);
-
       /* step 3: now that we have the new value of the generator,
        * recalculate the parameter values that are derived from the
        * generator */
+      // sure, we've updated the generator, but the generator hasn't updated the VOICE yet. We do that below.
       fluid_voice_update_param(voice, gen);
     }
   }
@@ -1634,17 +1626,14 @@ fluid_voice_off(fluid_voice_t* voice)
 /*
  * fluid_voice_add_mod
  *
- * Adds a modulator to the voice.  "mode" indicates, what to do, if
- * an identical modulator exists already.
+ * Adds a modulator to the voice.  "mode" indicates what to do if an identical modulator exists already.
  *
  * mode == FLUID_VOICE_ADD: Identical modulators on preset level are added
  * mode == FLUID_VOICE_OVERWRITE: Identical modulators on instrument level are overwritten
  * mode == FLUID_VOICE_DEFAULT: This is a default modulator, there can be no identical modulator.
  *                             Don't check.
  */
-void
-fluid_voice_add_mod(fluid_voice_t* voice, fluid_mod_t* mod, int mode)
-{
+void fluid_voice_add_mod(fluid_voice_t* voice, fluid_mod_t* mod, int mode) {
   int i;
 
   /*
@@ -1666,24 +1655,21 @@ fluid_voice_add_mod(fluid_voice_t* voice, fluid_mod_t* mod, int mode)
   }
 
   if (mode == FLUID_VOICE_ADD) {
-
     /* if identical modulator exists, add them */
     for (i = 0; i < voice->mod_count; i++) {
       if (fluid_mod_test_identity(&voice->mod[i], mod)) {
-	//		printf("Adding modulator...\n");
-	voice->mod[i].amount += mod->amount;
-	return;
+        //printf("Adding modulator...\n"); 
+        voice->mod[i].amount += mod->amount; 
+        return; 
       }
     }
-
   } else if (mode == FLUID_VOICE_OVERWRITE) {
-
     /* if identical modulator exists, replace it (only the amount has to be changed) */
     for (i = 0; i < voice->mod_count; i++) {
       if (fluid_mod_test_identity(&voice->mod[i], mod)) {
-	//		printf("Replacing modulator...amount is %f\n",mod->amount);
-	voice->mod[i].amount = mod->amount;
-	return;
+        //printf("Replacing modulator...amount is %f\n",mod->amount);
+        voice->mod[i].amount = mod->amount;
+        return;
       }
     }
   }

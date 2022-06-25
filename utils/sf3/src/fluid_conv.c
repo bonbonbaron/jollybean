@@ -295,8 +295,7 @@ fluid_pan(fluid_real_t c, int left)
  * fluid_concave
  */
 fluid_real_t
-fluid_concave(fluid_real_t val)
-{
+fluid_concave(fluid_real_t val) {
   if (val < 0) {
     return 0;
   } else if (val > 127) {
