@@ -68,10 +68,6 @@ fluidsynth_priv.h
 
 /home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_config.h
 
-/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_conv.c
-fluid_conv.h
-/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_conv.h
-
 /home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_conv.h
 fluidsynth_priv.h
 /home/bonbonbaron/hack/jollybean/utils/sf3/src/fluidsynth_priv.h

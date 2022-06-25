@@ -32,15 +32,17 @@ typedef union {
 // key/velocity range, filter cutoff/Q, source sample, etc.
 typedef struct {
   U8 genType;	
+  U8 nMods;
   GenAmount amount;	
   Modulator *modA;  // I get the mod array appeal, but data accessed together should stay together.
-} Generator;   // 10 bytes
+} Generator;   // 8 bytes
 
 struct _Zone;
 
 typedef struct {
+  U8 nZones;
   struct _Zone *zoneA;
-} Instrument;  // 4 bytes
+} Instrument;  // 8 bytes
 
 typedef Instrument Preset;  // Both have the same structure; so 4 bytes again!
 
@@ -48,7 +50,7 @@ typedef Instrument Preset;  // Both have the same structure; so 4 bytes again!
 // Union has inst/sample because presets are made of 
 // instruments, and instruments are made of samples.
 typedef struct _Zone {
-  U8            nGenerators;
+  U8           nGens;
   union {   // Finally found a good use case for unions: avoiding void* while restricting purpose.
     Sample     *sampleP;
     Instrument *instP;
@@ -57,20 +59,11 @@ typedef struct _Zone {
 } Zone;  // 12 bytes
 
 typedef struct {
+  U8 nPresets;
   Preset *presetA;
-} Bank;  // 4 bytes
+} Bank;  // 8 bytes
 
 typedef struct {
+  U8 nBanks;
   Bank *bankA;
-} Soundfont;  // 4 bytes
-
-// Seeds prevent duplicate data storage in ROM. Only samples are stored identical to runtime format.
-typedef struct {
-  U8     nPresets;
-  Preset *presetA;  // why pointer? 
-} BankSeed;
-
-typedef struct {
-  U8     nBankSeeds;
-  Bank  *bankSeedA;
-} SoundfontSeed;
+} Soundfont;  // 8 bytes

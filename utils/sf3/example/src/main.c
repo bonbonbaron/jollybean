@@ -70,6 +70,69 @@ struct _fluid_defsfont_t
   struct _fluid_defpreset_t* iter_cur;       /* the current preset in the iteration */
 };
 
+char genNamesA[][100] = {
+        "GEN_STARTADDROFS",         
+        "GEN_ENDADDROFS",           
+        "GEN_STARTLOOPADDROFS",     
+        "GEN_ENDLOOPADDROFS",       
+        "GEN_STARTADDRCOARSEOFS",   
+        "GEN_MODLFOTOPITCH",        
+        "GEN_VIBLFOTOPITCH",        
+        "GEN_MODENVTOPITCH",        
+        "GEN_FILTERFC",             
+        "GEN_FILTERQ",              
+        "GEN_MODLFOTOFILTERFC",     
+        "GEN_MODENVTOFILTERFC",     
+        "GEN_ENDADDRCOARSEOFS",     
+        "GEN_MODLFOTOVOL",          
+        "GEN_UNUSED1",              
+        "GEN_CHORUSSEND",           
+        "GEN_REVERBSEND",           
+        "GEN_PAN",                  
+        "GEN_UNUSED2",              
+        "GEN_UNUSED3",              
+        "GEN_UNUSED4",              
+        "GEN_MODLFODELAY",          
+        "GEN_MODLFOFREQ",           
+        "GEN_VIBLFODELAY",          
+        "GEN_VIBLFOFREQ",           
+        "GEN_MODENVDELAY",          
+        "GEN_MODENVATTACK",         
+        "GEN_MODENVHOLD",           
+        "GEN_MODENVDECAY",          
+        "GEN_MODENVSUSTAIN",        
+        "GEN_MODENVRELEASE",        
+        "GEN_KEYTOMODENVHOLD",      
+        "GEN_KEYTOMODENVDECAY",     
+        "GEN_VOLENVDELAY",          
+        "GEN_VOLENVATTACK",         
+        "GEN_VOLENVHOLD",           
+        "GEN_VOLENVDECAY",          
+        "GEN_VOLENVSUSTAIN",        
+        "GEN_VOLENVRELEASE",        
+        "GEN_KEYTOVOLENVHOLD",      
+        "GEN_KEYTOVOLENVDECAY",     
+        "GEN_INSTRUMENT",           
+        "GEN_RESERVED1",            
+        "GEN_KEYRANGE",             
+        "GEN_VELRANGE",             
+        "GEN_STARTLOOPADDRCOARSEOFS",
+        "GEN_KEYNUM",               
+        "GEN_VELOCITY",             
+        "GEN_ATTENUATION",          
+        "GEN_RESERVED2",            
+        "GEN_ENDLOOPADDRCOARSEOFS", 
+        "GEN_COARSETUNE",           
+        "GEN_FINETUNE",             
+        "GEN_SAMPLEID",             
+        "GEN_SAMPLEMODE",           
+        "GEN_RESERVED3",            
+        "GEN_SCALETUNE",            
+        "GEN_EXCLUSIVECLASS",       
+        "GEN_OVERRIDEROOTKEY",      
+        "GEN_PITCH",                
+};
+
 Error fileNameNew(char **fileNamePP, char *objName, char *objType, char *fileExt) {
   U8 nameLen = strlen(objType) + strlen(objName) + strlen(fileExt) + 3;  // +2 for '_', '.', and '\0'
   Error e = jbAlloc((void**) fileNamePP, nameLen, 1);
@@ -151,7 +214,7 @@ int main(int argc, char *argv[]) {
     if (!e && sfP) {
       // First, get the soundfont's name.
       U8 filenameLen = strlen(argv[1]);
-      // Get the basename of the file without the extension. This'll be the soundfont's name.
+      // Get the sfName of the file without the extension. This'll be the soundfont's name.
       U8 basenameLastIdx = filenameLen - 1;
       U8 basenameFirstIdx = 0;
       for (U8 i = filenameLen - 1; i >= 0; --i) {
@@ -166,16 +229,16 @@ int main(int argc, char *argv[]) {
       }
 
       char *fileExtP = argv[1] + basenameLastIdx;
-      char *basename;
+      char *sfName;
       if (!strcmp(".sf3", fileExtP)) {  // file is sf3.
-        basename = malloc(sizeof(char) * ((basenameLastIdx - basenameFirstIdx) + 1));
-        if (!basename)
+        sfName = malloc(sizeof(char) * ((basenameLastIdx - basenameFirstIdx) + 1));
+        if (!sfName)
           return E_NO_MEMORY;
-        char *baseCharP = basename;
+        char *baseCharP = sfName;
         for (U8 i = basenameFirstIdx; i < basenameLastIdx; ++i)
           *(baseCharP++) = argv[1][i];
         *baseCharP = '\0';
-        printf("File is .sf3 format. Its basename is %s.\n", basename);
+        printf("File is .sf3 format. Its sfName is %s.\n", sfName);
       }
       else {
         printf("File is NOT .sf3 format. It's actually %s.\n", fileExtP);
@@ -184,37 +247,46 @@ int main(int argc, char *argv[]) {
       //TODO make a standard set of include directives to prepend to each file.
       // Soundfont
       char soundfontFilename[500];
-      sprintf(soundfontFilename, "sf%s.h", basename);
+      sprintf(soundfontFilename, "sf%s.h", sfName);
       FILE *soundfontFP = fopen(soundfontFilename, "w");
       
       // Standardize strings to lessen the chance of mistyping any.*
-      char BANK_SEED_ARR_FORMAT[] = "%sBankSeedA";  // %s = basename
-      char BANK_SEED_OBJ_FORMAT[] = "sf%sBank%d";   // %s = basename, %d = bank number
-      char PRESET_SEED_ARR_FORMAT[] = "sf%sBank%dPresetA";  // %s = basename, %d bank number
-      char PRESET_SEED_OBJ_FORMAT[] = "sf%sBank%dPreset%d";  // %s = basename, %d = bank number, %d = preset number
+      char BANK_SEED_ARR_FORMAT[] = "%sBankSeedA";  // %s = sfName
+      char BANK_SEED_OBJ_FORMAT[] = "sf%sBank%d";   // %s = sfName, %d = bank number
+      char PRESET_SEED_ARR_FORMAT[] = "sf%sBank%dPresetA";  // %s = sfName, %d bank number
+      char PRESET_SEED_OBJ_FORMAT[] = "sf%sBank%dPreset%d";  // %s = sfName, %d = bank number, %d = preset number
+      char GLOBAL_MOD_ARR_FORMAT[] = "%sBank%dPreset%dGlobalZoneModA";  // sfont name, bank num, preset num
+      char MOD_ARR_FORMAT[] = "%sBank%dPreset%dZone%dModA";  // sfont name, bank num, preset num, zone num
+      char GEN_ARR_FORMAT[] = "sf%sBank%dPreset%dZone%dGenA";  // sfont name, bank num, preset num, zone num, gennum
+      char GLOBAL_GEN_ARR_FORMAT[] = "sf%sBank%dPreset%dGlobalZoneGenA";  // sfont name, bank num, preset num
+      char GLOBAL_PZONE_FORMAT[] = "sf%sBank%dPreset%dGlobalZone";  // sfont name, bank num, preset num
+      char PZONE_FORMAT[] = "sf%sBank%dPreset%dZone%d";  // sfont name, bank num, preset num, zone num
+      char GLOBAL_IZONE_FORMAT[] = "sf%sBank%dPreset%dGlobalZone";  // sfont name, bank num, preset num, zone num
+      char IZONE_FORMAT[] = "sf%sBank%dPreset%dGlobalZone";  // sfont name, bank num, preset num, zone num
+      char INST_FORMAT[] = "inst%s";  // Instruments are reusable; the zones that specify their attributes aren't.
 
       if (!e && soundfontFP) {
         fprintf(soundfontFP, INCLUDE_DIRECTIVES);
         // Write the bank seed pointer array first.
         fprintf(soundfontFP, "BankSeed");
-        fprintf(soundfontFP, BANK_SEED_ARR_FORMAT, basename);
+        fprintf(soundfontFP, BANK_SEED_ARR_FORMAT, sfName);
         fprintf(soundfontFP, " = {\n");
         for (U8 bankCounter = 0; bankCounter <= maxBankId; ++bankCounter) {
           fprintf(soundfontFP, "&");
-          fprintf(soundfontFP, BANK_SEED_OBJ_FORMAT, basename, bankCounter);
+          fprintf(soundfontFP, BANK_SEED_OBJ_FORMAT, sfName, bankCounter);
           if (bankCounter < maxBankId)
             fprintf(soundfontFP, ", ");
         fprintf(soundfontFP, "};\n\n");
         // Write the soundfont seed.
-        fprintf(soundfontFP, "Soundfont %sSoundfont = {\n", basename);
+        fprintf(soundfontFP, "Soundfont %sSoundfont = {\n", sfName);
         fprintf(soundfontFP, "\t.nBankSeeds = %d;\n", maxBankId + 1);
-        fprintf(soundfontFP, "\t.bankSeedA  = %sBankSeedA;\n", basename);
+        fprintf(soundfontFP, "\t.bankSeedA  = %sBankSeedA;\n", sfName);
         fprintf(soundfontFP, "};\n\n");
         fclose(soundfontFP);
         // Banks
         for (U8 bankIdx = 0; bankIdx <= maxBankId; ++bankIdx) {
           char bankFileName[500] = {0};
-          sprintf(bankFileName, "sf%sBank%d.h", basename, bankIdx);
+          sprintf(bankFileName, "sf%sBank%d.h", sfName, bankIdx);
           FILE *bankFP = fopen(bankFileName, "w");
           if (!e && bankFP) {
             fprintf(bankFP, INCLUDE_DIRECTIVES);
@@ -230,12 +302,12 @@ int main(int argc, char *argv[]) {
             U8 currPresetIdx = 0;
             defPresetP = presetP->data;
             fprintf(bankFP, "PresetSeed *");
-            fprintf(bankFP, PRESET_SEED_ARR_FORMAT, basename, bankIdx);
+            fprintf(bankFP, PRESET_SEED_ARR_FORMAT, sfName, bankIdx);
             fprintf(bankFP, " = {\n");
             // Write each preset seed element of bank's preset seed array.
             for (fluid_def_preset_t *currPresetP = defPresetP; currPresetP; currPresetP = currPresetP->next) {
               if (currPresetP->bank == bankIdx) { // if this preset belongs to this bank...
-                fprintf(bankFP, PRESET_SEED_OBJ_FORMAT, basename, bankIdx, currPresetIdx);
+                fprintf(bankFP, PRESET_SEED_OBJ_FORMAT, sfName, bankIdx, currPresetIdx);
                 if (++currPresetIdx == nPresets) 
                   break;
                 fprintf(bankFP, ", ");
@@ -244,7 +316,7 @@ int main(int argc, char *argv[]) {
             fprintf(bankFP, "};\n\n");  // end current bank's preset seed array
             // Write the bank seed structure to the current file.
             fprintf(bankFP, "BankSeed *");
-            fprintf(bankFP, BANK_SEED_ARR_FORMAT, basename, bankIdx);
+            fprintf(bankFP, BANK_SEED_ARR_FORMAT, sfName, bankIdx);
             fprintf(bankFP, " = {\n");
             fprintf(bankFP, "\t.nPresetSeeds = %d", nPresets);
             fprintf(bankFP, "\t.presetSeedA  = {");
@@ -256,16 +328,14 @@ int main(int argc, char *argv[]) {
             currPresetIdx = 0;
             // So tell each zone whether it has a modulator array (we'll know what the name is by zone #)
             // with an array of booleans (U8).
-            U8 zoneGenHasAnyModulatorsA[256][64] = {0};
+            U8 zoneGenNumModsA[256][64] = {0};
 
-            char PRESET_GLOBAL_ZONE_MOD_ARR_FORMAT[] = "%sBank%dPreset%dGlobalZoneModA";  // sfont name, bank num, preset num
-            char PRESET_ZONE_MOD_ARR_FORMAT[] = "%sBank%dPreset%dZone%dModA";  // sfont name, bank num, preset num, zone num
             while (sfP->iteration_next(sfP, presetP)) {
               fluid_def_preset_t *currPresetP = presetP->data;
               if (defPresetP->bank == bankIdx) {
                 // Create preset seed file.
                 char presetFilename[500];
-                sprintf(presetFilename, "sf%sBank%dPreset%d.h", basename, bankIdx, currPresetIdx++);
+                sprintf(presetFilename, "sf%sBank%dPreset%d.h", sfName, bankIdx, currPresetIdx++);
                 FILE *presetFP = fopen(presetFilename, "w");
                 // Write includes.
                 fprintf(presetFP, INCLUDE_DIRECTIVES);
@@ -274,14 +344,14 @@ int main(int argc, char *argv[]) {
                 // Global zone's modulators
                 // Modulators are read one by one in a whole array and tested for amounts before processing. 
                 U8 modCounter = 0;
-                U8 presetGlobalZoneGenHasAnyModulators = 0;
+                U8 globalZoneNMods = 0;
                 // Each preset can have up to 256 zones, and each zone has 60 generators.
                 if (presetGlobalZoneP->mod) {
-                  presetGlobalZoneGenHasAnyModulators = 0;
                   fprintf(presetFP, "Modulator ");
-                  fprintf(presetFP, PRESET_GLOBAL_ZONE_MOD_ARR_FORMAT, basename, bankIdx, currPresetIdx);
+                  fprintf(presetFP, GLOBAL_MOD_ARR_FORMAT, sfName, bankIdx, currPresetIdx);
                   fprintf(presetFP, "= {\n");
                   for (fluid_mod_t *modP = presetGlobalZoneP->mod; modP; modP = modP->next) {
+                    globalZoneNMods++;
                     fprintf(presetFP, "\t{\n");
                     fprintf(presetFP, "\t\t.src1 = %d;\n", modP->src1);
                     fprintf(presetFP, "\t\t.src2 = %d;\n", modP->src2);
@@ -295,29 +365,26 @@ int main(int argc, char *argv[]) {
                 // Individual zones' generators
                 // Loop through all zone's modulators can determine which generators own any modulators. 
                 // Fluidsynth does this a little backwards.
-                U8 zoneIdx = 0;
                 U8 currZoneIdx = 0;
-                U8 currGenIdx= 0;
 #define MAX_N_ZONES 256
 #define MAX_N_GENS   60
                 // Keeps track of whether a zone's gen has any modulators.
-                U8 presetZoneGenHasAnyModulators[MAX_N_ZONES][MAX_N_GENS] = {0};  
                 for (pZoneP = defPresetP->zone; pZoneP; pZoneP = pZoneP->next, ++currZoneIdx) 
                   for (fluid_mod_t *modP = pZoneP->mod; modP; modP = modP->next) 
-                    zoneGenHasAnyModulatorsA[currZoneIdx][modP->dest] = 1;  // avoids setting this zone's modA to NULL
+                    ++zoneGenNumModsA[currZoneIdx][modP->dest];  // avoids setting this zone's modA to NULL
                 // Now that we know which generators have modulators, we can make a mod array for each generator
                 // Iterate through all modulators. Determine which gens have any modulators too.
                 // before writing the gens.
-                zoneIdx = 0;
                 currZoneIdx = 0;
-                currGenIdx= 0;
+                U8 zoneIdx = 0;
+                U8 currGenIdx= 0;
                 // Write a modulator array for each generator that has any modulators. What a horrible algo!! LOL
                 for (pZoneP = defPresetP->zone; pZoneP; pZoneP = pZoneP->next, ++currZoneIdx) {
                   for (U8 genIdx = 0; genIdx < 60; ++genIdx) {
-                    if (zoneGenHasAnyModulatorsA[currZoneIdx][genIdx]) {
+                    if (zoneGenNumModsA[currZoneIdx][genIdx]) {
                       // Start the array for this generator's modulators.
                       fprintf(presetFP, "Modulator ");
-                      fprintf(presetFP, PRESET_ZONE_MOD_ARR_FORMAT, basename, bankIdx, currPresetIdx, zoneIdx++);
+                      fprintf(presetFP, MOD_ARR_FORMAT, sfName, bankIdx, currPresetIdx, zoneIdx++);
                       fprintf(presetFP, "[] = {\n");
                       for (fluid_mod_t *modP = pZoneP->mod; modP; modP = modP->next) {
                         if (modP->dest == genIdx) {
@@ -334,16 +401,72 @@ int main(int argc, char *argv[]) {
                     }  // if gen has any mods
                   }  // for each of this zone's 60 generators
                 }  // for each zone in this preset
-                // Now that we wrote all the mod arrays (PHEW!!), let's create the generators that own them.
+                // Generator Arrays for global zone
+                presetGlobalZoneP = defPresetP->global_zone;
+                fprintf(presetFP, "Generator ");
+                fprintf(presetFP, GLOBAL_GEN_ARR_FORMAT, sfName, bankIdx, currPresetIdx);
+                fprintf(presetFP, "[] = {\n");
+                U8 nGlobalGens = 0;
+                for (U8 genIdx = 0; genIdx < 60; ++genIdx) {
+                  if (presetGlobalZoneP->gen[genIdx].flags) {  // if this generator exists (TODO: determine how to tell if it exists)
+                    ++nGlobalGens;
+                    fprintf(presetFP, "\t.genType = %s;\n", genNamesA[genIdx]);
+                    fprintf(presetFP, "\t.nMods = %d;\n", zoneGenNumModsA[currZoneIdx][genIdx]);
+                    fprintf(presetFP, "\t.amount = %d;\n", (S16) presetGlobalZoneP->gen[genIdx].val);
+                  }  // if this zone is being used...
+                }  // for each generator of the global zone...
+                fprintf(presetFP, "};\n\n");  // Close the current generator structure.
+                // Generator Arrays for individual zones
+                U8 nZoneGensA[256] = {0};
+                currZoneIdx = 0;
                 for (pZoneP = defPresetP->zone; pZoneP; pZoneP = pZoneP->next, ++currZoneIdx) {
+                  fprintf(presetFP, "Generator ");
+                  fprintf(presetFP, GEN_ARR_FORMAT, sfName, bankIdx, currPresetIdx, currZoneIdx);
+                  fprintf(presetFP, "[] = {\n");
                   for (U8 genIdx = 0; genIdx < 60; ++genIdx) {
-                    if (zoneGenHasAnyModulatorsA[currZoneIdx][genIdx]) {
-
+                    if (pZoneP->gen[genIdx].flags) {  // if this generator exists (TODO: determine how to tell if it exists)
+                      ++nZoneGensA[currZoneIdx];
+                      fprintf(presetFP, "\t.genType = %s;\n", genNamesA[genIdx]);
+                      fprintf(presetFP, "\t.nMods = %d;\n", zoneGenNumModsA[currZoneIdx][genIdx]);
+                      fprintf(presetFP, "\t.amount = %d;\n", (S16) pZoneP->gen[genIdx].val);
+                    }  // if this zone is being used...
+                  }  // for each generator of the current zone...
+                  fprintf(presetFP, "};\n\n");  // Close the current generator structure.
+                }  // for each zone
+                // Global zone
+                presetGlobalZoneP = defPresetP->global_zone;
+                fprintf(presetFP, "Zone ");
+                fprintf(presetFP, GLOBAL_PZONE_FORMAT, sfName, bankIdx, currPresetIdx);
+                fprintf(presetFP, " = {\n");
+                fprintf(presetFP, "\t.nGens = %d;\n", nGlobalGens);
+                fprintf(presetFP, "\t.u.instP = &");
+                fprintf(presetFP, INST_FORMAT, presetGlobalZoneP->inst->name);
+                fprintf(presetFP, ";\n");
+                fprintf(presetFP, "\t.genA = ");
+                fprintf(presetFP, GLOBAL_GEN_ARR_FORMAT, sfName, bankIdx, currPresetIdx);
+                fprintf(presetFP, "\n};\n\n");
+                
+                // Zones (Hell yeah, finally!!... Oh wait, I still have to make instruments. Doh...)
+                currZoneIdx = 0;
+                for (pZoneP = defPresetP->zone; pZoneP; pZoneP = pZoneP->next, ++currZoneIdx) {
+                  fprintf(presetFP, "Zone ");
+                  fprintf(presetFP, PZONE_FORMAT, sfName, bankIdx, currPresetIdx, currZoneIdx);
+                  fprintf(presetFP, " = {\n");
+                  fprintf(presetFP, "\t.nGens = %d;\n", nZoneGensA[currZoneIdx]);
+                  fprintf(presetFP, "\t.u.instP = &");
+                  fprintf(presetFP, INST_FORMAT, pZoneP->inst->name);
+                  fprintf(presetFP, ";\n");
+                  fprintf(presetFP, "\t.genA = ");
+                  fprintf(presetFP, GLOBAL_GEN_ARR_FORMAT, sfName, bankIdx, currPresetIdx);
+                  fprintf(presetFP, "};\n\n");  // close the current zone
                 }
+
+                fclose(presetFP);
               }  // if this preset belongs to the current bank
             }  // for each preset in the soundfont
           }  // if bank file opened successfully 
         }  // for each bank in this soundfont
+      }
 #if 0
       // Instruments
       e = fileNew(&fileP, "myInstr", "InstrumentSeed", "h");
@@ -365,6 +488,7 @@ int main(int argc, char *argv[]) {
       fileDel(&fileP);
 #endif
     }
+  }
 
     //SF *sfP = (SF*) synthP->sfont->data;
     //float* buffer = calloc(SAMPLE_SIZE, NUM_SAMPLES);
