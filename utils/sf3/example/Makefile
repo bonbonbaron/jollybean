@@ -10,7 +10,8 @@ endif
 examples: example/sf_/Boomwhacker.sf2
 
 #ifdef sf3
-examples: example/sf_/Boomwhacker.sf3
+examples: example/sf_/tloz.sf3
+#examples: example/sf_/default.sf3
 cmake_args += -DENABLE_SF3=YES
 #ifeq ($(sf3),stb)
 cmake_args += -DSTB_VORBIS=YES

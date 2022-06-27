@@ -225,46 +225,19 @@ fluid_channel_set_banknum(fluid_channel_t* chan, unsigned int banknum)
   return FLUID_OK;
 }
 
-/*
- * fluid_channel_cc
- */
-int
-fluid_channel_cc(fluid_channel_t* chan, int num, int value)
-{
+int fluid_channel_cc(fluid_channel_t* chan, int num, int value) {
   chan->cc[num] = value;
-
   switch (num) {
-
   case SUSTAIN_SWITCH:
-    {
-      if (value < 64) {
-/*  	printf("** sustain off\n"); */
-	fluid_synth_damp_voices(chan->synth, chan->channum);
-      } else {
-/*  	printf("** sustain on\n"); */
-      }
-    }
+    if (value < 64) 
+      fluid_synth_damp_voices(chan->synth, chan->channum);
     break;
 
   case BANK_SELECT_MSB:
-    {
-      if (chan->channum == 9 && fluid_settings_str_equal(chan->synth->settings, "synth.drums-channel.active", "yes")) {
-        return FLUID_OK; /* ignored */
-      }
-
-      chan->bank_msb = (unsigned char) (value & 0x7f);
-/*      printf("** bank select msb recieved: %d\n", value); */
-
-      /* I fixed the handling of a MIDI bank select controller 0,
-	 e.g., bank select MSB (or "coarse" bank select according to
-	 my spec).  Prior to this fix a channel's bank number was only
-	 changed upon reception of MIDI bank select controller 32,
-	 e.g, bank select LSB (or "fine" bank-select according to my
-	 spec). [KLE]
-
-	 FIXME: is this correct? [PH] */
-      fluid_channel_set_banknum(chan, (unsigned int)(value & 0x7f));  /* KLE */
-    }
+    if (chan->channum == 9 && fluid_settings_str_equal(chan->synth->settings, "synth.drums-channel.active", "yes")) 
+      return FLUID_OK; /* ignored */
+    chan->bank_msb = (unsigned char) (value & 0x7f);
+    fluid_channel_set_banknum(chan, (unsigned int)(value & 0x7f));  /* KLE */
     break;
 
   case BANK_SELECT_LSB:

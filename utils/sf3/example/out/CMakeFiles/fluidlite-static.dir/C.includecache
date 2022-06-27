@@ -54,6 +54,16 @@ fluidsynth/version.h
 
 ../../include/fluidsynth/voice.h
 
+/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_chan.c
+fluid_chan.h
+/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_chan.h
+fluid_mod.h
+/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_mod.h
+fluid_synth.h
+/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_synth.h
+fluid_sfont.h
+/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_sfont.h
+
 /home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_chan.h
 fluidsynth_priv.h
 /home/bonbonbaron/hack/jollybean/utils/sf3/src/fluidsynth_priv.h
@@ -102,6 +112,24 @@ fluid_config.h
 fluidsynth_priv.h
 /home/bonbonbaron/hack/jollybean/utils/sf3/src/fluidsynth_priv.h
 
+/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_settings.h
+
+/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_sfont.h
+
+/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_synth.c
+math.h
+-
+fluid_synth.h
+/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_synth.h
+fluid_sys.h
+/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_sys.h
+fluid_chan.h
+/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_chan.h
+fluid_tuning.h
+/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_tuning.h
+fluid_settings.h
+/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_settings.h
+fluid_sfont.h
 /home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_sfont.h
 
 /home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_synth.h
@@ -127,24 +155,6 @@ fluidsynth_priv.h
 /home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_tuning.h
 fluidsynth_priv.h
 /home/bonbonbaron/hack/jollybean/utils/sf3/src/fluidsynth_priv.h
-
-/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_voice.c
-fluidsynth_priv.h
-/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluidsynth_priv.h
-fluid_voice.h
-/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_voice.h
-fluid_mod.h
-/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_mod.h
-fluid_chan.h
-/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_chan.h
-fluid_conv.h
-/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_conv.h
-fluid_synth.h
-/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_synth.h
-fluid_sys.h
-/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_sys.h
-fluid_sfont.h
-/home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_sfont.h
 
 /home/bonbonbaron/hack/jollybean/utils/sf3/src/fluid_voice.h
 fluid_phase.h

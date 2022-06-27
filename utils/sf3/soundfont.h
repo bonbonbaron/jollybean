@@ -40,9 +40,10 @@ typedef struct {
 struct _Zone;
 
 typedef struct {
-  U8 nZones;
+  U8 nZones;  // only pertains to individual zones. Global zone is just tested for NULL.
+  struct _Zone *globalZoneP;
   struct _Zone *zoneA;
-} Instrument;  // 8 bytes
+} Instrument;  // 12 bytes
 
 typedef Instrument Preset;  // Both have the same structure; so 4 bytes again!
 

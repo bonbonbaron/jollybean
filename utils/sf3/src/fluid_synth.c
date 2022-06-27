@@ -1512,7 +1512,6 @@ fluid_preset_t* fluid_synth_find_preset(fluid_synth_t* synth,
   int offset;
 
   while (list) {
-
     sfont = (fluid_sfont_t*) fluid_list_get(list);
     offset = fluid_synth_get_bank_offset(synth, fluid_sfont_get_id(sfont));
     preset = fluid_sfont_get_preset(sfont, banknum - offset, prognum);
