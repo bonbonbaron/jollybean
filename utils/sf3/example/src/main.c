@@ -18,13 +18,21 @@ static char INCLUDE_DIRECTIVES[] = "#include \"botox/data.h\"\n#include \"../sou
 // Standardize strings to lessen the chance of mistyping any.
 char BANK_ARR_FORMAT[]               = "sf%sBankA";  
 char PRESET_ARR_FORMAT[]             = "sf%sBank%dPresetA";  
-// imods
+
 char SAMPLE_FORMAT[] = "sample_%s";
 char IMOD_FORMAT[] = "i%s_z%s_g%d_modA";
 char IGEN_FORMAT[] = "i%s_z%s_genA";
 char IZONE_FORMAT[] = "i%s_zoneA";
 char IGZONE_FORMAT[] = "i%s_globalZone";
 char INST_FORMAT[] = "inst_%s";
+char PMOD_FORMAT[] = "i%s_z%s_g%d_modA";
+char PGEN_FORMAT[] = "i%s_z%s_genA";
+char PZONE_FORMAT[] = "i%s_zoneA";
+char PGZONE_FORMAT[] = "i%s_globalZone";
+char PRESET_FORMAT[] = "preset_%d";
+char BANK_FORMAT[] = "bank%d";
+char SOUNDFONT_FORMAT[] = "soundfont%d";
+
 
 // Instrument name + zone name + dest + Mod A
 
@@ -139,18 +147,18 @@ void writeImodArrays(FILE *fP, fluid_defsfont_t *sfP) {
 //      You can do this by making a union between izone and pzone.
 void writeIgen(FILE *fP, char *iname, char *zname, U8 genId, U16 genAmt, U8 nMods) {
   fprintf(fP, "\t{\n");
-  fprintf(fP, "\t\t.genType = %d;\n", genId);
-  fprintf(fP, "\t\t.nMods = %d;\n", nMods);
-  fprintf(fP, "\t\t.amount = %d;\n", genAmt);
+  fprintf(fP, "\t\t.genType = %s,\n", genNamesA[genId]);
+  fprintf(fP, "\t\t.nMods = %d,\n", nMods);
+  fprintf(fP, "\t\t.amount = %d,\n", genAmt);
   fprintf(fP, "\t\t.modA = ");
   if (nMods) 
     fprintf(fP, IMOD_FORMAT, iname, zname, genId);
   else
     fprintf(fP, "NULL");
-  fprintf(fP, ";\n\t},\n");
+  fprintf(fP, "\n\t},\n");
 }
 
-U8 countModsInGen(fluid_inst_zone_t *izoneP, U8 genId) {
+U8 countIModsInGen(fluid_inst_zone_t *izoneP, U8 genId) {
   U8 nMods = 0;
   if (izoneP->mod)
     for (fluid_mod_t *modP = izoneP->mod; modP; modP = modP->next)
@@ -159,12 +167,12 @@ U8 countModsInGen(fluid_inst_zone_t *izoneP, U8 genId) {
 }
 
 
-void writeIgenArray(FILE *fP, char *iname, char *zname, U8 genId, fluid_inst_zone_t *izoneP) {
+void writeIgenArray(FILE *fP, char *pname, char *zname, U8 genId, fluid_inst_zone_t *izoneP) {
   fprintf(fP, "Generator "); 
-  fprintf(fP, IGEN_FORMAT, iname, zname);
+  fprintf(fP, IGEN_FORMAT, pname, zname);
   fprintf(fP, "[] = {\n");
-  U8 nMods = countModsInGen(izoneP, genId);
-  writeIgen(fP, iname, zname, genId, (U16) izoneP->gen[genId].val, nMods);
+  U8 nMods = countIModsInGen(izoneP, genId);
+  writeIgen(fP, pname, zname, genId, (U16) izoneP->gen[genId].val, nMods);
   fprintf(fP, "};\n\n");
 }
 
@@ -184,7 +192,7 @@ void writeIgenArrays(FILE *fP, fluid_defsfont_t *sfP) {
       writeImodArraysForAllIzones(fP, dPresetP->global_zone->inst);
     // individual pzones' insts
     for (fluid_preset_zone_t *pzoneP = dPresetP->zone; pzoneP; pzoneP = pzoneP->next) {
-      writeImodArraysForAllIzones(fP, pzoneP->inst);
+      writeIgenArraysForAllIzones(fP, pzoneP->inst);
     }
   }
 }
@@ -203,29 +211,41 @@ void writeIzone(FILE *fP, U8 nGens, char *iname, char *zname, char *sampleName) 
 
 U8 countGensInIzone(fluid_inst_zone_t *izoneP) {
   U8 nGens = 0;
-  for (U8 genId = 0; genId < 60; ++genId)
-    nGens += (izoneP->gen[genId].flags != 0);
+  if (izoneP)
+    for (U8 genId = 0; genId < 60; ++genId)
+      nGens += (izoneP->gen[genId].flags != 0);
   return nGens;
 }
 
 void writeIzoneArray(FILE *fP, fluid_inst_t *instP) {
-  fprintf(fP, "Zone ");
-  fprintf(fP, IZONE_FORMAT, instP->name);
-  fprintf(fP, "[] = {\n");
-  for (fluid_inst_zone_t *izoneP = instP->zone; izoneP; izoneP = izoneP->next) {
-    U8 nGens = countGensInIzone(izoneP);
-    writeIzone(fP, nGens, instP->name, izoneP->name, izoneP->sample->name);
+  if (instP) {
+    fprintf(fP, "Zone ");
+    fprintf(fP, IZONE_FORMAT, instP->name);
+    fprintf(fP, "[] = {\n");
+    for (fluid_inst_zone_t *izoneP = instP->zone; izoneP; izoneP = izoneP->next) {
+      U8 nGens = countGensInIzone(izoneP);
+      writeIzone(fP, nGens, instP->name, izoneP->name, izoneP->sample->name);
+    }
+    fprintf(fP, "};\n\n");
   }
-  fprintf(fP, "};\n\n");
 }
 
-void writeIzones(FILE *fP, fluid_inst_t *instP) {
-  // Global izone
-  fprintf(fP, IGZONE_FORMAT, instP->name);
-  U8 nGens = countGensInIzone(instP->global_zone);
-  writeIzone(fP, nGens, instP->name, instP->global_zone->name, instP->global_zone->sample->name);
-  // Normal izones
-  writeIzoneArray(fP, instP);
+void writeGIzone(FILE *fP, fluid_inst_t *instP) {
+  if (instP) {
+    fprintf(fP, IGZONE_FORMAT, instP->name);
+    U8 nGens = countGensInIzone(instP->global_zone);
+    writeIzone(fP, nGens, instP->name, instP->global_zone->name, instP->global_zone->sample->name);
+  }
+}
+
+void writeIzoneArrays(FILE *fP, fluid_defsfont_t *sfP) {
+  for (fluid_def_preset_t *presetP = sfP->preset; presetP; presetP = presetP->next) {
+    // GLobal izone
+    writeGIzone(fP, presetP->global_zone->inst);
+    // Normal izones
+    for (fluid_preset_zone_t *pzoneP = presetP->zone; pzoneP; pzoneP = pzoneP->next)
+      writeIzoneArray(fP, pzoneP->inst);
+  }
 }
 
 U8 countZonesInInst(fluid_inst_t *instP) {
@@ -235,23 +255,29 @@ U8 countZonesInInst(fluid_inst_t *instP) {
 }
 
 void writeInst(FILE *fP, fluid_inst_t *instP) {
-  fprintf(fP, "Instrument ");
-  fprintf(fP, INST_FORMAT, instP->name);
-  fprintf(fP, " = {\n");
-  U8 nZones = countZonesInInst(instP);
-  fprintf(fP, "\t.nZones = %d;\n", nZones);
-  fprintf(fP, "\t.globalZoneP = ");
-  fprintf(fP, IGZONE_FORMAT, instP->global_zone->name);
-  fprintf(fP, ";\n");
-  fprintf(fP, "\t.zoneA = ");
-  fprintf(fP, IZONE_FORMAT, instP->name);
-  fprintf(fP, ";\n};\n\n");
+  if (instP) {
+    fprintf(fP, "Instrument ");
+    fprintf(fP, INST_FORMAT, instP->name);
+    fprintf(fP, " = {\n");
+    U8 nZones = countZonesInInst(instP);
+    fprintf(fP, "\t.nZones = %d,\n", nZones);
+    fprintf(fP, "\t.globalZoneP = ");
+    fprintf(fP, IGZONE_FORMAT, instP->global_zone->name);
+    fprintf(fP, ",\n");
+    fprintf(fP, "\t.zoneA = ");
+    fprintf(fP, IZONE_FORMAT, instP->name);
+    fprintf(fP, "\n};\n\n");
+  }
 }
 
-void writeInsts(FILE *fP, fluid_def_preset_t *presetP) {
-  writeInst(fP, presetP->global_zone->inst);
-  for (fluid_preset_zone_t *pzoneP = presetP->zone; pzoneP; pzoneP = pzoneP->next)
-    writeInst(fP, pzoneP->inst);
+void writeInsts(FILE *fP, fluid_defsfont_t *dSfP) {
+  for (fluid_def_preset_t *presetP = dSfP->preset; presetP; presetP = presetP->next) {
+    // Global zone
+    writeInst(fP, presetP->global_zone->inst);
+    // Normal zones
+    for (fluid_preset_zone_t *pzoneP = presetP->zone; pzoneP; pzoneP = pzoneP->next)
+      writeInst(fP, pzoneP->inst);
+  }
 }
 
 //*****************************
@@ -259,34 +285,34 @@ void writeInsts(FILE *fP, fluid_def_preset_t *presetP) {
 //*****************************
 
 // Pass genIdx = 0 - 59 through this function to see which modulators a generator uses.
-void writePMod(FILE *fP, fluid_mod_t *imodP) {
+void writePMod(FILE *fP, fluid_mod_t *pmodP) {
   fprintf(fP, "\t{\n");
-  fprintf(fP, "\t\t.src1 = %d;\n", imodP->src1);
-  fprintf(fP, "\t\t.src2 = %d;\n", imodP->src2);
-  fprintf(fP, "\t\t.xformType1 = %d;\n", imodP->flags1);
-  fprintf(fP, "\t\t.xformType2 = %d;\n", imodP->flags2);
-  fprintf(fP, "\t\t.productScale = %d;\n", (S16) imodP->amount);
+  fprintf(fP, "\t\t.src1 = %d;\n", pmodP->src1);
+  fprintf(fP, "\t\t.src2 = %d;\n", pmodP->src2);
+  fprintf(fP, "\t\t.xformType1 = %d;\n", pmodP->flags1);
+  fprintf(fP, "\t\t.xformType2 = %d;\n", pmodP->flags2);
+  fprintf(fP, "\t\t.productScale = %d;\n", (S16) pmodP->amount);
   fprintf(fP, "\t},\n");
 }
 
-void writePmodArray(FILE *fP, char *iname, char *zname, U8 genId, fluid_inst_zone_t *izoneP) {
-  if (izoneP->mod) {
+void writePmodArray(FILE *fP, char *pname, char *zname, U8 genId, fluid_preset_zone_t*pzoneP) {
+  if (pzoneP->mod) {
     fprintf(fP, "Modulator "); 
-    fprintf(fP, IMOD_FORMAT, iname, zname, genId);
+    fprintf(fP, PMOD_FORMAT, pname, zname, genId);
     fprintf(fP, "[] = {\n");
-    for (fluid_mod_t *imodP = izoneP->mod; imodP; imodP = imodP->next) 
-      if (imodP->dest == genId)  // Only write mods that belong to this generator so it has an array of them.
-        writeIMod(fP, imodP);
+    for (fluid_mod_t *pmodP = pzoneP->mod; pmodP; pmodP = pmodP->next) 
+      if (pmodP->dest == genId)  // Only write mods that belong to this generator so it has an array of them.
+        writeIMod(fP, pmodP);
     fprintf(fP, "};\n\n");  
   }
 }
 
-void writePmodArraysForAllPzones(FILE *fP, fluid_inst_t *instP) {
-  for (fluid_inst_zone_t *izoneP = instP->zone; izoneP; izoneP = izoneP->next) 
-    // inst's izones' generators
+void writePmodArraysForAllPzones(FILE *fP, fluid_def_preset_t *presetP) {
+  for (fluid_preset_zone_t *pzoneP = presetP->zone; pzoneP; pzoneP = pzoneP->next) 
+    // inst's pzones' generators
     for (U8 genId = 0; genId < 60; ++genId) 
-      if (izoneP->gen[genId].flags) 
-        writeImodArray(fP, instP->name, izoneP->name, genId, izoneP);
+      if (pzoneP->gen[genId].flags) 
+        writePmodArray(fP, presetP->name, pzoneP->name, genId, pzoneP);
 }
 
 void writePmodArrays(FILE *fP, fluid_defsfont_t *sfP) {
@@ -305,34 +331,34 @@ void writePmodArrays(FILE *fP, fluid_defsfont_t *sfP) {
 
 // TODO make this reusable for presets too. Have a boolean to determine which one.
 //      You can do this by making a union between izone and pzone.
-void writePgen(FILE *fP, char *iname, char *zname, U8 genId, U16 genAmt, U8 nMods) {
+void writePgen(FILE *fP, char *pname, char *zname, U8 genId, U16 genAmt, U8 nMods) {
   fprintf(fP, "\t{\n");
   fprintf(fP, "\t\t.genType = %d;\n", genId);
   fprintf(fP, "\t\t.nMods = %d;\n", nMods);
   fprintf(fP, "\t\t.amount = %d;\n", genAmt);
   fprintf(fP, "\t\t.modA = ");
   if (nMods) 
-    fprintf(fP, IMOD_FORMAT, iname, zname, genId);
+    fprintf(fP, PMOD_FORMAT, pname, zname, genId);
   else
     fprintf(fP, "NULL");
   fprintf(fP, ";\n\t},\n");
 }
 
-U8 countModsPnGen(fluid_inst_zone_t *izoneP, U8 genId) {
+U8 countPModsInGen(fluid_preset_zone_t *pzoneP, U8 genId) {
   U8 nMods = 0;
-  if (izoneP->mod)
-    for (fluid_mod_t *modP = izoneP->mod; modP; modP = modP->next)
+  if (pzoneP->mod)
+    for (fluid_mod_t *modP = pzoneP->mod; modP; modP = modP->next)
       nMods += (modP->dest == genId);
   return nMods;
 }
 
 
-void writePgenArray(FILE *fP, char *iname, char *zname, U8 genId, fluid_inst_zone_t *izoneP) {
+void writePgenArray(FILE *fP, char *pname, char *zname, U8 genId, fluid_preset_zone_t *pzoneP) {
   fprintf(fP, "Generator "); 
-  fprintf(fP, IGEN_FORMAT, iname, zname);
+  fprintf(fP, IGEN_FORMAT, pname, zname);
   fprintf(fP, "[] = {\n");
-  U8 nMods = countModsInGen(izoneP, genId);
-  writeIgen(fP, iname, zname, genId, (U16) izoneP->gen[genId].val, nMods);
+  U8 nMods = countPModsInGen(pzoneP, genId);
+  writeIgen(fP, pname, zname, genId, (U16) pzoneP->gen[genId].val, nMods);
   fprintf(fP, "};\n\n");
 }
 
@@ -357,69 +383,70 @@ void writePgenArrays(FILE *fP, fluid_defsfont_t *sfP) {
   }
 }
 
-void writePzone(FILE *fP, U8 nGens, char *iname, char *zname, char *sampleName) {
+void writePzone(FILE *fP, U8 nGens, char *pname, char *zname, char *iname) {
   fprintf(fP, "\t{\n");
   fprintf(fP, "\t\t.nGens = %d;\n", nGens);
-  fprintf(fP, "\t\t.u.sampleP = &%s;\n", sampleName);  // TODO sample name needs format
+  fprintf(fP, "\t\t.u.instP = &%s;\n", iname);
   fprintf(fP, "\t\t.genA = ");
   if (nGens) 
-    fprintf(fP, IGEN_FORMAT, iname, zname);
+    fprintf(fP, PGEN_FORMAT, iname, zname);
   else
     fprintf(fP, "NULL");
   fprintf(fP, ";\n\t},\n");
 }
 
-U8 countGensInPzone(fluid_inst_zone_t *izoneP) {
+U8 countGensInPzone(fluid_preset_zone_t *pzoneP) {
   U8 nGens = 0;
   for (U8 genId = 0; genId < 60; ++genId)
-    nGens += (izoneP->gen[genId].flags != 0);
+    nGens += (pzoneP->gen[genId].flags != 0);
   return nGens;
 }
 
-void writePzoneArray(FILE *fP, fluid_inst_t *instP) {
+void writePzoneArray(FILE *fP, fluid_def_preset_t *presetP) {
   fprintf(fP, "Zone ");
-  fprintf(fP, IZONE_FORMAT, instP->name);
+  fprintf(fP, IZONE_FORMAT, presetP->name);
   fprintf(fP, "[] = {\n");
-  for (fluid_inst_zone_t *izoneP = instP->zone; izoneP; izoneP = izoneP->next) {
-    U8 nGens = countGensInIzone(izoneP);
-    writeIzone(fP, nGens, instP->name, izoneP->name, izoneP->sample->name);
+  for (fluid_preset_zone_t *pzoneP = presetP->zone; pzoneP; pzoneP = pzoneP->next) {
+    U8 nGens = countGensInPzone(pzoneP);
+    writePzone(fP, nGens, presetP->name, pzoneP->name, pzoneP->inst->name);
   }
   fprintf(fP, "};\n\n");
 }
 
-void writePzones(FILE *fP, fluid_inst_t *instP) {
+void writePzones(FILE *fP, fluid_def_preset_t *presetP) {
   // Global izone
-  fprintf(fP, IGZONE_FORMAT, instP->name);
-  U8 nGens = countGensInIzone(instP->global_zone);
-  writeIzone(fP, nGens, instP->name, instP->global_zone->name, instP->global_zone->sample->name);
+  fprintf(fP, PGZONE_FORMAT, presetP->name);
+  U8 nGens = countGensInPzone(presetP->global_zone);
+  writeIzone(fP, nGens, presetP->name, presetP->global_zone->name, presetP->global_zone->inst->name);
   // Normal izones
-  writeIzoneArray(fP, instP);
+  writePzoneArray(fP, presetP);
 }
 
-U8 countZonesInPreset(fluid_inst_t *instP) {
+U8 countZonesInPreset(fluid_def_preset_t *presetP) {
   U8 nZones = 0;
-  for (fluid_inst_zone_t *zoneP = instP->zone; zoneP; zoneP = zoneP->next, ++nZones);
+  for (fluid_preset_zone_t *pzoneP = presetP->zone; pzoneP; pzoneP = pzoneP->next, ++nZones);
   return nZones;
 }
 
-void writePreset(FILE *fP, fluid_inst_t *instP) {
-  fprintf(fP, "Instrument ");
-  fprintf(fP, INST_FORMAT, instP->name);
-  fprintf(fP, " = {\n");
-  U8 nZones = countZonesInInst(instP);
-  fprintf(fP, "\t.nZones = %d;\n", nZones);
-  fprintf(fP, "\t.globalZoneP = ");
-  fprintf(fP, IGZONE_FORMAT, instP->global_zone->name);
-  fprintf(fP, ";\n");
-  fprintf(fP, "\t.zoneA = ");
-  fprintf(fP, IZONE_FORMAT, instP->name);
-  fprintf(fP, ";\n};\n\n");
+void writePreset(FILE *fP, fluid_def_preset_t *presetP) {
+  if (presetP) {
+    fprintf(fP, "Preset ");
+    fprintf(fP, PRESET_FORMAT, presetP->name);
+    fprintf(fP, " = {\n");
+    U8 nZones = countZonesInPreset(presetP);
+    fprintf(fP, "\t.nZones = %d,\n", nZones);
+    fprintf(fP, "\t.globalZoneP = ");
+    fprintf(fP, PGZONE_FORMAT, presetP->global_zone->name);
+    fprintf(fP, ",\n");
+    fprintf(fP, "\t.zoneA = ");
+    fprintf(fP, PZONE_FORMAT, presetP->name);
+    fprintf(fP, "\n};\n\n");
+  }
 }
 
-void writePresets(FILE *fP, fluid_def_preset_t *presetP) {
-  writeInst(fP, presetP->global_zone->inst);
-  for (fluid_preset_zone_t *pzoneP = presetP->zone; pzoneP; pzoneP = pzoneP->next)
-    writeInst(fP, pzoneP->inst);
+void writePresets(FILE *fP, fluid_defsfont_t *sfP) {
+  for (fluid_def_preset_t *presetP = sfP->preset; presetP; presetP = presetP->next) 
+    writePreset(fP, presetP);
 }
 
 int main(int argc, char *argv[]) {
@@ -444,17 +471,6 @@ int main(int argc, char *argv[]) {
   U8 currIterN = 0;
   U8 nZones    = 0;
   Error e = SUCCESS;
-  // Count presets in each bank.
-  U8 *presetCountsA;
-  e = arrayNew((void**) &presetCountsA, sizeof(U8), maxBankId + 1);
-  if (!e) {
-    sfP->iteration_start(sfP);
-    presetP = sfP->get_preset(sfP, 0, 0);
-    while (sfP->iteration_next(sfP, presetP)) {
-      defPresetP = presetP->data;
-      ++presetCountsA[defPresetP->bank];
-    }
-  }
 
 #ifdef _WIN32
   char FILE_SEP = '\\';
@@ -462,7 +478,8 @@ int main(int argc, char *argv[]) {
   char FILE_SEP = '/';
 #endif
 
-  if (!e && sfP) {
+  if (sfP) {
+    fluid_defsfont_t *dSfP = sfP->data;
     // First, get the soundfont's name.
     U8 filenameLen = strlen(argv[1]);
     // Get the sfName of the file without the extension. This'll be the soundfont's name.
@@ -500,11 +517,11 @@ int main(int argc, char *argv[]) {
     // Soundfont
     char soundfontFilename[500];
     sprintf(soundfontFilename, "sf%s.h", sfName);
-    FILE *sfFP = fopen(soundfontFilename, "w");
-    fprintf(sfFP, INCLUDE_DIRECTIVES);
-
-    writeInstruments(sfFP, sfName, sfP);
-    fclose(sfFP);
+    FILE *fP = fopen(soundfontFilename, "w");
+    fprintf(fP, INCLUDE_DIRECTIVES);
+    writeImodArrays(fP, dSfP);
+    writeIgenArrays(fP, dSfP);
+    writeIzoneArrays(fP, dSfP);
     // We'll start at the very lowest level (instruments; samples are extern) and work our way up.
   }
 }

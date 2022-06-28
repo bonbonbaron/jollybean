@@ -7,11 +7,12 @@ run =
 cmake_args += -DCMAKE_BUILD_TYPE=Release
 endif
 
-examples: example/sf_/Boomwhacker.sf2
+examples: example/_sf/Boomwhacker.sf2
 
 #ifdef sf3
-examples: example/sf_/tloz.sf3
-#examples: example/sf_/default.sf3
+#examples: example/_sf/tloz.sf3
+#examples: example/_sf/default.sf3
+examples: example/_sf/Boomwhacker.sf3
 cmake_args += -DENABLE_SF3=YES
 #ifeq ($(sf3),stb)
 cmake_args += -DSTB_VORBIS=YES

@@ -1,31 +1,34 @@
 #include "botox/data.h"
 #include "../soundfont.h"
 
-Zone sfBoomwhackerBank0Preset0ZoneA[] = {
+Generator iBoomwhacker_zBoomwhacker/2_genA[] = {
 	{
-		.nGens = 0;
-		.u.instP = &instBoomwhacker;
-		.genA = NULL;
-	}
+		.genType = GEN_PAN,
+		.nMods = 0,
+		.amount = 500,
+		.modA = NULL
+	},
 };
 
-Preset sfBoomwhackerBank0PresetA[] = {
+Generator iBoomwhacker_zBoomwhacker/1_genA[] = {
 	{
-		.nZones = 0;
-		.globalZoneP =  = NULL;
-		.zoneA = sfBoomwhackerBank0Preset0ZoneA;
-	}
+		.genType = GEN_PAN,
+		.nMods = 0,
+		.amount = 0,
+		.modA = NULL
+	},
 };
 
-Bank sfBoomwhackerBankA[] = {
+Zone iBoomwhacker_zoneA[] = {
 	{
-		.nPresets = 1;
-		.presetA  = sfBoomwhackerBank0PresetA;
-	}
-};
-
-Soundfont BoomwhackerSoundfont = {
-	.nBanks = 1;
-	.bankA  = sfBoomwhackerBankA;
+		.nGens = 1;
+		.u.sampleP = &BoomwhackerR;
+		.genA = iBoomwhacker_zBoomwhacker/2_genA;
+	},
+	{
+		.nGens = 1;
+		.u.sampleP = &BoomwhackerL;
+		.genA = iBoomwhacker_zBoomwhacker/1_genA;
+	},
 };
 
