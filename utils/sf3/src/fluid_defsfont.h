@@ -559,6 +559,7 @@ struct _fluid_inst_t
   char name[21];
   fluid_inst_zone_t* global_zone;
   fluid_inst_zone_t* zone;
+  char used;
 };
 
 fluid_inst_t* new_fluid_inst(void);

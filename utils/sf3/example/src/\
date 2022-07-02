@@ -27,7 +27,6 @@ char BANK_ARR_FORMAT[]               = "sf%sBankA";
 char PRESET_ARR_FORMAT[]             = "sf%sBank%dPresetA";  
 
 char INFLATABLE_OGG_FORMAT[] = "inf%sOgg";
-char PCM_FORMAT[] = "%sPcmA";
 char SAMPLE_FORMAT[] = "sample_%s";
 char IMOD_FORMAT[] = "i%s_z%s_g%d_modA";
 char IGEN_FORMAT[] = "i%s_z%s_genA";
@@ -57,31 +56,29 @@ typedef char S8;
 typedef unsigned short U16;
 typedef short S16;
 typedef unsigned long U32;
-typedef int S32;
+typedef long S32;
 
 typedef U8 Error;
 
 enum {
   SUCCESS,
-  E_BAD_ARGS,
-  E_NO_MEMORY,
-  E_ZLIB_COMPRESSION
+  E_NO_MEMORY
 };
 
 // Compression functions for comporessing OGG with zlib.
-S32 getMaxCompressedLen( S32 nLenSrc ) {
-    S32 n16kBlocks = (nLenSrc+16383) / 16384; // round up any fraction of a block
+int getMaxCompressedLen( int nLenSrc ) {
+    int n16kBlocks = (nLenSrc+16383) / 16384; // round up any fraction of a block
     return ( nLenSrc + 6 + (n16kBlocks*5) );
 }
 
-S32 _compressData( const U8* abSrc, S32 nLenSrc, U8* abDst, S32 nLenDst ) {
+int compressData( const U8* abSrc, int nLenSrc, U8* abDst, int nLenDst ) {
     z_stream zInfo ={0};
     zInfo.total_in=  zInfo.avail_in=  nLenSrc;
     zInfo.total_out= zInfo.avail_out= nLenDst;
     zInfo.next_in= (U8*)abSrc;
     zInfo.next_out= abDst;
 
-    S32 nErr, nRet= -1;
+    int nErr, nRet= -1;
     nErr= deflateInit( &zInfo, Z_DEFAULT_COMPRESSION ); // zlib function
     if ( nErr == Z_OK ) {
         nErr= deflate( &zInfo, Z_FINISH );              // zlib function
@@ -92,25 +89,20 @@ S32 _compressData( const U8* abSrc, S32 nLenSrc, U8* abDst, S32 nLenDst ) {
     return( nRet );
 }
 
-Error compressData(U8 *srcDataP, U32 srcLen, U8 **dstDataPP, S32 *dstLenP) {
-  if (!dstDataPP)
-    return E_BAD_ARGS;
+int doIt(U8 *srcDataP, U32 srcLen, U8 *dstDataP, U32 dstLen) {
+    U8 pbSrc[]="hello hello hello hello there";
 
-  S32 dstLen = getMaxCompressedLen(srcLen);
-  *dstDataPP = malloc(dstLen);
+    int nLenOrig= strlen( (char*)pbSrc )+1; // include terminating NULL
+    int nLenDst= getMaxCompressedLen( nLenOrig );
+    U8 *pbDst = malloc(nLenDst);
+    if (!pbDst) return 2;
 
-  if (!*dstDataPP)
-    return E_NO_MEMORY;
+    int nLenPacked= compressData( pbSrc, nLenOrig, pbDst, nLenDst );
+    if ( nLenPacked == -1 ) return(1);  
 
-  // nLenPacked is the actual length of the output compressed data.
-  *dstLenP = _compressData(srcDataP, srcLen, *dstDataPP, dstLen );
-
-  if ( *dstLenP == -1 ) 
-    return E_ZLIB_COMPRESSION;
-
-  return 0;
+    free(pbDst);
+    return 0;
 }
-
 //*********************
 //*****  SAMPLES ******
 //*********************
@@ -123,7 +115,6 @@ U8 writeSample(fluid_sample_t *sampleP) {
   if (!fP)
     return 1;
   fprintf(fP, INCLUDE_DIRECTIVES);
-  fprintf(fP, "\n");
   fprintf(fP, "Sample ");
   fprintf(fP, SAMPLE_FORMAT, sampleP->name);
   fprintf(fP, " = {\n");
@@ -139,54 +130,28 @@ U8 writeSample(fluid_sample_t *sampleP) {
   return 0;
 }
 
-void writePcmData(FILE *fP, char *sampleName, U8 *compressedDataP, S32 len) {
-  int counter = 0;
-  U8 *srcEndP = compressedDataP + len;
-  fprintf(fP, "U8 ");
-  fprintf(fP, PCM_FORMAT, sampleName);
-  fprintf(fP, "[] = {\n\t");
-  for (U8 *srcP = compressedDataP; srcP < srcEndP; ++srcP) {
-    fprintf(fP, "0x%02x, ", *srcP);
-    if (++counter >= 14) {
-      fprintf(fP, "\n\t");
-      counter = 0;
-    }
-    ++len;
-  }
-  fprintf(fP, "\n};\n\n");
-}
-
 U8 writeSamplePcmInflatable(fluid_sample_t *sampleP) {
   cleanString(sampleP->name);
-
   char nameAppendix[] = "_pcm_inflatable.h";
   char filename[strlen(sampleP->name) + strlen(nameAppendix) + 1];
-
   strcpy(filename, sampleP->name);
   strcat(filename, nameAppendix);
-
-  U8 *dstDataA;
-  S32 dstLen;
-  Error e = compressData((U8*) sampleP->data, sampleP->oggEnd * sizeof(short), &dstDataA, &dstLen);
-  if (!e) {
-    FILE *fP = fopen(filename, "w");
-    if (!fP)
-      return 1;
-    fprintf(fP, "#include \"botox/data.h\"\n\n");
-    writePcmData(fP, sampleP->name, dstDataA, dstLen);
-    fprintf(fP, "Inflatable ");
-    fprintf(fP, INFLATABLE_OGG_FORMAT, sampleP->name);
-    fprintf(fP, " = {\n");
-    fprintf(fP, "\t.compressedLen = %d,\n", sampleP->oggEnd);
-    fprintf(fP, "\t.inflatedLen = %d,\n", dstLen);
-    fprintf(fP, "\t.inflatedDataP = NULL,\n");
-    fprintf(fP, "\t.compressedData = ");  
-    fprintf(fP, PCM_FORMAT, sampleP->name);
-    fprintf(fP, "\n");
-    fprintf(fP, "};\n\n");
-    fclose(fP);
-  }
-
+  FILE *fP = fopen(filename, "w");
+  if (!fP)
+    return 1;
+  fprintf(fP, "#include \"botox/data.h");
+  fprintf(fP, "Inflatable ");
+  fprintf(fP, INFLATABLE_OGG_FORMAT, sampleP->name);
+  fprintf(fP, ",\n");
+  fprintf(fP, "\t.compressedLen = %d,\n", 1);  // TODO replace with computed zlib value
+  fprintf(fP, "\t.inflatedLen = %d,\n", sampleP->oggEnd);
+  fprintf(fP, "\t.inflatedDataP = NULL,\n");
+  fprintf(fP, "\t.compressedData[] = {\n");  // TODO replace with computed zlib array
+    // put compressed OGG data in a loop here; better yet, abstract out the compression + writer
+    // for reuse elsewhere.
+  fprintf(fP, "\t}\n");
+  fprintf(fP, "};\n\n");
+  fclose(fP);
   return 0;
 }
 

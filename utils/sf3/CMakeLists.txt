@@ -5,6 +5,8 @@ project(fluidlite)
 
 include(GNUInstallDirs)
 
+set(SF3_SUPPORT "SF3_STB_VORBIS")
+message(STATUS "SF3_SUPPORT is " ${SF3_SUPPORT})
 list(APPEND HEADERS
     include/fluidlite.h
 )
@@ -49,12 +51,10 @@ list(APPEND SOURCES
 include_directories(${CMAKE_SOURCE_DIR}/src)
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
-if (ENABLE_SF3 AND STB_VORBIS)
-    list(APPEND SOURCES
-        stb/stb_vorbis.c)
+list(APPEND SOURCES
+    stb/stb_vorbis.c)
 
-    include_directories(${CMAKE_SOURCE_DIR}/stb)
-endif()
+include_directories(${CMAKE_SOURCE_DIR}/stb)
 
 # Botox
 list(APPEND BOTOX_SRC
@@ -66,64 +66,6 @@ list(APPEND BOTOX_SRC
 set(BOTOX_LIB botox)
 add_library(${BOTOX_LIB} ${BOTOX_SRC})
 target_include_directories(${BOTOX_LIB} PUBLIC ${CMAKE_SOURCE_DIR}/libbotox/src/include)
-
-if (ENABLE_SF3 AND NOT STB_VORBIS)
-    find_package(PkgConfig QUIET)
-
-    pkg_check_modules(LIBVORBIS vorbis>=1.3.5)
-    pkg_check_modules(LIBVORBISFILE vorbisfile>=1.3.5)
-    if (NOT LIBVORBIS_FOUND OR NOT LIBVORBISFILE_FOUND)
-        list(APPEND SOURCES
-            libvorbis-1.3.5/lib/vorbisenc.c
-            libvorbis-1.3.5/lib/info.c
-            libvorbis-1.3.5/lib/analysis.c
-            libvorbis-1.3.5/lib/bitrate.c
-            libvorbis-1.3.5/lib/block.c
-            libvorbis-1.3.5/lib/codebook.c
-            libvorbis-1.3.5/lib/envelope.c
-            libvorbis-1.3.5/lib/floor0.c
-            libvorbis-1.3.5/lib/floor1.c
-            libvorbis-1.3.5/lib/lookup.c
-            libvorbis-1.3.5/lib/lpc.c
-            libvorbis-1.3.5/lib/lsp.c
-            libvorbis-1.3.5/lib/mapping0.c
-            libvorbis-1.3.5/lib/mdct.c
-            libvorbis-1.3.5/lib/psy.c
-            libvorbis-1.3.5/lib/registry.c
-            libvorbis-1.3.5/lib/res0.c
-            libvorbis-1.3.5/lib/sharedbook.c
-            libvorbis-1.3.5/lib/smallft.c
-            libvorbis-1.3.5/lib/vorbisfile.c
-            libvorbis-1.3.5/lib/window.c
-            libvorbis-1.3.5/lib/synthesis.c
-        )
-        list(APPEND LIBVORBIS_INCLUDE_DIRS
-            ${CMAKE_SOURCE_DIR}/libvorbis-1.3.5/include
-            ${CMAKE_SOURCE_DIR}/libvorbis-1.3.5/lib
-        )
-        message(WARNING "Using libvorbis shipped sources.")
-    else()
-        message(STATUS "Using pkg-config provided libvorbis")
-        set(ADDITIONAL_LIBS "${LIBVORBIS_LDFLAGS} ${LIBVORBISFILE_LDFLAGS}")
-    endif()
-
-    pkg_check_modules(LIBOGG ogg>=1.3.2)
-    if (NOT LIBOGG_FOUND)
-        list(APPEND SOURCES
-            libogg-1.3.2/src/bitwise.c
-            libogg-1.3.2/src/framing.c
-        )
-        set(LIBOGG_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/libogg-1.3.2/include)
-
-        message(WARNING "Using libogg shipped sources.")
-    else()
-        message(STATUS "Using pkg-config provided libogg")
-        string(CONCAT ADDITIONAL_LIBS "${ADDITIONAL_LIBS} ${LIBOGG_LDFLAGS}")
-    endif()
-
-    include_directories(${LIBOGG_INCLUDE_DIRS})
-    include_directories(${LIBVORBIS_INCLUDE_DIRS})
-endif()
 
 option(FLUIDLITE_BUILD_STATIC "Build static library" TRUE)
 if(FLUIDLITE_BUILD_STATIC)
@@ -180,19 +122,11 @@ if(FLUIDLITE_BUILD_SHARED AND FLUIDLITE_BUILD_STATIC)
     set_target_properties(${PROJECT_NAME}-static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
 endif()
 
-if (ENABLE_SF3)
-    if (STB_VORBIS)
-        set(SF3_SUPPORT "SF3_STB_VORBIS")
-    else()
-        set(SF3_SUPPORT "SF3_XIPH_VORBIS")
-    endif()
-
-    if(FLUIDLITE_BUILD_SHARED)
-        target_compile_definitions(${PROJECT_NAME} PUBLIC SF3_SUPPORT=${SF3_SUPPORT})
-    endif()
-    if(FLUIDLITE_BUILD_STATIC)
-        target_compile_definitions(${PROJECT_NAME}-static PUBLIC SF3_SUPPORT=${SF3_SUPPORT})
-    endif()
+if(FLUIDLITE_BUILD_SHARED)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC SF3_SUPPORT=${SF3_SUPPORT})
+endif()
+if(FLUIDLITE_BUILD_STATIC)
+    target_compile_definitions(${PROJECT_NAME}-static PUBLIC SF3_SUPPORT=${SF3_SUPPORT})
 endif()
 
 configure_file(fluidlite.pc.in ${CMAKE_BINARY_DIR}/fluidlite.pc @ONLY)

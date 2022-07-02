@@ -34,78 +34,9 @@
 static FILE *fP;
 static int counter = 0;
 
-#if SF3_SUPPORT == SF3_XIPH_VORBIS
-#include "vorbis/codec.h"
-#include "vorbis/vorbisenc.h"
-#include "vorbis/vorbisfile.h"
 
-
-struct VorbisData {
-	int pos;											// current position in audio->data()
-	char *data;
-	int datasize;
-};
-
-static struct VorbisData vorbisData;
-
-static size_t ovRead (void *ptr, size_t size, size_t nmemb, void *datasource);
-static int ovSeek (void *datasource, ogg_int64_t offset, int whence);
-static long ovTell (void *datasource);
-
-static ov_callbacks ovCallbacks = { ovRead, ovSeek, 0, ovTell };
-
-//---------------------------------------------------------
-//   ovRead
-//---------------------------------------------------------
-
-static size_t ovRead (void *ptr, size_t size, size_t nmemb, void *datasource) {
-	struct VorbisData *vd = (struct VorbisData *) datasource;
-	size_t n = size * nmemb;
-	if (vd->datasize < (int) vd->pos + (int) n)
-		n = vd->datasize - vd->pos;
-	if (n) {
-		const char *src = vd->data + vd->pos;
-		memcpy (ptr, src, n);
-		vd->pos += n;
-	}
-
-	return n;
-}
-
-//---------------------------------------------------------
-//   ovSeek
-//---------------------------------------------------------
-
-static int ovSeek (void *datasource, ogg_int64_t offset, int whence) {
-	struct VorbisData *vd = (struct VorbisData *) datasource;
-	switch (whence) {
-	case SEEK_SET:
-		vd->pos = offset;
-		break;
-	case SEEK_CUR:
-		vd->pos += offset;
-		break;
-	case SEEK_END:
-		vd->pos = vd->datasize - offset;
-		break;
-	}
-	return 0;
-}
-
-//---------------------------------------------------------
-//   ovTell
-//---------------------------------------------------------
-
-static long ovTell (void *datasource) {
-	struct VorbisData *vd = (struct VorbisData *) datasource;
-	return vd->pos;
-}
-#endif
-
-#if SF3_SUPPORT == SF3_STB_VORBIS
 #define STB_VORBIS_HEADER_ONLY
-#include "stb_vorbis.c"
-#endif
+#include "../stb/stb_vorbis.c"
 
 /***************************************************************
  *
@@ -719,58 +650,22 @@ fluid_sample_t *fluid_defsfont_get_sample (fluid_defsfont_t * sfont, char *s) {
 
 		if (FLUID_STRCMP (sample->name, s) == 0) {
 
-#if SF3_SUPPORT
 			if (sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS) {
         printf("Sample %s uses OGG vorbis format. Good!\n", sample->name);
 				short *sampledata = NULL;
 				int sampleframes = 0;
 
-#if SF3_SUPPORT == SF3_XIPH_VORBIS
-				int sampledata_size = 0;
-				OggVorbis_File vf;
 
-				vorbisData.pos = 0;
-				vorbisData.data = (char *) sample->data + sample->start;
-				vorbisData.datasize = sample->end + 1 - sample->start;
-
-				if (ov_open_callbacks (&vorbisData, &vf, 0, 0, ovCallbacks) == 0) {
-#define BUFFER_SIZE 4096
-					int bytes_read = 0;
-					int section = 0;
-					for (;;) {
-						// allocate additional memory for samples
-						sampledata = realloc (sampledata, sampledata_size + BUFFER_SIZE);
-						bytes_read =
-							ov_read (&vf, (char *) sampledata + sampledata_size,
-											 BUFFER_SIZE, 0, sizeof (short), 1, &section);
-						if (bytes_read > 0) {
-							sampledata_size += bytes_read;
-						} else {
-							// shrink sampledata to actual size
-							sampledata = realloc (sampledata, sampledata_size);
-							break;
-						}
-					}
-
-					ov_clear (&vf);
-				}
-				// because we actually need num of frames so we should divide num of bytes to frame size
-				sampleframes = sampledata_size / sizeof (short);
-#endif
-
-#if SF3_SUPPORT == SF3_STB_VORBIS
 				const uint8 *data = (uint8 *) sample->data + sample->start;
 				const int datasize = sample->end + 1 - sample->start;
-
 				int channels;
-				sampleframes =
-					stb_vorbis_decode_memory (data, datasize, &channels, NULL,
-																		&sampledata);
-#endif
+				sampleframes = stb_vorbis_decode_memory (data, datasize, &channels, NULL, &sampledata);
 				// point sample data to uncompressed data stream
-				sample->data = sampledata;
+				//sample->data = sampledata;
+				sample->data = data;  // point to compressed OGG data instead for fluidbean
 				sample->start = 0;
-				sample->end = sampleframes - 1;
+				sample->end = sampleframes - 1;  
+        sample->oggEnd = datasize;
 
 				/* loop is fowled?? (cluck cluck :) */
 				if (sample->loopend > sample->end ||
@@ -791,7 +686,6 @@ fluid_sample_t *fluid_defsfont_get_sample (fluid_defsfont_t * sfont, char *s) {
 
 				fluid_voice_optimize_sample (sample);
 			}
-#endif
 
 			return sample;
 		}
@@ -1496,6 +1390,7 @@ fluid_inst_t *new_fluid_inst () {
 	inst->name[0] = 0;
 	inst->global_zone = NULL;
 	inst->zone = NULL;
+  inst->used = 0;
 	return inst;
 }
 
@@ -1889,12 +1784,10 @@ fluid_sample_t *new_fluid_sample () {
  * delete_fluid_sample
  */
 int delete_fluid_sample (fluid_sample_t * sample) {
-#if SF3_SUPPORT
 	if (sample->sampletype & FLUID_SAMPLETYPE_OGG_VORBIS_UNPACKED) {
 		if (sample->data != NULL)
 			FLUID_FREE (sample->data);
 	}
-#endif
 
 	FLUID_FREE (sample);
 	return FLUID_OK;
@@ -2247,10 +2140,8 @@ process_info (int size, SFData * sf, void *fd, fluid_fileapi_t * fapi) {
 				return (FAIL);
 			}
 
-#if SF3_SUPPORT
 			if (sf->version.major == 3) {
 			} else
-#endif
 			if (sf->version.major > 2) {
 				FLUID_LOG (FLUID_WARN,
 									 _("Sound font version is %d.%d which is newer than"

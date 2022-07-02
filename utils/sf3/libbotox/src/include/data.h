@@ -112,7 +112,7 @@ typedef struct {
 	U32 compressedLen;
 	U32 inflatedLen;
 	void *inflatedDataP;
-	U8  compressedData[];
+	U8 *compressedData;
 } Inflatable;
 
 Error _inflate(Inflatable *inflatableP);

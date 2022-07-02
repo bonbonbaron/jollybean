@@ -202,6 +202,7 @@ struct _fluid_sample_t
   char name[21];
   unsigned int start;
   unsigned int end;	/* Note: Index of last valid sample point (contrary to SF spec) */
+  unsigned int oggEnd;
   unsigned int loopstart;
   unsigned int loopend;	/* Note: first point following the loop (superimposed on loopstart) */
   unsigned int samplerate;
@@ -209,7 +210,7 @@ struct _fluid_sample_t
   int pitchadj;
   int sampletype;
   int valid;
-  short* data;
+  short* data;  // for fluidbean, this points to compressed OGG data instead of inflated PCM data.
 
   /** The amplitude, that will lower the level of the sample's loop to
       the noise floor. Needed for note turnoff optimization, will be
