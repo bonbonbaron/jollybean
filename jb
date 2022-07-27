@@ -23,6 +23,7 @@ case $mainArg in
   game) gameExe ${*:2};;
   sys)  sysExe ${*};;
   gene) echo "what the del";;
+  build) buildExe ${*:2};;
   *) echo "Command $mainArg not recognized.";;
 esac
 

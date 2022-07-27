@@ -51,10 +51,10 @@ function sysLs {
 
 function sysExe {
   case $2 in
-    new) sysNew ${*:3};;
+    new)    sysNew ${*:3};;
     del|rm) sysDel ${*:3};;
-    ls)  sysLs;;
-    cat) sysCat;;
+    ls)     sysLs;;
+    cat)    sysCat;;
       *) echo "sys has no command \"$2\".";;
   esac
 }

@@ -1,17 +1,17 @@
 #include "jb.h"
 
 int main() {
-  extern Biome biome1;
-  XMaster *xmsP = NULL;
+  extern Biome <<INITIAL_BIOME_HERE>>;
+  XMaster *xMasterP = NULL;
 
 	System *sPA[] = {
-		sRenderP,
+    <<SYSTEMS_HERE>>
 	}; 
 
-	Error e = xMasterIni(&xmsP, sPA, sizeof(sPA) / sizeof(sPA[0]), N_COMPONENT_TYPES, &biome1);
+	Error e = xMasterIni(&xMasterP, sPA, sizeof(sPA) / sizeof(sPA[0]), <<N_SYSTEMS_HERE>>, &<<INITIAL_BIOME_HERE>>);
 
 	while (!e) 
-		e = xRun(&xmsP->system);
+		e = xRun(&xMasterP->system);
 
   return e;
 }

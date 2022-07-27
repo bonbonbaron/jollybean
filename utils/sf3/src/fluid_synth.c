@@ -2423,27 +2423,15 @@ fluid_synth_alloc_voice(fluid_synth_t* synth, fluid_sample_t* sample, int chan, 
     return NULL;
   }
 
-  if (synth->verbose) {
-    k = 0;
-    for (i = 0; i < synth->polyphony; i++) {
-      if (!_AVAILABLE(synth->voice[i])) {
-	k++;
-      }
-    }
+  if (synth->verbose) 
+    for (i = k = 0; i < synth->polyphony; i++) 
+      if (!_AVAILABLE(synth->voice[i])) 
+        k++;
 
-    FLUID_LOG(FLUID_INFO, "noteon\t%d\t%d\t%d\t%05d\t%.3f\t\t%.3f\t%d",
-	     chan, key, vel, synth->storeid,
-	     (float) synth->ticks / 44100.0f,
-	     0.0f,
-	     k);
-  }
-
-  if (chan >= 0) {
+  if (chan >= 0) 
 	  channel = synth->channel[chan];
-  } else {
-    FLUID_LOG(FLUID_WARN, "Channel should be valid");
+  else 
     return NULL;
-  }
 
   if (fluid_voice_init(voice, sample, channel, key, vel,
 		       synth->storeid, synth->ticks, synth->gain) != FLUID_OK) {
@@ -2492,38 +2480,28 @@ void fluid_synth_kill_by_exclusive_class(fluid_synth_t* synth, fluid_voice_t* ne
     return;
   }
 
-  //  FLUID_LOG(FLUID_INFO, "Voice belongs to exclusive class (class=%d, ignore_id=%d)", excl_class, ignore_ID);
+  /* Kill all notes on the same channel with the same exclusive class */
 
-    /* Kill all notes on the same channel with the same exclusive class */
-
+  memset(synth->voice, 0, sizeof
   for (i = 0; i < synth->polyphony; i++) {
     fluid_voice_t* existing_voice = synth->voice[i];
 
     /* Existing voice does not play? Leave it alone. */
-    if (!_PLAYING(existing_voice)) {
+    if (!_PLAYING(existing_voice)) 
       continue;
-    }
-
     /* An exclusive class is valid for a whole channel (or preset).
      * Is the voice on a different channel? Leave it alone. */
-    if (existing_voice->chan != new_voice->chan) {
+    if (existing_voice->chan != new_voice->chan) 
       continue;
-    }
-
     /* Existing voice has a different (or no) exclusive class? Leave it alone. */
-    if ((int)_GEN(existing_voice, GEN_EXCLUSIVECLASS) != excl_class) {
+    if ((int)_GEN(existing_voice, GEN_EXCLUSIVECLASS) != excl_class) 
       continue;
-    }
-
     /* Existing voice is a voice process belonging to this noteon
      * event (for example: stereo sample)?  Leave it alone. */
-    if (fluid_voice_get_id(existing_voice) == fluid_voice_get_id(new_voice)) {
+    if (fluid_voice_get_id(existing_voice) == fluid_voice_get_id(new_voice)) 
       continue;
-    }
-
     //    FLUID_LOG(FLUID_INFO, "Releasing previous voice of exclusive class (class=%d, id=%d)",
     //     (int)_GEN(existing_voice, GEN_EXCLUSIVECLASS), (int)fluid_voice_get_id(existing_voice));
-
     fluid_voice_kill_excl(existing_voice);
   };
 };
@@ -2544,366 +2522,6 @@ void fluid_synth_start_voice(fluid_synth_t* synth, fluid_voice_t* voice)
   /* Start the new voice */
 
   fluid_voice_start(voice);
-}
-
-/*
- * fluid_synth_add_sfloader
- */
-void fluid_synth_add_sfloader(fluid_synth_t* synth, fluid_sfloader_t* loader)
-{
-  synth->loaders = fluid_list_prepend(synth->loaders, loader);
-}
-
-
-/*
- * fluid_synth_sfload
- */
-int
-fluid_synth_sfload(fluid_synth_t* synth, const char* filename, int reset_presets)
-{
-  fluid_sfont_t* sfont;
-  fluid_list_t* list;
-  fluid_sfloader_t* loader;
-
-#if defined(MACOS9)
-  fluid_synth_sfunload_macos9(synth);
-#endif
-
-  if (filename == NULL) {
-    FLUID_LOG(FLUID_ERR, "Invalid filename");
-    return FLUID_FAILED;
-  }
-
-  for (list = synth->loaders; list; list = fluid_list_next(list)) {
-    loader = (fluid_sfloader_t*) fluid_list_get(list);
-
-    sfont = fluid_sfloader_load(loader, filename);
-    if (sfont == NULL)
-        return -1;
-
-    sfont->id = ++synth->sfont_id;
-    synth->sfont = fluid_list_prepend(synth->sfont, sfont);
-
-    if (reset_presets) {
-        fluid_synth_program_reset(synth);
-    }
-    return (int) sfont->id;
-  }
-
-  FLUID_LOG(FLUID_ERR, "Failed to load SoundFont \"%s\"", filename);
-  return -1;
-}
-
-
-/*
- * fluid_synth_sfunload_macos9
- */
-void fluid_synth_sfunload_macos9(fluid_synth_t* synth)
-{
-#if defined(MACOS9)
-  fluid_list_t *list, *next;
-  fluid_sfont_t* sfont;
-
-  list = synth->unloading;
-  while (list) {
-    next = fluid_list_next(list);
-    sfont = (fluid_sfont_t*) fluid_list_get(list);
-    if (delete_fluid_sfont(sfont) == 0) {
-      synth->unloading = fluid_list_remove(synth->unloading, sfont);
-    }
-    list = next;
-  }
-#endif
-}
-
-/*
- * fluid_synth_sfunload
- */
-int
-fluid_synth_sfunload(fluid_synth_t* synth, unsigned int id, int reset_presets)
-{
-  fluid_sfont_t* sfont = fluid_synth_get_sfont_by_id(synth, id);
-
-#if defined(MACOS9)
-  fluid_synth_sfunload_macos9(synth);
-#endif
-
-  if (!sfont) {
-    FLUID_LOG(FLUID_ERR, "No SoundFont with id = %d", id);
-    return FLUID_FAILED;
-  }
-
-  /* remove the SoundFont from the list */
-  synth->sfont = fluid_list_remove(synth->sfont, sfont);
-
-  /* reset the presets for all channels */
-  if (reset_presets) {
-    fluid_synth_program_reset(synth);
-  } else {
-    fluid_synth_update_presets(synth);
-  }
-
-  if (delete_fluid_sfont(sfont) != 0) {
-#if defined(MACOS9)
-    synth->unloading = fluid_list_prepend(synth->unloading, sfont);
-#else
-  int r = delete_fluid_sfont(sfont);
-  if (r == 0) {
-    FLUID_LOG(FLUID_DBG,"Unloaded SoundFont");
-  }
-#endif
-  }
-
-  return FLUID_OK;
-}
-
-/* fluid_synth_sfreload
- *
- */
-int fluid_synth_sfreload(fluid_synth_t* synth, unsigned int id)
-{
-  char filename[1024];
-  fluid_sfont_t* sfont;
-  int index = 0;
-  fluid_list_t *list;
-  fluid_sfloader_t* loader;
-
-
-  sfont = fluid_synth_get_sfont_by_id(synth, id);
-  if (!sfont) {
-    FLUID_LOG(FLUID_ERR, "No SoundFont with id = %d", id);
-    return FLUID_FAILED;
-  }
-
-  /* find the index of the SoundFont */
-  list = synth->sfont;
-  while (list) {
-    if (sfont == (fluid_sfont_t*) fluid_list_get(list)) {
-      break;
-    }
-    list = fluid_list_next(list);
-    index++;
-  }
-
-  /* keep a copy of the SoundFont's filename */
-  FLUID_STRCPY(filename, fluid_sfont_get_name(sfont));
-
-  if (fluid_synth_sfunload(synth, id, 0) != FLUID_OK) {
-    return FLUID_FAILED;
-  }
-
-  for (list = synth->loaders; list; list = fluid_list_next(list)) {
-    loader = (fluid_sfloader_t*) fluid_list_get(list);
-
-    sfont = fluid_sfloader_load(loader, filename);
-
-    if (sfont != NULL) {
-
-      sfont->id = id;
-
-      /* insert the sfont at the same index */
-      synth->sfont = fluid_list_insert_at(synth->sfont, index, sfont);
-
-      /* reset the presets for all channels */
-      fluid_synth_update_presets(synth);
-
-      return sfont->id;
-    }
-  }
-
-  FLUID_LOG(FLUID_ERR, "Failed to load SoundFont \"%s\"", filename);
-  return -1;
-}
-
-
-/*
- * fluid_synth_add_sfont
- */
-int fluid_synth_add_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont)
-{
-	sfont->id = ++synth->sfont_id;
-
-	/* insert the sfont as the first one on the list */
-	synth->sfont = fluid_list_prepend(synth->sfont, sfont);
-
-	/* reset the presets for all channels */
-	fluid_synth_program_reset(synth);
-
-	return sfont->id;
-}
-
-
-/*
- * fluid_synth_remove_sfont
- */
-void fluid_synth_remove_sfont(fluid_synth_t* synth, fluid_sfont_t* sfont)
-{
-	int sfont_id = fluid_sfont_get_id(sfont);
-
-	synth->sfont = fluid_list_remove(synth->sfont, sfont);
-
-	/* remove a possible bank offset */
-	fluid_synth_remove_bank_offset(synth, sfont_id);
-
-	/* reset the presets for all channels */
-	fluid_synth_program_reset(synth);
-}
-
-
-/* fluid_synth_sfcount
- *
- * Returns the number of loaded SoundFonts
- */
-int
-fluid_synth_sfcount(fluid_synth_t* synth)
-{
-  return fluid_list_size(synth->sfont);
-}
-
-/* fluid_synth_get_sfont
- *
- * Returns SoundFont num
- */
-fluid_sfont_t*
-fluid_synth_get_sfont(fluid_synth_t* synth, unsigned int num)
-{
-  return (fluid_sfont_t*) fluid_list_get(fluid_list_nth(synth->sfont, num));
-}
-
-/* fluid_synth_get_sfont_by_id
- *
- */
-fluid_sfont_t* fluid_synth_get_sfont_by_id(fluid_synth_t* synth, unsigned int id)
-{
-  fluid_list_t* list = synth->sfont;
-  fluid_sfont_t* sfont;
-
-  while (list) {
-    sfont = (fluid_sfont_t*) fluid_list_get(list);
-    if (fluid_sfont_get_id(sfont) == id) {
-      return sfont;
-    }
-    list = fluid_list_next(list);
-  }
-  return NULL;
-}
-
-/* fluid_synth_get_sfont_by_name
- *
- */
-fluid_sfont_t* fluid_synth_get_sfont_by_name(fluid_synth_t* synth, char *name)
-{
-  fluid_list_t* list = synth->sfont;
-  fluid_sfont_t* sfont;
-
-  while (list) {
-    sfont = (fluid_sfont_t*) fluid_list_get(list);
-    if (FLUID_STRCMP(fluid_sfont_get_name(sfont), name) == 0) {
-      return sfont;
-    }
-    list = fluid_list_next(list);
-  }
-  return NULL;
-}
-
-/*
- * fluid_synth_get_channel_preset
- */
-fluid_preset_t*
-fluid_synth_get_channel_preset(fluid_synth_t* synth, int chan)
-{
-  if ((chan >= 0) && (chan < synth->midi_channels)) {
-    return fluid_channel_get_preset(synth->channel[chan]);
-  }
-
-  return NULL;
-}
-
-/*
- * fluid_synth_get_voicelist
- */
-void
-fluid_synth_get_voicelist(fluid_synth_t* synth, fluid_voice_t* buf[], int bufsize, int ID)
-{
-  int i;
-  int count = 0;
-  for (i = 0; i < synth->polyphony; i++) {
-    fluid_voice_t* voice = synth->voice[i];
-    if (count >= bufsize) {
-      return;
-    }
-
-    if (_PLAYING(voice) && ((int)voice->id == ID || ID < 0)) {
-      buf[count++] = voice;
-    }
-  }
-  if (count >= bufsize) {
-    return;
-  }
-  buf[count++] = NULL;
-}
-
-/* Purpose:
- * Turns on / off the reverb unit in the synth */
-void fluid_synth_set_reverb_on(fluid_synth_t* synth, int on)
-{
-  synth->with_reverb = on;
-}
-
-/* Purpose:
- * Turns on / off the chorus unit in the synth */
-void fluid_synth_set_chorus_on(fluid_synth_t* synth, int on)
-{
-  synth->with_chorus = on;
-}
-
-/* Purpose:
- * Reports the current setting of the chorus unit. */
-int fluid_synth_get_chorus_nr(fluid_synth_t* synth)
-{
-    return fluid_chorus_get_nr(synth->chorus);
-}
-
-double fluid_synth_get_chorus_level(fluid_synth_t* synth)
-{
-    return (double)fluid_chorus_get_level(synth->chorus);
-}
-
-double fluid_synth_get_chorus_speed_Hz(fluid_synth_t* synth)
-{
-    return (double)fluid_chorus_get_speed_Hz(synth->chorus);
-}
-
-double fluid_synth_get_chorus_depth_ms(fluid_synth_t* synth)
-{
-    return (double)fluid_chorus_get_depth_ms(synth->chorus);
-}
-
-int fluid_synth_get_chorus_type(fluid_synth_t* synth)
-{
-    return fluid_chorus_get_type(synth->chorus);
-}
-
-/* Purpose:
- * Returns the current settings_old of the reverb unit */
-double fluid_synth_get_reverb_roomsize(fluid_synth_t* synth)
-{
-    return (double)fluid_revmodel_getroomsize(synth->reverb);
-}
-
-double fluid_synth_get_reverb_damp(fluid_synth_t* synth)
-{
-    return (double) fluid_revmodel_getdamp(synth->reverb);
-}
-
-double fluid_synth_get_reverb_level(fluid_synth_t* synth)
-{
-    return (double) fluid_revmodel_getlevel(synth->reverb);
-}
-
-double fluid_synth_get_reverb_width(fluid_synth_t* synth)
-{
-    return (double) fluid_revmodel_getwidth(synth->reverb);
 }
 
 /* Purpose:
@@ -2951,62 +2569,6 @@ int fluid_synth_set_interp_method(fluid_synth_t* synth, int chan, int interp_met
   };
   return FLUID_OK;
 };
-
-/* Purpose:
- * Returns the number of allocated midi channels
- */
-int
-fluid_synth_count_midi_channels(fluid_synth_t* synth)
-{
-  return synth->midi_channels;
-}
-
-/* Purpose:
- * Returns the number of allocated audio channels
- */
-int
-fluid_synth_count_audio_channels(fluid_synth_t* synth)
-{
-  return synth->audio_channels;
-}
-
-/* Purpose:
- * Returns the number of allocated audio channels
- */
-int
-fluid_synth_count_audio_groups(fluid_synth_t* synth)
-{
-  return synth->audio_groups;
-}
-
-/* Purpose:
- * Returns the number of allocated effects channels
- */
-int
-fluid_synth_count_effects_channels(fluid_synth_t* synth)
-{
-  return synth->effects_channels;
-}
-
-static fluid_tuning_t*
-fluid_synth_get_tuning(fluid_synth_t* synth, int bank, int prog)
-{
-  if ((bank < 0) || (bank >= 128)) {
-    FLUID_LOG(FLUID_WARN, "Bank number out of range");
-    return NULL;
-  }
-  if ((prog < 0) || (prog >= 128)) {
-    FLUID_LOG(FLUID_WARN, "Program number out of range");
-    return NULL;
-  }
-  if ((synth->tuning == NULL) ||
-      (synth->tuning[bank] == NULL) ||
-      (synth->tuning[bank][prog] == NULL)) {
-    FLUID_LOG(FLUID_WARN, "No tuning at bank %d, prog %d", bank, prog);
-    return NULL;
-  }
-  return synth->tuning[bank][prog];
-}
 
 static fluid_tuning_t*
 fluid_synth_create_tuning(fluid_synth_t* synth, int bank, int prog, const char* name)
