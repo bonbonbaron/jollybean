@@ -23,7 +23,7 @@ CFLAGS_TINY    = $(CFLAGS_COMMON) #-Os    #TODO: uncomment when ready for relase
 CFLAGS_FAST    = $(CFLAGS_COMMON) #-Ofast    #TODO: uncomment when ready for relase
 SDL_CFLAGS     = $(shell sdl2-config --cflags)
 SDL_LFLAGS     = $(shell sdl2-config --libs)
-LFLAGS         = -Wl,--gc-sections -Wl,-z,norelro 
+LFLAGS         = -Wl,--gc-sections -Wl,-z,norelro
 
 MAIN_SRC = $(BUILDDIR)/main.c
 MAIN_OUT = ./game
@@ -47,9 +47,7 @@ $(BUILDDIR):
 
 $(LIBDIR):
 	mkdir -p $(LIBDIR)
-##############################
-$(MAIN_OUT): $(MAIN_SRC) $(LIBJOLLBEAN) 
-	$(CC) $(SDL_CFLAGS) $(CFLAGS_FAST) -L$(LIBDIR) -ljollybean $(BUILDDIR)/main.c -o $@
+#############################
 
 .PHONY: install
 install:

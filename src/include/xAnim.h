@@ -12,8 +12,8 @@ typedef struct {
   U8     nIndices;
   Bln    repeat;
   U8    *timeA;     
-  Rect_ *srcRectA;   
-  Rect_ *shareRectP;
+  Rect_ *srcRectA;    // This is the array of animation rectangles. We draw FROM this part of the source image.
+  Rect_ *shareRectP;  // Pointer to rectangle shared across multiple systems. We draw TO this part of the dest image.
 } XAnimComp;
 
 typedef struct {

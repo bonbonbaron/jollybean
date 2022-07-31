@@ -2,16 +2,15 @@
 
 int main() {
   extern Biome <<INITIAL_BIOME_HERE>>;
-  XMaster *xMasterP = NULL;
 
 	System *sPA[] = {
     <<SYSTEMS_HERE>>
 	}; 
 
-	Error e = xMasterIni(&xMasterP, sPA, sizeof(sPA) / sizeof(sPA[0]), <<N_SYSTEMS_HERE>>, &<<INITIAL_BIOME_HERE>>);
+	Error e = xMasterIni(&xMaster, sPA, sizeof(sPA) / sizeof(sPA[0]), <<N_SYSTEMS_HERE>>, &<<INITIAL_BIOME_HERE>>);
 
 	while (!e) 
-		e = xRun(&xMasterP->system);
+		e = xRun(&xMaster.system);
 
   return e;
 }

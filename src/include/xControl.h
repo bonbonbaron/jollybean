@@ -36,8 +36,6 @@ Error xControlProcessMessage(System *sP, Message *msgP);
 XIniCompFuncDef_(Control);
 XGetShareFuncDef_(Control);
 
-//======================================================
-// System definition
-//======================================================
-X_(Control, 5, FLG_NO_SWITCHES_ | FLG_NO_CHECKS_ | FLG_NO_CF_SRC_A_);
+extern XControl xControl;
+extern System *sControlP;
 #endif

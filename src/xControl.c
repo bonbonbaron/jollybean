@@ -120,3 +120,8 @@ XIniCompFuncDef_(Control) {
 }
 
 XGetShareFuncDefUnused_(Control);
+
+//======================================================
+// System definition
+//======================================================
+X_(Control, 5, FLG_NO_SWITCHES_ | FLG_NO_CHECKS_ | FLG_NO_CF_SRC_A_);
