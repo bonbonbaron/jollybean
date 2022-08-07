@@ -212,4 +212,4 @@ Error xCollisionRun(System *sP) {
 // System definition
 //======================================================
 #define FLAGS_HERE (0)
-X_(Collision, 1, FLAGS_HERE);
+X_(Collision, COLLISION, FLAGS_HERE);

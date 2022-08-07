@@ -76,4 +76,4 @@ Error xMotionTransRun(System *sP) {
 // System definition
 //======================================================
 #define FLAGS_HERE (0)
-X_(MotionTrans, 1, FLAGS_HERE);
+X_(MotionTrans, MOTION_TRAN, FLAGS_HERE);

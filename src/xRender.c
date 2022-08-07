@@ -1,6 +1,6 @@
 #include "xRender.h"
 #include "xMaster.h"
-#include "x.h"
+#include "jb.h"
 
 //TODO Make bookmarks to indicate where images should when they switch layers.
 // Compressed images are already in memory in JB. 
@@ -243,6 +243,7 @@ XClrFuncDef_(Render) {
 XGetShareFuncDef_(Render) {
   XRender *renderSysP = (XRender*) sP;
   Error e = SUCCESS;
+#if 0
   Map *srcRectMP = (Map*) mapGet(shareMMP, CLIP_RECT);
   Map *dstRectMP = (Map*) mapGet(shareMMP, POSSIZE_RECT);
   Entity entity = 0;
@@ -261,25 +262,26 @@ XGetShareFuncDef_(Render) {
         e = E_BAD_ARGS;
     }
   }
+#endif
   // Get window and renderer too! Kind important lol. 
-  // They're "bogus" because there's only one element per window/renderer map. 
+  // They're bogus because there's only one element per window/renderer map. 
   // But we gotta stick with our awesome design!!
   // Get window
-  Map *bogusWindowMP = NULL; 
-  Map *bogusRendererMP = NULL;
+  Map *windowMP = NULL; 
+  Map *rendererMP = NULL;
   if (!e)
-    bogusWindowMP = (Map*) mapGet(shareMMP, WINDOW_GENE_TYPE);
-  if (!bogusWindowMP)
+    windowMP = (Map*) mapGet(shareMMP, WINDOW_GENE_TYPE);
+  if (!windowMP)
     e = E_BAD_KEY;  
   else 
-    renderSysP->windowP = (Window_*) mapGet(bogusWindowMP, WINDOW_KEY_);
+    renderSysP->windowP = (Window_*) mapGet(windowMP, WINDOW_KEY_);
   // Get renderer
   if (!e)
-    bogusRendererMP = (Map*) mapGet(shareMMP, RENDERER_GENE_TYPE);
-  if (!bogusRendererMP)
+    rendererMP = (Map*) mapGet(shareMMP, RENDERER_GENE_TYPE);
+  if (!rendererMP)
     e = E_BAD_KEY;
   else 
-    renderSysP->rendererP = (Renderer_*) mapGet(bogusRendererMP, RENDERER_KEY_);
+    renderSysP->rendererP = (Renderer_*) mapGet(rendererMP, RENDERER_KEY_);
 
   if (!renderSysP->windowP || !renderSysP->rendererP)
     e = E_BAD_KEY;
@@ -309,4 +311,4 @@ Error xRenderRun(System *sP) {
 //======================================================
 // System definition
 //======================================================
-X_(Render, 1, FLG_NO_SWITCHES_);
+X_(Render, RENDER, FLG_NO_SWITCHES_);

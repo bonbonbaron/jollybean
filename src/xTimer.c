@@ -1,6 +1,5 @@
 #include "xTimer.h"
-#include "data.h"
-#include "x.h"
+#include "jb.h"
 
 //======================================================
 // Initialize Timer's system.
@@ -79,4 +78,4 @@ Error xTimerRun(System *sP) {
 // System definition
 //======================================================
 #define FLAGS_HERE (0)
-X_(Timer, 1, FLAGS_HERE);
+X_(Timer, TIMER, FLAGS_HERE);

@@ -7,7 +7,7 @@ int main() {
     <<SYSTEMS_HERE>>
 	}; 
 
-	Error e = xMasterIni(&xMaster, sPA, sizeof(sPA) / sizeof(sPA[0]), <<N_SYSTEMS_HERE>>, &<<INITIAL_BIOME_HERE>>);
+	Error e = xMasterIni(&xMaster, sGoP, sPA, sizeof(sPA) / sizeof(sPA[0]), N_SYSTEM_TYPES, &<<INITIAL_BIOME_HERE>>);
 
 	while (!e) 
 		e = xRun(&xMaster.system);

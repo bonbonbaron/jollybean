@@ -45,6 +45,8 @@ XClrFuncDef_(Anim) {
 }
 
 XGetShareFuncDef_(Anim) {
+  if (!sP->cF)
+    return E_BAD_ARGS;
 	XAnimComp *cP = (XAnimComp*) sP->cF;
   XAnimComp *cStartP = cP;
 	XAnimComp *cEndP = cP + frayGetFirstInactiveIdx(sP->cF);
@@ -86,4 +88,4 @@ Error xAnimRun(System *sP) {
 // System definition
 //======================================================
 #define FLAGS_HERE (0)
-X_(Anim, 1, FLAGS_HERE);
+X_(Anim, ANIMATION, FLAGS_HERE);

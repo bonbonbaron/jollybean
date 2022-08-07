@@ -15,6 +15,7 @@
 #include "xCollision.h"
 
 // Keys  (hopefully obsolete later)
-enumKeys_(MASTER, CONTROL, POSITION, MOTION, ANIMATION, COLLISION, RENDER, JOLLYBEAN, N_COMPONENT_TYPES) SystemType; 
+// MASTER is 1, GO is 2
+typedef enum {CONTROL = 3, POSITION, MOTION_TRAN, ANIMATION, COLLISION, RENDER, TIMER, JOLLYBEAN, N_SYSTEM_TYPES} SystemType; 
 
 #endif

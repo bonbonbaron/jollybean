@@ -1,4 +1,5 @@
 #include "xControl.h"
+#include "xMaster.h"
 
 U32 buttonsPressed;
 
@@ -15,7 +16,7 @@ Error xControlRun(System *sP) {
   Error e = SUCCESS;
 	while (pollEvent_(&event)) {
 		if (event.type == EVENT_QUIT_) {
-      return mailboxWrite(sP->outboxF, MASTER, 0, QUIT_ALL, QUIT_ALL);
+      return mailboxWrite(sP->outboxF, MASTER_, 0, QUIT_ALL, QUIT_ALL);
 		}
 		else if (event.type == EVENT_KEYUP_) {
 			switch(event.key.keysym.sym) {
@@ -52,7 +53,7 @@ Error xControlRun(System *sP) {
         e = _alertFocusToKeyEvent(xControlSysP, KD_(SELECT_));
 				break;
 			case KEY_ESCAPE_:
-        return mailboxWrite(sP->outboxF, MASTER, 0, QUIT_ALL, QUIT_ALL);
+        return mailboxWrite(sP->outboxF, MASTER_, 0, QUIT_ALL, QUIT_ALL);
 			}
 		}
 		else if (event.type == EVENT_KEYDOWN_) {
@@ -90,7 +91,7 @@ Error xControlRun(System *sP) {
         e = _alertFocusToKeyEvent(xControlSysP, KD_(SELECT_));
         break;
       case KEY_ESCAPE_:
-        return mailboxWrite(sP->outboxF, MASTER, 0, QUIT_ALL, QUIT_ALL);
+        return mailboxWrite(sP->outboxF, MASTER_, 0, QUIT_ALL, QUIT_ALL);
       }
 		}
 	}
@@ -124,4 +125,4 @@ XGetShareFuncDefUnused_(Control);
 //======================================================
 // System definition
 //======================================================
-X_(Control, 5, FLG_NO_SWITCHES_ | FLG_NO_CHECKS_ | FLG_NO_CF_SRC_A_);
+X_(Control, CONTROL, FLG_NO_SWITCHES_ | FLG_NO_CHECKS_ | FLG_NO_CF_SRC_A_);
