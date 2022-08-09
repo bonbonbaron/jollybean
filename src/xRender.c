@@ -237,22 +237,25 @@ XClrFuncDef_(Render) {
   unused_(sP);
   return SUCCESS;
 }
-
 #define CLIP_RECT (4)  /* TODO: move to enum */
 #define POSSIZE_RECT (5)  /* TODO: move to enum */
 XGetShareFuncDef_(Render) {
   XRender *renderSysP = (XRender*) sP;
-  Error e = SUCCESS;
-#if 0
-  Map *srcRectMP = (Map*) mapGet(shareMMP, CLIP_RECT);
-  Map *dstRectMP = (Map*) mapGet(shareMMP, POSSIZE_RECT);
+  Map *srcRectMP, *dstRectMP;
+  // Get src and dst rectangles for each render component.
+  // Source rectangles are for animating and re-coloring.
+  // Destination rectangles are for motion, scaling, collision, and rotating.
+  Error e = mapGetNestedMapP(shareMMP, CLIP_RECT, &srcRectMP);
+  if (!e)
+    e = mapGetNestedMapP(shareMMP, POSSIZE_RECT, &dstRectMP);
   Entity entity = 0;
-  // Get clip and position-size rectangles for each render component.
-  if (!srcRectMP || !dstRectMP)
-    return E_BAD_KEY;
   XRenderComp *cP = sP->cF;
   XRenderComp *cEndP = cP + arrayGetNElems(sP->cF);
   for (; !e && cP < cEndP; cP++) {
+    entity = xGetEntityByCompIdx(sP, cP - (XRenderComp*) sP->cF);
+    if (!entity)
+      return E_BAD_KEY;
+
     cP->srcRectP = (Rect_*) mapGet(srcRectMP, entity);
     if (!cP->srcRectP)
       e = E_BAD_ARGS;
@@ -262,29 +265,12 @@ XGetShareFuncDef_(Render) {
         e = E_BAD_ARGS;
     }
   }
-#endif
-  // Get window and renderer too! Kind important lol. 
-  // They're bogus because there's only one element per window/renderer map. 
-  // But we gotta stick with our awesome design!!
-  // Get window
-  Map *windowMP = NULL; 
-  Map *rendererMP = NULL;
-  if (!e)
-    windowMP = (Map*) mapGet(shareMMP, WINDOW_GENE_TYPE);
-  if (!windowMP)
-    e = E_BAD_KEY;  
-  else 
-    renderSysP->windowP = (Window_*) mapGet(windowMP, WINDOW_KEY_);
   // Get renderer
   if (!e)
-    rendererMP = (Map*) mapGet(shareMMP, RENDERER_GENE_TYPE);
-  if (!rendererMP)
-    e = E_BAD_KEY;
-  else 
-    renderSysP->rendererP = (Renderer_*) mapGet(rendererMP, RENDERER_KEY_);
-
-  if (!renderSysP->windowP || !renderSysP->rendererP)
-    e = E_BAD_KEY;
+    e = mapGetNestedMapPElem(shareMMP, RENDERER_GENE_TYPE, RENDERER_KEY_, (void**) &renderSysP->rendererP);
+  // Get window
+  if (!e)
+    e = mapGetNestedMapPElem(shareMMP, WINDOW_GENE_TYPE, WINDOW_KEY_, (void**) &renderSysP->windowP);
 
   return e;
 }
