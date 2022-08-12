@@ -237,41 +237,15 @@ XClrFuncDef_(Render) {
   unused_(sP);
   return SUCCESS;
 }
-#define CLIP_RECT (4)  /* TODO: move to enum */
-#define POSSIZE_RECT (5)  /* TODO: move to enum */
+
+// Only get the render and window. Components' src & dst rects come from SCENE_START stimulus to XGo.
 XGetShareFuncDef_(Render) {
   XRender *renderSysP = (XRender*) sP;
-  Map *srcRectMP, *dstRectMP;
-  // Get src and dst rectangles for each render component.
-  // Source rectangles are for animating and re-coloring.
-  // Destination rectangles are for motion, scaling, collision, and rotating.
-  Error e = mapGetNestedMapP(shareMMP, CLIP_RECT, &srcRectMP);
-  if (!e)
-    e = mapGetNestedMapP(shareMMP, POSSIZE_RECT, &dstRectMP);
-  Entity entity = 0;
-  XRenderComp *cP = sP->cF;
-  XRenderComp *cEndP = cP + arrayGetNElems(sP->cF);
-  for (; !e && cP < cEndP; cP++) {
-    entity = xGetEntityByCompIdx(sP, cP - (XRenderComp*) sP->cF);
-    if (!entity)
-      return E_BAD_KEY;
-
-    cP->srcRectP = (Rect_*) mapGet(srcRectMP, entity);
-    if (!cP->srcRectP)
-      e = E_BAD_ARGS;
-    if (!e) {
-      cP->dstRectP = (Rect_*) mapGet(dstRectMP, sP->cIdx2eA[cP - (XRenderComp*) sP->cF]);
-      if (!cP->dstRectP) 
-        e = E_BAD_ARGS;
-    }
-  }
   // Get renderer
-  if (!e)
-    e = mapGetNestedMapPElem(shareMMP, RENDERER_GENE_TYPE, RENDERER_KEY_, (void**) &renderSysP->rendererP);
+  Error e = mapGetNestedMapPElem(shareMMP, RENDERER_GENE_TYPE, RENDERER_KEY_, (void**) &renderSysP->rendererP);
   // Get window
   if (!e)
     e = mapGetNestedMapPElem(shareMMP, WINDOW_GENE_TYPE, WINDOW_KEY_, (void**) &renderSysP->windowP);
-
   return e;
 }
 
