@@ -3,8 +3,6 @@
 
 // Core
 #include "botox.h"
-#include "xMaster.h"
-#include "xGo.h"
 
 // Child systems
 #include "xRender.h"

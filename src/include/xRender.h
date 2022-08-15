@@ -1,7 +1,6 @@
 #ifndef SYS_RENDER
 #define SYS_RENDER
 #include "botox.h"
-#include "yoyoInterface.h"
 
 #define WINDOW_KEY_ (1)
 #define RENDERER_KEY_ (1)

@@ -1,5 +1,3 @@
-#include "xRender.h"
-#include "xMaster.h"
 #include "jb.h"
 
 //TODO Make bookmarks to indicate where images should when they switch layers.
@@ -160,9 +158,9 @@ Error _cmGen(ColormapS *cmP) {
 // Initialize xRender's system.
 //======================================================
 Error xRenderIniSys(System *sP, void *sParamsP) {
-  return SUCCESS;
 	unused_(sParamsP);
   unused_(sP);
+  return SUCCESS;
 }
 
 //======================================================
@@ -207,11 +205,12 @@ Error xRenderIniComp(System *sP, void *compDataP, void *compDataSrcP) {
 
   // Everything's ready to hand over to the component.
 	if (!e) {
-		cP->srcRectP = NULL;
-    cP->dstRectP->x = 0;
-    cP->dstRectP->y = 0;
-    cP->dstRectP->w = imgP->colorMapP->w;
-    cP->dstRectP->h = imgP->colorMapP->h;
+    // These get set by a tree.
+		//cP->srcRectP = NULL;
+    //cP->dstRectP->x = 0;
+    //cP->dstRectP->y = 0;
+    //cP->dstRectP->w = imgP->colorMapP->w;
+    //cP->dstRectP->h = imgP->colorMapP->h;
     cP->textureP = imgP->textureP;
   }
 

@@ -13,7 +13,8 @@ JOLLBEANSRC      = $(shell find ./src -name "*.c")
 JOLLBEAN_OBJS     = $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(JOLLBEANSRC:.c=.o))
 JOLLBEAN_INCLUDES = $(shell find -name "*.h")
 TGTINCLUDDIR = /usr/local/include/jollybean/
-IFLAGS=-I/usr/local/include/botox -I/usr/local/include/yoyo -I./src/include/
+BOTOXDIR = /home/bonbonbaron/hack/botox
+IFLAGS=-I$(BOTOXDIR)/src/include -I./src/include/
 
 CFLAGS_COMMON  = -Wall \
 							   $(IFLAGS) -ffunction-sections \

@@ -1,7 +1,7 @@
 #ifndef SYS_CONTROL
 #define SYS_CONTROL
 #include "botox.h"
-#include "yoyoInterface.h"
+#include "interface.h"
 #include "xMaster.h"
 #include "jb.h"
 

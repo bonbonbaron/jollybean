@@ -1,6 +1,6 @@
 #ifndef SYS_MotionTrans
 #define SYS_MotionTrans
-#include "yoyoInterface.h"
+#include "interface.h"
 #include "jb.h"
 
 typedef struct {

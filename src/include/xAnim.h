@@ -1,7 +1,5 @@
 #ifndef SYS_Anim
 #define SYS_Anim
-#include "botox.h"
-#include "yoyoInterface.h"
 #include "jb.h"
 
 typedef struct {

@@ -1,4 +1,5 @@
 #include "xControl.h"
+#include "x.h"
 #include "xMaster.h"
 
 U32 buttonsPressed;
@@ -98,28 +99,10 @@ Error xControlRun(System *sP) {
 	return e;
 }
 
-Error xControlProcessMessage(System *sP, Message *msgP) {
-	unused_(sP);
-	unused_(msgP);
-	return SUCCESS;
-}
-
-//TODO
-Error xControlClr(System *sP) {
-  unused_(sP);
-  return SUCCESS;
-}
-
-Error xControlIniSys() {
-	return SUCCESS;
-}
-
-XIniCompFuncDef_(Control) {
-  unused_(sP);
-	unused_(dataP);
-	return SUCCESS;
-}
-
+XProcMsgFuncDefUnused_(Control);
+XClrFuncDefUnused_(Control);
+XIniSysFuncDefUnused_(Control);
+XIniCompFuncDefUnused_(Control);
 XGetShareFuncDefUnused_(Control);
 
 //======================================================
