@@ -34,7 +34,8 @@ PNG_IDAT_END          = bytearray("IEND".encode())
 IMG_DIR_IDX_NAME      = 0
 IMG_DIR_IDX_LOCATION  = 1
 IMG_DIR_IDX_NBR_TILES = 2
- 
+TROVE_IMAGE_DIR       = "~/.jb/src/Image"
+
 BYTEORDER = "little"  # since that's the order files are written in
  
 class Inflatable:
@@ -46,8 +47,12 @@ class Inflatable:
     
     def writeInflationData(self, fp, tsDims):
         f = open(fp, "w")
-        f.write("#include \"data.h\"\n\n")
-        f.write("Inflatable inflatable%s = {\n"%(self.name.title()))
+        fprintf(fP, "#include \"data.h\"\n\n")
+        fprintf(fP, "Inflatable inflatable%s = {\n"%(self.name.title()))
+        fprintf(fP, "\t.compressedLen  = 5774,\n");
+        fprintf(fP, "\t.inflatedDataP  = NULL,\n");
+        fprintf(fP, "\t.inflatedLen    = 10500,\n");
+        fprintf(fP, "\t.compressedData = {\n\t");
         f.write("\t%d,\n\t%d,\n\tNULL,\n\t"%(self.cmpLen, self.decompLen))
         f.write("{" + ", ".join([str(hex(e)) for e in self.cmpData]) + "}\n};")
         f.write("\n\nImage img%s = {%d, %d, %d, %d, NULL};"%(self.name.title(), tsDims.w, tsDims.h, tsDims.pitch, tsDims.bpp))
@@ -450,4 +455,8 @@ args = sys.argv
 if len(args) > 1:
     print("running mkimg for each image in [" + ", ".join(args[1:])+ "].")
     for arg in args[1:]:
+        pytime = os.path.getmtime(os.path.join(root, sc))
         proc_img(arg)
+else:
+    print("No arguments provided. Exiting...")
+

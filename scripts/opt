@@ -2,6 +2,8 @@
 JB=$HOME/.jb
 JB_CONFIG=$JB/config
 
+# "opt" is a script for jollybean or jollybean global or game-level options.
+
 # $1 - key (option name)
 # $2 - filename (containing list of options)
 function optExists {
