@@ -864,7 +864,7 @@ void *tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_len, siz
   For more information, please refer to <http://unlicense.org/>
 */
 
-Error _inflate(Inflatable *inflatableP) {
+Error botoxInflate(Inflatable *inflatableP) {
 	Error e = SUCCESS;
 	long long unsigned int expectedInflatedLen;
 	if (inflatableP != NULL && inflatableP->inflatedDataP == NULL) {
@@ -885,7 +885,7 @@ Error _inflate(Inflatable *inflatableP) {
   return e;
 }
 
-void _deflate(Inflatable **inflatablePP) {
+void botoxDeflate(Inflatable **inflatablePP) {
   if (inflatablePP && *inflatablePP && (*inflatablePP)->inflatedDataP)
     jbFree(&(*inflatablePP)->inflatedDataP);
 }

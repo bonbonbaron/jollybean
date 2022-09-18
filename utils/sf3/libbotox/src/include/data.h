@@ -115,8 +115,8 @@ typedef struct {
 	U8 *compressedData;
 } Inflatable;
 
-Error _inflate(Inflatable *inflatableP);
-void _deflate(Inflatable **inflatablePP);
+Error botoxInflate(Inflatable *inflatableP);
+void botoxDeflate(Inflatable **inflatablePP);
 
 // Efficient Arrays (frays)
 Error frayNew(void **fPP, U32 elemSz, U32 nElems);

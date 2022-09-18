@@ -34,12 +34,12 @@ Error _cmGen(ColormapS *cmP) {
 			return SUCCESS;  
 		// If not reconstructed yet, inflate strip set if it's still compressed (inflate() checks internally).
 		if (cmP->stripSetP)
-			e = inflate(cmP->stripSetP->stripSetInfP);
+			e = botoxInflate(cmP->stripSetP->stripSetInfP);
 		else
 			return E_NULL_VAR;
 		// If CM source is strip-mapped, inflate strip map if it's still compressed (same as above).
 		if (!e && cmP->stripMapP)
-			e = inflate(cmP->stripMapP->stripMapInfP);
+			e = botoxInflate(cmP->stripMapP->stripMapInfP);
 		// Allocate colormap memory.
 		if (!e) 
 			e = jbAlloc((void**) &cmP->dataP, sizeof(U8), cmP->w * cmP->h);
