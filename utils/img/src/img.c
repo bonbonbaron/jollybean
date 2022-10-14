@@ -21,7 +21,13 @@
 #define IMG_DIR_IDX_LOCATION   1
 #define IMG_DIR_IDX_NBR_TILES  2
 
-void getBaseNameIndices(char *filepathP, U32 *startIdxP, U32 *endIdxP);
+#ifdef WINDOWS_
+#define FILE_SEP '\\'
+#else
+#define FILE_SEP '/'
+#endif
+
+void getBaseNameIndices(char *filepathP, char *extension, U32 *startIdxP, U32 *endIdxP);
 
 const static U8 PNG_SIGNATURE[]     = {137, 80, 78, 71, 13, 10, 26, 10};
 const static U8 PNG_IHDR_START[]    = {0, 0, 0, 13, 73, 72, 68, 82};
@@ -38,9 +44,23 @@ typedef struct {
   U32 w, h, pitch, bpp;
 } ImgDims;
 
+void imgDimsIni(ImgDims *imgDimsP, U32 width, U32 height, U32 bpp) {
+  imgDimsP->w = width;
+  imgDimsP->h = height;
+  imgDimsP->bpp = bpp;
+  imgDimsP->pitch = width * bpp / 8;
+}
+
+#if 0
 typedef struct {
   U8 r, g, b, a;
 } Pixel;
+#else
+typedef png_color Pixel;
+#endif
+
+typedef U8 ColormapIdx;
+typedef U16 StripmapIdx;
 
 typedef struct {
   U8 *flipIdxA;
@@ -48,9 +68,6 @@ typedef struct {
   U16 *stripMapA;
   U8 bpp;
 } Stripset;
-
-typedef U8 ColormapIdx;
-typedef U16 StripmapIdx;
 
 void writeRawData8(FILE *fP, U8 *byteA, U32 nBytes) {
   U8 *cmpDataP = byteA;
@@ -125,7 +142,7 @@ Error writeInflatable(char *imgNameA, U8 *cmpDataA, U32 cmpLen, U32 decompLen, I
   return SUCCESS;
 }
 
-Error writeStripmap(char *imgNameA, U16 *idxA, U16 nIndices, ImgDims *imgDimsP, U16 *flipA, U16 nFlips, U32 nBytes) {
+Error writeStripmap(char *imgNameA, Stripset *stripsetP, ImgDims *imgDimsP) {
   char fullPath[strlen(imgNameA) + strlen(TROVE_IMAGE_DIR) + strlen(".c")];
   strcat(fullPath, TROVE_IMAGE_DIR);
   strcat(fullPath, imgNameA);
@@ -141,14 +158,14 @@ Error writeStripmap(char *imgNameA, U16 *idxA, U16 nIndices, ImgDims *imgDimsP, 
   // Write header and image dim data.
   fprintf(fP, "#include \"data.h\"\n\n");
   fprintf(fP, "StripMap sm%s = {\n", imgTitle);
-  fprintf(fP, "\t%d,\n\t%d\n\t%d,\n\t", nBytes, imgDimsP->pitch, imgDimsP->bpp);
+  fprintf(fP, "\t%d,\n\t%d\n\t%d,\n\t", arrayGetNElems(stripsetP->dataA), imgDimsP->pitch, imgDimsP->bpp);
   // Write index array.
   fprintf(fP, "U16 %sStripIdxA[] = {\n\t", imgNameA);
-  writeRawData16(fP, idxA, nIndices);
+  writeRawData16(fP, (U16*) stripsetP->dataA, arrayGetNElems(stripsetP->dataA));
   fprintf(fP, "};\n\n");
   // Write flips.
   fprintf(fP, "U16 %sIdxFlipA[] = {", imgNameA);
-  writeRawData16(fP, flipA, nFlips);
+  writeRawData16(fP, (U16*) stripsetP->flipIdxA, arrayGetNElems(stripsetP->flipIdxA));
   fprintf(fP, "};\n\n");
   // Close file.
   fclose(fP);
@@ -168,29 +185,67 @@ S32 getColormapIdx(Pixel *pixelA, U32 nPixels, const Pixel *pixelQueryP) {
   return -1;
 }
 
-Error readPng(png_image **imgPP, char *imgPathA, Pixel **pixelAP) {
+Error readPng(png_image **imgPP, char *imgPathA, void **pixelAP, png_color *colorPaletteP) {
   if (!imgPP || !imgPathA || !pixelAP)
     return E_BAD_ARGS;
 
+  void *colormapA = NULL;
+  png_color blackBg = {0}; // used to replace alpha pixels for 1-byte output pixel format
+  *imgPP = malloc(sizeof(png_image));
+  if (!*imgPP)
+    return E_NO_MEMORY;
+
+  memset(*imgPP, 0, sizeof(png_image));  // bombed, seeing if this worked
   (*imgPP)->version = PNG_IMAGE_VERSION;
-  (*imgPP)->opaque = NULL;
   // Set up reader.
   int e = png_image_begin_read_from_file(*imgPP, imgPathA);
   // Allocate pixel array.
-  if (!e) {
-    (*imgPP)->format = PNG_FORMAT_RGBA;  // I think it'll xform TO this regardless of source type.
-    *pixelAP = malloc((*imgPP)->width * (*imgPP)->height * sizeof(Pixel));
+  if ((*imgPP)->warning_or_error)
+    printf("Error message: %s\n", (*imgPP)->message);
+  else if (!e) {
+    printf("png_image_begin_read() errored with e = %d.\n", e);
+    if ((*imgPP)->message[0]) 
+      printf("%s\n", (*imgPP)->message);
   }
+
+  // libpng errors work differently; 0 is bad, anything else is good.
   // TODO: Support all PNG formats.
   // Perform actual read.
-  if (*pixelAP) {
-    png_color blackBg = {0}; // Black background color for "blank" pixels.
-    U32 pitch = (*imgPP)->width;  // Assume bpp doesn't factor in right now.
-    png_image_finish_read(*imgPP, &blackBg, pixelA, pitch, NULL);
+  if (!(*imgPP)->warning_or_error) {
+    U32 rowStride = PNG_IMAGE_ROW_STRIDE(**imgPP);
+    U32 bufferSz = PNG_IMAGE_BUFFER_SIZE(**imgPP, rowStride);
+
+    // Output pixel buffer
+    e = arrayNew((void**) pixelAP, 1, bufferSz);
+    if (e)
+      return e;
+
+    // Colormap (input) 
+#if 0
+    if ( (*imgPP)->colormap_entries ) {
+      printf("Allocating %d bytes for colormap.\n", PNG_IMAGE_COLORMAP_SIZE(**imgPP));
+      colormapA = malloc(PNG_IMAGE_COLORMAP_SIZE(**imgPP));
+      if (!colormapA)
+        return E_NO_MEMORY;
+    }
+#endif
+
+    // row_stride param being 0 forces libpng to calculate the pitch for you.
+    e = png_image_finish_read(*imgPP, NULL, *pixelAP, 0, colorPaletteP);
+    if ((*imgPP)->warning_or_error) 
+      printf("%s\n", (*imgPP)->message);
   }
-  return (Error) e;
+
+  if (!(*imgPP)->warning_or_error && verbose)
+    printf("no error on read; it says w = %d and h = %d.\n", (*imgPP)->width, (*imgPP)->height);
+
+  //free(colormapA);
+  if (!e)
+    free(*pixelAP);
+  
+  return e ? SUCCESS : E_BAD_ARGS;  // libpng errors are weird.
 } 
- 
+
 //##########################################
 #define STRIP_N_PIXELS (64) //images will use 8x8 s to ensure pixel count is multiple of STRIP_N_PIXELS
 Error makeStripsetFromColormap(ColormapIdx *colormapA, Stripset *stripsetP, png_image *imgDataP) {
@@ -202,8 +257,8 @@ Error makeStripsetFromColormap(ColormapIdx *colormapA, Stripset *stripsetP, png_
   StripmapIdx stripsLabelled[nStrips];
   memset(stripsLabelled, 0, sizeof(StripmapIdx) * nStrips);
   // Strip set
-  ColormapIdx dataA[nStrips];
-  memset(dataA, 0, sizeof(ColormapIdx) * nStrips);
+  ColormapIdx stripsetDataA[nStrips * STRIP_N_PIXELS];
+  memset(stripsetDataA, 0, sizeof(ColormapIdx) * nStrips * STRIP_N_PIXELS);
   // Flip set 
   // This gets copied to a properly sized array at the end.
   ColormapIdx flipSet[nStrips];
@@ -217,7 +272,7 @@ Error makeStripsetFromColormap(ColormapIdx *colormapA, Stripset *stripsetP, png_
   Error e = arrayNew((void**) &stripMapA, sizeof(StripmapIdx), nStrips);
   if (e)
     return e;
-  
+
   if (verbose)
     printf("Analyzing viability of breaking image into strips...");
 
@@ -229,7 +284,7 @@ Error makeStripsetFromColormap(ColormapIdx *colormapA, Stripset *stripsetP, png_
     // This strip hasn't been labelled yet. 
     // So give it its own label and add it to the set of unique strips.
     if (!stripsLabelled[i]) {
-      memcpy((void*) &dataA[stripLabel], &colormapA[i * STRIP_N_PIXELS], STRIP_N_PIXELS);
+      memcpy((void*) &stripsetDataA[stripLabel], &colormapA[i * STRIP_N_PIXELS], STRIP_N_PIXELS);
       stripsLabelled[i] = 1;
       stripMapA[i] = stripLabel;
       /* All strips up to current "i" should be labelled, so search for strips
@@ -274,7 +329,7 @@ Error makeStripsetFromColormap(ColormapIdx *colormapA, Stripset *stripsetP, png_
       e = arrayNew((void**) &stripsetP->dataA, sizeof(ColormapIdx), stripLabel);
     if (!e) {
       memcpy((void*) stripsetP->flipIdxA, (void*) flipIdxA, sizeof(StripmapIdx) * nFlips);
-      memcpy((void*) stripsetP->dataA, (void*) dataA, sizeof(ColormapIdx) * stripLabel);
+      memcpy((void*) stripsetP->dataA, (void*) stripsetDataA, sizeof(ColormapIdx) * stripLabel);
     }
     else {
       arrayDel((void**) &stripsetP->stripMapA);
@@ -394,28 +449,32 @@ Error packBits(Stripset *stripsetP) {
 
 //##########################################
 Error compressImg(char *imgFilePathP) {
-  Pixel *pixelP = NULL;
+  void *pixelP = NULL;  // i think this is actually meant to be colormap data
   Pixel colorPaletteA[256] = {0};
   U8 *colormapA = NULL;
   png_image *pngImgP = NULL;
   U32 nColors = 0;
   U32 bpp = 0;
   Stripset stripset = {0};
-  Error e = readPng(&pngImgP, imgFilePathP, &pixelP);
+  ImgDims imgDims = {0};
 
-  if (!e)
+  Error e = readPng(&pngImgP, imgFilePathP, &pixelP, &colorPaletteA[0]);
+
+  if (!e && (nColors = pngImgP->colormap_entries) == 0)
     e = makeColorPaletteAndColormap(colorPaletteA, &colormapA, &nColors, pngImgP, pixelP);
-   
+  else 
+    colormapA = pixelP;
+
   // Compute pixel bitdepth.
   if (!e) {
     if (nColors <= 2)
-      bpp = 1;
+      imgDimsIni(&imgDims, pngImgP->width, pngImgP->height, 1);
     else if (nColors <= 4)
-      bpp = 2;
+      imgDimsIni(&imgDims, pngImgP->width, pngImgP->height, 2);
     else if (nColors <= 16)
-      bpp = 4;
+      imgDimsIni(&imgDims, pngImgP->width, pngImgP->height, 4);
     else
-      bpp = 8;
+      imgDimsIni(&imgDims, pngImgP->width, pngImgP->height, 8);  // assume no greater than 8 bits per pixel
   }
 
   // Colormap StripSet  & StripMap
@@ -427,14 +486,16 @@ Error compressImg(char *imgFilePathP) {
     printf("pre-compression length: %d", (arrayGetNElems(stripset.dataA)));
 
   Inflatable *stripsetInflatableP = NULL;
+  char fp[500] = {0};
+  char imgNameA[100] = {0};
+
+  // Requires inflatable from data.h and util's inflatable writer function.
   if (!e)
     e = inflatableNew((void*) stripset.dataA, &stripsetInflatableP);
   if (!e) {
     U32 startIdx, endIdx;
-    getBaseNameIndices(imgFilePathP, &startIdx, &endIdx) {
-    char fp[500] = {0};
-    char imgNameA[100] = {0};
-    memcpy((void*) imgNameA, (void*) &imageFilePathP[startIdx], endIdx - startIdx);
+    getBaseNameIndices(imgFilePathP, "png", &startIdx, &endIdx);
+    memcpy((void*) imgNameA, (void*) &imgFilePathP[startIdx], endIdx - startIdx);
     // Generate stripset's inflatable  C source file
     strcpy(fp, TROVE_IMAGE_DIR);
     strcat(fp, imgNameA);
@@ -444,8 +505,8 @@ Error compressImg(char *imgFilePathP) {
   }
 
   // Give game engine the stripMap for this image if it applies.
-  if (!e)
-    writeStripmap(img_name, STRIP_N_PIXELS * len(stripMap), img.shape[1] * bpp, 8, bpp, flipList, stripMap)
+  if (!e && imgNameA[0])
+    writeStripmap(imgNameA, &stripset, &imgDims);
 
   return e;
 }
@@ -466,14 +527,16 @@ void getBaseNameIndices(char *filepathP, char *extension, U32 *startIdxP, U32 *e
 }
 
 int main (int argc, char **argv) {
-  if (argc >= 1) {
-    if (!memcmp(argv[1], "-v"))
-      verbose = 1;
-
-    Error e = SUCCESS;
-    for (U8 i = 0; !e && i < argc; ++i)
-      e = compressImg(argv[i]);
+  Error e = SUCCESS;
+  if (argc > 1) {  // argv[0] is this program's name
+    // iterate through arguments
+    for (int i = 1; i < argc; ++i) {
+      if (!memcmp(argv[1], "-v", strlen(argv[i])))
+        verbose = 1;
+      else  {
+        e = compressImg(argv[i]);
+      }
+    }
   }
-
-  return 0;
+  return e;
 }
