@@ -454,7 +454,6 @@ Error compressImg(char *imgFilePathP) {
   U8 *colormapA = NULL;
   png_image *pngImgP = NULL;
   U32 nColors = 0;
-  U32 bpp = 0;
   Stripset stripset = {0};
   ImgDims imgDims = {0};
 
@@ -475,6 +474,8 @@ Error compressImg(char *imgFilePathP) {
       imgDimsIni(&imgDims, pngImgP->width, pngImgP->height, 4);
     else
       imgDimsIni(&imgDims, pngImgP->width, pngImgP->height, 8);  // assume no greater than 8 bits per pixel
+
+    stripset.bpp = imgDims.bpp;
   }
 
   // Colormap StripSet  & StripMap
@@ -496,6 +497,8 @@ Error compressImg(char *imgFilePathP) {
     U32 startIdx, endIdx;
     getBaseNameIndices(imgFilePathP, "png", &startIdx, &endIdx);
     memcpy((void*) imgNameA, (void*) &imgFilePathP[startIdx], endIdx - startIdx);
+    parseEntityAndKeyNames(imgNameA, &startIdx, &endIdx);
+    // TODO decide what to do with parsed key name.
     // Generate stripset's inflatable  C source file
     strcpy(fp, TROVE_IMAGE_DIR);
     strcat(fp, imgNameA);
@@ -524,6 +527,29 @@ void getBaseNameIndices(char *filepathP, char *extension, U32 *startIdxP, U32 *e
   }
   *startIdxP = basenameFirstIdx;
   *endIdxP   = filenameLen - extLen;   
+}
+
+// An image name looks like this: /some/path/to/entityName#keyName.png.
+// The key name is used to map an enum to an animation strip.
+// The entity name is assumed to begin at the start of base name.
+// The key name is assumed to extend to the end of the base name.
+void parseEntityAndKeyNames(char *baseNameP, U32 *entityNameEndIdxP, U32 *keyNameStartIdxP) {
+  U8 baseNameLen = strlen(baseNameP);
+  U8 poundIdx = 0;  // index of # in base name
+  for (U8 i = baseNameLen - 1; i >= 0; --i) {
+    if (baseNameP[i] == '#') {
+      poundIdx = i;
+      break;
+    }
+  }
+  if (poundIdx) {
+    *entityNameEndIdxP = poundIdx;
+    *keyNameStartIdxP  = poundIdx + 1;
+  }
+  else {
+    *entityNameEndIdxP = baseNameLen;
+    *keyNameStartIdxP  = 0;  // Zero means there's no key.
+  }
 }
 
 int main (int argc, char **argv) {
