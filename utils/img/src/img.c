@@ -1,48 +1,6 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <png.h>
-#include "botox.h"
-#include "data.h"
-#include "inflatable.h"
-
-#define IDX_R           0
-#define IDX_G           1
-#define IDX_B           2
-#define TILE_WIDTH        8
-#define TILE_HEIGHT       8
-#define NBR_COLOR_CHANNELS    3
-#define TILE_SIZE = TILE_WIDTH * TILE_HEIGHT * NBR_COLOR_CHANNELS
-#define PNG_BITDEPTH_LOCATION  24
-#define PNG_BITDEPTH_DATA_SZ   1
-#define PNG_IDATA_LOCATION   PNG_BITDEPTH_LOCATION + 8
-#define PNG_IEND_LENGTH    8
-#define IMG_DIR_IDX_NAME     0
-#define IMG_DIR_IDX_LOCATION   1
-#define IMG_DIR_IDX_NBR_TILES  2
-
-#ifdef WINDOWS_
-#define FILE_SEP '\\'
-#else
-#define FILE_SEP '/'
-#endif
-
-void getBaseNameIndices(char *filepathP, char *extension, U32 *startIdxP, U32 *endIdxP);
-
-const static U8 PNG_SIGNATURE[]     = {137, 80, 78, 71, 13, 10, 26, 10};
-const static U8 PNG_IHDR_START[]    = {0, 0, 0, 13, 73, 72, 68, 82};
-const static U8 PNG_PLTE_CHUNK_TYPE[] = {80, 76, 84, 69};
-const static U8 PNG_IDAT_CHUNK_TYPE[] = {73, 68, 65, 84};
-const static U8 PNG_IEND[]      = {0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130};
-const static U8 PNG_IDAT_START[]    = {'I', 'D', 'A', 'T'};
-const static U8 PNG_IDAT_END[]    = {'I', 'E', 'E', 'D'};
-const char TROVE_IMAGE_DIR[]      = "~/.jb/src/Image";
-
-static int verbose = 0;
-
-typedef struct {
-  U32 w, h, pitch, bpp;
-} ImgDims;
+#include "img.h"
+#include <assert.h>
+#include <string.h>
 
 void imgDimsIni(ImgDims *imgDimsP, U32 width, U32 height, U32 bpp) {
   imgDimsP->w = width;
@@ -50,24 +8,6 @@ void imgDimsIni(ImgDims *imgDimsP, U32 width, U32 height, U32 bpp) {
   imgDimsP->bpp = bpp;
   imgDimsP->pitch = width * bpp / 8;
 }
-
-#if 0
-typedef struct {
-  U8 r, g, b, a;
-} Pixel;
-#else
-typedef png_color Pixel;
-#endif
-
-typedef U8 ColormapIdx;
-typedef U16 StripmapIdx;
-
-typedef struct {
-  U8 *flipIdxA;
-  ColormapIdx *dataA;
-  U16 *stripMapA;
-  U8 bpp;
-} Stripset;
 
 void writeRawData8(FILE *fP, U8 *byteA, U32 nBytes) {
   U8 *cmpDataP = byteA;
@@ -247,7 +187,6 @@ Error readPng(png_image **imgPP, char *imgPathA, void **pixelAP, png_color *colo
 } 
 
 //##########################################
-#define STRIP_N_PIXELS (64) //images will use 8x8 s to ensure pixel count is multiple of STRIP_N_PIXELS
 Error makeStripsetFromColormap(ColormapIdx *colormapA, Stripset *stripsetP, png_image *imgDataP) {
   U32 nStrips = imgDataP->width * imgDataP->height * sizeof(ColormapIdx) / STRIP_N_PIXELS;
   U16 stripLabel = 0;
@@ -447,6 +386,12 @@ Error packBits(Stripset *stripsetP) {
   return e;
 }
 
+void toUpper(char *stringP) {
+  for (char *charP = stringP; *charP; ++charP) 
+    if (*charP >= 'a' && *charP <= 'z')
+      *charP -= 32;
+}
+
 //##########################################
 Error compressImg(char *imgFilePathP) {
   void *pixelP = NULL;  // i think this is actually meant to be colormap data
@@ -488,69 +433,80 @@ Error compressImg(char *imgFilePathP) {
 
   Inflatable *stripsetInflatableP = NULL;
   char fp[500] = {0};
-  char imgNameA[100] = {0};
+  char entityName[250] = {0};
+  char keyName[250] = {0};
 
   // Requires inflatable from data.h and util's inflatable writer function.
   if (!e)
     e = inflatableNew((void*) stripset.dataA, &stripsetInflatableP);
   if (!e) {
-    U32 startIdx, endIdx;
-    getBaseNameIndices(imgFilePathP, "png", &startIdx, &endIdx);
-    memcpy((void*) imgNameA, (void*) &imgFilePathP[startIdx], endIdx - startIdx);
-    parseEntityAndKeyNames(imgNameA, &startIdx, &endIdx);
-    // TODO decide what to do with parsed key name.
-    // Generate stripset's inflatable  C source file
-    strcpy(fp, TROVE_IMAGE_DIR);
-    strcat(fp, imgNameA);
-    strcat(fp, ".c");
+    U32 entityNameIdx, entityNameLen, keyNameIdx, keyNameLen;
+    parseEntityAndKeyNames(imgFilePathP, ".png", &entityNameIdx, &entityNameLen, &keyNameIdx, &keyNameLen);
+    memcpy((void*) entityName, (void*) &imgFilePathP[entityNameIdx], entityNameLen);
+    memcpy((void*) keyName, (void*) &imgFilePathP[keyNameIdx], keyNameLen);
+    toUpper(keyName);  // key is going to be an enum, so format it accordingly
+#if TEST_
+    printf("Entity name is %s.\n", entityName);
+    printf("Key name is %s.\n", keyName);
+#endif
 
-    e = inflatableWrite(stripsetInflatableP, fp, imgNameA);
+    // Generate stripset's inflatable C source file
+    strcpy(fp, TROVE_IMAGE_DIR);
+    strcat(fp, entityName);
+    strcat(fp, ".c");
+    printf("fp is %s.\n", fp);
+
+    e = inflatableWrite(stripsetInflatableP, fp, entityName);
   }
 
   // Give game engine the stripMap for this image if it applies.
-  if (!e && imgNameA[0])
-    writeStripmap(imgNameA, &stripset, &imgDims);
+  if (!e && entityName[0])
+    writeStripmap(entityName, &stripset, &imgDims);
 
   return e;
 }
 
-void getBaseNameIndices(char *filepathP, char *extension, U32 *startIdxP, U32 *endIdxP) {
-  U8 filenameLen = strlen(filepathP);
-  U8 basenameFirstIdx = 0;
-  U8 extLen = strlen(extension) + 1;  // including the leading "."
-  for (U8 i = filenameLen - 1; i >= 0; --i) {
-    char currChar = filepathP[i];
-    if (currChar == FILE_SEP) {
-      basenameFirstIdx = i + 1;
-      break;
-    }
-  }
-  *startIdxP = basenameFirstIdx;
-  *endIdxP   = filenameLen - extLen;   
-}
-
-// An image name looks like this: /some/path/to/entityName#keyName.png.
-// The key name is used to map an enum to an animation strip.
+// An image name looks like this: /some/path/to/entityName#keyName.png
+// A base name looks like this: entityName#keyName
+// Extension is the file extension including the leading '.'.
+// The key name (string after KEY_DELIMITER) is used to map an enum to an animation strip.
 // The entity name is assumed to begin at the start of base name.
 // The key name is assumed to extend to the end of the base name.
-void parseEntityAndKeyNames(char *baseNameP, U32 *entityNameEndIdxP, U32 *keyNameStartIdxP) {
-  U8 baseNameLen = strlen(baseNameP);
-  U8 poundIdx = 0;  // index of # in base name
-  for (U8 i = baseNameLen - 1; i >= 0; --i) {
-    if (baseNameP[i] == '#') {
-      poundIdx = i;
-      break;
+void parseEntityAndKeyNames(char *filepathP, char *extension, U32 *entityNameIdxP, U32 *entityNameLenP, U32 *keyNameIdxP, U32 *keyNameLenP) {
+  U32 filenameLen = strlen(filepathP);
+  U32 extLen = strlen(extension);  // including the leading "."
+  // Make sure this file has a ".png" extension.
+  assert(!strncasecmp(&filepathP[filenameLen - extLen], extension, extLen));
+
+  // Init all outputs to zero.
+  *entityNameIdxP = *keyNameIdxP = *entityNameLenP = *keyNameLenP = 0;
+
+  // Get both entity and key's starting positions.
+  for (U8 i = filenameLen - 1; i >= 0; --i) {
+    switch (filepathP[i]) {
+      case KEY_DELIMITER:
+        *keyNameIdxP = i + 1;
+        break;
+      case FILE_SEP:
+        *entityNameIdxP = i + 1;
+        goto breakout;
     }
   }
-  if (poundIdx) {
-    *entityNameEndIdxP = poundIdx;
-    *keyNameStartIdxP  = poundIdx + 1;
+  breakout:
+  // Get both entity and key's lengths.
+  if (*keyNameIdxP) {
+    *entityNameLenP = *keyNameIdxP - *entityNameIdxP - 1;  // 1 is the '#'
+    *keyNameLenP = filenameLen - *keyNameIdxP - extLen;
   }
-  else {
-    *entityNameEndIdxP = baseNameLen;
-    *keyNameStartIdxP  = 0;  // Zero means there's no key.
-  }
+  else 
+    *entityNameLenP = filenameLen - *entityNameIdxP - extLen;
 }
+
+// Problem with this design is being unable to edit all the animation strips of 
+// the same entity at the same time. If you change the color in one animation strip, 
+// you're in big trouble. But the rationale for separating it out was to make key-giving easy.
+// Aseprite doesn't exactly provide that easy functionality. Until someone makes a jollybean-
+// compatible Aseprite (and it sure as hell ain't gonna be me), this is the way we'll do it.
 
 int main (int argc, char **argv) {
   Error e = SUCCESS;
@@ -566,3 +522,4 @@ int main (int argc, char **argv) {
   }
   return e;
 }
+

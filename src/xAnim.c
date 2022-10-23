@@ -58,7 +58,7 @@ XGetShareFuncDef_(Anim) {
 	XAnimComp *cEndP = cP + frayGetFirstInactiveIdx(sP->cF);
 
   for (; cP < cEndP; ++cP)
-    cP->shareRectP = (Rect_*) mapGet(shareMMP, xGetEntityByCompIdx(sP, cP - cStartP));
+    cP->srcRectP = (Rect_*) mapGet(shareMMP, xGetEntityByCompIdx(sP, cP - cStartP));
 
   return SUCCESS;
 }
@@ -78,7 +78,7 @@ Error xAnimRun(System *sP) {
     if (!(--cP->timeLeft)) {
       if (cP->repeat) {
         cP->timeLeft = cP->timeA[cP->currIdx = 0];
-        *cP->shareRectP = cP->srcRectA[0];
+        *cP->srcRectP = cP->srcRectA[0];
       } else {
         xDeactivateComponentByIdx(sP, cP - cStartP);
         --cEndP;

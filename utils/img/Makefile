@@ -13,8 +13,8 @@ ${BINDIR}/img: ${BUILDDIR}/img.o ../inflatable/build/inflatable.o ${BUILDIR} ${B
 	touch $@
 
 # Compiler
-${BUILDDIR}/img.o: ./src/img.c ${BUILDDIR}
-	$(CC) -g $(shell sdl2-config --cflags) $(shell pkg-config --cflags zlib) $(shell libpng-config --cflags) -I../inflatable/src/include -I${HOME}/hack/botox/src/include -c ./src/img.c -o $@
+${BUILDDIR}/img.o: ./src/img.c ./src/include/img.h ${BUILDDIR}
+	$(CC) -g $(shell sdl2-config --cflags) $(shell pkg-config --cflags zlib) $(shell libpng-config --cflags) -I./src/include -I../inflatable/src/include -I${HOME}/hack/botox/src/include -c ./src/img.c -o $@
 	touch $@
 
 # Build directory (dependency)

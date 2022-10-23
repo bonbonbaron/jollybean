@@ -35,6 +35,7 @@ typedef struct {
 
 typedef struct {
   U8 nColors;
+  S16 textureAtlasIdx;  // Keeps track of distinct image indices in tree. -1 if not yet inserted
   Color_ *colorA;
   ColormapS *colorMapP;
   Texture_ *textureP;

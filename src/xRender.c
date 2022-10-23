@@ -154,6 +154,107 @@ Error _cmGen(ColormapS *cmP) {
 	return e;
 }
 
+// Source: https://codeincomplete.com/articles/bin-packing/
+// ========================================================
+
+// Scratch area
+// ============
+
+// First, we sort the rectangles by their area (using a LUT). 
+// Second, we put them in the atlas based on how much room there is.
+
+// TA stands for "Texture Atlas". Spares readers.
+typedef struct {
+  Entity rectIdx;  // indexes the shared rectangle array in xMaster
+  Key right, down;
+} TaTreeNode;  // 20 bytes, oh well, best I can do
+
+TaTreeNode* taNodeFind(TaTreeNode *rootP, TaTreeNode *nodeP, S32 w, S32 h) {
+  if (root.used)
+    return taNodeFind(root.right, w, h) || taNodeFind(root.down, w, h);
+  else if ((w <= root.w) && (h <= root.h))
+    return root;
+  else
+    return null;
+}
+
+TaTreeNode* taNodeSplit(TaTreeNode *nodeP, S32 w, S32 h) {
+  node.down  = { x: node.x,     y: node.y + h, w: node.w,     h: node.h - h };
+  node.right = { x: node.x + w, y: node.y,     w: node.w - w, h: h          };
+  return node;
+}
+
+// Prevent copies with new member in XRenderComponentSrc struct: S16 textureAtlasIdx.
+void taNodeFit() {
+  var n, node, block, len = blocks.length;
+  var w = len > 0 ? blocks[0].w : 0;
+  var h = len > 0 ? blocks[0].h : 0;
+  this.root = { x: 0, y: 0, w: w, h: h };
+  for (n = 0; n < len ; n++) {
+    block = blocks[n];
+    if (node = taNodeFind(this.root, block.w, block.h))
+      taNodeFit = this.taNodeSplit(node, block.w, block.h);
+    else
+      taNodeFit = taNodeGrow(block.w, block.h);
+  }
+}
+
+TaTreeNode* taNodeGrowRight(w, h) {
+  this.root = {
+    used: true,
+    x: 0,
+    y: 0,
+    w: this.root.w + w,
+    h: this.root.h,
+    down: this.root,
+    right: { x: this.root.w, y: 0, w: w, h: this.root.h }
+  };
+  if (node = taNodeFind(this.root, w, h))
+    return taNodeSplit(node, w, h);
+  else
+    return null;
+}
+
+TaTreeNode *taNodeGrowDown(w, h) {
+  this.root = {
+    used: true,
+    x: 0,
+    y: 0,
+    w: this.root.w,
+    h: this.root.h + h,
+    down:  { x: 0, y: this.root.h, w: this.root.w, h: h },
+    right: this.root
+  };
+  if (node = taNodeFind(this.root, w, h))
+    return taNodeSplit(node, w, h);
+  else
+    return null;
+}
+
+
+TaTreeNode* taNodeGrow(S32 w, S32 h) {
+  var canGrowDown  = (w <= this.root.w);
+  var canGrowRight = (h <= this.root.h);
+
+  var shouldGrowRight = canGrowRight && (this.root.h >= (this.root.w + w)); // attempt to keep square-ish by growing right when height is much greater than width
+  var shouldGrowDown  = canGrowDown  && (this.root.w >= (this.root.h + h)); // attempt to keep square-ish by growing down  when width  is much greater than height
+
+  if (shouldGrowRight)
+    return taNodeGrowRight(w, h);
+  else if (shouldGrowDown)
+    return taNodeGrowDown(w, h);
+  else if (canGrowRight)
+   return taNodeGrowRight(w, h);
+  else if (canGrowDown)
+    return taNodeGrowDown(w, h);
+  else
+    return null; // need to ensure sensible root starting size to avoid this happening
+}
+// This is where I'll write the texture atlas algorithm.
+//
+// Write a insert-sort by rect w/h function that memcpys in an inner insert.
+// Write some array-based binary tree functionality -- perhaps within data.c. Only what's needed.
+// Sort all rectangles by 
 //======================================================
 // Initialize xRender's system.
 //======================================================
@@ -204,15 +305,8 @@ Error xRenderIniComp(System *sP, void *compDataP, void *compDataSrcP) {
 		e = textureSetAlpha(imgP->textureP);
 
   // Everything's ready to hand over to the component.
-	if (!e) {
-    // These get set by a tree.
-		//cP->srcRectP = NULL;
-    //cP->dstRectP->x = 0;
-    //cP->dstRectP->y = 0;
-    //cP->dstRectP->w = imgP->colorMapP->w;
-    //cP->dstRectP->h = imgP->colorMapP->h;
-    cP->textureP = imgP->textureP;
-  }
+	if (!e)  
+    cP->textureP = imgP->textureP;  // All other imgP attributes are set later by a b-tree.
 
 	//SDL_FreeSurface(surfaceP);  // Program crashes when I do this. Maybe textureP needs it?
 
