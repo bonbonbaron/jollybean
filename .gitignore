@@ -8,3 +8,5 @@ o
 compile_commands.json
 .*~
 tags
+gmon.out
+*.out
