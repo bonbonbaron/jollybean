@@ -61,8 +61,27 @@ Error _cmGen(ColormapS *cmP) {
 					U16 *mapEndP = ((U16*) cmP->stripMapP->stripMapInfP->inflatedDataP) + cmP->stripMapP->nIndices;
 					// 8 *packed* pixels per U32 out of 64 pixels means there are 8 U32s.
 					// First read all mapped strips into the target colormap.
+#ifdef __ARM_NEON__
+          asm("vmov.i8 q10, 0x0f\n\t")
+          asm("vmov.i8 q11, 0xf0\n\t")
+#endif
 					for (U16 *ssIdxP = (U16*) cmP->stripMapP->stripMapInfP->inflatedDataP; ssIdxP < mapEndP; ssIdxP++) {
 						U32 *srcStripP = stripSetP + (*ssIdxP << 3);
+#ifdef __ARM_NEON__
+            // 7 instructions neon VS 40-58 instructions regular
+            asm volatile inline (
+            // Pixels 01 - 32
+            "vld1.32 {d0-d1}, [%1]!\n\t"  
+            "vand q1, q0, q10\n\t"
+            "vst1.32 {d2-d3}, [%0]!\n\t"
+            // Pixels 33 - 64
+            "vld1.32 {d0-d1}, [%1]!\n\t"   
+            "vand q1, q0, q11\n\t"
+            "vshr.u8 q1, #4\n\t"
+            "vst1.32 {d2-d3}, [%0]!"
+            : "+r&" (dstStripP), "+r&" (srcStripP)
+            );
+#else
 						// Pixels 01 - 08
 						*dstStripP++ =  *srcStripP   & 0x0F0F0F0F;
 						*dstStripP++ = (*srcStripP++ & 0xF0F0F0F0) >> 4;
@@ -87,6 +106,7 @@ Error _cmGen(ColormapS *cmP) {
 						// Pixels 57   64
 						*dstStripP++ =  *srcStripP   & 0x0F0F0F0F;
 						*dstStripP++ = (*srcStripP++ & 0xF0F0F0F0) >> 4;
+#endif
 					}
 					// Then flip whatever strips need flipping. Remember data's already expanded to U8s!
 					if (cmP->stripSetP->flipSetP) {
@@ -96,6 +116,7 @@ Error _cmGen(ColormapS *cmP) {
 						// 4 *unpacked* pixels per U32 out of 64 pixels means there are 16 U32s.
 						for (U16 *flipIdxP = cmP->stripSetP->flipSetP->flipIdxA; flipIdxP < flipEndP; flipIdxP++) {
 							for (U32 nPairsSwapped = 0; nPairsSwapped < 8; nPairsSwapped++) {
+                // TODO use vrev32.8 here.
 								// Left 4 pixels
 								dstLeft4PixelsP = (U32*) cmDataP + (*flipIdxP << 3) + nPairsSwapped; 
 								dstFlip = *dstLeft4PixelsP;
