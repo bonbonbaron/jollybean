@@ -9,6 +9,8 @@
 // Github:                  https://github.com/mikolalysenko/box-intersect
 // Paper:                   https://pub.ist.ac.at/~edels/Papers/2002-J-01-FastBoxIntersection.pdf
 // ================================================
+// TODO: In the future, when I/we implement 16-bit keys, we'll make it switch between brute force
+//       and "loose grids" found on {TODO put URL here}.
 
 
 //======================================================
