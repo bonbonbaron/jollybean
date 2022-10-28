@@ -1,7 +1,7 @@
 #ifndef SYS_CONTROL
 #define SYS_CONTROL
 #include "botox.h"
-#include "yoyoInterface.h"
+#include "interface.h"
 #include "xMaster.h"
 #include "jb.h"
 
@@ -30,5 +30,12 @@ typedef struct {} XControlCompSrc;
 
 Error xControlRun(System *sP);
 Error xControlProcessMessage(System *sP, Message *msgP);
+Error xControlIniSys();
+Error xControlClr(System *sP);
+Error xControlProcessMessage(System *sP, Message *msgP);
+XIniCompFuncDef_(Control);
+XGetShareFuncDef_(Control);
 
+extern XControl xControl;
+extern System *sControlP;
 #endif

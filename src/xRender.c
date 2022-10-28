@@ -1,6 +1,4 @@
-#include "xRender.h"
-#include "xMaster.h"
-#include "x.h"
+#include "jb.h"
 
 //TODO Make bookmarks to indicate where images should when they switch layers.
 // Compressed images are already in memory in JB. 
@@ -36,12 +34,12 @@ Error _cmGen(ColormapS *cmP) {
 			return SUCCESS;  
 		// If not reconstructed yet, inflate strip set if it's still compressed (inflate() checks internally).
 		if (cmP->stripSetP)
-			e = inflate(cmP->stripSetP->stripSetInfP);
+			e = botoxInflate(cmP->stripSetP->stripSetInfP);
 		else
 			return E_NULL_VAR;
 		// If CM source is strip-mapped, inflate strip map if it's still compressed (same as above).
 		if (!e && cmP->stripMapP)
-			e = inflate(cmP->stripMapP->stripMapInfP);
+			e = botoxInflate(cmP->stripMapP->stripMapInfP);
 		// Allocate colormap memory.
 		if (!e) 
 			e = jbAlloc((void**) &cmP->dataP, sizeof(U8), cmP->w * cmP->h);
@@ -63,8 +61,27 @@ Error _cmGen(ColormapS *cmP) {
 					U16 *mapEndP = ((U16*) cmP->stripMapP->stripMapInfP->inflatedDataP) + cmP->stripMapP->nIndices;
 					// 8 *packed* pixels per U32 out of 64 pixels means there are 8 U32s.
 					// First read all mapped strips into the target colormap.
+#ifdef __ARM_NEON__
+          asm("vmov.i8 q10, 0x0f\n\t")
+          asm("vmov.i8 q11, 0xf0\n\t")
+#endif
 					for (U16 *ssIdxP = (U16*) cmP->stripMapP->stripMapInfP->inflatedDataP; ssIdxP < mapEndP; ssIdxP++) {
 						U32 *srcStripP = stripSetP + (*ssIdxP << 3);
+#ifdef __ARM_NEON__
+            // 7 instructions neon VS 40-58 instructions regular
+            asm volatile inline (
+            // Pixels 01 - 32
+            "vld1.32 {d0-d1}, [%1]!\n\t"  
+            "vand q1, q0, q10\n\t"
+            "vst1.32 {d2-d3}, [%0]!\n\t"
+            // Pixels 33 - 64
+            "vld1.32 {d0-d1}, [%1]!\n\t"   
+            "vand q1, q0, q11\n\t"
+            "vshr.u8 q1, #4\n\t"
+            "vst1.32 {d2-d3}, [%0]!"
+            : "+r&" (dstStripP), "+r&" (srcStripP)
+            );
+#else
 						// Pixels 01 - 08
 						*dstStripP++ =  *srcStripP   & 0x0F0F0F0F;
 						*dstStripP++ = (*srcStripP++ & 0xF0F0F0F0) >> 4;
@@ -89,6 +106,7 @@ Error _cmGen(ColormapS *cmP) {
 						// Pixels 57   64
 						*dstStripP++ =  *srcStripP   & 0x0F0F0F0F;
 						*dstStripP++ = (*srcStripP++ & 0xF0F0F0F0) >> 4;
+#endif
 					}
 					// Then flip whatever strips need flipping. Remember data's already expanded to U8s!
 					if (cmP->stripSetP->flipSetP) {
@@ -98,6 +116,7 @@ Error _cmGen(ColormapS *cmP) {
 						// 4 *unpacked* pixels per U32 out of 64 pixels means there are 16 U32s.
 						for (U16 *flipIdxP = cmP->stripSetP->flipSetP->flipIdxA; flipIdxP < flipEndP; flipIdxP++) {
 							for (U32 nPairsSwapped = 0; nPairsSwapped < 8; nPairsSwapped++) {
+                // TODO use vrev32.8 here.
 								// Left 4 pixels
 								dstLeft4PixelsP = (U32*) cmDataP + (*flipIdxP << 3) + nPairsSwapped; 
 								dstFlip = *dstLeft4PixelsP;
@@ -156,13 +175,114 @@ Error _cmGen(ColormapS *cmP) {
 	return e;
 }
 
+// Source: https://codeincomplete.com/articles/bin-packing/
+// ========================================================
+
+// Scratch area
+// ============
+
+// First, we sort the rectangles by their area (using a LUT). 
+// Second, we put them in the atlas based on how much room there is.
+
+// TA stands for "Texture Atlas". Spares readers.
+typedef struct {
+  Entity rectIdx;  // indexes the shared rectangle array in xMaster
+  Key right, down;
+} TaTreeNode;  // 20 bytes, oh well, best I can do
+
+TaTreeNode* taNodeFind(TaTreeNode *rootP, TaTreeNode *nodeP, S32 w, S32 h) {
+  if (root.used)
+    return taNodeFind(root.right, w, h) || taNodeFind(root.down, w, h);
+  else if ((w <= root.w) && (h <= root.h))
+    return root;
+  else
+    return null;
+}
+
+TaTreeNode* taNodeSplit(TaTreeNode *nodeP, S32 w, S32 h) {
+  node.down  = { x: node.x,     y: node.y + h, w: node.w,     h: node.h - h };
+  node.right = { x: node.x + w, y: node.y,     w: node.w - w, h: h          };
+  return node;
+}
+
+// Prevent copies with new member in XRenderComponentSrc struct: S16 textureAtlasIdx.
+void taNodeFit() {
+  var n, node, block, len = blocks.length;
+  var w = len > 0 ? blocks[0].w : 0;
+  var h = len > 0 ? blocks[0].h : 0;
+  this.root = { x: 0, y: 0, w: w, h: h };
+  for (n = 0; n < len ; n++) {
+    block = blocks[n];
+    if (node = taNodeFind(this.root, block.w, block.h))
+      taNodeFit = this.taNodeSplit(node, block.w, block.h);
+    else
+      taNodeFit = taNodeGrow(block.w, block.h);
+  }
+}
+
+TaTreeNode* taNodeGrowRight(w, h) {
+  this.root = {
+    used: true,
+    x: 0,
+    y: 0,
+    w: this.root.w + w,
+    h: this.root.h,
+    down: this.root,
+    right: { x: this.root.w, y: 0, w: w, h: this.root.h }
+  };
+  if (node = taNodeFind(this.root, w, h))
+    return taNodeSplit(node, w, h);
+  else
+    return null;
+}
+
+TaTreeNode *taNodeGrowDown(w, h) {
+  this.root = {
+    used: true,
+    x: 0,
+    y: 0,
+    w: this.root.w,
+    h: this.root.h + h,
+    down:  { x: 0, y: this.root.h, w: this.root.w, h: h },
+    right: this.root
+  };
+  if (node = taNodeFind(this.root, w, h))
+    return taNodeSplit(node, w, h);
+  else
+    return null;
+}
+
+
+TaTreeNode* taNodeGrow(S32 w, S32 h) {
+  var canGrowDown  = (w <= this.root.w);
+  var canGrowRight = (h <= this.root.h);
+
+  var shouldGrowRight = canGrowRight && (this.root.h >= (this.root.w + w)); // attempt to keep square-ish by growing right when height is much greater than width
+  var shouldGrowDown  = canGrowDown  && (this.root.w >= (this.root.h + h)); // attempt to keep square-ish by growing down  when width  is much greater than height
+
+  if (shouldGrowRight)
+    return taNodeGrowRight(w, h);
+  else if (shouldGrowDown)
+    return taNodeGrowDown(w, h);
+  else if (canGrowRight)
+   return taNodeGrowRight(w, h);
+  else if (canGrowDown)
+    return taNodeGrowDown(w, h);
+  else
+    return null; // need to ensure sensible root starting size to avoid this happening
+}
+// This is where I'll write the texture atlas algorithm.
+//
+// Write a insert-sort by rect w/h function that memcpys in an inner insert.
+// Write some array-based binary tree functionality -- perhaps within data.c. Only what's needed.
+// Sort all rectangles by 
 //======================================================
 // Initialize xRender's system.
 //======================================================
 Error xRenderIniSys(System *sP, void *sParamsP) {
-  return SUCCESS;
 	unused_(sParamsP);
   unused_(sP);
+  return SUCCESS;
 }
 
 //======================================================
@@ -206,14 +326,8 @@ Error xRenderIniComp(System *sP, void *compDataP, void *compDataSrcP) {
 		e = textureSetAlpha(imgP->textureP);
 
   // Everything's ready to hand over to the component.
-	if (!e) {
-		cP->srcRectP = NULL;
-    cP->dstRectP->x = 0;
-    cP->dstRectP->y = 0;
-    cP->dstRectP->w = imgP->colorMapP->w;
-    cP->dstRectP->h = imgP->colorMapP->h;
-    cP->textureP = imgP->textureP;
-  }
+	if (!e)  
+    cP->textureP = imgP->textureP;  // All other imgP attributes are set later by a b-tree.
 
 	//SDL_FreeSurface(surfaceP);  // Program crashes when I do this. Maybe textureP needs it?
 
@@ -238,52 +352,14 @@ XClrFuncDef_(Render) {
   return SUCCESS;
 }
 
-#define CLIP_RECT (4)  /* TODO: move to enum */
-#define POSSIZE_RECT (5)  /* TODO: move to enum */
+// Only get the render and window. Components' src & dst rects come from SCENE_START stimulus to XGo.
 XGetShareFuncDef_(Render) {
   XRender *renderSysP = (XRender*) sP;
-  Error e = SUCCESS;
-  Map *srcRectMP = (Map*) mapGet(shareMMP, CLIP_RECT);
-  Map *dstRectMP = (Map*) mapGet(shareMMP, POSSIZE_RECT);
-  Entity entity = 0;
-  // Get clip and position-size rectangles for each render component.
-  if (!srcRectMP || !dstRectMP)
-    return E_BAD_KEY;
-  XRenderComp *cP = sP->cF;
-  XRenderComp *cEndP = cP + arrayGetNElems(sP->cF);
-  for (; !e && cP < cEndP; cP++) {
-    cP->srcRectP = (Rect_*) mapGet(srcRectMP, entity);
-    if (!cP->srcRectP)
-      e = E_BAD_ARGS;
-    if (!e) {
-      cP->dstRectP = (Rect_*) mapGet(dstRectMP, sP->cIdx2eA[cP - (XRenderComp*) sP->cF]);
-      if (!cP->dstRectP) 
-        e = E_BAD_ARGS;
-    }
-  }
-  // Get window and renderer too! Kind important lol. 
-  // They're "bogus" because there's only one element per window/renderer map. 
-  // But we gotta stick with our awesome design!!
-  // Get window
-  Map *bogusWindowMP = NULL; 
-  Map *bogusRendererMP = NULL;
-  if (!e)
-    bogusWindowMP = (Map*) mapGet(shareMMP, WINDOW_GENE_TYPE);
-  if (!bogusWindowMP)
-    e = E_BAD_KEY;  
-  else 
-    renderSysP->windowP = (Window_*) mapGet(bogusWindowMP, WINDOW_KEY_);
   // Get renderer
+  Error e = mapGetNestedMapPElem(shareMMP, RENDERER_GENE_TYPE, RENDERER_KEY_, (void**) &renderSysP->rendererP);
+  // Get window
   if (!e)
-    bogusRendererMP = (Map*) mapGet(shareMMP, RENDERER_GENE_TYPE);
-  if (!bogusRendererMP)
-    e = E_BAD_KEY;
-  else 
-    renderSysP->rendererP = (Renderer_*) mapGet(bogusRendererMP, RENDERER_KEY_);
-
-  if (!renderSysP->windowP || !renderSysP->rendererP)
-    e = E_BAD_KEY;
-
+    e = mapGetNestedMapPElem(shareMMP, WINDOW_GENE_TYPE, WINDOW_KEY_, (void**) &renderSysP->windowP);
   return e;
 }
 
@@ -309,4 +385,4 @@ Error xRenderRun(System *sP) {
 //======================================================
 // System definition
 //======================================================
-X_(Render, 1, FLG_NO_SWITCHES_);
+X_(Render, RENDER, FLG_NO_SWITCHES_);

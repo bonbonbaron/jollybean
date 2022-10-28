@@ -13,7 +13,8 @@ JOLLBEANSRC      = $(shell find ./src -name "*.c")
 JOLLBEAN_OBJS     = $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(JOLLBEANSRC:.c=.o))
 JOLLBEAN_INCLUDES = $(shell find -name "*.h")
 TGTINCLUDDIR = /usr/local/include/jollybean/
-IFLAGS=-I/usr/local/include/botox -I/usr/local/include/yoyo -I./src/include/
+BOTOXDIR = /home/bonbonbaron/hack/botox
+IFLAGS=-I$(BOTOXDIR)/src/include -I./src/include/
 
 CFLAGS_COMMON  = -Wall \
 							   $(IFLAGS) -ffunction-sections \
@@ -23,7 +24,10 @@ CFLAGS_TINY    = $(CFLAGS_COMMON) #-Os    #TODO: uncomment when ready for relase
 CFLAGS_FAST    = $(CFLAGS_COMMON) #-Ofast    #TODO: uncomment when ready for relase
 SDL_CFLAGS     = $(shell sdl2-config --cflags)
 SDL_LFLAGS     = $(shell sdl2-config --libs)
-LFLAGS         = -Wl,--gc-sections -Wl,-z,norelro \
+LFLAGS         = -Wl,--gc-sections -Wl,-z,norelro
+
+MAIN_SRC = $(BUILDDIR)/main.c
+MAIN_OUT = ./game
 
 ##############################
 # Archiver
@@ -36,7 +40,7 @@ $(LIBJOLLBEAN): $(BUILDDIR) $(LIBDIR) $(JOLLBEAN_OBJS) $(JOLLBEAN_INCLUDES)
 # Compiler
 ##############################
 $(BUILDDIR)/%.o: $(SRCDIR)/%.c $(JOLLBEAN_INCLUDES)
-	$(CC) $(SDL_CFLAGS) $(CFLAGS_FAST) -c $< -o $@
+	$(CC) $(SDL_CFLAGS) $(CFLAGS_FAST) -g -c $< -o $@
 	touch $@
 
 $(BUILDDIR):
@@ -44,7 +48,8 @@ $(BUILDDIR):
 
 $(LIBDIR):
 	mkdir -p $(LIBDIR)
-##############################
+#############################
+
 .PHONY: install
 install:
 	mkdir -p $(TGTINCLUDDIR)

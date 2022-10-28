@@ -1,0 +1,69 @@
+#!/bin/bash
+
+function imgExists {
+  a=$(find ${TROVE}/Image -name "$1.png")
+  a+=$(find ${TROVE}/Image -name "$1")
+  if ! a; then
+    return 0;
+  else
+    return 1;
+  fi
+}
+
+function imgNew {
+  python ../utils/imgStrip.py ${*:2}
+  declare -a outputImgs=($(echo $* | sed "s/png/c/g"))
+  mv ${outputImgs[*]} $GAME/biome/seed/$IMAGE
+}
+
+function imgDel {
+  for img in $@; do
+    if imgExists $img; then
+      echo "Deleting $img..."
+      rm -rf $(imgGetPath $img)            # remove img directory structure
+      sed -iE "/^\s*$img\s/d" $GAMES_FILE   # clear its record from the img table
+    fi;
+  done;
+}
+
+function imgLs {
+  cat $GAMES_FILE | sed -nE "s/^\s*([A-Za-z0-9_]+)\s+.*/\1/ p"
+}
+
+function imgWhich {
+  for img in $@; do
+    echo $(imgGetPath $img);
+  done;
+}
+
+function imgBuild {
+  sysBasenames=""; 
+  nSystems=$(echo $(echo $(ls src/*.c) | wc -w))
+  for i in $(ls src/*.c); do sysBasenames+="\t\t$(basename $i .c),\n"; done;
+  sysBasenames=${sysBasenames::-3}  # get rid of last "\n"
+  sysBasenames=$(echo $sysBasenames | sed -E "s/x([a-zA-Z0-9_]+)/s\1P/g")
+  if [ ${#INITIAL_BIOME} -gt 0 ]; then 
+    sed "s/<<SYSTEMS_HERE>>/${sysBasenames}/g;
+         s/<<INITIAL_BIOME_HERE>>/${INITIAL_BIOME}/g;
+         s/<<N_SYSTEMS_HERE>>/${nSystems}/g" templates/jb.c > build/main.c
+  else
+    echo "Oops, initial biome is undefined. Export that variable first then come back and try again."
+    exit
+  fi
+  make ./img
+}
+
+function imgExe {
+  case $1 in
+    new)          imgNew ${*:2};;
+    del|rm)       imgDel ${*:2};;
+    ls)           imgLs;;
+    which)        imgWhich ${*:2};;
+    pwg)          imgPwg;;
+    set)          imgSet $2;;
+    build)        imgBuild $2;;
+    exists|exist) imgExists $2;;
+    *) echo "jb img has no subcommand $1. Available img commands are
+      jb img [ new | del | rm | set | ls | pwg | build]." > /dev/stderr
+  esac
+}

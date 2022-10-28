@@ -4,9 +4,9 @@
 // Initialize MotionTrans's system.
 //======================================================
 Error xMotionTransIniSys(System *sP, void *sParamsP) {
-  return SUCCESS;
 	unused_(sParamsP);
   unused_(sP);
+  return SUCCESS;
 }
 
 //======================================================
@@ -21,20 +21,26 @@ Error xMotionTransIniComp(System *sP, void *compDataP, void *compDataSrcP) {
 
 Error xMotionTransProcessMessage(System *sP, Message *msgP) {
   Error e = SUCCESS;
-  // Get the entity's switch function. 
-  // (Keep in mind this function can also just grab into an array if you tell it to.)
-  XSwitchCompU switchU = (XSwitchCompU) mapGet(sP->switchMP, msgP->attn);
-  if (switchU) {
-    void* compP = xGetCompPByEntity(sP, msgP->attn);
+  // Get entity's map of switchable components.
+  Map **switchMPP = (Map**) mapGet(sP->switchMPMP, msgP->attn);
+  if (!switchMPP)
+    e = E_BAD_KEY;
+  Map *switchMP;
+  if (!e) {
+    switchMP = *switchMPP;
+    if (!switchMP) 
+      e = E_BAD_KEY;
+  }
+  if (!e) {
+    // Get entity's map of components to switch to.
+    void *compP = xGetCompPByEntity(sP, msgP->attn);
     if (compP) {
-      void *tmpP = switchU(msgP->arg);
+      void *tmpP = mapGet(switchMP, msgP->arg);
       if (tmpP)
         memcpy(compP, tmpP, sP->compSz - sizeof(Rect_*));  // don't copy over source rect pointer!
       else
         e = E_BAD_ARGS;
     }
-    else
-      e = E_BAD_KEY;
   }
 	return e;
 }
@@ -76,4 +82,4 @@ Error xMotionTransRun(System *sP) {
 // System definition
 //======================================================
 #define FLAGS_HERE (0)
-X_(MotionTrans, 1, FLAGS_HERE);
+X_(MotionTrans, MOTION_TRAN, FLAGS_HERE);

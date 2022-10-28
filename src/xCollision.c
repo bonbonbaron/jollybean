@@ -17,9 +17,9 @@
 // Initialize Collision's system.
 //======================================================
 Error xCollisionIniSys(System *sP, void *sParamsP) {
-  return SUCCESS;
 	unused_(sParamsP);
   unused_(sP);
+  return SUCCESS;
 }
 
 //======================================================
@@ -134,7 +134,7 @@ Error xCollisionRun(System *sP) {
   XCollisionComp *cStartP = cP;
   XCollisionComp *cFirstInactiveP = &cP[frayGetFirstInactiveIdx(sP->cF)];
   XCollisionComp *cEndP = cP + arrayGetNElems(sP->cF);
-  XCollisionComp *cFirstPausedP = &cP[frayGetFirstPausedIdx(sP->cF)];
+  XCollisionComp *cFirstPausedP = cP + frayGetFirstPausedIdx(sP->cF);
 
   XCollision *xCollSysP = (XCollision*) sP;
   Rect_ *rectA = xCollSysP->rectA;
@@ -214,4 +214,4 @@ Error xCollisionRun(System *sP) {
 // System definition
 //======================================================
 #define FLAGS_HERE (0)
-X_(Collision, 1, FLAGS_HERE);
+X_(Collision, COLLISION, FLAGS_HERE);

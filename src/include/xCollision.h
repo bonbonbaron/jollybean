@@ -1,7 +1,7 @@
 #ifndef SYS_Collision
 #define SYS_Collision
 #include "botox.h"
-#include "yoyoInterface.h"
+#include "interface.h"
 
 // Dummy struct to keep macro X_ happy.
 typedef struct {

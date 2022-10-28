@@ -1,19 +1,11 @@
 #!/bin/bash
 
+export TROVE="${HOME}/.jb"
+
 source ./scripts/ini
 source ./scripts/sys
 source ./scripts/game
-
-function imgNew {
-  python ./jollybean/_utils/imgStrip.py ${*:2}
-  declare -a outputImgs=($(echo $* | sed "s/png/c/g"))
-  mv ${outputImgs[*]} $GAME/biome/seed/$IMAGE
-}
-
-function imgDel {
-  echo hi;
-}
-
+source ./scripts/image
 function lower () {
   echo $1 | sed 's/.*/\L&/'
 }
@@ -22,8 +14,10 @@ mainArg=$(lower $1)
 case $mainArg in  
   game) gameExe ${*:2};;
   sys)  sysExe ${*};;
+  image|img) imgExe ${*:2};;
   gene) echo "what the del";;
-  *) echo "Command $mainArg not recognized.";;
+  build) buildExe ${*:2};;
+  *) echo "jb: Command $mainArg not recognized.";;
 esac
 
 # TODO reimplement StripSet inside of imgStrip.py

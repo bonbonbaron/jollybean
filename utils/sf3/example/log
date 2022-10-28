@@ -1,0 +1,12 @@
+Input #0, mp3, from 'http://streams.radiobob.de/metallica/mp3-192':
+  Metadata:
+    icy-br          : 192
+    icy-pub         : 0
+    icy-description : Unspecified description
+    icy-audio-info  : ice-samplerate=44100;ice-bitrate=192;ice-channels=2
+    icy-url         : 
+    icy-genre       : various
+    icy-name        : RADIO BOB! - Metallica
+    StreamTitle     : Metallica - Turn the Page
+  Duration: N/A, start: 0.000000, bitrate: 192 kb/s
+    Stream #0:0: Audio: mp3, 44100 Hz, stereo, fltp, 192 kb/s

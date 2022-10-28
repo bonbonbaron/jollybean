@@ -67,6 +67,23 @@ function gameSet {
   fi
 }
 
+function gameBuild {
+  sysBasenames=""; 
+  nSystems=$(echo $(echo $(ls src/*.c) | wc -w))
+  for i in $(ls src/*.c); do sysBasenames+="\t\t$(basename $i .c),\n"; done;
+  sysBasenames=${sysBasenames::-3}  # get rid of last "\n"
+  sysBasenames=$(echo $sysBasenames | sed -E "s/x([a-zA-Z0-9_]+)/s\1P/g")
+  if [ ${#INITIAL_BIOME} -gt 0 ]; then 
+    sed "s/<<SYSTEMS_HERE>>/${sysBasenames}/g;
+         s/<<INITIAL_BIOME_HERE>>/${INITIAL_BIOME}/g;
+         s/<<N_SYSTEMS_HERE>>/${nSystems}/g" templates/jb.c > build/main.c
+  else
+    echo "Oops, initial biome is undefined. Export that variable first then come back and try again."
+    exit
+  fi
+  make ./game
+}
+
 function gameExe {
   case $1 in
     new)    gameNew ${*:2};;
@@ -75,6 +92,7 @@ function gameExe {
     which)  gameWhich ${*:2};;
     pwg)    gamePwg;;
     set)    gameSet $2;;
+    build)  gameBuild $2;;
     *) echo "jb game has no subcommand $1. Available game commands are
       jb game [ new | del | set ]." > /dev/stderr
   esac
