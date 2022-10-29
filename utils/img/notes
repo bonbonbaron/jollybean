@@ -1,42 +1,16 @@
 There is a handful of things I need to keep in mind for my renderer updates:
 ============================================================================
 1) Texture atlas 
-2) restrict individiual color palette sizes to 4bpp
+  \2) restrict individiual color palette sizes to 4bpp
 3) update shared source rectangles' coordinates
-4) research texture atlas's size limitations
-5) vectorize colormap inflation and increment indices as needed. FIRST IS ALWAYS ZERO!
+  \4) research texture atlas's size limitations
+  \5) vectorize colormap inflation and increment indices as needed. FIRST IS ALWAYS ZERO!
 6) make 3 copies atlas palette: original, transitional, target
 7) detect whether a colorpalette's already in play with new palette member
-8) Motion may be done differently. If I want vectorize motion, I don't want to swap things around. I want the velocities to align with the shared positions, even if that means having gaps between them. That also means they'll be 4-byte values though.
-\) parse key from entity and format it
-\) study your design of key expectations
-11) study sprite atlases, their rationale, and what they entail
-   If your animation strips are based on their local images, 
-   they're going to need updating for every sprite atlas the image goes into.
-12) implement output based on (3)
-13) generate and manage enums
-14) store images and animation structures somewhere
-15) test img compression integrity without SDL using memcmp()
-
-
-/* Most TMUs require images to be arranged in memory in T- or LT- format. These formats
- * have a sequence of Micro-tiles (M).
-
-/* (M)s are rectangular image blocks w/ fixed size of 64 bytes' worth of pixels in raster order. 
- *   Since they're 64 bytes, their sizes are as follows:
- *      - 64bpp: 02x04 pixels
- *      - 32bpp: 04x04 pixels
- *      - 16bpp: 08x04 pixels
- *      + 08bpp: 08x08 pixels  <-- This'll be the story for nearly every atlas I use.
- *      - 04bpp: 16x08 pixels
- *      - 01bpp: 32x16 pixels
- *
- * They come in T- (T) and LT-format (L).
- *
-*/
-
-/* (T) consists of 4kB tiles of 2D images, formed from 1kB sub-tiles. 
- *     In our 8bpp style, a 4kB tile is 64x64 pixels.
- *     The 1kB sub-tiles are 32x32 pixels.
- */
-
+  \8) parse key from entity and format it
+  \9) study your design of key expectations
+  \10) study sprite atlases, their rationale, and what they entail
+11) generate and manage enums from keys in image files
+12) store images and animation structures somewhere
+13) test img compression integrity without SDL using memcmp()
+14) test img inflation integrity at all 3 bitdepths

@@ -236,7 +236,6 @@ static Error _cmGen(ColormapS *cmP) {
             srcStripP = stripSetP + (*ssIdxP << 3);
             _unpackStrip1BPP(&srcStripP, &dstStripP);
           }
-
 					// Then flip whatever strips need flipping. Remember data's already expanded to U8s!
 					if (cmP->stripSetP->flipSetP) 
             _flipStrips1BPP(cmP);
@@ -252,10 +251,10 @@ static Error _cmGen(ColormapS *cmP) {
         // First read all mapped strips into the target colormap.
 				if (cmP->stripMapP) {
 					U16 *mapEndP = ((U16*) cmP->stripMapP->stripMapInfP->inflatedDataP) + cmP->stripMapP->nIndices;
-					for (U16 *ssIdxP = (U16*) cmP->stripMapP->stripMapInfP->inflatedDataP; ssIdxP < mapEndP; ssIdxP++) 
+					for (U16 *ssIdxP = (U16*) cmP->stripMapP->stripMapInfP->inflatedDataP; ssIdxP < mapEndP; ssIdxP++) {
             srcStripP = stripSetP + (*ssIdxP << 3);
             _unpackStrip2BPP(&srcStripP, &dstStripP);
-
+          }
 					// Then flip whatever strips need flipping. Remember data's already expanded to U8s!
 					if (cmP->stripSetP->flipSetP) 
             _flipStrips2BPP(cmP);
@@ -271,10 +270,10 @@ static Error _cmGen(ColormapS *cmP) {
         // First read all mapped strips into the target colormap.
 				if (cmP->stripMapP) {
 					U16 *mapEndP = ((U16*) cmP->stripMapP->stripMapInfP->inflatedDataP) + cmP->stripMapP->nIndices;
-					for (U16 *ssIdxP = (U16*) cmP->stripMapP->stripMapInfP->inflatedDataP; ssIdxP < mapEndP; ssIdxP++) 
+					for (U16 *ssIdxP = (U16*) cmP->stripMapP->stripMapInfP->inflatedDataP; ssIdxP < mapEndP; ssIdxP++) {
             srcStripP = stripSetP + (*ssIdxP << 3);
             _unpackStrip4BPP(&srcStripP, &dstStripP);
-
+          }
 					// Then flip whatever strips need flipping. Remember data's already expanded to U8s!
 					if (cmP->stripSetP->flipSetP) 
             _flipStrips4BPP(cmP);
@@ -286,7 +285,6 @@ static Error _cmGen(ColormapS *cmP) {
             _unpackStrip4BPP(&srcStripP, &dstStripP);
 				}
 				break;
-
 			default:  
 				e = E_UNSUPPORTED_PIXEL_FORMAT;
 				break;
