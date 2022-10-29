@@ -19,7 +19,7 @@ IFLAGS=-I$(BOTOXDIR)/src/include -I./src/include/
 CFLAGS_COMMON  = -Wall \
 							   $(IFLAGS) -ffunction-sections \
 							 	 -fdata-sections -s -fno-ident -fmerge-all-constants \
-							 	 -fomit-frame-pointer -fno-stack-protector 
+							 	 -fomit-frame-pointer -fno-stack-protector -mfpu=neon -O3
 CFLAGS_TINY    = $(CFLAGS_COMMON) #-Os    #TODO: uncomment when ready for relase
 CFLAGS_FAST    = $(CFLAGS_COMMON) #-Ofast    #TODO: uncomment when ready for relase
 SDL_CFLAGS     = $(shell sdl2-config --cflags)

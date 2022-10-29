@@ -5,6 +5,10 @@
 // JB just reconstructs them from strips of staggered pixels. 
 // Packed bits are staggered to allow JB to unpack and (if necessary) flip 4 color-mapped pixels at a time.
 
+// Assembler instructions need this word.
+#ifdef inline
+#undef inline
+#endif
 // =========================================
 // Clear color map and all its related data.
 // =========================================
@@ -27,7 +31,7 @@ static void _unpackStrip1BPP(U32 **srcStripPP, U32 **dstStripPP) {
 #ifdef __ARM_NEON__
   // 7 instructions neon VS 40-58 instructions regular
   asm volatile inline (
-  "vmov.u8 q10 #1\n\t"   // q10 = mask
+  "vmov.u8 q10, #1\n\t"   // q10 = mask
   );
   // 1 x (128 pixels per quad-word)
   for (int i = 0; i < 8; ++i) {
@@ -47,44 +51,13 @@ static void _unpackStrip1BPP(U32 **srcStripPP, U32 **dstStripPP) {
 #endif
 }
 
-
-static void _flipStrips1BPP(ColormapS *cmP) {
-  U16 *flipEndP = cmP->stripSetP->flipSetP->flipIdxA + cmP->stripSetP->flipSetP->nFlips;
-  U32 *dstLeft4PixelsP, *dstRight4PixelsP;
-  // 4 *unpacked* pixels per U32 out of 64 pixels means there are 16 U32s.
-  for (U16 *flipIdxP = cmP->stripSetP->flipSetP->flipIdxA; flipIdxP < flipEndP; ++flipIdxP) {
-    dstLeft4PixelsP = (U32*) cmP->dataP + (*flipIdxP << 3); 
-    dstRight4PixelsP = dstLeft4PixelsP + 15;
-    for (; dstLeft4PixelsP < dstRight4PixelsP; ++dstLeft4PixelsP, --dstRight4PixelsP) {
-#ifdef __ARM_NEON__
-      asm volatile inline (
-      "vldr.64 d0, [%0]\n\t"
-      "vldr.64 d1, [%1]\n\t"
-      "vrev.8 q0\n\t"
-      "vst1.32, d0[0], [%1]\n\t"   // Neon-based swap occurs here if I can make this work right.
-      "vst1.32, d1[1], [%0]"
-      : "+r" (*dstLeft4PixelsP), "+r" (*dstRight4PixelsP)
-      );
-#else
-      // Left 4 pixels
-      *dstLeft4PixelsP  = ((*dstLeft4PixelsP & 0xFFFF0000) >> 16) | ((*dstLeft4PixelsP & 0x0000FFFF) << 16);
-      *dstLeft4PixelsP  = ((*dstLeft4PixelsP & 0xFF00FF00) >>  8) | ((*dstLeft4PixelsP & 0x00FF00FF) <<  8);
-      // Right 4 pixels
-      *dstRight4PixelsP = ((*dstRight4PixelsP & 0xFFFF0000) >> 16) | ((*dstRight4PixelsP & 0x0000FFFF) << 16);
-      *dstRight4PixelsP = ((*dstRight4PixelsP & 0xFF00FF00) >>  8) | ((*dstRight4PixelsP & 0x00FF00FF) <<  8);  // Put right 4 pixels into left 4 pixels
-      swap_(*dstLeft4PixelsP, *dstRight4PixelsP);
-#endif
-    }
-  }
-}
-
 static void _unpackStrip2BPP(U32 **srcStripPP, U32 **dstStripPP) {
   U32 *srcStripP = *srcStripPP;
   U32 *dstStripP = *dstStripPP;
 #ifdef __ARM_NEON__
   // 7 instructions neon VS 40-58 instructions regular
   asm volatile inline (
-  "vmov.u8 q10 #3\n\t"   // q10 = mask
+  "vmov.u8 q10, #3\n\t"   // q10 = mask
   );
   // 1 x (64 pixels per quad-word)
   for (int i = 0; i < 1; ++i) {  // keeping this useless loop here for when I chagne to 128-pixel strips.
@@ -106,44 +79,13 @@ static void _unpackStrip2BPP(U32 **srcStripPP, U32 **dstStripPP) {
 #endif
 }
 
-static void _flipStrips2BPP(ColormapS *cmP) {
-  U16 *flipEndP = cmP->stripSetP->flipSetP->flipIdxA + cmP->stripSetP->flipSetP->nFlips;
-  U32 *dstLeft4PixelsP, *dstRight4PixelsP;
-  // 4 *unpacked* pixels per U32 out of 64 pixels means there are 16 U32s.
-  for (U16 *flipIdxP = cmP->stripSetP->flipSetP->flipIdxA; flipIdxP < flipEndP; ++flipIdxP) {
-    dstLeft4PixelsP = (U32*) cmP->dataP + (*flipIdxP << 3); 
-    dstRight4PixelsP = dstLeft4PixelsP + 15;
-    for (; dstLeft4PixelsP < dstRight4PixelsP; ++dstLeft4PixelsP, --dstRight4PixelsP) {
-#ifdef __ARM_NEON__
-      asm volatile inline (
-      "vldr.64 d0, [%0]\n\t"
-      "vldr.64 d1, [%1]\n\t"
-      "vrev.8 q0\n\t"
-      "vst1.32, d0[0], [%1]\n\t"   // Neon-based swap occurs here if I can make this work right.
-      "vst1.32, d1[1], [%0]"
-      : "+r" (*dstLeft4PixelsP), "+r" (*dstRight4PixelsP)
-      );
-#else
-      // Left 4 pixels
-      *dstLeft4PixelsP  = ((*dstLeft4PixelsP & 0xFFFF0000) >> 16) | ((*dstLeft4PixelsP & 0x0000FFFF) << 16);
-      *dstLeft4PixelsP  = ((*dstLeft4PixelsP & 0xFF00FF00) >>  8) | ((*dstLeft4PixelsP & 0x00FF00FF) <<  8);
-      // Right 4 pixels
-      *dstRight4PixelsP = ((*dstRight4PixelsP & 0xFFFF0000) >> 16) | ((*dstRight4PixelsP & 0x0000FFFF) << 16);
-      *dstRight4PixelsP = ((*dstRight4PixelsP & 0xFF00FF00) >>  8) | ((*dstRight4PixelsP & 0x00FF00FF) <<  8);  // Put right 4 pixels into left 4 pixels
-      swap_(*dstLeft4PixelsP, *dstRight4PixelsP);
-#endif
-    }
-  }
-}
-
-
 static void _unpackStrip4BPP(U32 **srcStripPP, U32 **dstStripPP) {
   U32 *srcStripP = *srcStripPP;
   U32 *dstStripP = *dstStripPP;
 #ifdef __ARM_NEON__
   // 7 instructions neon VS 40-58 instructions regular
   asm volatile inline (
-  "vmov.u8 q10 #1\n\t"   // q10 = mask
+  "vmov.u8 q10, #1\n\t"   // q10 = mask
   );
   // 2 x (32 pixels per quad-word)
   for (int i = 0; i < 2; ++i) {
@@ -160,29 +102,40 @@ static void _unpackStrip4BPP(U32 **srcStripPP, U32 **dstStripPP) {
 #else
   // 32 pixels per iteration, 4 iterations
   for (int i = 0; i < 2; ++i, ++srcStripP) 
-    for (register int j = 0; j < 8; ++j)
-      *dstStripP++ =  (*srcStripP >> j) & 0x01010101;
+    for (register int j = 0; j < 8; j += 4)
+      *dstStripP++ =  (*srcStripP >> j) & 0x0f0f0f0f;
 #endif
 }
 
-static void _flipStrips4BPP(ColormapS *cmP) {
+// Flips already-unpacked strips that need flipping. 
+// Jollybean's image compressor deletes strips that're mirror-images of another.
+static void _flipStrips(ColormapS *cmP) {
   U16 *flipEndP = cmP->stripSetP->flipSetP->flipIdxA + cmP->stripSetP->flipSetP->nFlips;
   U32 *dstLeft4PixelsP, *dstRight4PixelsP;
   // 4 *unpacked* pixels per U32 out of 64 pixels means there are 16 U32s.
   for (U16 *flipIdxP = cmP->stripSetP->flipSetP->flipIdxA; flipIdxP < flipEndP; ++flipIdxP) {
     dstLeft4PixelsP = (U32*) cmP->dataP + (*flipIdxP << 3); 
+#ifdef __ARM_NEON__
+    // 16 quad-words per strip
+    dstRight4PixelsP = dstLeft4PixelsP + 12;  // to start on words 13-16
+    for (int i = 0; i < 2; ++i) {
+      asm volatile (
+      "vld1.32 {d0-d1}, [%0]\n\t"
+      "vld1.32 {d2-d3}, [%1]\n\t"
+      "vrev64.8 q0, q0\n\t" // reverses order of 8 bytes in each half-quad-word
+      "vrev64.8 q1, q1\n\t"
+      "vswp d0, d1\n\t" // swaps the half quad-words
+      "vswp d2, d3\n\t"
+      "vswp q0, q1\n\t" 
+      "vst1.32 {d0-d1}, [%1]\n\t" // swaps entire quad-words
+      "vst1.32 {d2-d3}, [%0]!\n\t"  // %0 increments forward; %1 backwards (next line)
+      "sub %1, #16\n\t"
+      : "+r" (dstLeft4PixelsP), "+r" (dstRight4PixelsP)
+      );
+    }
+#else
     dstRight4PixelsP = dstLeft4PixelsP + 15;
     for (; dstLeft4PixelsP < dstRight4PixelsP; ++dstLeft4PixelsP, --dstRight4PixelsP) {
-#ifdef __ARM_NEON__
-      asm volatile inline (
-      "vldr.64 d0, [%0]\n\t"
-      "vldr.64 d1, [%1]\n\t"
-      "vrev.8 q0\n\t"
-      "vst1.32, d0[0], [%1]\n\t"   // Neon-based swap occurs here if I can make this work right.
-      "vst1.32, d1[1], [%0]"
-      : "+r" (*dstLeft4PixelsP), "+r" (*dstRight4PixelsP)
-      );
-#else
       // Left 4 pixels
       *dstLeft4PixelsP  = ((*dstLeft4PixelsP & 0xFFFF0000) >> 16) | ((*dstLeft4PixelsP & 0x0000FFFF) << 16);
       *dstLeft4PixelsP  = ((*dstLeft4PixelsP & 0xFF00FF00) >>  8) | ((*dstLeft4PixelsP & 0x00FF00FF) <<  8);
@@ -190,10 +143,11 @@ static void _flipStrips4BPP(ColormapS *cmP) {
       *dstRight4PixelsP = ((*dstRight4PixelsP & 0xFFFF0000) >> 16) | ((*dstRight4PixelsP & 0x0000FFFF) << 16);
       *dstRight4PixelsP = ((*dstRight4PixelsP & 0xFF00FF00) >>  8) | ((*dstRight4PixelsP & 0x00FF00FF) <<  8);  // Put right 4 pixels into left 4 pixels
       swap_(*dstLeft4PixelsP, *dstRight4PixelsP);
-#endif
     }
+#endif
   }
 }
+
 
 // =====================================================================
 // Build color map by inflating, unpacking, and piecing together strips.
@@ -238,7 +192,7 @@ static Error _cmGen(ColormapS *cmP) {
           }
 					// Then flip whatever strips need flipping. Remember data's already expanded to U8s!
 					if (cmP->stripSetP->flipSetP) 
-            _flipStrips1BPP(cmP);
+            _flipStrips(cmP);
 				} 
 				// Unmapped stripsets are already ordered, so they only need to be unpacked.
 				else {
@@ -257,7 +211,7 @@ static Error _cmGen(ColormapS *cmP) {
           }
 					// Then flip whatever strips need flipping. Remember data's already expanded to U8s!
 					if (cmP->stripSetP->flipSetP) 
-            _flipStrips2BPP(cmP);
+            _flipStrips(cmP);
 				} 
 				// Unmapped stripsets are already ordered, so they only need to be unpacked.
 				else {
@@ -276,7 +230,7 @@ static Error _cmGen(ColormapS *cmP) {
           }
 					// Then flip whatever strips need flipping. Remember data's already expanded to U8s!
 					if (cmP->stripSetP->flipSetP) 
-            _flipStrips4BPP(cmP);
+            _flipStrips(cmP);
 				} 
 				// Unmapped stripsets are already ordered, so they only need to be unpacked.
 				else {
