@@ -250,7 +250,6 @@ static Error _cmGen(ColormapS *cmP) {
 	return e;
 }
 
-#if 0
 // Source: https://codeincomplete.com/articles/bin-packing/
 // ========================================================
 
@@ -260,29 +259,56 @@ static Error _cmGen(ColormapS *cmP) {
 // First, we sort the rectangles by their area (using a LUT). 
 // Second, we put them in the atlas based on how much room there is.
 
-// TA stands for "Texture Atlas". Spares readers.
+// TA stands for "Texture Atlas". Let's spare readers' eyes.
 typedef struct {
-  Entity rectIdx;  // indexes the shared rectangle array in xMaster
-  Key right, down;
-} TaTreeNode;  // 20 bytes, oh well, best I can do
+  Key srcRectIdx;  // indexes the shared source rectangle array in xMaster
+  Key used;
+  U16 remainingWidthRight, remainingHeightDown;  // U16 works if the max texture dimension the Pi supports is 4096.
+} TaNode;  // 6 bytes
 
-TaTreeNode* taNodeFind(TaTreeNode *rootP, TaTreeNode *nodeP, S32 w, S32 h) {
-  if (root.used)
-    return taNodeFind(root.right, w, h) || taNodeFind(root.down, w, h);
-  else if ((w <= root.w) && (h <= root.h))
-    return root;
-  else
-    return null;
+Error fit(Rect_ *srcRectA) {
+  if (!srcRectA)
+    return E_BAD_ARGS;
+  Error e = SUCCESS;
+  Rect *rectP = srcRectA;
+  Rect *rectEndP = rectP + arrayGetNElems(srcRectA);
+  for (; !e && rectP < rectEndP; ++rectP) {
+    if (node = this.findNode(this.root, block.w, block.h))
+      e = this.splitNode(node, block.w, block.h);
+  }
+  return e;
 }
 
-TaTreeNode* taNodeSplit(TaTreeNode *nodeP, S32 w, S32 h) {
-  node.down  = { x: node.x,     y: node.y + h, w: node.w,     h: node.h - h };
-  node.right = { x: node.x + w, y: node.y,     w: node.w - w, h: h          };
+Key taNodeFind(TaNode *nodeA, Key idx, S32 w, S32 h) {
+  // If this node's used up, continue looking in its neighboring nodes (going right first).
+  // When it reaches the right border, it looks beneath the rightmost node.
+  if (nodeP->used)
+    return taNodeFind(nodeA, nodeP->right, w, h) || taNodeFind(nodeA, nodeP->down, w, h);
+  // When it finds an empty node, it returns that node.
+  else if ((w <= nodeA[idx].w) && (h <= nodeA[idx].h))  
+    return idx;
+  else
+    return 0;  // This node won't work. Hopefully the next one will when this returns.
+    // The first node is already automatically used by the first (largest) rectangle.
+    // So a return value of 0 means the current rectangle won't fit in this node.
+}
+
+// This is where nodes are born: mitosis. w and h represent the remaining w and h in the direction from this block.
+TaNode* taNodeSplit(TaNode *nodeA, Key idx, S32 w, S32 h) {
+  nodeA[idx].down.x = nodeA[idx].x;
+  nodeA[idx].down.y = nodeA[idx].y + h;
+  nodeA[idx].down.w = nodeA[idx].w;
+  nodeA[idx].down.h = nodeA[idx].h - h;
+  nodeP->down  = { x: nodeP->x,     y: nodeP->y + h, w: nodeP->w,     h: nodeP->h - h };
+  nodeP->right = { x: nodeP->x + w, y: nodeP->y,     w: nodeP->w - w, h: h          };
   return node;
 }
 
 // Prevent copies with new member in XRenderComponentSrc struct: S16 textureAtlasIdx.
-void taNodeFit() {
+// For array-based binary trees, left child is (parent*2)+1; right child is (parent*2)+2. So...
+// p0, c01, c02, ... then you can't have an independent parent. They all descend from p0.
+// p0, c01, c02, c01_01, c01_02, c02_01, c02_02, c01_01_01, c01_01_02... etc.
+void taNodeFitNewBlock() {
   var n, node, block, len = blocks.length;
   var w = len > 0 ? blocks[0].w : 0;
   var h = len > 0 ? blocks[0].h : 0;
@@ -290,13 +316,13 @@ void taNodeFit() {
   for (n = 0; n < len ; n++) {
     block = blocks[n];
     if (node = taNodeFind(this.root, block.w, block.h))
-      taNodeFit = this.taNodeSplit(node, block.w, block.h);
+      taNodeFit = taNodeSplit(node, block.w, block.h);
     else
       taNodeFit = taNodeGrow(block.w, block.h);
   }
 }
 
-TaTreeNode* taNodeGrowRight(w, h) {
+TaNode* taNodeGrowRight(w, h) {
   this.root = {
     used: true,
     x: 0,
@@ -312,7 +338,7 @@ TaTreeNode* taNodeGrowRight(w, h) {
     return null;
 }
 
-TaTreeNode *taNodeGrowDown(w, h) {
+TaNode *taNodeGrowDown(w, h) {
   this.root = {
     used: true,
     x: 0,
@@ -329,7 +355,7 @@ TaTreeNode *taNodeGrowDown(w, h) {
 }
 
 
-TaTreeNode* taNodeGrow(S32 w, S32 h) {
+TaNode* taNodeGrow(S32 w, S32 h) {
   var canGrowDown  = (w <= this.root.w);
   var canGrowRight = (h <= this.root.h);
 
@@ -352,7 +378,6 @@ TaTreeNode* taNodeGrow(S32 w, S32 h) {
 // Write a insert-sort by rect w/h function that memcpys in an inner insert.
 // Write some array-based binary tree functionality -- perhaps within data.c. Only what's needed.
 // Sort all rectangles by 
-#endif
 
 
 //======================================================
@@ -419,6 +444,7 @@ Error xRenderIniComp(System *sP, void *compDataP, void *compDataSrcP) {
 	return e;
 }
 
+// TODO Is the source rect MPMP already shared?
 Error xRenderProcessMessage(System *sP, Message *msgP) {
 	unused_(sP);
 	unused_(msgP);
@@ -439,6 +465,32 @@ XGetShareFuncDef_(Render) {
   // Get window
   if (!e)
     e = mapGetNestedMapPElem(shareMMP, WINDOW_GENE_TYPE, WINDOW_KEY_, (void**) &renderSysP->windowP);
+
+  // TODO get source rectangles MPMP too, not just 
+  if (!e) {
+    Entity entity = 0;
+    // We're not just reading from source rectangle map; we're writing to it too (when making our texture atlas).
+    Map **srcRectMPP = (Map**) mapGet(shareMMP, SRC_RECT);
+    if (!srcRectMPP)
+      return E_BAD_KEY;
+    Map *srcRectMP = *srcRectMPP;
+    if (!srcRectMP)
+      return E_BAD_ARGS;
+    Map *dstRectMP = *((Map**) mapGet(shareMMP, DST_RECT));
+    if (!dstRectMPP)
+      return E_BAD_KEY;
+    Map *dstRectMP = *dstRectMPP;
+    if (!dstRectMP)
+      return E_BAD_ARGS;
+    for (; cP < cEndP; ++cP) {
+      entity = xGetEntityByCompIdx(sP, cP - cStartP);
+      cP->srcRectP = (Rect_*) mapGet(srcRectMP, entity);
+      // TODO insert-sort the source rectangle into a list of rectangles ordered by largest dimension.
+      cP->dstRectP = (Rect_*) mapGet(dstRectMP, entity);
+    }
+
+  }
+
   return e;
 }
 

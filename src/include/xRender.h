@@ -59,6 +59,7 @@ typedef struct {
   System system;
   Window_ *windowP;
   Renderer_ *rendererP;
+  Map *  // Here's the problem: The src rect share array only stores the current value, not the entire range of possibilities.
 } XRender;
 
 extern System *sRenderP;

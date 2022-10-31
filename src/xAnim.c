@@ -50,6 +50,7 @@ XClrFuncDef_(Anim) {
   return SUCCESS;
 }
 
+// TODO: does this break if we call this BEFORE add
 XGetShareFuncDef_(Anim) {
   if (!sP->cF)
     return E_BAD_ARGS;
