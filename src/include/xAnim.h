@@ -8,7 +8,6 @@ typedef struct {
 typedef struct {
   U8     timeLeft; 
   U8     currIdx;
-  U8     nIndices;
   Bln    repeat;
   U8    *timeA;     
   Rect_ *srcRectA;    // This is the array of animation rectangles. We draw FROM this part of the source image.

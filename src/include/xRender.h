@@ -42,9 +42,8 @@ typedef struct {
 } XRenderCompSrc; 
 
 typedef struct {
-  Texture_ *textureP;
-  Rect_ *srcRectP;
-  Rect_ *dstRectP;
+  Key srcRectIdx;
+  Key dstRectIdx;
 } XRenderComp;
 
 // Images
@@ -59,7 +58,9 @@ typedef struct {
   System system;
   Window_ *windowP;
   Renderer_ *rendererP;
-  Map *  // Here's the problem: The src rect share array only stores the current value, not the entire range of possibilities.
+  Map *srcRectMAMP;  // Lets rendering system update the source rectangles' positions according to their placement in the texture atlas.
+  Map *srcRectMP;   // Keeps rendering system posted on the animation frame of each animated entity.
+  Map *dstRectMP;   // Keeps rendering system posted on the position and scale of each mobile entity.
 } XRender;
 
 extern System *sRenderP;

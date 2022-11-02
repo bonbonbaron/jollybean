@@ -457,8 +457,23 @@ XClrFuncDef_(Render) {
   return SUCCESS;
 }
 
+static Error _getSharedMap(Map *shareMPMP, Key key, Map **outputMPP) {
+  if (!shareMPMP || !outputMPP)
+    return E_BAD_ARGS;
+  Map **shareMPP = (Map**) mapGet(shareMPMP, key);
+  if (!shareMPP)
+    return E_BAD_KEY;
+  *outputMPP = *shareMPP;
+  if (!*outputMPP)
+    return E_BAD_ARGS;
+  return SUCCESS;
+}
+
 // Only get the render and window. Components' src & dst rects come from SCENE_START stimulus to XGo.
 XGetShareFuncDef_(Render) {
+  XRenderComp *cP = NULL;
+  XRenderComp *cEndP = NULL;
+  Entity entity = 0;
   XRender *renderSysP = (XRender*) sP;
   // Get renderer
   Error e = mapGetNestedMapPElem(shareMMP, RENDERER_GENE_TYPE, RENDERER_KEY_, (void**) &renderSysP->rendererP);
@@ -466,31 +481,99 @@ XGetShareFuncDef_(Render) {
   if (!e)
     e = mapGetNestedMapPElem(shareMMP, WINDOW_GENE_TYPE, WINDOW_KEY_, (void**) &renderSysP->windowP);
 
-  // TODO get source rectangles MPMP too, not just 
-  if (!e) {
-    Entity entity = 0;
-    // We're not just reading from source rectangle map; we're writing to it too (when making our texture atlas).
-    Map **srcRectMPP = (Map**) mapGet(shareMMP, SRC_RECT);
-    if (!srcRectMPP)
-      return E_BAD_KEY;
-    Map *srcRectMP = *srcRectMPP;
-    if (!srcRectMP)
-      return E_BAD_ARGS;
-    Map *dstRectMP = *((Map**) mapGet(shareMMP, DST_RECT));
-    if (!dstRectMPP)
-      return E_BAD_KEY;
-    Map *dstRectMP = *dstRectMPP;
-    if (!dstRectMP)
-      return E_BAD_ARGS;
-    for (; cP < cEndP; ++cP) {
-      entity = xGetEntityByCompIdx(sP, cP - cStartP);
-      cP->srcRectP = (Rect_*) mapGet(srcRectMP, entity);
-      // TODO insert-sort the source rectangle into a list of rectangles ordered by largest dimension.
-      cP->dstRectP = (Rect_*) mapGet(dstRectMP, entity);
-    }
+  // Extract all source and dest rectangles we need to keep track of (they get updated by other systems).
+  if (!e) 
+    e = _getSharedMap(shareMMP, SRC_RECT, &renderSysP->srcRectMP);  // represents current source rectangle for, say, an animated entity
+  if (!e)
+    e = _getSharedMap(shareMMP, DST_RECT, &renderSysP->dstRectMP);  // represents current destination rectangle for, say, a mobile, scalable entity
+  if (!e)
+    // Animation system nicely makes a map of pointers to its components' srcRect arrays (2D: first dim is anim # (not important), second is array of src rects).
+    e = _getSharedMap(shareMMP, SRC_RECT_ARRAY, &renderSysP->srcRectAMP);  // represents all the possible source rectangles to keep track of in texture atlas
 
+  // Get each component's src and dest rectangle indices.
+  if (!e) {
+    *cP = renderSysP->cF;
+    *cEndP = cP + arrayGetNElems(renderSysP->cF);
+    for (; !e && cP < cEndP; ++cP) {
+      entity = xGetEntityByCompIdx(sP, cP - (XRenderComp*) renderSysP->cF);
+      e = mapGetIndex(renderSysP->srcRectMP, entity, &cP->srcRectIdx);
+      if (!e) 
+        e = mapGetIndex(renderSysP->dstRectMP, entity, &cP->dstRectIdx) {
+    }
   }
 
+  // Get all the animation rectangles we need to update when building our texture atlas.
+  // First count all the rectangles we're going to need.
+  U32 nRectangles = 0;
+  Rect_ *srcRectA = NULL;
+  Rect_ **srcRectAP = NULL;
+  Rect_ **srcRectAEndP = NULL;
+  Rect_ **srcRectAA = NULL;
+  Rect_ **srcRectAAP = NULL;
+  
+  cEndP = cP + arrayGetNElems(renderSysP->cF);
+  if (!e) {
+    for (cP = renderSysP->cF; !e && cP < cEndP; ++cP) {
+      entity = xGetEntityByCompIdx(sP, cP - (XRenderComp*) renderSysP->cF);
+      srcRectAAP = (Rect***) mapGet(renderSysP->srcRectAAMP, entity);  // TRIPLE POINTER!!! holllly crap
+      if (srcRectAAP)
+        srcRectAA = *srcRectAAP;
+      if (srcRectAA) {
+        srcRectAP = srcRectAA;
+        srcRectAEndP = srcRectAP + arrayGetNElems(srcRectAA);
+        for (; srcRectAP < srcRectAEndP; ++srcRectAP) {
+          srcRectA = *srcRectAP;
+          if (!srcRectA) {
+            e = E_NULL_VAR;
+            goto ranIntoNullArray;
+          nRectangles += arrayGetNElems(srcRectA);
+        }
+      }
+    }
+  }
+  // Second, insert-sort those rectangles into our own, temporary array of rectangles by their largest dimension.
+  Rect_ *rectSortedA;
+  Rect_ *rectP = NULL;
+  Rect_ *rectEndP = NULL;
+  if (!e)
+    e = arrayNew((void**) rectSortedA, sizeof(Rect_), nRectangles);
+
+  if (!e) {
+    for (cP = renderSysP->cF; !e && cP < cEndP; ++cP) {
+      entity = xGetEntityByCompIdx(sP, cP - (XRenderComp*) renderSysP->cF);
+      srcRectAAP = (Rect***) mapGet(renderSysP->srcRectAAMP, entity);  // TRIPLE POINTER!!! holllly crap
+      if (srcRectAAP)
+        srcRectAA = *srcRectAAP;
+      if (srcRectAA) {
+        srcRectAP = srcRectAA;
+        srcRectAEndP = srcRectAP + arrayGetNElems(srcRectAA);
+        for (; srcRectAP < srcRectAEndP; ++srcRectAP) {
+          srcRectA = *srcRectAP;  // we won't check for null arrays this time as we already did last time.
+          rectP = srcRectA;
+          rectEndP = rectP + arrayGetNElems(srcRectA);
+          for (; rectP < rectEndP; ++rectP) {
+            // TODO: 
+            // 1) put all the image source data into a map in xRenderIniComp()
+            // 2) put key from (1) into struct of each sorted array element in order to know which rectangle in sorted rect array corresponds to which image
+            // 3) insert-sort rectangles into array
+          }
+        }
+      }
+    }
+  }
+
+  // Make an array-based binary tree of the sorted rectangles' placements in the texture atlas.
+  if (!e) {
+    //TODO
+  }
+
+  // Inflate all the components' images straight into the texture atlas.
+  if (!e) {
+    //TODO
+  }
+
+ranIntoNullArray:
+  arrayDel((void**) &rectSortedA);
   return e;
 }
 
