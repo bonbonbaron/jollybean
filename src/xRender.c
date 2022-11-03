@@ -258,7 +258,7 @@ static Error _cmGen(ColormapS *cmP) {
 
 // First, we sort the rectangles by their area (using a LUT). 
 // Second, we put them in the atlas based on how much room there is.
-
+#if 1  // let's just get the rectangle sorting to compile first, shall we?
 // TA stands for "Texture Atlas". Let's spare readers' eyes.
 typedef struct {
   Key srcRectIdx;  // indexes the shared source rectangle array in xMaster
@@ -270,8 +270,8 @@ Error fit(Rect_ *srcRectA) {
   if (!srcRectA)
     return E_BAD_ARGS;
   Error e = SUCCESS;
-  Rect *rectP = srcRectA;
-  Rect *rectEndP = rectP + arrayGetNElems(srcRectA);
+  Rect_ *rectP = srcRectA;
+  Rect_ *rectEndP = rectP + arrayGetNElems(srcRectA);
   for (; !e && rectP < rectEndP; ++rectP) {
     if (node = this.findNode(this.root, block.w, block.h))
       e = this.splitNode(node, block.w, block.h);
@@ -379,6 +379,8 @@ TaNode* taNodeGrow(S32 w, S32 h) {
 // Write some array-based binary tree functionality -- perhaps within data.c. Only what's needed.
 // Sort all rectangles by 
 
+#endif
+
 
 //======================================================
 // Initialize xRender's system.
@@ -392,14 +394,19 @@ Error xRenderIniSys(System *sP, void *sParamsP) {
 //======================================================
 // Initialize xRender's components, which are Images.
 //======================================================
+#define DO_IT_THE_OLD_DUMB_WAY 0
 Error xRenderIniComp(System *sP, void *compDataP, void *compDataSrcP) {
 	if (!sP || !compDataP || !compDataSrcP)
 		return E_BAD_ARGS;
 
+  return SUCCESS;  // here for now to make the compiler happy
+#if DO_IT_THE_OLD_DUMB_WAY
 	XRender *xRenderSysP = (XRender*) sP;
 	XRenderComp *cP = (XRenderComp*) compDataP;
   XRenderCompSrc *imgP = (XRenderCompSrc*) compDataSrcP;
+#endif
 
+#if DO_IT_THE_OLD_DUMB_WAY
   // Skip things that're already done.
 	if (cP->textureP) 
 		return SUCCESS;
@@ -408,10 +415,12 @@ Error xRenderIniComp(System *sP, void *compDataP, void *compDataSrcP) {
     return SUCCESS;
   }
 	// Build colormap.
-	Error e = _cmGen(imgP->colorMapP);
+	Error e = _cmGen(imgP->colorMapP);  // I think I'm keeping this to vectorize better.
+#endif
+  
+#if DO_IT_THE_OLD_DUMB_WAY  // I think the texture atlas obsoletes all this.
 	// Make surface out of colormap and color palette.
 	Surface_ *surfaceP = NULL;
-
 	if (!e)
 		e = surfaceNew(&surfaceP, imgP->colorMapP->w, imgP->colorMapP->h, imgP->colorMapP->bpp);
 
@@ -442,6 +451,7 @@ Error xRenderIniComp(System *sP, void *compDataP, void *compDataSrcP) {
 			textureDel(&imgP->textureP);
 	}
 	return e;
+#endif
 }
 
 // TODO Is the source rect MPMP already shared?
@@ -488,17 +498,17 @@ XGetShareFuncDef_(Render) {
     e = _getSharedMap(shareMMP, DST_RECT, &renderSysP->dstRectMP);  // represents current destination rectangle for, say, a mobile, scalable entity
   if (!e)
     // Animation system nicely makes a map of pointers to its components' srcRect arrays (2D: first dim is anim # (not important), second is array of src rects).
-    e = _getSharedMap(shareMMP, SRC_RECT_ARRAY, &renderSysP->srcRectAMP);  // represents all the possible source rectangles to keep track of in texture atlas
+    e = _getSharedMap(shareMMP, SRC_RECT_ARRAY, &renderSysP->srcRectMAMP);  // represents all the possible source rectangles to keep track of in texture atlas
 
   // Get each component's src and dest rectangle indices.
   if (!e) {
-    *cP = renderSysP->cF;
-    *cEndP = cP + arrayGetNElems(renderSysP->cF);
+    cP = sP->cF;
+    cEndP = cP + arrayGetNElems(sP->cF);
     for (; !e && cP < cEndP; ++cP) {
-      entity = xGetEntityByCompIdx(sP, cP - (XRenderComp*) renderSysP->cF);
+      entity = xGetEntityByCompIdx(sP, cP - (XRenderComp*) sP->cF);
       e = mapGetIndex(renderSysP->srcRectMP, entity, &cP->srcRectIdx);
       if (!e) 
-        e = mapGetIndex(renderSysP->dstRectMP, entity, &cP->dstRectIdx) {
+        e = mapGetIndex(renderSysP->dstRectMP, entity, &cP->dstRectIdx);
     }
   }
 
@@ -509,13 +519,13 @@ XGetShareFuncDef_(Render) {
   Rect_ **srcRectAP = NULL;
   Rect_ **srcRectAEndP = NULL;
   Rect_ **srcRectAA = NULL;
-  Rect_ **srcRectAAP = NULL;
+  Rect_ ***srcRectAAP = NULL;
   
-  cEndP = cP + arrayGetNElems(renderSysP->cF);
+  cEndP = cP + arrayGetNElems(sP->cF);
   if (!e) {
-    for (cP = renderSysP->cF; !e && cP < cEndP; ++cP) {
-      entity = xGetEntityByCompIdx(sP, cP - (XRenderComp*) renderSysP->cF);
-      srcRectAAP = (Rect***) mapGet(renderSysP->srcRectAAMP, entity);  // TRIPLE POINTER!!! holllly crap
+    for (cP = sP->cF; !e && cP < cEndP; ++cP) {
+      entity = xGetEntityByCompIdx(sP, cP - (XRenderComp*) sP->cF);
+      srcRectAAP = (Rect_***) mapGet(renderSysP->srcRectMAMP, entity);  // TRIPLE POINTER!!! holllly crap
       if (srcRectAAP)
         srcRectAA = *srcRectAAP;
       if (srcRectAA) {
@@ -526,41 +536,65 @@ XGetShareFuncDef_(Render) {
           if (!srcRectA) {
             e = E_NULL_VAR;
             goto ranIntoNullArray;
+          }
           nRectangles += arrayGetNElems(srcRectA);
         }
       }
     }
   }
+  
   // Second, insert-sort those rectangles into our own, temporary array of rectangles by their largest dimension.
-  Rect_ *rectSortedA;
+  Rect_ *sortedRectA;
   Rect_ *rectP = NULL;
   Rect_ *rectEndP = NULL;
-  if (!e)
-    e = arrayNew((void**) rectSortedA, sizeof(Rect_), nRectangles);
+  Rect_ *sortedRectP = NULL;
+  Rect_ *sortedRectEndP = NULL;
+  U32 nRectsSorted = 0;
 
+  if (!e)
+    e = arrayNew((void**) sortedRectA, sizeof(Rect_), nRectangles);
+
+  // DON'T PANIC! I know four nested for-loops looks horrifying, but it's an O(n) algorithm.
   if (!e) {
-    for (cP = renderSysP->cF; !e && cP < cEndP; ++cP) {
-      entity = xGetEntityByCompIdx(sP, cP - (XRenderComp*) renderSysP->cF);
-      srcRectAAP = (Rect***) mapGet(renderSysP->srcRectAAMP, entity);  // TRIPLE POINTER!!! holllly crap
+    // For each entity...
+    for (cP = sP->cF; !e && cP < cEndP; ++cP) {
+      entity = xGetEntityByCompIdx(sP, cP - (XRenderComp*) sP->cF);
+      srcRectAAP = (Rect_***) mapGet(renderSysP->srcRectMAMP, entity);  // TRIPLE POINTER!!! holllly crap
       if (srcRectAAP)
         srcRectAA = *srcRectAAP;
       if (srcRectAA) {
         srcRectAP = srcRectAA;
         srcRectAEndP = srcRectAP + arrayGetNElems(srcRectAA);
+        // For each animation strip...
         for (; srcRectAP < srcRectAEndP; ++srcRectAP) {
           srcRectA = *srcRectAP;  // we won't check for null arrays this time as we already did last time.
           rectP = srcRectA;
           rectEndP = rectP + arrayGetNElems(srcRectA);
+          // For each rectangle in this strip...
           for (; rectP < rectEndP; ++rectP) {
-            // TODO: 
-            // 1) put all the image source data into a map in xRenderIniComp()
-            // 2) put key from (1) into struct of each sorted array element in order to know which rectangle in sorted rect array corresponds to which image
-            // 3) insert-sort rectangles into array
+            sortedRectP = sortedRectA;
+            sortedRectEndP = sortedRectP + arrayGetNElems(sortedRectA);
+            // For each sorted rectangle in the array of rectangles sorted by there largest dimensions...
+            // (While iterating to nRectsSorted would be quicker, it ruins the first rect's break condition.)
+            for (; sortedRectP < sortedRectEndP; ++sortedRectP) {  
+              if (       ((rectP->w > rectP->h)       ? rectP->w       : rectP->h)          // new rect's max dim 
+                  > (sortedRectP->w > sortedRectP->h) ? sortedRectP->w : sortedRectP->h) {  // sorted rect's max dim
+                memcpy((void*) (sortedRectP + 1), (void*) sortedRectP, sizeof(Rect_) * (nRectsSorted - (sortedRectP - sortedRectA)));
+                *sortedRectP = *rectP;
+                break;
+              }
+            }
           }
         }
       }
     }
   }
+
+  // TODO: 
+  // 1) if you're updating the source rectangle on the fly, then you don't need to store it or its entity.
+  //    The rectangle's purpose then is just to show how much space there is left.
+  //    Once you finish, you can then just fly through the images themselves and place them where their
+  //    source rectangles dictate they go.
 
   // Make an array-based binary tree of the sorted rectangles' placements in the texture atlas.
   if (!e) {
@@ -573,7 +607,7 @@ XGetShareFuncDef_(Render) {
   }
 
 ranIntoNullArray:
-  arrayDel((void**) &rectSortedA);
+  arrayDel((void**) &sortedRectA);
   return e;
 }
 
@@ -583,13 +617,18 @@ ranIntoNullArray:
 Error xRenderRun(System *sP) {
 	Error e = SUCCESS;
 
+  XRender *renderSysP = (XRender*) sP;
+
 	XRenderComp *cP = (XRenderComp*) sP->cF;
 	XRenderComp *cEndP = cP + frayGetFirstInactiveIdx(sP->cF);
-	Renderer_ *rendererP = ((XRender*) sP)->rendererP;
+	Renderer_ *rendererP = renderSysP->rendererP;
+  Texture_ *sysTextureP = renderSysP->textureP;
+  Rect_ *srcRectA = (Rect_*) renderSysP->srcRectMP->mapA;
+  Rect_ *dstRectA = (Rect_*) renderSysP->dstRectMP->mapA;
 
 	clearScreen(rendererP);
 	for (; !e && cP < cEndP; cP++) 
-		e = copy_(rendererP, cP->textureP, cP->srcRectP, cP->dstRectP);
+		e = copy_(rendererP, sysTextureP, &srcRectA[cP->srcRectIdx], &dstRectA[cP->dstRectIdx]);
 	if (!e)
 		present_(rendererP);
 

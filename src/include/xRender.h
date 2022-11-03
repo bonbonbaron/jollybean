@@ -35,10 +35,9 @@ typedef struct {
 
 typedef struct {
   U8 nColors;
-  S16 textureAtlasIdx;  // Keeps track of distinct image indices in tree. -1 if not yet inserted
+  U8 textureAtlasRectIdx;
   Color_ *colorA;
   ColormapS *colorMapP;
-  Texture_ *textureP;
 } XRenderCompSrc; 
 
 typedef struct {
@@ -58,9 +57,11 @@ typedef struct {
   System system;
   Window_ *windowP;
   Renderer_ *rendererP;
+  Texture_ *textureP;
   Map *srcRectMAMP;  // Lets rendering system update the source rectangles' positions according to their placement in the texture atlas.
   Map *srcRectMP;   // Keeps rendering system posted on the animation frame of each animated entity.
   Map *dstRectMP;   // Keeps rendering system posted on the position and scale of each mobile entity.
+  Map *xRenderCompSourceMP;
 } XRender;
 
 extern System *sRenderP;
