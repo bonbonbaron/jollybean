@@ -8,14 +8,33 @@ BINDIR         = ./bin
 INSTALLDIR     = /usr/local/lib
 
 # Linker
-${BINDIR}/img: ${BUILDDIR}/img.o ../dir/build/dir.o ../strip/build/strip.o ../inflatable/build/inflatable.o ${BUILDIR} ${BINDIR}
-	$(CC) -g ${BUILDDIR}/img.o ../dir/build/dir.o ../strip/build/strip.o ../file/build/fileUtils.o ../inflatable/build/inflatable.o -L${HOME}/hack/botox/lib/ -lbotox $(shell pkg-config --libs zlib) $(shell sdl2-config --libs) $(shell libpng-config --libs) -o $@
+${BINDIR}/img: \
+	../file/build/fileUtils.o \
+	${BUILDDIR}/img.o \
+	../dir/build/dir.o \
+	../strip/build/strip.o \
+	../inflatable/build/inflatable.o \
+	${BUILDIR} ${BINDIR}
+	$(CC) -g \
+	${BUILDDIR}/img.o \
+	../file/build/fileUtils.o \
+	../dir/build/dir.o \
+	../strip/build/strip.o \
+	../inflatable/build/inflatable.o \
+	-L${HOME}/hack/botox/lib/ -lbotox \
+	$(shell pkg-config --libs zlib) \
+	$(shell sdl2-config --libs) \
+	$(shell libpng-config --libs) \
+	-o $@
 	touch $@
 
 # Compiler
 ${BUILDDIR}/img.o: ./src/img.c ./src/include/img.h ${BUILDDIR}
-	$(CC) -g $(shell sdl2-config --cflags) $(shell pkg-config --cflags zlib) $(shell libpng-config --cflags) -I../strip/src/include -I./src/include -I../inflatable/src/include -I${HOME}/hack/botox/src/include -I../file/src/include/ -I${HOME}/hack/jollybean/src/include -I../dir/src/include -O1 -c ./src/img.c -o $@
+	$(CC) -g $(shell sdl2-config --cflags) $(shell pkg-config --cflags zlib) $(shell libpng-config --cflags) -I../strip/src/include -I./src/include -I../inflatable/src/include -I${HOME}/hack/botox/src/include -I../file/src/include/ -I${HOME}/hack/jollybean/src/include -I../dir/src/include -O0 -c ./src/img.c -o $@
 	touch $@
+
+../file/build/fileUtils.o: ../file/src/fileUtils.c ../file/src/include/fileUtils.h
+	make -C ../file
 
 ../strip/build/strip.o: ../strip/src/strip.c ../strip/src/include/strip.h
 	make -C ../strip
@@ -32,6 +51,9 @@ ${BUILDDIR}:
 
 ${BINDIR}:
 	mkdir -p ${BINDIR}
+
+.PHONY: Makefile
+	make
 
 # Cleaner
 .PHONY: clean

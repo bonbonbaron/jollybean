@@ -5,11 +5,10 @@
 #include <ctype.h>
 #include <assert.h>
 #include <string.h>
-#include "inflatable.h"
-#include "fileUtils.h"
 #include <stdlib.h>
+#include "data.h"
 
-const char LOCAL_TROVE_BOOKKEEPING_DIR[] = "/.jb/src/Bookkeeping/";
+extern const char LOCAL_TROVE_BOOKKEEPING_DIR[];
 
 // Unions keep directories' element sizes uniform. 
 // That away we can use just one directory API, 

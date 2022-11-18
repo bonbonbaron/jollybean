@@ -1,5 +1,4 @@
 #include "strip.h"
-#include <assert.h>
 
 // These three arrays describe where each consecutive unit
 // is located in the current U32 word. We stagger them like this

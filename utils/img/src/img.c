@@ -147,7 +147,7 @@ Error writeColormap(char *imgNameA, StripSetS *stripsetP, ImgDims *imgDimsP, U8 
   }
   Error e = SUCCESS;
   // Make Title format of image name.
-  char imgTitle[strlen(imgNameA)];
+  char imgTitle[strlen(imgNameA) + 1];
   strcpy(imgTitle, imgNameA);
   imgTitle[0] = toupper(imgTitle[0]);
   // Write header.

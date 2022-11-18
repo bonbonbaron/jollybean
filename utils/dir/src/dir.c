@@ -1,15 +1,19 @@
 #include "dir.h"
 
-static Error _dirCreate(char *filepath) {
+const char LOCAL_TROVE_BOOKKEEPING_DIR[] = "/.jb/src/Bookkeeping/";
+
+static Error _dirNew(char *filepath, U8 verbose) {
   const static Directory dirPrototype = {0};
   FILE *fP = fopen(filepath, "wb");
   if (fP) {
+    if (verbose)
+      printf("Writing %d bytes to new file.\n", sizeof(Directory));
     fwrite(&dirPrototype, sizeof(Directory), 1, fP);
     fclose(fP);
   }
   else { 
     printf("Failed to create missing file, %s\n", filepath);
-    return E_BAD_ARGS;
+    return E_FILE_IO;
   }
   return SUCCESS;
 }
@@ -22,30 +26,47 @@ Error dirGet(Directory **dirPP, char *dirName, int argc, U8 verbose) {
   strcat(filepath, dirName);
 
   Error e = SUCCESS;
+  U8 fileIsNew = 0;
 
-  // Read just top-level object 
+  // Make sure the diretory file exists.
   FILE *fP = fopen(filepath, "rb");
   if (!fP) {
-    fclose(fP);
-    e = _dirCreate(filepath);
+    fileIsNew = 1;
+    e = _dirNew(filepath, verbose);
     if (!e) {
       fP = fopen(filepath, "rb");  // Should open if we successfully created it.
-      if (!fP)
-        e = E_BAD_ARGS;
+      if (!fP) {
+        printf("no such directory file:\n\t%s\n", filepath);
+        e = E_FILE_IO;
+      }
     }
   }
   else {
-    printf("no such directory file:\n\t%s\n", filepath);
   }
 
+  // See how big the file is.
   U32 nBytesTotal = 0;
   if (!e) {
-    fseek(fP, 0, SEEK_END);
-    nBytesTotal = ftell(fP);
-    e = jbAlloc((void**) dirPP, 2 *(nBytesTotal + (argc * sizeof(Entry))), 1);  // "* 2" just for safety
+    if (fseek(fP, 0, SEEK_END))  // returns 0 if successful
+      e = E_FILE_IO;
   }
   if (!e) {
-    fseek(fP, 0, SEEK_SET);
+    if (fileIsNew) {
+      if (verbose)
+        printf("file's new, so pretending we read 0 bytes even if we didn't\n");
+      nBytesTotal = 0;
+    }
+    else {
+      if (verbose)
+        printf("file's not new, so we're treating it like an adult\n");
+      nBytesTotal = ftell(fP);
+    }
+    // Make room to store the file's data in memory.
+    e = jbAlloc((void**) dirPP, 2 *(nBytesTotal + (argc * sizeof(Entry))), 1);  // "* 2" just for safety
+  }
+  // Read it into memory and make sure it's as big as we say it is.
+  if (!e) {
+    rewind(fP);
     U32 nBytesRead = fread(*dirPP, 1, nBytesTotal, fP);
     if (verbose)
       printf("read %d bytes out of %d expected\n", nBytesRead, nBytesTotal);
