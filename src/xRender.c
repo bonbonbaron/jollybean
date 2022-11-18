@@ -1,14 +1,8 @@
 #include "jb.h"
-
-//TODO Make bookmarks to indicate where images should when they switch layers.
 // Compressed images are already in memory in JB. 
-// JB just reconstructs them from strips of staggered pixels. 
+// JB just reconstructs them from strips of staggered pixels.   // TODO illustrate this with ASCII art
 // Packed bits are staggered to allow JB to unpack and (if necessary) flip 4 color-mapped pixels at a time.
 
-// Assembler instructions need this word.
-#ifdef inline
-#undef inline
-#endif
 // =========================================
 // Clear color map and all its related data.
 // =========================================
@@ -24,130 +18,6 @@ static void _cmClr(ColormapS *cmP) {
 			jbFree((void**) &cmP->stripSetP->stripSetInfP->inflatedDataP);
 	}
 }
-
-static void _unpackStrip1BPP(U32 **srcStripPP, U32 **dstStripPP) {
-  U32 *srcStripP = *srcStripPP;
-  U32 *dstStripP = *dstStripPP;
-#ifdef __ARM_NEON__
-  // 7 instructions neon VS 40-58 instructions regular
-  asm volatile inline (
-  "vmov.u8 q10, #1\n\t"   // q10 = mask
-  );
-  // 1 x (128 pixels per quad-word)
-  for (int i = 0; i < 8; ++i) {
-    asm volatile inline (
-    "vld1.32 {d0-d1}, [%1]!\n\t"    // q0 (aka d0-d1) = packed indices
-    "vand q1, q0, q10\n\t"          // q1 = unpacked indices
-    "vst1.32 {d2-d3}, [%0]!\n\t"
-    "vshr.u8 q0, #1\n\t"            // shift q0 over 1
-    : "+r&" (dstStripP), "+r&" (srcStripP)
-    );
-  }
-#else
-  // 32 pixels per iteration, 4 iterations
-  for (int i = 0; i < 2; ++i, ++srcStripP) 
-    for (register int j = 0; j < 8; ++j)
-      *dstStripP++ =  (*srcStripP >> j) & 0x01010101;
-#endif
-}
-
-static void _unpackStrip2BPP(U32 **srcStripPP, U32 **dstStripPP) {
-  U32 *srcStripP = *srcStripPP;
-  U32 *dstStripP = *dstStripPP;
-#ifdef __ARM_NEON__
-  // 7 instructions neon VS 40-58 instructions regular
-  asm volatile inline (
-  "vmov.u8 q10, #3\n\t"   // q10 = mask
-  );
-  // 1 x (64 pixels per quad-word)
-  for (int i = 0; i < 1; ++i) {  // keeping this useless loop here for when I chagne to 128-pixel strips.
-    for (int j = 0; j < 4; ++j) {  // looping through the zipped half-nibbles
-      asm volatile inline (
-      "vld1.32 {d0-d1}, [%1]!\n\t"    // q0 (aka d0-d1) = packed indices
-      "vand q1, q0, q10\n\t"          // q1 = unpacked indices
-      "vst1.32 {d2-d3}, [%0]!\n\t"
-      "vshr.u8 q0, #2\n\t"            // shift q0 over 1
-      : "+r&" (dstStripP), "+r&" (srcStripP)
-      );
-    }
-  }
-#else
-  // 32 pixels per outer loop iteration, 2 iterations
-  for (int i = 0; i < 2; ++i, ++srcStripP) 
-    for (register int j = 0; j < 8; j += 2)
-      *dstStripP++ =  (*srcStripP >> j) & 0x03030303;
-#endif
-}
-
-static void _unpackStrip4BPP(U32 **srcStripPP, U32 **dstStripPP) {
-  U32 *srcStripP = *srcStripPP;
-  U32 *dstStripP = *dstStripPP;
-#ifdef __ARM_NEON__
-  // 7 instructions neon VS 40-58 instructions regular
-  asm volatile inline (
-  "vmov.u8 q10, #1\n\t"   // q10 = mask
-  );
-  // 2 x (32 pixels per quad-word)
-  for (int i = 0; i < 2; ++i) {
-    for (int j = 0; j < 2; ++j) {
-      asm volatile inline (
-      "vld1.32 {d0-d1}, [%1]!\n\t"    // q0 (aka d0-d1) = packed indices
-      "vand q1, q0, q10\n\t"          // q1 = unpacked indices
-      "vst1.32 {d2-d3}, [%0]!\n\t"
-      "vshr.u8 q0, #4\n\t"            // shift q0 over 1
-      : "+r&" (dstStripP), "+r&" (srcStripP)
-      );
-    }
-  }
-#else
-  // 32 pixels per iteration, 4 iterations
-  for (int i = 0; i < 2; ++i, ++srcStripP) 
-    for (register int j = 0; j < 8; j += 4)
-      *dstStripP++ =  (*srcStripP >> j) & 0x0f0f0f0f;
-#endif
-}
-
-// Flips already-unpacked strips that need flipping. 
-// Jollybean's image compressor deletes strips that're mirror-images of another.
-static void _flipStrips(ColormapS *cmP) {
-  U16 *flipEndP = cmP->stripSetP->flipSetP->flipIdxA + cmP->stripSetP->flipSetP->nFlips;
-  U32 *dstLeft4PixelsP, *dstRight4PixelsP;
-  // 4 *unpacked* pixels per U32 out of 64 pixels means there are 16 U32s.
-  for (U16 *flipIdxP = cmP->stripSetP->flipSetP->flipIdxA; flipIdxP < flipEndP; ++flipIdxP) {
-    dstLeft4PixelsP = (U32*) cmP->dataP + (*flipIdxP << 3); 
-#ifdef __ARM_NEON__
-    // 16 quad-words per strip
-    dstRight4PixelsP = dstLeft4PixelsP + 12;  // to start on words 13-16
-    for (int i = 0; i < 2; ++i) {
-      asm volatile (
-      "vld1.32 {d0-d1}, [%0]\n\t"
-      "vld1.32 {d2-d3}, [%1]\n\t"
-      "vrev64.8 q0, q0\n\t" // reverses order of 8 bytes in each half-quad-word
-      "vrev64.8 q1, q1\n\t"
-      "vswp d0, d1\n\t" // swaps the half quad-words
-      "vswp d2, d3\n\t"
-      "vswp q0, q1\n\t" 
-      "vst1.32 {d0-d1}, [%1]\n\t" // swaps entire quad-words
-      "vst1.32 {d2-d3}, [%0]!\n\t"  // %0 increments forward; %1 backwards (next line)
-      "sub %1, #16\n\t"
-      : "+r" (dstLeft4PixelsP), "+r" (dstRight4PixelsP)
-      );
-    }
-#else
-    dstRight4PixelsP = dstLeft4PixelsP + 15;
-    for (; dstLeft4PixelsP < dstRight4PixelsP; ++dstLeft4PixelsP, --dstRight4PixelsP) {
-      // Left 4 pixels
-      *dstLeft4PixelsP  = ((*dstLeft4PixelsP & 0xFFFF0000) >> 16) | ((*dstLeft4PixelsP & 0x0000FFFF) << 16);
-      *dstLeft4PixelsP  = ((*dstLeft4PixelsP & 0xFF00FF00) >>  8) | ((*dstLeft4PixelsP & 0x00FF00FF) <<  8);
-      // Right 4 pixels
-      *dstRight4PixelsP = ((*dstRight4PixelsP & 0xFFFF0000) >> 16) | ((*dstRight4PixelsP & 0x0000FFFF) << 16);
-      *dstRight4PixelsP = ((*dstRight4PixelsP & 0xFF00FF00) >>  8) | ((*dstRight4PixelsP & 0x00FF00FF) <<  8);  // Put right 4 pixels into left 4 pixels
-      swap_(*dstLeft4PixelsP, *dstRight4PixelsP);
-    }
-#endif
-  }
-}
-
 
 // =====================================================================
 // Build color map by inflating, unpacking, and piecing together strips.
@@ -173,71 +43,27 @@ static Error _cmGen(ColormapS *cmP) {
 	}
 	else
 		e = E_BAD_ARGS;
-
 	// Expand strip set into image.
 	if (!e) {
 		const U32 *cmDataP = (U32*) cmP->dataP;
 		U32 *dstStripP = (U32*) cmDataP;
 		U32 *stripSetP = (U32*) cmP->stripSetP->stripSetInfP->inflatedDataP;
     U32 *srcStripP;
+    // Count remainder of pixels to process after all the whole strips.
+    U32 nWholeStrips = countWholeStrips_(cmP->stripSetP->nPixels);
+    U32 nRemainderPixels = countRemainderPixels_(cmP->stripSetP->nPixels);
     // Mapped stripsets need to be both unpacked and indexed. They may need strips to be flipped too.
 		switch (cmP->bpp) {
 			case 1:
-        // First read all mapped strips into the target colormap.
-				if (cmP->stripMapP) {
-					U16 *mapEndP = ((U16*) cmP->stripMapP->stripMapInfP->inflatedDataP) + cmP->stripMapP->nIndices;
-					for (U16 *ssIdxP = (U16*) cmP->stripMapP->stripMapInfP->inflatedDataP; ssIdxP < mapEndP; ssIdxP++) {
-            srcStripP = stripSetP + (*ssIdxP << 3);
-            _unpackStrip1BPP(&srcStripP, &dstStripP);
-          }
-					// Then flip whatever strips need flipping. Remember data's already expanded to U8s!
-					if (cmP->stripSetP->flipSetP) 
-            _flipStrips(cmP);
-				} 
-				// Unmapped stripsets are already ordered, so they only need to be unpacked.
-				else {
-					U32 *srcEndP = stripSetP + (cmP->stripSetP->nStrips << 3);
-					for (U32 *srcStripP = stripSetP; srcStripP < srcEndP; srcStripP++) 
-            _unpackStrip1BPP(&srcStripP, &dstStripP);
-				}
+        inflateStripsWithBpp_(1);
 				break;
 			case 2:
         // First read all mapped strips into the target colormap.
-				if (cmP->stripMapP) {
-					U16 *mapEndP = ((U16*) cmP->stripMapP->stripMapInfP->inflatedDataP) + cmP->stripMapP->nIndices;
-					for (U16 *ssIdxP = (U16*) cmP->stripMapP->stripMapInfP->inflatedDataP; ssIdxP < mapEndP; ssIdxP++) {
-            srcStripP = stripSetP + (*ssIdxP << 3);
-            _unpackStrip2BPP(&srcStripP, &dstStripP);
-          }
-					// Then flip whatever strips need flipping. Remember data's already expanded to U8s!
-					if (cmP->stripSetP->flipSetP) 
-            _flipStrips(cmP);
-				} 
-				// Unmapped stripsets are already ordered, so they only need to be unpacked.
-				else {
-					U32 *srcEndP = stripSetP + (cmP->stripSetP->nStrips << 3);
-					for (U32 *srcStripP = stripSetP; srcStripP < srcEndP; srcStripP++) 
-            _unpackStrip2BPP(&srcStripP, &dstStripP);
-				}
+        inflateStripsWithBpp_(2);
 				break;
 			case 4: 
         // First read all mapped strips into the target colormap.
-				if (cmP->stripMapP) {
-					U16 *mapEndP = ((U16*) cmP->stripMapP->stripMapInfP->inflatedDataP) + cmP->stripMapP->nIndices;
-					for (U16 *ssIdxP = (U16*) cmP->stripMapP->stripMapInfP->inflatedDataP; ssIdxP < mapEndP; ssIdxP++) {
-            srcStripP = stripSetP + (*ssIdxP << 3);
-            _unpackStrip4BPP(&srcStripP, &dstStripP);
-          }
-					// Then flip whatever strips need flipping. Remember data's already expanded to U8s!
-					if (cmP->stripSetP->flipSetP) 
-            _flipStrips(cmP);
-				} 
-				// Unmapped stripsets are already ordered, so they only need to be unpacked.
-				else {
-					U32 *srcEndP = stripSetP + (cmP->stripSetP->nStrips << 3);
-					for (U32 *srcStripP = stripSetP; srcStripP < srcEndP; srcStripP++) 
-            _unpackStrip4BPP(&srcStripP, &dstStripP);
-				}
+        inflateStripsWithBpp_(4);
 				break;
 			default:  
 				e = E_UNSUPPORTED_PIXEL_FORMAT;
@@ -258,7 +84,7 @@ static Error _cmGen(ColormapS *cmP) {
 
 // First, we sort the rectangles by their area (using a LUT). 
 // Second, we put them in the atlas based on how much room there is.
-#if 1  // let's just get the rectangle sorting to compile first, shall we?
+#if 0  // let's just get the rectangle sorting to compile first, shall we?
 // TA stands for "Texture Atlas". Let's spare readers' eyes.
 typedef struct {
   Key srcRectIdx;  // indexes the shared source rectangle array in xMaster
@@ -398,13 +224,13 @@ Error xRenderIniSys(System *sP, void *sParamsP) {
 Error xRenderIniComp(System *sP, void *compDataP, void *compDataSrcP) {
 	if (!sP || !compDataP || !compDataSrcP)
 		return E_BAD_ARGS;
-
-  return SUCCESS;  // here for now to make the compiler happy
-#if DO_IT_THE_OLD_DUMB_WAY
-	XRender *xRenderSysP = (XRender*) sP;
-	XRenderComp *cP = (XRenderComp*) compDataP;
+	// Build colormap.
+	//XRender *xRenderSysP = (XRender*) sP;
+	//XRenderComp *cP = (XRenderComp*) compDataP;
   XRenderCompSrc *imgP = (XRenderCompSrc*) compDataSrcP;
-#endif
+	Error e = _cmGen(imgP->colorMapP);  // I think I'm keeping this to vectorize better.
+
+  return e;  // here for now to make the compiler happy
 
 #if DO_IT_THE_OLD_DUMB_WAY
   // Skip things that're already done.
@@ -414,8 +240,6 @@ Error xRenderIniComp(System *sP, void *compDataP, void *compDataSrcP) {
     cP->textureP = imgP->textureP;
     return SUCCESS;
   }
-	// Build colormap.
-	Error e = _cmGen(imgP->colorMapP);  // I think I'm keeping this to vectorize better.
 #endif
   
 #if DO_IT_THE_OLD_DUMB_WAY  // I think the texture atlas obsoletes all this.

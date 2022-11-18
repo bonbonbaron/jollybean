@@ -11,7 +11,7 @@ typedef struct {
   Entity entity;
   Key    type;  // Colliding elements react according to each other's type.
   Key    layer;
-  Key    rectIdx;
+  Key    rectIdx;  // indexes both a layer array, reference rect array, and 
 } XCollisionComp;
 
 typedef struct {

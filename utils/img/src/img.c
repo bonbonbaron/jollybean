@@ -1,135 +1,189 @@
 #include "img.h"
-#include <assert.h>
-#include <string.h>
 
 void imgDimsIni(ImgDims *imgDimsP, U32 width, U32 height, U32 bpp) {
   imgDimsP->w = width;
   imgDimsP->h = height;
   imgDimsP->bpp = bpp;
-  imgDimsP->pitch = width * bpp / 8;
+  imgDimsP->pitch = width * bpp / 8;  // "bpp / 8" converts from bpp to bytes
 }
 
-void writeRawData8(FILE *fP, U8 *byteA, U32 nBytes) {
-  U8 *cmpDataP = byteA;
-  U8 *cmpDataEndP = cmpDataP + nBytes;
-  for (U32 counter = 0; cmpDataP < cmpDataEndP; ++cmpDataP) {
-    fprintf(fP, "0x%02x, ", *cmpDataP);
-    if (++counter >= 16) {
-    fprintf(fP, "\n\t");
-    counter = 0;
-    }
-  }
-}
-
-void writeRawData16(FILE *fP, U16 *byteA, U16 nBytes) {
-  U16 *cmpDataP = byteA;
-  U16 *cmpDataEndP = cmpDataP + nBytes;
-  for (U16 counter = 0; cmpDataP < cmpDataEndP; ++cmpDataP) {
-    fprintf(fP, "0x%02x, ", *cmpDataP);
-    if (++counter >= 16) {
-    fprintf(fP, "\n\t");
-    counter = 0;
-    }
-  }
-}
-
-
-void writeRawData32(FILE *fP, U32 *byteA, U32 nBytes) {
-  U32 *cmpDataP = byteA;
-  U32 *cmpDataEndP = cmpDataP + nBytes;
-  for (U32 counter = 0; cmpDataP < cmpDataEndP; ++cmpDataP) {
-    fprintf(fP, "0x%02x, ", *cmpDataP);
-    if (++counter >= 16) {
-    fprintf(fP, "\n\t");
-    counter = 0;
-    }
-  }
-}
-
-
-Error writeInflatable(char *imgNameA, U8 *cmpDataA, U32 cmpLen, U32 decompLen, ImgDims *imgDimsP) {
-  if (!imgNameA || strlen(imgNameA) == 0 || !cmpDataA || !cmpLen || !decompLen || !imgDimsP)
+Error writeColorPalette(char *imgNameA, U8 *paletteA, U8 verbose) {
+  Error e = SUCCESS;
+  const char OBJ_TYPE[] = "ColorPalette_";
+  FILE *fP = NULL;
+  // Make target filepath to save this stripmap in.
+  char *homefp = getenv("HOME");
+  if (!homefp) {
+    if (verbose)
+      printf("no $HOME environment variable! exiting...\n");
     return E_BAD_ARGS;
-  // Init output filepath.
-  char fullPath[strlen(imgNameA) + strlen(TROVE_IMAGE_DIR) + 2];
-  strcat(fullPath, TROVE_IMAGE_DIR);
+  }
+  char fullPath[strlen(OBJ_TYPE) + strlen(imgNameA) + strlen(homefp) + strlen(TROVE_IMG_SRC_DIR) + strlen(".c")];
+  strcpy(fullPath, homefp);
+  strcat(fullPath, TROVE_IMG_SRC_DIR);
+  strcat(fullPath, OBJ_TYPE);
   strcat(fullPath, imgNameA);
   strcat(fullPath, ".c");
-  // Make Title format of image name.
-  char imgTitle[strlen(imgNameA)];
-  strcat(imgTitle, imgNameA);
-  imgTitle[0] = toupper(imgTitle[0]);
+  if (verbose)
+    printf("writing color palette...\n");
   // Open file.
-  FILE *fP = fopen(fullPath, "w");
-  if (!fP)
-    return E_NO_MEMORY;
-  // Write to file's header and length data.
-  fprintf(fP, "#include \"data.h\"\n\n");
-  fprintf(fP, "Inflatable inflatable%s = {\n", imgTitle);
-  fprintf(fP, "\t.compressedLen  = %d,\n", cmpLen);
-  fprintf(fP, "\t.inflatedDataP  = NULL,\n");
-  fprintf(fP, "\t.inflatedLen  = %d,\n", decompLen);
-  fprintf(fP, "\t.compressedData = {\n\t");
-  fprintf(fP, "\t%d,\n\t%d,\n\tNULL,\n\t", cmpLen, decompLen);
-  // Write compressed data's raw bytes in hexadecimal format.
-  writeRawData8(fP, cmpDataA, cmpLen);
-  fprintf(fP, "\n\t}\n};");
-  // Write image wrapper struct.
-  fprintf(fP, "\n\nImage img%s = {%d, %d, %d, %d, NULL};", imgNameA, imgDimsP->w, imgDimsP->h, imgDimsP->pitch, imgDimsP->bpp);
-  // Close file.
-  fclose(fP);
-
+  fP = fopen(fullPath, "w");
+  if (!fP) {
+    if (verbose)
+      printf("[writeStripFlipStuff] file opening failed for path %s\n", fullPath);
+    e = E_NO_MEMORY;
+  }
+  if (!e) {
+    // Write header.
+    fprintf(fP, "#include \"xRender.h\"\n\n");
+    // Palette Array
+    fprintf(fP, "U32 %sPaletteA[] = {\n", imgNameA);
+    writeRawData32(fP, (U32*) paletteA, arrayGetNElems(paletteA));
+    fprintf(fP, "};\n\n");
+    fprintf(fP, "ColorPalette %sColorPalette = {\n", imgNameA);
+    fprintf(fP, "\t.nColors = %d,\n", arrayGetNElems(paletteA));
+    fprintf(fP, "\t.paletteA = %sPaletteA\n", imgNameA);
+    fprintf(fP, "};\n\n");
+  }
+  if (fP) {
+    // Close file.
+    fclose(fP);
+  }
   return SUCCESS;
 }
 
-Error writeStripmap(char *imgNameA, Stripset *stripsetP, ImgDims *imgDimsP) {
-  char fullPath[strlen(imgNameA) + strlen(TROVE_IMAGE_DIR) + strlen(".c")];
-  strcat(fullPath, TROVE_IMAGE_DIR);
+Error writeStripsHeaderFile(char *imgNameA, U8 verbose) {
+  Error e = SUCCESS;
+  if (verbose)
+    printf("writing strip header file...\n");
+  const char OBJ_TYPE[] = "Strips_";
+  // Make target filepath to save this stripmap in.
+  char *homefp = getenv("HOME");
+  if (!homefp) {
+    if (verbose)
+      printf("no $HOME environment variable! exiting...\n");
+    return E_BAD_ARGS;
+  }
+  char fullPath[strlen(OBJ_TYPE) + strlen(imgNameA) + strlen(homefp) + strlen(TROVE_IMG_INC_DIR) + strlen(".c")];
+  strcpy(fullPath, homefp);
+  strcat(fullPath, TROVE_IMG_INC_DIR);
+  strcat(fullPath, OBJ_TYPE);
   strcat(fullPath, imgNameA);
-  strcat(fullPath, ".c");
-  // Make Title format of image name.
-  char imgTitle[strlen(imgNameA)];
-  strcat(imgTitle, imgNameA);
-  imgTitle[0] = toupper(imgTitle[0]);
+  strcat(fullPath, ".h");
   // Open file.
   FILE *fP = fopen(fullPath, "w");
-  if (!fP)
+  if (!fP) {
+    if (verbose)
+      printf("[writeColormap] file opening failed for path %s\n", fullPath);
     return E_NO_MEMORY;
-  // Write header and image dim data.
-  fprintf(fP, "#include \"data.h\"\n\n");
-  fprintf(fP, "StripMap sm%s = {\n", imgTitle);
-  fprintf(fP, "\t%d,\n\t%d\n\t%d,\n\t", arrayGetNElems(stripsetP->dataA), imgDimsP->pitch, imgDimsP->bpp);
-  // Write index array.
-  fprintf(fP, "U16 %sStripIdxA[] = {\n\t", imgNameA);
-  writeRawData16(fP, (U16*) stripsetP->dataA, arrayGetNElems(stripsetP->dataA));
-  fprintf(fP, "};\n\n");
-  // Write flips.
-  fprintf(fP, "U16 %sIdxFlipA[] = {", imgNameA);
-  writeRawData16(fP, (U16*) stripsetP->flipIdxA, arrayGetNElems(stripsetP->flipIdxA));
-  fprintf(fP, "};\n\n");
+  }
+  // Write header.
+  fprintf(fP, "#include \"xRender.h\"\n\n");
+  // Flip set
+  fprintf(fP, "extern StripSetS %sStripSet;\n", imgNameA);
+  fprintf(fP, "extern StripMapS %sStripMap;\n\n", imgNameA);
   // Close file.
   fclose(fP);
+  return e;
+}
 
+Error writeColorPaletteHeaderFile(char *imgNameA, U8 verbose) {
+  const char OBJ_TYPE[] = "ColorPalette_";
+  if (verbose)
+    printf("writing color palette header file...\n");
+  // Make target filepath to save this stripmap in.
+  char *homefp = getenv("HOME");
+  if (!homefp) {
+    if (verbose)
+      printf("no $HOME environment variable! exiting...\n");
+    return E_BAD_ARGS;
+  }
+  char fullPath[strlen(OBJ_TYPE) + strlen(imgNameA) + strlen(homefp) + strlen(TROVE_IMG_INC_DIR) + strlen(".c")];
+  strcpy(fullPath, homefp);
+  strcat(fullPath, TROVE_IMG_INC_DIR);
+  strcat(fullPath, OBJ_TYPE);
+  strcat(fullPath, imgNameA);
+  strcat(fullPath, ".h");
+  // Open file.
+  FILE *fP = fopen(fullPath, "w");
+  if (!fP) {
+    if (verbose)
+      printf("[writeColormap] file opening failed for path %s\n", fullPath);
+    return E_NO_MEMORY;
+  }
+  Error e = SUCCESS;
+  // Write header.
+  fprintf(fP, "#include \"xRender.h\"\n\n");
+  // Flip set
+  fprintf(fP, "extern ColorPalette %sColorPalette;\n", imgNameA);
+  // Close file.
+  fclose(fP);
   return SUCCESS;
 }
 
+Error writeColormap(char *imgNameA, StripSetS *stripsetP, ImgDims *imgDimsP, U8 verbose) {
+  const char OBJ_TYPE[] = "Colormap_";
+  if (verbose)
+    printf("writing colormap...\n");
+  // Make target filepath to save this stripmap in.
+  char *homefp = getenv("HOME");
+  if (!homefp) {
+    if (verbose)
+      printf("no $HOME environment variable! exiting...\n");
+    return E_BAD_ARGS;
+  }
+  char fullPath[strlen(OBJ_TYPE) + strlen(imgNameA) + strlen(homefp) + strlen(TROVE_IMG_SRC_DIR) + strlen(".c")];
+  strcpy(fullPath, homefp);
+  strcat(fullPath, TROVE_IMG_SRC_DIR);
+  strcat(fullPath, OBJ_TYPE);
+  strcat(fullPath, imgNameA);
+  strcat(fullPath, ".c");
+  // Open file.
+  FILE *fP = fopen(fullPath, "w");
+  if (!fP) {
+    if (verbose)
+      printf("[writeColormap] file opening failed for path %s\n", fullPath);
+    return E_NO_MEMORY;
+  }
+  Error e = SUCCESS;
+  // Make Title format of image name.
+  char imgTitle[strlen(imgNameA)];
+  strcpy(imgTitle, imgNameA);
+  imgTitle[0] = toupper(imgTitle[0]);
+  // Write header.
+  fprintf(fP, "#include \"xRender.h\"\n");
+  fprintf(fP, "#include \"Strips_%s.h\"\n\n", imgNameA);
+  // Flip set
+  fprintf(fP, "ColormapS %sColormap = {\n", imgNameA);
+  fprintf(fP, "\t.bpp = %d,\n", imgDimsP->bpp);
+  fprintf(fP, "\t.w = %d,\n", imgDimsP->w);
+  fprintf(fP, "\t.h = %d,\n", imgDimsP->h);
+  fprintf(fP, "\t.pitch = %d,\n", imgDimsP->pitch);
+  fprintf(fP, "\t.stripSetP = &%sStripSet,\n", imgNameA);
+  fprintf(fP, "\t.stripMapP = &%sStripMap,\n", imgNameA);
+  fprintf(fP, "};\n\n");
+  // Close file.
+  fclose(fP);
+  return SUCCESS;
+}
 
 // =========================================================================================
 // When you're building your color palette, this adds colors that don't already exist in it.
-S32 getColormapIdx(Pixel *pixelA, U32 nPixels, const Pixel *pixelQueryP) {
-  Pixel *pixelP = pixelA;
-  Pixel *pixelEndP = pixelP + nPixels;
-  for (; pixelP < pixelEndP; ++pixelP)
-    if (!memcmp((const void*) pixelP, (const void*) pixelQueryP, sizeof(Pixel)))
-      return pixelP - pixelA;
+S32 getColormapIdx(U8 *srcPixelA, U32 nPixels, const U8 srcPixelSize, const U8 *srcPixelQueryP) {
+  U8 *srcPixelP = srcPixelA;
+  U8 *srcPixelEndP = srcPixelP + (nPixels * srcPixelSize);
+  for (; srcPixelP < srcPixelEndP; srcPixelP += srcPixelSize) {
+    if (!memcmp((const void*) srcPixelP, (const void*) srcPixelQueryP, srcPixelSize)) {
+      return (srcPixelP - srcPixelA) / srcPixelSize;
+    }
+  }
   return -1;
 }
 
-Error readPng(png_image **imgPP, char *imgPathA, void **pixelAP, png_color *colorPaletteP) {
-  if (!imgPP || !imgPathA || !pixelAP)
+Error readPng(png_image **imgPP, char *imgPathA, U8 *pixelSizeP, U8 **pixelAP, U8 **colorPalettePP, U8 verbose) {
+  if (!imgPP || !imgPathA || !pixelAP || !pixelSizeP)
     return E_BAD_ARGS;
 
-  void *colormapA = NULL;
   png_color blackBg = {0}; // used to replace alpha pixels for 1-byte output pixel format
   *imgPP = malloc(sizeof(png_image));
   if (!*imgPP)
@@ -147,31 +201,40 @@ Error readPng(png_image **imgPP, char *imgPathA, void **pixelAP, png_color *colo
     if ((*imgPP)->message[0]) 
       printf("%s\n", (*imgPP)->message);
   }
-
-  // libpng errors work differently; 0 is bad, anything else is good.
-  // TODO: Support all PNG formats.
   // Perform actual read.
   if (!(*imgPP)->warning_or_error) {
     U32 rowStride = PNG_IMAGE_ROW_STRIDE(**imgPP);
     U32 bufferSz = PNG_IMAGE_BUFFER_SIZE(**imgPP, rowStride);
+    if (verbose) {
+      printf("row stride: %d\n", rowStride);
+      printf("buffer size: %d\n", bufferSz);
+    }
+
+    *pixelSizeP = PNG_IMAGE_PIXEL_SIZE((*imgPP)->format);
+    if (verbose)
+      printf("source pixel size: %d\n", *pixelSizeP);
 
     // Output pixel buffer
     e = arrayNew((void**) pixelAP, 1, bufferSz);
     if (e)
       return e;
 
-    // Colormap (input) 
-#if 0
-    if ( (*imgPP)->colormap_entries ) {
-      printf("Allocating %d bytes for colormap.\n", PNG_IMAGE_COLORMAP_SIZE(**imgPP));
-      colormapA = malloc(PNG_IMAGE_COLORMAP_SIZE(**imgPP));
-      if (!colormapA)
-        return E_NO_MEMORY;
+    // In PNGs that're alreaday colormaps, we go ahead and populate the color palette here.
+    if (*pixelSizeP == 1) {
+      if ( (*imgPP)->colormap_entries ) {
+        if (verbose)
+          printf("Allocating %d bytes for libpng to give us its color palette.\n", PNG_IMAGE_COLORMAP_SIZE(**imgPP));
+        e = arrayNew((void**) colorPalettePP, sizeof(U8), PNG_IMAGE_COLORMAP_SIZE(**imgPP));
+      }
+      if (!e) {
+        e = png_image_finish_read(*imgPP, NULL, *pixelAP, 0, *colorPalettePP);
+      }
     }
-#endif
+    // If PNG is NOT a colormap, then read it like a normal image without getting a color palette.
+    else
+      // row_stride param being 0 forces libpng to calculate the pitch for you.
+      e = png_image_finish_read(*imgPP, NULL, *pixelAP, 0, NULL);
 
-    // row_stride param being 0 forces libpng to calculate the pitch for you.
-    e = png_image_finish_read(*imgPP, NULL, *pixelAP, 0, colorPaletteP);
     if ((*imgPP)->warning_or_error) 
       printf("%s\n", (*imgPP)->message);
   }
@@ -180,234 +243,138 @@ Error readPng(png_image **imgPP, char *imgPathA, void **pixelAP, png_color *colo
     printf("no error on read; it says w = %d and h = %d.\n", (*imgPP)->width, (*imgPP)->height);
 
   //free(colormapA);
-  if (!e)
-    free(*pixelAP);
+  if (!e) { // png's error returns 0 if it fails.
+    arrayDel((void**) colorPalettePP);
+    arrayDel((void**) pixelAP);
+  }
   
-  return e ? SUCCESS : E_BAD_ARGS;  // libpng errors are weird.
+  return (e != 0) ? SUCCESS : E_BAD_ARGS;  // libpng errors are weird.
 } 
 
 //##########################################
-Error makeStripsetFromColormap(ColormapIdx *colormapA, Stripset *stripsetP, png_image *imgDataP) {
-  U32 nStrips = imgDataP->width * imgDataP->height * sizeof(ColormapIdx) / STRIP_N_PIXELS;
-  U16 stripLabel = 0;
-  // Allocate all these annoying arrays.
-  // nStrips is the max possible number of strips, so prepare to have up to that many.
-  // Strips labelled so far
-  StripmapIdx stripsLabelled[nStrips];
-  memset(stripsLabelled, 0, sizeof(StripmapIdx) * nStrips);
-  // Strip set
-  ColormapIdx stripsetDataA[nStrips * STRIP_N_PIXELS];
-  memset(stripsetDataA, 0, sizeof(ColormapIdx) * nStrips * STRIP_N_PIXELS);
-  // Flip set 
-  // This gets copied to a properly sized array at the end.
-  ColormapIdx flipSet[nStrips];
-  memset(flipSet, 0, sizeof(ColormapIdx) * nStrips);
-  // Array of Index of strips to flip
-  // This gets copied to a properly sized array at the end.
-  StripmapIdx flipIdxA[nStrips];
-  memset(flipIdxA, 0, sizeof(U8) * nStrips);
-  // Strip map
-  StripmapIdx *stripMapA = NULL;
-  Error e = arrayNew((void**) &stripMapA, sizeof(StripmapIdx), nStrips);
-  if (e)
-    return e;
-
-  if (verbose)
-    printf("Analyzing viability of breaking image into strips...");
-
-  // Find distinct strips and write an index-mapping to them.
-  ColormapIdx *currStripP;
-  ColormapIdx *nextStripP;  
-  U32 nFlips = 0;
-  for (U32 i = 0; i < nStrips; ++i) {
-    // This strip hasn't been labelled yet. 
-    // So give it its own label and add it to the set of unique strips.
-    if (!stripsLabelled[i]) {
-      memcpy((void*) &stripsetDataA[stripLabel], &colormapA[i * STRIP_N_PIXELS], STRIP_N_PIXELS);
-      stripsLabelled[i] = 1;
-      stripMapA[i] = stripLabel;
-      /* All strips up to current "i" should be labelled, so search for strips
-       * beyond that that match the current, newly labelled strip. */
-      currStripP = colormapA + (STRIP_N_PIXELS * i);
-      for (StripmapIdx ii = i + 1; ii < nStrips; ++ii) {
-        if (!stripsLabelled[ii]) {
-          nextStripP = colormapA + (ii * STRIP_N_PIXELS);
-          if (!memcmp((const void*) nextStripP, 
-              (const void*) currStripP, 
-              sizeof(ColormapIdx) * STRIP_N_PIXELS)) {
-            stripMapA[ii] = stripLabel;  //flipped strip gets same label
-            stripsLabelled[ii] = 1;
-          }  // if strip is straight-up equal
-          // Not identical as-is. Is it identical with flipping?
-          else {
-            for (StripmapIdx j = STRIP_N_PIXELS - 1; j >= 0; --j) {
-              if (nextStripP[j] != currStripP[STRIP_N_PIXELS - j - 1])
-                goto flipNotEqual;
-            }
-            flipIdxA[nFlips++] = ii;
-            stripMapA[ii] = stripLabel;
-            stripsLabelled[i] = 1;
-            flipNotEqual:
-            continue;  // only because labels require something
-          }  // else, see if flip is equal to strip
-        }
-      }
-      ++stripLabel;
-    }
+// 1-byte PNG images are understood to be color palettes. Usually they have extra colors we don't need, so we're removing the unused ones here.
+Error stealColorPaletteAndColormap(U8 **paletteAP, U8 **colormapPP, U32 *nColorsP, U8 srcPixelSize, png_image *srcImgDataP, U8 *srcImgP, U8 verbose) {
+  if (!paletteAP || !colormapPP || !nColorsP || !srcImgDataP || !srcImgP)
+    return E_BAD_ARGS;
+  if (srcPixelSize != 1) {
+    if (verbose)
+      printf("[makeColorPaletteAndColormap] srcPixelSize is %d.\n", srcPixelSize);
+    return E_BAD_ARGS; 
   }
-  // Slight compression isn't worth the trouble to inflate; keep as is.
-  if (nStrips - stripLabel < 5) { //arbitrary number; maybe decide more scientific number later
-    memset(stripsetP, 0, sizeof(Stripset));
-  }
-  else {
-    // If it's worth doing, store compressed stuff into colormap profile.
-    stripsetP->stripMapA = stripMapA;
-    if (!e)
-      e = arrayNew((void**) &stripsetP->flipIdxA, sizeof(flipIdxA[0]), nFlips);
-    if (!e)
-      e = arrayNew((void**) &stripsetP->dataA, sizeof(ColormapIdx), stripLabel);
-    if (!e) {
-      memcpy((void*) stripsetP->flipIdxA, (void*) flipIdxA, sizeof(StripmapIdx) * nFlips);
-      memcpy((void*) stripsetP->dataA, (void*) stripsetDataA, sizeof(ColormapIdx) * stripLabel);
-    }
-    else {
-      arrayDel((void**) &stripsetP->stripMapA);
-      arrayDel((void**) &stripsetP->flipIdxA);
-      arrayDel((void**) &stripsetP->dataA);
-    }
+
+  // We're dealing with 1-byte pixels, meaning the palette should already be updated.
+  assert(srcPixelSize == 1 && *paletteAP != NULL);
+
+  U8 *newColormapP = NULL;
+  U32 *newColorPalette = NULL;
+
+  // Allocate new colormap to replace the old one.
+  Error e = arrayNew((void**) &newColormapP, sizeof(ColormapIdx), srcImgDataP->width * srcImgDataP->height);
+  // Allocate new palette to replace the old one.
+  if (!e)
+    e = arrayNew((void**) paletteAP, srcPixelSize, N_COLORS_SUPPORTED_MAX_); 
+  // Loop through 
+  if (!e) {
   }
   return e;
 }
 
 //##########################################
-Error makeColorPaletteAndColormap(Pixel *paletteA, U8 **colormapPP, U32 *nColorsP, png_image *imgDataP, Pixel *imgP) {
-  if (!paletteA || !colormapPP || !nColorsP || !imgDataP || !imgP)
+Error makeColorPaletteAndColormap(U8 **paletteAP, U8 **colormapPP, U32 *nColorsP, U8 srcPixelSize, png_image *srcImgDataP, U8 *srcImgP, U8 verbose) {
+  if (!paletteAP || !colormapPP || !nColorsP || !srcImgDataP || !srcImgP)
     return E_BAD_ARGS;
 
+  if (srcPixelSize != 2 && srcPixelSize != 4) {
+    if (verbose)
+      printf("[makeColorPaletteAndColormap] srcPixelSize is %d.\n", srcPixelSize);
+    return E_BAD_ARGS; 
+  }
+
+  // If we're dealing with 1-byte pixels, then the palette should already be updated.
+  assert((srcPixelSize == 2 || srcPixelSize == 4) && *paletteAP == NULL);
+
   // Allocate colormap.
-  Error e = arrayNew((void**) colormapPP, sizeof(U8), imgDataP->width * imgDataP->height);
+  Error e = arrayNew((void**) colormapPP, sizeof(ColormapIdx), srcImgDataP->width * srcImgDataP->height);
+  // Allocate color palette.
+  if (!e)
+    e = arrayNew((void**) paletteAP, srcPixelSize, N_COLORS_SUPPORTED_MAX_); 
   if (!e) {
-    // Set up pointers for looping through image.
-    Pixel *pixelP = imgP;
-    Pixel *pixelEndP = pixelP + (imgDataP->width * imgDataP->height);
+    // Set up pointers for looping through input image.
+    U8 *srcPixelP = srcImgP;
+    U8 *pixelEndP = srcPixelP + (srcImgDataP->width * srcImgDataP->height * srcPixelSize);
     // Set up pointers for populating colormap.
     U8 *colormapP = *colormapPP;
     U8 *colormapEndP = colormapP + arrayGetNElems((void*) *colormapPP);
     S32 colormapIdx = -1;
-
-    for (*nColorsP = 0; pixelP < pixelEndP && colormapP < colormapEndP; ++pixelP) {
-      colormapIdx = getColormapIdx(paletteA, *nColorsP, pixelP);
+    // Make a palette of distinct colors.
+    for (*nColorsP = 0; srcPixelP < pixelEndP && colormapP < colormapEndP; srcPixelP += srcPixelSize, ++colormapP) {
+      colormapIdx = getColormapIdx(*paletteAP, *nColorsP, srcPixelSize, srcPixelP);
       if (colormapIdx < 0) {
-        paletteA[*nColorsP] = *pixelP;
+        memcpy(&(*paletteAP)[*nColorsP * srcPixelSize], srcPixelP, srcPixelSize);
         *colormapP = (*nColorsP)++;
       }
       else 
         *colormapP = (U8) colormapIdx;
     }
   }
+  // If aseprite's output PNG uses the 16-bit [ gray | alpha ] pixel format, rectify that here.
+  if (!e && srcPixelSize == 2) {
+    U32 *tmpA;
+    e = arrayNew((void**) &tmpA, sizeof(U32), *nColorsP);
+    if (!e) {
+      for (int i = 0; i < *nColorsP; ++i) 
+        tmpA[i] = (*paletteAP)[i*2] | (*paletteAP)[i*2] | (*paletteAP)[i*2] | 0xff;  // alpha is 0xff
+      arrayDel((void**) paletteAP);
+      *paletteAP = (U8*) tmpA;  
+    }
+  }
   return e;
 }
 
-// Pack all the bits in strip set.
-Error packBits(Stripset *stripsetP) {
-  if (!stripsetP || !stripsetP->dataA)
-    return E_BAD_ARGS;
-
-  U32 nPixels = arrayGetNElems((void*) stripsetP->dataA);
-  U8 *pixP = stripsetP->dataA;
-  U8 *pixEndP = pixP + (nPixels);
-  U32 *bpsA = NULL;     // array of packed bits
-  U32 *bpsP, *bpsEndP;  // bits packed staggered
-  Error e = SUCCESS;
-  //bpg = np.zeros(len(unpackedBytes) // (8 // bpp)).astype("uint8") //bits packed contiguous 
-  //bps = np.zeros(bpg.shape).astype("uint8") //bits packed staggered
-  switch (stripsetP->bpp) {
-    case 1:
-      e = arrayNew((void**) &bpsA, sizeof(U32), nPixels / (32));  // 32 pixels per U32
-      if (!e) {
-        bpsP = bpsA;
-        bpsEndP = bpsP + arrayGetNElems(bpsA);
-        for (; bpsP < bpsEndP && pixP < pixEndP; ++bpsP, pixP += 32) {
-          *bpsP = 
-            (*(pixP+0)  << 0) | (*(pixP+1)  << 8) | (*(pixP+2)  << 16) | (*(pixP+3)  << 24) |
-            (*(pixP+4)  << 1) | (*(pixP+5)  << 9) | (*(pixP+6)  << 17) | (*(pixP+7)  << 25) |
-            (*(pixP+8)  << 2) | (*(pixP+9)  << 10) | (*(pixP+10) << 18) | (*(pixP+11) << 26) |
-            (*(pixP+12) << 3) | (*(pixP+13) << 11) | (*(pixP+14) << 19) | (*(pixP+15) << 27) |
-            (*(pixP+16) << 4) | (*(pixP+17) << 12) | (*(pixP+18) << 20) | (*(pixP+19) << 28) |
-            (*(pixP+20) << 5) | (*(pixP+21) << 13) | (*(pixP+22) << 21) | (*(pixP+23) << 29) |
-            (*(pixP+24) << 6) | (*(pixP+25) << 14) | (*(pixP+26) << 22) | (*(pixP+27) << 30) |
-            (*(pixP+28) << 7) | (*(pixP+29) << 15) | (*(pixP+30) << 23)  | (*(pixP+31) << 31);
-        }
-      }
-      break;
-    case 2:
-      e = arrayNew((void**) &bpsA, sizeof(U32), nPixels / (16));  // 16 pixels per U32
-      if (!e) {
-        bpsP = bpsA;
-        bpsEndP = bpsP + arrayGetNElems(bpsA);
-        for (; bpsP < bpsEndP && pixP < pixEndP; ++bpsP, pixP += 32) {
-          *bpsP = 
-            (*(pixP+0)  << 0) | (*(pixP+1)  << 8) |  (*(pixP+2)  << 16) | (*(pixP+3)  << 24) |
-            (*(pixP+4)  << 2) | (*(pixP+5)  << 10) | (*(pixP+6)  << 18) | (*(pixP+7)  << 26) |
-            (*(pixP+8)  << 4) | (*(pixP+9)  << 12) | (*(pixP+10) << 20) | (*(pixP+11) << 28) |
-            (*(pixP+12) << 6) | (*(pixP+13) << 14) | (*(pixP+14) << 22) | (*(pixP+15) << 30);
-        }
-      }
-      break;
-    case 4:
-      e = arrayNew((void**) &bpsA, sizeof(U32), nPixels / (8));  // 8 pixels per U32
-      if (!e) {
-        bpsP = bpsA;
-        bpsEndP = bpsP + arrayGetNElems(bpsA);
-        for (; bpsP < bpsEndP && pixP < pixEndP; ++bpsP, pixP += 32) {
-          *bpsP = 
-            (*(pixP+0)  << 0) | (*(pixP+1)  << 8) |  (*(pixP+2)  << 16) | (*(pixP+3)  << 24) |
-            (*(pixP+4)  << 4) | (*(pixP+5)  << 12) | (*(pixP+6)  << 20) | (*(pixP+7)  << 28);
-        }
-      }
-      break;
-    case 8:
-      return SUCCESS;  // No changes need to be made as no packing can be done.
-      break;
-    default:
-      if (verbose)
-        printf("Jollybean doesn't support more than 256 colors in an image.\n");
-      return E_BAD_ARGS;
-      break;
-  }
-
-  if (!e && stripsetP->bpp < 8) {
-    arrayDel((void**) &stripsetP->dataA);
-    stripsetP->dataA = (ColormapIdx*) bpsP;
-  }
-  else if (e)
-    arrayDel((void**) &bpsP);
-
-  return e;
-}
-
+// TODO migrate this to genie code
+// TODO Use this when you start putting things into enums with key.s
 void toUpper(char *stringP) {
   for (char *charP = stringP; *charP; ++charP) 
     if (*charP >= 'a' && *charP <= 'z')
       *charP -= 32;
 }
 
+Error getColorPaletteAndColormap(U8 **colorPaletteAP, U8 **colormapAP, U32 *nColorsP, png_image *pngImgP, U8 *pixelP, U8 maxNColorsAllowed, U8 srcPixelSize, U8 verbose) {
+  if (!colorPaletteAP || !nColorsP || !pngImgP || !maxNColorsAllowed)
+    return E_BAD_ARGS;
+  Error e = SUCCESS;
+  if (*colorPaletteAP) { // libpng gave us a color palette; use it.
+    *nColorsP = PNG_IMAGE_COLORMAP_SIZE(*pngImgP);
+    if (*nColorsP > maxNColorsAllowed) 
+      return E_BAD_ARGS;
+    e = stealColorPaletteAndColormap(colorPaletteAP, colormapAP, nColorsP, srcPixelSize, pngImgP, pixelP, verbose);
+  }
+  else
+    e = makeColorPaletteAndColormap(colorPaletteAP, colormapAP, nColorsP, srcPixelSize, pngImgP, pixelP, verbose);
+  return e;
+}
+
 //##########################################
-Error compressImg(char *imgFilePathP) {
-  void *pixelP = NULL;  // i think this is actually meant to be colormap data
-  Pixel colorPaletteA[256] = {0};
+Error compressImg(char *imgFilePathP, Directory *dirP, U8 verbose) {
+  U8 *pixelP = NULL;  // can be 1bpp colormap, 2bpp gray+alpha, or 4bpp RGBA
+  U8 *colorPaletteA = NULL;
   U8 *colormapA = NULL;
   png_image *pngImgP = NULL;
   U32 nColors = 0;
-  Stripset stripset = {0};
+  U8 srcPixelSize = 0;
+  StripSetS stripset = {0};
+  StripMapS stripmap = {0};
   ImgDims imgDims = {0};
+  U8 bpp = 0;
+  
+  Error e = readPng(&pngImgP, imgFilePathP, &srcPixelSize, &pixelP, &colorPaletteA, verbose);
 
-  Error e = readPng(&pngImgP, imgFilePathP, &pixelP, &colorPaletteA[0]);
+  if (!e) 
+    e = getColorPaletteAndColormap(&colorPaletteA, &colormapA, &nColors, pngImgP, pixelP, 16, srcPixelSize, verbose);
 
-  if (!e && (nColors = pngImgP->colormap_entries) == 0)
-    e = makeColorPaletteAndColormap(colorPaletteA, &colormapA, &nColors, pngImgP, pixelP);
-  else 
-    colormapA = pixelP;
+  if (verbose) {
+    printf("%d distinct colors w/ %d byte source pixel size.\n", nColors, srcPixelSize);
+  }
 
   // Compute pixel bitdepth.
   if (!e) {
@@ -417,109 +384,99 @@ Error compressImg(char *imgFilePathP) {
       imgDimsIni(&imgDims, pngImgP->width, pngImgP->height, 2);
     else if (nColors <= 16)
       imgDimsIni(&imgDims, pngImgP->width, pngImgP->height, 4);
-    else
-      imgDimsIni(&imgDims, pngImgP->width, pngImgP->height, 8);  // assume no greater than 8 bits per pixel
-
-    stripset.bpp = imgDims.bpp;
+    else {
+badPixel:
+      if (verbose)
+        printf("Jollybean doesn't support color palettes of more than %d colors.\n%s uses %d colors.\n", N_COLORS_SUPPORTED_MAX_, imgFilePathP, nColors/4);
+      e = E_UNSUPPORTED_PIXEL_FORMAT;
+    }
+    if (!e)
+      bpp = imgDims.bpp;
   }
 
   // Colormap StripSet  & StripMap
   if (!e)
-    e = makeStripsetFromColormap(colormapA, &stripset, pngImgP);
-  if (!e)
-    e = packBits(&stripset);
-  if (verbose && !e)
-    printf("pre-compression length: %d", (arrayGetNElems(stripset.dataA)));
-
-  Inflatable *stripsetInflatableP = NULL;
-  char fp[500] = {0};
-  char entityName[250] = {0};
-  char keyName[250] = {0};
+    e = stripNew(colormapA, verbose, bpp, arrayGetNElems(colormapA), &stripset, &stripmap);
 
   // Requires inflatable from data.h and util's inflatable writer function.
-  if (!e)
-    e = inflatableNew((void*) stripset.dataA, &stripsetInflatableP);
+  char entityName[250] = {0};
   if (!e) {
-    U32 entityNameIdx, entityNameLen, keyNameIdx, keyNameLen;
-    parseEntityAndKeyNames(imgFilePathP, ".png", &entityNameIdx, &entityNameLen, &keyNameIdx, &keyNameLen);
+    U32 entityNameIdx, entityNameLen;
+    parseEntityName(imgFilePathP, ".png", &entityNameIdx, &entityNameLen);
     memcpy((void*) entityName, (void*) &imgFilePathP[entityNameIdx], entityNameLen);
-    memcpy((void*) keyName, (void*) &imgFilePathP[keyNameIdx], keyNameLen);
-    toUpper(keyName);  // key is going to be an enum, so format it accordingly
-#if TEST_
-    printf("Entity name is %s.\n", entityName);
-    printf("Key name is %s.\n", keyName);
-#endif
-
-    // Generate stripset's inflatable C source file
-    strcpy(fp, TROVE_IMAGE_DIR);
-    strcat(fp, entityName);
-    strcat(fp, ".c");
-    printf("fp is %s.\n", fp);
-
-    e = inflatableWrite(stripsetInflatableP, fp, entityName);
+    if (verbose)
+      printf("Entity name is %s.\n", entityName);
   }
+  if (!e)
+    if (!entityName[0]) {
+      if (verbose)
+        printf("entity name is empty!\n");
+      return E_BAD_ARGS;
+    }
 
   // Give game engine the stripMap for this image if it applies.
-  if (!e && entityName[0])
-    writeStripmap(entityName, &stripset, &imgDims);
+  if (!e)
+    e = writeStripData(entityName, "Image", verbose, &stripset, &stripmap);
+  if (!e)
+    e = writeColormap(entityName, &stripset, &imgDims, verbose);
+  if (!e)
+    e = writeStripsHeaderFile(entityName, verbose);
 
+  // Time to see whether to update the new palette directory.
+  if (!e) {
+    EntryData entryDataToFind;
+    entryDataToFind.palette.nColors = nColors;
+    memcpy(entryDataToFind.palette.paletteA, colorPaletteA, sizeof(U32) * nColors);
+    char *existingPaletteName = dirFindNameByValue(dirP, &entryDataToFind, verbose);
+    if (!existingPaletteName) {
+      // TODO Add genie's prompt for new color palette's name here.
+      if (verbose)
+        printf("%s found NO MATCHING PALETTES in the palette directory. Inserting a new one and writing its header files...\n", entityName);
+      // Store our palette only because it doesn't already exist in the directory.
+      e = writeColorPaletteHeaderFile(entityName, verbose);
+      if (!e)
+        e = writeColorPalette(entityName, colorPaletteA, verbose);
+      if (!e)
+        dirAddEntry(dirP, entityName, &entryDataToFind, verbose);  // TODO replace entity name with name which genie prompots you for
+    }
+    else 
+      if (verbose)
+        printf("%s found a matching palette. Skipping write stage.\n", entityName);
+  }
+
+  stripDel(&stripset, &stripmap);
+  arrayDel((void**) &colorPaletteA);
+  arrayDel((void**) &pixelP);
+  free(pngImgP);
   return e;
 }
-
-// An image name looks like this: /some/path/to/entityName#keyName.png
-// A base name looks like this: entityName#keyName
-// Extension is the file extension including the leading '.'.
-// The key name (string after KEY_DELIMITER) is used to map an enum to an animation strip.
-// The entity name is assumed to begin at the start of base name.
-// The key name is assumed to extend to the end of the base name.
-void parseEntityAndKeyNames(char *filepathP, char *extension, U32 *entityNameIdxP, U32 *entityNameLenP, U32 *keyNameIdxP, U32 *keyNameLenP) {
-  U32 filenameLen = strlen(filepathP);
-  U32 extLen = strlen(extension);  // including the leading "."
-  // Make sure this file has a ".png" extension.
-  assert(!strncasecmp(&filepathP[filenameLen - extLen], extension, extLen));
-
-  // Init all outputs to zero.
-  *entityNameIdxP = *keyNameIdxP = *entityNameLenP = *keyNameLenP = 0;
-
-  // Get both entity and key's starting positions.
-  for (U8 i = filenameLen - 1; i >= 0; --i) {
-    switch (filepathP[i]) {
-      case KEY_DELIMITER:
-        *keyNameIdxP = i + 1;
-        break;
-      case FILE_SEP:
-        *entityNameIdxP = i + 1;
-        goto breakout;
-    }
-  }
-  breakout:
-  // Get both entity and key's lengths.
-  if (*keyNameIdxP) {
-    *entityNameLenP = *keyNameIdxP - *entityNameIdxP - 1;  // 1 is the '#'
-    *keyNameLenP = filenameLen - *keyNameIdxP - extLen;
-  }
-  else 
-    *entityNameLenP = filenameLen - *entityNameIdxP - extLen;
-}
-
-// Problem with this design is being unable to edit all the animation strips of 
-// the same entity at the same time. If you change the color in one animation strip, 
-// you're in big trouble. But the rationale for separating it out was to make key-giving easy.
-// Aseprite doesn't exactly provide that easy functionality. Until someone makes a jollybean-
-// compatible Aseprite (and it sure as hell ain't gonna be me), this is the way we'll do it.
 
 int main (int argc, char **argv) {
+  U8 verbose = 0;
   Error e = SUCCESS;
+  char DIR_NAME[] = "Palette";
+  Directory *dirP = NULL;
+  U32 origNSavedPalettes = 0;
   if (argc > 1) {  // argv[0] is this program's name
-    // iterate through arguments
-    for (int i = 1; i < argc; ++i) {
-      if (!memcmp(argv[1], "-v", strlen(argv[i])))
-        verbose = 1;
-      else  {
-        e = compressImg(argv[i]);
+    if (!memcmp(argv[1], "-v", strlen(argv[1])))
+      verbose = 1;
+    // Get old palette directory.
+    e = dirGet(&dirP, DIR_NAME, argc, verbose);
+    if (!e)
+      origNSavedPalettes = dirP->nEntries;
+    // Iterate through arguments
+    if (!e)
+      for (int i = 1 + verbose; i < argc; ++i) {
+        if (verbose)
+          printf("\n================\n%s\n", argv[i]);
+        e = compressImg(argv[i], dirP, verbose);
       }
-    }
+    // Save the updated palette directory AFTER all updates are done.
+    if (!e && dirP->nEntries != origNSavedPalettes)
+      e = dirReplaceOriginal(dirP, DIR_NAME, verbose);
+    else
+      if (verbose)
+        printf("\nNo new palettes to write.\n");
   }
   return e;
 }
-

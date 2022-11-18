@@ -11,8 +11,8 @@ INSTALLDIR     = /usr/local/lib
 ##############################
 # Compiler
 ##############################
-inflatable.o: ./src/inflatable.c ./src/include/inflatable.h
-	$(CC) -L${HOME}/hack/botox/lib/ -lbotox $(sdl2-config --cflags) $(pkg-config --cflags zlib) -lz -c ./src/inflatable.c -o $@
+inflatable.o: ./src/inflatable.c ./src/include/inflatable.h ${BUILDDIR}
+	$(CC) -I${HOME}/hack/botox/src/include -L${HOME}/hack/botox/lib/ -lbotox $(sdl2-config --cflags) $(pkg-config --cflags zlib) -lz -c ./src/inflatable.c -o $@
 	mv $@ build/
 	touch build/$@
 

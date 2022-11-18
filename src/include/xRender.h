@@ -2,28 +2,18 @@
 #define SYS_RENDER
 #include "botox.h"
 
+// TODO is both being 1 a bug, or is that the *inner* key value?
 #define WINDOW_KEY_ (1)
 #define RENDERER_KEY_ (1)
-
 typedef enum{WINDOW_GENE_TYPE = 1, RENDERER_GENE_TYPE, N_MASTER_GENES} GeneType;
+typedef struct {
+  U8 r, g, b, a;
+} Color;
 
 typedef struct {
-  U16 nFlips;
-  U16 flipIdxA[];
-} FlipSetS;
-
-// Strip set's inflated data is in U32 format.
-typedef struct {
-  FlipSetS *flipSetP;
-  U16 nStrips;    // number of 64-pixel strips in strip set
-  Inflatable *stripSetInfP;  // strip set's compressed source data
-} StripSetS;
-
-// StripMapS's inflated data is in U16 format.
-typedef struct {
-  U16 nIndices;
-  Inflatable *stripMapInfP;
-} StripMapS;
+  U8 nColors;
+  Color *paletteA;
+} ColorPalette;
 
 typedef struct {
   U8 bpp;
@@ -33,10 +23,20 @@ typedef struct {
   U8 *dataP;    // JB only supports 8-bit colormap. If image requires neither strips nor bit-unpacking, this simply points at the inflatable data.
 } ColormapS;     // When the inflatable requires neither unpacking nor strip-mapping, go ahead and memcpy over. I can't think of any cleaner way to do it.
 
+// Backgrounds are made of tiles, although their source images are made of strips.  
+// Therefore, the bg's ROM image is the tileset. The tileset gets compressed into
+// strips just like all the other (foreground) images.
 typedef struct {
-  U8 nColors;
+  U32 tileDim;    // tiles are assumed to be square, so it's tile "dim" instead of width and height
+  U32 nTilesHigh; // number of tiles high
+  U32 nTilesWide; // number of tiles wide
+  U16 *tileSetA;  // not to be confused with strip set
+  U16 *tileMapA;  // not to be confused with strip map
+} BgTilemap;
+
+typedef struct {
   U8 textureAtlasRectIdx;
-  Color_ *colorA;
+  ColorPalette *colorPalette;
   ColormapS *colorMapP;
 } XRenderCompSrc; 
 

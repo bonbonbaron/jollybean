@@ -6,10 +6,20 @@ source ./scripts/ini
 source ./scripts/sys
 source ./scripts/game
 source ./scripts/image
+
 function lower () {
   echo $1 | sed 's/.*/\L&/'
 }
 
+# First, distribute any items dropped off in the trove.
+mv ${TROVE}/*_col.png ${TROVE}/src/Collision/png 2>/dev/null
+mv ${TROVE}/*.png ${TROVE}/src/Image/png 2>/dev/null
+mv ${TROVE}/*.ase ${TROVE}/src/Image/ase 2>/dev/null
+mv ${TROVE}/*.json ${TROVE}/src/Animation 2>/dev/null
+# What's the collision pipeline? 
+
+
+# Second, handle actual user arguments.
 mainArg=$(lower $1)
 case $mainArg in  
   game) gameExe ${*:2};;
@@ -20,7 +30,6 @@ case $mainArg in
   *) echo "jb: Command $mainArg not recognized.";;
 esac
 
-# TODO reimplement StripSet inside of imgStrip.py
 # TODO add -g argument for game to specify game; if absent, check env vars for $GAME
 # TODO make sure mv'ing imgStrip output to game dir works properly
 # TODO make flexible add/rm functions that can handle any gene type
