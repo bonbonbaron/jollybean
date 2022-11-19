@@ -1,3 +1,4 @@
+#include "data.h"
 #include "genie.h"
 
 int main(int argc, char **argv) {
@@ -15,7 +16,10 @@ int main(int argc, char **argv) {
       memset((void*) &hoopla[2], 'A' + (i & 15), 25);
       dirAddEntry(dirP, hoopla, &emptyData, 0);
     }
-    char *response = genieAsk("Which hoopla do you want?", DIR_FILE, (List*) dirP, 1);
+    char *response = genieAsk("Which hoopla do you want?", DIR_FILE, (List*) dirP, 0);
+
+    printf("you gave me the hoopla %s\nsupposedly %d chars long.\n", response, arrayGetNElems(response));
+    arrayDel((void**) &response);
   }
 
   return e;

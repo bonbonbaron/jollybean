@@ -1,4 +1,5 @@
 #include "genie.h"
+#include "data.h"
 
 
 inline static char _upperChar(char c) {
@@ -178,6 +179,7 @@ static char* _genieListen(ListType listType, List *listP, U8 verbose) {
         break;
       // Backspace
       case BACKSPACE:
+        printf("\non backspace, seeing reponse is %d chars long\n", strlen(responseP));
         if (strlen(responseP) > 0) {
           responseP[strlen(responseP) - 1] = '\0';
         }
@@ -191,7 +193,7 @@ static char* _genieListen(ListType listType, List *listP, U8 verbose) {
             responseP[0] = '\0';
             break;
           }
-          else if (responseP[i] == '_') {
+          else if (responseP[i] == ' ') {
             responseP[i - 1] = '\0';
             break;
           }
@@ -205,20 +207,22 @@ static char* _genieListen(ListType listType, List *listP, U8 verbose) {
         memset(responseP, 0, arrayGetElemSz(responseP));
         continue;
       default:
-        if (strlen(responseP) < sizeof(responseP) - 1) {
+        if (strlen(responseP) < arrayGetNElems(responseP) - 1) {
           //newChar[0] = _purifyChar(newChar[0]);
           //newChar[0] = _upperChar(newChar[0]);
           strcat(responseP, newChar);
+          putchar(newChar[0]);
         }
-        putchar(newChar[0]);
         continue;
     }
   }
 
 exit:
-  _purify(responseP);
-  _upper(responseP);
+  //_purify(responseP);
+  //_upper(responseP);
 
+  putchar('\n');
+  putchar('\n');
   return responseP;
 }
 

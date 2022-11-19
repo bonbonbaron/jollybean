@@ -201,7 +201,6 @@ NameNode* dirFindNamesStartingWith(Directory *dirP, char *nameStart, U8 verbose)
         e = _nameNodeGrow(&nodeP);  // nodeP = nodeP->next (after allocating)
         if (!e) {
           nodeP->entryIdx = i;
-          printf("%d: ", i);
         }
       }
       if (verbose) {
