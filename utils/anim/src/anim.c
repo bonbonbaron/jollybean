@@ -24,6 +24,12 @@ Error frameNodeGrow(FrameNode **nodePP) {
   return e;
 }
 
+void frameNodeDel(FrameNode **nodePP) {
+  if (nodePP && *nodePP) {
+    jbFree((void**) nodePP);
+  }
+}
+
 // Tags  ---------------
 Error tagNodeNew(TagNode **nodePP) {
   if (!nodePP)
@@ -47,6 +53,13 @@ Error tagNodeGrow(TagNode **nodePP) {
   }
   return e;
 }
+
+void tagNodeDel(FrameNode **nodePP) {
+  if (nodePP && *nodePP) {
+    jbFree((void**) nodePP);
+  }
+}
+
 
 // At this point the caller has run into either a named object within the "frames" object, or
 // an anonymous object within the "frames" array.

@@ -121,6 +121,47 @@ void dirAddEntry(Directory *dirP, char *name, EntryData *dataP, U8 verbose) {
   dirP->entryA[dirP->nEntries++].data = *dataP;
 }
 
+// List nodes for finding multiple partial query hits
+Error nameNodeNew(NameNode **nodePP) {
+  if (!nodePP)
+    return E_BAD_ARGS;
+  Error e = jbAlloc((void**) nodePP, sizeof(NameNode), 1);
+  if (!e) 
+    memset(*nodePP, 0, sizeof(NameNode));
+  return e;
+}
+
+static Error _nameNodeGrow(NameNode **nodePP) {
+  if (!nodePP)
+    return E_BAD_ARGS;
+  Error e = SUCCESS;
+  // If this is the first node
+  if (!*nodePP) {
+    e = nameNodeNew(nodePP);
+  }
+  // If this is after the first node
+  else {
+    e = nameNodeNew(&(*nodePP)->nextP);
+    if (!e) {
+      *nodePP = (*nodePP)->nextP;
+    }
+  }
+  return e;
+}
+
+void nameNodeDel(NameNode **nodePP) {
+  if (nodePP && *nodePP) {
+    // Recurse all the way to the end then free backwards.
+    if ((*nodePP)->nextP) {
+      nameNodeDel(&(*nodePP)->nextP);
+    }
+    // Actual deletion
+    jbFree((void**) nodePP);
+    *nodePP = NULL;
+  }
+}
+
+// Querying functions
 Entry* dirFindValueByName(Directory *dirP, char *name, U8 verbose) {
   for (int i = 0; i < dirP->nEntries; ++i)
     if (!strcmp(name, dirP->entryA[i].name))
@@ -137,4 +178,41 @@ char* dirFindNameByValue(Directory *dirP, EntryData *valP, U8 verbose) {
   if (verbose)
     printf("Could not find entry.\n");
   return NULL;
+}
+
+NameNode* dirFindNamesStartingWith(Directory *dirP, char *nameStart, U8 verbose) {
+  assert(strlen(nameStart) < NAME_LEN_);
+  NameNode *nodeP = NULL;
+  // Look for nodes starting with input string.
+  NameNode *firstNodeP = NULL;
+  Error e = SUCCESS;
+  for (int i = 0; !e && i < dirP->nEntries; ++i) {
+    if (!memcmp(nameStart, &dirP->entryA[i].name, strlen(nameStart))) {
+      if (firstNodeP == NULL) {
+        // Allocate first name node to build list of matching names from.
+        e = nameNodeNew(&nodeP); 
+        // Leave if it returns an error.
+        if (!e) {
+          nodeP->entryIdx = i;
+          firstNodeP = nodeP;
+        }
+      }
+      else {
+        e = _nameNodeGrow(&nodeP);  // nodeP = nodeP->next (after allocating)
+        if (!e) {
+          nodeP->entryIdx = i;
+          printf("%d: ", i);
+        }
+      }
+      if (verbose) {
+        printf("Match found: %s\n", dirP->entryA[i].name);
+      }
+    }
+  }
+
+  if (e) {
+    nameNodeDel(&firstNodeP);
+  }
+
+  return firstNodeP;
 }

@@ -21,5 +21,5 @@ typedef union {
 
 void genieListDir(Directory *dirP);
 void genieListTxt(Directory *dirP);
-Error genieListen(ListType fileType);
+char* genieAsk(char* question, ListType listType, List *listP, U8 verbose);
 #endif

@@ -85,85 +85,144 @@ void genieListDir(Directory *dirP) {
 	}
 }
 
+static void _genieListSuggestions(Directory *dirP, NameNode *startNodeP, U8 verbose) {
+	struct winsize terminalWidth;
+	ioctl(STDOUT_FILENO, TIOCGWINSZ, &terminalWidth);
+
+	int maxLen = 0;
+	// Get the longest entry's length so we can fit as many in the terminal as possible.
+	for (NameNode *nodeP = startNodeP; nodeP != NULL; nodeP = nodeP->nextP) {
+		int currEntryLen = strlen(dirP->entryA[nodeP->entryIdx].name);
+		if (maxLen < currEntryLen) {
+			maxLen = currEntryLen;
+		}
+	}
+  
+  if (verbose) {
+    printf("max len in matches: %d\n", maxLen);
+  }
+
+	if (!maxLen)
+		return;	// Either directory has no entries or all its entries are empty!
+
+	maxLen += 4;	 // minimal whitespace padding between entries in terminal
+
+	U32 nEntriesPerLine = terminalWidth.ws_col / maxLen;
+
+	// At last one entry per line even if it won't fit for retardedly small terminals.
+	if (!nEntriesPerLine) {
+		nEntriesPerLine = 1; 
+  }
+
+  const char LEFT_ALIGNED_TBD_BYTES[] = "%%-%ds";
+	char leftAlignment[strlen(LEFT_ALIGNED_TBD_BYTES) + 16];	// +1 for '\0'
+	sprintf(leftAlignment, LEFT_ALIGNED_TBD_BYTES, maxLen);
+
+	for (NameNode *nodeP = startNodeP; nodeP != NULL;) {
+		for (int j = 0; nodeP != NULL && j < nEntriesPerLine; ++j, nodeP = nodeP->nextP) {
+			// Don't print empty entries, even though we should prevent those.
+			if (dirP->entryA[nodeP->entryIdx].name[0]) {
+				printf(leftAlignment, dirP->entryA[nodeP->entryIdx].name);
+			}
+		}
+		putchar('\n');
+	}
+  // couple newlines before the next input prompt
+  putchar('\n');
+  putchar('\n');
+}
+
+// Although it would be proper to use unsigned chars so I could use the right ASCII codes,
+// let's be honest: Who wants to write "unsigned" over and over again?
 #define CTRL_U (21)
 #define CTRL_W (23)
 #define BACKSPACE (127)
 
-Error genieListen(ListType listType) {
-  int e = SUCCESS;
+#define MAX_REPONSE_SZ_ (NAME_LEN_)
+#define CLEAR_INPUT_PROMPT_ "\33[2K\r"
+// NOTE: Callers MUST arrayDel returned pointers!
+// TODO support cursor movement keys (including ^B, ^F, altB, and altF)
+static char* _genieListen(ListType listType, List *listP, U8 verbose) {
   char newChar[2] = {0};
-  char input[100] = {0};
+  char *responseP;
+  if (arrayNew((void**) &responseP, sizeof(char), MAX_REPONSE_SZ_))
+    return NULL;
+
 	for (;;) {
     newChar[0] = _getch();
     switch(newChar[0]) {
+      // Tab = Show suggestions (or autocomplete if there's only one)
       case '\t':
-        printf("tab\n");
+        if (strlen(responseP) == 0) {
+          continue;
+        }
+        // List suggests or autocomplete according to appropriate filetype.
         if (listType == TEXT_FILE) {
           continue;	// do autocomplete text version here
         }
         else if (listType == DIR_FILE) {
-          continue;	// do autocomplete dir version here
+          NameNode *nameNodeP = dirFindNamesStartingWith(&listP->dir, responseP, verbose);
+          if (nameNodeP != NULL) {
+            putchar('\n');
+            putchar('\n');
+            _genieListSuggestions(&listP->dir, nameNodeP, verbose);
+            nameNodeDel(&nameNodeP);
+          }
         }
-        break;
+        printf(CLEAR_INPUT_PROMPT_);
+        printf("%s", responseP);
+        continue;
+      // Enter = Done
       case '\n':
         goto exit;
         break;
+      // Backspace
       case BACKSPACE:
-        if (strlen(input) > 0) {
-          input[strlen(input) - 1] = '\0';
+        if (strlen(responseP) > 0) {
+          responseP[strlen(responseP) - 1] = '\0';
         }
-        printf("\33[2K\r");
-        printf("%s", input);
+        printf(CLEAR_INPUT_PROMPT_);
+        printf("%s", responseP);
         continue;
+      // Delete one word backwards
       case CTRL_W:
-        for (int i = strlen(input); i > 0; --i) {
+        for (int i = strlen(responseP); i > 0; --i) {
           if (i == 1) {
-            input[0] = '\0';
+            responseP[0] = '\0';
             break;
           }
-          else if (input[i] == '_') {
-            input[i - 1] = '\0';
+          else if (responseP[i] == '_') {
+            responseP[i - 1] = '\0';
             break;
           }
         }
-        printf("\33[2K\r");
-        printf("%s", input);
+        printf(CLEAR_INPUT_PROMPT_);
+        printf("%s", responseP);
         continue;
+      // Delete whole line
       case CTRL_U:
-        printf("\33[2K\r");
-        //printf("ctrl u\n");
-        memset(input, 0, sizeof(input));
+        printf(CLEAR_INPUT_PROMPT_);
+        memset(responseP, 0, arrayGetElemSz(responseP));
         continue;
       default:
-        if (strlen(input) < sizeof(input) - 1) {
-          newChar[0] = _purifyChar(newChar[0]);
-          newChar[0] = _upperChar(newChar[0]);
-          strcat(input, newChar);
+        if (strlen(responseP) < sizeof(responseP) - 1) {
+          //newChar[0] = _purifyChar(newChar[0]);
+          //newChar[0] = _upperChar(newChar[0]);
+          strcat(responseP, newChar);
         }
         putchar(newChar[0]);
-        //printf("in default\n");
         continue;
     }
-
-    if (!e) {  // 0 if fail
-      e = E_FILE_IO;
-      break;
-    }
   }
+
 exit:
-  _purify(input);
-  _upper(input);
-  printf("\n\nFinal output:\n%s\n", input);
-  return e;
+  _purify(responseP);
+  _upper(responseP);
+
+  return responseP;
 }
 
-
-
-/*
-	 On tab, call an autocomplete function. 
-	 That autocomplete will either run through
-			* a directory's names or
-			* a text file's listings (generated at runtime by a jb sed script).
-	 
-		
- * */
+char* genieAsk(char* question, ListType listType, List *listP, U8 verbose) {
+  printf("%s\n", question);
+  return _genieListen(listType, listP, verbose);
+}
