@@ -11,8 +11,8 @@
 
 #define TEST_ 1
 
-const char TROVE_ANIM_DIR[] = "/home/bonbonbaron/.jb/src/Animation/";
-const char TROVE_GENE_DIR[] = "~/.jb/src/Gene/";
+const char TROVE_ANIM_DIR[] = "/home/bonbonbaron/jb/src/Animation/";
+const char TROVE_GENE_DIR[] = "~/jb/src/Gene/";
 static int verbose = 0;
 
 typedef struct _TagNode {
@@ -36,4 +36,4 @@ void getBaseNameIndices(char *filepathP, char *extension, U32 *startIdxP, U32 *e
 void writeRawData8(FILE *fP, U8 *byteA, U32 nBytes);
 void writeRawData16(FILE *fP, U16 *byteA, U16 nBytes);
 void writeRawData32(FILE *fP, U32 *byteA, U32 nBytes);
-void parseEntityName(char *filepathP, char *extension, U32 *entityNameIdxP, U32 *entityNameLenP);
+void parseName(char *filepathP, char *extension, U32 *entityNameIdxP, U32 *entityNameLenP);

@@ -3,7 +3,7 @@
 // An image name looks like this: /some/path/to/entityName.png
 // Extension is the file extension including the leading '.'.
 // The entity name is assumed to begin at the start of base name.
-void parseEntityName(char *filepathP, char *extension, U32 *entityNameIdxP, U32 *entityNameLenP) {
+void parseName(char *filepathP, char *extension, U32 *entityNameIdxP, U32 *entityNameLenP) {
   U32 filenameLen = strlen(filepathP);
   U32 extLen = strlen(extension);  // including the leading "."
   // Make sure this file has a ".png" extension.
@@ -61,3 +61,47 @@ void writeRawData32(FILE *fP, U32 *byteA, U32 nBytes) {
   }
 }
 
+FILE* openFile(char *fp) {
+  if (access(fp, F_OK) == 0) {
+    fopen(fp);
+  } else {
+    return NULL;
+  }
+}
+
+Error getSrcDir(char **srcDirPath, U32 nExtraSpaces, char *srcLocalDirName) {
+  const char HOME = getenv("HOME");
+  char *jbDir;
+  Error e = jbAlloc(srcDirPath, sizeof(char), 
+              strlen(HOME)         + strlen(SEP) + 
+              strlen(JB_DIR_NAME)  + strlen(SEP) + 
+              strlen(SRC_DIR_NAME) + strlen(SEP) + 
+              strlen(srcLocalDirName)   + strlen(SEP) + 
+              + nExtraSpaces + 1);  // extra spaces if you plan to append filename to dir path
+
+  if (!e) {
+    strcpy(jbDir, JB_DIR_NAME);
+    strcat(jbDir, SEP);
+    strcat(jbDir, SRC_DIR_NAME);
+    strcat(jbDir, SEP);
+    strcat(jbDir, srcLocalDirName);
+    strcat(jbDir, SEP);
+  }
+
+  return e;
+}
+
+Error getSrcFilePath(char **srcFilePath, char *srcLocalDirName, char *srcFileName) {
+ char *srcDirPath = NULL;
+
+ Error e = getSrcDir(&srcDirPath, strlen(srcFileName), srcLocalDirName);
+
+ if (!e) {
+   strcat(srcFilePath, srcFileName);
+ }
+ else {
+   jbFree(srcFileName);
+ }
+
+ return e;
+}

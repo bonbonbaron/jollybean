@@ -246,7 +246,7 @@ Error writeStripData(char *objNameA, char *OBJ_TYPE, U8 verbose, StripSetS *ssP,
       printf("no $HOME environment variable! exiting...\n");
     return E_BAD_ARGS;
   }
-  char TROVE_STRIP_DIR[] = "/.jb/build/Strip/";
+  char TROVE_STRIP_DIR[] = "/jb/build/Strip/";
   char fullPath[strlen(homefp) + strlen(TROVE_STRIP_DIR) + strlen(OBJ_TYPE) + strlen("/") + strlen(objNameA) + strlen(".c")];
   strcpy(fullPath, homefp);
   strcat(fullPath, TROVE_STRIP_DIR);

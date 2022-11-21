@@ -1,4 +1,5 @@
 #include "img.h"
+#include "genie.h"
 
 void imgDimsIni(ImgDims *imgDimsP, U32 width, U32 height, U32 bpp) {
   imgDimsP->w = width;
@@ -7,7 +8,7 @@ void imgDimsIni(ImgDims *imgDimsP, U32 width, U32 height, U32 bpp) {
   imgDimsP->pitch = width * bpp / 8;  // "bpp / 8" converts from bpp to bytes
 }
 
-Error writeColorPalette(char *imgNameA, U8 *paletteA, U8 verbose) {
+Error writeJbColorPalette(char *imgNameA, U8 *paletteA, U8 verbose) {
   Error e = SUCCESS;
   const char OBJ_TYPE[] = "ColorPalette_";
   FILE *fP = NULL;
@@ -25,7 +26,7 @@ Error writeColorPalette(char *imgNameA, U8 *paletteA, U8 verbose) {
   strcat(fullPath, imgNameA);
   strcat(fullPath, ".c");
   if (verbose)
-    printf("writing color palette...\n");
+    printf("writing color palette for use in jollybean...\n");
   // Open file.
   fP = fopen(fullPath, "w");
   if (!fP) {
@@ -51,6 +52,77 @@ Error writeColorPalette(char *imgNameA, U8 *paletteA, U8 verbose) {
   }
   return SUCCESS;
 }
+
+Error writeAsepriteColorPalette(char *imgNameA, EntryData *paletteData, U8 verbose) {
+  Error e = SUCCESS;
+  const char OBJ_TYPE[] = "ColorPalette_";
+  FILE *fP = NULL;
+  // Make target filepath to save this stripmap in.
+  char *homefp = getenv("HOME");
+  if (!homefp) {
+    if (verbose)
+      printf("no $HOME environment variable! exiting...\n");
+    return E_BAD_ARGS;
+  }
+  char fullPath[strlen(OBJ_TYPE) + strlen(imgNameA) + strlen(homefp) + strlen(TROVE_IMG_SRC_DIR) + strlen(".c")];
+  strcpy(fullPath, homefp);
+  strcat(fullPath, TROVE_IMG_SRC_DIR);
+  strcat(fullPath, OBJ_TYPE);
+  strcat(fullPath, imgNameA);
+  strcat(fullPath, ".c");
+  if (verbose)
+    printf("writing color palette for reuse in aseprite...\n");
+  // Open file.
+  fP = fopen(fullPath, "w");
+  if (!fP) {
+    if (verbose)
+      printf("[writeStripFlipStuff] file opening failed for path %s\n", fullPath);
+    e = E_NO_MEMORY;
+  }
+
+  /*
+   * Example file of aseprite palette:
+   -----------------------------------
+        GIMP Palette
+        #
+        255 188  15	Untitled
+        139 172  15	Untitled
+         48  98  48	Untitled
+         15  56  15	Untitled
+         15  56  15	Untitled
+        215  56  15	Untitled
+         15 254  15	Untitled
+         15  56  15	Untitled
+         15  56  15	Untitled
+         15  56  15	Untitled
+         15  56  15	Untitled
+          0   0 100	Untitled
+         15  56  15	Untitled
+         15  56  15	Untitled
+ */
+
+  // Write file.
+  if (!e) {
+    // Write header.
+    fprintf(fP, "GIMP Palette\n#\n");
+    // Palette Array
+    U32 *paletteA = paletteData->palette.paletteA;
+    int nColors = paletteData->palette.nColors;
+    for (int i = 0; i < nColors; ++i) {
+      fprintf(fP, "%-3d %-3d %-3d %s\n", 
+          paletteA[i] & 0xFF000000 >> 24,
+          paletteA[i] & 0x00FF0000 >> 16,
+          paletteA[i] & 0x0000FF00 >>  8,
+          "Untitled");
+    }
+  }
+  if (fP) {
+    // Close file.
+    fclose(fP);
+  }
+  return SUCCESS;
+}
+
 
 Error writeStripsHeaderFile(char *imgNameA, U8 verbose) {
   Error e = SUCCESS;
@@ -402,7 +474,7 @@ badPixel:
   char entityName[250] = {0};
   if (!e) {
     U32 entityNameIdx, entityNameLen;
-    parseEntityName(imgFilePathP, ".png", &entityNameIdx, &entityNameLen);
+    parseName(imgFilePathP, ".png", &entityNameIdx, &entityNameLen);
     memcpy((void*) entityName, (void*) &imgFilePathP[entityNameIdx], entityNameLen);
     if (verbose)
       printf("Entity name is %s.\n", entityName);
@@ -429,13 +501,14 @@ badPixel:
     memcpy(entryDataToFind.palette.paletteA, colorPaletteA, sizeof(U32) * nColors);
     char *existingPaletteName = dirFindNameByValue(dirP, &entryDataToFind, verbose);
     if (!existingPaletteName) {
-      // TODO Add genie's prompt for new color palette's name here.
-      if (verbose)
-        printf("%s found NO MATCHING PALETTES in the palette directory. Inserting a new one and writing its header files...\n", entityName);
+      genieAsk(
+          "This palette is new. What would you like to name it?", 
+          DIR_FILE, (List*) dirP, verbose);
       // Store our palette only because it doesn't already exist in the directory.
       e = writeColorPaletteHeaderFile(entityName, verbose);
       if (!e)
-        e = writeColorPalette(entityName, colorPaletteA, verbose);
+        e = writeJbColorPalette(entityName, colorPaletteA, verbose);
+      if (!e)
       if (!e)
         dirAddEntry(dirP, entityName, &entryDataToFind, verbose);  // TODO replace entity name with name which genie prompots you for
     }
@@ -451,32 +524,20 @@ badPixel:
   return e;
 }
 
-int main (int argc, char **argv) {
-  U8 verbose = 0;
+// Passing in the palette directory mitigates file I/O. 
+// The caller can keep it open across all the bodies it operates on.
+Error img(FILE *fP, Directory *paletteDirectoryP, U8 verbose) {
+  if (!fP)
+    return E_BAD_ARGS;
   Error e = SUCCESS;
-  char DIR_NAME[] = "Palette";
-  Directory *dirP = NULL;
-  U32 origNSavedPalettes = 0;
-  if (argc > 1) {  // argv[0] is this program's name
-    if (!memcmp(argv[1], "-v", strlen(argv[1])))
-      verbose = 1;
-    // Get old palette directory.
-    e = dirGet(&dirP, DIR_NAME, argc, verbose);
-    if (!e)
-      origNSavedPalettes = dirP->nEntries;
     // Iterate through arguments
     if (!e)
       for (int i = 1 + verbose; i < argc; ++i) {
-        if (verbose)
+        if (verbose) {
           printf("\n================\n%s\n", argv[i]);
+        }
         e = compressImg(argv[i], dirP, verbose);
       }
-    // Save the updated palette directory AFTER all updates are done.
-    if (!e && dirP->nEntries != origNSavedPalettes)
-      e = dirReplaceOriginal(dirP, DIR_NAME, verbose);
-    else
-      if (verbose)
-        printf("\nNo new palettes to write.\n");
   }
   return e;
 }

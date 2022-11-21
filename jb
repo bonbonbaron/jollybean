@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export TROVE="${HOME}/.jb"
+export TROVE="${HOME}/jb"
 
 source ./scripts/ini
 source ./scripts/sys

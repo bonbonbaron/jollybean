@@ -1,6 +1,6 @@
 #!/bin/bash
 
-JB=$HOME/.jb
+JB=$HOME/jb
 mkdir -p $JB
 
 if [ ! -f $JB_DIR/config ]; then

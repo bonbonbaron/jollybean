@@ -383,7 +383,7 @@ int main (int argc, char **argv) {
           printResults(&anim);
         if (!e) {
           U32 startIdx, len;
-          parseEntityName(argv[i], ".json", &startIdx, &len);
+          parseName(argv[i], ".json", &startIdx, &len);
           char entityName[len];
           memcpy(entityName, &argv[i][startIdx], len);
           entityName[len - 1] = '\0';

@@ -11,8 +11,8 @@
 
 #define TEST_ 1
 
-const char LOCAL_TROVE_ANIM_DIR[] = "/.jb/src/Collision/";
-const char LOCAL_TROVE_GENE_DIR[] = "/.jb/src/Gene/";
+const char LOCAL_TROVE_ANIM_DIR[] = "/jb/src/Collision/";
+const char LOCAL_TROVE_GENE_DIR[] = "/jb/src/Gene/";
 const char COLORCOLLMAPPING_FILENAME = "ColorCollDirectory";
 // We color collidable objects' collision rectangles/grids.
 // That way we know how someone should react when bumping into them.

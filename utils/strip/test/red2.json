@@ -111,7 +111,7 @@
  "meta": {
   "app": "http://www.aseprite.org/",
   "version": "1.1.6-dev",
-  "image": "/home/bonbonbaron/.jb/red2.png",
+  "image": "/home/bonbonbaron/jb/red2.png",
   "format": "RGBA8888",
   "size": { "w": 128, "h": 96 },
   "scale": "1",

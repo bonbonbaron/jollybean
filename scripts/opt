@@ -1,5 +1,5 @@
 #!/bin/bash
-JB=$HOME/.jb
+JB=$HOME/jb
 JB_CONFIG=$JB/config
 
 # "opt" is a script for jollybean or jollybean global or game-level options.
@@ -85,7 +85,7 @@ function optExe {
     echo "Invalid key-value pair. Quitting..."
     exit;
   fi;
-  # File input is optional; default is ~/.jb/config.
+  # File input is optional; default is ~/jb/config.
   if [ ${#file} -eq 0 ]; then 
     file=$JB_CONFIG;
   fi;

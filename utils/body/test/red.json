@@ -1,6 +1,5 @@
-{ "frames": [
-   {
-    "filename": "red2 0.ase",
+{ "frames": {
+   "red 0.ase": {
     "frame": { "x": 0, "y": 0, "w": 32, "h": 32 },
     "rotated": false,
     "trimmed": false,
@@ -8,8 +7,7 @@
     "sourceSize": { "w": 32, "h": 32 },
     "duration": 60
    },
-   {
-    "filename": "red2 1.ase",
+   "red 1.ase": {
     "frame": { "x": 32, "y": 0, "w": 32, "h": 32 },
     "rotated": false,
     "trimmed": false,
@@ -17,8 +15,7 @@
     "sourceSize": { "w": 32, "h": 32 },
     "duration": 60
    },
-   {
-    "filename": "red2 2.ase",
+   "red 2.ase": {
     "frame": { "x": 64, "y": 0, "w": 32, "h": 32 },
     "rotated": false,
     "trimmed": false,
@@ -26,8 +23,7 @@
     "sourceSize": { "w": 32, "h": 32 },
     "duration": 60
    },
-   {
-    "filename": "red2 3.ase",
+   "red 3.ase": {
     "frame": { "x": 96, "y": 0, "w": 32, "h": 32 },
     "rotated": false,
     "trimmed": false,
@@ -35,8 +31,7 @@
     "sourceSize": { "w": 32, "h": 32 },
     "duration": 60
    },
-   {
-    "filename": "red2 4.ase",
+   "red 4.ase": {
     "frame": { "x": 0, "y": 32, "w": 32, "h": 32 },
     "rotated": false,
     "trimmed": false,
@@ -44,8 +39,7 @@
     "sourceSize": { "w": 32, "h": 32 },
     "duration": 60
    },
-   {
-    "filename": "red2 5.ase",
+   "red 5.ase": {
     "frame": { "x": 32, "y": 32, "w": 32, "h": 32 },
     "rotated": false,
     "trimmed": false,
@@ -53,8 +47,7 @@
     "sourceSize": { "w": 32, "h": 32 },
     "duration": 60
    },
-   {
-    "filename": "red2 6.ase",
+   "red 6.ase": {
     "frame": { "x": 64, "y": 32, "w": 32, "h": 32 },
     "rotated": false,
     "trimmed": false,
@@ -62,8 +55,7 @@
     "sourceSize": { "w": 32, "h": 32 },
     "duration": 60
    },
-   {
-    "filename": "red2 7.ase",
+   "red 7.ase": {
     "frame": { "x": 96, "y": 32, "w": 32, "h": 32 },
     "rotated": false,
     "trimmed": false,
@@ -71,8 +63,7 @@
     "sourceSize": { "w": 32, "h": 32 },
     "duration": 60
    },
-   {
-    "filename": "red2 8.ase",
+   "red 8.ase": {
     "frame": { "x": 0, "y": 64, "w": 32, "h": 32 },
     "rotated": false,
     "trimmed": false,
@@ -80,8 +71,7 @@
     "sourceSize": { "w": 32, "h": 32 },
     "duration": 60
    },
-   {
-    "filename": "red2 9.ase",
+   "red 9.ase": {
     "frame": { "x": 32, "y": 64, "w": 32, "h": 32 },
     "rotated": false,
     "trimmed": false,
@@ -89,8 +79,7 @@
     "sourceSize": { "w": 32, "h": 32 },
     "duration": 60
    },
-   {
-    "filename": "red2 10.ase",
+   "red 10.ase": {
     "frame": { "x": 64, "y": 64, "w": 32, "h": 32 },
     "rotated": false,
     "trimmed": false,
@@ -98,8 +87,7 @@
     "sourceSize": { "w": 32, "h": 32 },
     "duration": 60
    },
-   {
-    "filename": "red2 11.ase",
+   "red 11.ase": {
     "frame": { "x": 96, "y": 64, "w": 32, "h": 32 },
     "rotated": false,
     "trimmed": false,
@@ -107,11 +95,11 @@
     "sourceSize": { "w": 32, "h": 32 },
     "duration": 60
    }
- ],
+ },
  "meta": {
   "app": "http://www.aseprite.org/",
   "version": "1.1.6-dev",
-  "image": "/home/bonbonbaron/.jb/red2.png",
+  "image": "/home/bonbonbaron/jb/red.png",
   "format": "RGBA8888",
   "size": { "w": 128, "h": 96 },
   "scale": "1",

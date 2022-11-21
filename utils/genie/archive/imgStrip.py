@@ -34,7 +34,7 @@ PNG_IDAT_END          = bytearray("IEND".encode())
 IMG_DIR_IDX_NAME      = 0
 IMG_DIR_IDX_LOCATION  = 1
 IMG_DIR_IDX_NBR_TILES = 2
-TROVE_IMAGE_DIR       = "~/.jb/src/Image"
+TROVE_IMAGE_DIR       = "~/jb/src/Image"
 
 BYTEORDER = "little"  # since that's the order files are written in
  

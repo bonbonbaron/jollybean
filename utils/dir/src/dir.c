@@ -1,6 +1,6 @@
 #include "dir.h"
 
-const char LOCAL_TROVE_BOOKKEEPING_DIR[] = "/.jb/src/Bookkeeping/";
+const char LOCAL_TROVE_BOOKKEEPING_DIR[] = "/jb/src/Bookkeeping/";
 
 static Error _dirNew(char *filepath, U8 verbose) {
   const static Directory dirPrototype = {0};

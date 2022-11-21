@@ -2,7 +2,7 @@
 IMAGESUBDIRS=Image/{ColorMap,ColorPalette,StripMap,StripSet}
 PERSONALITYSUBDIRS=personality/tree/node
 INCLUDE=include
-JB=$HOME/.jb
+JB=$HOME/jb
 JB_CONFIG=$JB/config
 GAMES_FILE=$JB/games
 

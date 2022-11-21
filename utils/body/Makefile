@@ -12,6 +12,7 @@ ${BINDIR}/img: \
 	../file/build/fileUtils.o \
 	${BUILDDIR}/img.o \
 	../dir/build/dir.o \
+	../genie/build/genie.o \
 	../strip/build/strip.o \
 	../inflatable/build/inflatable.o \
 	${BUILDIR} ${BINDIR}
@@ -30,7 +31,19 @@ ${BINDIR}/img: \
 
 # Compiler
 ${BUILDDIR}/img.o: ./src/img.c ./src/include/img.h ${BUILDDIR}
-	$(CC) -g $(shell sdl2-config --cflags) $(shell pkg-config --cflags zlib) $(shell libpng-config --cflags) -I../strip/src/include -I./src/include -I../inflatable/src/include -I${HOME}/hack/botox/src/include -I../file/src/include/ -I${HOME}/hack/jollybean/src/include -I../dir/src/include -O0 -c ./src/img.c -o $@
+	$(CC) -g \
+		$(shell sdl2-config --cflags) \
+		$(shell pkg-config --cflags zlib) \
+		$(shell libpng-config --cflags) \
+		-I../strip/src/include \
+		-I./src/include \
+		-I../inflatable/src/include \
+		-I${HOME}/hack/botox/src/include \
+		-I../file/src/include/ \
+		-I${HOME}/hack/jollybean/src/include \
+		-I../dir/src/include \
+		-I../genie/src/include \
+		-O0 -c ./src/img.c -o $@
 	touch $@
 
 ../file/build/fileUtils.o: ../file/src/fileUtils.c ../file/src/include/fileUtils.h
@@ -44,6 +57,9 @@ ${BUILDDIR}/img.o: ./src/img.c ./src/include/img.h ${BUILDDIR}
 
 ../dir/build/dir.o: ../dir/src/dir.c ../dir/src/include/dir.h
 	make -C ../dir
+
+../genie/build/genie.o: ../genie/src/genie.c ../genie/src/include/genie.h
+	make -C ../genie
 
 # Build directory (dependency)
 ${BUILDDIR}:

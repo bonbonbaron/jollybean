@@ -12,11 +12,12 @@
 #include <stdlib.h>
 #include "strip.h"
 #include "dir.h"
+#include "genie.h"
 
-//const char LOCAL_TROVE_IMAGE_DIR[] = "/.jb/src/Image/";
-const char TROVE_IMG_OBJ_DIR[] = "/.jb/build/Image/obj/";
-const char TROVE_IMG_SRC_DIR[] = "/.jb/build/Image/src/";
-const char TROVE_IMG_INC_DIR[] = "/.jb/build/Image/include/";
+//const char LOCAL_TROVE_IMAGE_DIR[] = "/jb/src/Image/";
+const char TROVE_IMG_OBJ_DIR[] = "/jb/build/Image/obj/";
+const char TROVE_IMG_SRC_DIR[] = "/jb/build/Image/src/";
+const char TROVE_IMG_INC_DIR[] = "/jb/build/Image/include/";
 
 typedef struct {
   U32 w, h, pitch, bpp;
