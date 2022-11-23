@@ -1,5 +1,5 @@
 #!/bin/bash
-IMAGESUBDIRS=Image/{ColorMap,ColorPalette,StripMap,StripSet}
+IMAGESUBDIRS=Image/{Colormap,ColorPalette,StripMap,StripSet}
 PERSONALITYSUBDIRS=personality/tree/node
 INCLUDE=include
 JB=$HOME/jb
@@ -20,7 +20,7 @@ function gameNew {
   for game in $@; do
     if ! gameExists $game; then
       echo "Making directory structure for new game $1..."
-      mkdir -p ./$game/{biome/seed/{genome/{blackboard,ecs_component/Image/{ColorMap,ColorPalette,StripMap,StripSet},ecs_shared},personality/tree/node},include}
+      mkdir -p ./$game/{biome/seed/{genome/{blackboard,ecs_component/Image/{Colormap,ColorPalette,StripMap,StripSet},ecs_shared},personality/tree/node},include}
       echo "$game $(pwd)/$game" >> $GAMES_FILE
     else
       echo "Game \"$game\" already exists in $(gameGetPath $game). Skipping..."

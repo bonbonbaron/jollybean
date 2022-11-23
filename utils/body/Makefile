@@ -8,9 +8,14 @@ BINDIR         = ./bin
 INSTALLDIR     = /usr/local/lib
 
 # Linker
-${BINDIR}/img: \
+${BINDIR}/body: \
 	../file/build/fileUtils.o \
+	../genie/build/genie.o \
+	../strip/build/strip.o \
+	${BUILDDIR}/body.o \
 	${BUILDDIR}/img.o \
+	${BUILDDIR}/anim.o \
+	${BUILDDIR}/coll.o \
 	../dir/build/dir.o \
 	../genie/build/genie.o \
 	../strip/build/strip.o \
@@ -23,6 +28,7 @@ ${BINDIR}/img: \
 	../strip/build/strip.o \
 	../inflatable/build/inflatable.o \
 	-L${HOME}/hack/botox/lib/ -lbotox \
+	-lfastjson\
 	$(shell pkg-config --libs zlib) \
 	$(shell sdl2-config --libs) \
 	$(shell libpng-config --libs) \
@@ -30,7 +36,7 @@ ${BINDIR}/img: \
 	touch $@
 
 # Compiler
-${BUILDDIR}/img.o: ./src/img.c ./src/include/img.h ${BUILDDIR}
+${BUILDDIR}/%.o: ./src/%.c ./src/include/%.h ${BUILDDIR}
 	$(CC) -g \
 		$(shell sdl2-config --cflags) \
 		$(shell pkg-config --cflags zlib) \
@@ -43,7 +49,8 @@ ${BUILDDIR}/img.o: ./src/img.c ./src/include/img.h ${BUILDDIR}
 		-I${HOME}/hack/jollybean/src/include \
 		-I../dir/src/include \
 		-I../genie/src/include \
-		-O0 -c ./src/img.c -o $@
+		-I/usr/include/libfastjson \
+		-O0 -c $< -o $@
 	touch $@
 
 ../file/build/fileUtils.o: ../file/src/fileUtils.c ../file/src/include/fileUtils.h

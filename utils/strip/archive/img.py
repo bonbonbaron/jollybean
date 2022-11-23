@@ -263,7 +263,7 @@ def convertToRGBHex(rgbNPArray):
 # Color brightness formula:
 #   https://stackoverflow.com/questions/59628/formula-to-determine-brightness-of-rgb-color
 ###########################################
-def iniColorMap(img):
+def iniColormap(img):
     # Get unique pixel values to make color palette
     # I only want to support up to 8 colors like the SNES.
     color_palette = get_color_palette(img)
@@ -387,7 +387,7 @@ def compress_img(img_fp):
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
     #~~~~~ Colormap Tileset & Tileset ~~~~~~~#
     #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~#
-    colormap, colorPalette = iniColorMap(img)
+    colormap, colorPalette = iniColormap(img)
     tileList, tilemap = map_tiles(colormap)
     flat_packed_tileset = bytes(packBytes(tileList, bpp).tolist())
 

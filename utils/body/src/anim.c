@@ -342,59 +342,63 @@ Error writeAnimation(char *entityName, Animation *animP) {
   fclose(fP);
 }
 
-Error writeGene() {
-
-
-}
-
-int main (int argc, char **argv) {
-  Error e = SUCCESS;
-  if (argc > 1) {  // argv[0] is this program's name
-    // iterate through arguments
-    for (int i = 1; i < argc; ++i) {
-      if (!strcmp(argv[i], "-v"))
-        verbose = 1;
-      //else if (argv[i][0] == '|' || argv[i][0] == '&' || argv[i][0] == ';') 
-        //return e;
-      else  {
-        fjson_object *new_obj;
-        /* Which one you choose depends on whether you want to test 
-           on the json file's "frames" being an array or object. */
-        FILE *fP = fopen(argv[i], "r");
-        if (!fP) {
-          printf("failed to open %s.\n", argv[i]);
-          return 1;
-        }
-        fseek(fP, 0, SEEK_END);
-        int nBytes = ftell(fP);
-        char jsonFileContents[nBytes];
-        memset(jsonFileContents, 0, nBytes);
-        fseek(fP, 0, SEEK_SET);
-
-        int nBytesRead = fread(&jsonFileContents[0], 1, nBytes, fP);
-        assert(nBytesRead == nBytes);
-
-        fjson_object *topLevelObjP = fjson_tokener_parse(jsonFileContents);
-
-        // Go dig up all the stuff.
-        Animation anim = {0};
-        e = getJsonData(&anim, topLevelObjP);
-        if (!e && verbose)
-          printResults(&anim);
-        if (!e) {
-          U32 startIdx, len;
-          parseName(argv[i], ".json", &startIdx, &len);
-          char entityName[len];
-          memcpy(entityName, &argv[i][startIdx], len);
-          entityName[len - 1] = '\0';
-          e = writeAnimation(entityName, &anim);
-        }
-      }
-    }
+Error anim (char *filepath, U8 verbose, Animation **animPP) {
+  if (!filepath || !animPP) {
+    return E_BAD_ARGS;
   }
+
+  Error e = SUCCESS;
+  // iterate through arguments
+  fjson_object *new_obj;
+  FILE *fP = fopen(argv[i], "r");
+  if (!fP) {
+    printf("failed to open %s.\n", argv[i]);
+    *animPP = NULL;
+    return E_FILE_IO;
+  }
+  fseek(fP, 0, SEEK_END);
+
+  // Get file size
+  int nBytes = ftell(fP);
+  char jsonFileContents[nBytes];
+  memset(jsonFileContents, 0, nBytes);
+  fseek(fP, 0, SEEK_SET);
+
+  // Read json file
+  int nBytesRead = fread(&jsonFileContents[0], 1, nBytes, fP);
+  assert(nBytesRead == nBytes);
+
+  // Parse json file
+  fjson_object *topLevelObjP = fjson_tokener_parse(jsonFileContents);
+
+  // Turn it into a C struct
+  Animation *animP;
+  if (!e) {
+    e = jbAlloc((void**) &animP, sizeof(Animation), 1);
+  }
+  if (!e) {
+    e = getJsonData(&animP, topLevelObjP);
+  }
+  if (!e && verbose) {
+    printResults(&animP);
+  }
+  if (!e) {
+    U32 startIdx, len;
+    parseName(argv[i], ".json", &startIdx, &len);
+    char entityName[len];
+    memcpy(entityName, &argv[i][startIdx], len);
+    entityName[len - 1] = '\0';
+    e = writeAnimation(entityName, &animP);
+  }
+
+  // Return animation if it's good; otherwise free it and return NULL.
+  if (!e) {
+    *animPP = animP;
+  }
+  else {
+    *animPP = NULL;
+    jbFree((void**) &animP);
+  }
+
   return e;
 }
-
-// get meta
-// write C file in trove
-// compile C file automatically

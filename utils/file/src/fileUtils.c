@@ -15,7 +15,11 @@ void parseName(char *filepathP, char *extension, U32 *entityNameIdxP, U32 *entit
   // Get both entity starting position.
   for (U8 i = filenameLen - 1; i >= 0; --i) {
     switch (filepathP[i]) {
-      case FILE_SEP:
+#ifdef WINDOWS
+      case '/':
+#else
+      case '\\':
+#endif
         *entityNameIdxP = i + 1;
         goto breakout;
     }
@@ -61,18 +65,10 @@ void writeRawData32(FILE *fP, U32 *byteA, U32 nBytes) {
   }
 }
 
-FILE* openFile(char *fp) {
-  if (access(fp, F_OK) == 0) {
-    fopen(fp);
-  } else {
-    return NULL;
-  }
-}
-
 Error getSrcDir(char **srcDirPath, U32 nExtraSpaces, char *srcLocalDirName) {
-  const char HOME = getenv("HOME");
+  char *HOME = getenv("HOME");
   char *jbDir;
-  Error e = jbAlloc(srcDirPath, sizeof(char), 
+  Error e = jbAlloc((void**) srcDirPath, sizeof(char), 
               strlen(HOME)         + strlen(SEP) + 
               strlen(JB_DIR_NAME)  + strlen(SEP) + 
               strlen(SRC_DIR_NAME) + strlen(SEP) + 
@@ -88,6 +84,8 @@ Error getSrcDir(char **srcDirPath, U32 nExtraSpaces, char *srcLocalDirName) {
     strcat(jbDir, SEP);
   }
 
+  // TODO do i have to free this?
+  free(HOME);
   return e;
 }
 
@@ -96,11 +94,11 @@ Error getSrcFilePath(char **srcFilePath, char *srcLocalDirName, char *srcFileNam
 
  Error e = getSrcDir(&srcDirPath, strlen(srcFileName), srcLocalDirName);
 
- if (!e) {
-   strcat(srcFilePath, srcFileName);
+ if (!e && *srcFilePath) {
+   strcat(*srcFilePath, srcFileName);
  }
  else {
-   jbFree(srcFileName);
+   jbFree((void**) srcFilePath);
  }
 
  return e;

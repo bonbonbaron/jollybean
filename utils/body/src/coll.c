@@ -167,48 +167,41 @@ Error writeCollisionTree(char *entityName, CollisionTree *collTreeP) {
   fclose(fP);
 }
 
-int main (int argc, char **argv) {
-  Error e = SUCCESS;
-  if (argc > 1) {  // argv[0] is this program's name
-    // iterate through arguments
-    for (int i = 1; i < argc; ++i) {
-      if (!strcmp(argv[i], "-v")) {
-        verbose = 1;
-        continue;
-      }
-      // allow for interleaving foregound files with background files
-      else if (!strcmp(argv[i], "-b")) {
-        IS_GRID = 1;
-        continue;
-      }
-      else if (!strcmp(argv[i], "-f"))  {  
-        IS_GRID = 0;
-        continue;
-      }
-      // Process the current file.
-      else {
-        png_image *pngImgP = NULL;
-        U32 pixelSize = 0;
-        U8 *pixelA = NULL;
-        U8 *colorPaletteA = NULL;
-        e = readPng(&pngImgP, argv[i], &pixelSize, &pixelA, &colorPaletteA);
-        // Background objects are pixel-by-pixel-(grid)-based, so they need to be compressed into strips.
-        if (IS_GRID) {
-          if (!e) {  // Start doing brackets... Leaving them out hurts dev speed and reading comprehension.
-            e = getColorPaletteAndColormap(&colorPaletteA, &colormapA, &nColors, pngImgP, pixelP, 16, srcPixelSize);
-          }
+Error findCollisionRect(Animation *animP) {
 
-          arrayDel((void**) &stripset.dataA);
-        }
-        // Foreground objects are rectangle-based, so you only need to find the rectangle in each frame.
-        else { 
-        }
-        arrayDel((void**) &colorPaletteA);
-        arrayDel((void**) &pixelA);
-        free(pngImgP);
-      }
+}
+
+// If animation is passed in, then we want to find the collision rect in each individual frame.
+// 
+// We consider each rectangle to have only one collision type, but the type may differ from 
+// one rectangle to the next.
+//
+// If it's a background, we treat it as a pixel-perfect (AKA grid) collision object with 
+// multiple collision types.
+//
+// For now at least, the input cannot be both animation and background. 
+Error coll(Directory *dirP, U8 isBg, Animation *animP, U8 verbose) {
+  Error e = SUCCESS;
+  png_image *pngImgP = NULL;
+  U32 pixelSize = 0;
+  U8 *pixelA = NULL;
+  U8 *colorPaletteA = NULL;
+  // Get pixels of 
+  e = readPng(&pngImgP, argv[i], &pixelSize, &pixelA, &colorPaletteA);
+  // Background objects are pixel-by-pixel-(grid)-based, so they need to be compressed into strips.
+  if (isBg) {
+    if (!e) {  // Start doing brackets... Leaving them out hurts dev speed and reading comprehension.
+      e = getColorPaletteAndColormap(&colorPaletteA, &colormapA, &nColors, pngImgP, pixelP, 16, srcPixelSize);
     }
+
+    arrayDel((void**) &stripset.dataA);
   }
+  // Foreground objects are rectangle-based, so you only need to find the rectangle in each frame.
+  else { 
+  }
+  arrayDel((void**) &colorPaletteA);
+  arrayDel((void**) &pixelA);
+  free(pngImgP);
   return e;
 }
 

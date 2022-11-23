@@ -427,7 +427,7 @@ Error getColorPaletteAndColormap(U8 **colorPaletteAP, U8 **colormapAP, U32 *nCol
 }
 
 //##########################################
-Error compressImg(char *imgFilePathP, Directory *dirP, U8 verbose) {
+Error img(char *imgFilePathP, Directory *cpDirP, Directory *cmDirP, U8 verbose) {
   U8 *pixelP = NULL;  // can be 1bpp colormap, 2bpp gray+alpha, or 4bpp RGBA
   U8 *colorPaletteA = NULL;
   U8 *colormapA = NULL;
@@ -476,15 +476,17 @@ badPixel:
     U32 entityNameIdx, entityNameLen;
     parseName(imgFilePathP, ".png", &entityNameIdx, &entityNameLen);
     memcpy((void*) entityName, (void*) &imgFilePathP[entityNameIdx], entityNameLen);
-    if (verbose)
+    if (verbose) {
       printf("Entity name is %s.\n", entityName);
+    }
   }
-  if (!e)
+  if (!e) {
     if (!entityName[0]) {
       if (verbose)
         printf("entity name is empty!\n");
       return E_BAD_ARGS;
     }
+  }
 
   // Give game engine the stripMap for this image if it applies.
   if (!e)
@@ -499,18 +501,18 @@ badPixel:
     EntryData entryDataToFind;
     entryDataToFind.palette.nColors = nColors;
     memcpy(entryDataToFind.palette.paletteA, colorPaletteA, sizeof(U32) * nColors);
-    char *existingPaletteName = dirFindNameByValue(dirP, &entryDataToFind, verbose);
+    char *existingPaletteName = dirFindNameByValue(cpDirP, &entryDataToFind, verbose);
     if (!existingPaletteName) {
       genieAsk(
           "This palette is new. What would you like to name it?", 
-          DIR_FILE, (List*) dirP, verbose);
+          DIR_FILE, (List*) cpDirP, verbose);
       // Store our palette only because it doesn't already exist in the directory.
       e = writeColorPaletteHeaderFile(entityName, verbose);
       if (!e)
         e = writeJbColorPalette(entityName, colorPaletteA, verbose);
       if (!e)
       if (!e)
-        dirAddEntry(dirP, entityName, &entryDataToFind, verbose);  // TODO replace entity name with name which genie prompots you for
+        dirAddEntry(cpDirP, entityName, &entryDataToFind, verbose);  // TODO replace entity name with name which genie prompots you for
     }
     else 
       if (verbose)
@@ -521,23 +523,5 @@ badPixel:
   arrayDel((void**) &colorPaletteA);
   arrayDel((void**) &pixelP);
   free(pngImgP);
-  return e;
-}
-
-// Passing in the palette directory mitigates file I/O. 
-// The caller can keep it open across all the bodies it operates on.
-Error img(FILE *fP, Directory *paletteDirectoryP, U8 verbose) {
-  if (!fP)
-    return E_BAD_ARGS;
-  Error e = SUCCESS;
-    // Iterate through arguments
-    if (!e)
-      for (int i = 1 + verbose; i < argc; ++i) {
-        if (verbose) {
-          printf("\n================\n%s\n", argv[i]);
-        }
-        e = compressImg(argv[i], dirP, verbose);
-      }
-  }
   return e;
 }
