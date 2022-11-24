@@ -107,7 +107,7 @@ void setFrame(FrameNode *frameP, fjson_object *jsonObjP) {
 }
 // At this point the caller has run into the "frames" key. 
 // Its value is either going to be an object of objects or an array of objects.
-Error setFrames(FrameNode **framePP, fjson_object *jsonObjP, fjson_type framesType) {
+Error setFrames(FrameNode **framePP, fjson_object *jsonObjP, fjson_type framesType, U8 verbose) {
   if (!framePP || !jsonObjP)
     return E_BAD_ARGS;
 
@@ -173,7 +173,7 @@ Error setFrames(FrameNode **framePP, fjson_object *jsonObjP, fjson_type framesTy
 }
 
 // At this point the caller has run into the "frameTags" key. 
-Error setTags(TagNode **tagNodePP, fjson_object *jsonObjP) {
+Error setTags(TagNode **tagNodePP, fjson_object *jsonObjP, U8 verbose) {
   if (!tagNodePP || !jsonObjP)
     return E_BAD_ARGS;
 
@@ -253,7 +253,7 @@ void printResults(Animation *animP) {
 
 // JSON tree traversal 
 // ====================
-Error getJsonData(Animation *animP, fjson_object *objP) {
+Error getJsonData(Animation *animP, fjson_object *objP, U8 verbose) {
   Error e = SUCCESS;
   struct fjson_object_iterator itr =  fjson_object_iter_begin(objP);
   struct fjson_object_iterator itrEnd =  fjson_object_iter_end(objP);
@@ -262,7 +262,7 @@ Error getJsonData(Animation *animP, fjson_object *objP) {
     fjson_object *currObjP = fjson_object_iter_peek_value(&itr);
     const char *name = fjson_object_iter_peek_name(&itr);
     if (!strcmp(name, "frames")) 
-      e = setFrames(&animP->frameNodeA, currObjP, fjson_object_get_type(currObjP));
+      e = setFrames(&animP->frameNodeA, currObjP, fjson_object_get_type(currObjP), verbose);
     else if (!strcmp(name, "meta")) {
       struct fjson_object_iterator metaItr = fjson_object_iter_begin(currObjP);
       struct fjson_object_iterator metaItrEnd =  fjson_object_iter_end(currObjP);
@@ -270,7 +270,7 @@ Error getJsonData(Animation *animP, fjson_object *objP) {
         const char *name = fjson_object_iter_peek_name(&metaItr);
         if (!strcmp(name, "frameTags")) {
           fjson_object *metaArrayObjP = fjson_object_iter_peek_value(&metaItr);
-          e = setTags(&animP->tagNodeA, metaArrayObjP);
+          e = setTags(&animP->tagNodeA, metaArrayObjP, verbose);
           break;
         }
       }
@@ -298,15 +298,15 @@ FrameNode* getFrameNode(FrameNode *rootP, U32 idx) {
 }
 
 Error writeAnimation(char *entityName, Animation *animP) {
-  char fp[200] = {0};
-  strcpy(fp, TROVE_ANIM_DIR);
-  strcat(fp, entityName);
-  strcat(fp, ".c");
-  FILE *fP = fopen(fp, "w");
+  char *dstFilepathP = NULL;
+  Error e = getSrcFilePath(&dstFilepathP, "Body/Graybody/Colormap/", entityName); 
+  FILE *fP = fopen(dstFilepathP, "w");
   if (!fP) {
-    printf("failed to open %s\n", fp);
+    printf("failed to open %s\n", dstFilepathP);
+    jbFree((void**) dstFilepathP);
     return E_NO_MEMORY;
   }
+  jbFree((void**) dstFilepathP);
   fprintf(fP, "#include \"xAnim.h\"\n\n");
   // Write frame arrays.
   for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
@@ -350,9 +350,9 @@ Error anim (char *filepath, U8 verbose, Animation **animPP) {
   Error e = SUCCESS;
   // iterate through arguments
   fjson_object *new_obj;
-  FILE *fP = fopen(argv[i], "r");
+  FILE *fP = fopen(filepath, "r");
   if (!fP) {
-    printf("failed to open %s.\n", argv[i]);
+    printf("failed to open %s.\n", filepath);
     *animPP = NULL;
     return E_FILE_IO;
   }
@@ -377,18 +377,18 @@ Error anim (char *filepath, U8 verbose, Animation **animPP) {
     e = jbAlloc((void**) &animP, sizeof(Animation), 1);
   }
   if (!e) {
-    e = getJsonData(&animP, topLevelObjP);
+    e = getJsonData(animP, topLevelObjP, verbose);
   }
   if (!e && verbose) {
-    printResults(&animP);
+    printResults(animP);
   }
   if (!e) {
     U32 startIdx, len;
-    parseName(argv[i], ".json", &startIdx, &len);
+    parseName(filepath, ".json", &startIdx, &len);
     char entityName[len];
-    memcpy(entityName, &argv[i][startIdx], len);
+    memcpy(entityName, &filepath[startIdx], len);
     entityName[len - 1] = '\0';
-    e = writeAnimation(entityName, &animP);
+    e = writeAnimation(entityName, animP);
   }
 
   // Return animation if it's good; otherwise free it and return NULL.

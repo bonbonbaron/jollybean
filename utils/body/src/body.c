@@ -14,10 +14,10 @@ int main(int argc, char ** argv) {
   // Directories
   Error e = dirGet(&cpDirP, "ColorPalette", argc, verbose);
   if (!e) {
-    origNColorPalettes = cpDirP->nEntries;
     e = dirGet(&cmDirP, "Colormap", argc, verbose);
   }
   if (!e) {
+    origNColorPalettes = cpDirP->nEntries;
     origNColormaps = cmDirP->nEntries;
     cpDirP = cmDirP = NULL;
     origNColorPalettes = origNColormaps = 0;
@@ -45,7 +45,7 @@ int main(int argc, char ** argv) {
       e = getSrcFilePath(&srcFilePath, "Body/Graybody/Collision/", argv[i]); 
     }
     if (!e) {
-      e = coll(srcFilePath, animP);
+      e = coll(srcFilePath, 0, animP, verbose);
     }
     jbFree((void**) &animP);
     jbFree((void**) &srcFilePath);
@@ -54,11 +54,17 @@ int main(int argc, char ** argv) {
   }
 
   // Save the updated palette directory AFTER all updates are done.
-  if (!e && cpDirP->nEntries != origNSavedPalettes) {
-    e = dirReplaceOriginal(cpDirP, CP_DIR_NAME, verbose);
+  if (!e && cpDirP->nEntries != origNColorPalettes) {
+    e = dirReplaceOriginal(cpDirP, "ColorPalette", verbose);
   }
   else if (verbose) {
     printf("\nNo new palettes to write.\n");
+  }
+  if (!e && cmDirP->nEntries != origNColormaps) {
+    e = dirReplaceOriginal(cpDirP, "Colormap", verbose);
+  }
+  else if (verbose) {
+    printf("\nNo new colormaps to write.\n");
   }
 
   return e;

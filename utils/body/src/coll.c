@@ -1,3 +1,4 @@
+#include "fileUtils.h"
 #include "img.h"
 #include "anim.h"
 
@@ -5,128 +6,9 @@
  * this way you don't have to recompile this tool before
  * using it again. */
 
-static ColorCollisionDirectory *newDirectoryP = NULL;  // is used to replace above binary file
-
-Error createExistingDirectory(char *filepath) {
-  const static ColorCollisionDirectory palDirPrototype = {0};
-  FILE *fP = fopen(filepath, "wb");
-  if (fP) {
-    fwrite(&palDirPrototype, sizeof(ColorCollisionDirectory), 1, fP);
-    fclose(fP);
-  }
-  else { 
-    if (verbose)
-      printf("Failed to create missing file, %s\n", filepath);
-    return E_BAD_ARGS;
-  }
-  return SUCCESS;
-}
-
-Error getExistingDirectory(int argc) {
-  char *HOME = getenv("HOME");
-  char filepath[strlen(HOME) + strlen(LOCAL_TROVE_BOOKKEEPING_DIR) + strlen(COLORCOLLMAPPING_FILENAME)];
-  strcpy(filepath, HOME);
-  strcat(filepath, LOCAL_TROVE_BOOKKEEPING_DIR);
-  strcat(filepath, COLORCOLLMAPPING_FILENAME);
-
-  Error e = SUCCESS;
-
-  // Read just top-level object 
-  FILE *fP = fopen(filepath, "rb");
-  if (!fP) {
-    fclose(fP);
-    e = createExistingDirectory(filepath);
-    if (!e) {
-      fP = fopen(filepath, "rb");  // Should open if we successfully created it.
-      if (!fP)
-        e = E_BAD_ARGS;
-    }
-  }
-
-  U32 nBytesTotal = 0;
-  if (!e) {
-    fseek(fP, 0, SEEK_END);
-    nBytesTotal = ftell(fP);
-    e = jbAlloc((void**) &newDirectoryP, 2 *(nBytesTotal + (argc * sizeof(SavedColorCollisionMapping))), 1);  // "* 2" just for safety
-  }
-  if (!e) {
-    fseek(fP, 0, SEEK_SET);
-    U32 nBytesRead = fread(newDirectoryP, 1, nBytesTotal, fP);
-    if (verbose)
-      printf("read %d bytes out of %d expected\n", nBytesRead, nBytesTotal);
-    assert(nBytesRead == nBytesTotal);
-    if (verbose)
-      printf("Existing directory contains %d entries and %d bytes.\n", newDirectoryP->nSavedColorCollisionMappings, nBytesTotal);
-  
-    fclose(fP);
-  }
-
-  return e;
-}
-
-Error replaceExistingDirectory() {
-  char *HOME = getenv("HOME");
-  char filepath[strlen(HOME) + strlen(LOCAL_TROVE_BOOKKEEPING_DIR) + strlen(COLORCOLLMAPPING_FILENAME)];
-  strcpy(filepath, HOME);
-  strcat(filepath, LOCAL_TROVE_BOOKKEEPING_DIR);
-  strcat(filepath, COLORCOLLMAPPING_FILENAME);
-
-  Error e = SUCCESS;
-
-  // Open the file.
-  FILE *fP = fopen(filepath, "wb");
-  if (!fP) {
-    fclose(fP);
-    return E_BAD_ARGS;
-  }
-
-  // Write to it.
-  U32 nBytesToWrite = sizeof(ColorCollisionDirectory) + (newDirectoryP->nSavedColorCollisionMappings * sizeof(SavedColorCollisionMapping));
-  U32 nBytesWritten = fwrite(newDirectoryP, 1, nBytesToWrite, fP);
-  if (verbose) {
-    printf("\n\n%d actual of %d expected bytes written to directory file:.\n", nBytesWritten, nBytesToWrite);
-    printf("\tPalette directory: %d bytes\n", sizeof(ColorCollisionDirectory));
-    printf("\t%d saved palettes (%d bytes each): %d bytes\n", newDirectoryP->nSavedColorCollisionMappings, sizeof(SavedColorCollisionMapping), nBytesToWrite);
-    printf("Output filepath:\n");
-    printf("\t%s\n", filepath);
-  }
-
-  // Close it.
-  fclose(fP);
-
-  return e;
-}
-
-void appendColorCollisionDirectory(char *name, U32 *colorA, U32 nColors) {
-  if (verbose)
-    printf("adding %s to directory\n", name);
-
-  SavedColorCollisionMapping newPalette = {
-    .nColors = nColors,
-    .paletteName = "abc",
-    .paletteA = {0}
-  };
-  memcpy(&newPalette.paletteA, colorA, nColors * sizeof(U32));
-  strcpy(newPalette.paletteName, name);
-
-  newDirectoryP->savedPalettesA[newDirectoryP->nSavedColorCollisionMappings++] = newPalette;
-}
-
-char* queryDirectoryForPaletteName(U32 *colorA, U32 nColors) {
-  for (int i = 0; i < newDirectoryP->nSavedColorCollisionMappings; ++i)
-    if (newDirectoryP->savedPalettesA[i].nColors == nColors)
-      if (!memcmp(newDirectoryP->savedPalettesA[i].paletteA, colorA, sizeof(U32) * nColors))
-        return newDirectoryP->savedPalettesA[i].paletteName;
-  return NULL;
-}
-
-static U8 IS_GRID = false;
-
 Error writeCollisionTree(char *entityName, CollisionTree *collTreeP) {
-  char fp[200] = {0};
-  strcpy(fp, TROVE_ANIM_DIR);
-  strcat(fp, entityName);
-  strcat(fp, ".c");
+  char *filepath = NULL;
+  getSrcFilePath(&fp, 
   FILE *fP = fopen(fp, "w");
   if (!fP) {
     printf("failed to open %s\n", fp);
@@ -167,8 +49,111 @@ Error writeCollisionTree(char *entityName, CollisionTree *collTreeP) {
   fclose(fP);
 }
 
-Error findCollisionRect(Animation *animP) {
+static U8* calcFirstPixelP(FrameNode *fNodeP, U8 *pixelA, U32 pixelSize, U32 imgPitch) {
+  if (fNodeP) {
+    return pixelA 
+      + (fNodeP->x * pixelSize)  // starting from frame's first pixel's column...
+      + (fNodeP->y * imgPitch);  // ... jumping to start of frame's last row
+  }
+  else {
+    return pixelA;
+  }
+}
 
+static U8* calcLastPixelP(FrameNode *fNodeP, U8 *firstPixelP, U32 pixelSize, U32 imgPitch) {
+  if (fNodeP) {
+    return firstPixelP + 
+      + (fNodeP->w * pixelSize)  // starting from frame's first pixel's column...
+      + (fNodeP->h * imgPitch);  // ... jumping to start of frame's last row
+  }
+  else {
+    // assuming firstPixel is the start of the array, as per calcFirstPixel()
+    return firstPixelP + (arrayGetNElems(firstPixelP) * arrayGetElemSz(firstPixelP));
+  }
+}
+
+#define findRect_(bpp_) \
+  /* if this is an animated collison rectangle... */ \
+  if (animP) { \
+    /* for each frame... */ \
+    for (FrameNode *fNodeP = animP->frameNodeA; fNodeP; fNodeP = fNodeP->nextP) { \
+      U##bpp_ *pixelP = calcFirstPixelP(fNodeP, pixelA, pixelSize, imgPitch); \
+      /* for each row in frame... */ \
+      for (int i = 0; i < fNodeP->h; ++i, pixelP += imgPitch) { \
+        U##bpp_ *pixelEndP = calcLastPixelP(fNodeP, pixelP, pixelSize, imgPitch); \
+        /* for each pixel in frame's current row... */ \
+        for (int j = 0; pixelP < pixelEndP; ++j, ++pixelP) { \
+          if (*pixelP) { \
+            if (rectP->x < 0) { \
+              rectP->x = fNodeP->x + j; \
+            } \
+            if (rectP->y < 0) { \
+              rectP->y = fNodeP->y + i; \
+            } \
+          } \
+          /* If you've hit an empty pixel and you've found the rect's start already... */ \
+          else { \
+            if (rectP->x >= 0 && !rectP->w) { \
+              rectP->w = j - rectP->x; \
+            } \
+            if (rectP->y >= 0) {  /* height needs to be continually updated till end of rect */ \
+              rectP->h = i - rectP->y; \
+            } \
+          }  /* If you've hit an empty pixel and you've found the rect's start already... */ \
+        }  /* for each pixel in frame's current row */ \
+      }  /* for each row in frame... */ \
+    }  /* for each frame... */ \
+  }  /* if this is an animated collsion rectangle... */ \
+  /* If this is not animated, you only need to find one rectangle. */ \
+  else { \
+    U##bpp_ *pixelP = calcFirstPixel(NULL, pixelA, pixelSize, imgPitch); \
+    U##bpp_ *lastPixelP = calcLastPixel(NULL, pixelP, pixelSize, imgPitch); \
+    for (; pixelP < lastPixelP; ++pixelP) { \
+      if (*pixelP) { \
+        if (rectP->x < 0 ) { \
+          rectP->x = (pixelP - pixelA) % imgPitch; \
+        } \
+        if (rectP->y < 0) { \
+          rectP->y = (pixelP - pixelA) / imgPitch; \
+        } \
+      } \
+      /* If you've hit an empty pixel and you've found the rect's start already... */ \
+      else { \
+        if (rectP->x >= 0 && !rectP->w) { \
+          rectP->w = ((pixelP - pixelA) % imgPitch) - rectP->x; \
+        } \
+        if (rectP->y >= 0) {  /* height needs to be continually updated till end of rect */ \
+          rectP->h = ((pixelP - pixelA) / imgPitch) - rectP->y; \
+        } \
+      }  /* If you've hit an empty pixel and you've found the rect's start already... */ \
+    } \
+  } 
+
+Error findCollisionRects(U8 *pixelA, png_image *imgP, U32 pixelSize, Animation *animP, Rect_ *rectP) {
+  if (!pixelA || !imgP || !pixelSize || pixelSize > 4) {
+    return E_BAD_ARGS;
+  }
+  U32 nPixels = imgP->width * imgP->height;
+  U32 imgPitch = imgP->width * pixelSize;
+
+  // Initialize rectangle to negative numbers to make parameter-tracking easier.
+  rectP->x = rectP->y = rectP->w = rectP->h = -1;
+
+  switch (pixelSize) {
+    case 1:
+      findRect_(8)
+      break;
+    case 2:
+      findRect_(16)
+      break;
+    case 4:
+      findRect_(32)
+      break;
+    default:
+      return E_UNSUPPORTED_PIXEL_FORMAT;
+  }
+
+  return SUCCESS;
 }
 
 // If animation is passed in, then we want to find the collision rect in each individual frame.
@@ -180,24 +165,27 @@ Error findCollisionRect(Animation *animP) {
 // multiple collision types.
 //
 // For now at least, the input cannot be both animation and background. 
-Error coll(Directory *dirP, U8 isBg, Animation *animP, U8 verbose) {
-  Error e = SUCCESS;
+Error coll(char *fp, U8 isBg, Animation *animP, U8 verbose) {
+  if (!dirp || (isBg && animP)) {
+    return E_BAD_ARGS;
+  }
   png_image *pngImgP = NULL;
   U32 pixelSize = 0;
   U8 *pixelA = NULL;
   U8 *colorPaletteA = NULL;
-  // Get pixels of 
-  e = readPng(&pngImgP, argv[i], &pixelSize, &pixelA, &colorPaletteA);
-  // Background objects are pixel-by-pixel-(grid)-based, so they need to be compressed into strips.
-  if (isBg) {
-    if (!e) {  // Start doing brackets... Leaving them out hurts dev speed and reading comprehension.
-      e = getColorPaletteAndColormap(&colorPaletteA, &colormapA, &nColors, pngImgP, pixelP, 16, srcPixelSize);
+  // Get pixels of collision image
+  Error e = readPng(&pngImgP, fp, &pixelSize, &pixelA, &colorPaletteA);
+  if (!e) {
+    // Background objects are pixel-by-pixel-(grid)-based, so they need to be compressed into strips.
+    if (isBg) {
+      if (!e) {  // Start doing brackets... Leaving them out hurts dev speed and reading comprehension.
+        e = getColorPaletteAndColormap(&colorPaletteA, &colormapA, &nColors, pngImgP, pixelP, 16, srcPixelSize);
+      }
+      arrayDel((void**) &stripset.dataA);
     }
-
-    arrayDel((void**) &stripset.dataA);
-  }
-  // Foreground objects are rectangle-based, so you only need to find the rectangle in each frame.
-  else { 
+    // Foreground objects are rectangle-based, so you only need to find the rectangle in each frame.
+    else { 
+    }
   }
   arrayDel((void**) &colorPaletteA);
   arrayDel((void**) &pixelA);

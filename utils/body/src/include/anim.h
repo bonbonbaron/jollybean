@@ -9,12 +9,6 @@
 #include "fileUtils.h"
 #include "xAnim.h"
 
-#define TEST_ 1
-
-const char TROVE_ANIM_DIR[] = "/home/bonbonbaron/jb/src/Animation/";
-const char TROVE_GENE_DIR[] = "~/jb/src/Gene/";
-static int verbose = 0;
-
 typedef struct _TagNode {
   char *name;
   U32 from, to;

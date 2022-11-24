@@ -11,5 +11,6 @@
 
 #define TEST_ 1
 
+Error coll(char *fp, U8 isBg, Animation *animP, U8 verbose);
 // We color collidable objects' collision rectangles/grids.
 // That way we know how someone should react when bumping into them.

@@ -51,7 +51,7 @@ ${BUILDDIR}/%.o: ./src/%.c ./src/include/%.h ${BUILDDIR}
 		-I../genie/src/include \
 		-I/usr/include/libfastjson \
 		-O0 -c $< -o $@
-	touch $@
+		touch $@
 
 ../file/build/fileUtils.o: ../file/src/fileUtils.c ../file/src/include/fileUtils.h
 	make -C ../file
