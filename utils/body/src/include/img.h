@@ -15,9 +15,9 @@
 #include "genie.h"
 
 //const char LOCAL_TROVE_IMAGE_DIR[] = "/jb/src/Image/";
-const char TROVE_IMG_OBJ_DIR[] = "/jb/build/Image/obj/";
-const char TROVE_IMG_SRC_DIR[] = "/jb/build/Image/src/";
-const char TROVE_IMG_INC_DIR[] = "/jb/build/Image/include/";
+extern char TROVE_IMG_OBJ_DIR[];
+extern char TROVE_IMG_SRC_DIR[];
+extern char TROVE_IMG_INC_DIR[];
 
 typedef struct {
   U32 w, h, pitch, bpp;

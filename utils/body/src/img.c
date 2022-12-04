@@ -1,6 +1,10 @@
 #include "img.h"
 #include "genie.h"
 
+char TROVE_IMG_OBJ_DIR[] = "/jb/build/Image/obj/";
+char TROVE_IMG_SRC_DIR[] = "/jb/build/Image/src/";
+char TROVE_IMG_INC_DIR[] = "/jb/build/Image/include/";
+
 void imgDimsIni(ImgDims *imgDimsP, U32 width, U32 height, U32 bpp) {
   imgDimsP->w = width;
   imgDimsP->h = height;

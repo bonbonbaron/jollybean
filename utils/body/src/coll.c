@@ -6,7 +6,8 @@
  * this way you don't have to recompile this tool before
  * using it again. */
 
-Error writeCollisionTree(char *entityName, CollisionTree *collTreeP) {
+#if 0
+Error writeCollisionTree(char *entityName, Animation *collTreeP) {
   char *filepath = NULL;
   getSrcFilePath(&fp, 
   FILE *fP = fopen(fp, "w");
@@ -48,6 +49,7 @@ Error writeCollisionTree(char *entityName, CollisionTree *collTreeP) {
   }
   fclose(fP);
 }
+#endif
 
 static U8* calcFirstPixelP(FrameNode *fNodeP, U8 *pixelA, U32 pixelSize, U32 imgPitch) {
   if (fNodeP) {
@@ -77,10 +79,10 @@ static U8* calcLastPixelP(FrameNode *fNodeP, U8 *firstPixelP, U32 pixelSize, U32
   if (animP) { \
     /* for each frame... */ \
     for (FrameNode *fNodeP = animP->frameNodeA; fNodeP; fNodeP = fNodeP->nextP) { \
-      U##bpp_ *pixelP = calcFirstPixelP(fNodeP, pixelA, pixelSize, imgPitch); \
+      U##bpp_ *pixelP = (U##bpp_*) calcFirstPixelP(fNodeP, (U8*) pixelA, pixelSize, imgPitch); \
       /* for each row in frame... */ \
       for (int i = 0; i < fNodeP->h; ++i, pixelP += imgPitch) { \
-        U##bpp_ *pixelEndP = calcLastPixelP(fNodeP, pixelP, pixelSize, imgPitch); \
+        U##bpp_ *pixelEndP = (U##bpp_*) calcLastPixelP(fNodeP, (U8*) pixelP, pixelSize, imgPitch); \
         /* for each pixel in frame's current row... */ \
         for (int j = 0; pixelP < pixelEndP; ++j, ++pixelP) { \
           if (*pixelP) { \
@@ -106,24 +108,24 @@ static U8* calcLastPixelP(FrameNode *fNodeP, U8 *firstPixelP, U32 pixelSize, U32
   }  /* if this is an animated collsion rectangle... */ \
   /* If this is not animated, you only need to find one rectangle. */ \
   else { \
-    U##bpp_ *pixelP = calcFirstPixel(NULL, pixelA, pixelSize, imgPitch); \
-    U##bpp_ *lastPixelP = calcLastPixel(NULL, pixelP, pixelSize, imgPitch); \
+    U##bpp_ *pixelP = (U##bpp_*) calcFirstPixelP(NULL, (U8*) pixelA, pixelSize, imgPitch); \
+    U##bpp_ *lastPixelP = (U##bpp_*) calcLastPixelP(NULL, (U8*) pixelP, pixelSize, imgPitch); \
     for (; pixelP < lastPixelP; ++pixelP) { \
       if (*pixelP) { \
         if (rectP->x < 0 ) { \
-          rectP->x = (pixelP - pixelA) % imgPitch; \
+          rectP->x = (pixelP - (U##bpp_*) pixelA) % imgPitch; \
         } \
         if (rectP->y < 0) { \
-          rectP->y = (pixelP - pixelA) / imgPitch; \
+          rectP->y = (pixelP - (U##bpp_*) pixelA) / imgPitch; \
         } \
       } \
       /* If you've hit an empty pixel and you've found the rect's start already... */ \
       else { \
         if (rectP->x >= 0 && !rectP->w) { \
-          rectP->w = ((pixelP - pixelA) % imgPitch) - rectP->x; \
+          rectP->w = ((pixelP - (U##bpp_*) pixelA) % imgPitch) - rectP->x; \
         } \
         if (rectP->y >= 0) {  /* height needs to be continually updated till end of rect */ \
-          rectP->h = ((pixelP - pixelA) / imgPitch) - rectP->y; \
+          rectP->h = ((pixelP - (U##bpp_*) pixelA) / imgPitch) - rectP->y; \
         } \
       }  /* If you've hit an empty pixel and you've found the rect's start already... */ \
     } \
@@ -166,27 +168,36 @@ Error findCollisionRects(U8 *pixelA, png_image *imgP, U32 pixelSize, Animation *
 //
 // For now at least, the input cannot be both animation and background. 
 Error coll(char *fp, U8 isBg, Animation *animP, U8 verbose) {
-  if (!dirp || (isBg && animP)) {
+  if (!fp || (isBg && animP)) {
     return E_BAD_ARGS;
   }
+  StripSetS stripset = {0};
+  StripMapS stripmap = {0};
   png_image *pngImgP = NULL;
-  U32 pixelSize = 0;
+  U8 pixelSize = 0;
+  U32 nColors;
+  U8 bpp = 0;
   U8 *pixelA = NULL;
   U8 *colorPaletteA = NULL;
+  U8 *colormapA = NULL;
   // Get pixels of collision image
-  Error e = readPng(&pngImgP, fp, &pixelSize, &pixelA, &colorPaletteA);
+  Error e = readPng(&pngImgP, fp, &pixelSize, &pixelA, &colorPaletteA, verbose);
   if (!e) {
     // Background objects are pixel-by-pixel-(grid)-based, so they need to be compressed into strips.
     if (isBg) {
       if (!e) {  // Start doing brackets... Leaving them out hurts dev speed and reading comprehension.
-        e = getColorPaletteAndColormap(&colorPaletteA, &colormapA, &nColors, pngImgP, pixelP, 16, srcPixelSize);
+        e = getColorPaletteAndColormap(&colorPaletteA, &colormapA, &nColors, pngImgP, pixelA, 16, pixelSize, verbose);
       }
-      arrayDel((void**) &stripset.dataA);
+      // Colormap StripSet  & StripMap
+      if (!e) {
+        e = stripNew(colormapA, verbose, bpp, arrayGetNElems(colormapA), &stripset, &stripmap);
+      }
     }
     // Foreground objects are rectangle-based, so you only need to find the rectangle in each frame.
     else { 
     }
   }
+  stripDel(&stripset, &stripmap);
   arrayDel((void**) &colorPaletteA);
   arrayDel((void**) &pixelA);
   free(pngImgP);

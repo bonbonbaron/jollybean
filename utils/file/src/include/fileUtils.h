@@ -10,7 +10,7 @@
 #else
 #define SEP "/"
 #endif
-//
+
 /// Under Windows (VC) unistd.h does not exist. To make it work it is necessary to define:
 #ifdef WIN32
 #include <io.h>
@@ -25,6 +25,6 @@ void writeRawData16(FILE *fP, U16 *byteA, U16 nBytes);
 void writeRawData32(FILE *fP, U32 *byteA, U32 nBytes);
 Error getSrcFilePath(char **srcFilePath, char *srcLocalDirName, char *srcFileName);
 
-const char JB_DIR_NAME[] = "jb";
-const char SRC_DIR_NAME[] = "src";
+extern char JB_DIR_NAME[];
+extern char SRC_DIR_NAME[];
 #endif

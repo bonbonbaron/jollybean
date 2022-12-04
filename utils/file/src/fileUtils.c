@@ -1,5 +1,8 @@
 #include "fileUtils.h"
 
+char JB_DIR_NAME[] = "jb";
+char SRC_DIR_NAME[] = "src";
+
 // An image name looks like this: /some/path/to/entityName.png
 // Extension is the file extension including the leading '.'.
 // The entity name is assumed to begin at the start of base name.
