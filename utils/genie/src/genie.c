@@ -46,7 +46,7 @@ static char _getch(void) {
 	return ch; /*return received char */
 }
 
-void genieListDir(Directory *dirP) {
+void genieListDb(Database *dbP) {
 	struct winsize terminalWidth;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &terminalWidth);
 
@@ -54,15 +54,15 @@ void genieListDir(Directory *dirP) {
 
 	// Get the longest entry's length so we can fit as many in the terminal as possible.
 	int maxLen = 0;
-	for (int i = 0; i < dirP->nEntries; ++i) {
-		int currEntryLen = strlen(dirP->entryA[i].name);
+	for (int i = 0; i < dbP->nEntries; ++i) {
+		int currEntryLen = strlen(dbP->entryA[i].name);
 		if (maxLen < currEntryLen) {
 			maxLen = currEntryLen;
 		}
 	}
 
 	if (!maxLen)
-		return;	// Either directory has no entries or all its entries are empty!
+		return;	// Either database has no entries or all its entries are empty!
 
 	maxLen += 4;	 // minimal whitespace padding between entries in terminal
 
@@ -75,25 +75,25 @@ void genieListDir(Directory *dirP) {
 	char leftAlignment[maxLen + 1];	// +1 for '\0'
 	sprintf(leftAlignment, "%%-%ds", maxLen);
 
-	for (int i = 0; i < dirP->nEntries; ) {
-		for (int j = 0; i < dirP->nEntries && j < nEntriesPerLine; ++j, ++i) {
+	for (int i = 0; i < dbP->nEntries; ) {
+		for (int j = 0; i < dbP->nEntries && j < nEntriesPerLine; ++j, ++i) {
 			// Don't print empty entries, even though we should prevent those.
-			if (dirP->entryA[i].name[0]) {
-				printf(leftAlignment, dirP->entryA[i].name);
+			if (dbP->entryA[i].name[0]) {
+				printf(leftAlignment, dbP->entryA[i].name);
 			}
 		}
 		putchar('\n');
 	}
 }
 
-static void _genieListSuggestions(Directory *dirP, NameNode *startNodeP, U8 verbose) {
+static void _genieListSuggestions(Database *dbP, NameNode *startNodeP, U8 verbose) {
 	struct winsize terminalWidth;
 	ioctl(STDOUT_FILENO, TIOCGWINSZ, &terminalWidth);
 
 	int maxLen = 0;
 	// Get the longest entry's length so we can fit as many in the terminal as possible.
 	for (NameNode *nodeP = startNodeP; nodeP != NULL; nodeP = nodeP->nextP) {
-		int currEntryLen = strlen(dirP->entryA[nodeP->entryIdx].name);
+		int currEntryLen = strlen(dbP->entryA[nodeP->entryIdx].name);
 		if (maxLen < currEntryLen) {
 			maxLen = currEntryLen;
 		}
@@ -104,7 +104,7 @@ static void _genieListSuggestions(Directory *dirP, NameNode *startNodeP, U8 verb
   }
 
 	if (!maxLen)
-		return;	// Either directory has no entries or all its entries are empty!
+		return;	// Either database has no entries or all its entries are empty!
 
 	maxLen += 4;	 // minimal whitespace padding between entries in terminal
 
@@ -122,8 +122,8 @@ static void _genieListSuggestions(Directory *dirP, NameNode *startNodeP, U8 verb
 	for (NameNode *nodeP = startNodeP; nodeP != NULL;) {
 		for (int j = 0; nodeP != NULL && j < nEntriesPerLine; ++j, nodeP = nodeP->nextP) {
 			// Don't print empty entries, even though we should prevent those.
-			if (dirP->entryA[nodeP->entryIdx].name[0]) {
-				printf(leftAlignment, dirP->entryA[nodeP->entryIdx].name);
+			if (dbP->entryA[nodeP->entryIdx].name[0]) {
+				printf(leftAlignment, dbP->entryA[nodeP->entryIdx].name);
 			}
 		}
 		putchar('\n');
@@ -162,11 +162,11 @@ static char* _genieListen(ListType listType, List *listP, U8 verbose) {
           continue;	// do autocomplete text version here
         }
         else if (listType == DIR_FILE) {
-          NameNode *nameNodeP = dirFindNamesStartingWith(&listP->dir, responseP, verbose);
+          NameNode *nameNodeP = dbFindNamesStartingWith(&listP->db, responseP, verbose);
           if (nameNodeP != NULL) {
             putchar('\n');
             putchar('\n');
-            _genieListSuggestions(&listP->dir, nameNodeP, verbose);
+            _genieListSuggestions(&listP->db, nameNodeP, verbose);
             nameNodeDel(&nameNodeP);
           }
         }

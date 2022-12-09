@@ -12,8 +12,8 @@ extern const char LOCAL_TROVE_BOOKKEEPING_DIR[];
 
 #define NAME_LEN_ (32)
 
-// Unions keep directories' element sizes uniform. 
-// That away we can use just one directory API, 
+// Unions keep dbectories' element sizes uniform. 
+// That away we can use just one database API, 
 // and the interface can use it for everything.
 typedef union {
   struct {
@@ -23,7 +23,7 @@ typedef union {
   U32 collisionTypeColor;  // one color maps to one typet
 } EntryData;
 
-// Single entry in the saved palettes directory.
+// Single entry in the saved palettes database.
 typedef struct {
   char name[NAME_LEN_];
   EntryData data;
@@ -40,13 +40,13 @@ typedef struct _NameNode {
 typedef struct {
   U32 nEntries;
   Entry entryA[];  // Allows unlimited palettes when placed at end of struct.
-} Directory;
+} Database;
 
-Error dirGet(Directory **dirPP, char *dirName, int argc, U8 verbose);
-Error dirReplaceOriginal(Directory *dirP, char *dirName, U8 verbose);
-void dirAddEntry(Directory *dirP, char *name, EntryData *dataP, U8 verbose);
-Entry* dirFindValueByName(Directory *dirP, char *name, U8 verbose);
-char* dirFindNameByValue(Directory *dirP, EntryData *valP, U8 verbose);
-NameNode* dirFindNamesStartingWith(Directory *dirP, char *nameStart, U8 verbose);
+Error dbGet(Database **dbPP, char *dbName, int argc, U8 verbose);
+Error dbReplaceOriginal(Database *dbP, char *dbName, U8 verbose);
+void dbAddEntry(Database *dbP, char *name, EntryData *dataP, U8 verbose);
+Entry* dbFindValueByName(Database *dbP, char *name, U8 verbose);
+char* dbFindNameByValue(Database *dbP, EntryData *valP, U8 verbose);
+NameNode* dbFindNamesStartingWith(Database *dbP, char *nameStart, U8 verbose);
 void nameNodeDel(NameNode **nodePP);
 #endif

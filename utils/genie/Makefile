@@ -8,14 +8,14 @@ BINDIR         = ./bin
 INSTALLDIR     = /usr/local/lib
 
 # Compiler
-${BUILDDIR}/genie.o: ./src/genie.c ./src/include/genie.h ../dir/build/dir.o ${BUILDDIR}
-	$(CC) -g -I../dir/src/include -I./src/include -I${HOME}/hack/botox/src/include -I../file/src/include/ -I${HOME}/hack/jollybean/src/include -O0 -c ./src/genie.c -o $@
+${BUILDDIR}/genie.o: ./src/genie.c ./src/include/genie.h ../db/build/db.o ${BUILDDIR}
+	$(CC) -g -I../db/src/include -I./src/include -I${HOME}/hack/botox/src/include -I../file/src/include/ -I${HOME}/hack/jollybean/src/include -O0 -c ./src/genie.c -o $@
 	touch $@
 
-../dir/build/dir.o:
-	make -C ../dir/
+../db/build/db.o:
+	make -C ../db/
 
-# Build directory (dependency)
+# Build db (dependency)
 ${BUILDDIR}:
 	mkdir -p ${BUILDDIR}
 

@@ -70,39 +70,42 @@ void writeRawData32(FILE *fP, U32 *byteA, U32 nBytes) {
 
 Error getSrcDir(char **srcDirPath, U32 nExtraSpaces, char *srcLocalDirName) {
   char *HOME = getenv("HOME");
-  char *jbDir;
-  Error e = jbAlloc((void**) srcDirPath, sizeof(char), 
-              strlen(HOME)         + strlen(SEP) + 
-              strlen(JB_DIR_NAME)  + strlen(SEP) + 
-              strlen(SRC_DIR_NAME) + strlen(SEP) + 
-              strlen(srcLocalDirName)   + strlen(SEP) + 
-              + nExtraSpaces + 1);  // extra spaces if you plan to append filename to dir path
+  U32 nChars = strlen(HOME)         + strlen(SEP) + 
+               strlen(JB_DIR_NAME)  + strlen(SEP) + 
+               strlen(SRC_DIR_NAME) + strlen(SEP) + 
+               strlen(srcLocalDirName)   + strlen(SEP) + 
+               + nExtraSpaces + 1;
 
+  Error e = jbAlloc((void**) srcDirPath, sizeof(char), nChars);  // extra spaces if you plan to append filename to dir path
   if (!e) {
-    strcpy(jbDir, JB_DIR_NAME);
-    strcat(jbDir, SEP);
-    strcat(jbDir, SRC_DIR_NAME);
-    strcat(jbDir, SEP);
-    strcat(jbDir, srcLocalDirName);
-    strcat(jbDir, SEP);
+    memset(*srcDirPath, 0, sizeof(char) * nChars);
   }
 
-  // TODO do i have to free this?
-  free(HOME);
+  if (!e) {
+    strcpy(*srcDirPath, JB_DIR_NAME);
+    strcat(*srcDirPath, SEP);
+    strcat(*srcDirPath, SRC_DIR_NAME);
+    strcat(*srcDirPath, SEP);
+    strcat(*srcDirPath, srcLocalDirName);
+    strcat(*srcDirPath, SEP);
+  }
+
+  printf("src dir path result: %s\n", *srcDirPath);
+
   return e;
 }
 
 Error getSrcFilePath(char **srcFilePath, char *srcLocalDirName, char *srcFileName) {
- char *srcDirPath = NULL;
-
- Error e = getSrcDir(&srcDirPath, strlen(srcFileName), srcLocalDirName);
+ Error e = getSrcDir(srcFilePath, strlen(srcFileName), srcLocalDirName);
 
  if (!e && *srcFilePath) {
    strcat(*srcFilePath, srcFileName);
+   printf(*srcFilePath);
  }
  else {
    jbFree((void**) srcFilePath);
  }
+
 
  return e;
 }

@@ -431,7 +431,7 @@ Error getColorPaletteAndColormap(U8 **colorPaletteAP, U8 **colormapAP, U32 *nCol
 }
 
 //##########################################
-Error img(char *imgFilePathP, Directory *cpDirP, Directory *cmDirP, U8 verbose) {
+Error img(char *imgFilePathP, Database *cpDirP, Database *cmDirP, U8 verbose) {
   U8 *pixelP = NULL;  // can be 1bpp colormap, 2bpp gray+alpha, or 4bpp RGBA
   U8 *colorPaletteA = NULL;
   U8 *colormapA = NULL;
@@ -505,7 +505,7 @@ badPixel:
     EntryData entryDataToFind;
     entryDataToFind.palette.nColors = nColors;
     memcpy(entryDataToFind.palette.paletteA, colorPaletteA, sizeof(U32) * nColors);
-    char *existingPaletteName = dirFindNameByValue(cpDirP, &entryDataToFind, verbose);
+    char *existingPaletteName = dbFindNameByValue(cpDirP, &entryDataToFind, verbose);
     if (!existingPaletteName) {
       genieAsk(
           "This palette is new. What would you like to name it?", 
@@ -516,7 +516,7 @@ badPixel:
         e = writeJbColorPalette(entityName, colorPaletteA, verbose);
       if (!e)
       if (!e)
-        dirAddEntry(cpDirP, entityName, &entryDataToFind, verbose);  // TODO replace entity name with name which genie prompots you for
+        dbAddEntry(cpDirP, entityName, &entryDataToFind, verbose);  // TODO replace entity name with name which genie prompots you for
     }
     else 
       if (verbose)

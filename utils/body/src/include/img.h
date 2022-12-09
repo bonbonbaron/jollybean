@@ -11,7 +11,7 @@
 #include "inflatable.h"
 #include "fileUtils.h"
 #include "strip.h"
-#include "dir.h"
+#include "db.h"
 #include "genie.h"
 
 //const char LOCAL_TROVE_IMAGE_DIR[] = "/jb/src/Image/";
@@ -32,6 +32,6 @@ S32 getColormapIdx(U8 *srcPixelA, U32 nPixels, const U8 srcPixelSize, const U8 *
 Error readPng(png_image **imgPP, char *imgPathA, U8 *pixelSizeP, U8 **pixelAP, U8 **colorPalettePP, U8 verbose);
 Error getColorPaletteAndColormap(U8 **colorPaletteAP, U8 **colormapAP, U32 *nColorsP, png_image *pngImgP, U8 *pixelP, U8 maxNColorsAllowed, U8 srcPixelSize, U8 verbose);
 Error makeColorPaletteAndColormap(U8 **paletteAP, U8 **colormapPP, U32 *nColorsP, U8 srcPixelSize, png_image *srcImgDataP, U8 *srcImgP, U8 verbose);
-Error img(char *imgFilePathP, Directory *cpDirP, Directory *cmDirP, U8 verbose);
+Error img(char *imgFilePathP, Database *cpDirP, Database *cmDirP, U8 verbose);
 
 #endif

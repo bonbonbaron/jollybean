@@ -10,16 +10,16 @@
 #include <termios.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
-#include "dir.h"
+#include "db.h"
 
 typedef enum {TEXT_FILE, DIR_FILE} ListType;
 
 typedef union {
-  Directory dir;
+  Database db;
   char **stringA;
 } List;
 
-void genieListDir(Directory *dirP);
-void genieListTxt(Directory *dirP);
+void genieListDb(Database *db);
+void genieListTxt(Database *db);
 char* genieAsk(char* question, ListType listType, List *listP, U8 verbose);
 #endif

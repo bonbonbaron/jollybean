@@ -12,10 +12,9 @@ function lower () {
 }
 
 # First, distribute any items dropped off in the trove.
-mv ${TROVE}/*_col.png ${TROVE}/src/Collision/png 2>/dev/null
-mv ${TROVE}/*.png ${TROVE}/src/Image/png 2>/dev/null
-mv ${TROVE}/*.ase ${TROVE}/src/Image/ase 2>/dev/null
-mv ${TROVE}/*.json ${TROVE}/src/Animation 2>/dev/null
+mv ${TROVE}/*_col.png ${TROVE}/Body/Graybody/Collision 2>/dev/null
+mv ${TROVE}/*.{png,ase} ${TROVE}/Body/Graybody/Colormap 2>/dev/null
+mv ${TROVE}/*.json ${TROVE}/Body/Graybody/Animation 2>/dev/null
 # What's the collision pipeline? 
 
 
@@ -27,6 +26,7 @@ case $mainArg in
   image|img) imgExe ${*:2};;
   gene) echo "what the del";;
   build) buildExe ${*:2};;
+  ini) mkdir -p ${TROVE}/src/Body/{Palette/{Color,Collision},Graybody/{Animation,Collision,Colormap}};;
   *) echo "jb: Command $mainArg not recognized.";;
 esac
 

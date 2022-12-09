@@ -1,14 +1,14 @@
-#include "dir.h"
+#include "db.h"
 
 const char LOCAL_TROVE_BOOKKEEPING_DIR[] = "/jb/src/Bookkeeping/";
 
-static Error _dirNew(char *filepath, U8 verbose) {
-  const static Directory dirPrototype = {0};
+static Error _dbNew(char *filepath, U8 verbose) {
+  const static Database dbPrototype = {0};
   FILE *fP = fopen(filepath, "wb");
   if (fP) {
     if (verbose)
-      printf("Writing %d bytes to new file.\n", sizeof(Directory));
-    fwrite(&dirPrototype, sizeof(Directory), 1, fP);
+      printf("Writing %d bytes to new file.\n", sizeof(Database));
+    fwrite(&dbPrototype, sizeof(Database), 1, fP);
     fclose(fP);
   }
   else { 
@@ -18,25 +18,25 @@ static Error _dirNew(char *filepath, U8 verbose) {
   return SUCCESS;
 }
 
-Error dirGet(Directory **dirPP, char *dirName, int argc, U8 verbose) {
+Error dbGet(Database **dbPP, char *dbName, int argc, U8 verbose) {
   char *HOME = getenv("HOME");
-  char filepath[strlen(HOME) + strlen(LOCAL_TROVE_BOOKKEEPING_DIR) + strlen(dirName)];
+  char filepath[strlen(HOME) + strlen(LOCAL_TROVE_BOOKKEEPING_DIR) + strlen(dbName)];
   strcpy(filepath, HOME);
   strcat(filepath, LOCAL_TROVE_BOOKKEEPING_DIR);
-  strcat(filepath, dirName);
+  strcat(filepath, dbName);
 
   Error e = SUCCESS;
   U8 fileIsNew = 0;
 
-  // Make sure the diretory file exists.
+  // Make sure the db file exists.
   FILE *fP = fopen(filepath, "rb");
   if (!fP) {
     fileIsNew = 1;
-    e = _dirNew(filepath, verbose);
+    e = _dbNew(filepath, verbose);
     if (!e) {
       fP = fopen(filepath, "rb");  // Should open if we successfully created it.
       if (!fP) {
-        printf("no such directory file:\n\t%s\n", filepath);
+        printf("no such db file:\n\t%s\n", filepath);
         e = E_FILE_IO;
       }
     }
@@ -62,17 +62,17 @@ Error dirGet(Directory **dirPP, char *dirName, int argc, U8 verbose) {
       nBytesTotal = ftell(fP);
     }
     // Make room to store the file's data in memory.
-    e = jbAlloc((void**) dirPP, 2 *(nBytesTotal + (argc * sizeof(Entry))), 1);  // "* 2" just for safety
+    e = jbAlloc((void**) dbPP, 2 *(nBytesTotal + (argc * sizeof(Entry))), 1);  // "* 2" just for safety
   }
   // Read it into memory and make sure it's as big as we say it is.
   if (!e) {
     rewind(fP);
-    U32 nBytesRead = fread(*dirPP, 1, nBytesTotal, fP);
+    U32 nBytesRead = fread(*dbPP, 1, nBytesTotal, fP);
     if (verbose)
       printf("read %d bytes out of %d expected\n", nBytesRead, nBytesTotal);
     assert(nBytesRead == nBytesTotal);
     if (verbose)
-      printf("Existing directory contains %d entries and %d bytes.\n", (*dirPP)->nEntries, nBytesTotal);
+      printf("Existing database contains %d entries and %d bytes.\n", (*dbPP)->nEntries, nBytesTotal);
 
     fclose(fP);
   }
@@ -80,12 +80,12 @@ Error dirGet(Directory **dirPP, char *dirName, int argc, U8 verbose) {
   return e;
 }
 
-Error dirReplaceOriginal(Directory *dirP, char *dirName, U8 verbose) {
+Error dbReplaceOriginal(Database *dbP, char *dbName, U8 verbose) {
   char *HOME = getenv("HOME");
-  char filepath[strlen(HOME) + strlen(LOCAL_TROVE_BOOKKEEPING_DIR) + strlen(dirName)];
+  char filepath[strlen(HOME) + strlen(LOCAL_TROVE_BOOKKEEPING_DIR) + strlen(dbName)];
   strcpy(filepath, HOME);
   strcat(filepath, LOCAL_TROVE_BOOKKEEPING_DIR);
-  strcat(filepath, dirName);
+  strcat(filepath, dbName);
 
   Error e = SUCCESS;
 
@@ -97,12 +97,12 @@ Error dirReplaceOriginal(Directory *dirP, char *dirName, U8 verbose) {
   }
 
   // Write to it.
-  U32 nBytesToWrite = sizeof(Directory) + (dirP->nEntries * sizeof(Entry));
-  U32 nBytesWritten = fwrite(dirP, 1, nBytesToWrite, fP);
+  U32 nBytesToWrite = sizeof(Database) + (dbP->nEntries * sizeof(Entry));
+  U32 nBytesWritten = fwrite(dbP, 1, nBytesToWrite, fP);
   if (verbose) {
-    printf("\n\n%d actual of %d expected bytes written to directory file:.\n", nBytesWritten, nBytesToWrite);
-    printf("\tDirectory: %d bytes\n", sizeof(Directory));
-    printf("\t%d entries (%d bytes each): %d bytes\n", dirP->nEntries, sizeof(Entry), nBytesToWrite);
+    printf("\n\n%d actual of %d expected bytes written to database file:.\n", nBytesWritten, nBytesToWrite);
+    printf("\tDatabase: %d bytes\n", sizeof(Database));
+    printf("\t%d entries (%d bytes each): %d bytes\n", dbP->nEntries, sizeof(Entry), nBytesToWrite);
     printf("Output filepath:\n");
     printf("\t%s\n", filepath);
   }
@@ -113,12 +113,12 @@ Error dirReplaceOriginal(Directory *dirP, char *dirName, U8 verbose) {
   return e;
 }
 
-void dirAddEntry(Directory *dirP, char *name, EntryData *dataP, U8 verbose) {
+void dbAddEntry(Database *dbP, char *name, EntryData *dataP, U8 verbose) {
   if (verbose)
-    printf("adding %s to directory\n", name);
+    printf("adding %s to database\n", name);
 
-  strcpy(dirP->entryA[dirP->nEntries].name, name);
-  dirP->entryA[dirP->nEntries++].data = *dataP;
+  strcpy(dbP->entryA[dbP->nEntries].name, name);
+  dbP->entryA[dbP->nEntries++].data = *dataP;
 }
 
 // List nodes for finding multiple partial query hits
@@ -162,32 +162,32 @@ void nameNodeDel(NameNode **nodePP) {
 }
 
 // Querying functions
-Entry* dirFindValueByName(Directory *dirP, char *name, U8 verbose) {
-  for (int i = 0; i < dirP->nEntries; ++i)
-    if (!strcmp(name, dirP->entryA[i].name))
-      return &dirP->entryA[i];
+Entry* dbFindValueByName(Database *dbP, char *name, U8 verbose) {
+  for (int i = 0; i < dbP->nEntries; ++i)
+    if (!strcmp(name, dbP->entryA[i].name))
+      return &dbP->entryA[i];
   if (verbose)
-    printf("Could not find entry named %s in directory.\n", name);
+    printf("Could not find entry named %s in db.\n", name);
   return NULL;
 }
 
-char* dirFindNameByValue(Directory *dirP, EntryData *valP, U8 verbose) {
-  for (int i = 0; i < dirP->nEntries; ++i)
-    if (!memcmp(valP, &dirP->entryA[i].data, sizeof(EntryData)))
-      return dirP->entryA[i].name;
+char* dbFindNameByValue(Database *dbP, EntryData *valP, U8 verbose) {
+  for (int i = 0; i < dbP->nEntries; ++i)
+    if (!memcmp(valP, &dbP->entryA[i].data, sizeof(EntryData)))
+      return dbP->entryA[i].name;
   if (verbose)
     printf("Could not find entry.\n");
   return NULL;
 }
 
-NameNode* dirFindNamesStartingWith(Directory *dirP, char *nameStart, U8 verbose) {
+NameNode* dbFindNamesStartingWith(Database *dbP, char *nameStart, U8 verbose) {
   assert(strlen(nameStart) < NAME_LEN_);
   NameNode *nodeP = NULL;
   // Look for nodes starting with input string.
   NameNode *firstNodeP = NULL;
   Error e = SUCCESS;
-  for (int i = 0; !e && i < dirP->nEntries; ++i) {
-    if (!memcmp(nameStart, &dirP->entryA[i].name, strlen(nameStart))) {
+  for (int i = 0; !e && i < dbP->nEntries; ++i) {
+    if (!memcmp(nameStart, &dbP->entryA[i].name, strlen(nameStart))) {
       if (firstNodeP == NULL) {
         // Allocate first name node to build list of matching names from.
         e = nameNodeNew(&nodeP); 
@@ -204,7 +204,7 @@ NameNode* dirFindNamesStartingWith(Directory *dirP, char *nameStart, U8 verbose)
         }
       }
       if (verbose) {
-        printf("Match found: %s\n", dirP->entryA[i].name);
+        printf("Match found: %s\n", dbP->entryA[i].name);
       }
     }
   }
