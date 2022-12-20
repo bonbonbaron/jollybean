@@ -299,7 +299,7 @@ FrameNode* getFrameNode(FrameNode *rootP, U32 idx) {
 
 Error writeAnimation(char *entityName, Animation *animP) {
   char *dstFilepathP = NULL;
-  Error e = getSrcFilePath(&dstFilepathP, "Body/Graybody/Colormap/", entityName); 
+  Error e = getBuildFilePath(&dstFilepathP, "Animation/", entityName, ".c"); 
   FILE *fP = fopen(dstFilepathP, "w");
   if (!fP) {
     printf("failed to open %s\n", dstFilepathP);

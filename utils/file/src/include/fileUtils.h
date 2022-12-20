@@ -23,8 +23,10 @@ void parseName(char *filepathP, char *extension, U32 *entityNameIdxP, U32 *entit
 void writeRawData8(FILE *fP, U8 *byteA, U32 nBytes);
 void writeRawData16(FILE *fP, U16 *byteA, U16 nBytes);
 void writeRawData32(FILE *fP, U32 *byteA, U32 nBytes);
-Error getSrcFilePath(char **srcFilePath, char *srcLocalDirName, char *srcFileName);
+Error getSrcFilePath(char **srcFilePath, char *srcLocalDirName, char *srcFileName, char *srcFileSuffix);
+Error getBuildFilePath(char **buildFilePath, char *buildLocalDirName, char *buildFileName, char *buildFileSuffix);
 
 extern char JB_DIR_NAME[];
 extern char SRC_DIR_NAME[];
+extern char DST_DIR_NAME[];
 #endif

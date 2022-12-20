@@ -1,5 +1,8 @@
 #include "body.h"
 
+/* 
+ * Passed-in arguments: name of bod[y|ies].
+ */
 int main(int argc, char ** argv) {
   char *srcFilePath;
   Database *cpDbP, *cmDbP;
