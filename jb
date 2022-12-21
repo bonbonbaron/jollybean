@@ -2,33 +2,34 @@
 
 export TROVE="${HOME}/jb"
 
-source ./scripts/ini
-source ./scripts/sys
-source ./scripts/game
-source ./scripts/image
+#source ./scripts/ini
+#source /home/bonbonbaron/hack/jollybean/scripts/sys
+#source /home/bonbonbaron/hack/jollybean/scripts/game
+#source /home/bonbonbaron/hack/jollybean/scripts/image
+#source /home/bonbonbaron/hack/jollybean/scripts/*
 
 function lower () {
   echo $1 | sed 's/.*/\L&/'
 }
 
 # First, distribute any items dropped off in the trove.
-mv ${TROVE}/*_col.png ${TROVE}/Body/Graybody/Collision 2>/dev/null
-mv ${TROVE}/*.{png,ase} ${TROVE}/Body/Graybody/Colormap 2>/dev/null
-mv ${TROVE}/*.json ${TROVE}/Body/Graybody/Animation 2>/dev/null
-# What's the collision pipeline? 
-
+mv ${TROVE}/*_col.png ${TROVE}/src/Body/Graybody/Collision 
+mv ${TROVE}/*.{png,ase} ${TROVE}/src/Body/Graybody/Colormap 
+mv ${TROVE}/*.json ${TROVE}/src/Body/Graybody/Animation 
 
 # Second, handle actual user arguments.
-mainArg=$(lower $1)
-case $mainArg in  
-  game) gameExe ${*:2};;
-  sys)  sysExe ${*};;
-  image|img) imgExe ${*:2};;
-  gene) echo "what the del";;
-  build) buildExe ${*:2};;
-  ini) mkdir -p ${TROVE}/src/Body/{Palette/{Color,Collision},Graybody/{Animation,Collision,Colormap}};;
-  *) echo "jb: Command $mainArg not recognized.";;
-esac
+if [ $# -gt 0 ]; then
+  mainArg=$(lower $1)
+  case $mainArg in  
+    game) gameExe ${*:2};;
+    sys)  sysExe ${*};;
+    image|img) imgExe ${*:2};;
+    gene) echo "what the del";;
+    build) buildExe ${*:2};;
+    ini) mkdir -p ${TROVE}/src/Body/{Palette/{Color,Collision},Graybody/{Animation,Collision,Colormap}};;
+    *) echo "jb: Command $mainArg not recognized.";;
+  esac
+fi
 
 # TODO add -g argument for game to specify game; if absent, check env vars for $GAME
 # TODO make sure mv'ing imgStrip output to game dir works properly

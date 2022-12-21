@@ -299,14 +299,15 @@ FrameNode* getFrameNode(FrameNode *rootP, U32 idx) {
 
 Error writeAnimation(char *entityName, Animation *animP) {
   char *dstFilepathP = NULL;
-  Error e = getBuildFilePath(&dstFilepathP, "Animation/", entityName, ".c"); 
+  printf("[writeAnimation] entityName is %s.\n", entityName);
+  Error e = getBuildFilePath(&dstFilepathP, "Animation", entityName, ".c"); 
   FILE *fP = fopen(dstFilepathP, "w");
   if (!fP) {
-    printf("failed to open %s\n", dstFilepathP);
+    printf("[writeAnimation] failed to open %s\n", dstFilepathP);
     jbFree((void**) dstFilepathP);
-    return E_NO_MEMORY;
+    return E_FILE_IO;
   }
-  jbFree((void**) dstFilepathP);
+  jbFree((void**) &dstFilepathP);
   fprintf(fP, "#include \"xAnim.h\"\n\n");
   // Write frame arrays.
   for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
@@ -342,6 +343,8 @@ Error writeAnimation(char *entityName, Animation *animP) {
   fclose(fP);
 }
 
+/* anim() outputs an Animation** in case the caller wants to use its 
+   frame data to look for collision rectangles. */
 Error anim (char *filepath, U8 verbose, Animation **animPP) {
   if (!filepath || !animPP) {
     return E_BAD_ARGS;
@@ -385,9 +388,14 @@ Error anim (char *filepath, U8 verbose, Animation **animPP) {
   if (!e) {
     U32 startIdx, len;
     parseName(filepath, ".json", &startIdx, &len);
-    char entityName[len];
+    char entityName[len + 1];
+    memset(entityName, 0, sizeof(char) * (len + 1));
+    memcpy((void*) entityName, (void*) &filepath[startIdx], len);
+    if (verbose) {
+      printf("Entity name is %s with length %d.\n", entityName, len);
+    }
     memcpy(entityName, &filepath[startIdx], len);
-    entityName[len - 1] = '\0';
+    entityName[len] = '\0';
     e = writeAnimation(entityName, animP);
   }
 

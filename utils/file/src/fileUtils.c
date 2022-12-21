@@ -10,16 +10,16 @@ char BUILD_DIR_NAME[] = "build";
 void parseName(char *filepathP, char *extension, U32 *entityNameIdxP, U32 *entityNameLenP) {
   U32 filenameLen = strlen(filepathP);
   U32 extLen = strlen(extension);  // including the leading "."
-  // Make sure this file has a ".png" extension.
+  // Make sure this file has the expected extension.
   assert(!strncasecmp(&filepathP[filenameLen - extLen], extension, extLen));
 
   // Init all outputs to zero.
   *entityNameIdxP = *entityNameLenP = 0;
 
   // Get both entity starting position.
-  for (U8 i = filenameLen - 1; i >= 0; --i) {
+  for (S32 i = filenameLen - 1; i >= 0; --i) {
     switch (filepathP[i]) {
-#ifdef WINDOWS
+#ifndef WINDOWS
       case '/':
 #else
       case '\\':
@@ -83,7 +83,9 @@ static Error getSrcDir(char **srcDirPath, U32 nExtraSpaces, char *srcLocalDirNam
   }
 
   if (!e) {
-    strcpy(*srcDirPath, JB_DIR_NAME);
+    strcpy(*srcDirPath, HOME);
+    strcat(*srcDirPath, SEP);
+    strcat(*srcDirPath, JB_DIR_NAME);
     strcat(*srcDirPath, SEP);
     strcat(*srcDirPath, SRC_DIR_NAME);
     strcat(*srcDirPath, SEP);
@@ -125,7 +127,9 @@ static Error getBuildDir(char **buildDirPath, U32 nExtraSpaces, char *buildLocal
   }
 
   if (!e) {
-    strcpy(*buildDirPath, JB_DIR_NAME);
+    strcpy(*buildDirPath, HOME);
+    strcat(*buildDirPath, SEP);
+    strcat(*buildDirPath, JB_DIR_NAME);
     strcat(*buildDirPath, SEP);
     strcat(*buildDirPath, BUILD_DIR_NAME);
     strcat(*buildDirPath, SEP);

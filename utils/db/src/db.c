@@ -1,6 +1,6 @@
 #include "db.h"
 
-const char LOCAL_TROVE_BOOKKEEPING_DIR[] = "/jb/src/Bookkeeping/";
+const char LOCAL_TROVE_BOOKKEEPING_DIR[] = "/jb/src/Database/";
 
 static Error _dbNew(char *filepath, U8 verbose) {
   const static Database dbPrototype = {0};

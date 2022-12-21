@@ -240,15 +240,15 @@ Error writeStripData(char *objNameA, char *OBJ_TYPE, U8 verbose, StripSetS *ssP,
   Error e = SUCCESS;
   char infName[strlen(objNameA) + strlen("StripSet") + strlen("Inf")];
   // Make target filepath to save this stripmap in.
-  char *homefp = getenv("HOME");
-  if (!homefp) {
+  char *HOME = getenv("HOME");
+  if (!HOME) {
     if (verbose)
       printf("no $HOME environment variable! exiting...\n");
     return E_BAD_ARGS;
   }
-  char TROVE_STRIP_DIR[] = "/jb/build/Strip/";
-  char fullPath[strlen(homefp) + strlen(TROVE_STRIP_DIR) + strlen(OBJ_TYPE) + strlen("/") + strlen(objNameA) + strlen(".c")];
-  strcpy(fullPath, homefp);
+  char TROVE_STRIP_DIR[] = "/jb/build/";
+  char fullPath[strlen(HOME) + strlen(TROVE_STRIP_DIR) + strlen(OBJ_TYPE) + strlen("/") + strlen(objNameA) + strlen(".c")];
+  strcpy(fullPath, HOME);
   strcat(fullPath, TROVE_STRIP_DIR);
   strcat(fullPath, OBJ_TYPE);
   strcat(fullPath, "/");
@@ -258,7 +258,7 @@ Error writeStripData(char *objNameA, char *OBJ_TYPE, U8 verbose, StripSetS *ssP,
   FILE *fP = fopen(fullPath, "w");
   if (!fP) {
     if (verbose)
-      printf("[writeStripFlipStuff] file opening failed for path %s\n", fullPath);
+      printf("[writeStripData] file opening failed for path %s\n", fullPath);
     e = E_BAD_ARGS;
   }
   if (!e) {
@@ -305,7 +305,9 @@ Error writeStripData(char *objNameA, char *OBJ_TYPE, U8 verbose, StripSetS *ssP,
   }
 
 closeout:
-  fclose(fP);
+  if (fP) {
+    fclose(fP);
+  }
 
   return e;
 }

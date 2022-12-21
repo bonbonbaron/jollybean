@@ -1,9 +1,9 @@
 #include "img.h"
 #include "genie.h"
 
-char TROVE_IMG_OBJ_DIR[] = "/jb/build/Image/obj/";
-char TROVE_IMG_SRC_DIR[] = "/jb/build/Image/src/";
-char TROVE_IMG_INC_DIR[] = "/jb/build/Image/include/";
+char TROVE_IMG_OBJ_DIR[] = "/jb/build/Colormap/obj/";
+char TROVE_IMG_SRC_DIR[] = "/jb/build/Colormap/src/";
+char TROVE_IMG_INC_DIR[] = "/jb/build/Colormap/include/";
 
 void imgDimsIni(ImgDims *imgDimsP, U32 width, U32 height, U32 bpp) {
   imgDimsP->w = width;
@@ -35,7 +35,7 @@ Error writeJbColorPalette(char *imgNameA, U8 *paletteA, U8 verbose) {
   fP = fopen(fullPath, "w");
   if (!fP) {
     if (verbose)
-      printf("[writeStripFlipStuff] file opening failed for path %s\n", fullPath);
+      printf("[writeJbColorPalette] file opening failed for path %s\n", fullPath);
     e = E_NO_MEMORY;
   }
   if (!e) {
@@ -80,7 +80,7 @@ Error writeAsepriteColorPalette(char *imgNameA, EntryData *paletteData, U8 verbo
   fP = fopen(fullPath, "w");
   if (!fP) {
     if (verbose)
-      printf("[writeStripFlipStuff] file opening failed for path %s\n", fullPath);
+      printf("[writeAsepriteColorPalette] file opening failed for path %s\n", fullPath);
     e = E_NO_MEMORY;
   }
 
@@ -270,8 +270,10 @@ Error readPng(png_image **imgPP, char *imgPathA, U8 *pixelSizeP, U8 **pixelAP, U
   // Set up reader.
   int e = png_image_begin_read_from_file(*imgPP, imgPathA);
   // Allocate pixel array.
-  if ((*imgPP)->warning_or_error)
-    printf("Error message: %s\n", (*imgPP)->message);
+  if ((*imgPP)->warning_or_error) {
+    printf("libpng error message: %s\n", (*imgPP)->message);
+    printf("related to file %s.\n", imgPathA);
+  }
   else if (!e) {
     printf("png_image_begin_read() errored with e = %d.\n", e);
     if ((*imgPP)->message[0]) 
@@ -494,7 +496,7 @@ badPixel:
 
   // Give game engine the stripMap for this image if it applies.
   if (!e)
-    e = writeStripData(entityName, "Image", verbose, &stripset, &stripmap);
+    e = writeStripData(entityName, "Colormap", verbose, &stripset, &stripmap);
   if (!e)
     e = writeColormap(entityName, &stripset, &imgDims, verbose);
   if (!e)
@@ -514,7 +516,6 @@ badPixel:
       e = writeColorPaletteHeaderFile(entityName, verbose);
       if (!e)
         e = writeJbColorPalette(entityName, colorPaletteA, verbose);
-      if (!e)
       if (!e)
         dbAddEntry(cpDirP, entityName, &entryDataToFind, verbose);  // TODO replace entity name with name which genie prompots you for
     }
