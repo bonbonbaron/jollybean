@@ -301,6 +301,7 @@ Error writeAnimation(char *entityName, Animation *animP) {
   char *dstFilepathP = NULL;
   printf("[writeAnimation] entityName is %s.\n", entityName);
   Error e = getBuildFilePath(&dstFilepathP, "Animation", entityName, ".c"); 
+  Key nKeyValPairs = 0;
   FILE *fP = fopen(dstFilepathP, "w");
   if (!fP) {
     printf("[writeAnimation] failed to open %s\n", dstFilepathP);
@@ -316,7 +317,7 @@ Error writeAnimation(char *entityName, Animation *animP) {
     FrameNode *frameNodeP = getFrameNode(animP->frameNodeA, tagP->from);
     if (!frameNodeP)
       return E_BAD_ARGS;
-    for (int i = tagP->from; i < tagP->to; ++i) {
+    for (int i = tagP->from; frameNodeP && i < tagP->to; ++i, frameNodeP = frameNodeP->nextP) {
       fprintf(fP, "\t{\n");
       fprintf(fP, "\t\t.x = %d,\n", frameNodeP->x);
       fprintf(fP, "\t\t.y = %d,\n", frameNodeP->y);
@@ -327,7 +328,7 @@ Error writeAnimation(char *entityName, Animation *animP) {
     }
     fprintf(fP, "};\n\n");
     // Animation strips
-    fprintf(fP, "AnimStrip strip_%s_%s = {\n", entityName, tagP->name);
+    fprintf(fP, "AnimStrip animStrip_%s_%s = {\n", entityName, tagP->name);
     fprintf(fP, "\t.nFrames = %d,\n", 1 + tagP->to - tagP->from);
     int len = strlen(tagP->name);
     Bln isLeft = !strncasecmp(&tagP->name[len - 4], "LEFT", 4);
@@ -339,7 +340,19 @@ Error writeAnimation(char *entityName, Animation *animP) {
     fprintf(fP, "\t.pingPong = %d,\n", isPingPong);
     fprintf(fP, "\t.frameA = frame_%s_%sA\n", entityName, tagP->name);
     fprintf(fP, "};\n\n");
+    ++nKeyValPairs;
   }
+  // Write key-val pairs between tag names and coll strips
+  fprintf(fP, "KeyValPairArray tagName2AnimStripMap_%s[] = {\n", entityName);
+  fprintf(fP, "\t.nKeyValPairs = %d,\n", nKeyValPairs);
+  fprintf(fP, "\t.keyValPairA = {\n");
+  for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
+    fprintf(fP, "\t\t{\n");
+    fprintf(fP, "\t\t\t.key  = %s,\n", tagP->name);
+    fprintf(fP, "\t\t\t.valP = &animStrip_%s_%s\n");
+    fprintf(fP, "\t\t},\n");
+  }
+  fprintf(fP, "};\n\n");
   fclose(fP);
 }
 
