@@ -229,7 +229,7 @@ Error writeColormap(char *imgNameA, StripSetS *stripsetP, ImgDims *imgDimsP, U8 
   // Write header.
   fprintf(fP, "#include \"xRender.h\"\n");
   fprintf(fP, "#include \"Strips_%s.h\"\n\n", imgNameA);
-  // Flip set
+  // Write colormap
   fprintf(fP, "ColormapS %sColormap = {\n", imgNameA);
   fprintf(fP, "\t.bpp = %d,\n", imgDimsP->bpp);
   fprintf(fP, "\t.w = %d,\n", imgDimsP->w);

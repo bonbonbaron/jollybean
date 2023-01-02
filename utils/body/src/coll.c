@@ -68,8 +68,8 @@ RectNode* getRectNode(RectNode *rootP, U32 idx) {
 static U8* calcFirstPixelP(FrameNode *fNodeP, U8 *pixelA, U32 pixelSize, U32 imgPitch) {
   if (fNodeP) {
     U8 *ptr = pixelA 
-      + (fNodeP->x * pixelSize)  // starting from frame's first pixel's column...
-      + (fNodeP->y * imgPitch);  // ... jumping to start of frame's last row
+      + (fNodeP->y * imgPitch)    // ... jumping to start of frame's last row
+      + (fNodeP->x * pixelSize);  // starting from frame's first pixel's column...
     return ptr;
   }
   else {
@@ -118,14 +118,15 @@ static U8* calcLastPixelPInRowP(FrameNode *fNodeP, U8 *firstPixelP, U32 pixelSiz
         RectNode *rectNodeP = *currRectNodePP; \
         U##bpp_ *pixelP = (U##bpp_*) calcFirstPixelP(fNodeP, (U8*) pixelA, pixelSize, imgPitch); \
         /* Number of pixels to jump from end of current frame's row to the start of its next row */\
-        U32 nPixelsToNextRow = imgPitch - (fNodeP->w * pixelSize); \
+        U32 nPixelsToNextRow = (imgPitch / pixelSize) - fNodeP->w; \
         /* for each row in frame... */ \
         for (int i = 0; i < fNodeP->h; ++i, pixelP += nPixelsToNextRow) { \
+          printf("%02d: ", i); \
           U##bpp_ *pixelRowEndP = (U##bpp_*) calcLastPixelPInRowP(fNodeP, (U8*) pixelP, pixelSize); \
           /* for each pixel in frame's current row... */ \
           for (int j = 0; pixelP < pixelRowEndP; ++j, ++pixelP) { \
+            if (*pixelP) printf("1"); else printf("0"); \
             if (*pixelP) { \
-              printf("1");\
               if (rectNodeP->x < 0) { \
                 rectNodeP->x = j; \
               } \
@@ -136,18 +137,14 @@ static U8* calcLastPixelPInRowP(FrameNode *fNodeP, U8 *firstPixelP, U32 pixelSiz
             } \
             /* If you're at row's end and haven't terminated the width yet */ \
             if (j == fNodeP->w - 1 && rectNodeP->w < 0) { \
-              rectNodeP->w = j - rectNodeP->x; \
+              rectNodeP->w = j + 1; \
             } \
             /* If you hit an empty pixel... */ \
             if (!pixelP) { \
-              if (rectNodeP->w < 0) { \
-                rectNodeP->w = j - rectNodeP->x; \
+              if ((j + 1) > rectNodeP->w) { \
+                rectNodeP->w = j + 1; \
               } \
             } \
-            /* If you're at frame's end or have hit an empty pixel after starting rect... */ \
-            if (!*pixelP) { \
-              printf("0");\
-            }  /* If you've hit an empty pixel and you've found the rect's start already... */ \
           }  /* for each pixel in frame's current row */ \
           printf("\n");\
         }  /* for each row in frame... */ \
@@ -264,7 +261,7 @@ Error writeCollisionRectMap(char *entityName, Animation *animP, RectNode *collTr
       fprintf(fP, "\t.repeat = %d,\n", isReverse);  
       Bln isPingPong = !strncasecmp(tagP->direction, "pingpong", 4);
       fprintf(fP, "\t.pingPong = %d,\n", isPingPong);
-      fprintf(fP, "\t.frameA = collRect_%s_%sA\n", entityName, tagP->name);
+      fprintf(fP, "\t.frameA = collRect_%s_%s_A\n", entityName, tagP->name);
       fprintf(fP, "};\n\n");
       ++nKeyValPairs;
     }
@@ -381,7 +378,8 @@ Error coll(char *fp, char *entityName, U8 isBg, Animation *animP, U8 verbose) {
  *
  * \It's not writing any rects to output file
  * \It's writing one less frame. 
- * Y isn't right.
- * W is always -1
- * X is relative to image instead of frame
+ * \]Y isn't right.
+ * \]W is always -1
+ * \]X is relative to image instead of frame
+ * It doesn't memorize color palettes.
  * */

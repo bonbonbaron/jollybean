@@ -282,7 +282,7 @@ Error writeStripData(char *objNameA, char *OBJ_TYPE, U8 verbose, StripSetS *ssP,
     fprintf(fP, "\t.nUnitsPerStrip = %d,\n", N_UNITS_PER_STRIP);  // in case we ever want to give each sprite its own strip length... wuh oh.
     fprintf(fP, "\t.nStrips = %d,\n", ssP->nStrips);
     fprintf(fP, "\t.nUnits  = %d,\n", ssP->nUnits);
-    fprintf(fP, "\t.flipSet = {,\n", objNameA);
+    fprintf(fP, "\t.flipSet = {\n", objNameA);
     fprintf(fP, "\t\t.nFlips = %d,\n", ssP->flipSet.nFlips);
     fprintf(fP, "\t\t.flipIdxA = %sFlipIdxA,\n", objNameA);
     fprintf(fP, "\t},\n");
