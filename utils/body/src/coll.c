@@ -67,20 +67,20 @@ RectNode* getRectNode(RectNode *rootP, U32 idx) {
 // Pixel calculations
 static U8* calcFirstPixelP(FrameNode *fNodeP, U8 *pixelA, U32 pixelSize, U32 imgPitch) {
   if (fNodeP) {
-    return pixelA 
+    U8 *ptr = pixelA 
       + (fNodeP->x * pixelSize)  // starting from frame's first pixel's column...
       + (fNodeP->y * imgPitch);  // ... jumping to start of frame's last row
+    return ptr;
   }
   else {
     return pixelA;
   }
 }
 
-static U8* calcLastPixelP(FrameNode *fNodeP, U8 *firstPixelP, U32 pixelSize, U32 imgPitch) {
+static U8* calcLastPixelP(FrameNode *fNodeP, U8 *firstPixelP, U32 pixelSize) {
   if (fNodeP) {
-    return firstPixelP + 
-      + (fNodeP->w * pixelSize)  // starting from frame's first pixel's column...
-      + (fNodeP->h * imgPitch);  // ... jumping to start of frame's last row
+    U8 *ptr = firstPixelP + (fNodeP->w * pixelSize) * (fNodeP->h);
+    return ptr;
   }
   else {
     // assuming firstPixel is the start of the array, as per calcFirstPixel()
@@ -88,47 +88,77 @@ static U8* calcLastPixelP(FrameNode *fNodeP, U8 *firstPixelP, U32 pixelSize, U32
   }
 }
 
+static U8* calcLastPixelPInRowP(FrameNode *fNodeP, U8 *firstPixelP, U32 pixelSize) {
+  if (fNodeP) {
+    U8 *ptr = firstPixelP + (fNodeP->w * pixelSize);
+    return ptr;
+  }
+  else {
+    // assuming firstPixel is the start of the array, as per calcFirstPixel()
+    return firstPixelP + (arrayGetNElems(firstPixelP) * arrayGetElemSz(firstPixelP));
+  }
+}
+
+// Collision rect coords are offsets from current animation frame's top-left corner.
 #define findRect_(bpp_) \
   /* if this is an animated collison rectangle... */ \
   if (animP) { \
     /* for each frame... */ \
     for (FrameNode *fNodeP = animP->frameNodeA; !e && fNodeP; fNodeP = fNodeP->nextP) { \
-      e = rectNodeGrow(rectNodePP); \
+      /* Grow a new frame node either from root or head. */ \
+      if (!*currRectNodePP) { \
+        e = rectNodeGrow(currRectNodePP); \
+        firstRectNodeP = *currRectNodePP; \
+      } \
+      else { \
+        e = rectNodeGrow(currRectNodePP); \
+      } \
       /* If rect node creation succeeded... */ \
       if (!e) { \
-        RectNode *rectNodeP = *rectNodePP; \
+        RectNode *rectNodeP = *currRectNodePP; \
         U##bpp_ *pixelP = (U##bpp_*) calcFirstPixelP(fNodeP, (U8*) pixelA, pixelSize, imgPitch); \
+        /* Number of pixels to jump from end of current frame's row to the start of its next row */\
+        U32 nPixelsToNextRow = imgPitch - (fNodeP->w * pixelSize); \
         /* for each row in frame... */ \
-        for (int i = 0; i < fNodeP->h; ++i, pixelP += imgPitch) { \
-          U##bpp_ *pixelEndP = (U##bpp_*) calcLastPixelP(fNodeP, (U8*) pixelP, pixelSize, imgPitch); \
+        for (int i = 0; i < fNodeP->h; ++i, pixelP += nPixelsToNextRow) { \
+          U##bpp_ *pixelRowEndP = (U##bpp_*) calcLastPixelPInRowP(fNodeP, (U8*) pixelP, pixelSize); \
           /* for each pixel in frame's current row... */ \
-          for (int j = 0; pixelP < pixelEndP; ++j, ++pixelP) { \
+          for (int j = 0; pixelP < pixelRowEndP; ++j, ++pixelP) { \
             if (*pixelP) { \
+              printf("1");\
               if (rectNodeP->x < 0) { \
-                rectNodeP->x = fNodeP->x + j; \
+                rectNodeP->x = j; \
               } \
               if (rectNodeP->y < 0) { \
-                rectNodeP->y = fNodeP->y + i; \
+                rectNodeP->y = i; \
               } \
+              rectNodeP->h = i - rectNodeP->y + 1; \
             } \
-            /* If you've hit an empty pixel and you've found the rect's start already... */ \
-            else { \
-              if (rectNodeP->x >= 0 && !rectNodeP->w) { \
+            /* If you're at row's end and haven't terminated the width yet */ \
+            if (j == fNodeP->w - 1 && rectNodeP->w < 0) { \
+              rectNodeP->w = j - rectNodeP->x; \
+            } \
+            /* If you hit an empty pixel... */ \
+            if (!pixelP) { \
+              if (rectNodeP->w < 0) { \
                 rectNodeP->w = j - rectNodeP->x; \
               } \
-              if (rectNodeP->y >= 0) {  /* height is continually updated till end of rect */ \
-                rectNodeP->h = i - rectNodeP->y; \
-              } \
+            } \
+            /* If you're at frame's end or have hit an empty pixel after starting rect... */ \
+            if (!*pixelP) { \
+              printf("0");\
             }  /* If you've hit an empty pixel and you've found the rect's start already... */ \
           }  /* for each pixel in frame's current row */ \
+          printf("\n");\
         }  /* for each row in frame... */ \
+        printf("rect xywh: %d %d %d %d\n\n", rectNodeP->x, rectNodeP->y, rectNodeP->w, rectNodeP->h); \
       }  /* if rect node creation succeeded... */ \
     }  /* for each frame... */ \
   }  /* if this is an animated collsion rectangle... */ \
   /* If this is not animated, you only need to find one rectangle. */ \
   else { \
     U##bpp_ *pixelP = (U##bpp_*) calcFirstPixelP(NULL, (U8*) pixelA, pixelSize, imgPitch); \
-    U##bpp_ *lastPixelP = (U##bpp_*) calcLastPixelP(NULL, (U8*) pixelP, pixelSize, imgPitch); \
+    U##bpp_ *lastPixelP = (U##bpp_*) calcLastPixelP(NULL, (U8*) pixelP, pixelSize); \
     e = rectNodeGrow(rectNodePP); \
     /* If rect node creation succeeded... */ \
     if (!e) { \
@@ -163,6 +193,11 @@ Error findCollisionRects(U8 *pixelA, png_image *imgP, U32 pixelSize, Animation *
   U32 imgPitch = imgP->width * pixelSize;
   Error e = SUCCESS;
 
+  // Keep track of the first node so we don't pass out the most recent one and lose all predecessors. 
+  RectNode **currRectNodePP = rectNodePP; 
+  RectNode *firstRectNodeP = NULL; 
+
+  // Make your pappy proud and go find some rectangles, son.
   switch (pixelSize) {
     case 1:
       findRect_(8)
@@ -177,76 +212,20 @@ Error findCollisionRects(U8 *pixelA, png_image *imgP, U32 pixelSize, Animation *
       return E_UNSUPPORTED_PIXEL_FORMAT;
   }
 
+  *rectNodePP = firstRectNodeP;
+
   return e;
 }
 
-// Write a map of rectangle arrays to a C file.
-Error writeCollisionGridMap(char *entityName, Animation *animP, RectNode *collTreeP) {
-  char *filepath = NULL;
-  Error  e = getBuildFilePath(&filepath, "Collision", entityName, "_col.c");
-  if (!e) {
-    FILE *fP = fopen(filepath, "w");
-    Key nKeyValPairs = 0;
-    if (!fP) {
-      printf("failed to open %s\n", filepath);
-      return E_NO_MEMORY;
-    }
-    fprintf(fP, "#include \"xCollision.h\"\n\n");
-    // Write collision rect arrays.
-    for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
-      // Collision rect arrays
-      fprintf(fP, "CollGrid *collGrid_%s_%sA[] = {\n", entityName, tagP->name);
-      RectNode *rectNodeP = getRectNode(collTreeP, tagP->from);
-      if (!rectNodeP)
-        return E_BAD_ARGS;
-      for (int i = tagP->from; rectNodeP && i < tagP->to; ++i, rectNodeP = rectNodeP->nextP) {
-        if (rectNodeP) {
-          fprintf(fP, "\t{\n");
-          fprintf(fP, "\t\t.x = %d,\n", rectNodeP->x);
-          fprintf(fP, "\t\t.y = %d,\n", rectNodeP->y);
-          fprintf(fP, "\t\t.w = %d,\n", rectNodeP->w);
-          fprintf(fP, "\t\t.h = %d,\n", rectNodeP->h);
-          fprintf(fP, "\t},\n");
-        }
-      }
-      fprintf(fP, "};\n\n");
-      // CollisionTree strips
-      fprintf(fP, "CollStrip collStrip_%s_%s = {\n", entityName, tagP->name);
-      fprintf(fP, "\t.nFrames = %d,\n", 1 + tagP->to - tagP->from);
-      int len = strlen(tagP->name);
-      Bln isLeft = !strncasecmp(&tagP->name[len - 4], "LEFT", 4);
-      fprintf(fP, "\t.flip = %d,\n", isLeft);
-      // Aseprite left out looping in their tags for some reason, so using the otherwise useless reverse!
-      Bln isReverse = !strncasecmp(tagP->direction, "reverse", 4);
-      fprintf(fP, "\t.repeat = %d,\n", isReverse);  
-      Bln isPingPong = !strncasecmp(tagP->direction, "pingpong", 4);
-      fprintf(fP, "\t.pingPong = %d,\n", isPingPong);
-      fprintf(fP, "\t.frameA = collGrid_%s_%sA\n", entityName, tagP->name);
-      fprintf(fP, "};\n\n");
-      ++nKeyValPairs;
-    }
-    // Write key-val pairs between tag names and coll strips
-    fprintf(fP, "KeyValPairArray tagName2CollRectAMap_%s[] = {\n", entityName);
-    fprintf(fP, "\t.nKeyValPairs = %d,\n", nKeyValPairs);
-    fprintf(fP, "\t.keyValPairA = {\n");
-    for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
-      fprintf(fP, "\t\t{\n");
-      fprintf(fP, "\t\t\t.key  = %s,\n", tagP->name);
-      fprintf(fP, "\t\t\t.valP = &collStrip_%s_%s\n");
-      fprintf(fP, "\t\t},\n");
-    }
-    fprintf(fP, "};\n\n");
-    fclose(fP);
-  }
-  return e;
+// Write a collision grid to a C file.
+Error writeCollisionGridMap(char *entityName, StripMapS *stripmapP, StripSetS *stripsetP, U8 verbose) {
+  return writeStripData(entityName, "CollGrid", verbose, stripsetP, stripmapP);
 }
-
-
 
 // Write a map of rectangle arrays to a C file.
 Error writeCollisionRectMap(char *entityName, Animation *animP, RectNode *collTreeP) {
   char *filepath = NULL;
-  Error  e = getBuildFilePath(&filepath, "Collision", entityName, "_col.c");
+  Error  e = getBuildFilePath(&filepath, "Collision/Rect", entityName, "_col.c");
   if (!e) {
     FILE *fP = fopen(filepath, "w");
     Key nKeyValPairs = 0;
@@ -258,11 +237,12 @@ Error writeCollisionRectMap(char *entityName, Animation *animP, RectNode *collTr
     // Write collision rect arrays.
     for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
       // Collision rect arrays
-      fprintf(fP, "CollRect *collRect_%s_%sA[] = {\n", entityName, tagP->name);
+      fprintf(fP, "CollRect *collRect_%s_%s_A[] = {\n", entityName, tagP->name);
       RectNode *rectNodeP = getRectNode(collTreeP, tagP->from);
-      if (!rectNodeP)
+      if (!rectNodeP) {
         return E_BAD_ARGS;
-      for (int i = tagP->from; rectNodeP && i < tagP->to; ++i, rectNodeP = rectNodeP->nextP) {
+      }
+      for (int i = tagP->from; rectNodeP && i <= tagP->to; ++i, rectNodeP = rectNodeP->nextP) {
         if (rectNodeP) {
           fprintf(fP, "\t{\n");
           fprintf(fP, "\t\t.x = %d,\n", rectNodeP->x);
@@ -295,7 +275,7 @@ Error writeCollisionRectMap(char *entityName, Animation *animP, RectNode *collTr
     for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
       fprintf(fP, "\t\t{\n");
       fprintf(fP, "\t\t\t.key  = %s,\n", tagP->name);
-      fprintf(fP, "\t\t\t.valP = &collStrip_%s_%s\n");
+      fprintf(fP, "\t\t\t.valP = &collStrip_%s_%s\n", entityName, tagP->name);
       fprintf(fP, "\t\t},\n");
     }
     fprintf(fP, "};\n\n");
@@ -314,7 +294,7 @@ Error writeCollisionRectMap(char *entityName, Animation *animP, RectNode *collTr
 // multiple collision types (where each pixel is a collision type value).
 //
 // For now at least, the input cannot be an animated background. (But what about water!? Hmmm...)
-Error coll(char *fp, U8 isBg, Animation *animP, U8 verbose) {
+Error coll(char *fp, char *entityName, U8 isBg, Animation *animP, U8 verbose) {
   if (!fp || (isBg && animP)) {
     return E_BAD_ARGS;
   }
@@ -342,12 +322,33 @@ Error coll(char *fp, U8 isBg, Animation *animP, U8 verbose) {
       }
       // Write collision grid map source file.
       if (!e) {
-        e = writeCollisionGridMap(entityName, animP, &stripset, &stripmap);
+        e = writeCollisionGridMap(entityName, &stripmap, &stripset, verbose);
       }
     }
     // Foreground objects are rectangle-based, so you only need to find the rectangle in each frame.
     else { 
+      // Make sure all animation frames fit within image.
+      U32 xMax, yMax;
+      xMax = yMax = 0;
+      for (FrameNode *fNodeP = animP->frameNodeA; fNodeP; fNodeP = fNodeP->nextP) {
+        if ((fNodeP->x + fNodeP->w) > xMax) {
+          xMax = fNodeP->x + fNodeP->w;
+        }
+        if ((fNodeP->y + fNodeP->h) > yMax) {
+          yMax = fNodeP->y + fNodeP->h;
+        }
+      }
+      if (xMax > pngImgP->width) {
+        printf("Maximum x %d is bigger than collision image width %d.\n", xMax, pngImgP->width);
+        return E_BAD_ARGS;
+      }
+      if (yMax > pngImgP->height) {
+        printf("Maximum y %d is bigger than collision image height %d.\n", yMax, pngImgP->height);
+        return E_BAD_ARGS;
+      }
+
       e = findCollisionRects(pixelA, pngImgP, pixelSize, animP, &rectListP);
+#if 0
       // Parse entity  name. 
       if (!e) {
         U32 startIdx, len;
@@ -361,6 +362,7 @@ Error coll(char *fp, U8 isBg, Animation *animP, U8 verbose) {
         memcpy(entityName, &filepath[startIdx], len);
         entityName[len] = '\0';
       }
+#endif
       // Write collision rect map source file.
       if (!e) {
         e = writeCollisionRectMap(entityName, animP, rectListP);
@@ -374,4 +376,12 @@ Error coll(char *fp, U8 isBg, Animation *animP, U8 verbose) {
   return e;
 }
 
-// If there's no json file, the collision BB should be based on the image itself. 
+
+/* Three problems:
+ *
+ * \It's not writing any rects to output file
+ * \It's writing one less frame. 
+ * Y isn't right.
+ * W is always -1
+ * X is relative to image instead of frame
+ * */

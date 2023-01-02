@@ -313,11 +313,11 @@ Error writeAnimation(char *entityName, Animation *animP) {
   // Write frame arrays.
   for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
     // Animation frame arrays
-    fprintf(fP, "AnimFrame *frame_%s_%sA[] = {\n", entityName, tagP->name);
+    fprintf(fP, "AnimFrame *frame_%s_%s_A[] = {\n", entityName, tagP->name);
     FrameNode *frameNodeP = getFrameNode(animP->frameNodeA, tagP->from);
     if (!frameNodeP)
       return E_BAD_ARGS;
-    for (int i = tagP->from; frameNodeP && i < tagP->to; ++i, frameNodeP = frameNodeP->nextP) {
+    for (int i = tagP->from; frameNodeP && i <= tagP->to; ++i, frameNodeP = frameNodeP->nextP) {
       fprintf(fP, "\t{\n");
       fprintf(fP, "\t\t.x = %d,\n", frameNodeP->x);
       fprintf(fP, "\t\t.y = %d,\n", frameNodeP->y);
@@ -393,6 +393,7 @@ Error anim (char *filepath, U8 verbose, Animation **animPP) {
     e = jbAlloc((void**) &animP, sizeof(Animation), 1);
   }
   if (!e) {
+    memset(animP, 0, sizeof(Animation));
     e = getJsonData(animP, topLevelObjP, verbose);
   }
   if (!e && verbose) {

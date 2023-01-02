@@ -49,7 +49,7 @@ int main(int argc, char ** argv) {
       e = getSrcFilePath(&srcFilePath, "Body/Graybody/Collision", argv[i], "_col.png"); 
     }
     if (!e) {
-      e = coll(srcFilePath, 0, animP, verbose);
+      e = coll(srcFilePath, argv[i], 0, animP, verbose);
     }
     jbFree((void**) &animP);
     jbFree((void**) &srcFilePath);

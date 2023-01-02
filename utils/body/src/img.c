@@ -318,7 +318,7 @@ Error readPng(png_image **imgPP, char *imgPathA, U8 *pixelSizeP, U8 **pixelAP, U
   }
 
   if (!(*imgPP)->warning_or_error && verbose)
-    printf("no error on read; it says w = %d and h = %d.\n", (*imgPP)->width, (*imgPP)->height);
+    printf("PNG image load success: %d x %d \n", (*imgPP)->width, (*imgPP)->height);
 
   //free(colormapA);
   if (!e) { // png's error returns 0 if it fails.
