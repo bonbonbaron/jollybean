@@ -236,45 +236,24 @@ Error stripNew(U8 *srcA, U8 verbose, U8 bpu, U32 nUnits, StripSetS *ssP, StripMa
   return e;
 }
 
-Error writeStripData(char *objNameA, char *OBJ_TYPE, U8 verbose, StripSetS *ssP, StripMapS *smP) {
-  Error e = SUCCESS;
-  char infName[strlen(objNameA) + strlen("StripSet") + strlen("Inf")];
-  // Make target filepath to save this stripmap in.
-  char *HOME = getenv("HOME");
-  if (!HOME) {
-    if (verbose)
-      printf("no $HOME environment variable! exiting...\n");
+Error writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripSetS *ssP, StripMapS *smP) {
+  if (!fP || !ssP || !smP) {
     return E_BAD_ARGS;
   }
-  char TROVE_STRIP_DIR[] = "/jb/build/";
-  char fullPath[strlen(HOME) + strlen(TROVE_STRIP_DIR) + strlen(OBJ_TYPE) + strlen("/") + strlen(objNameA) + strlen(".c")];
-  strcpy(fullPath, HOME);
-  strcat(fullPath, TROVE_STRIP_DIR);
-  strcat(fullPath, OBJ_TYPE);
-  strcat(fullPath, "/");
-  strcat(fullPath, objNameA);
-  strcat(fullPath, ".c");
-  // Open file.
-  FILE *fP = fopen(fullPath, "w");
-  if (!fP) {
-    if (verbose)
-      printf("[writeStripData] file opening failed for path %s\n", fullPath);
-    e = E_BAD_ARGS;
-  }
-  if (!e) {
-    // Write header.
-    fprintf(fP, "#include \"data.h\"\n\n");
-    // Flip set
-    fprintf(fP, "static U16 %sFlipIdxA[] = {\n", objNameA);
-    writeRawData16(fP, (U16*) ssP->flipSet.flipIdxA, arrayGetNElems(ssP->flipSet.flipIdxA));
-    fprintf(fP, "};\n\n");
-  }
-  if (!e) {
-    strcpy(infName, objNameA);
-    strcat(infName, "StripSet");
-    strcat(infName, "Inf");
-    e = inflatableAppend(ssP->stripSetInfP, fP, infName);
-  }
+
+  char infName[strlen(objNameA) + strlen("StripSet") + strlen("Inf")];
+
+  // Write header.
+  fprintf(fP, "#include \"data.h\"\n\n");
+  // Flip set
+  fprintf(fP, "static U16 %sFlipIdxA[] = {\n", objNameA);
+  writeRawData16(fP, (U16*) ssP->flipSet.flipIdxA, arrayGetNElems(ssP->flipSet.flipIdxA));
+  fprintf(fP, "};\n\n");
+  strcpy(infName, objNameA);
+  strcat(infName, "StripSet");
+  strcat(infName, "Inf");
+  Error e = inflatableAppend(ssP->stripSetInfP, fP, infName);
+
   if (!e) {
     fprintf(fP, "\n\n");
     // Strip set 
@@ -307,6 +286,37 @@ Error writeStripData(char *objNameA, char *OBJ_TYPE, U8 verbose, StripSetS *ssP,
 closeout:
   if (fP) {
     fclose(fP);
+  }
+
+  return e;
+}
+
+Error writeStripData(char *objNameA, char *OBJ_TYPE, U8 verbose, StripSetS *ssP, StripMapS *smP) {
+  Error e = SUCCESS;
+  // Make target filepath to save this stripmap in.
+  char *HOME = getenv("HOME");
+  if (!HOME) {
+    if (verbose)
+      printf("no $HOME environment variable! exiting...\n");
+    return E_BAD_ARGS;
+  }
+  char TROVE_STRIP_DIR[] = "/jb/build/";
+  char fullPath[strlen(HOME) + strlen(TROVE_STRIP_DIR) + strlen(OBJ_TYPE) + strlen("/") + strlen(objNameA) + strlen(".c")];
+  strcpy(fullPath, HOME);
+  strcat(fullPath, TROVE_STRIP_DIR);
+  strcat(fullPath, OBJ_TYPE);
+  strcat(fullPath, "/");
+  strcat(fullPath, objNameA);
+  strcat(fullPath, ".c");
+  // Open file.
+  FILE *fP = fopen(fullPath, "w");
+  if (!fP) {
+    if (verbose)
+      printf("[writeStripData] file opening failed for path %s\n", fullPath);
+    e = E_BAD_ARGS;
+  }
+  if (!e) {
+    e = writeStripDataInFile(fP, verbose, objNameA, ssP, smP);
   }
 
   return e;

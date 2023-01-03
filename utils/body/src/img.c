@@ -197,7 +197,7 @@ Error writeColorPaletteHeaderFile(char *imgNameA, U8 verbose) {
   return SUCCESS;
 }
 
-Error writeColormap(char *imgNameA, StripSetS *stripsetP, ImgDims *imgDimsP, U8 verbose) {
+Error writeColormap(char *imgNameA, StripSetS *ssP, StripMapS *smP, ImgDims *imgDimsP, U8 verbose) {
   const char OBJ_TYPE[] = "Colormap_";
   if (verbose)
     printf("writing colormap...\n");
@@ -221,26 +221,24 @@ Error writeColormap(char *imgNameA, StripSetS *stripsetP, ImgDims *imgDimsP, U8 
       printf("[writeColormap] file opening failed for path %s\n", fullPath);
     return E_NO_MEMORY;
   }
-  Error e = SUCCESS;
   // Make Title format of image name.
-  char imgTitle[strlen(imgNameA) + 1];
-  strcpy(imgTitle, imgNameA);
-  imgTitle[0] = toupper(imgTitle[0]);
-  // Write header.
   fprintf(fP, "#include \"xRender.h\"\n");
-  fprintf(fP, "#include \"Strips_%s.h\"\n\n", imgNameA);
-  // Write colormap
-  fprintf(fP, "ColormapS %sColormap = {\n", imgNameA);
-  fprintf(fP, "\t.bpp = %d,\n", imgDimsP->bpp);
-  fprintf(fP, "\t.w = %d,\n", imgDimsP->w);
-  fprintf(fP, "\t.h = %d,\n", imgDimsP->h);
-  fprintf(fP, "\t.pitch = %d,\n", imgDimsP->pitch);
-  fprintf(fP, "\t.stripSetP = &%sStripSet,\n", imgNameA);
-  fprintf(fP, "\t.stripMapP = &%sStripMap,\n", imgNameA);
-  fprintf(fP, "};\n\n");
+  // Write stripmap and stripset data.
+  Error e = writeStripDataInFile(fP, verbose, imgNameA, ssP, smP);
+  if (!e) { 
+    // Write colormap
+    fprintf(fP, "ColormapS %sColormap = {\n", imgNameA);
+    fprintf(fP, "\t.bpp = %d,\n", imgDimsP->bpp);
+    fprintf(fP, "\t.w = %d,\n", imgDimsP->w);
+    fprintf(fP, "\t.h = %d,\n", imgDimsP->h);
+    fprintf(fP, "\t.pitch = %d,\n", imgDimsP->pitch);
+    fprintf(fP, "\t.stripSetP = &%sStripSet,\n", imgNameA);
+    fprintf(fP, "\t.stripMapP = &%sStripMap,\n", imgNameA);
+    fprintf(fP, "};\n\n");
+  }
   // Close file.
   fclose(fP);
-  return SUCCESS;
+  return e;
 }
 
 // =========================================================================================
@@ -495,12 +493,9 @@ badPixel:
   }
 
   // Give game engine the stripMap for this image if it applies.
-  if (!e)
-    e = writeStripData(entityName, "Colormap", verbose, &stripset, &stripmap);
-  if (!e)
-    e = writeColormap(entityName, &stripset, &imgDims, verbose);
-  if (!e)
-    e = writeStripsHeaderFile(entityName, verbose);
+  if (!e) {
+    e = writeColormap(entityName, &stripset, &stripmap, &imgDims, verbose);
+  }
 
   // Time to see whether to update the new palette directory.
   if (!e) {

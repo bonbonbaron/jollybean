@@ -232,7 +232,7 @@ Error setTags(TagNode **tagNodePP, fjson_object *jsonObjP, U8 verbose) {
   return e;
 }
 
-void printResults(Animation *animP) {
+void printResults(AnimJsonData *animP) {
   for (FrameNode *frameNodeP = animP->frameNodeA; frameNodeP != NULL; frameNodeP = frameNodeP->nextP) {
     printf("Got frame:\n");
     printf("\tx: %d\n", frameNodeP->x);
@@ -253,7 +253,7 @@ void printResults(Animation *animP) {
 
 // JSON tree traversal 
 // ====================
-Error getJsonData(Animation *animP, fjson_object *objP, U8 verbose) {
+Error getJsonData(AnimJsonData *animP, fjson_object *objP, U8 verbose) {
   Error e = SUCCESS;
   struct fjson_object_iterator itr =  fjson_object_iter_begin(objP);
   struct fjson_object_iterator itrEnd =  fjson_object_iter_end(objP);
@@ -297,14 +297,14 @@ FrameNode* getFrameNode(FrameNode *rootP, U32 idx) {
   return resultP;
 }
 
-Error writeAnimation(char *entityName, Animation *animP) {
+Error writeAnimJsonData(char *entityName, AnimJsonData *animP) {
   char *dstFilepathP = NULL;
-  printf("[writeAnimation] entityName is %s.\n", entityName);
-  Error e = getBuildFilePath(&dstFilepathP, "Animation", entityName, ".c"); 
+  printf("[writeAnimJsonData] entityName is %s.\n", entityName);
+  Error e = getBuildFilePath(&dstFilepathP, "AnimJsonData", entityName, ".c"); 
   Key nKeyValPairs = 0;
   FILE *fP = fopen(dstFilepathP, "w");
   if (!fP) {
-    printf("[writeAnimation] failed to open %s\n", dstFilepathP);
+    printf("[writeAnimJsonData] failed to open %s\n", dstFilepathP);
     jbFree((void**) dstFilepathP);
     return E_FILE_IO;
   }
@@ -312,7 +312,7 @@ Error writeAnimation(char *entityName, Animation *animP) {
   fprintf(fP, "#include \"xAnim.h\"\n\n");
   // Write frame arrays.
   for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
-    // Animation frame arrays
+    // AnimJsonData frame arrays
     fprintf(fP, "AnimFrame *frame_%s_%s_A[] = {\n", entityName, tagP->name);
     FrameNode *frameNodeP = getFrameNode(animP->frameNodeA, tagP->from);
     if (!frameNodeP)
@@ -327,7 +327,7 @@ Error writeAnimation(char *entityName, Animation *animP) {
       fprintf(fP, "\t},\n");
     }
     fprintf(fP, "};\n\n");
-    // Animation strips
+    // AnimJsonData strips
     fprintf(fP, "AnimStrip animStrip_%s_%s = {\n", entityName, tagP->name);
     fprintf(fP, "\t.nFrames = %d,\n", 1 + tagP->to - tagP->from);
     int len = strlen(tagP->name);
@@ -356,9 +356,9 @@ Error writeAnimation(char *entityName, Animation *animP) {
   fclose(fP);
 }
 
-/* anim() outputs an Animation** in case the caller wants to use its 
+/* anim() outputs an AnimJsonData** in case the caller wants to use its 
    frame data to look for collision rectangles. */
-Error anim (char *filepath, U8 verbose, Animation **animPP) {
+Error anim (char *filepath, U8 verbose, AnimJsonData **animPP) {
   if (!filepath || !animPP) {
     return E_BAD_ARGS;
   }
@@ -388,12 +388,12 @@ Error anim (char *filepath, U8 verbose, Animation **animPP) {
   fjson_object *topLevelObjP = fjson_tokener_parse(jsonFileContents);
 
   // Turn it into a C struct
-  Animation *animP;
+  AnimJsonData *animP;
   if (!e) {
-    e = jbAlloc((void**) &animP, sizeof(Animation), 1);
+    e = jbAlloc((void**) &animP, sizeof(AnimJsonData), 1);
   }
   if (!e) {
-    memset(animP, 0, sizeof(Animation));
+    memset(animP, 0, sizeof(AnimJsonData));
     e = getJsonData(animP, topLevelObjP, verbose);
   }
   if (!e && verbose) {
@@ -410,7 +410,7 @@ Error anim (char *filepath, U8 verbose, Animation **animPP) {
     }
     memcpy(entityName, &filepath[startIdx], len);
     entityName[len] = '\0';
-    e = writeAnimation(entityName, animP);
+    e = writeAnimJsonData(entityName, animP);
   }
 
   // Return animation if it's good; otherwise free it and return NULL.

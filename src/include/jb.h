@@ -4,6 +4,9 @@
 // Core
 #include "botox.h"
 
+// Core jb objects
+#include "body.h"
+
 // Child systems
 #include "xRender.h"
 #include "xControl.h"

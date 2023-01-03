@@ -1,18 +1,12 @@
 #ifndef SYS_Collision
 #define SYS_Collision
-#include "botox.h"
-#include "interface.h"
+#include "jb.h"
 
 // Dummy struct to keep macro X_ happy.
 typedef struct {
 } XCollisionCompSrc; 
 
-typedef struct {
-  Entity entity;
-  Key    type;  // Colliding elements react according to each other's type.
-  Key    layer;
-  Key    rectIdx;  // indexes both a layer array, reference rect array, and 
-} XCollisionComp;
+typedef Collision XCollisionComp;
 
 typedef struct {
   System  system;

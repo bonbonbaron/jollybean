@@ -29,18 +29,18 @@ typedef struct {
   EntryData data;
 } Entry;
 
-// List nodes for finding multiple partial query hits
-typedef struct _NameNode {
-  int entryIdx;  // index to partially matching name
-  struct _NameNode *nextP;
-} NameNode;
-
 // Lets us keep track of things that may be shared across multiple entities.
 // BTW, this is really just an array. But easier to store this way.
 typedef struct {
   U32 nEntries;
   Entry entryA[];  // Allows unlimited palettes when placed at end of struct.
 } Database;
+
+// List nodes for finding multiple partial query hits
+typedef struct _NameNode {
+  int entryIdx;  // index to partially matching name
+  struct _NameNode *nextP;
+} NameNode;
 
 Error dbGet(Database **dbPP, char *dbName, int argc, U8 verbose);
 Error dbReplaceOriginal(Database *dbP, char *dbName, U8 verbose);

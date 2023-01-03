@@ -36,7 +36,7 @@ int main(int argc, char ** argv) {
     }
     jbFree((void**) &srcFilePath);
     // Animation
-    Animation *animP = NULL;
+    AnimJsonData *animP = NULL;
     if (!e) {
       e = getSrcFilePath(&srcFilePath, "Body/Graybody/Animation", argv[i], ".json"); 
     }

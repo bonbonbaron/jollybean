@@ -1,27 +1,11 @@
 #ifndef SYS_RENDER
 #define SYS_RENDER
-#include "botox.h"
+#include "jb.h"
 
 // TODO is both being 1 a bug, or is that the *inner* key value?
 #define WINDOW_KEY_ (1)
 #define RENDERER_KEY_ (1)
 typedef enum{WINDOW_GENE_TYPE = 1, RENDERER_GENE_TYPE, N_MASTER_GENES} GeneType;
-typedef struct {
-  U8 r, g, b, a;
-} Color;
-
-typedef struct {
-  U8 nColors;
-  Color *paletteA;
-} ColorPalette;
-
-typedef struct {
-  U8 bpp;
-  U16 w, h, pitch;  // in pixel units; determine actual step size by pixel format
-  StripSetS *stripSetP;
-  StripMapS *stripMapP;
-  U8 *dataP;    // JB only supports 8-bit colormap. If image requires neither strips nor bit-unpacking, this simply points at the inflatable data.
-} ColormapS;     // When the inflatable requires neither unpacking nor strip-mapping, go ahead and memcpy over. I can't think of any cleaner way to do it.
 
 // Backgrounds are made of tiles, although their source images are made of strips.  
 // Therefore, the bg's ROM image is the tileset. The tileset gets compressed into
@@ -37,7 +21,7 @@ typedef struct {
 typedef struct {
   U8 textureAtlasRectIdx;
   ColorPalette *colorPalette;
-  ColormapS *colorMapP;
+  Colormap *colorMapP;
 } XRenderCompSrc; 
 
 typedef struct {
@@ -46,8 +30,8 @@ typedef struct {
 } XRenderComp;
 
 // Images
-Error cmGen(ColormapS *imgP);
-void  cmClr(ColormapS *imgP);
+Error cmGen(Colormap *imgP);
+void  cmClr(Colormap *imgP);
 Error xRenderIniS(System *sP, void *sParamsP);
 Error xRenderProcessMessage(System *sP, Message *msgP);
 typedef void (*XRenderPresentU)(Renderer_ *rendererP);

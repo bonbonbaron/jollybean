@@ -182,7 +182,7 @@ static U8* calcLastPixelPInRowP(FrameNode *fNodeP, U8 *firstPixelP, U32 pixelSiz
     } \
   } 
 
-Error findCollisionRects(U8 *pixelA, png_image *imgP, U32 pixelSize, Animation *animP, RectNode **rectNodePP) {
+Error findCollisionRects(U8 *pixelA, png_image *imgP, U32 pixelSize, AnimJsonData *animP, RectNode **rectNodePP) {
   if (!pixelA || !imgP || !pixelSize || pixelSize > 4 || !rectNodePP) {
     return E_BAD_ARGS;
   }
@@ -220,7 +220,7 @@ Error writeCollisionGridMap(char *entityName, StripMapS *stripmapP, StripSetS *s
 }
 
 // Write a map of rectangle arrays to a C file.
-Error writeCollisionRectMap(char *entityName, Animation *animP, RectNode *collTreeP) {
+Error writeCollisionRectMap(char *entityName, AnimJsonData *animP, RectNode *collTreeP) {
   char *filepath = NULL;
   Error  e = getBuildFilePath(&filepath, "Collision/Rect", entityName, "_col.c");
   if (!e) {
@@ -291,7 +291,7 @@ Error writeCollisionRectMap(char *entityName, Animation *animP, RectNode *collTr
 // multiple collision types (where each pixel is a collision type value).
 //
 // For now at least, the input cannot be an animated background. (But what about water!? Hmmm...)
-Error coll(char *fp, char *entityName, U8 isBg, Animation *animP, U8 verbose) {
+Error coll(char *fp, char *entityName, U8 isBg, AnimJsonData *animP, U8 verbose) {
   if (!fp || (isBg && animP)) {
     return E_BAD_ARGS;
   }
@@ -372,14 +372,3 @@ Error coll(char *fp, char *entityName, U8 isBg, Animation *animP, U8 verbose) {
   free(pngImgP);
   return e;
 }
-
-
-/* Three problems:
- *
- * \It's not writing any rects to output file
- * \It's writing one less frame. 
- * \]Y isn't right.
- * \]W is always -1
- * \]X is relative to image instead of frame
- * It doesn't memorize color palettes.
- * */

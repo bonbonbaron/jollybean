@@ -6,7 +6,7 @@
 // =========================================
 // Clear color map and all its related data.
 // =========================================
-static void _cmClr(ColormapS *cmP) {
+static void _cmClr(Colormap *cmP) {
 	if (cmP != NULL) {
 	 	if (cmP->dataP != NULL)    // But if the double pointer is null, avoid any processing.
 			jbFree((void**) &cmP->dataP);
@@ -22,12 +22,12 @@ static void _cmClr(ColormapS *cmP) {
 // =====================================================================
 // Build color map by inflating, unpacking, and piecing together strips.
 // =====================================================================
-static Error _cmGen(ColormapS *cmP) {
+static Error _cmGen(Colormap *cmP) {
 	Error e;
 
 	if (cmP != NULL) {
 		// Check if the image has already been reconstructed. If so, get out.
-		if (cmP->dataP != NULL)   // ColormapS has already been reconstructed.
+		if (cmP->dataP != NULL)   // Colormap has already been reconstructed.
 			return SUCCESS;  
 		// If not reconstructed yet, inflate strip set if it's still compressed (inflate() checks internally).
 		if (cmP->stripSetP)
@@ -45,25 +45,25 @@ static Error _cmGen(ColormapS *cmP) {
 		e = E_BAD_ARGS;
 	// Expand strip set into image.
 	if (!e) {
-		const U32 *cmDataP = (U32*) cmP->dataP;
-		U32 *dstStripP = (U32*) cmDataP;
-		U32 *stripSetP = (U32*) cmP->stripSetP->stripSetInfP->inflatedDataP;
-    U32 *srcStripP;
+		U32 *dstStripP = (U32*) cmP->dataP;
     // Count remainder of pixels to process after all the whole strips.
-    U32 nWholeStrips = countWholeStrips_(cmP->stripSetP->nPixels);
-    U32 nRemainderPixels = countRemainderPixels_(cmP->stripSetP->nPixels);
+    U32 nWholeStrips = countWholeStrips_(cmP->stripSetP->nUnits);
+    U32 nRemainderUnits = countRemainderUnits_(cmP->stripSetP->nUnits);
     // Mapped stripsets need to be both unpacked and indexed. They may need strips to be flipped too.
 		switch (cmP->bpp) {
 			case 1:
-        inflateStripsWithBpp_(1);
+        // These cannot be macros. They have to be function calls. Because
+        // each macro assumes other macros that define *static* functions exist, meaning
+        // all the work has to be done within data.c.
+        inflateStripsWithBpu1(1);
 				break;
 			case 2:
         // First read all mapped strips into the target colormap.
-        inflateStripsWithBpp_(2);
+        inflateStripsWithBpu2(2);
 				break;
 			case 4: 
         // First read all mapped strips into the target colormap.
-        inflateStripsWithBpp_(4);
+        inflateStripsWithBpu4(4);
 				break;
 			default:  
 				e = E_UNSUPPORTED_PIXEL_FORMAT;
