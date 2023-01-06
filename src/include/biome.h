@@ -63,7 +63,7 @@ typedef struct {
 	U8 geneClass;    // exclusive, shared, or blackboard gene
 	U8 type;         // image, audio, text, battle stats, etc. (used to target the correct shared pool/system)
 	U8 size;         // sizeof destination component type (so we can memcpy the right size into the ECS target system/sharedPool/BB)
-  Key key;         // key that lets you change an entity's current component to this one
+  Key key;         // key that lets you mutate a seed's gene to this one; 0 for immutable
   void *dataP;     // the destination data of the gene to be populated via srcDataP
   void *srcDataP;  // the data needed to initialize the destination data
 } Gene;
@@ -101,9 +101,6 @@ typedef struct {
   S32 y;
 } Position;
 
-// Sigh, this is going to bloat. But 8 additional bytes per position is a better deal
-// than a switch function, a map with 32B overhead, or an if-else statement.
-
 typedef struct {
   Key keyhole;
   Position position;
@@ -115,7 +112,7 @@ typedef struct {
   Seed *seedP;
   Key *keyP;   // if an entity can spawn in one of multiple places, the key determines which
   Map **geneMutationMPA;  // array of pointers to maps of gene mutations; ptrs are distro'd to entities
-  PositionNode *positionNodeA;
+  PositionNode *positionNodeA;  // all possible places these seeds can spawn
 } Spawn;
 
 /************************/

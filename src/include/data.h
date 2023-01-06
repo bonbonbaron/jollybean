@@ -307,9 +307,12 @@ __inline__ static void _unpackRemainderUnits##Bpu_(U8 *byteA, U8 *outputByteP, U
     *outputByteP++ =  (*(byteP++) >> i) & maskByte_;\
 }
 
+void flipUnpackedStrips(StripSetS *stripSetP, void *outputDataP);
+
 #define defineInflateStripsWithBpu_(Bpu_)\
-  void inflateStripsWithBpu##Bpu_ (StripSetS *stripSetP, StripMapS *stripMapP) {\
+  declareInflateStripsWithBpu_(Bpu_) {\
     U32 *srcStripP; \
+    U32 *dstStripOriginP = dstStripP; /* keep track of beginning as pointer gets incremented */ \
     /* Count remainder of pixels to process after all the whole strips. */ \
     U32 nWholeStrips = countWholeStrips_(stripSetP->nUnits); \
     U32 nRemainderUnits = countRemainderUnits_(stripSetP->nUnits); \
@@ -318,22 +321,27 @@ __inline__ static void _unpackRemainderUnits##Bpu_(U8 *byteA, U8 *outputByteP, U
     if (stripMapP) {\
       U16 *mapEndP = ((U16*) stripMapP->stripMapInfP->inflatedDataP) + nWholeStrips;\
       for (U16 *ssIdxP = (U16*) stripMapP->stripMapInfP->inflatedDataP; ssIdxP < mapEndP; ssIdxP++) {\
-        srcStripP = stripSetP-> + stripIdxTo##Bpu_##BpuStripPtr_(*ssIdxP);  \
+        srcStripP = stripSetP->stripSetInfP->inflatedDataP + stripIdxTo##Bpu_##BpuStripPtr_(*ssIdxP);  \
         _unpackStrip##Bpu_##Bpu(&srcStripP, &dstStripP);\
       }\
-      srcStripP = stripSetP + stripSetP->nStrips - 1;\
+      srcStripP = stripSetP->stripSetInfP->inflatedDataP + stripSetP->nStrips - 1;\
       _unpackRemainderUnits##Bpu_((U8*) srcStripP, (U8*) dstStripP, nRemainderUnits);\
       /* Then flip whatever strips need flipping. Remember data's already expanded to U8s! */\
       if (stripSetP->flipSet.nFlips) \
-        _flipUnpackedStrips(cmP);\
+        flipUnpackedStrips(stripSetP, dstStripOriginP);\
     } \
     /* Unmapped stripsets are already ordered, so they only need to be unpacked. */\
     else {\
-      U32 *srcEndP = stripSetP + stripIdxTo1BpuStripPtr_(nWholeStrips);\
-      for (U32 *srcStripP = stripSetP; srcStripP < srcEndP; srcStripP++) \
+      U32 *srcEndP = stripSetP->stripSetInfP->inflatedDataP + stripIdxTo1BpuStripPtr_(nWholeStrips);\
+      for (U32 *srcStripP = stripSetP->stripSetInfP->inflatedDataP; srcStripP < srcEndP; srcStripP++) \
         _unpackStrip##Bpu_##Bpu(&srcStripP, &dstStripP);\
       _unpackRemainderUnits##Bpu_((U8*) srcStripP, (U8*) dstStripP, nRemainderUnits);\
     }\
   }
 
+#define declareInflateStripsWithBpu_(Bpu_) void inflateStripsWithBpu##Bpu_ (StripSetS *stripSetP, StripMapS *stripMapP, U32 *dstStripP)
+
+declareInflateStripsWithBpu_(1);
+declareInflateStripsWithBpu_(2);
+declareInflateStripsWithBpu_(4);
 #endif

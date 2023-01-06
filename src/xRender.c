@@ -45,25 +45,19 @@ static Error _cmGen(Colormap *cmP) {
 		e = E_BAD_ARGS;
 	// Expand strip set into image.
 	if (!e) {
-		U32 *dstStripP = (U32*) cmP->dataP;
     // Count remainder of pixels to process after all the whole strips.
-    U32 nWholeStrips = countWholeStrips_(cmP->stripSetP->nUnits);
-    U32 nRemainderUnits = countRemainderUnits_(cmP->stripSetP->nUnits);
     // Mapped stripsets need to be both unpacked and indexed. They may need strips to be flipped too.
 		switch (cmP->bpp) {
 			case 1:
-        // These cannot be macros. They have to be function calls. Because
-        // each macro assumes other macros that define *static* functions exist, meaning
-        // all the work has to be done within data.c.
-        inflateStripsWithBpu1(1);
+        inflateStripsWithBpu1(cmP->stripSetP, cmP->stripMapP, (U32*) cmP->dataP);
 				break;
 			case 2:
         // First read all mapped strips into the target colormap.
-        inflateStripsWithBpu2(2);
+        inflateStripsWithBpu2(cmP->stripSetP, cmP->stripMapP, (U32*) cmP->dataP);
 				break;
 			case 4: 
         // First read all mapped strips into the target colormap.
-        inflateStripsWithBpu4(4);
+        inflateStripsWithBpu4(cmP->stripSetP, cmP->stripMapP, (U32*) cmP->dataP);
 				break;
 			default:  
 				e = E_UNSUPPORTED_PIXEL_FORMAT;

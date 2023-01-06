@@ -1182,7 +1182,7 @@ defineUnpackRemainderUnitsFunction_(4, 0x0f);
 
 // Flips already-unpacked (8bpu) strips that need flipping. 
 // Jollybean's image compressor deletes strips that're mirror-images of another.
-__inline__ static void _flipUnpackedStrips(StripSetS *stripSetP, void *outputDataP) {
+void _flipUnpackedStrips(StripSetS *stripSetP, void *outputDataP) {
   U16 *flipEndP = stripSetP->flipSet.flipIdxA + stripSetP->flipSet.nFlips;
   U32 *dstLeftWordP, *dstRightWordP;
   // 4 *unpacked* Units per U32 out of 64 Units means there are 16 U32s.
