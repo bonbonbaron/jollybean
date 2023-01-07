@@ -156,3 +156,59 @@ Error getBuildFilePath(char **buildFilePath, char *buildLocalDirName, char *buil
 
  return e;
 }
+
+FILE* getBuildFile(char *buildLocalDirName, char *buildFileName, char *buildFileSuffix, U8 verbose) {
+  FILE  *fP = NULL;
+  if (!buildLocalDirName || !buildFileName || !buildFileSuffix) {
+    printf("[getBuildFile] error: one of the args is NULL or 0.\n");
+    return NULL;
+  }
+  char *buildFilePath = NULL;
+  Error e = getBuildFilePath(&buildFilePath, buildLocalDirName, buildFileName, buildFilePath);
+  if (!e) {
+    if (verbose) {
+      printf("About to open build file %s...\n", buildFilePath);
+    }
+    // Open file.
+    fP = fopen(buildFilePath, "w");
+    if (!fP) {
+      printf("[getBuildFile] file opening failed for path %s\n", buildFilePath);
+      e = E_FILE_IO;
+    }
+  }
+  if (buildFilePath) {
+    jbFree((void**) &buildFilePath);
+  }
+  if (!e) {
+    return fP;
+  }
+  return NULL;
+}
+
+FILE* getSrcFile(char *srcLocalDirName, char *srcFileName, char *srcFileSuffix, U8 verbose) {
+  FILE  *fP = NULL;
+  if (!srcLocalDirName || !srcFileName || !srcFileSuffix) {
+    printf("[getSrcFile] error: one of the args is NULL or 0.\n");
+    return NULL;
+  }
+  char *srcFilePath = NULL;
+  Error e = getSrcFilePath(&srcFilePath, srcLocalDirName, srcFileName, srcFilePath);
+  if (!e) {
+    if (verbose) {
+      printf("About to open source file %s...\n", srcFilePath);
+    }
+    // Open file.
+    fP = fopen(srcFilePath, "w");
+    if (!fP) {
+      printf("[getSrcFile] file opening failed for path %s\n", srcFilePath);
+      e = E_FILE_IO;
+    }
+  }
+  if (srcFilePath) {
+    jbFree((void**) &srcFilePath);
+  }
+  if (!e) {
+    return fP;
+  }
+  return NULL;
+}

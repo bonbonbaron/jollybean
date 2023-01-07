@@ -220,65 +220,61 @@ Error writeCollisionGridMap(char *entityName, StripMapS *stripmapP, StripSetS *s
 }
 
 // Write a map of rectangle arrays to a C file.
-Error writeCollisionRectMap(char *entityName, AnimJsonData *animP, RectNode *collTreeP) {
+Error writeCollisionRectMap(char *entityName, AnimJsonData *animP, RectNode *collTreeP, U8 verbose) {
   char *filepath = NULL;
-  Error  e = getBuildFilePath(&filepath, "Collision/Rect", entityName, "_col.c");
-  if (!e) {
-    FILE *fP = fopen(filepath, "w");
-    Key nKeyValPairs = 0;
-    if (!fP) {
-      printf("failed to open %s\n", filepath);
-      return E_NO_MEMORY;
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Graybody/Collision/Rect/src", entityName, "_col.c", verbose);
+  if (!fP) {
+    return E_FILE_IO;
+  }
+  U32 nKeyValPairs = 0;
+  fprintf(fP, "#include \"xCollision.h\"\n\n");
+  // Write collision rect arrays.
+  for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
+    // Collision rect arrays
+    fprintf(fP, "CollRect *collRect_%s_%s_A[] = {\n", entityName, tagP->name);
+    RectNode *rectNodeP = getRectNode(collTreeP, tagP->from);
+    if (!rectNodeP) {
+      return E_BAD_ARGS;
     }
-    fprintf(fP, "#include \"xCollision.h\"\n\n");
-    // Write collision rect arrays.
-    for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
-      // Collision rect arrays
-      fprintf(fP, "CollRect *collRect_%s_%s_A[] = {\n", entityName, tagP->name);
-      RectNode *rectNodeP = getRectNode(collTreeP, tagP->from);
-      if (!rectNodeP) {
-        return E_BAD_ARGS;
+    for (int i = tagP->from; rectNodeP && i <= tagP->to; ++i, rectNodeP = rectNodeP->nextP) {
+      if (rectNodeP) {
+        fprintf(fP, "\t{\n");
+        fprintf(fP, "\t\t.x = %d,\n", rectNodeP->x);
+        fprintf(fP, "\t\t.y = %d,\n", rectNodeP->y);
+        fprintf(fP, "\t\t.w = %d,\n", rectNodeP->w);
+        fprintf(fP, "\t\t.h = %d,\n", rectNodeP->h);
+        fprintf(fP, "\t},\n");
       }
-      for (int i = tagP->from; rectNodeP && i <= tagP->to; ++i, rectNodeP = rectNodeP->nextP) {
-        if (rectNodeP) {
-          fprintf(fP, "\t{\n");
-          fprintf(fP, "\t\t.x = %d,\n", rectNodeP->x);
-          fprintf(fP, "\t\t.y = %d,\n", rectNodeP->y);
-          fprintf(fP, "\t\t.w = %d,\n", rectNodeP->w);
-          fprintf(fP, "\t\t.h = %d,\n", rectNodeP->h);
-          fprintf(fP, "\t},\n");
-        }
-      }
-      fprintf(fP, "};\n\n");
-      // CollisionTree strips
-      fprintf(fP, "CollStrip collStrip_%s_%s = {\n", entityName, tagP->name);
-      fprintf(fP, "\t.nFrames = %d,\n", 1 + tagP->to - tagP->from);
-      int len = strlen(tagP->name);
-      Bln isLeft = !strncasecmp(&tagP->name[len - 4], "LEFT", 4);
-      fprintf(fP, "\t.flip = %d,\n", isLeft);
-      // Aseprite left out looping in their tags for some reason, so using the otherwise useless reverse!
-      Bln isReverse = !strncasecmp(tagP->direction, "reverse", 4);
-      fprintf(fP, "\t.repeat = %d,\n", isReverse);  
-      Bln isPingPong = !strncasecmp(tagP->direction, "pingpong", 4);
-      fprintf(fP, "\t.pingPong = %d,\n", isPingPong);
-      fprintf(fP, "\t.frameA = collRect_%s_%s_A\n", entityName, tagP->name);
-      fprintf(fP, "};\n\n");
-      ++nKeyValPairs;
-    }
-    // Write key-val pairs between tag names and coll strips
-    fprintf(fP, "KeyValPairArray tagName2CollRectAMap_%s[] = {\n", entityName);
-    fprintf(fP, "\t.nKeyValPairs = %d,\n", nKeyValPairs);
-    fprintf(fP, "\t.keyValPairA = {\n");
-    for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
-      fprintf(fP, "\t\t{\n");
-      fprintf(fP, "\t\t\t.key  = %s,\n", tagP->name);
-      fprintf(fP, "\t\t\t.valP = &collStrip_%s_%s\n", entityName, tagP->name);
-      fprintf(fP, "\t\t},\n");
     }
     fprintf(fP, "};\n\n");
-    fclose(fP);
+    // CollisionTree strips
+    fprintf(fP, "CollStrip collStrip_%s_%s = {\n", entityName, tagP->name);
+    fprintf(fP, "\t.nFrames = %d,\n", 1 + tagP->to - tagP->from);
+    int len = strlen(tagP->name);
+    Bln isLeft = !strncasecmp(&tagP->name[len - 4], "LEFT", 4);
+    fprintf(fP, "\t.flip = %d,\n", isLeft);
+    // Aseprite left out looping in their tags for some reason, so using the otherwise useless reverse!
+    Bln isReverse = !strncasecmp(tagP->direction, "reverse", 4);
+    fprintf(fP, "\t.repeat = %d,\n", isReverse);  
+    Bln isPingPong = !strncasecmp(tagP->direction, "pingpong", 4);
+    fprintf(fP, "\t.pingPong = %d,\n", isPingPong);
+    fprintf(fP, "\t.frameA = collRect_%s_%s_A\n", entityName, tagP->name);
+    fprintf(fP, "};\n\n");
+    ++nKeyValPairs;
   }
-  return e;
+  // Write key-val pairs between tag names and coll strips
+  fprintf(fP, "KeyValPairArray tagName2CollRectAMap_%s[] = {\n", entityName);
+  fprintf(fP, "\t.nKeyValPairs = %d,\n", nKeyValPairs);
+  fprintf(fP, "\t.keyValPairA = {\n");
+  for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
+    fprintf(fP, "\t\t{\n");
+    fprintf(fP, "\t\t\t.key  = %s,\n", tagP->name);
+    fprintf(fP, "\t\t\t.valP = &collStrip_%s_%s\n", entityName, tagP->name);
+    fprintf(fP, "\t\t},\n");
+  }
+  fprintf(fP, "};\n\n");
+  fclose(fP);
+  return SUCCESS;
 }
 
 
@@ -362,7 +358,7 @@ Error coll(char *fp, char *entityName, U8 isBg, AnimJsonData *animP, U8 verbose)
 #endif
       // Write collision rect map source file.
       if (!e) {
-        e = writeCollisionRectMap(entityName, animP, rectListP);
+        e = writeCollisionRectMap(entityName, animP, rectListP, verbose);
       }
     }
   }

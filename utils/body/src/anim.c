@@ -297,18 +297,13 @@ FrameNode* getFrameNode(FrameNode *rootP, U32 idx) {
   return resultP;
 }
 
-Error writeAnimJsonData(char *entityName, AnimJsonData *animP) {
-  char *dstFilepathP = NULL;
+Error writeAnimJsonData(char *entityName, AnimJsonData *animP, U8 verbose) {
   printf("[writeAnimJsonData] entityName is %s.\n", entityName);
-  Error e = getBuildFilePath(&dstFilepathP, "AnimJsonData", entityName, ".c"); 
-  Key nKeyValPairs = 0;
-  FILE *fP = fopen(dstFilepathP, "w");
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Graybody/Animation/src", entityName, ".c", verbose); 
   if (!fP) {
-    printf("[writeAnimJsonData] failed to open %s\n", dstFilepathP);
-    jbFree((void**) dstFilepathP);
     return E_FILE_IO;
   }
-  jbFree((void**) &dstFilepathP);
+  Key nKeyValPairs = 0;
   fprintf(fP, "#include \"xAnim.h\"\n\n");
   // Write frame arrays.
   for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
@@ -410,7 +405,7 @@ Error anim (char *filepath, U8 verbose, AnimJsonData **animPP) {
     }
     memcpy(entityName, &filepath[startIdx], len);
     entityName[len] = '\0';
-    e = writeAnimJsonData(entityName, animP);
+    e = writeAnimJsonData(entityName, animP, verbose);
   }
 
   // Return animation if it's good; otherwise free it and return NULL.

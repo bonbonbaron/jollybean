@@ -243,8 +243,6 @@ Error writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripSetS *ssP,
 
   char infName[strlen(objNameA) + strlen("StripSet") + strlen("Inf")];
 
-  // Write header.
-  fprintf(fP, "#include \"data.h\"\n\n");
   // Flip set
   fprintf(fP, "static U16 %sFlipIdxA[] = {\n", objNameA);
   writeRawData16(fP, (U16*) ssP->flipSet.flipIdxA, arrayGetNElems(ssP->flipSet.flipIdxA));
@@ -281,11 +279,6 @@ Error writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripSetS *ssP,
     fprintf(fP, "\t.nIndices = %d,\n", smP->nIndices);
     fprintf(fP, "\t.stripMapInfP = &%s\n", infName);
     fprintf(fP, "};\n\n");
-  }
-
-closeout:
-  if (fP) {
-    fclose(fP);
   }
 
   return e;

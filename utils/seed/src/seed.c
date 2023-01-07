@@ -1,7 +1,29 @@
 #include "seed.h"
 
 // Gene
-Error geneNew(char *geneName, char *geneClass, char *type, U32 size, Key mutationKey, char *srcDataName);
+Error geneNew(char *geneName, char *geneClass, char *type, U32 size, Key mutationKey, char *srcDataName) {
+  // validate args
+  if (!geneName || !geneClass || !type || !size) {
+    printf("Gene name, class, type, or size is zero.\n");
+    return E_BAD_ARGS;
+  }
+
+  if (strcmp(geneClass, "EXCLUSIVE_GENE") && 
+      strcmp(geneClass, "SHARED_GENE") && 
+      strcmp(geneClass, "BB_GENE")) {
+    printf("Gene type has to be one of the 3 accepted types (exclusive, shared, or blackboard).\n");
+    return E_BAD_ARGS;
+  }
+
+  FILE *fP = getBuildFile("Seed/Genome/Gene/src", geneName, ".c");
+  if (!fP) {
+    return E_FILE_IO;
+  }
+  // TODO write src file
+  // TODO write include file with extern
+  
+
+}
 Error geneDel(char *geneName);
 // Genome
 Error genomeNew(Genome **genomePP);
@@ -28,38 +50,3 @@ Error seedEditGenome(Seed *seedP, Genome *newGenomeP);  // don't need index as t
 Error seedEditPersonality(Seed *seedP, Personality *newPersonalityP);  // don't need index as there's only one personality per seed
 Error seedDel(Seed **seedPP);
 
-/*
- * Okay, before I drive myself crazy by going a long way down the wrong road, let's walk through how this'll work from start to finish. We'll use the context of Bodies as an example.
- *
- * Every body has a graybody and palette. Those in turn have their own components. Since it would be painful to hunt down every one of those components individually, I'm wrapping them up in the Graybody and Palette objects. Then I'm wrapping them up again in the Body object. So in the final product, the Body is the only Gene used. Beautiful and simple.
- *
- * So once body.c finishes making the body, it should ask you to name its gene. It should also ask you to name its lower-level graybody and palette components, but those won't be genes; they'll just be reusable to other bodies.
- *
- * So you name the gene, and geneNew() writes to a new gene header and source file. These files look like this:
- *
- * HEADER:   <this gene's name>.h
- * ==============================
- * #include "gene.h"
- *
- * extern Gene <this gene's name>;
- *
- * 
- * SOURCE:   <this gene's name>.c
- * ==============================
- * #include "<this gene's name>.h"
- *
- * Gene <this gene's name> = {
- *  .geneClass = %s (gene class),
- *  .type = %s (type),
- *  .size = %d (size),
- *  .key = %s (mutation key),
- *  .dstDataP = NULL,
- *  .srcDataP = %s (srcDataName)
- * };
- *
- * All the above are automatable-- brilliant!
- * So all I have to do is name it!? Great!
- *
- * But what if I want to make a new body out of an existing graybody and palette?
- * And what if I want to make a new palette, which doesn't techincally count as a gene?
- * */

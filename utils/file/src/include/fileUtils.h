@@ -25,6 +25,8 @@ void writeRawData16(FILE *fP, U16 *byteA, U16 nBytes);
 void writeRawData32(FILE *fP, U32 *byteA, U32 nBytes);
 Error getSrcFilePath(char **srcFilePath, char *srcLocalDirName, char *srcFileName, char *srcFileSuffix);
 Error getBuildFilePath(char **buildFilePath, char *buildLocalDirName, char *buildFileName, char *buildFileSuffix);
+FILE* getSrcFile(char *srcLocalDirName, char *srcFileName, char *srcFileSuffix, U8 verbose);
+FILE* getBuildFile(char *buildLocalDirName, char *buildFileName, char *buildFileSuffix, U8 verbose);
 
 extern char JB_DIR_NAME[];
 extern char SRC_DIR_NAME[];

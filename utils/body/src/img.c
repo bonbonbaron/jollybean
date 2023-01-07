@@ -1,10 +1,6 @@
 #include "img.h"
 #include "genie.h"
 
-char TROVE_IMG_OBJ_DIR[] = "/jb/build/Colormap/obj/";
-char TROVE_IMG_SRC_DIR[] = "/jb/build/Colormap/src/";
-char TROVE_IMG_INC_DIR[] = "/jb/build/Colormap/include/";
-
 void imgDimsIni(ImgDims *imgDimsP, U32 width, U32 height, U32 bpp) {
   imgDimsP->w = width;
   imgDimsP->h = height;
@@ -13,32 +9,9 @@ void imgDimsIni(ImgDims *imgDimsP, U32 width, U32 height, U32 bpp) {
 }
 
 Error writeJbColorPalette(char *imgNameA, U8 *paletteA, U8 verbose) {
-  Error e = SUCCESS;
-  const char OBJ_TYPE[] = "ColorPalette_";
-  FILE *fP = NULL;
   // Make target filepath to save this stripmap in.
-  char *homefp = getenv("HOME");
-  if (!homefp) {
-    if (verbose)
-      printf("no $HOME environment variable! exiting...\n");
-    return E_BAD_ARGS;
-  }
-  char fullPath[strlen(OBJ_TYPE) + strlen(imgNameA) + strlen(homefp) + strlen(TROVE_IMG_SRC_DIR) + strlen(".c")];
-  strcpy(fullPath, homefp);
-  strcat(fullPath, TROVE_IMG_SRC_DIR);
-  strcat(fullPath, OBJ_TYPE);
-  strcat(fullPath, imgNameA);
-  strcat(fullPath, ".c");
-  if (verbose)
-    printf("writing color palette for use in jollybean...\n");
-  // Open file.
-  fP = fopen(fullPath, "w");
-  if (!fP) {
-    if (verbose)
-      printf("[writeJbColorPalette] file opening failed for path %s\n", fullPath);
-    e = E_NO_MEMORY;
-  }
-  if (!e) {
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Palette/ColorPalette", imgNameA, ".c", verbose);
+  if (fP) {
     // Write header.
     fprintf(fP, "#include \"xRender.h\"\n\n");
     // Palette Array
@@ -50,6 +23,9 @@ Error writeJbColorPalette(char *imgNameA, U8 *paletteA, U8 verbose) {
     fprintf(fP, "\t.paletteA = %sPaletteA\n", imgNameA);
     fprintf(fP, "};\n\n");
   }
+  else {
+    return E_FILE_IO;
+  }
   if (fP) {
     // Close file.
     fclose(fP);
@@ -58,55 +34,9 @@ Error writeJbColorPalette(char *imgNameA, U8 *paletteA, U8 verbose) {
 }
 
 Error writeAsepriteColorPalette(char *imgNameA, EntryData *paletteData, U8 verbose) {
-  Error e = SUCCESS;
-  const char OBJ_TYPE[] = "ColorPalette_";
-  FILE *fP = NULL;
-  // Make target filepath to save this stripmap in.
-  char *homefp = getenv("HOME");
-  if (!homefp) {
-    if (verbose)
-      printf("no $HOME environment variable! exiting...\n");
-    return E_BAD_ARGS;
-  }
-  char fullPath[strlen(OBJ_TYPE) + strlen(imgNameA) + strlen(homefp) + strlen(TROVE_IMG_SRC_DIR) + strlen(".c")];
-  strcpy(fullPath, homefp);
-  strcat(fullPath, TROVE_IMG_SRC_DIR);
-  strcat(fullPath, OBJ_TYPE);
-  strcat(fullPath, imgNameA);
-  strcat(fullPath, ".c");
-  if (verbose)
-    printf("writing color palette for reuse in aseprite...\n");
-  // Open file.
-  fP = fopen(fullPath, "w");
-  if (!fP) {
-    if (verbose)
-      printf("[writeAsepriteColorPalette] file opening failed for path %s\n", fullPath);
-    e = E_NO_MEMORY;
-  }
-
-  /*
-   * Example file of aseprite palette:
-   -----------------------------------
-        GIMP Palette
-        #
-        255 188  15	Untitled
-        139 172  15	Untitled
-         48  98  48	Untitled
-         15  56  15	Untitled
-         15  56  15	Untitled
-        215  56  15	Untitled
-         15 254  15	Untitled
-         15  56  15	Untitled
-         15  56  15	Untitled
-         15  56  15	Untitled
-         15  56  15	Untitled
-          0   0 100	Untitled
-         15  56  15	Untitled
-         15  56  15	Untitled
- */
-
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Palette/Color/src", imgNameA, ".gpl", verbose);
   // Write file.
-  if (!e) {
+  if (!fP) {
     // Write header.
     fprintf(fP, "GIMP Palette\n#\n");
     // Palette Array
@@ -120,6 +50,9 @@ Error writeAsepriteColorPalette(char *imgNameA, EntryData *paletteData, U8 verbo
           "Untitled");
     }
   }
+  else {
+    return E_FILE_IO;
+  }
   if (fP) {
     // Close file.
     fclose(fP);
@@ -128,66 +61,26 @@ Error writeAsepriteColorPalette(char *imgNameA, EntryData *paletteData, U8 verbo
 }
 
 
-Error writeStripsHeaderFile(char *imgNameA, U8 verbose) {
-  Error e = SUCCESS;
-  if (verbose)
-    printf("writing strip header file...\n");
-  const char OBJ_TYPE[] = "Strips_";
-  // Make target filepath to save this stripmap in.
-  char *homefp = getenv("HOME");
-  if (!homefp) {
-    if (verbose)
-      printf("no $HOME environment variable! exiting...\n");
-    return E_BAD_ARGS;
+Error writeColormapHeaderFile(char *imgNameA, U8 verbose) {
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Graybody/Colormap/include", imgNameA, ".gpl", verbose);
+  if (fP) {
+    // Write header.
+    fprintf(fP, "#include \"xRender.h\"\n\n");
+    // Flip set
+    fprintf(fP, "extern Colormap %sColormap;\n\n", imgNameA);
+    // Close file.
   }
-  char fullPath[strlen(OBJ_TYPE) + strlen(imgNameA) + strlen(homefp) + strlen(TROVE_IMG_INC_DIR) + strlen(".c")];
-  strcpy(fullPath, homefp);
-  strcat(fullPath, TROVE_IMG_INC_DIR);
-  strcat(fullPath, OBJ_TYPE);
-  strcat(fullPath, imgNameA);
-  strcat(fullPath, ".h");
-  // Open file.
-  FILE *fP = fopen(fullPath, "w");
-  if (!fP) {
-    if (verbose)
-      printf("[writeColormap] file opening failed for path %s\n", fullPath);
-    return E_NO_MEMORY;
+  else {
+    return E_FILE_IO;
   }
-  // Write header.
-  fprintf(fP, "#include \"xRender.h\"\n\n");
-  // Flip set
-  fprintf(fP, "extern StripSetS %sStripSet;\n", imgNameA);
-  fprintf(fP, "extern StripMapS %sStripMap;\n\n", imgNameA);
-  // Close file.
-  fclose(fP);
-  return e;
+  if (fP) {
+    fclose(fP);
+  }
+  return SUCCESS;
 }
 
 Error writeColorPaletteHeaderFile(char *imgNameA, U8 verbose) {
-  const char OBJ_TYPE[] = "ColorPalette_";
-  if (verbose)
-    printf("writing color palette header file...\n");
-  // Make target filepath to save this stripmap in.
-  char *homefp = getenv("HOME");
-  if (!homefp) {
-    if (verbose)
-      printf("no $HOME environment variable! exiting...\n");
-    return E_BAD_ARGS;
-  }
-  char fullPath[strlen(OBJ_TYPE) + strlen(imgNameA) + strlen(homefp) + strlen(TROVE_IMG_INC_DIR) + strlen(".c")];
-  strcpy(fullPath, homefp);
-  strcat(fullPath, TROVE_IMG_INC_DIR);
-  strcat(fullPath, OBJ_TYPE);
-  strcat(fullPath, imgNameA);
-  strcat(fullPath, ".h");
-  // Open file.
-  FILE *fP = fopen(fullPath, "w");
-  if (!fP) {
-    if (verbose)
-      printf("[writeColormap] file opening failed for path %s\n", fullPath);
-    return E_NO_MEMORY;
-  }
-  Error e = SUCCESS;
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Palette/Color/src", imgNameA, ".h", verbose);
   // Write header.
   fprintf(fP, "#include \"xRender.h\"\n\n");
   // Flip set
@@ -198,33 +91,25 @@ Error writeColorPaletteHeaderFile(char *imgNameA, U8 verbose) {
 }
 
 Error writeColormap(char *imgNameA, StripSetS *ssP, StripMapS *smP, ImgDims *imgDimsP, U8 verbose) {
-  const char OBJ_TYPE[] = "Colormap_";
-  if (verbose)
+  if (verbose) {
     printf("writing colormap...\n");
+  }
   // Make target filepath to save this stripmap in.
-  char *homefp = getenv("HOME");
-  if (!homefp) {
-    if (verbose)
-      printf("no $HOME environment variable! exiting...\n");
-    return E_BAD_ARGS;
+//Error getBuildFilePath(char **buildFilePath, char *buildLocalDirName, char *buildFileName, char *buildFileSuffix) {
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Graybody/Colormap/src", imgNameA, ".c", verbose);
+  Error e = SUCCESS;
+  if (fP) {
+    // Make Title format of image name.
+    fprintf(fP, "#include \"xRender.h\"\n\n");
+    // Write stripmap and stripset data.
+    e = writeStripDataInFile(fP, verbose, imgNameA, ssP, smP);
   }
-  char fullPath[strlen(OBJ_TYPE) + strlen(imgNameA) + strlen(homefp) + strlen(TROVE_IMG_SRC_DIR) + strlen(".c")];
-  strcpy(fullPath, homefp);
-  strcat(fullPath, TROVE_IMG_SRC_DIR);
-  strcat(fullPath, OBJ_TYPE);
-  strcat(fullPath, imgNameA);
-  strcat(fullPath, ".c");
-  // Open file.
-  FILE *fP = fopen(fullPath, "w");
-  if (!fP) {
-    if (verbose)
-      printf("[writeColormap] file opening failed for path %s\n", fullPath);
-    return E_NO_MEMORY;
+  else {
+    if (fP) {
+      fclose(fP);
+    }
+    return E_FILE_IO;
   }
-  // Make Title format of image name.
-  fprintf(fP, "#include \"xRender.h\"\n");
-  // Write stripmap and stripset data.
-  Error e = writeStripDataInFile(fP, verbose, imgNameA, ssP, smP);
   if (!e) { 
     // Write colormap
     fprintf(fP, "ColormapS %sColormap = {\n", imgNameA);
@@ -237,7 +122,9 @@ Error writeColormap(char *imgNameA, StripSetS *ssP, StripMapS *smP, ImgDims *img
     fprintf(fP, "};\n\n");
   }
   // Close file.
-  fclose(fP);
+  if (fP) {
+    fclose(fP);
+  }
   return e;
 }
 
