@@ -298,8 +298,7 @@ FrameNode* getFrameNode(FrameNode *rootP, U32 idx) {
 }
 
 Error writeAnimJsonData(char *entityName, AnimJsonData *animP, U8 verbose) {
-  printf("[writeAnimJsonData] entityName is %s.\n", entityName);
-  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Graybody/Animation/src", entityName, ".c", verbose); 
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Graybody/Animation/src", entityName, "Anim.c", verbose); 
   if (!fP) {
     return E_FILE_IO;
   }

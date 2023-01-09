@@ -10,17 +10,17 @@ void imgDimsIni(ImgDims *imgDimsP, U32 width, U32 height, U32 bpp) {
 
 Error writeJbColorPalette(char *imgNameA, U8 *paletteA, U8 verbose) {
   // Make target filepath to save this stripmap in.
-  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Palette/ColorPalette", imgNameA, ".c", verbose);
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Palette/Color/src", imgNameA, "ColorPalette.c", verbose);
   if (fP) {
     // Write header.
     fprintf(fP, "#include \"xRender.h\"\n\n");
     // Palette Array
-    fprintf(fP, "U32 %sPaletteA[] = {\n", imgNameA);
+    fprintf(fP, "Color_ %sPaletteA[] = {\n", imgNameA);
     writeRawData32(fP, (U32*) paletteA, arrayGetNElems(paletteA));
     fprintf(fP, "};\n\n");
     fprintf(fP, "ColorPalette %sColorPalette = {\n", imgNameA);
     fprintf(fP, "\t.nColors = %d,\n", arrayGetNElems(paletteA));
-    fprintf(fP, "\t.paletteA = %sPaletteA\n", imgNameA);
+    fprintf(fP, "\t.colorA = %sPaletteA\n", imgNameA);
     fprintf(fP, "};\n\n");
   }
   else {
@@ -34,7 +34,7 @@ Error writeJbColorPalette(char *imgNameA, U8 *paletteA, U8 verbose) {
 }
 
 Error writeAsepriteColorPalette(char *imgNameA, EntryData *paletteData, U8 verbose) {
-  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Palette/Color/src", imgNameA, ".gpl", verbose);
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Palette/Color/src", imgNameA, "ColorPalette.gpl", verbose);
   // Write file.
   if (!fP) {
     // Write header.
@@ -62,7 +62,7 @@ Error writeAsepriteColorPalette(char *imgNameA, EntryData *paletteData, U8 verbo
 
 
 Error writeColormapHeaderFile(char *imgNameA, U8 verbose) {
-  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Graybody/Colormap/include", imgNameA, ".gpl", verbose);
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Graybody/Colormap/include", imgNameA, "Colormap.h", verbose);
   if (fP) {
     // Write header.
     fprintf(fP, "#include \"xRender.h\"\n\n");
@@ -80,7 +80,7 @@ Error writeColormapHeaderFile(char *imgNameA, U8 verbose) {
 }
 
 Error writeColorPaletteHeaderFile(char *imgNameA, U8 verbose) {
-  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Palette/Color/src", imgNameA, ".h", verbose);
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Palette/Color/include", imgNameA, "ColorPalette.h", verbose);
   // Write header.
   fprintf(fP, "#include \"xRender.h\"\n\n");
   // Flip set
@@ -96,7 +96,7 @@ Error writeColormap(char *imgNameA, StripSetS *ssP, StripMapS *smP, ImgDims *img
   }
   // Make target filepath to save this stripmap in.
 //Error getBuildFilePath(char **buildFilePath, char *buildLocalDirName, char *buildFileName, char *buildFileSuffix) {
-  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Graybody/Colormap/src", imgNameA, ".c", verbose);
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Graybody/Colormap/src", imgNameA, "Colormap.c", verbose);
   Error e = SUCCESS;
   if (fP) {
     // Make Title format of image name.
@@ -112,7 +112,7 @@ Error writeColormap(char *imgNameA, StripSetS *ssP, StripMapS *smP, ImgDims *img
   }
   if (!e) { 
     // Write colormap
-    fprintf(fP, "ColormapS %sColormap = {\n", imgNameA);
+    fprintf(fP, "Colormap %sColormap = {\n", imgNameA);
     fprintf(fP, "\t.bpp = %d,\n", imgDimsP->bpp);
     fprintf(fP, "\t.w = %d,\n", imgDimsP->w);
     fprintf(fP, "\t.h = %d,\n", imgDimsP->h);
@@ -379,14 +379,17 @@ badPixel:
     }
   }
 
-  // Give game engine the stripMap for this image if it applies.
+  // Give game engine the colormap for this image if it applies.
   if (!e) {
     e = writeColormap(entityName, &stripset, &stripmap, &imgDims, verbose);
+  }
+  if (!e) {
+    e = writeColormapHeaderFile(entityName, verbose);
   }
 
   // Time to see whether to update the new palette directory.
   if (!e) {
-    EntryData entryDataToFind;
+    EntryData entryDataToFind = {0};
     entryDataToFind.palette.nColors = nColors;
     memcpy(entryDataToFind.palette.paletteA, colorPaletteA, sizeof(U32) * nColors);
     char *existingPaletteName = dbFindNameByValue(cpDirP, &entryDataToFind, verbose);
@@ -395,15 +398,20 @@ badPixel:
           "This palette is new. What would you like to name it?", 
           DIR_FILE, (List*) cpDirP, verbose);
       // Store our palette only because it doesn't already exist in the directory.
-      e = writeColorPaletteHeaderFile(entityName, verbose);
-      if (!e)
-        e = writeJbColorPalette(entityName, colorPaletteA, verbose);
-      if (!e)
-        dbAddEntry(cpDirP, entityName, &entryDataToFind, verbose);  // TODO replace entity name with name which genie prompots you for
+      dbAddEntry(cpDirP, entityName, &entryDataToFind, verbose);  
     }
-    else 
-      if (verbose)
+    else {
+      if (verbose) {
         printf("%s found a matching palette. Skipping write stage.\n", entityName);
+      }
+    }
+    // Write source files unconditionally (in case they were removed)
+    if (!e) {
+      e = writeColorPaletteHeaderFile(entityName, verbose);
+    }
+    if (!e) {
+      e = writeJbColorPalette(entityName, colorPaletteA, verbose);
+    }
   }
 
   stripDel(&stripset, &stripmap);

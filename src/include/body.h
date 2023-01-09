@@ -28,12 +28,8 @@ typedef struct {
 } Colormap;     
 
 typedef struct {
-  U8 r, g, b, a;
-} Color;
-
-typedef struct {
   U8 nColors;
-  Color *colorA;
+  Color_ *colorA;
 } ColorPalette;
 
 typedef struct {

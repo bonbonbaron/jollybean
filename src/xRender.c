@@ -6,7 +6,7 @@
 // =========================================
 // Clear color map and all its related data.
 // =========================================
-static void _cmClr(Colormap *cmP) {
+void cmClr(Colormap *cmP) {
 	if (cmP != NULL) {
 	 	if (cmP->dataP != NULL)    // But if the double pointer is null, avoid any processing.
 			jbFree((void**) &cmP->dataP);
@@ -22,7 +22,7 @@ static void _cmClr(Colormap *cmP) {
 // =====================================================================
 // Build color map by inflating, unpacking, and piecing together strips.
 // =====================================================================
-static Error _cmGen(Colormap *cmP) {
+Error cmGen(Colormap *cmP) {
 	Error e;
 
 	if (cmP != NULL) {
@@ -65,7 +65,7 @@ static Error _cmGen(Colormap *cmP) {
 		}
 	}
 	else 
-		_cmClr(cmP);
+		cmClr(cmP);
 
 	return e;
 }
@@ -222,7 +222,7 @@ Error xRenderIniComp(System *sP, void *compDataP, void *compDataSrcP) {
 	//XRender *xRenderSysP = (XRender*) sP;
 	//XRenderComp *cP = (XRenderComp*) compDataP;
   XRenderCompSrc *imgP = (XRenderCompSrc*) compDataSrcP;
-	Error e = _cmGen(imgP->colorMapP);  // I think I'm keeping this to vectorize better.
+	Error e = cmGen(imgP->colorMapP);  // I think I'm keeping this to vectorize better.
 
   return e;  // here for now to make the compiler happy
 

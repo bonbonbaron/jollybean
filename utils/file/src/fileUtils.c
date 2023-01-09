@@ -69,7 +69,7 @@ void writeRawData32(FILE *fP, U32 *byteA, U32 nBytes) {
   }
 }
 
-static Error getSrcDir(char **srcDirPath, U32 nExtraSpaces, char *srcLocalDirName) {
+static Error getSrcDir(char **srcDirPath, U32 nExtraSpaces, char *srcLocalDirName, U8 verbose) {
   char *HOME = getenv("HOME");
   U32 nChars = strlen(HOME)         + strlen(SEP) + 
                strlen(JB_DIR_NAME)  + strlen(SEP) + 
@@ -93,18 +93,22 @@ static Error getSrcDir(char **srcDirPath, U32 nExtraSpaces, char *srcLocalDirNam
     strcat(*srcDirPath, SEP);
   }
 
-  printf("src dir path result: %s\n", *srcDirPath);
+  if (verbose) {
+    printf("src dir path result: %s\n", *srcDirPath);
+  }
 
   return e;
 }
 
-Error getSrcFilePath(char **srcFilePath, char *srcLocalDirName, char *srcFileName, char *srcFileSuffix) {
- Error e = getSrcDir(srcFilePath, strlen(srcFileName) + strlen(srcFileSuffix), srcLocalDirName);
+Error getSrcFilePath(char **srcFilePath, char *srcLocalDirName, char *srcFileName, char *srcFileSuffix, U8 verbose) {
+ Error e = getSrcDir(srcFilePath, strlen(srcFileName) + strlen(srcFileSuffix), srcLocalDirName, verbose);
 
  if (!e && *srcFilePath) {
    strcat(*srcFilePath, srcFileName);
    strcat(*srcFilePath, srcFileSuffix);
-   printf("final src file path: %s\n", *srcFilePath);
+   if (verbose) {
+     printf("final src file path: %s\n", *srcFilePath);
+   }
  }
  else {
    jbFree((void**) srcFilePath);
@@ -113,7 +117,7 @@ Error getSrcFilePath(char **srcFilePath, char *srcLocalDirName, char *srcFileNam
  return e;
 }
 
-static Error getBuildDir(char **buildDirPath, U32 nExtraSpaces, char *buildLocalDirName) {
+static Error getBuildDir(char **buildDirPath, U32 nExtraSpaces, char *buildLocalDirName, U8 verbose) {
   char *HOME = getenv("HOME");
   U32 nChars = strlen(HOME)                + strlen(SEP) + 
                strlen(JB_DIR_NAME)         + strlen(SEP) + 
@@ -137,18 +141,22 @@ static Error getBuildDir(char **buildDirPath, U32 nExtraSpaces, char *buildLocal
     strcat(*buildDirPath, SEP);
   }
 
-  printf("build dir path result: %s\n", *buildDirPath);
+  if (verbose) {
+    printf("build dir path result: %s\n", *buildDirPath);
+  }
 
   return e;
 }
 
-Error getBuildFilePath(char **buildFilePath, char *buildLocalDirName, char *buildFileName, char *buildFileSuffix) {
- Error e = getBuildDir(buildFilePath, strlen(buildFileName) + strlen(buildFileSuffix), buildLocalDirName);
+Error getBuildFilePath(char **buildFilePath, char *buildLocalDirName, char *buildFileName, char *buildFileSuffix, U8 verbose) {
+ Error e = getBuildDir(buildFilePath, strlen(buildFileName) + strlen(buildFileSuffix), buildLocalDirName, verbose);
 
  if (!e && *buildFilePath) {
    strcat(*buildFilePath, buildFileName);
    strcat(*buildFilePath, buildFileSuffix);
-   printf("final build file path: %s\n", *buildFilePath);
+   if (verbose) {
+     printf("final build file path: %s\n", *buildFilePath);
+   }
  }
  else {
    jbFree((void**) buildFilePath);
@@ -164,7 +172,7 @@ FILE* getBuildFile(char *buildLocalDirName, char *buildFileName, char *buildFile
     return NULL;
   }
   char *buildFilePath = NULL;
-  Error e = getBuildFilePath(&buildFilePath, buildLocalDirName, buildFileName, buildFilePath);
+  Error e = getBuildFilePath(&buildFilePath, buildLocalDirName, buildFileName, buildFileSuffix, verbose);
   if (!e) {
     if (verbose) {
       printf("About to open build file %s...\n", buildFilePath);
@@ -192,7 +200,7 @@ FILE* getSrcFile(char *srcLocalDirName, char *srcFileName, char *srcFileSuffix, 
     return NULL;
   }
   char *srcFilePath = NULL;
-  Error e = getSrcFilePath(&srcFilePath, srcLocalDirName, srcFileName, srcFilePath);
+  Error e = getSrcFilePath(&srcFilePath, srcLocalDirName, srcFileName, srcFilePath, verbose);
   if (!e) {
     if (verbose) {
       printf("About to open source file %s...\n", srcFilePath);

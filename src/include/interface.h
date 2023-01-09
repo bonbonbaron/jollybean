@@ -4,7 +4,8 @@
 
 #define USE_SDL
 
-#ifdef USE_SDL
+//#ifdef USE_SDL
+#if 1
 #include "SDL.h"
 // Video
 #define Color_ SDL_Color

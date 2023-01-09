@@ -121,11 +121,15 @@ static U8* calcLastPixelPInRowP(FrameNode *fNodeP, U8 *firstPixelP, U32 pixelSiz
         U32 nPixelsToNextRow = (imgPitch / pixelSize) - fNodeP->w; \
         /* for each row in frame... */ \
         for (int i = 0; i < fNodeP->h; ++i, pixelP += nPixelsToNextRow) { \
-          printf("%02d: ", i); \
+          if (verbose) { \
+            printf("%02d: ", i); \
+          } \
           U##bpp_ *pixelRowEndP = (U##bpp_*) calcLastPixelPInRowP(fNodeP, (U8*) pixelP, pixelSize); \
           /* for each pixel in frame's current row... */ \
           for (int j = 0; pixelP < pixelRowEndP; ++j, ++pixelP) { \
-            if (*pixelP) printf("1"); else printf("0"); \
+            if (verbose) { \
+              if (*pixelP) printf("1"); else printf("0"); \
+            } \
             if (*pixelP) { \
               if (rectNodeP->x < 0) { \
                 rectNodeP->x = j; \
@@ -146,9 +150,13 @@ static U8* calcLastPixelPInRowP(FrameNode *fNodeP, U8 *firstPixelP, U32 pixelSiz
               } \
             } \
           }  /* for each pixel in frame's current row */ \
-          printf("\n");\
+          if (verbose) { \
+            printf("\n");\
+          } \
         }  /* for each row in frame... */ \
-        printf("rect xywh: %d %d %d %d\n\n", rectNodeP->x, rectNodeP->y, rectNodeP->w, rectNodeP->h); \
+        if (verbose) { \
+          printf("rect xywh: %d %d %d %d\n\n", rectNodeP->x, rectNodeP->y, rectNodeP->w, rectNodeP->h); \
+        } \
       }  /* if rect node creation succeeded... */ \
     }  /* for each frame... */ \
   }  /* if this is an animated collsion rectangle... */ \
@@ -182,7 +190,7 @@ static U8* calcLastPixelPInRowP(FrameNode *fNodeP, U8 *firstPixelP, U32 pixelSiz
     } \
   } 
 
-Error findCollisionRects(U8 *pixelA, png_image *imgP, U32 pixelSize, AnimJsonData *animP, RectNode **rectNodePP) {
+static Error findCollisionRects(U8 *pixelA, png_image *imgP, U32 pixelSize, AnimJsonData *animP, RectNode **rectNodePP, U8 verbose) {
   if (!pixelA || !imgP || !pixelSize || pixelSize > 4 || !rectNodePP) {
     return E_BAD_ARGS;
   }
@@ -222,7 +230,7 @@ Error writeCollisionGridMap(char *entityName, StripMapS *stripmapP, StripSetS *s
 // Write a map of rectangle arrays to a C file.
 Error writeCollisionRectMap(char *entityName, AnimJsonData *animP, RectNode *collTreeP, U8 verbose) {
   char *filepath = NULL;
-  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Graybody/Collision/Rect/src", entityName, "_col.c", verbose);
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Graybody/Collision/Rect/src", entityName, "ColRect.c", verbose);
   if (!fP) {
     return E_FILE_IO;
   }
@@ -340,7 +348,7 @@ Error coll(char *fp, char *entityName, U8 isBg, AnimJsonData *animP, U8 verbose)
         return E_BAD_ARGS;
       }
 
-      e = findCollisionRects(pixelA, pngImgP, pixelSize, animP, &rectListP);
+      e = findCollisionRects(pixelA, pngImgP, pixelSize, animP, &rectListP, verbose);
 #if 0
       // Parse entity  name. 
       if (!e) {

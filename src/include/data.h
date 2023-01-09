@@ -232,10 +232,16 @@ typedef struct {
 #define QUADWORD_MASK_1BPU  (0x01)
 #define QUADWORD_MASK_2BPU  (0x03)
 #define QUADWORD_MASK_4BPU  (0x0f)
-// Macros for converting strip index to strip pointer. WARNING: ASSUMES STRIPIDX IS A POINTER TO U32!
-#define stripIdxTo1BpuStripPtr_(stripIdx_) (stripIdx_ << (3 * N_WORDS_PER_1BPU_STRIP))
-#define stripIdxTo2BpuStripPtr_(stripIdx_) (stripIdx_ << (3 * N_WORDS_PER_2BPU_STRIP))
-#define stripIdxTo4BpuStripPtr_(stripIdx_) (stripIdx_ << (3 * N_WORDS_PER_4BPU_STRIP))
+// Macros for converting strip idx to strip pointer. WARNING: ASSUMES STRIPIDX OPERATES ON A U32 PTR!
+// (Considered a "pointer" because it gets added to an inflated strip set pointer.)
+/* For example, if it's a 4bpu stripset, and we have 32 units/strip, that's 16 bytes/strip.
+ * That's 4 words (4 bytes/word).
+ * So 4 words * 3 = 12. You bitshift by 12!? That's huge.
+ * So that's wrong. You should've just added N_WORDS_PER_4BPU_STRIP * stripIdx_.
+ */
+#define stripIdxTo1BpuStripPtr_(stripIdx_) (stripIdx_ * N_WORDS_PER_1BPU_STRIP)
+#define stripIdxTo2BpuStripPtr_(stripIdx_) (stripIdx_ * N_WORDS_PER_2BPU_STRIP)
+#define stripIdxTo4BpuStripPtr_(stripIdx_) (stripIdx_ * N_WORDS_PER_4BPU_STRIP)
 // Macro for converting flip index to strip pointer.
 #define flipIdxTo8BpuStripPtr_(flipIdx_) (flipIdx_ << (3 * N_WORDS_PER_8BPU_STRIP))
 // Macros for counting remainder units that take up whole bytes.

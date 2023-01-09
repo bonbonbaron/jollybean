@@ -1172,17 +1172,18 @@ Error mailboxForward(Message *mailboxP, Message *msgP) {
   return frayAdd((void*) mailboxP, msgP, NULL);
 }
 
+// TODO hard-code the used unpacker to step through it
 // Strip Inflation
 defineUnpackStripFunction_(1, 0x01);
 defineUnpackStripFunction_(2, 0x03);
-defineUnpackStripFunction_(4, 0x0f);
+//defineUnpackStripFunction_(4, 0x0f);  // TODO uncomment
 defineUnpackRemainderUnitsFunction_(1, 0x01);
 defineUnpackRemainderUnitsFunction_(2, 0x03);
-defineUnpackRemainderUnitsFunction_(4, 0x0f);
+//defineUnpackRemainderUnitsFunction_(4, 0x0f);  // TODO uncomment
 
 // Flips already-unpacked (8bpu) strips that need flipping. 
 // Jollybean's image compressor deletes strips that're mirror-images of another.
-void _flipUnpackedStrips(StripSetS *stripSetP, void *outputDataP) {
+void flipUnpackedStrips(StripSetS *stripSetP, void *outputDataP) {
   U16 *flipEndP = stripSetP->flipSet.flipIdxA + stripSetP->flipSet.nFlips;
   U32 *dstLeftWordP, *dstRightWordP;
   // 4 *unpacked* Units per U32 out of 64 Units means there are 16 U32s.
@@ -1225,4 +1226,102 @@ void _flipUnpackedStrips(StripSetS *stripSetP, void *outputDataP) {
 
 defineInflateStripsWithBpu_(1);
 defineInflateStripsWithBpu_(2);
-defineInflateStripsWithBpu_(4);
+//defineInflateStripsWithBpu_(4);
+
+// TODO delete everything below once bug is fixed
+// Stripped data inflation
+#ifdef __ARM_NEON__
+__inline__ static void _unpackStrip4Bpu(U32 **srcStripPP, U32 **dstStripPP) {
+  U32 *srcStripP = *srcStripPP;
+  U32 *dstStripP = *dstStripPP;
+  /* 6 instructions neon VS 40-58 instructions regular */
+  /* Although the outer loop appears unnecessary for 1 quadword per 1Bpu strip,
+     it safeguards us from changes in the number of units per strip. */
+  for (int i = 0; i < N_QUADWORDS_PER_4BPU_STRIP; ++i) {  /* keeping this useless loop here for when I chagne to 128-unit strips. */
+    asm volatile inline (
+    "vmov.u8 q10, #" #maskByte_ "nt"   /* q10 = mask */
+    "vld1.32 {d0-d1}, [%0]!nt"    /* q0 (aka d0-d1) = packed indices */
+    : "+r&" (srcStripP)
+    );
+    for (int j = 0; j < N_4BPU_UNITS_PER_BYTE; ++j) {
+      asm volatile inline (
+      "vand q1, q0, q10nt"          /* q1 = unpacked indices*/
+      "vst1.32 {d2-d3}, [%0]!nt"
+      "vshr.u8 q0, #" #Bpu_ "nt"            /* shift q0 over 1*/
+      : "+r&" (dstStripP)
+      );
+    }
+  }
+}
+#else
+static int k = 0;
+__inline__ static void _unpackStrip4Bpu(U32 **srcStripPP, U32 **dstStripPP) {
+  U32 *srcStripP = *srcStripPP;
+  U32 *dstStripP = *dstStripPP;
+  /* Although the first loop line appears unnecessary for 1 word per 1Bpu strip,
+     it safeguards us from changes in the number of units per strip. */
+  for (int i = 0; i < N_WORDS_PER_4BPU_STRIP; ++i) {
+    for (int j = 0; j < N_BITS_PER_BYTE; j += SHIFT_INCREMENT_4BPU) {
+      *dstStripP++ =  (*(srcStripP++) >> j) & 0x0f0f0f0f;
+    }
+  }
+  printf("\tstrip #: %d\n", k++);
+}
+#endif
+
+__inline__ static void _unpackRemainderUnits4Bpu(U8 *byteA, U8 *outputByteP, U32 nRemainderUnits) {
+  U8 *byteP = byteA;
+  U8 *byteEndP = byteP + countWholeBytesFor4BpuUnits_(nRemainderUnits);
+  /* Handle all the whole bytes of units. */
+  printf("# whole bytes of remainder data: %d\n", byteEndP - byteP);
+  while (byteP < byteEndP)
+    for (U8 i = 0; i < N_BITS_PER_BYTE; i += SHIFT_INCREMENT_4BPU)
+      *outputByteP++ =  (*(byteP++) >> i) & 0x0f;
+  /* Handle the last, partial byte of data. */
+  U8 iEnd = countUnitsInPartialByte4BPU_(nRemainderUnits);
+  printf("# partial bytes of remainder data: %d\n", iEnd);
+  for (U8 i = 0; i < iEnd; i += SHIFT_INCREMENT_4BPU)
+    *outputByteP++ =  (*(byteP++) >> i) & 0x0f;
+}
+
+void inflateStripsWithBpu4 (StripSetS *stripSetP, StripMapS *stripMapP, U32 *dstStripP) {
+  U32 *srcStripP; 
+  U32 *dstStripOriginP = dstStripP; /* keep track of beginning as pointer gets incremented */ 
+  /* Count remainder of pixels to process after all the whole strips. */ 
+  printf("stripSetP->nUnits: %d\n", stripSetP->nUnits);
+  printf("# bytes: %d\n", stripSetP->nUnits / 2);
+  U32 nWholeStrips = countWholeStrips_(stripSetP->nUnits); 
+  U32 nRemainderUnits = countRemainderUnits_(stripSetP->nUnits); 
+  /* Mapped stripsets need to be both unpacked and indexed. They may need strips to be flipped too. */ 
+  /* First read all mapped strips into the target colormap. */
+  // Things to check:
+  //    1) size of strip map's inflated data
+  //    2) size of strip set's inflated data
+  //    3) counting of whole strips
+  //    4) counting of remainder units
+  //    5) integrity of stripIdxTo4BpuStripPtr_(*stripMapElemP)
+  if (stripMapP) {
+    U16 *mapEndP = ((U16*) stripMapP->stripMapInfP->inflatedDataP) + nWholeStrips;
+    printf("nWholeStrips: %d\n", nWholeStrips);
+    printf("nRemainderUnits: %d\n", nRemainderUnits);
+    for (U16 *stripMapElemP = (U16*) stripMapP->stripMapInfP->inflatedDataP; stripMapElemP < mapEndP; stripMapElemP++) {
+      srcStripP = ((U32*) stripSetP->stripSetInfP->inflatedDataP + stripIdxTo4BpuStripPtr_(*stripMapElemP));  
+      _unpackStrip4Bpu(&srcStripP, &dstStripP);
+    }
+    srcStripP = stripSetP->stripSetInfP->inflatedDataP + stripSetP->nStrips - 1;
+    printf("doing partial strip now\n");
+    _unpackRemainderUnits4Bpu((U8*) srcStripP, (U8*) dstStripP, nRemainderUnits);
+    /* Then flip whatever strips need flipping. Remember data's already expanded to U8s! */
+    if (stripSetP->flipSet.nFlips) {
+      printf("doing flips\n");
+      flipUnpackedStrips(stripSetP, dstStripOriginP);
+    }
+  } 
+  /* Unmapped stripsets are already ordered, so they only need to be unpacked. */
+  else {
+    U32 *srcEndP = stripSetP->stripSetInfP->inflatedDataP + stripIdxTo1BpuStripPtr_(nWholeStrips);
+    for (U32 *srcStripP = stripSetP->stripSetInfP->inflatedDataP; srcStripP < srcEndP; srcStripP++) 
+      _unpackStrip4Bpu(&srcStripP, &dstStripP);
+    _unpackRemainderUnits4Bpu((U8*) srcStripP, (U8*) dstStripP, nRemainderUnits);
+  }
+}

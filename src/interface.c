@@ -7,7 +7,7 @@ Error guiNew(Window_ **windowPP, Renderer_ **rendererPP) {
 	if (SDL_Init(SDL_INIT_VIDEO) != SUCCESS)
 		return EXIT_FAILURE;
 	// Init window
-	*windowPP = SDL_CreateWindow("Hello world!", 100, 100, 1080, 700, SDL_WINDOW_SHOWN);
+	*windowPP = SDL_CreateWindow("Hello world!", 0, 0, 0, 0, SDL_WINDOW_FULLSCREEN);
 	if (!*windowPP)
 		return EXIT_FAILURE;
 	// Init renderer
