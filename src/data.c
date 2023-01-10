@@ -1254,7 +1254,7 @@ __inline__ static void _unpackStrip4Bpu(U32 **srcStripPP, U32 **dstStripPP) {
   }
 }
 #else
-static int k = 0;
+//static int k = 0;
 __inline__ static void _unpackStrip4Bpu(U32 **srcStripPP, U32 **dstStripPP) {
   U32 *srcStripP = *srcStripPP;
   U32 *dstStripP = *dstStripPP;
@@ -1262,10 +1262,10 @@ __inline__ static void _unpackStrip4Bpu(U32 **srcStripPP, U32 **dstStripPP) {
      it safeguards us from changes in the number of units per strip. */
   for (int i = 0; i < N_WORDS_PER_4BPU_STRIP; ++i) {
     for (int j = 0; j < N_BITS_PER_BYTE; j += SHIFT_INCREMENT_4BPU) {
-      *dstStripP++ =  (*(srcStripP++) >> j) & 0x0f0f0f0f;
+      *dstStripP++ =  (*srcStripP >> j) & 0x0f0f0f0f;
     }
   }
-  printf("\tstrip #: %d\n", k++);
+  //printf("\tstrip #: %d\n", k++);
 }
 #endif
 
@@ -1273,13 +1273,13 @@ __inline__ static void _unpackRemainderUnits4Bpu(U8 *byteA, U8 *outputByteP, U32
   U8 *byteP = byteA;
   U8 *byteEndP = byteP + countWholeBytesFor4BpuUnits_(nRemainderUnits);
   /* Handle all the whole bytes of units. */
-  printf("# whole bytes of remainder data: %d\n", byteEndP - byteP);
+  //printf("# whole bytes of remainder data: %d\n", byteEndP - byteP);
   while (byteP < byteEndP)
     for (U8 i = 0; i < N_BITS_PER_BYTE; i += SHIFT_INCREMENT_4BPU)
       *outputByteP++ =  (*(byteP++) >> i) & 0x0f;
   /* Handle the last, partial byte of data. */
   U8 iEnd = countUnitsInPartialByte4BPU_(nRemainderUnits);
-  printf("# partial bytes of remainder data: %d\n", iEnd);
+  //printf("# partial bytes of remainder data: %d\n", iEnd);
   for (U8 i = 0; i < iEnd; i += SHIFT_INCREMENT_4BPU)
     *outputByteP++ =  (*(byteP++) >> i) & 0x0f;
 }
@@ -1288,8 +1288,8 @@ void inflateStripsWithBpu4 (StripSetS *stripSetP, StripMapS *stripMapP, U32 *dst
   U32 *srcStripP; 
   U32 *dstStripOriginP = dstStripP; /* keep track of beginning as pointer gets incremented */ 
   /* Count remainder of pixels to process after all the whole strips. */ 
-  printf("stripSetP->nUnits: %d\n", stripSetP->nUnits);
-  printf("# bytes: %d\n", stripSetP->nUnits / 2);
+  //printf("stripSetP->nUnits: %d\n", stripSetP->nUnits);
+  //printf("# bytes: %d\n", stripSetP->nUnits / 2);
   U32 nWholeStrips = countWholeStrips_(stripSetP->nUnits); 
   U32 nRemainderUnits = countRemainderUnits_(stripSetP->nUnits); 
   /* Mapped stripsets need to be both unpacked and indexed. They may need strips to be flipped too. */ 
@@ -1302,18 +1302,18 @@ void inflateStripsWithBpu4 (StripSetS *stripSetP, StripMapS *stripMapP, U32 *dst
   //    5) integrity of stripIdxTo4BpuStripPtr_(*stripMapElemP)
   if (stripMapP) {
     U16 *mapEndP = ((U16*) stripMapP->stripMapInfP->inflatedDataP) + nWholeStrips;
-    printf("nWholeStrips: %d\n", nWholeStrips);
-    printf("nRemainderUnits: %d\n", nRemainderUnits);
+    //printf("nWholeStrips: %d\n", nWholeStrips);
+    //printf("nRemainderUnits: %d\n", nRemainderUnits);
     for (U16 *stripMapElemP = (U16*) stripMapP->stripMapInfP->inflatedDataP; stripMapElemP < mapEndP; stripMapElemP++) {
       srcStripP = ((U32*) stripSetP->stripSetInfP->inflatedDataP + stripIdxTo4BpuStripPtr_(*stripMapElemP));  
       _unpackStrip4Bpu(&srcStripP, &dstStripP);
     }
-    srcStripP = stripSetP->stripSetInfP->inflatedDataP + stripSetP->nStrips - 1;
-    printf("doing partial strip now\n");
+    srcStripP = (U32*) stripSetP->stripSetInfP->inflatedDataP + stripSetP->nStrips - 1;
+    //printf("doing partial strip now\n");
     _unpackRemainderUnits4Bpu((U8*) srcStripP, (U8*) dstStripP, nRemainderUnits);
     /* Then flip whatever strips need flipping. Remember data's already expanded to U8s! */
     if (stripSetP->flipSet.nFlips) {
-      printf("doing flips\n");
+      //printf("doing flips\n");
       flipUnpackedStrips(stripSetP, dstStripOriginP);
     }
   } 

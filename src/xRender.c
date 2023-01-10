@@ -8,14 +8,17 @@
 // =========================================
 void cmClr(Colormap *cmP) {
 	if (cmP != NULL) {
-	 	if (cmP->dataP != NULL)    // But if the double pointer is null, avoid any processing.
+	 	if (cmP->dataP != NULL) {    // But if the double pointer is null, avoid any processing.
 			jbFree((void**) &cmP->dataP);
+    }
 		if (cmP->stripSetP != NULL && cmP->stripSetP->stripSetInfP != NULL &&
-				cmP->stripSetP->stripSetInfP->inflatedDataP != NULL)
+				cmP->stripSetP->stripSetInfP->inflatedDataP != NULL) {
 			jbFree((void**) &cmP->stripSetP->stripSetInfP->inflatedDataP);
+    }
 		if (cmP->stripMapP != NULL && cmP->stripMapP->stripMapInfP != NULL &&
-				cmP->stripMapP->stripMapInfP->inflatedDataP != NULL)
+				cmP->stripMapP->stripMapInfP->inflatedDataP != NULL) {
 			jbFree((void**) &cmP->stripSetP->stripSetInfP->inflatedDataP);
+    }
 	}
 }
 
@@ -27,22 +30,34 @@ Error cmGen(Colormap *cmP) {
 
 	if (cmP != NULL) {
 		// Check if the image has already been reconstructed. If so, get out.
-		if (cmP->dataP != NULL)   // Colormap has already been reconstructed.
+		if (cmP->dataP != NULL) {   // Colormap has already been reconstructed.
 			return SUCCESS;  
+    }
 		// If not reconstructed yet, inflate strip set if it's still compressed (inflate() checks internally).
-		if (cmP->stripSetP)
+		if (cmP->stripSetP) {
 			e = botoxInflate(cmP->stripSetP->stripSetInfP);
-		else
+    }
+		else {
 			return E_NULL_VAR;
+    }
+
+    // TODO get rid ofthis once done debugging
+    printf("let us commence on spillin the strip set inflatable beans....\n");
+    for (U8 *eP = (U8*) cmP->stripSetP->stripSetInfP->inflatedDataP; eP < (U8*) cmP->stripSetP->stripSetInfP->inflatedDataP + cmP->stripSetP->stripSetInfP->inflatedLen; ++eP) {
+      printf("%d ", *eP);
+    }
 		// If CM source is strip-mapped, inflate strip map if it's still compressed (same as above).
-		if (!e && cmP->stripMapP)
+		if (!e && cmP->stripMapP) {
 			e = botoxInflate(cmP->stripMapP->stripMapInfP);
+    }
 		// Allocate colormap memory.
-		if (!e) 
+		if (!e) {
 			e = jbAlloc((void**) &cmP->dataP, sizeof(U8), cmP->w * cmP->h);
+    }
 	}
-	else
+	else {
 		e = E_BAD_ARGS;
+  }
 	// Expand strip set into image.
 	if (!e) {
     // Count remainder of pixels to process after all the whole strips.
@@ -64,8 +79,9 @@ Error cmGen(Colormap *cmP) {
 				break;
 		}
 	}
-	else 
+	else {
 		cmClr(cmP);
+  }
 
 	return e;
 }

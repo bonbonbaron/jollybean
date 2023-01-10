@@ -17,6 +17,9 @@ ${HOME}/jb/build/Seed/Genome/Gene/Body/Palette/Color/obj/redColorPalette.o: ${HO
 ${HOME}/hack/jollybean/build/data.o: ${HOME}/hack/jollybean/src/data.c
 	make -C ../
 
+${HOME}/hack/jollybean/build/xRender.o: ${HOME}/hack/jollybean/src/xRender.c
+	make -C ../
+
 ${HOME}/jb/build/Seed/Genome/Gene/Body/Palette/Color/src/redColorPalette.c:
 	${HOME}/hack/jollybean/utils/body/bin/body red
 

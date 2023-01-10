@@ -184,7 +184,7 @@ typedef struct {
   U16 *flipIdxA;
 } FlipSetS;
 
-// Strip set's inflated data is in U32 format.
+// gtrip set's inflated data is in U32 format.
 typedef struct {
   U8 nUnitsPerStrip;
   U16 nStrips;
@@ -209,10 +209,11 @@ typedef struct {
     -------- *  ------ * ------ * ------- =  -------
      strip       unit    # bits   # bytes     strip
 */
-#define N_WORDS_PER_1BPU_STRIP ((N_UNITS_PER_STRIP * 1) >> 5)  
-#define N_WORDS_PER_2BPU_STRIP ((N_UNITS_PER_STRIP * 2) >> 5)  
-#define N_WORDS_PER_4BPU_STRIP ((N_UNITS_PER_STRIP * 4) >> 5)  
-#define N_WORDS_PER_8BPU_STRIP ((N_UNITS_PER_STRIP * 8) >> 5)    // for flips
+#define N_BITS_PER_WORD (32)
+#define N_WORDS_PER_1BPU_STRIP ((N_UNITS_PER_STRIP * 1) / N_BITS_PER_WORD)  
+#define N_WORDS_PER_2BPU_STRIP ((N_UNITS_PER_STRIP * 2) / N_BITS_PER_WORD)  
+#define N_WORDS_PER_4BPU_STRIP ((N_UNITS_PER_STRIP * 4) / N_BITS_PER_WORD)  
+#define N_WORDS_PER_8BPU_STRIP ((N_UNITS_PER_STRIP * 8) / N_BITS_PER_WORD)    // for flips
 #define N_QUADWORDS_PER_1BPU_STRIP ((N_WORDS_PER_1BPU_STRIP + (N_WORDS_PER_1BPU_STRIP >> 1))>> 2)  // make sure 0.5 rounds up to 1
 #define N_QUADWORDS_PER_2BPU_STRIP ((N_WORDS_PER_2BPU_STRIP + (N_WORDS_PER_2BPU_STRIP >> 1))>> 2)
 #define N_QUADWORDS_PER_4BPU_STRIP ((N_WORDS_PER_4BPU_STRIP + (N_WORDS_PER_4BPU_STRIP >> 1))>> 2)
@@ -293,9 +294,9 @@ __inline__ static void _unpackStrip##Bpu_##Bpu(U32 **srcStripPP, U32 **dstStripP
   U32 *dstStripP = *dstStripPP;\
   /* Although the first loop line appears unnecessary for 1 word per 1Bpu strip,
      it safeguards us from changes in the number of units per strip. */\
-  for (int i = 0; i < N_WORDS_PER_##Bpu_##BPU_STRIP; ++i) \
+  for (int i = 0; i < N_WORDS_PER_##Bpu_##BPU_STRIP; ++i, ++srcStripP) \
     for (int j = 0; j < N_BITS_PER_BYTE; j += SHIFT_INCREMENT_##Bpu_##BPU)\
-      *dstStripP++ =  (*(srcStripP++) >> j) & maskWord_;\
+      *dstStripP++ =  (*srcStripP >> j) & maskWord_;\
 }
 #endif
 
@@ -314,6 +315,8 @@ __inline__ static void _unpackRemainderUnits##Bpu_(U8 *byteA, U8 *outputByteP, U
 }
 
 void flipUnpackedStrips(StripSetS *stripSetP, void *outputDataP);
+
+#define declareInflateStripsWithBpu_(Bpu_) void inflateStripsWithBpu##Bpu_ (StripSetS *stripSetP, StripMapS *stripMapP, U32 *dstStripP)
 
 #define defineInflateStripsWithBpu_(Bpu_)\
   declareInflateStripsWithBpu_(Bpu_) {\
@@ -344,8 +347,6 @@ void flipUnpackedStrips(StripSetS *stripSetP, void *outputDataP);
       _unpackRemainderUnits##Bpu_((U8*) srcStripP, (U8*) dstStripP, nRemainderUnits);\
     }\
   }
-
-#define declareInflateStripsWithBpu_(Bpu_) void inflateStripsWithBpu##Bpu_ (StripSetS *stripSetP, StripMapS *stripMapP, U32 *dstStripP)
 
 declareInflateStripsWithBpu_(1);
 declareInflateStripsWithBpu_(2);

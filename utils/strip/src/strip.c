@@ -155,8 +155,9 @@ Error stripNew(U8 *srcA, U8 verbose, U8 bpu, U32 nUnits, StripSetS *ssP, StripMa
     // Strip map
     e = arrayNew((void**) &stripMapA, sizeof(StripmapIdx), nStrips);
   }
-  if (verbose)
+  if (verbose) {
     printf("Analyzing viability of breaking image into %d strips of %d units each...\n", nStrips, N_UNITS_PER_STRIP);
+  }
 
   // Find distinct strips and write an index-mapping to them.
   U8 *currStripP;
@@ -231,8 +232,9 @@ Error stripNew(U8 *srcA, U8 verbose, U8 bpu, U32 nUnits, StripSetS *ssP, StripMa
   }
   arrayDel((void**) &stripMapA);
   arrayDel((void**) &stripsetDataA);
-  if (e)
+  if (e) {
     printf("Something errored out in stripNew.\n");
+  }
   return e;
 }
 

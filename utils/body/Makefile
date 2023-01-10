@@ -8,8 +8,8 @@ BINDIR         = ./bin
 INSTALLDIR     = /usr/local/lib
 
 # Linker
-${BINDIR}/body: ${BUILDIR} ${BINDIR} ../file/build/fileUtils.o ../genie/build/genie.o ../strip/build/strip.o ../db/build/db.o ../inflatable/build/inflatable.o ${BUILDDIR}/body.o ${BUILDDIR}/img.o ${BUILDDIR}/anim.o ${BUILDDIR}/coll.o 
-	$(CC) -g ../file/build/fileUtils.o ../genie/build/genie.o ../db/build/db.o ../strip/build/strip.o ../inflatable/build/inflatable.o ${BUILDDIR}/img.o ${BUILDDIR}/anim.o ${BUILDDIR}/coll.o ${BUILDDIR}/body.o -L${HOME}/hack/botox/lib/ -lbotox -lfastjson $(shell pkg-config --libs zlib) $(shell sdl2-config --libs) $(shell libpng-config --libs) -o $@
+${BINDIR}/body: ${BUILDIR} ${BINDIR} ../file/build/fileUtils.o ../genie/build/genie.o ../strip/build/strip.o ../db/build/db.o ../inflatable/build/inflatable.o ${BUILDDIR}/body.o ${BUILDDIR}/img.o ${BUILDDIR}/anim.o ${BUILDDIR}/coll.o ${BUILDDIR}/previewImg.o
+	$(CC) -g ../file/build/fileUtils.o ../genie/build/genie.o ../db/build/db.o ../strip/build/strip.o ../inflatable/build/inflatable.o ${BUILDDIR}/img.o ${BUILDDIR}/anim.o ${BUILDDIR}/coll.o ${BUILDDIR}/previewImg.o ${BUILDDIR}/body.o -L${HOME}/hack/botox/lib/ -lbotox -lfastjson $(shell pkg-config --libs zlib) $(shell sdl2-config --libs) $(shell libpng-config --libs) -o $@
 	touch $@
 
 # Compiler

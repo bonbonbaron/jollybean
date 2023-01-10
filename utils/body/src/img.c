@@ -1,5 +1,6 @@
 #include "img.h"
 #include "genie.h"
+#include "previewImg.h"
 
 void imgDimsIni(ImgDims *imgDimsP, U32 width, U32 height, U32 bpp) {
   imgDimsP->w = width;
@@ -318,6 +319,95 @@ Error getColorPaletteAndColormap(U8 **colorPaletteAP, U8 **colormapAP, U32 *nCol
 }
 
 //##########################################
+// Debugging tools to validate input integrity (independent of xRender's inflation tools)
+inline static void _unpackStrip(U32 **dstStripPP, U32 **srcStripPP, const U32 mask, const U8 bpu, const U32 nWordsPerPackedStrip) {
+  U32 *srcStripP = *srcStripPP;
+  U32 *dstStripP = *dstStripPP;
+  /* Although the first loop line appears unnecessary for 1 word per 1Bpu strip,
+     it safeguards us from changes in the number of units per strip. */
+  for (int i = 0; i < nWordsPerPackedStrip; ++i, ++srcStripP) {
+    for (int j = 0; j < N_BITS_PER_BYTE; j += bpu) {
+      *dstStripP++ =  (*srcStripP >> j) & mask;
+    }
+  }
+}
+
+// TODO: copied from xRender. Fix linker error in cmGen there so you can reuse it without copy/paste.
+void cmClr(Colormap *cmP) {
+	if (cmP != NULL) {
+	 	if (cmP->dataP != NULL) {    // But if the double pointer is null, avoid any processing.
+			jbFree((void**) &cmP->dataP);
+    }
+		if (cmP->stripSetP != NULL && cmP->stripSetP->stripSetInfP != NULL &&
+				cmP->stripSetP->stripSetInfP->inflatedDataP != NULL) {
+			jbFree((void**) &cmP->stripSetP->stripSetInfP->inflatedDataP);
+    }
+		if (cmP->stripMapP != NULL && cmP->stripMapP->stripMapInfP != NULL &&
+				cmP->stripMapP->stripMapInfP->inflatedDataP != NULL) {
+			jbFree((void**) &cmP->stripSetP->stripSetInfP->inflatedDataP);
+    }
+	}
+}
+
+
+static Error _checkInputIntegrity(Colormap *cmP, ColorPalette *cpP) {
+  if (!cmP || !cpP) {
+    return E_BAD_ARGS;
+  }
+
+  // Inflate stripmap and stripset
+  Error e = botoxInflate(cmP->stripSetP->stripSetInfP);
+  if (!e) {
+    e = botoxInflate(cmP->stripMapP->stripMapInfP);
+  }
+  if (!e) {
+    e = arrayNew((void**) &cmP->dataP, sizeof(U8), cmP->stripSetP->nStrips * N_UNITS_PER_STRIP * sizeof(U8));
+  }
+  U32 mask = 0;
+  const U8 bpu = cmP->bpp;
+  //const U8 bpu = N_BITS_PER_WORD / cmP->stripSetP->nUnitsPerStrip;
+  // 32 pixels per strip
+  // 32 bits per word = 32 1bpp pixels per word, then multiply by bpp if bpp > 1.
+  const U32 nWordsPerPackedStrip = (N_UNITS_PER_STRIP * bpu) / N_BITS_PER_WORD;
+  if (!e) {
+    printf("bpu is %d\n", bpu);
+    switch(bpu) {
+      case 1:
+        mask = 0x01010101;
+        break;
+      case 2:
+        mask = 0x03030303;
+        break;
+      case 4:
+        mask = 0x0f0f0f0f;
+        break;
+      default:
+        mask = 0xffffffff;
+        break;
+    }
+
+    // Reconstruct colormap
+    U32 stripIdx = 0;
+    U32 *srcStripP = NULL;
+    U32 *dstStripP = (U32*) cmP->dataP;
+    for (U16 *smElemP = cmP->stripMapP->stripMapInfP->inflatedDataP;
+         smElemP < (U16*) cmP->stripMapP->stripMapInfP->inflatedDataP + cmP->stripMapP->nIndices;
+         ++smElemP) {
+      stripIdx = *smElemP * nWordsPerPackedStrip;
+      srcStripP = &((U32*) cmP->stripSetP->stripSetInfP->inflatedDataP)[stripIdx];
+      _unpackStrip(&dstStripP, &srcStripP, (const U32) mask, bpu, nWordsPerPackedStrip);
+    }
+
+    // Visually validate result
+    e = previewImg(cmP, cpP, 2000);
+  }
+
+  cmClr(cmP);
+
+  return e;
+}
+
+//##########################################
 Error img(char *imgFilePathP, Database *cpDirP, Database *cmDirP, U8 verbose) {
   U8 *pixelP = NULL;  // can be 1bpp colormap, 2bpp gray+alpha, or 4bpp RGBA
   U8 *colorPaletteA = NULL;
@@ -332,8 +422,11 @@ Error img(char *imgFilePathP, Database *cpDirP, Database *cmDirP, U8 verbose) {
   
   Error e = readPng(&pngImgP, imgFilePathP, &srcPixelSize, &pixelP, &colorPaletteA, verbose);
 
-  if (!e) 
+  // TODO Either getColorPaletteAndColormap, stripNew, or _checkInputIntegrity is screwing up.
+  // Rule them out one by one till you find the culprit!
+  if (!e) {
     e = getColorPaletteAndColormap(&colorPaletteA, &colormapA, &nColors, pngImgP, pixelP, 16, srcPixelSize, verbose);
+  }
 
   if (verbose) {
     printf("%d distinct colors w/ %d byte source pixel size.\n", nColors, srcPixelSize);
@@ -341,26 +434,31 @@ Error img(char *imgFilePathP, Database *cpDirP, Database *cmDirP, U8 verbose) {
 
   // Compute pixel bitdepth.
   if (!e) {
-    if (nColors <= 2)
+    if (nColors <= 2) {
       imgDimsIni(&imgDims, pngImgP->width, pngImgP->height, 1);
-    else if (nColors <= 4)
+    }
+    else if (nColors <= 4) {
       imgDimsIni(&imgDims, pngImgP->width, pngImgP->height, 2);
-    else if (nColors <= 16)
+    }
+    else if (nColors <= 16) {
       imgDimsIni(&imgDims, pngImgP->width, pngImgP->height, 4);
+    }
     else {
-badPixel:
-      if (verbose)
+      if (verbose) {
         printf("Jollybean doesn't support color palettes of more than %d colors.\n%s uses %d colors.\n", N_COLORS_SUPPORTED_MAX_, imgFilePathP, nColors/4);
+      }
       e = E_UNSUPPORTED_PIXEL_FORMAT;
     }
-    if (!e)
+    if (!e) {
       bpp = imgDims.bpp;
+    }
   }
 
   // Colormap StripSet  & StripMap
-  if (!e)
+  if (!e) {
     e = stripNew(colormapA, verbose, bpp, arrayGetNElems(colormapA), &stripset, &stripmap);
-
+  }
+ 
   // Requires inflatable from data.h and util's inflatable writer function.
   char entityName[250] = {0};
   if (!e) {
@@ -378,6 +476,27 @@ badPixel:
       return E_BAD_ARGS;
     }
   }
+
+  // Verify input independently of how the output treats it
+  if (!e && verbose) {
+    Colormap cm = {
+      .bpp = imgDims.bpp,
+      .w = imgDims.w,
+      .h = imgDims.h,
+      .pitch = imgDims.pitch,
+      .stripSetP = &stripset,
+      .stripMapP = &stripmap,
+      .dataP = NULL
+    };
+
+    ColorPalette cp = {
+      .nColors = nColors,
+      .colorA = (Color_*) colorPaletteA
+    };
+
+    e = _checkInputIntegrity(&cm, &cp);
+  }
+
 
   // Give game engine the colormap for this image if it applies.
   if (!e) {
