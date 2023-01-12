@@ -99,103 +99,12 @@ static U8* calcLastPixelPInRowP(FrameNode *fNodeP, U8 *firstPixelP, U32 pixelSiz
   }
 }
 
-// Collision rect coords are offsets from current animation frame's top-left corner.
-#define findRect_(bpp_) \
-  /* if this is an animated collison rectangle... */ \
-  if (animP) { \
-    /* for each frame... */ \
-    for (FrameNode *fNodeP = animP->frameNodeA; !e && fNodeP; fNodeP = fNodeP->nextP) { \
-      /* Grow a new frame node either from root or head. */ \
-      if (!*currRectNodePP) { \
-        e = rectNodeGrow(currRectNodePP); \
-        firstRectNodeP = *currRectNodePP; \
-      } \
-      else { \
-        e = rectNodeGrow(currRectNodePP); \
-      } \
-      /* If rect node creation succeeded... */ \
-      if (!e) { \
-        RectNode *rectNodeP = *currRectNodePP; \
-        U##bpp_ *pixelP = (U##bpp_*) calcFirstPixelP(fNodeP, (U8*) pixelA, pixelSize, imgPitch); \
-        /* Number of pixels to jump from end of current frame's row to the start of its next row */\
-        U32 nPixelsToNextRow = (imgPitch / pixelSize) - fNodeP->w; \
-        /* for each row in frame... */ \
-        for (int i = 0; i < fNodeP->h; ++i, pixelP += nPixelsToNextRow) { \
-          if (verbose) { \
-            printf("%02d: ", i); \
-          } \
-          U##bpp_ *pixelRowEndP = (U##bpp_*) calcLastPixelPInRowP(fNodeP, (U8*) pixelP, pixelSize); \
-          /* for each pixel in frame's current row... */ \
-          for (int j = 0; pixelP < pixelRowEndP; ++j, ++pixelP) { \
-            if (verbose) { \
-              if (*pixelP) printf("1"); else printf("0"); \
-            } \
-            if (*pixelP) { \
-              if (rectNodeP->x < 0) { \
-                rectNodeP->x = j; \
-              } \
-              if (rectNodeP->y < 0) { \
-                rectNodeP->y = i; \
-              } \
-              rectNodeP->h = i - rectNodeP->y + 1; \
-            } \
-            /* If you're at row's end and haven't terminated the width yet */ \
-            if (j == fNodeP->w - 1 && rectNodeP->w < 0) { \
-              rectNodeP->w = j + 1; \
-            } \
-            /* If you hit an empty pixel... */ \
-            if (!pixelP) { \
-              if ((j + 1) > rectNodeP->w) { \
-                rectNodeP->w = j + 1; \
-              } \
-            } \
-          }  /* for each pixel in frame's current row */ \
-          if (verbose) { \
-            printf("\n");\
-          } \
-        }  /* for each row in frame... */ \
-        if (verbose) { \
-          printf("rect xywh: %d %d %d %d\n\n", rectNodeP->x, rectNodeP->y, rectNodeP->w, rectNodeP->h); \
-        } \
-      }  /* if rect node creation succeeded... */ \
-    }  /* for each frame... */ \
-  }  /* if this is an animated collsion rectangle... */ \
-  /* If this is not animated, you only need to find one rectangle. */ \
-  else { \
-    U##bpp_ *pixelP = (U##bpp_*) calcFirstPixelP(NULL, (U8*) pixelA, pixelSize, imgPitch); \
-    U##bpp_ *lastPixelP = (U##bpp_*) calcLastPixelP(NULL, (U8*) pixelP, pixelSize); \
-    e = rectNodeGrow(rectNodePP); \
-    /* If rect node creation succeeded... */ \
-    if (!e) { \
-      RectNode rect = **rectNodePP; \
-      for (; pixelP < lastPixelP; ++pixelP) { \
-        if (*pixelP) { \
-          if (rect.x < 0 ) { \
-            rect.x = (pixelP - (U##bpp_*) pixelA) % imgPitch; \
-          } \
-          if (rect.y < 0) { \
-            rect.y = (pixelP - (U##bpp_*) pixelA) / imgPitch; \
-          } \
-        } \
-        /* If you've hit an empty pixel and you've found the rect's start already... */ \
-        else { \
-          if (rect.x >= 0 && !rect.w) { \
-            rect.w = ((pixelP - (U##bpp_*) pixelA) % imgPitch) - rect.x; \
-          } \
-          if (rect.y >= 0) {  /* height needs to be continually updated till end of rect */ \
-            rect.h = ((pixelP - (U##bpp_*) pixelA) / imgPitch) - rect.y; \
-          } \
-        }  /* If you've hit an empty pixel and you've found the rect's start already... */ \
-      } \
-    } \
-  } 
-
-static Error findCollisionRects(U8 *pixelA, png_image *imgP, U32 pixelSize, AnimJsonData *animP, RectNode **rectNodePP, U8 verbose) {
-  if (!pixelA || !imgP || !pixelSize || pixelSize > 4 || !rectNodePP) {
+static Error findCollisionRects(Colormap *cmP, AnimJsonData *animP, RectNode **rectNodePP, U8 verbose) {
+  if (!cmP || cmP->bpp > 4 || !rectNodePP) {
     return E_BAD_ARGS;
   }
-  U32 nPixels = imgP->width * imgP->height;
-  U32 imgPitch = imgP->width * pixelSize;
+  U32 nPixels = cmP->w * cmP->h;
+  U32 imgPitch = cmP->w * arrayGetElemSz(cmP->dataP);
   Error e = SUCCESS;
 
   // Keep track of the first node so we don't pass out the most recent one and lose all predecessors. 
@@ -203,19 +112,95 @@ static Error findCollisionRects(U8 *pixelA, png_image *imgP, U32 pixelSize, Anim
   RectNode *firstRectNodeP = NULL; 
 
   // Make your pappy proud and go find some rectangles, son.
-  switch (pixelSize) {
-    case 1:
-      findRect_(8)
-      break;
-    case 2:
-      findRect_(16)
-      break;
-    case 4:
-      findRect_(32)
-      break;
-    default:
-      return E_UNSUPPORTED_PIXEL_FORMAT;
-  }
+// Collision rect coords are offsets from current animation frame's top-left corner.
+  /* if this is an animated collison rectangle... */ 
+  if (animP) { 
+    /* for each frame... */ 
+    for (FrameNode *fNodeP = animP->frameNodeA; !e && fNodeP; fNodeP = fNodeP->nextP) { 
+      /* Grow a new frame node either from root or head. */ 
+      if (!*currRectNodePP) { 
+        e = rectNodeGrow(currRectNodePP); 
+        firstRectNodeP = *currRectNodePP; 
+      } 
+      else { 
+        e = rectNodeGrow(currRectNodePP); 
+      } 
+      /* If rect node creation succeeded... */ 
+      if (!e) { 
+        RectNode *rectNodeP = *currRectNodePP; 
+        U8 *pixelP = (U8*) calcFirstPixelP(fNodeP, cmP->dataP, arrayGetElemSz(cmP->dataP), imgPitch); 
+        /* Number of pixels to jump from end of current frame's row to the start of its next row */
+        U32 nPixelsToNextRow = (imgPitch / arrayGetElemSz(cmP->dataP)) - fNodeP->w; 
+        /* for each row in frame... */ 
+        for (int i = 0; i < fNodeP->h; ++i, pixelP += nPixelsToNextRow) { 
+          if (verbose) { 
+            printf("%02d: ", i); 
+          } 
+          U8 *pixelRowEndP = (U8*) calcLastPixelPInRowP(fNodeP, (U8*) pixelP, arrayGetElemSz(cmP->dataP)); 
+          /* for each pixel in frame's current row... */ 
+          for (int j = 0; pixelP < pixelRowEndP; ++j, ++pixelP) { 
+            if (verbose) { 
+              if (*pixelP) printf("1"); else printf("0"); 
+            } 
+            if (*pixelP) { 
+              if (rectNodeP->x < 0) { 
+                rectNodeP->x = j; 
+              } 
+              if (rectNodeP->y < 0) { 
+                rectNodeP->y = i; 
+              } 
+              rectNodeP->h = i - rectNodeP->y + 1; 
+            } 
+            /* If you're at row's end and haven't terminated the width yet */ 
+            if (j == fNodeP->w - 1 && rectNodeP->w < 0) { 
+              rectNodeP->w = j + 1; 
+            } 
+            /* If you hit an empty pixel... */ 
+            if (!pixelP) { 
+              if ((j + 1) > rectNodeP->w) { 
+                rectNodeP->w = j + 1; 
+              } 
+            } 
+          }  /* for each pixel in frame's current row */ 
+          if (verbose) { 
+            printf("n");
+          } 
+        }  /* for each row in frame... */ 
+        if (verbose) { 
+          printf("rect xywh: %d %d %d %dnn", rectNodeP->x, rectNodeP->y, rectNodeP->w, rectNodeP->h); 
+        } 
+      }  /* if rect node creation succeeded... */ 
+    }  /* for each frame... */ 
+  }  /* if this is an animated collsion rectangle... */ 
+  /* If this is not animated, you only need to find one rectangle. */ 
+  else { 
+    U8 *pixelP = (U8*) calcFirstPixelP(NULL, cmP->dataP, arrayGetElemSz(cmP->dataP), imgPitch); 
+    U8 *lastPixelP = (U8*) calcLastPixelP(NULL, (U8*) pixelP, arrayGetElemSz(cmP->dataP)); 
+    e = rectNodeGrow(rectNodePP); 
+    /* If rect node creation succeeded... */ 
+    if (!e) { 
+      RectNode rect = **rectNodePP; 
+      for (; pixelP < lastPixelP; ++pixelP) { 
+        if (*pixelP) { 
+          if (rect.x < 0 ) { 
+            rect.x = (pixelP - cmP->dataP) % imgPitch; 
+          } 
+          if (rect.y < 0) { 
+            rect.y = (pixelP - cmP->dataP) / imgPitch; 
+          } 
+        } 
+        /* If you've hit an empty pixel and you've found the rect's start already... */ 
+        else { 
+          if (rect.x >= 0 && !rect.w) { 
+            rect.w = ((pixelP - cmP->dataP) % imgPitch) - rect.x; 
+          } 
+          if (rect.y >= 0) {  /* height needs to be continually updated till end of rect */ 
+            rect.h = ((pixelP - cmP->dataP) / imgPitch) - rect.y; 
+          } 
+        }  /* If you've hit an empty pixel and you've found the rect's start already... */ 
+      } 
+    } 
+  } 
 
   *rectNodePP = firstRectNodeP;
 
@@ -223,8 +208,8 @@ static Error findCollisionRects(U8 *pixelA, png_image *imgP, U32 pixelSize, Anim
 }
 
 // Write a collision grid to a C file.
-Error writeCollisionGridMap(char *entityName, StripMapS *stripmapP, StripSetS *stripsetP, U8 verbose) {
-  return writeStripData(entityName, "CollGrid", verbose, stripsetP, stripmapP);
+Error writeCollisionGridMap(char *entityName, Colormap *cmP, U8 verbose) {
+  return writeStripData(entityName, "CollGrid", verbose, cmP->stripsetP, cmP->stripmapP);
 }
 
 // Write a map of rectangle arrays to a C file.
@@ -295,36 +280,26 @@ Error writeCollisionRectMap(char *entityName, AnimJsonData *animP, RectNode *col
 // multiple collision types (where each pixel is a collision type value).
 //
 // For now at least, the input cannot be an animated background. (But what about water!? Hmmm...)
-Error coll(char *fp, char *entityName, U8 isBg, AnimJsonData *animP, U8 verbose) {
-  if (!fp || (isBg && animP)) {
+Error coll(char *entityName, U8 isBg, AnimJsonData *animP, U8 verbose) {
+  if (!entityName || (isBg && animP)) {
     return E_BAD_ARGS;
   }
-  StripSetS stripset = {0};
-  StripMapS stripmap = {0};
-  png_image *pngImgP = NULL;
-  U8 pixelSize = 0;
-  U32 nColors;
-  U8 bpp = 0;
-  U8 *pixelA = NULL;
-  U8 *colorPaletteA = NULL;
-  U8 *colormapA = NULL;
+
+  Colormap cm = {0};
+  ColorPalette cp = {0};
   RectNode *rectListP = NULL;
+  char *srcFilePath = NULL;
+
+  Error e = getSrcFilePath(&srcFilePath, "Body/Graybody/Collision", entityName, "_col.png", verbose); 
   // Get pixels of collision image
-  Error e = readPng(&pngImgP, fp, &pixelSize, &pixelA, &colorPaletteA, verbose);
+  if (!e) {
+    e = readPng(srcFilePath, &cm, &cp, verbose);
+  }
   if (!e) {
     // Background objects are pixel-by-pixel-(grid)-based, so they need to be compressed into strips.
     if (isBg) {
-      if (!e) {  // Start doing brackets... Leaving them out hurts dev speed and reading comprehension.
-        e = getColorPaletteAndColormap(&colorPaletteA, &colormapA, &nColors, pngImgP, pixelA, 16, pixelSize, verbose);
-      }
-      // Colormap StripSet  & StripMap
-      if (!e) {
-        e = stripNew(colormapA, verbose, bpp, arrayGetNElems(colormapA), &stripset, &stripmap);
-      }
       // Write collision grid map source file.
-      if (!e) {
-        e = writeCollisionGridMap(entityName, &stripmap, &stripset, verbose);
-      }
+      e = writeCollisionGridMap(entityName, &cm, verbose);
     }
     // Foreground objects are rectangle-based, so you only need to find the rectangle in each frame.
     else { 
@@ -339,40 +314,24 @@ Error coll(char *fp, char *entityName, U8 isBg, AnimJsonData *animP, U8 verbose)
           yMax = fNodeP->y + fNodeP->h;
         }
       }
-      if (xMax > pngImgP->width) {
-        printf("Maximum x %d is bigger than collision image width %d.\n", xMax, pngImgP->width);
+      if (xMax > cm.w) {
+        printf("Maximum anim frame x %d is bigger than collision image width %d.\n", xMax, cm.w);
         return E_BAD_ARGS;
       }
-      if (yMax > pngImgP->height) {
-        printf("Maximum y %d is bigger than collision image height %d.\n", yMax, pngImgP->height);
+      if (yMax > cm.h) {
+        printf("Maximum anim frame y %d is bigger than collision image height %d.\n", yMax, cm.h);
         return E_BAD_ARGS;
       }
-
-      e = findCollisionRects(pixelA, pngImgP, pixelSize, animP, &rectListP, verbose);
-#if 0
-      // Parse entity  name. 
-      if (!e) {
-        U32 startIdx, len;
-        parseName(filepath, ".json", &startIdx, &len);
-        char entityName[len + 1];
-        memset(entityName, 0, sizeof(char) * (len + 1));
-        memcpy((void*) entityName, (void*) &filepath[startIdx], len);
-        if (verbose) {
-          printf("Entity name is %s with length %d.\n", entityName, len);
-        }
-        memcpy(entityName, &filepath[startIdx], len);
-        entityName[len] = '\0';
-      }
-#endif
+      // Find collision rectangles in each animation frame.
+      e = findCollisionRects(&cm, animP, &rectListP, verbose);
       // Write collision rect map source file.
       if (!e) {
         e = writeCollisionRectMap(entityName, animP, rectListP, verbose);
       }
     }
   }
-  stripDel(&stripset, &stripmap);
-  arrayDel((void**) &colorPaletteA);
-  arrayDel((void**) &pixelA);
-  free(pngImgP);
+  cmClr(&cm);
+  cpClr(&cp);
+  jbFree((void**) &srcFilePath);
   return e;
 }

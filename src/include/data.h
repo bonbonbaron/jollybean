@@ -182,23 +182,23 @@ typedef Error (*inboxRead)(Message *mailboxF);  // only for self
 typedef struct {
   U16 nFlips;
   U16 *flipIdxA;
-} FlipSetS;
+} FlipsetS;
 
 // gtrip set's inflated data is in U32 format.
 typedef struct {
   U8 nUnitsPerStrip;
   U16 nStrips;
   U32 nUnits;
-  FlipSetS flipSet;
-  Inflatable *stripSetInfP;  // strip set's compressed source data
-} StripSetS;
+  FlipsetS flipset;
+  Inflatable *stripsetInfP;  // strip set's compressed source data
+} StripsetS;
 
-// StripMapS's inflated data is in U16 format.
+// StripmapS's inflated data is in U16 format.
 typedef S16 StripmapIdx;
 typedef struct {
   U32 nIndices;
-  Inflatable *stripMapInfP;
-} StripMapS;
+  Inflatable *stripmapInfP;
+} StripmapS;
 
 // N_UNITS_PER_STRIP drives all the other quantities. TODO add compile-time assertion for being a multiple of 32.
 #define N_UNITS_PER_STRIP (32) 
@@ -314,35 +314,35 @@ __inline__ static void _unpackRemainderUnits##Bpu_(U8 *byteA, U8 *outputByteP, U
     *outputByteP++ =  (*(byteP++) >> i) & maskByte_;\
 }
 
-void flipUnpackedStrips(StripSetS *stripSetP, void *outputDataP);
+void flipUnpackedStrips(StripsetS *stripsetP, void *outputDataP);
 
-#define declareInflateStripsWithBpu_(Bpu_) void inflateStripsWithBpu##Bpu_ (StripSetS *stripSetP, StripMapS *stripMapP, U32 *dstStripP)
+#define declareInflateStripsWithBpu_(Bpu_) void inflateStripsWithBpu##Bpu_ (StripsetS *stripsetP, StripmapS *stripmapP, U32 *dstStripP)
 
 #define defineInflateStripsWithBpu_(Bpu_)\
   declareInflateStripsWithBpu_(Bpu_) {\
     U32 *srcStripP; \
     U32 *dstStripOriginP = dstStripP; /* keep track of beginning as pointer gets incremented */ \
     /* Count remainder of pixels to process after all the whole strips. */ \
-    U32 nWholeStrips = countWholeStrips_(stripSetP->nUnits); \
-    U32 nRemainderUnits = countRemainderUnits_(stripSetP->nUnits); \
+    U32 nWholeStrips = countWholeStrips_(stripsetP->nUnits); \
+    U32 nRemainderUnits = countRemainderUnits_(stripsetP->nUnits); \
     /* Mapped stripsets need to be both unpacked and indexed. They may need strips to be flipped too. */ \
     /* First read all mapped strips into the target colormap. */\
-    if (stripMapP) {\
-      U16 *mapEndP = ((U16*) stripMapP->stripMapInfP->inflatedDataP) + nWholeStrips;\
-      for (U16 *ssIdxP = (U16*) stripMapP->stripMapInfP->inflatedDataP; ssIdxP < mapEndP; ssIdxP++) {\
-        srcStripP = stripSetP->stripSetInfP->inflatedDataP + stripIdxTo##Bpu_##BpuStripPtr_(*ssIdxP);  \
+    if (stripmapP) {\
+      U16 *mapEndP = ((U16*) stripmapP->stripmapInfP->inflatedDataP) + nWholeStrips;\
+      for (U16 *ssIdxP = (U16*) stripmapP->stripmapInfP->inflatedDataP; ssIdxP < mapEndP; ssIdxP++) {\
+        srcStripP = stripsetP->stripsetInfP->inflatedDataP + stripIdxTo##Bpu_##BpuStripPtr_(*ssIdxP);  \
         _unpackStrip##Bpu_##Bpu(&srcStripP, &dstStripP);\
       }\
-      srcStripP = stripSetP->stripSetInfP->inflatedDataP + stripSetP->nStrips - 1;\
+      srcStripP = stripsetP->stripsetInfP->inflatedDataP + stripsetP->nStrips - 1;\
       _unpackRemainderUnits##Bpu_((U8*) srcStripP, (U8*) dstStripP, nRemainderUnits);\
       /* Then flip whatever strips need flipping. Remember data's already expanded to U8s! */\
-      if (stripSetP->flipSet.nFlips) \
-        flipUnpackedStrips(stripSetP, dstStripOriginP);\
+      if (stripsetP->flipset.nFlips) \
+        flipUnpackedStrips(stripsetP, dstStripOriginP);\
     } \
     /* Unmapped stripsets are already ordered, so they only need to be unpacked. */\
     else {\
-      U32 *srcEndP = stripSetP->stripSetInfP->inflatedDataP + stripIdxTo1BpuStripPtr_(nWholeStrips);\
-      for (U32 *srcStripP = stripSetP->stripSetInfP->inflatedDataP; srcStripP < srcEndP; srcStripP++) \
+      U32 *srcEndP = stripsetP->stripsetInfP->inflatedDataP + stripIdxTo1BpuStripPtr_(nWholeStrips);\
+      for (U32 *srcStripP = stripsetP->stripsetInfP->inflatedDataP; srcStripP < srcEndP; srcStripP++) \
         _unpackStrip##Bpu_##Bpu(&srcStripP, &dstStripP);\
       _unpackRemainderUnits##Bpu_((U8*) srcStripP, (U8*) dstStripP, nRemainderUnits);\
     }\

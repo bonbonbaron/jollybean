@@ -11,13 +11,13 @@ void cmClr(Colormap *cmP) {
 	 	if (cmP->dataP != NULL) {    // But if the double pointer is null, avoid any processing.
 			jbFree((void**) &cmP->dataP);
     }
-		if (cmP->stripSetP != NULL && cmP->stripSetP->stripSetInfP != NULL &&
-				cmP->stripSetP->stripSetInfP->inflatedDataP != NULL) {
-			jbFree((void**) &cmP->stripSetP->stripSetInfP->inflatedDataP);
+		if (cmP->stripsetP != NULL && cmP->stripsetP->stripsetInfP != NULL &&
+				cmP->stripsetP->stripsetInfP->inflatedDataP != NULL) {
+			jbFree((void**) &cmP->stripsetP->stripsetInfP->inflatedDataP);
     }
-		if (cmP->stripMapP != NULL && cmP->stripMapP->stripMapInfP != NULL &&
-				cmP->stripMapP->stripMapInfP->inflatedDataP != NULL) {
-			jbFree((void**) &cmP->stripSetP->stripSetInfP->inflatedDataP);
+		if (cmP->stripmapP != NULL && cmP->stripmapP->stripmapInfP != NULL &&
+				cmP->stripmapP->stripmapInfP->inflatedDataP != NULL) {
+			jbFree((void**) &cmP->stripsetP->stripsetInfP->inflatedDataP);
     }
 	}
 }
@@ -34,8 +34,8 @@ Error cmGen(Colormap *cmP) {
 			return SUCCESS;  
     }
 		// If not reconstructed yet, inflate strip set if it's still compressed (inflate() checks internally).
-		if (cmP->stripSetP) {
-			e = botoxInflate(cmP->stripSetP->stripSetInfP);
+		if (cmP->stripsetP) {
+			e = botoxInflate(cmP->stripsetP->stripsetInfP);
     }
 		else {
 			return E_NULL_VAR;
@@ -43,12 +43,12 @@ Error cmGen(Colormap *cmP) {
 
     // TODO get rid ofthis once done debugging
     printf("let us commence on spillin the strip set inflatable beans....\n");
-    for (U8 *eP = (U8*) cmP->stripSetP->stripSetInfP->inflatedDataP; eP < (U8*) cmP->stripSetP->stripSetInfP->inflatedDataP + cmP->stripSetP->stripSetInfP->inflatedLen; ++eP) {
+    for (U8 *eP = (U8*) cmP->stripsetP->stripsetInfP->inflatedDataP; eP < (U8*) cmP->stripsetP->stripsetInfP->inflatedDataP + cmP->stripsetP->stripsetInfP->inflatedLen; ++eP) {
       printf("%d ", *eP);
     }
 		// If CM source is strip-mapped, inflate strip map if it's still compressed (same as above).
-		if (!e && cmP->stripMapP) {
-			e = botoxInflate(cmP->stripMapP->stripMapInfP);
+		if (!e && cmP->stripmapP) {
+			e = botoxInflate(cmP->stripmapP->stripmapInfP);
     }
 		// Allocate colormap memory.
 		if (!e) {
@@ -64,15 +64,15 @@ Error cmGen(Colormap *cmP) {
     // Mapped stripsets need to be both unpacked and indexed. They may need strips to be flipped too.
 		switch (cmP->bpp) {
 			case 1:
-        inflateStripsWithBpu1(cmP->stripSetP, cmP->stripMapP, (U32*) cmP->dataP);
+        inflateStripsWithBpu1(cmP->stripsetP, cmP->stripmapP, (U32*) cmP->dataP);
 				break;
 			case 2:
         // First read all mapped strips into the target colormap.
-        inflateStripsWithBpu2(cmP->stripSetP, cmP->stripMapP, (U32*) cmP->dataP);
+        inflateStripsWithBpu2(cmP->stripsetP, cmP->stripmapP, (U32*) cmP->dataP);
 				break;
 			case 4: 
         // First read all mapped strips into the target colormap.
-        inflateStripsWithBpu4(cmP->stripSetP, cmP->stripMapP, (U32*) cmP->dataP);
+        inflateStripsWithBpu4(cmP->stripsetP, cmP->stripmapP, (U32*) cmP->dataP);
 				break;
 			default:  
 				e = E_UNSUPPORTED_PIXEL_FORMAT;

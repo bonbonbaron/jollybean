@@ -14,7 +14,7 @@
 
 #define TEST_ 1
 
-Error coll(char *fp, char *entityName, U8 isBg, AnimJsonData *animP, U8 verbose);
+Error coll(char *entityName, U8 isBg, AnimJsonData *animP, U8 verbose);
 // We color collidable objects' collision rectangles/grids.
 // That way we know how someone should react when bumping into them.
 #endif

@@ -7,14 +7,13 @@ char BUILD_DIR_NAME[] = "build";
 // An image name looks like this: /some/path/to/entityName.png
 // Extension is the file extension including the leading '.'.
 // The entity name is assumed to begin at the start of base name.
-void parseName(char *filepathP, char *extension, U32 *entityNameIdxP, U32 *entityNameLenP) {
+char* parseName(char *filepathP, char *extension, U8 verbose) {
   U32 filenameLen = strlen(filepathP);
   U32 extLen = strlen(extension);  // including the leading "."
+  U32 entityNameIdx = 0;
+  U32 entityNameLen = 0;
   // Make sure this file has the expected extension.
   assert(!strncasecmp(&filepathP[filenameLen - extLen], extension, extLen));
-
-  // Init all outputs to zero.
-  *entityNameIdxP = *entityNameLenP = 0;
 
   // Get both entity starting position.
   for (S32 i = filenameLen - 1; i >= 0; --i) {
@@ -24,13 +23,32 @@ void parseName(char *filepathP, char *extension, U32 *entityNameIdxP, U32 *entit
 #else
       case '\\':
 #endif
-        *entityNameIdxP = i + 1;
+        entityNameIdx = i + 1;
         goto breakout;
     }
   }
   breakout:
   // Get both entity length.
-  *entityNameLenP = filenameLen - *entityNameIdxP - extLen;
+  entityNameLen = filenameLen - entityNameIdx - extLen;
+
+  if (entityNameLen == 0) {
+    if (verbose) {
+      printf("entity name is empty!\n");
+    }
+    return NULL;
+  }
+
+  char *outputNameP = NULL;
+  Error e = jbAlloc((void**) &outputNameP, sizeof(char), (entityNameLen + 1) * sizeof(char));
+  if (!e) {
+    memset(outputNameP, 0, (entityNameLen + 1) * sizeof(char));
+    memcpy((void*) outputNameP, (void*) &filepathP[entityNameIdx], entityNameLen);
+    return outputNameP;
+  }
+  if (verbose) {
+    printf("[parseName] out of memory when allocating output name\n)");
+  }
+  return NULL;
 }
 
 void writeRawData8(FILE *fP, U8 *byteA, U32 nBytes) {

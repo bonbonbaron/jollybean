@@ -32,6 +32,5 @@ void getBaseNameIndices(char *filepathP, char *extension, U32 *startIdxP, U32 *e
 void writeRawData8(FILE *fP, U8 *byteA, U32 nBytes);
 void writeRawData16(FILE *fP, U16 *byteA, U16 nBytes);
 void writeRawData32(FILE *fP, U32 *byteA, U32 nBytes);
-void parseName(char *filepathP, char *extension, U32 *entityNameIdxP, U32 *entityNameLenP);
-Error anim (char *filepath, U8 verbose, AnimJsonData **animPP);
+Error anim (char *entityNameP, U8 verbose, AnimJsonData **animPP);
 #endif

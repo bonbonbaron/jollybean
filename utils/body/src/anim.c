@@ -337,7 +337,7 @@ Error writeAnimJsonData(char *entityName, AnimJsonData *animP, U8 verbose) {
     ++nKeyValPairs;
   }
   // Write key-val pairs between tag names and coll strips
-  fprintf(fP, "KeyValPairArray tagName2AnimStripMap_%s[] = {\n", entityName);
+  fprintf(fP, "KeyValPairArray tagName2AnimStripmap_%s[] = {\n", entityName);
   fprintf(fP, "\t.nKeyValPairs = %d,\n", nKeyValPairs);
   fprintf(fP, "\t.keyValPairA = {\n");
   for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
@@ -352,27 +352,24 @@ Error writeAnimJsonData(char *entityName, AnimJsonData *animP, U8 verbose) {
 
 /* anim() outputs an AnimJsonData** in case the caller wants to use its 
    frame data to look for collision rectangles. */
-Error anim (char *filepath, U8 verbose, AnimJsonData **animPP) {
-  if (!filepath || !animPP) {
+Error anim (char *entityNameP, U8 verbose, AnimJsonData **animPP) {
+  if (!entityNameP || !animPP) {
     return E_BAD_ARGS;
   }
+  char *srcFilePath = NULL;
 
-  Error e = SUCCESS;
-  // iterate through arguments
-  fjson_object *new_obj;
-  FILE *fP = fopen(filepath, "r");
+  FILE *fP = getSrcFile("Body/Graybody/Animation", entityNameP, ".json", verbose); 
   if (!fP) {
-    printf("failed to open %s.\n", filepath);
-    *animPP = NULL;
     return E_FILE_IO;
   }
-  fseek(fP, 0, SEEK_END);
 
   // Get file size
   int nBytes = ftell(fP);
+  fseek(fP, 0, SEEK_SET);
+
+  // Init JSON file contents to zeroes.
   char jsonFileContents[nBytes];
   memset(jsonFileContents, 0, nBytes);
-  fseek(fP, 0, SEEK_SET);
 
   // Read json file
   int nBytesRead = fread(&jsonFileContents[0], 1, nBytes, fP);
@@ -383,9 +380,8 @@ Error anim (char *filepath, U8 verbose, AnimJsonData **animPP) {
 
   // Turn it into a C struct
   AnimJsonData *animP;
-  if (!e) {
-    e = jbAlloc((void**) &animP, sizeof(AnimJsonData), 1);
-  }
+  Error e = jbAlloc((void**) &animP, sizeof(AnimJsonData), 1);
+
   if (!e) {
     memset(animP, 0, sizeof(AnimJsonData));
     e = getJsonData(animP, topLevelObjP, verbose);
@@ -394,17 +390,7 @@ Error anim (char *filepath, U8 verbose, AnimJsonData **animPP) {
     printResults(animP);
   }
   if (!e) {
-    U32 startIdx, len;
-    parseName(filepath, ".json", &startIdx, &len);
-    char entityName[len + 1];
-    memset(entityName, 0, sizeof(char) * (len + 1));
-    memcpy((void*) entityName, (void*) &filepath[startIdx], len);
-    if (verbose) {
-      printf("Entity name is %s with length %d.\n", entityName, len);
-    }
-    memcpy(entityName, &filepath[startIdx], len);
-    entityName[len] = '\0';
-    e = writeAnimJsonData(entityName, animP, verbose);
+    e = writeAnimJsonData(entityNameP, animP, verbose);
   }
 
   // Return animation if it's good; otherwise free it and return NULL.
@@ -415,6 +401,8 @@ Error anim (char *filepath, U8 verbose, AnimJsonData **animPP) {
     *animPP = NULL;
     jbFree((void**) &animP);
   }
+
+  jbFree((void**) &srcFilePath);
 
   return e;
 }

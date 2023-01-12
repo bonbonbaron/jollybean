@@ -19,13 +19,16 @@ typedef struct {
   Key    rectIdx;  // Rect index of Collidee (i swear i don't talk like this)
 } Collision;
 
+typedef U8 ColormapIdx;
+
 typedef struct {
   U8 bpp;
   U16 w, h, pitch;  // in pixel units; determine actual step size by pixel format
-  StripSetS *stripSetP;
-  StripMapS *stripMapP;
-  U8 *dataP;    // JB only supports 8-bit colormap. If image requires neither strips nor bit-unpacking, this simply points at the inflatable data.
+  StripsetS *stripsetP;
+  StripmapS *stripmapP;
+  ColormapIdx *dataP;    // JB only supports 8-bit colormap. If image requires neither strips nor bit-unpacking, this simply points at the inflatable data.
 } Colormap;     
+
 
 typedef struct {
   U8 nColors;
