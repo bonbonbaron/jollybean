@@ -153,15 +153,28 @@ Error writeColormap(char *imgNameA, Colormap *cmP, U8 verbose) {
 // =========================================================================================
 // When you're building your color palette, this adds colors that don't already exist in it.
 // This acts agnostic to the size of color palette elements.
-S32 getColormapIdx(U8 *cpColorA, U32 nPixels, const U8 cpElemSz, const U8 *colorQueryP) {
+S32 getColormapIdx(U8 *cpColorA, U32 nPixels, const U8 cpElemSz, const U8 *colorQueryP, U8 verbose) {
   U8 *colorP = cpColorA;
   U8 *cpEndP = colorP + (nPixels * cpElemSz);
+  // TODO put verbose printing matching and mismatching here to see why it's returning -1.
   for (; colorP < cpEndP; colorP += cpElemSz) {
     if (!memcmp((const void*) colorP, (const void*) colorQueryP, cpElemSz)) {
       return (colorP - cpColorA) / cpElemSz;
     }
   }
   return -1;
+}
+
+static Error mallocSanityCheck(char *msgDetails) {
+  U8 *memA = NULL;
+  Error e = jbAlloc((void**) &memA, sizeof(U8), 100000);
+  if (!e) {
+    printf("malloc works fine: %s\n", msgDetails);
+  }
+  else {
+    printf("ERROR: malloc breaks: %s\n", msgDetails);
+  }
+  jbFree((void**) &memA);
 }
 
 Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, U8 verbose) {
@@ -172,28 +185,28 @@ Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, U8 verbose) {
   png_color blackBg = {0}; // used to replace alpha pixels for 1-byte output pixel format
   U8 srcPixelSize = 0;
   // Allocate PNG image info
-  pngP = malloc(sizeof(png_image));
-  if (!pngP) {
-    return E_NO_MEMORY;
-  }
+  Error e = jbAlloc((void**) &pngP, sizeof(png_image), 1);
   memset(pngP, 0, sizeof(png_image));  // bombed, seeing if this worked
   pngP->version = PNG_IMAGE_VERSION;
   // Set up PNG reader.
-  int e = png_image_begin_read_from_file(pngP, imgPathA);
-  e = !e ? E_FILE_IO : SUCCESS;
-  // Handle errors if any
-  if (pngP->warning_or_error) {
-    printf("libpng error message: %s\n", pngP->message);
-    printf("related to file %s.\n", imgPathA);
-  }
-  else if (e) {  // in this context, !e is an error (libpng way of doing it)
-    printf("png_image_begin_read() errored with e = %d.\n", e);
-    if (pngP->message[0]) {
-      printf("%s\n", pngP->message);
+  if (!e) {
+    int e = png_image_begin_read_from_file(pngP, imgPathA);
+    e = !e ? E_FILE_IO : SUCCESS;
+    // Handle errors if any
+    if (pngP->warning_or_error) {
+      printf("libpng error message: %s\n", pngP->message);
+      printf("related to file %s.\n", imgPathA);
+    }
+    else if (e) {  // in this context, !e is an error (libpng way of doing it)
+      printf("png_image_begin_read() errored with e = %d.\n", e);
+      if (pngP->message[0]) {
+        printf("%s\n", pngP->message);
+      }
     }
   }
   // No errors. Perform actual read.
-  else { 
+  if (!e) {
+    mallocSanityCheck("before allocating cmP->dataP");
     srcPixelSize = PNG_IMAGE_PIXEL_SIZE(pngP->format);
     cmP->pitch = PNG_IMAGE_ROW_STRIDE(*pngP);
     U32 bufferSz = PNG_IMAGE_BUFFER_SIZE(*pngP, cmP->pitch);
@@ -211,7 +224,8 @@ Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, U8 verbose) {
       // PNG is a colormap if its pixels are one byte each.
       if (srcPixelSize == 1) {
         // Output 1-byte pixel buffer
-        e = arrayNew((void**) &cmP->dataP, sizeof(ColormapIdx), bufferSz);
+        e = arrayNew((void**) &cmP->dataP, sizeof(U8), bufferSz);
+        mallocSanityCheck("after allocating cmP->dataP");
         if ( !e && pngP->colormap_entries ) {
           if (verbose) {
             printf("Allocating %d bytes for libpng to give us its color palette.\n", PNG_IMAGE_COLORMAP_SIZE(*pngP));
@@ -229,6 +243,7 @@ Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, U8 verbose) {
           e = png_image_finish_read(pngP, NULL, cmP->dataP, 0, cpP->colorA);
           // png's error returns 0 if it fails, hence !e.
           e = !e ? E_FILE_IO : SUCCESS;
+          mallocSanityCheck("after finishing reeading PNG 1");
         }
       }
       // If PNG is NOT a colormap, then read it like a normal image without getting a color palette.
@@ -239,10 +254,24 @@ Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, U8 verbose) {
           // row_stride param being 0 forces libpng to calculate the pitch for you.
           e = png_image_finish_read(pngP, NULL, srcPixelA, 0, NULL);
           e = !e ? E_FILE_IO : SUCCESS;
+          mallocSanityCheck("after finishing reeading PNG 2");
+        }
+        if (!e & verbose) {
+          Color_ *pixelP = (Color_*) srcPixelA;
+          Color_ *pixelEndP = (Color_*) srcPixelA + arrayGetNElems(srcPixelA);
+          assert ((pixelEndP - pixelP) == (bufferSz / srcPixelSize));
+          assert ((pixelEndP - pixelP) == (cmP->w * cmP->h));
+#if 0
+          for (; pixelP < pixelEndP; ++pixelP) {
+            printf("{%d, %d, %d, %d}, ", pixelP->r, pixelP->g, pixelP->b, pixelP->a);
+          }
+#endif
         }
         // png's error returns 0 if it fails, hence !e.
         if (!e) {
+          mallocSanityCheck("before making CP and CM");
           e = makeColorPaletteAndColormap(cpP, cmP, pngP, srcPixelA, verbose);
+          mallocSanityCheck("after making CP and CM");
         }
         arrayDel((void**) &srcPixelA);
       }
@@ -254,9 +283,17 @@ Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, U8 verbose) {
 
   }
 
+  // Sanity check before making strips
+  if (!e) {
+    mallocSanityCheck("before previewing img");
+    e = previewImg(cmP, cpP, 3000);
+    mallocSanityCheck("after previewing img");
+  }
   // Colormap's stripset & stripmap
   if (!e) {
+    mallocSanityCheck("before stripNew");
     e = stripNew(cmP->dataP, verbose, cmP->bpp, cmP->w * cmP->h, &cmP->stripsetP, &cmP->stripmapP);
+    mallocSanityCheck("after stripNew");
   }
 
   if (!pngP->warning_or_error && verbose) {
@@ -267,7 +304,7 @@ Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, U8 verbose) {
     cmClr(cmP);
     cpClr(cpP);
   }
-  free(pngP);
+  jbFree((void**) &pngP);
 
   return e;  // libpng errors are weird.
 }
@@ -299,8 +336,17 @@ Error makeColorPaletteAndColormap(ColorPalette *cpP, Colormap *cmP, png_image *s
     S32 colormapIdx = -1;
     // Make a palette of distinct colors.
     for (cpP->nColors = 0; srcPixelP < pixelEndP && colormapP < colormapEndP; srcPixelP += srcPixelSz, ++colormapP) {
-      colormapIdx = getColormapIdx((U8*) cpP->colorA, cpP->nColors, srcPixelSz, srcPixelP);
+      colormapIdx = getColormapIdx((U8*) cpP->colorA, cpP->nColors, srcPixelSz, srcPixelP, verbose);
+      // < 0 means this is an unencountered color; add it to the palette.
       if (colormapIdx < 0) {
+        if (verbose) {
+          if (srcPixelSz == 2) {
+            printf("Unique color: {%d, %d}\n", srcPixelP[0], srcPixelP[1]);
+          }
+          else if (srcPixelSz == 4) {
+            printf("Unique color: {%d, %d, %d, %d}\n", srcPixelP[0], srcPixelP[1], srcPixelP[2], srcPixelP[3]);
+          }
+        }
         memcpy(&cpP->colorA[cpP->nColors * srcPixelSz], srcPixelP, srcPixelSz);
         *colormapP = cpP->nColors++;
       }
