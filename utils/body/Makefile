@@ -8,8 +8,8 @@ BINDIR         = ./bin
 INSTALLDIR     = /usr/local/lib
 
 # Linker
-${BINDIR}/body: ${BUILDIR} ${BINDIR} ../file/build/fileUtils.o ../genie/build/genie.o ../strip/build/strip.o ../db/build/db.o ../inflatable/build/inflatable.o ${BUILDDIR}/body.o ${BUILDDIR}/img.o ${BUILDDIR}/anim.o ${BUILDDIR}/coll.o ${BUILDDIR}/previewImg.o
-	$(CC) -g ../file/build/fileUtils.o ../genie/build/genie.o ../db/build/db.o ../strip/build/strip.o ../inflatable/build/inflatable.o ${BUILDDIR}/img.o ${BUILDDIR}/anim.o ${BUILDDIR}/coll.o ${BUILDDIR}/previewImg.o ${BUILDDIR}/body.o -L../../lib/ -lbotox -lfastjson $(shell pkg-config --libs zlib) $(shell sdl2-config --libs) $(shell libpng-config --libs) -o $@
+${BINDIR}/body: ../file/build/fileUtils.o ../genie/build/genie.o ../strip/build/strip.o ../db/build/db.o ../inflatable/build/inflatable.o ${BUILDDIR}/body.o ${BUILDDIR}/img.o ${BUILDDIR}/anim.o ${BUILDDIR}/coll.o ${BUILDDIR}/previewImg.o ../../build/interface.o ../../build/data.o
+	$(CC) -g ../file/build/fileUtils.o ../genie/build/genie.o ../db/build/db.o ../strip/build/strip.o ../inflatable/build/inflatable.o ${BUILDDIR}/img.o ${BUILDDIR}/anim.o ${BUILDDIR}/coll.o ${BUILDDIR}/previewImg.o ${BUILDDIR}/body.o -L../../lib/ -ljollybean -lfastjson $(shell pkg-config --libs zlib) $(shell sdl2-config --libs) $(shell libpng-config --libs) -o $@
 	touch $@
 
 # Compiler
@@ -31,6 +31,9 @@ ${BUILDDIR}/%.o: ./src/%.c ./src/include/%.h ${BUILDDIR}
 
 ../genie/build/genie.o: ../genie/src/genie.c ../genie/src/include/genie.h
 	make -C ../genie
+
+../../build/%.o: ../../src/%.c
+	make -C ../../
 
 # Build dbectory (dependency)
 ${BUILDDIR}:

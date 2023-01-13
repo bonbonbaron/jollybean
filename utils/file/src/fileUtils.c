@@ -218,13 +218,13 @@ FILE* getSrcFile(char *srcLocalDirName, char *srcFileName, char *srcFileSuffix, 
     return NULL;
   }
   char *srcFilePath = NULL;
-  Error e = getSrcFilePath(&srcFilePath, srcLocalDirName, srcFileName, srcFilePath, verbose);
+  Error e = getSrcFilePath(&srcFilePath, srcLocalDirName, srcFileName, srcFileSuffix, verbose);
   if (!e) {
     if (verbose) {
       printf("About to open source file %s...\n", srcFilePath);
     }
     // Open file.
-    fP = fopen(srcFilePath, "w");
+    fP = fopen(srcFilePath, "r");
     if (!fP) {
       printf("[getSrcFile] file opening failed for path %s\n", srcFilePath);
       e = E_FILE_IO;

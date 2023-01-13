@@ -14,8 +14,8 @@ function lower () {
 
 # First, distribute any items dropped off in the trove.
 mv ${TROVE}/*_col.png ${TROVE}/src/Body/Graybody/Collision 
-mv ${TROVE}/*.{png,ase} ${TROVE}/src/Body/Graybody/Colormap 
 mv ${TROVE}/*.json ${TROVE}/src/Body/Graybody/Animation 
+mv ${TROVE}/*.{png,ase} ${TROVE}/src/Body/Graybody/Colormap 
 
 # Second, handle actual user arguments.
 if [ $# -gt 0 ]; then

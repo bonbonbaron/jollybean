@@ -356,7 +356,6 @@ Error anim (char *entityNameP, U8 verbose, AnimJsonData **animPP) {
   if (!entityNameP || !animPP) {
     return E_BAD_ARGS;
   }
-  char *srcFilePath = NULL;
 
   FILE *fP = getSrcFile("Body/Graybody/Animation", entityNameP, ".json", verbose); 
   if (!fP) {
@@ -364,7 +363,15 @@ Error anim (char *entityNameP, U8 verbose, AnimJsonData **animPP) {
   }
 
   // Get file size
+  fseek(fP, 0, SEEK_END);
   int nBytes = ftell(fP);
+  if (nBytes <= 0) {
+    printf("~/jb/src/Body/GrayBody/Animation/%s.json is empty! Exiting...\n", entityNameP);
+    return E_FILE_IO;
+  }
+  else if (verbose) {
+    printf("~/jb/src/Body/GrayBody/Animation/%s.json is %d bytes.\n", entityNameP);
+  }
   fseek(fP, 0, SEEK_SET);
 
   // Init JSON file contents to zeroes.
@@ -401,8 +408,6 @@ Error anim (char *entityNameP, U8 verbose, AnimJsonData **animPP) {
     *animPP = NULL;
     jbFree((void**) &animP);
   }
-
-  jbFree((void**) &srcFilePath);
 
   return e;
 }

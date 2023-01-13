@@ -32,7 +32,7 @@ MAIN_OUT = ./game
 ##############################
 # Archiver
 ##############################
-$(LIBJOLLBEAN): $(BUILDDIR) $(LIBDIR) $(JOLLBEAN_OBJS) $(JOLLBEAN_INCLUDES)
+$(LIBJOLLBEAN): $(BUILDDIR) $(LIBDIR) $(JOLLBEAN_OBJS) ${JOLLBEANSRC} $(JOLLBEAN_INCLUDES)
 	ar rcs $(LIBJOLLBEAN) $(JOLLBEAN_OBJS)
 	touch $@
 

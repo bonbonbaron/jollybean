@@ -62,8 +62,24 @@
 #define EVENT_QUIT_ SDL_QUIT
 #endif  // #ifdef USE_SDL
 
-Error surfaceNew(Surface_ **surfacePP, U32 w, U32 h, U32 bpp);
-Error surfaceIni(Surface_ *surfaceP, U8 nColors, Color_ *colorA, U8 *cmDataP);
+typedef U8 ColormapIdx;
+
+typedef struct {
+  U8 bpp;
+  U16 w, h, pitch;  // in pixel units; determine actual step size by pixel format
+  StripsetS *stripsetP;
+  StripmapS *stripmapP;
+  ColormapIdx *dataP;    // JB only supports 8-bit colormap. If image requires neither strips nor bit-unpacking, this simply points at the inflatable data.
+} Colormap;     
+
+typedef struct {
+  U8 nColors;
+  Color_ *colorA;
+} ColorPalette;
+
+
+Error surfaceNew(Surface_ **surfacePP, Colormap *cmP);
+Error surfaceIni(Surface_ *surfaceP, Colormap *cmP, ColorPalette *cpP);
 Error guiNew(Window_ **windowPP, Renderer_ **rendererPP);
 Error textureNew(Texture_ **texturePP, Renderer_ *rendererP, Surface_ *surfaceP);
 void textureDel(Texture_ **texturePP);

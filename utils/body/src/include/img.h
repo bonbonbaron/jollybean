@@ -27,7 +27,7 @@ typedef png_color Pixel;
 
 void getBaseNameIndices(char *filepathP, char *extension, U32 *startIdxP, U32 *endIdxP);
 void imgDimsIni(ImgDims *imgDimsP, U32 width, U32 height, U32 bpp);
-S32 getColormapIdx(U8 *srcPixelA, U32 nPixels, const U8 srcPixelSize, const U8 *srcPixelQueryP);
+S32 getColormapIdx(U8 *cpColorA, const U8 *colorQueryP, U8 verbose);
 Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, U8 verbose);
 Error getColorPaletteAndColormap(ColorPalette *cpP, Colormap *cmP, png_image *pngImgP, U8 *pixelP, U8 srcPixelSize, U8 verbose);
 Error makeColorPaletteAndColormap(ColorPalette *cpP, Colormap *cmP, png_image *srcImgDataP, U8 *srcPixelA, U8 verbose);

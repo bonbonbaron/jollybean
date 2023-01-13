@@ -1301,14 +1301,14 @@ void inflateStripsWithBpu4 (StripsetS *stripsetP, StripmapS *stripmapP, U32 *dst
   //    4) counting of remainder units
   //    5) integrity of stripIdxTo4BpuStripPtr_(*stripmapElemP)
   if (stripmapP) {
-    U16 *mapEndP = ((U16*) stripmapP->stripmapInfP->inflatedDataP) + nWholeStrips;
+    U16 *mapEndP = ((U16*) stripmapP->infP->inflatedDataP) + nWholeStrips;
     //printf("nWholeStrips: %d\n", nWholeStrips);
     //printf("nRemainderUnits: %d\n", nRemainderUnits);
-    for (U16 *stripmapElemP = (U16*) stripmapP->stripmapInfP->inflatedDataP; stripmapElemP < mapEndP; stripmapElemP++) {
-      srcStripP = ((U32*) stripsetP->stripsetInfP->inflatedDataP + stripIdxTo4BpuStripPtr_(*stripmapElemP));  
+    for (U16 *stripmapElemP = (U16*) stripmapP->infP->inflatedDataP; stripmapElemP < mapEndP; stripmapElemP++) {
+      srcStripP = ((U32*) stripsetP->infP->inflatedDataP + stripIdxTo4BpuStripPtr_(*stripmapElemP));  
       _unpackStrip4Bpu(&srcStripP, &dstStripP);
     }
-    srcStripP = (U32*) stripsetP->stripsetInfP->inflatedDataP + stripsetP->nStrips - 1;
+    srcStripP = (U32*) stripsetP->infP->inflatedDataP + stripsetP->nStrips - 1;
     //printf("doing partial strip now\n");
     _unpackRemainderUnits4Bpu((U8*) srcStripP, (U8*) dstStripP, nRemainderUnits);
     /* Then flip whatever strips need flipping. Remember data's already expanded to U8s! */
@@ -1319,8 +1319,8 @@ void inflateStripsWithBpu4 (StripsetS *stripsetP, StripmapS *stripmapP, U32 *dst
   } 
   /* Unmapped stripsets are already ordered, so they only need to be unpacked. */
   else {
-    U32 *srcEndP = stripsetP->stripsetInfP->inflatedDataP + stripIdxTo1BpuStripPtr_(nWholeStrips);
-    for (U32 *srcStripP = stripsetP->stripsetInfP->inflatedDataP; srcStripP < srcEndP; srcStripP++) 
+    U32 *srcEndP = stripsetP->infP->inflatedDataP + stripIdxTo1BpuStripPtr_(nWholeStrips);
+    for (U32 *srcStripP = stripsetP->infP->inflatedDataP; srcStripP < srcEndP; srcStripP++) 
       _unpackStrip4Bpu(&srcStripP, &dstStripP);
     _unpackRemainderUnits4Bpu((U8*) srcStripP, (U8*) dstStripP, nRemainderUnits);
   }

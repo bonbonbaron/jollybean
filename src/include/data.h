@@ -187,17 +187,18 @@ typedef struct {
 // gtrip set's inflated data is in U32 format.
 typedef struct {
   U8 nUnitsPerStrip;
+  U8 bpu;  // bits per unit
   U16 nStrips;
   U32 nUnits;
   FlipsetS flipset;
-  Inflatable *stripsetInfP;  // strip set's compressed source data
+  Inflatable *infP;  // strip set's compressed source data
 } StripsetS;
 
 // StripmapS's inflated data is in U16 format.
 typedef S16 StripmapIdx;
 typedef struct {
   U32 nIndices;
-  Inflatable *stripmapInfP;
+  Inflatable *infP;
 } StripmapS;
 
 // N_UNITS_PER_STRIP drives all the other quantities. TODO add compile-time assertion for being a multiple of 32.
@@ -328,12 +329,12 @@ void flipUnpackedStrips(StripsetS *stripsetP, void *outputDataP);
     /* Mapped stripsets need to be both unpacked and indexed. They may need strips to be flipped too. */ \
     /* First read all mapped strips into the target colormap. */\
     if (stripmapP) {\
-      U16 *mapEndP = ((U16*) stripmapP->stripmapInfP->inflatedDataP) + nWholeStrips;\
-      for (U16 *ssIdxP = (U16*) stripmapP->stripmapInfP->inflatedDataP; ssIdxP < mapEndP; ssIdxP++) {\
-        srcStripP = stripsetP->stripsetInfP->inflatedDataP + stripIdxTo##Bpu_##BpuStripPtr_(*ssIdxP);  \
+      U16 *mapEndP = ((U16*) stripmapP->infP->inflatedDataP) + nWholeStrips;\
+      for (U16 *ssIdxP = (U16*) stripmapP->infP->inflatedDataP; ssIdxP < mapEndP; ssIdxP++) {\
+        srcStripP = stripsetP->infP->inflatedDataP + stripIdxTo##Bpu_##BpuStripPtr_(*ssIdxP);  \
         _unpackStrip##Bpu_##Bpu(&srcStripP, &dstStripP);\
       }\
-      srcStripP = stripsetP->stripsetInfP->inflatedDataP + stripsetP->nStrips - 1;\
+      srcStripP = stripsetP->infP->inflatedDataP + stripsetP->nStrips - 1;\
       _unpackRemainderUnits##Bpu_((U8*) srcStripP, (U8*) dstStripP, nRemainderUnits);\
       /* Then flip whatever strips need flipping. Remember data's already expanded to U8s! */\
       if (stripsetP->flipset.nFlips) \
@@ -341,8 +342,8 @@ void flipUnpackedStrips(StripsetS *stripsetP, void *outputDataP);
     } \
     /* Unmapped stripsets are already ordered, so they only need to be unpacked. */\
     else {\
-      U32 *srcEndP = stripsetP->stripsetInfP->inflatedDataP + stripIdxTo1BpuStripPtr_(nWholeStrips);\
-      for (U32 *srcStripP = stripsetP->stripsetInfP->inflatedDataP; srcStripP < srcEndP; srcStripP++) \
+      U32 *srcEndP = stripsetP->infP->inflatedDataP + stripIdxTo1BpuStripPtr_(nWholeStrips);\
+      for (U32 *srcStripP = stripsetP->infP->inflatedDataP; srcStripP < srcEndP; srcStripP++) \
         _unpackStrip##Bpu_##Bpu(&srcStripP, &dstStripP);\
       _unpackRemainderUnits##Bpu_((U8*) srcStripP, (U8*) dstStripP, nRemainderUnits);\
     }\

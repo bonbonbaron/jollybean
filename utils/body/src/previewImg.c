@@ -12,10 +12,11 @@ Error previewImg(Colormap *cmP, ColorPalette *cpP, U32 preview_ms) {
 
   Error e = guiNew(&windowP, &rendererP);
   if (!e) {
-    e = surfaceNew(&surfaceP, cmP->w, cmP->h, cmP->bpp);
+    //e = surfaceNew(&surfaceP, cmP->w, cmP->h, sizeof(ColormapIdx) * 8);
+    e = surfaceNew(&surfaceP, cmP);
   }
   if (!e) {
-    e = surfaceIni(surfaceP, cpP->nColors, cpP->colorA, cmP->dataP);
+    e = surfaceIni(surfaceP, cmP, cpP);
   }
   if (!e && surfaceP) {
     e = textureNew(&textureP, rendererP, surfaceP);

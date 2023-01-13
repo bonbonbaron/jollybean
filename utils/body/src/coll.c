@@ -331,7 +331,7 @@ Error coll(char *entityName, U8 isBg, AnimJsonData *animP, U8 verbose) {
     }
   }
   cmClr(&cm);
-  cpClr(&cp);
+  arrayDel((void**) &cp.colorA);
   jbFree((void**) &srcFilePath);
   return e;
 }
