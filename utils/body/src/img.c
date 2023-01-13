@@ -8,14 +8,7 @@ void cmClr(Colormap *cmP) {
 	 	if (cmP->dataP != NULL) {    // But if the double pointer is null, avoid any processing.
 			arrayDel((void**) &cmP->dataP);
     }
-		if (cmP->stripsetP != NULL && cmP->stripsetP->infP != NULL &&
-				cmP->stripsetP->infP->inflatedDataP != NULL) {
-			jbFree((void**) &cmP->stripsetP->infP->inflatedDataP);
-    }
-		if (cmP->stripmapP != NULL && cmP->stripmapP->infP != NULL &&
-				cmP->stripmapP->infP->inflatedDataP != NULL) {
-			jbFree((void**) &cmP->stripsetP->infP->inflatedDataP);
-    }
+    stripDel(&cmP->sdP);
 	}
 }
 
@@ -134,7 +127,7 @@ Error writeColormap(char *imgNameA, Colormap *cmP, U8 verbose) {
     // Make Title format of image name.
     fprintf(fP, "#include \"xRender.h\"\n\n");
     // Write stripmap and stripset data.
-    e = writeStripDataInFile(fP, verbose, imgNameA, cmP->stripsetP, cmP->stripmapP);
+    e = writeStripDataInFile(fP, verbose, imgNameA, cmP->sdP);
   }
   else {
     if (fP) {
@@ -340,9 +333,7 @@ Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, U8 verbose) {
   }
   // Colormap's stripset & stripmap
   if (!e) {
-    // mallocSanityCheck("before stripNew");
-    e = stripNew(cmP->dataP, verbose, cmP->bpp, cmP->w * cmP->h, &cmP->stripsetP, &cmP->stripmapP);
-    // mallocSanityCheck("after stripNew");
+    e = stripNew(cmP->dataP, 32, 32, cmP->bpp, &cmP->sdP, verbose);
   }
 
   if (!e && verbose) {
@@ -455,14 +446,14 @@ static Error _checkInputIntegrity(Colormap *cmP, ColorPalette *cpP) {
   }
   // Inflate stripmap and stripset
   if (!e) {
-    e = botoxInflate(cmP->stripsetP->infP);
+    e = inflatableIni(cmP->sdP->ss.infP);
   }
   if (!e) {
-    e = botoxInflate(cmP->stripmapP->infP);
+    e = inflatableIni(cmP->sdP->sm.infP);
   }
   // Unpack stripset
   if (!e) {
-    e = unpackStripset(cmP->stripsetP, cmP->stripmapP, &cmP->dataP);
+    e = stripsetUnpack(&cmP->sdP->ss);
   }
 #if 0
   // Verify array lengths match.
@@ -518,7 +509,6 @@ Error img(char *entityNameP, Database *cpDirP, Database *cmDirP, U8 verbose) {
   // Only supports PNG for now
   Error e = getSrcFilePath(&imgFilePathP, "Body/Graybody/Colormap", entityNameP, ".png", verbose); 
 
-  // TODO Either getColorPaletteAndColormap, stripNew, or _checkInputIntegrity is screwing up.
   // Rule them out one by one till you find the culprit!
   // Read PNG into colormap and color palette in one fell swoop.
   if (!e) {

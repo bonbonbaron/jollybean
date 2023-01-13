@@ -209,7 +209,15 @@ static Error findCollisionRects(Colormap *cmP, AnimJsonData *animP, RectNode **r
 
 // Write a collision grid to a C file.
 Error writeCollisionGridMap(char *entityName, Colormap *cmP, U8 verbose) {
-  return writeStripData(entityName, "CollGrid", verbose, cmP->stripsetP, cmP->stripmapP);
+  FILE *fP = getBuildFile("Body/Graybody/Collision/Grid", entityName, "CollGrid.c", verbose);
+  Error e = !fP ? E_FILE_IO : SUCCESS;
+  if (!e) {
+    e = writeStripDataInFile(fP, verbose, entityName, cmP->sdP);
+  }
+  if (fP) {
+    fclose(fP);
+  }
+  return e;
 }
 
 // Write a map of rectangle arrays to a C file.

@@ -10,10 +10,10 @@
 #include <stdlib.h>
 #include "data.h"
 
-Error stripNew(U8 *srcA, U8 verbose, U8 bpu, U32 nUnits, StripsetS **ssPP, StripmapS **smPP);
-void stripDel(StripsetS *ssP, StripmapS *smP);
-Error writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripsetS *ssP, StripmapS *smP);
-Error writeStripData(char *objNameA, char *OBJ_TYPE, U8 verbose, StripsetS *ssP, StripmapS *smP);
-Error unpackStripset(StripsetS *ssP, StripmapS *smP, U8 **outputPP);
+Error stripNew(U8 *srcA, const U32 nTotalBytesPerUnpackedStrip, const U32 nUsedBytesPerUnpackedStrip, const U8 bitsPerPackedByte, StripDataS **sdPP, U8 verbose);
+void stripDel(StripDataS **sdPP);
+Error writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripDataS *sdP);
+Error writeStripData(char *objNameA, char *OBJ_TYPE, U8 verbose, StripDataS *sdP);
+Error stripsetUnpack(Stripset *ssP);
 
 #endif

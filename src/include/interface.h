@@ -67,8 +67,7 @@ typedef U8 ColormapIdx;
 typedef struct {
   U8 bpp;
   U16 w, h, pitch;  // in pixel units; determine actual step size by pixel format
-  StripsetS *stripsetP;
-  StripmapS *stripmapP;
+  StripDataS *sdP;
   ColormapIdx *dataP;    // JB only supports 8-bit colormap. If image requires neither strips nor bit-unpacking, this simply points at the inflatable data.
 } Colormap;     
 

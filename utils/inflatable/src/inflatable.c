@@ -38,11 +38,16 @@ Error inflatableNew(void *voidA, Inflatable **inflatablePP) {
   return e;
 }
 
+// The reason data.c doesn't own this function is because inflatables are permanent in-game.
 void inflatableDel(Inflatable **inflatablePP) {
   if (inflatablePP && *inflatablePP) {
     if ((*inflatablePP)->compressedDataA) {
       free((*inflatablePP)->compressedDataA);
       (*inflatablePP)->compressedDataA = NULL;
+    }
+    if ((*inflatablePP)->inflatedDataP) {
+      free((*inflatablePP)->inflatedDataP);
+      (*inflatablePP)->inflatedDataP = NULL;
     }
     free(*inflatablePP);
     *inflatablePP = NULL;

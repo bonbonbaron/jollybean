@@ -35,6 +35,7 @@ typedef enum Error {
 	E_BAD_ARGS,
 	E_NO_MEMORY,
   E_FILE_IO,
+  E_BAD_DATA,
 	E_BAD_INDEX,
 	E_BAD_KEY,
 	E_MSG_TO_ECS_TYPE_MISMATCH,
@@ -136,8 +137,8 @@ typedef struct {
 	U8  *compressedDataA;
 } Inflatable;
 
-Error botoxInflate(Inflatable *inflatableP);
-void botoxDeflate(Inflatable **inflatablePP);
+Error inflatableIni(Inflatable *inflatableP);
+void inflatableClr(Inflatable *inflatableP);
 
 // Efficient Arrays (frays)
 Error frayNew(void **fPP, U32 elemSz, U32 nElems);
@@ -178,11 +179,14 @@ Error mailboxWrite(Message *mailboxF, Key address, Key attn, Key cmd, Key arg);
 Error mailboxForward(Message *mailboxF, Message *msgP);
 typedef Error (*inboxRead)(Message *mailboxF);  // only for self
 
+// Stripmap's inflated data is in U16 format.
+typedef U16 StripmapElem;
+
 // Strip inflation
 typedef struct {
   U16 nFlips;
-  U16 *flipIdxA;
-} FlipsetS;
+  StripmapElem *flipIdxA;  // indices in stripmap that're supposed to be flipped
+} Flipset;
 
 // gtrip set's inflated data is in U32 format.
 typedef struct {
@@ -190,19 +194,26 @@ typedef struct {
   U8 bpu;  // bits per unit
   U16 nStrips;
   U32 nUnits;
-  FlipsetS flipset;
+  Flipset flipset;
   Inflatable *infP;  // strip set's compressed source data
-} StripsetS;
+  U8 *unpackedDataP;
+} Stripset;
 
-// StripmapS's inflated data is in U16 format.
-typedef S16 StripmapIdx;
 typedef struct {
   U32 nIndices;
   Inflatable *infP;
-} StripmapS;
+} Stripmap;
+
+typedef struct {
+  Stripmap sm;
+  Stripset ss;
+} StripDataS;
 
 // N_UNITS_PER_STRIP drives all the other quantities. TODO add compile-time assertion for being a multiple of 32.
 #define N_UNITS_PER_STRIP (32) 
+#define N_BYTES_PER_UNPACKED_UNIT (1)
+#define N_BYTES_PER_UNPACKED_STRIP (N_UNITS_PER_STRIP * N_BYTES_PER_UNPACKED_UNIT)
+#define UNWHOLE_STRIP_MASK (N_UNITS_PER_STRIP - 1)
 #define RSHIFT_TO_DIV_BY_NPPS (5)   /* NPPS = Number of Units of Data Per Strip */
 #define N_COLORS_SUPPORTED_MAX_ (16)
 /* Words per strip math goes like this:
@@ -315,9 +326,9 @@ __inline__ static void _unpackRemainderUnits##Bpu_(U8 *byteA, U8 *outputByteP, U
     *outputByteP++ =  (*(byteP++) >> i) & maskByte_;\
 }
 
-void flipUnpackedStrips(StripsetS *stripsetP, void *outputDataP);
+void flipUnpackedStrips(Stripset *stripsetP, void *outputDataP);
 
-#define declareInflateStripsWithBpu_(Bpu_) void inflateStripsWithBpu##Bpu_ (StripsetS *stripsetP, StripmapS *stripmapP, U32 *dstStripP)
+#define declareInflateStripsWithBpu_(Bpu_) void inflateStripsWithBpu##Bpu_ (Stripset *stripsetP, Stripmap *stripmapP, U32 *dstStripP)
 
 #define defineInflateStripsWithBpu_(Bpu_)\
   declareInflateStripsWithBpu_(Bpu_) {\

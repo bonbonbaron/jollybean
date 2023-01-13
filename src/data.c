@@ -917,7 +917,7 @@ void *tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_len, siz
   For more information, please refer to <http://unlicense.org/>
 */
 
-Error botoxInflate(Inflatable *inflatableP) {
+Error inflatableIni(Inflatable *inflatableP) {
 	Error e = SUCCESS;
 	long long unsigned int expectedInflatedLen;
 	if (inflatableP != NULL && inflatableP->inflatedDataP == NULL) {
@@ -939,11 +939,14 @@ Error botoxInflate(Inflatable *inflatableP) {
   return e;
 }
 
-void botoxDeflate(Inflatable **inflatablePP) {
-  if (inflatablePP && *inflatablePP && (*inflatablePP)->inflatedDataP)
-    jbFree(&(*inflatablePP)->inflatedDataP);
+void inflatableClr(Inflatable *inflatableP) {
+  if (inflatableP) {
+    if (inflatableP->inflatedDataP) {
+      free(inflatableP->inflatedDataP);
+      inflatableP->inflatedDataP = NULL;
+    }
+  }
 }
-
 
 // Efficient Arrays (frays)
 #define N_PREFRAY_ELEMS (5)
@@ -1181,9 +1184,19 @@ defineUnpackRemainderUnitsFunction_(1, 0x01);
 defineUnpackRemainderUnitsFunction_(2, 0x03);
 //defineUnpackRemainderUnitsFunction_(4, 0x0f);  // TODO uncomment
 
+void stripDel(StripDataS **sdPP) {
+  if (sdPP && *sdPP) {
+    inflatableClr((*sdPP)->ss.infP);
+    inflatableClr((*sdPP)->sm.infP);
+    arrayDel((void**) &(*sdPP)->ss.flipset.flipIdxA);
+    arrayDel((void**) &(*sdPP)->ss.unpackedDataP);
+    jbFree((void**) sdPP);
+  }
+}
+
 // Flips already-unpacked (8bpu) strips that need flipping. 
 // Jollybean's image compressor deletes strips that're mirror-images of another.
-void flipUnpackedStrips(StripsetS *stripsetP, void *outputDataP) {
+void flipUnpackedStrips(Stripset *stripsetP, void *outputDataP) {
   U16 *flipEndP = stripsetP->flipset.flipIdxA + stripsetP->flipset.nFlips;
   U32 *dstLeftWordP, *dstRightWordP;
   // 4 *unpacked* Units per U32 out of 64 Units means there are 16 U32s.
@@ -1284,7 +1297,7 @@ __inline__ static void _unpackRemainderUnits4Bpu(U8 *byteA, U8 *outputByteP, U32
     *outputByteP++ =  (*(byteP++) >> i) & 0x0f;
 }
 
-void inflateStripsWithBpu4 (StripsetS *stripsetP, StripmapS *stripmapP, U32 *dstStripP) {
+void inflateStripsWithBpu4 (Stripset *stripsetP, Stripmap *stripmapP, U32 *dstStripP) {
   U32 *srcStripP; 
   U32 *dstStripOriginP = dstStripP; /* keep track of beginning as pointer gets incremented */ 
   /* Count remainder of pixels to process after all the whole strips. */ 
