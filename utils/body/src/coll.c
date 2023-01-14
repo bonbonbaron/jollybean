@@ -301,7 +301,7 @@ Error coll(char *entityName, U8 isBg, AnimJsonData *animP, U8 verbose) {
   Error e = getSrcFilePath(&srcFilePath, "Body/Graybody/Collision", entityName, "_col.png", verbose); 
   // Get pixels of collision image
   if (!e) {
-    e = readPng(srcFilePath, &cm, &cp, verbose);
+    e = readPng(srcFilePath, &cm, &cp, animP, verbose);
   }
   if (!e) {
     // Background objects are pixel-by-pixel-(grid)-based, so they need to be compressed into strips.

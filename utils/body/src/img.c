@@ -2,6 +2,7 @@
 #include "genie.h"
 #include "previewImg.h"
 
+#define DEBUG_IMG_ 1
 // TODO: copied from xRender. Fix linker error in cmGen there so you can reuse it without copy/paste.
 void cmClr(Colormap *cmP) {
 	if (cmP != NULL) {
@@ -181,10 +182,20 @@ static Error mallocSanityCheck(char *msgDetails) {
   jbFree((void**) &memA);
 }
 
-Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, U8 verbose) {
+Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *animP, U8 verbose) {
   if (!imgPathA || !cmP || !cpP) {
     return E_BAD_ARGS;
   }
+
+#if DEBUG_IMG_
+  FILE *fP = fopen(imgPathA, "rb");
+  if (fP) {
+    fseek(fP, 0, SEEK_END);
+    printf("PNG: original size is %d bytes.\n", ftell(fP));
+    fclose(fP);
+  }
+#endif
+
   png_image *pngP = NULL;
   png_color blackBg = {0}; // used to replace alpha pixels for 1-byte output pixel format
   U8 srcPixelSize = 0;
@@ -332,8 +343,15 @@ Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, U8 verbose) {
     }
   }
   // Colormap's stripset & stripmap
+
   if (!e) {
-    e = stripNew(cmP->dataP, 32, cmP->bpp, &cmP->sdP, verbose);
+    // If image is animated, strip length should be the width of an animation frame.
+    // Otherwise, it should be the image width.
+    U32 stripLen = cmP->w;
+    if (animP && animP->frameNodeA) {
+      stripLen = animP->frameNodeA[0].w;
+    }
+    e = stripNew(cmP->dataP, stripLen, cmP->bpp, &cmP->sdP, verbose);
   }
 
   if (!e && verbose) {
@@ -499,7 +517,7 @@ static Error _checkInputIntegrity(Colormap *cmP, ColorPalette *cpP) {
 }
 
 //##########################################
-Error img(char *entityNameP, Database *cpDirP, Database *cmDirP, U8 verbose) {
+Error img(char *entityNameP, Database *cpDirP, Database *cmDirP, AnimJsonData *animP, U8 verbose) {
   U8 *pixelP = NULL;  // can be 1bpp colormap, 2bpp gray+alpha, or 4bpp RGBA
   U8 srcPixelSize = 0;
   ColorPalette cp = {0};
@@ -512,7 +530,7 @@ Error img(char *entityNameP, Database *cpDirP, Database *cmDirP, U8 verbose) {
   // Rule them out one by one till you find the culprit!
   // Read PNG into colormap and color palette in one fell swoop.
   if (!e) {
-    e = readPng(imgFilePathP, &cm, &cp, verbose);
+    e = readPng(imgFilePathP, &cm, &cp, animP, verbose);
   }
 
   if (!e && verbose) {

@@ -1,5 +1,5 @@
 #include "strip.h"
-#define DEBUG_ 1 
+#define DEBUG_ 1
 
 // These three arrays describe where each consecutive unit
 // is located in the current U32 word. We stagger them like this
@@ -12,7 +12,7 @@ const static U8 bitIdx1Bpu[] = {
   4, 12, 20, 28,
   5, 13, 21, 29,
   6, 14, 22, 30,
-  7, 16, 23, 31
+  7, 15, 23, 31
 };
 
 const static U8 bitIdx2Bpu[] = {
@@ -29,14 +29,31 @@ const static U8 bitIdx4Bpu[] = {
 
 // Pack all the bits in strip set.
 static Error _packBits(U8 **ssPackedAP, U8 *ssUnpackedA, U32 nUnits, U32 bpu, U8 verbose) {
-  if (!ssUnpackedA) {
+  if (!ssPackedAP | !ssUnpackedA || !nUnits || !bpu || (bpu != 1 && bpu !=2 && bpu !=4)) {
     return E_BAD_ARGS;
   }
 
   U32 nUnitsPerWord = N_BITS_PER_WORD / bpu;
   //U32 nWholeWordUnits = nUnits & 0xfffffffc;
   U32 nWholeWordUnits = nUnits / nUnitsPerWord;
-  U32 nRemainingUnits = nUnits & 0x00000003;  // 4 bytes per word
+  //U32 nRemainingUnits = nUnits & 0x00000003;  // 4 bytes per word
+  U32 nPartialWordUnits = nUnits % nUnitsPerWord;  // 4 bytes per word
+
+  // Pre-pack stats
+  if (verbose) {
+    U32 compressionRatio = 8 / bpu;
+    U32 nWholePackedBytes = nUnits / compressionRatio;
+    U32 nPartialPackedBytes = nUnits / compressionRatio;
+    U32 nRemainderUnpackedBytes = nUnits % compressionRatio;
+    U32 nRemainderPackedBytes = (nPartialWordUnits > 0);
+    printf("[_packBits] Input data: %d bytes\n", nUnits);
+    printf("[_packBits] Compression ratio: %d\n", compressionRatio);
+    printf("[_packBits] Packed data has %d whole words ( = %d bytes).\n", nWholeWordUnits, nWholeWordUnits << 2);
+    printf("[_packBits] Unpacked data has %d bytes that don't make a word.\n", nUnits & 0x3);
+    printf("[_packBits] %d whole packed bytes\n", nWholePackedBytes);
+    printf("[_packBits] %d remaining packed byte\n\n", nRemainderPackedBytes);
+    printf("[_packBits] %d remaining unpacked bytes\n\n", nRemainderUnpackedBytes);
+  }
 
   U8 *bitIdxA;
   switch (bpu) {
@@ -59,9 +76,12 @@ static Error _packBits(U8 **ssPackedAP, U8 *ssUnpackedA, U32 nUnits, U32 bpu, U8
    *      1       unit    8 bits
    *
    *   In the case of a partial byte, you add one more.
+   *   TODO: what about the case of a partial word, which is more relevant here?
    *
    */
-  Error e = arrayNew((void**) ssPackedAP, sizeof(U8), ((bpu * nUnits) >> 3) + (nRemainingUnits > 0));  
+  printf("[_packBits] making packed array %d bytes for whole words + %d bytes for remainders\n",
+         ((bpu * nUnits) >> 3), (nPartialWordUnits > 0));   
+  Error e = arrayNew((void**) ssPackedAP, sizeof(U8), ((bpu * nUnits) >> 3) + (nPartialWordUnits > 0));  
   if (!e) {
     U32 *packedWordP = (U32*) *ssPackedAP;
     U32 *packedWordEndP = packedWordP + nWholeWordUnits;
@@ -75,17 +95,14 @@ static Error _packBits(U8 **ssPackedAP, U8 *ssUnpackedA, U32 nUnits, U32 bpu, U8
         *packedWordP |= *(unitP++) << bitIdxA[i];
       }
     }
-    for (U8 i = 0; packedWordP < packedWordEndP && i < nRemainingUnits; ++i, ++packedWordP) {
+    for (U8 i = 0; packedWordP < packedWordEndP && i < nPartialWordUnits; ++i, ++packedWordP) {
       *packedWordP |= *(unitP + i) << bitIdxA[i];  // packs 4-bit values into a word
     }
-    
-    // Stats
+    // TODO the above's sus. Is the last packed word going beyond the array bounds?
+    // Post-pack stats
     if (verbose) {
-      printf("unpacked size: %12d bytes\n", 
-          arrayGetNElems(ssUnpackedA) * arrayGetElemSz(ssUnpackedA));
-    }
-    if (verbose) {
-      printf("packed size:   %12d bytes\n", 
+      printf("[_packBits] unpacked stripset size: %12d bytes\n", nUnits);
+      printf("[_packBits] packed   stripset size: %12d bytes\n", 
           arrayGetNElems(*ssPackedAP) * arrayGetElemSz(*ssPackedAP));
     }
   }
@@ -97,7 +114,7 @@ static Error _packBits(U8 **ssPackedAP, U8 *ssUnpackedA, U32 nUnits, U32 bpu, U8
   return e;
 }
 
-static Error _validateBitPacking(U8 *packedDataA, U8 *unpackedDataA, U32 nUnits, U32 bpu) {
+static Error _validateBitPacking(U8 *packedDataA, U8 *srcUnpackedDataP, U32 nUnits, U32 bpu) {
   U32 nUnitsPerWord = N_BITS_PER_WORD / bpu;
   U32 nWholePackedWords = nUnits / nUnitsPerWord;
   U32 nRemainingPackedBytes =  (nUnits / (nUnitsPerWord >> 2)) & 0x00000003;  /* units per byte */
@@ -118,46 +135,35 @@ static Error _validateBitPacking(U8 *packedDataA, U8 *unpackedDataA, U32 nUnits,
       return SUCCESS;
   }
 
-  // Sanity check
-#if 0
-  printf("packed array:   %d elems %d bytes each\n", arrayGetNElems(packedDataA), arrayGetElemSz(packedDataA));
-  printf("unpacked array: %d elems %d bytes each\n", arrayGetNElems(unpackedDataA), arrayGetElemSz(unpackedDataA));
-#endif
-
   U32 *wholePackedWordP = (U32*) packedDataA;
-  U32 *origDataWordP    = (U32*) unpackedDataA;
+  U32 *srcUnpackedWordP    = (U32*) srcUnpackedDataP;
 
   U32 *wholePackedWordEndP = wholePackedWordP + nWholePackedWords;
-  U32 unpackedWord = 0;
+  U32 dstUnpackedWord = 0;
 
 
   for (; wholePackedWordP < wholePackedWordEndP; ++wholePackedWordP) {
-    for (U32 j = 0; j < N_BITS_PER_BYTE; j += bpu, ++origDataWordP) {
-      unpackedWord = (*wholePackedWordP >> j) & mask;
-      if (*origDataWordP != unpackedWord) {
-        printf("Orig data word %9d of %9d: %9d != unpacked word %9d\n", 
-            origDataWordP - (U32*) unpackedDataA, 
+    for (U32 j = 0; j < N_BITS_PER_BYTE; j += bpu, ++srcUnpackedWordP) {
+      dstUnpackedWord = (*wholePackedWordP >> j) & mask;
+      if (*srcUnpackedWordP != dstUnpackedWord) {
+        printf("Src unpacked word %9d of %9d: %9d != dst %d\n", 
+            srcUnpackedWordP - (U32*) srcUnpackedDataP, 
             nUnits >> 2,
-            *origDataWordP,
-            unpackedWord);
+            *srcUnpackedWordP,
+            dstUnpackedWord);
         printf("Bombing out...\n\n");
         return E_BAD_DATA;
       }
       else {
-        printf("Orig data word %9d of %9d: %9d == unpacked word %9d\n", 
-            origDataWordP - (U32*) unpackedDataA, 
-            nUnits >> 2,
-            *origDataWordP,
-            unpackedWord);
+        printf("Src unpacked word %9d of %9d: %9d == dst\n", 
+            srcUnpackedWordP - (U32*) srcUnpackedDataP, 
+            nUnits >> 2,  // bytes / 4 = # words
+            *srcUnpackedWordP);
       }
     }
   }
 
-  printf("\n\nCongratulations: %d words all match the source data!\n\n", wholePackedWordEndP - (U32*) packedDataA);
-
-  // For each packed full-word till it reaches (A),
-  //    unpack a word
-  //    see if that unpacked word equals the original word
+  printf("\n\nCONGRATULATIONS! We validated your stripmap's bitpacking integrity!\n\n");
 
   // For each packed remainder byte till it reaches (B),
   //    unpack a byte
@@ -311,14 +317,9 @@ static Error _validateStripmapping(U8 *ssA, U32 nBytesPerUnpackedStrip, Stripmap
     }  // if original strip does not match one in stripset
     else {
       U32 smElemNumber = smElemP - smA;
-      printf("Original data's %dth strip: ", smElemNumber);
+      printf("sm Idx %5d = src strip %5d: ", *smElemP, smElemNumber);
       for (U32 i = 0; i < nBytesPerUnpackedStrip; ++i) {
         printf("%d", origElemP[i]);
-      }
-      printf(" MATCHES ");
-      printf("Stripset's %dth strip: ", *smElemP);
-      for (U32 i = 0; i < nBytesPerUnpackedStrip; ++i) {
-        printf("%d", ssElemP[i]);
       }
       printf("\n");
     }
@@ -486,6 +487,14 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
     if (!e) {
       e = inflatableNew((void*) ssUnpackedA, &(*sdPP)->ss.infP);
     }
+    if (!e && verbose) {
+      printf("[stripNew] Compressed size: %d bytes\n", 
+          (sizeof(Inflatable) * 2)
+        + (*sdPP)->ss.infP->compressedLen
+        + (*sdPP)->sm.infP->compressedLen
+        );
+    }
+
     if (!e) {
       (*sdPP)->ss.nUnits = nUnitsInStripset;
       (*sdPP)->ss.nUnitsPerStrip = nBytesPerUnpackedStrip;
@@ -504,7 +513,7 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
     jbFree((void**) sdPP);
   }
   return e;
-}
+}  // stripNew()
 
 Error writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripDataS *sdP) {
   if (!fP || !sdP) {
@@ -553,4 +562,4 @@ Error writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripDataS *sdP
   }
 
   return e;
-}
+}  // writeStripDataInFile
