@@ -333,7 +333,7 @@ Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, U8 verbose) {
   }
   // Colormap's stripset & stripmap
   if (!e) {
-    e = stripNew(cmP->dataP, 20, cmP->bpp, &cmP->sdP, verbose);
+    e = stripNew(cmP->dataP, 32, cmP->bpp, &cmP->sdP, verbose);
   }
 
   if (!e && verbose) {
@@ -381,7 +381,7 @@ Error makeColorPaletteAndColormap(ColorPalette *cpP, Colormap *cmP, png_image *s
     // Make a palette of distinct colors.
     for (cpP->nColors = 0; srcPixelP < pixelEndP && cmElemP < colormapEndP; srcPixelP += srcPixelSz, ++cmElemP) {
       colormapIdx = getColormapIdx((U8*) cpP->colorA, srcPixelP, verbose);
-#if 1
+#if 0
       if (srcPixelSz == 2) {
         printf("Idx %d: {%d, %d}\n", colormapIdx, srcPixelP[0], srcPixelP[1]);
       }

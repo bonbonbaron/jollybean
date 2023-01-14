@@ -130,11 +130,12 @@ static Error _validateBitPacking(U8 *packedDataA, U8 *unpackedDataA, U32 nUnits,
   U32 *wholePackedWordEndP = wholePackedWordP + nWholePackedWords;
   U32 unpackedWord = 0;
 
+
   for (; wholePackedWordP < wholePackedWordEndP; ++wholePackedWordP) {
     for (U32 j = 0; j < N_BITS_PER_BYTE; j += bpu, ++origDataWordP) {
       unpackedWord = (*wholePackedWordP >> j) & mask;
       if (*origDataWordP != unpackedWord) {
-        printf("Orig data word %9d of %9d: %9d DOES NOT MATCH unpacked word %9d\n", 
+        printf("Orig data word %9d of %9d: %9d != unpacked word %9d\n", 
             origDataWordP - (U32*) unpackedDataA, 
             nUnits >> 2,
             *origDataWordP,
@@ -143,7 +144,7 @@ static Error _validateBitPacking(U8 *packedDataA, U8 *unpackedDataA, U32 nUnits,
         return E_BAD_DATA;
       }
       else {
-        printf("Orig data word %9d of %9d: %9d MATCHES unpacked word %9d\n", 
+        printf("Orig data word %9d of %9d: %9d == unpacked word %9d\n", 
             origDataWordP - (U32*) unpackedDataA, 
             nUnits >> 2,
             *origDataWordP,
@@ -432,6 +433,7 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
         ++stripLabel;
       }  // if strip is unlabelled...
     }  // for all strips in original data...
+    --stripLabel;  // last increment is erroneous
     if (verbose) {
       printf("%d distinct strips out of a maximum possible %d strips\n", stripLabel, nStripsInOrigData);
     }
