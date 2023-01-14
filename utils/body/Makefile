@@ -13,7 +13,7 @@ ${BINDIR}/body: ../file/build/fileUtils.o ../genie/build/genie.o ../strip/build/
 	touch $@
 
 # Compiler
-${BUILDDIR}/%.o: ./src/%.c ./src/include/%.h ${BUILDDIR}
+${BUILDDIR}/%.o: ./src/%.c ./src/include/%.h 
 	$(CC) -g $(shell sdl2-config --cflags) $(shell pkg-config --cflags zlib) $(shell libpng-config --cflags) -I../strip/src/include -I./src/include -I../inflatable/src/include -I../../src/include -I../file/src/include/ -I${HOME}/hack/jollybean/src/include -I../db/src/include -I../genie/src/include -I/usr/include/libfastjson -O0 -c $< -o $@
 	touch $@
 

@@ -8,7 +8,7 @@ void cmClr(Colormap *cmP) {
 	 	if (cmP->dataP != NULL) {    // But if the double pointer is null, avoid any processing.
 			arrayDel((void**) &cmP->dataP);
     }
-    stripDel(&cmP->sdP);
+    stripClr(cmP->sdP);
 	}
 }
 
@@ -313,7 +313,7 @@ Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, U8 verbose) {
   // Sanity check before making strips
   if (!e && verbose) {
     // mallocSanityCheck("before previewing img");
-    e = previewImg(cmP, cpP, 500);
+    //e = previewImg(cmP, cpP, 500);
     // mallocSanityCheck("after previewing img");
   }
   // Set colormap's bpp.
@@ -333,7 +333,7 @@ Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, U8 verbose) {
   }
   // Colormap's stripset & stripmap
   if (!e) {
-    e = stripNew(cmP->dataP, 32, 32, cmP->bpp, &cmP->sdP, verbose);
+    e = stripNew(cmP->dataP, 20, cmP->bpp, &cmP->sdP, verbose);
   }
 
   if (!e && verbose) {
@@ -455,7 +455,7 @@ static Error _checkInputIntegrity(Colormap *cmP, ColorPalette *cpP) {
   if (!e) {
     e = stripsetUnpack(&cmP->sdP->ss);
   }
-#if 0
+#if 1
   // Verify array lengths match.
   if (!e && (arrayGetNElems(cmP->dataP) != arrayGetNElems(cmOrigP))) {
     printf("orig cm has %d elems; new cm has %d\n", 
@@ -489,7 +489,7 @@ static Error _checkInputIntegrity(Colormap *cmP, ColorPalette *cpP) {
     else {
       printf("\n\nthey don't match :( \n");
     }
-    if (0 && theyMatch) {
+    if (theyMatch) {
       e = previewImg(cmP, cpP, 5000);
     }
   }

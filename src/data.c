@@ -1184,13 +1184,12 @@ defineUnpackRemainderUnitsFunction_(1, 0x01);
 defineUnpackRemainderUnitsFunction_(2, 0x03);
 //defineUnpackRemainderUnitsFunction_(4, 0x0f);  // TODO uncomment
 
-void stripDel(StripDataS **sdPP) {
-  if (sdPP && *sdPP) {
-    inflatableClr((*sdPP)->ss.infP);
-    inflatableClr((*sdPP)->sm.infP);
-    arrayDel((void**) &(*sdPP)->ss.flipset.flipIdxA);
-    arrayDel((void**) &(*sdPP)->ss.unpackedDataP);
-    jbFree((void**) sdPP);
+void stripClr(StripDataS *sdP) {
+  if (sdP) {
+    inflatableClr(sdP->ss.infP);
+    inflatableClr(sdP->sm.infP);
+    arrayDel((void**) &sdP->ss.unpackedDataP);
+    // Gotta keep the stripmap elements, or you won't be able to re-inflate later!
   }
 }
 

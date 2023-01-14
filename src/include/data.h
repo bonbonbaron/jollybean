@@ -209,6 +209,8 @@ typedef struct {
   Stripset ss;
 } StripDataS;
 
+void stripClr(StripDataS *sdP);
+
 // N_UNITS_PER_STRIP drives all the other quantities. TODO add compile-time assertion for being a multiple of 32.
 #define N_UNITS_PER_STRIP (32) 
 #define N_BYTES_PER_UNPACKED_UNIT (1)
