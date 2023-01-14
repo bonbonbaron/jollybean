@@ -7,15 +7,8 @@
 // Clear color map and all its related data.
 // =========================================
 void cmClr(Colormap *cmP) {
-	if (cmP != NULL) {
-	 	if (cmP->dataP != NULL) {    // But if the double pointer is null, avoid any processing.
-			jbFree((void**) &cmP->dataP);
-    }
-    if (cmP->sdP != NULL) {
-      inflatableClr(cmP->sdP->ss.infP);
-      inflatableClr(cmP->sdP->sm.infP);
-      arrayDel((void**) &cmP->sdP->ss.unpackedDataP);
-    }
+	if (cmP != NULL && cmP->sdP != NULL) {
+    stripClr(cmP->sdP);
 	}
 }
 
@@ -25,9 +18,9 @@ void cmClr(Colormap *cmP) {
 Error cmGen(Colormap *cmP) {
 	Error e;
 
-	if (cmP != NULL) {
+	if (cmP != NULL && cmP->sdP != NULL) {
 		// Check if the image has already been reconstructed. If so, get out.
-		if (cmP->dataP != NULL) {   // Colormap has already been reconstructed.
+		if (cmP->sdP->unmappedDataA != NULL) {   // Colormap has already been reconstructed.
 			return SUCCESS;  
     }
 		// If not reconstructed yet, inflate strip set if it's still compressed (inflate() checks internally).
@@ -49,7 +42,7 @@ Error cmGen(Colormap *cmP) {
     }
 		// Allocate colormap memory.
 		if (!e) {
-			e = jbAlloc((void**) &cmP->dataP, sizeof(U8), cmP->w * cmP->h);
+			e = jbAlloc((void**) &cmP->sdP->unmappedDataA, sizeof(U8), cmP->w * cmP->h);
     }
 	}
 	else {
@@ -61,15 +54,15 @@ Error cmGen(Colormap *cmP) {
     // Mapped stripsets need to be both unpacked and indexed. They may need strips to be flipped too.
 		switch (cmP->bpp) {
 			case 1:
-        inflateStripsWithBpu1(&cmP->sdP->ss, &cmP->sdP->sm, (U32*) cmP->dataP);
+        inflateStripsWithBpu1(&cmP->sdP->ss, &cmP->sdP->sm, (U32*) cmP->sdP->unmappedDataA);
 				break;
 			case 2:
         // First read all mapped strips into the target colormap.
-        inflateStripsWithBpu2(&cmP->sdP->ss, &cmP->sdP->sm, (U32*) cmP->dataP);
+        inflateStripsWithBpu2(&cmP->sdP->ss, &cmP->sdP->sm, (U32*) cmP->sdP->unmappedDataA);
 				break;
 			case 4: 
         // First read all mapped strips into the target colormap.
-        inflateStripsWithBpu4(&cmP->sdP->ss, &cmP->sdP->sm, (U32*) cmP->dataP);
+        inflateStripsWithBpu4(&cmP->sdP->ss, &cmP->sdP->sm, (U32*) cmP->sdP->unmappedDataA);
 				break;
 			default:  
 				e = E_UNSUPPORTED_PIXEL_FORMAT;
@@ -257,7 +250,7 @@ Error xRenderIniComp(System *sP, void *compDataP, void *compDataSrcP) {
 
 	// Apply color palette to color map.
 	if (!e)
-		e = surfaceIni(surfaceP, imgP->nColors, imgP->colorA, imgP->colorMapP->dataP);
+		e = surfaceIni(surfaceP, imgP->nColors, imgP->colorA, imgP->colorMapP->sdP->unmappedDataA);
 
 	// Create texture from surface. 
 	if (!e && surfaceP)

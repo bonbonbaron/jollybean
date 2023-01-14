@@ -31,7 +31,6 @@ void imgDimsIni(ImgDims *imgDimsP, U32 width, U32 height, U32 bpp);
 S32 getColormapIdx(U8 *cpColorA, const U8 *colorQueryP, U8 verbose);
 Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *animP, U8 verbose);
 Error getColorPaletteAndColormap(ColorPalette *cpP, Colormap *cmP, png_image *pngImgP, U8 *pixelP, U8 srcPixelSize, U8 verbose);
-Error makeColorPaletteAndColormap(ColorPalette *cpP, Colormap *cmP, png_image *srcImgDataP, U8 *srcPixelA, U8 verbose);
 void cpClr(ColorPalette *cpP);
 Error img(char *entityNameP, Database *cpDirP, Database *cmDirP, AnimJsonData *animP, U8 verbose);
 

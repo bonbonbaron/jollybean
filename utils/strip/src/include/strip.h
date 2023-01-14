@@ -14,6 +14,6 @@ Error stripNew(U8 *srcA, const const U32 nUsedBytesPerUnpackedStrip, const U8 bi
 void stripDel(StripDataS **sdPP);
 Error writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripDataS *sdP);
 Error writeStripData(char *objNameA, char *OBJ_TYPE, U8 verbose, StripDataS *sdP);
-Error stripsetUnpack(Stripset *ssP);
+Error stripDataIni(StripDataS *sdP);
 
 #endif

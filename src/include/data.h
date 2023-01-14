@@ -207,6 +207,7 @@ typedef struct {
 typedef struct {
   Stripmap sm;
   Stripset ss;
+  U8 *unmappedDataA;
 } StripDataS;
 
 void stripClr(StripDataS *sdP);

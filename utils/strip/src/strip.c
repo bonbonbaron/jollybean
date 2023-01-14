@@ -42,7 +42,7 @@ static Error _packBits(U8 **ssPackedAP, U8 *ssUnpackedA, U32 nUnits, U32 bpu, U8
   // Pre-pack stats
   if (verbose) {
     U32 compressionRatio = 8 / bpu;
-    U32 nWholePackedBytes = nUnits / compressionRatio;
+    U32 nWholePackedWords = nUnits / compressionRatio;
     U32 nPartialPackedBytes = nUnits / compressionRatio;
     U32 nRemainderUnpackedBytes = nUnits % compressionRatio;
     U32 nRemainderPackedBytes = (nPartialWordUnits > 0);
@@ -50,7 +50,7 @@ static Error _packBits(U8 **ssPackedAP, U8 *ssUnpackedA, U32 nUnits, U32 bpu, U8
     printf("[_packBits] Compression ratio: %d\n", compressionRatio);
     printf("[_packBits] Packed data has %d whole words ( = %d bytes).\n", nWholeWordUnits, nWholeWordUnits << 2);
     printf("[_packBits] Unpacked data has %d bytes that don't make a word.\n", nUnits & 0x3);
-    printf("[_packBits] %d whole packed bytes\n", nWholePackedBytes);
+    printf("[_packBits] %d whole packed bytes\n", nWholePackedWords);
     printf("[_packBits] %d remaining packed byte\n\n", nRemainderPackedBytes);
     printf("[_packBits] %d remaining unpacked bytes\n\n", nRemainderUnpackedBytes);
   }
@@ -175,77 +175,87 @@ static inline U32 countWholeBytesOfUnits(U32 nUnits_, U32 bpu) {
  return (nUnits_ / (8 / bpu));
 }
 
-// Unpack bits to reconstruct original data
-Error stripsetUnpack(Stripset *ssP) {
+// Unpack bits to reconstruct original data (uesd for debugging img.c)
+static Error _stripsetUnpack(Stripset *ssP) {
   if (!ssP || (ssP && !ssP->infP) || (ssP && ssP->infP && !ssP->infP->compressedDataA)) {
     return E_BAD_ARGS;
   }
-
-  // Each UNPACKED unit is one byte in size.
+  // start copy
   Error e = arrayNew((void**) &ssP->unpackedDataP, sizeof(U8), ssP->nUnits);
-
-  if (!e) {
-    const U32 nWordsPerPackedStrip = (N_UNITS_PER_STRIP * ssP->bpu) / N_BITS_PER_WORD;
-    const U32 nRemainderUnits = countRemainderUnits_(ssP->nUnits); 
-
-    U32 mask = 0;
-
-    switch(ssP->bpu) {
-      case 1:
-        mask = 0x01010101;
-        break;
-      case 2:
-        mask = 0x03030303;
-        break;
-      case 4:
-        mask = 0x0f0f0f0f;
-        break;
-      default:
-        mask = 0xffffffff;  // TODO Point data to already unpacked inflatedDataP and return here.
-        break;
-    }
-
-    U32 *packedStripP = ssP->infP->inflatedDataP;
-    U32 *unpackedStripP = (U32*) ssP->unpackedDataP;
-    U32 *unpackedStripEndP = (U32*) ((U8*) unpackedStripP + ssP->nUnits);
-    U32 *unpackedWholeStripEndP = (U32*) ((U8*) unpackedStripEndP - nRemainderUnits);
-
-    //*******************************
-    //*******************************
-    // Unpack whole strips
-    for (; unpackedStripP < unpackedWholeStripEndP; ++packedStripP) {
-      for (U32 j = 0; j < N_BITS_PER_BYTE; j += ssP->bpu) {
-        *(unpackedStripP++) =  (*packedStripP >> j) & mask;
-      }
-    }
-    goto skipForNow;
-    //*******************************
-    // Unpack remainder units
-    //*******************************
-    U8 *packedByteP = (U8*) packedStripP;
-    U8 *packedByteEndP = packedByteP + countWholeBytesOfUnits(nRemainderUnits, ssP->bpu);
-    U8 *unpackedByteP = (U8*) unpackedStripP;
-    /* Handle all the whole bytes of units. */
-    //printf("# whole bytes of remainder data: %d\n", byteEndP - byteP);
-    while (packedByteP < packedByteEndP) {
-      for (U8 i = 0; i < N_BITS_PER_BYTE; i += ssP->bpu) {
-        *(unpackedByteP++) =  (*(packedByteP++) >> i) & mask;
-      }
-    }
-    //*******************************
-    /* Handle the last, partial byte of data. */
-    //*******************************
-    U8 iEnd = countUnitsInPartialByte4BPU_(nRemainderUnits);
-    //printf("# partial bytes of remainder data: %d\n", iEnd);
-    for (U8 i = 0; i < iEnd; i += ssP->bpu) {
-      *(unpackedByteP++) =  (*(packedByteP++) >> i) & mask;
-    }
+  if (e) {
+    return e;
   }
 
-  skipForNow:
+  U32 mask = 0;
+  switch(ssP->bpu) {
+    case 1:
+      mask = 0x01010101;
+      break;
+    case 2:
+      mask = 0x03030303;
+      break;
+    case 4:
+      mask = 0x0f0f0f0f;
+      break;
+    default:
+      printf("[_stripsetUnpack] This data isn't packed. No validation to do.\n");
+      return SUCCESS;
+  }
+
+  U32 *wholePackedWordP    = (U32*) ssP->infP->inflatedDataP;
+  U32 *wholePackedWordEndP = (U32*) (ssP->infP->inflatedDataP + ssP->infP->inflatedLen);
+  U32 *dstUnpackedWordP    = (U32*) ssP->unpackedDataP;
+  U32 stripNum = 0;
+
+  for (; wholePackedWordP < wholePackedWordEndP; ++wholePackedWordP) {
+    U32 *dstBookmarkP = dstUnpackedWordP;
+    for (U32 j = 0; j < N_BITS_PER_BYTE; j += ssP->bpu) {
+      *(dstUnpackedWordP++) = (*wholePackedWordP >> j) & mask;
+    }
+    printf("[_stripsetUnpack] strip %5d: ", stripNum++);
+    for (U32 i = 0; i < ssP->nUnitsPerStrip; ++i) {
+      printf("%d", dstBookmarkP[i]);
+    }
+    printf("\n");
+  }
+
   return e;
 }
 
+static Error _pieceTogetherMappedStrips(StripDataS *sdP) {
+  if (!sdP || !sdP->ss.unpackedDataP || !sdP->sm.infP->inflatedDataP || !sdP->unmappedDataA) {
+    return E_BAD_ARGS;
+  }
+  // Piece together strips
+  for (StripmapElem *smElemP = sdP->sm.infP->inflatedDataP;
+       smElemP < (StripmapElem*) sdP->sm.infP->inflatedDataP + sdP->sm.nIndices;
+       ++smElemP) {
+    memcpy(sdP->unmappedDataA + (*smElemP * sdP->ss.nUnitsPerStrip),
+           sdP->ss.unpackedDataP,
+           sdP->ss.nUnitsPerStrip);
+  }
+
+  return SUCCESS;
+}
+
+Error stripDataIni(StripDataS *sdP) {
+  Error e = inflatableIni(sdP->ss.infP);
+  if (!e) {
+    e = inflatableIni(sdP->sm.infP);
+  }
+  if (!e) {
+    e = _stripsetUnpack(&sdP->ss);
+  }
+  if (!e) {
+    e = arrayNew((void**) &sdP->unmappedDataA, 
+                 sizeof(U8), 
+                 sdP->sm.nIndices * sdP->ss.nUnitsPerStrip);
+  }
+  if (!e) {
+    e = _pieceTogetherMappedStrips(sdP);
+  }
+  return e;
+}
 // This is for UNPACKED strips, so units are in full  bytes.
 /* EXAMPLE:
    ========
@@ -371,8 +381,8 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
   // Allocate output stripmap and stripset
   *sdPP = NULL;
   Error e = jbAlloc((void**) sdPP, sizeof(StripDataS), 1);
-
   if (!e ) {
+    memset(*sdPP, 0, sizeof(StripDataS));
     e = arrayNew((void**) &ssUnpackedA, sizeof(U8), nStripsInOrigData * nBytesPerUnpackedStrip);
   }
   if (!e) {
@@ -485,7 +495,7 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
     }
 #endif
     if (!e) {
-      e = inflatableNew((void*) ssUnpackedA, &(*sdPP)->ss.infP);
+      e = inflatableNew((void*) ssPackedA, &(*sdPP)->ss.infP);
     }
     if (!e && verbose) {
       printf("[stripNew] Compressed size: %d bytes\n", 
@@ -495,13 +505,15 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
         );
     }
 
+    // Fill in empty information.
     if (!e) {
       (*sdPP)->ss.nUnits = nUnitsInStripset;
       (*sdPP)->ss.nUnitsPerStrip = nBytesPerUnpackedStrip;
       (*sdPP)->ss.nStrips = stripLabel;
       (*sdPP)->ss.bpu = bitsPerPackedByte;
+      (*sdPP)->sm.nIndices = nStripsInOrigData - 1;
     }
-    if (e) {
+    else {
       inflatableDel(&(*sdPP)->ss.infP);
       inflatableDel(&(*sdPP)->sm.infP);
       arrayDel((void**) &(*sdPP)->ss.flipset.flipIdxA);

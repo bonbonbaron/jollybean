@@ -2,16 +2,20 @@
 
 Error guiNew(Window_ **windowPP, Renderer_ **rendererPP) {
   //TODO add an #if that only uses this code when interfacing SDL
-	if (!windowPP || !rendererPP) 
+	if (!windowPP || !rendererPP) {
 		return E_BAD_ARGS;
+  }
 	// Init SDL
-	if (SDL_Init(SDL_INIT_VIDEO) != SUCCESS)
+	if (SDL_Init(SDL_INIT_VIDEO) != SUCCESS) {
+    printf("[guiNew] SDL error: %s\n", SDL_GetError());
 		return EXIT_FAILURE;
+  }
 	// Init window
 	//*windowPP = SDL_CreateWindow("Hello world!", 0, 0, 0, 0, SDL_WINDOW_FULLSCREEN);
 	*windowPP = SDL_CreateWindow("Hello world!", 100, 100, 400, 300, 0);
-	if (!*windowPP)
+	if (!*windowPP) {
 		return EXIT_FAILURE;
+  }
 	// Init renderer
 	*rendererPP = SDL_CreateRenderer(*windowPP, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	if (!*rendererPP) {
@@ -59,6 +63,10 @@ Error surfaceNew(Surface_ **surfacePP, Colormap *cmP) {
 }
 
 Error surfaceIni(Surface_ *surfaceP, Colormap *cmP, ColorPalette *cpP) {
+  if (!surfaceP || !cmP || !cmP->sdP || !cmP->sdP->unmappedDataA || !cpP || !cpP->colorA
+      || cpP->nColors == 0) {
+    return E_BAD_ARGS;
+  }
   //Palette_ palette = {nColors, colorA, 0, 0};
   printf("starting to make palette\n");
 #if 0
@@ -85,7 +93,7 @@ Error surfaceIni(Surface_ *surfaceP, Colormap *cmP, ColorPalette *cpP) {
   memcpy(surfaceP->format->palette->colors, cpP->colorA, arrayGetElemSz(cpP->colorA) * cpP->nColors);
   //surfaceP->pixels = cmDataP;
   printf("copying pixels into surface pixels");
-  memcpy(surfaceP->pixels, cmP->dataP, arrayGetElemSz(cmP->dataP) * arrayGetNElems(cmP->dataP));
+  memcpy(surfaceP->pixels, cmP->sdP->unmappedDataA, arrayGetElemSz(cmP->sdP->unmappedDataA) * arrayGetNElems(cmP->sdP->unmappedDataA));
   return SUCCESS;
 #endif
 }

@@ -1189,6 +1189,7 @@ void stripClr(StripDataS *sdP) {
     inflatableClr(sdP->ss.infP);
     inflatableClr(sdP->sm.infP);
     arrayDel((void**) &sdP->ss.unpackedDataP);
+    arrayDel((void**) &sdP->unmappedDataA);
     // Gotta keep the stripmap elements, or you won't be able to re-inflate later!
   }
 }
