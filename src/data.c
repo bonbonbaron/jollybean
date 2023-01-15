@@ -1192,50 +1192,6 @@ void stripClr(StripDataS *sdP) {
     // Gotta keep the stripmap elements, or you won't be able to re-inflate later!
   }
 }
-
-// Flips already-unpacked (8bpu) strips that need flipping. 
-// Jollybean's image compressor deletes strips that're mirror-images of another.
-void flipUnpackedStrips(Stripset *stripsetP, void *outputDataP) {
-  U16 *flipEndP = stripsetP->flipset.flipIdxA + stripsetP->flipset.nFlips;
-  U32 *dstLeftWordP, *dstRightWordP;
-  // 4 *unpacked* Units per U32 out of 64 Units means there are 16 U32s.
-  for (U16 *flipIdxP = stripsetP->flipset.flipIdxA; flipIdxP < flipEndP; ++flipIdxP) {
-    dstLeftWordP = (U32*) outputDataP + flipIdxTo8BpuStripPtr_(*flipIdxP);
-#ifdef __ARM_NEON__
-    // Flip all the bytes in a 32-byte region with a divide-and-conquer approach.
-    // 4 quad-words per strip
-    dstRightWordP = dstLeftWordP + 12;  // 12 is for starting on words 13-16 ("word indices" 12-15)
-    for (int i = 0; i < 2; ++i) {
-      asm volatile (
-      "vld1.32 {d0-d1}, [%0]\n\t"
-      "vld1.32 {d2-d3}, [%1]\n\t"
-      "vrev64.8 q0, q0\n\t" // reverses order of 8 bytes in each half-quad-word
-      "vrev64.8 q1, q1\n\t"
-      "vswp d0, d1\n\t" // swaps the half quad-words
-      "vswp d2, d3\n\t"
-      "vswp q0, q1\n\t" 
-      "vst1.32 {d0-d1}, [%1]\n\t" // swaps entire quad-words
-      "vst1.32 {d2-d3}, [%0]!\n\t"  // %0 increments forward; %1 backwards (next line)
-      "sub %1, #16\n\t"
-      : "+r" (dstLeftWordP), "+r" (dstRightWordP)
-      );
-    }
-#else
-    dstRightWordP = dstLeftWordP + 15;
-    // Flip all the bytes in a 32-byte region with a divide-and-conquer approach.
-    for (; dstLeftWordP < dstRightWordP; ++dstLeftWordP, --dstRightWordP) {
-      // Left 4 Units
-      *dstLeftWordP  = ((*dstLeftWordP & 0xFFFF0000) >> 16) | ((*dstLeftWordP & 0x0000FFFF) << 16);
-      *dstLeftWordP  = ((*dstLeftWordP & 0xFF00FF00) >>  8) | ((*dstLeftWordP & 0x00FF00FF) <<  8);
-      // Right 4 Units
-      *dstRightWordP = ((*dstRightWordP & 0xFFFF0000) >> 16) | ((*dstRightWordP & 0x0000FFFF) << 16);
-      *dstRightWordP = ((*dstRightWordP & 0xFF00FF00) >>  8) | ((*dstRightWordP & 0x00FF00FF) <<  8);  // Put right 4 Units into left 4 Units
-      swap_(*dstLeftWordP, *dstRightWordP);
-    }
-#endif
-  }
-}
-
 //defineInflateStripsWithBpu_(1);
 //defineInflateStripsWithBpu_(2);
 //defineInflateStripsWithBpu_(4);

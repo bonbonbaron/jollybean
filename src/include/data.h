@@ -182,18 +182,11 @@ typedef Error (*inboxRead)(Message *mailboxF);  // only for self
 // Stripmap's inflated data is in U16 format.
 typedef U16 StripmapElem;
 
-// Strip inflation
-typedef struct {
-  U16 nFlips;
-  StripmapElem *flipIdxA;  // indices in stripmap that're supposed to be flipped
-} Flipset;
-
 // gtrip set's inflated data is in U32 format.
 typedef struct {
   U8 nUnitsPerStrip;
   U8 bpu;  // bits per unit
   U32 nUnits;
-  Flipset flipset;
   Inflatable *infP;  // strip set's compressed source data
   U8 *unpackedDataP;
 } Stripset;
@@ -257,8 +250,6 @@ void stripClr(StripDataS *sdP);
 #define stripIdxTo1BpuStripPtr_(stripIdx_) (stripIdx_ * N_WORDS_PER_1BPU_STRIP)
 #define stripIdxTo2BpuStripPtr_(stripIdx_) (stripIdx_ * N_WORDS_PER_2BPU_STRIP)
 #define stripIdxTo4BpuStripPtr_(stripIdx_) (stripIdx_ * N_WORDS_PER_4BPU_STRIP)
-// Macro for converting flip index to strip pointer.
-#define flipIdxTo8BpuStripPtr_(flipIdx_) (flipIdx_ << (3 * N_WORDS_PER_8BPU_STRIP))
 // Macros for counting remainder units that take up whole bytes.
 #define countWholeBytesFor1BpuUnits_(nUnits_) (nUnits_ >> 3)
 #define countWholeBytesFor2BpuUnits_(nUnits_) (nUnits_ >> 2)
@@ -314,6 +305,5 @@ __inline__ static void _unpackStrip##Bpu_##Bpu(U32 **srcStripPP, U32 **dstStripP
 }
 #endif
 #endif
-void flipUnpackedStrips(Stripset *stripsetP, void *outputDataP);
 
 #endif

@@ -1,5 +1,5 @@
 #include "strip.h"
-#define DEBUG_ 1
+#define DEBUG_ 0
 
 // These three arrays describe where each consecutive unit
 // is located in the current U32 word. We stagger them like this
@@ -222,7 +222,7 @@ static inline U32 countWholeBytesOfUnits(U32 nUnits_, U32 bpu) {
 }
 
 // Unpack bits to reconstruct original data (uesd for debugging img.c)
-static Error _stripsetUnpack(Stripset *ssP) {
+static Error _unpackStripset(Stripset *ssP) {
   if (!ssP || (ssP && !ssP->infP) || (ssP && ssP->infP && !ssP->infP->compressedDataA)) {
     return E_BAD_ARGS;
   }
@@ -250,7 +250,7 @@ static Error _stripsetUnpack(Stripset *ssP) {
       mask = 0x0f0f0f0f;
       break;
     default:
-      printf("[_stripsetUnpack] This data isn't packed.\n");
+      printf("[_unpackStripset] This data isn't packed.\n");
       return SUCCESS;
   }
 
@@ -273,7 +273,7 @@ static Error _stripsetUnpack(Stripset *ssP) {
        nUnitsInExtraPackedWord -= sizeof(U32), j += ssP->bpu) {
     *(dstUnpackedWordP++) = (*packedWordP >> j) & mask;
 #if DEBUG_
-    printf("\n[_stripsetUnpack] last unpacked word: %d %d %d %d\n\n", 
+    printf("\n[_unpackStripset] last unpacked word: %d %d %d %d\n\n", 
         ((U8*) (dstUnpackedWordP - 1))[0],
         ((U8*) (dstUnpackedWordP - 1))[1],
         ((U8*) (dstUnpackedWordP - 1))[2],
@@ -286,7 +286,7 @@ static Error _stripsetUnpack(Stripset *ssP) {
     U32 lastUnpackedWord = (*packedWordP >> j) & mask;
     memcpy((void*) dstUnpackedWordP, &lastUnpackedWord, nUnitsInExtraPackedWord);
 #if DEBUG_
-    printf("\n[_stripsetUnpack] last unpacked word: %d %d %d %d\n\n", 
+    printf("\n[_unpackStripset] last unpacked word: %d %d %d %d\n\n", 
         ((U8*) &lastUnpackedWord)[0],
         ((U8*) &lastUnpackedWord)[1],
         ((U8*) &lastUnpackedWord)[2],
@@ -321,7 +321,7 @@ Error stripIni(StripDataS *sdP) {
     e = inflatableIni(sdP->sm.infP);
   }
   if (!e) {
-    e = _stripsetUnpack(&sdP->ss);
+    e = _unpackStripset(&sdP->ss);
   }
   if (!e) {
     e = arrayNew((void**) &sdP->unstrippedDataA, 
@@ -333,27 +333,9 @@ Error stripIni(StripDataS *sdP) {
   }
   return e;
 }
-// This is for UNPACKED strips, so units are in full  bytes.
-/* EXAMPLE:
-   ========
- *
- * with 3 used units out of 8:
- * normal         flipped
- * ======         ========
- * 14300000  -->  34100000
- */
-static void _flipStrip(U8 *unflippedStripP, U32 nBytesPerUnpackedStrip, U8 *flippedStripP) {
-  memset(flippedStripP, 0, nBytesPerUnpackedStrip);
-  U8 *flipUnitP = flippedStripP;
-  U8 *unflippedUnitP = unflippedStripP + nBytesPerUnpackedStrip;
-  for (; unflippedUnitP >= unflippedStripP; --unflippedUnitP) {
-    *(flipUnitP++) = *unflippedUnitP;
-  }
-}
 
 #if DEBUG_
-static Error _validateStripmapping(U8 *ssA, U32 nBytesPerUnpackedStrip, StripmapElem *smA, 
-                                   StripmapElem *flipsetA, U32 nFlips, U8 *srcA) {
+static Error _validateStripmapping(U8 *ssA, U32 nBytesPerUnpackedStrip, StripmapElem *smA, U8 *srcA) {
   if (!ssA || !smA || !srcA) {
     return E_BAD_ARGS;
   }
@@ -364,57 +346,13 @@ static Error _validateStripmapping(U8 *ssA, U32 nBytesPerUnpackedStrip, Stripmap
   U8 *origElemP = srcA;
   U8 *origElemEndP = origElemP + arrayGetNElems(srcA);
 
-  U8 flippedStrip[nBytesPerUnpackedStrip];
-
   for (; smElemP < smElemEndP && origElemP < origElemEndP; ++smElemP, origElemP += nBytesPerUnpackedStrip) {
     ssElemP = ssA + (*smElemP * nBytesPerUnpackedStrip); 
-    // If unpacked strip doensn't match original data it maps to, see if it's in flipset.
+    // If unpacked strip doensn't match original data it maps to, bomb out.
     if (memcmp(ssElemP, origElemP, nBytesPerUnpackedStrip)) {
-      // If strip doesn't match, see if it matches when flipped.
-      _flipStrip(ssElemP, nBytesPerUnpackedStrip, flippedStrip);
-      // If strip matches when reversed, make sure it's in flipset too!
-      if (!memcmp(flippedStrip, origElemP, nBytesPerUnpackedStrip)) {
-        U32 smElemNumber = smElemP - smA;
-        printf("Stripset's %dth strip matches source data when flipped!\n", smElemNumber);
-        for (U32 i = 0; i < nFlips; ++i) {
-          printf("\tTrying flipset[%d] = %d...\n", i, flipsetA[i]);
-          if (*smElemP == flipsetA[i]) {
-            printf("\tMatching flipset index found.\n");
-            goto matchFound;
-          }
-        }
-        // If it doesn't exist in flipset, 
-        printf("But stripset index %d doesn't exist in flipset. Bombing out...", *smElemP);
-        return E_BAD_DATA;
-      }  // if flipped strip matches current
-      else {
-        printf("\n\nUnpacked stripset doesn't represent original data correctly! Bombing out...\n\n");
-        U32 smElemNumber = smElemP - smA;
-        printf("Original data's %dth strip: ", smElemNumber);
-        for (U32 i = 0; i < nBytesPerUnpackedStrip; ++i) {
-          printf("%d", origElemP[i]);
-        }
-        printf("\n\nStripset's %dth strip: ", *smElemP);
-        for (U32 i = 0; i < nBytesPerUnpackedStrip; ++i) {
-          printf("%d", ssElemP[i]);
-        }
-        printf("\n\n");
-        return E_BAD_DATA;
-      }
+      printf("Found mismatching strip\n");
+      return E_BAD_DATA;
     }  // if original strip does not match one in stripset
-    else {
-      if (*smElemP == 23) printf("AAAAAAAAAH found idx 23\n");
-#if 0
-      U32 smElemNumber = smElemP - smA;
-      printf("sm Idx %5d = src strip %5d: ", *smElemP, smElemNumber);
-      for (U32 i = 0; i < nBytesPerUnpackedStrip; ++i) {
-        printf("%d", ssElemP[i]);
-      }
-      printf("\n");
-#endif
-    }
-    matchFound:
-    continue;
   }  // for each strip in stripset
 
   printf("\nCONGRULATIONS! We validated your stripmap's integrity!\n\n");
@@ -526,10 +464,6 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
   U16 stripLabel = 0;
   StripmapElem stripsLabelled[nStripsInOrigData];
   memset(stripsLabelled, 0, sizeof(StripmapElem) * nStripsInOrigData);
-  // Flip set
-  StripmapElem flipIdxA[nStripsInOrigData];
-  // Flipped strip used to search for other strips that match when flipped
-  U8 flippedCurrStripP[nBytesPerUnpackedStrip];  // may have unused bytes; that's fine/expected
   // Strip set
   U8 *ssUnpackedA = NULL;  // stripset placeholder till we compress it into output's inflatable
   U8 *ssPackedA = NULL;  // stripset placeholder till we compress it into output's inflatable
@@ -545,9 +479,6 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
   }
   if (!e) {
     memset(ssUnpackedA, 0, sizeof(U8) * nStripsInOrigData * nBytesPerUnpackedStrip);
-    // Array of Index of strips to flip
-    // This gets copied to a properly sized array at the end.
-    memset(flipIdxA, 0, sizeof(StripmapElem) * nStripsInOrigData);
     // Strip map
     e = arrayNew((void**) &smDataA, sizeof(StripmapElem), nStripsInOrigData);
   }
@@ -558,8 +489,6 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
   // Find distinct strips and write an index-mapping to them.
   U8 *currStripP;
   U8 *nextStripP;  
-  U32 nFlips = 0;
-  StripmapElem lastFlipChange = 0;
   if (!e) {
     for (U32 i = 0; i < nStripsInOrigData; ++i) {
       // This strip hasn't been labelled yet. 
@@ -573,32 +502,18 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
         /* All strips up to current "i" should be labelled, so search for strips
          * beyond that that match the current, newly labelled strip. */
         currStripP = srcA + (nBytesPerUnpackedStrip * i);
-        // Flip this strip only once to speed up the search for flipped matches.
-        _flipStrip(currStripP, nBytesPerUnpackedStrip, flippedCurrStripP);
         for (StripmapElem ii = i + 1; ii < nStripsInOrigData; ++ii) {
-          if (lastFlipChange != flipIdxA[0]) {
-            lastFlipChange = flipIdxA[0];
-          }
           if (!stripsLabelled[ii]) {
             nextStripP = srcA + (ii * nBytesPerUnpackedStrip);
             // If they match forwards...
             if (!memcmp((const void*) nextStripP, 
                 (const void*) currStripP, 
                 sizeof(U8) * nBytesPerUnpackedStrip)) {
-              smDataA[ii] = stripLabel;  //flipped strip gets same label
+              smDataA[ii] = stripLabel;  
               stripsLabelled[ii] = 1;
             }  // if strip is straight-up equal
-            // Not identical as-is. Is it identical with flipping?
-            else if (!memcmp((const void*) nextStripP, 
-                (const void*) flippedCurrStripP, 
-                sizeof(U8) * nBytesPerUnpackedStrip)) {
-              // Flip index points to strip in unpacked stripset that should be flipped.
-              flipIdxA[nFlips++] = stripLabel;
-              smDataA[ii] = stripLabel;
-              stripsLabelled[ii] = 1;
-            }  // if strip is straight-up equal
-          }
-        }
+          }  // if this strip isn't labelled...
+        }  // for each element after current to look for matches (forward or backwards)...
         ++stripLabel;
       }  // if strip is unlabelled...
     }  // for all strips in original data...
@@ -608,14 +523,7 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
   }
 #if DEBUG_
   if (!e) {
-    printf("All flipmap elements: ");
-    for (U32 i = 0; i < nFlips; ++i) {
-      printf("%d, ", flipIdxA[i]);
-    }
-    printf("\n");
-  }
-  if (!e) {
-    e = _validateStripmapping(ssUnpackedA, nBytesPerUnpackedStrip, smDataA, flipIdxA, nFlips, srcA);
+    e = _validateStripmapping(ssUnpackedA, nBytesPerUnpackedStrip, smDataA, srcA);
   }
 #endif
   // Slight compression isn't worth the trouble to inflate; keep as is.
@@ -639,15 +547,6 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
       (*sdPP)->ss.nUnitsPerStrip = nBytesPerUnpackedStrip;
       (*sdPP)->ss.bpu = bitsPerPackedByte;
       e = inflatableNew((void*) ssPackedA, &(*sdPP)->ss.infP);
-    }
-    if (!e) {
-      e = arrayNew((void**) &(*sdPP)->ss.flipset.flipIdxA, sizeof(StripmapElem), nFlips);
-    }
-    if (!e) {
-      memcpy((*sdPP)->ss.flipset.flipIdxA, 
-             flipIdxA, 
-             nFlips * arrayGetElemSz((*sdPP)->ss.flipset.flipIdxA));
-      (*sdPP)->ss.flipset.nFlips = nFlips;
     }
     // Stripmap
     if (!e) {
@@ -677,7 +576,6 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
   else {
     inflatableDel(&(*sdPP)->ss.infP);
     inflatableDel(&(*sdPP)->sm.infP);
-    arrayDel((void**) &(*sdPP)->ss.flipset.flipIdxA);
   }
   arrayDel((void**) &smDataA);
   arrayDel((void**) &ssUnpackedA);
@@ -694,13 +592,10 @@ Error writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripDataS *sdP
 
   char infName[strlen(objNameA) + strlen("Stripset") + strlen("Inf")];
 
-  // Flip set
-  fprintf(fP, "static U16 %sFlipIdxA[] = {\n", objNameA);
-  writeRawData16(fP, (U16*) sdP->ss.flipset.flipIdxA, arrayGetNElems(sdP->ss.flipset.flipIdxA));
-  fprintf(fP, "};\n\n");
   strcpy(infName, objNameA);
   strcat(infName, "Stripset");
   strcat(infName, "Inf");
+
   Error e = inflatableAppend(sdP->ss.infP, fP, infName);
 
   if (!e) {
@@ -710,9 +605,6 @@ Error writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripDataS *sdP
     fprintf(fP, "\t.nUnitsPerStrip = %d,\n", sdP->ss.nUnitsPerStrip);  // in case we ever want to give each sprite its own strip length... wuh oh.
     fprintf(fP, "\t.nUnits  = %d,\n", sdP->ss.nUnits);
     fprintf(fP, "\t.bpu  = %d,\n", sdP->ss.bpu);
-    fprintf(fP, "\t.flipset = {\n", objNameA);
-    fprintf(fP, "\t\t.nFlips = %d,\n", sdP->ss.flipset.nFlips);
-    fprintf(fP, "\t\t.flipIdxA = %sFlipIdxA,\n", objNameA);
     fprintf(fP, "\t},\n");
     fprintf(fP, "\t.infP = &%s,\n", infName);
     fprintf(fP, "};\n\n");

@@ -260,7 +260,7 @@ Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *an
 
 #if DEBUG_IMG_
   FILE *fP = fopen(imgPathA, "rb");
-  if (fP) {
+  if (fP && verbose) {
     fseek(fP, 0, SEEK_END);
     printf("PNG: original size is %d bytes.\n", ftell(fP));
     fclose(fP);
