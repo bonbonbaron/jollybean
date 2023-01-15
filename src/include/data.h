@@ -14,6 +14,9 @@ typedef int S32;
 typedef U8 Key;
 typedef U8 Bln;   // Boolean
 
+#define N_BITS_PER_BYTE (8)
+#define N_BITS_PER_WORD (N_BITS_PER_BYTE * 4)
+
 // For-each macro, which allows per-element macro-processing on variadic arguments
 #define N_FLAG_BYTES ((1 << (sizeof(Key) * 8)) / 8)  // This times 8 is the number of items JB's hash map can hold. Increase as necessary. 
 #define LAST_FLAG_BYTE_IDX (N_FLAG_BYTES - 1)
@@ -203,107 +206,6 @@ typedef struct {
 } StripDataS;
 
 void stripClr(StripDataS *sdP);
-
-// N_UNITS_PER_STRIP drives all the other quantities. TODO add compile-time assertion for being a multiple of 32.
-#define N_UNITS_PER_STRIP (32) 
-#define N_BYTES_PER_UNPACKED_UNIT (1)
-#define N_BYTES_PER_UNPACKED_STRIP (N_UNITS_PER_STRIP * N_BYTES_PER_UNPACKED_UNIT)
-#define UNWHOLE_STRIP_MASK (N_UNITS_PER_STRIP - 1)
-#define RSHIFT_TO_DIV_BY_NPPS (5)   /* NPPS = Number of Units of Data Per Strip */
-#define N_COLORS_SUPPORTED_MAX_ (16)
-/* Words per strip math goes like this:
-    # units     # bits    byte     word      # words
-    -------- *  ------ * ------ * ------- =  -------
-     strip       unit    # bits   # bytes     strip
-*/
-#define N_BITS_PER_WORD (32)
-#define N_WORDS_PER_1BPU_STRIP ((N_UNITS_PER_STRIP * 1) / N_BITS_PER_WORD)  
-#define N_WORDS_PER_2BPU_STRIP ((N_UNITS_PER_STRIP * 2) / N_BITS_PER_WORD)  
-#define N_WORDS_PER_4BPU_STRIP ((N_UNITS_PER_STRIP * 4) / N_BITS_PER_WORD)  
-#define N_WORDS_PER_8BPU_STRIP ((N_UNITS_PER_STRIP * 8) / N_BITS_PER_WORD)    // for flips
-#define N_QUADWORDS_PER_1BPU_STRIP ((N_WORDS_PER_1BPU_STRIP + (N_WORDS_PER_1BPU_STRIP >> 1))>> 2)  // make sure 0.5 rounds up to 1
-#define N_QUADWORDS_PER_2BPU_STRIP ((N_WORDS_PER_2BPU_STRIP + (N_WORDS_PER_2BPU_STRIP >> 1))>> 2)
-#define N_QUADWORDS_PER_4BPU_STRIP ((N_WORDS_PER_4BPU_STRIP + (N_WORDS_PER_4BPU_STRIP >> 1))>> 2)
-// Number of units per byte
-#define N_1BPU_UNITS_PER_BYTE (8)
-#define N_2BPU_UNITS_PER_BYTE (4)
-#define N_4BPU_UNITS_PER_BYTE (2)
-// Amount of shifting to do per masking iteration.
-#define N_BITS_PER_BYTE (8)
-#define SHIFT_INCREMENT_1BPU (1)
-#define SHIFT_INCREMENT_2BPU (2)
-#define SHIFT_INCREMENT_4BPU (4)
-// Masks used for grabbing 4 units in parallel. (That's why I stagger their order in img.c.)
-#define MASK_1BPU  (0x01010101)
-#define MASK_2BPU  (0x03030303)
-#define MASK_4BPU  (0x0f0f0f0f)
-#define QUADWORD_MASK_1BPU  (0x01)
-#define QUADWORD_MASK_2BPU  (0x03)
-#define QUADWORD_MASK_4BPU  (0x0f)
-// Macros for converting strip idx to strip pointer. WARNING: ASSUMES STRIPIDX OPERATES ON A U32 PTR!
-// (Considered a "pointer" because it gets added to an inflated strip set pointer.)
-/* For example, if it's a 4bpu stripset, and we have 32 units/strip, that's 16 bytes/strip.
- * That's 4 words (4 bytes/word).
- * So 4 words * 3 = 12. You bitshift by 12!? That's huge.
- * So that's wrong. You should've just added N_WORDS_PER_4BPU_STRIP * stripIdx_.
- */
-#define stripIdxTo1BpuStripPtr_(stripIdx_) (stripIdx_ * N_WORDS_PER_1BPU_STRIP)
-#define stripIdxTo2BpuStripPtr_(stripIdx_) (stripIdx_ * N_WORDS_PER_2BPU_STRIP)
-#define stripIdxTo4BpuStripPtr_(stripIdx_) (stripIdx_ * N_WORDS_PER_4BPU_STRIP)
-// Macros for counting remainder units that take up whole bytes.
-#define countWholeBytesFor1BpuUnits_(nUnits_) (nUnits_ >> 3)
-#define countWholeBytesFor2BpuUnits_(nUnits_) (nUnits_ >> 2)
-#define countWholeBytesFor4BpuUnits_(nUnits_) (nUnits_ >> 1)
-// Macros for counting remainder units in last, partial byte.
-#define countUnitsInPartialByte1BPU_(nUnits_) (nUnits_ & (N_1BPU_UNITS_PER_BYTE - 1))
-#define countUnitsInPartialByte2BPU_(nUnits_) (nUnits_ & (N_2BPU_UNITS_PER_BYTE - 1))
-#define countUnitsInPartialByte4BPU_(nUnits_) (nUnits_ & (N_4BPU_UNITS_PER_BYTE - 1))
-// Macro for counting number of whole strips
-#define countWholeStrips_(nUnits_) (nUnits_ >> RSHIFT_TO_DIV_BY_NPPS);
-// Macro for counting number of remainder units
-#define countRemainderUnits_(nUnits_) (nUnits_ & (N_UNITS_PER_STRIP - 1))
-// Assembler instructions need the "inline" keyword.
-#ifdef inline
-#undef inline
-#endif
-#if 0
-// Stripped data inflation
-#ifdef __ARM_NEON__
-#define defineUnpackStripFunction_(Bpu_, maskByte_) \
-__inline__ static void _unpackStrip##Bpu_##Bpu(U32 **srcStripPP, U32 **dstStripPP) {\
-  U32 *srcStripP = *srcStripPP;\
-  U32 *dstStripP = *dstStripPP;\
-  /* 6 instructions neon VS 40-58 instructions regular */\
-  /* Although the outer loop appears unnecessary for 1 quadword per 1Bpu strip,
-     it safeguards us from changes in the number of units per strip. */\
-  for (int i = 0; i < N_QUADWORDS_PER_##Bpu_##BPU_STRIP; ++i) {  /* keeping this useless loop here for when I chagne to 128-unit strips. */\
-    asm volatile inline (\
-    "vmov.u8 q10, #" #maskByte_ "\n\t"   /* q10 = mask */\
-    "vld1.32 {d0-d1}, [%0]!\n\t"    /* q0 (aka d0-d1) = packed indices */\
-    : "+r&" (srcStripP)\
-    );\
-    for (int j = 0; j < N_##Bpu_##BPU_UNITS_PER_BYTE; ++j) {\
-      asm volatile inline (\
-      "vand q1, q0, q10\n\t"          /* q1 = unpacked indices*/\
-      "vst1.32 {d2-d3}, [%0]!\n\t"\
-      "vshr.u8 q0, #" #Bpu_ "\n\t"            /* shift q0 over 1*/\
-      : "+r&" (dstStripP)\
-      );\
-    }\
-  }\
-}
-#else
-#define defineUnpackStripFunction_(Bpu_, maskWord_) \
-__inline__ static void _unpackStrip##Bpu_##Bpu(U32 **srcStripPP, U32 **dstStripPP) {\
-  U32 *srcStripP = *srcStripPP;\
-  U32 *dstStripP = *dstStripPP;\
-  /* Although the first loop line appears unnecessary for 1 word per 1Bpu strip,
-     it safeguards us from changes in the number of units per strip. */\
-  for (int i = 0; i < N_WORDS_PER_##Bpu_##BPU_STRIP; ++i, ++srcStripP) \
-    for (int j = 0; j < N_BITS_PER_BYTE; j += SHIFT_INCREMENT_##Bpu_##BPU)\
-      *dstStripP++ =  (*srcStripP >> j) & maskWord_;\
-}
-#endif
-#endif
+Error stripIni(StripDataS *sdP);
 
 #endif

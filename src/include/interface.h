@@ -63,7 +63,7 @@
 #endif  // #ifdef USE_SDL
 
 typedef U8 ColormapIdx;
-
+#define N_COLORS_SUPPORTED_MAX_ (16)
 typedef struct {
   U8 bpp;
   U16 w, h, pitch;  // in pixel units; determine actual step size by pixel format

@@ -1174,15 +1174,6 @@ Error mailboxForward(Message *mailboxP, Message *msgP) {
   return frayAdd((void*) mailboxP, msgP, NULL);
 }
 
-// TODO hard-code the used unpacker to step through it
-// Strip Inflation
-//defineUnpackStripFunction_(1, 0x01);
-//defineUnpackStripFunction_(2, 0x03);
-//defineUnpackStripFunction_(4, 0x0f);  // TODO uncomment
-//defineUnpackRemainderUnitsFunction_(1, 0x01);
-//defineUnpackRemainderUnitsFunction_(2, 0x03);
-//defineUnpackRemainderUnitsFunction_(4, 0x0f);  // TODO uncomment
-
 void stripClr(StripDataS *sdP) {
   if (sdP) {
     inflatableClr(sdP->ss.infP);
@@ -1192,9 +1183,8 @@ void stripClr(StripDataS *sdP) {
     // Gotta keep the stripmap elements, or you won't be able to re-inflate later!
   }
 }
-//defineInflateStripsWithBpu_(1);
-//defineInflateStripsWithBpu_(2);
-//defineInflateStripsWithBpu_(4);
+
+// This is for when I vectorize (again) in the future for the IMPROVED stripset unpacking algorithm.
 #if 0
 // TODO delete everything below once bug is fixed
 // Stripped data inflation
@@ -1221,19 +1211,102 @@ __inline__ static void _unpackStrip4Bpu(U32 **srcStripPP, U32 **dstStripPP) {
     }
   }
 }
-#else
-//static int k = 0;
-__inline__ static void _unpackStrip4Bpu(U32 **srcStripPP, U32 **dstStripPP) {
-  U32 *srcStripP = *srcStripPP;
-  U32 *dstStripP = *dstStripPP;
-  /* Although the first loop line appears unnecessary for 1 word per 1Bpu strip,
-     it safeguards us from changes in the number of units per strip. */
-  for (int i = 0; i < N_WORDS_PER_4BPU_STRIP; ++i) {
-    for (int j = 0; j < N_BITS_PER_BYTE; j += SHIFT_INCREMENT_4BPU) {
-      *dstStripP++ =  (*srcStripP >> j) & 0x0f0f0f0f;
+#endif
+#endif
+
+// Unpack bits to reconstruct original data (uesd for debugging img.c)
+static Error _unpackStripset(Stripset *ssP) {
+  if (!ssP || (ssP && !ssP->infP) || (ssP && ssP->infP && !ssP->infP->compressedDataA)) {
+    return E_BAD_ARGS;
+  }
+  // Packed data is all whole words. Unpacked may not be.
+  // Only way to tell is by looking at the number of units.
+  const U32 nPackedUnitsPerWord     = N_BITS_PER_WORD / ssP->bpu;
+  U32 nUnitsInExtraPackedWord = ssP->nUnits % nPackedUnitsPerWord; 
+
+  // start copy
+  Error e = arrayNew((void**) &ssP->unpackedDataP, sizeof(U8), ssP->nUnits);
+  if (e) {
+    return e;
+  }
+
+  U32 mask = 0;
+  switch(ssP->bpu) {
+    case 1:
+      mask = 0x01010101;
+      break;
+    case 2:
+      mask = 0x03030303;
+      break;
+    case 4:
+      mask = 0x0f0f0f0f;
+      break;
+    default:
+      printf("[_unpackStripset] This data isn't packed.\n");
+      return SUCCESS;
+  }
+
+  U32 *packedWordP    = (U32*) ssP->infP->inflatedDataP;
+  U32 *packedWordEndP = (U32*) ((U8*) ssP->infP->inflatedDataP + (ssP->infP->inflatedLen))
+                             - (nUnitsInExtraPackedWord > 0);  // stop short of partially packed word
+  U32 *dstUnpackedWordP    = (U32*) ssP->unpackedDataP;
+
+  U32 j;
+  // Unpack whole words with reckless abandon (CRAZY GORILLA MODE)
+  for (; packedWordP < packedWordEndP; ++packedWordP) {
+    for (j = 0; j < N_BITS_PER_BYTE; j += ssP->bpu) {
+      *(dstUnpackedWordP++) = (*packedWordP >> j) & mask;
     }
   }
-  //printf("\tstrip #: %d\n", k++);
+  // While theres >= 4 units left in packed word...
+  for (j = 0; 
+       !e && nUnitsInExtraPackedWord >= sizeof(U32); 
+       nUnitsInExtraPackedWord -= sizeof(U32), j += ssP->bpu) {
+    *(dstUnpackedWordP++) = (*packedWordP >> j) & mask;
+  }
+  // Fewer than 4 packed units remaining in last word
+  // If last word has fewer than 4 units remaining, carefully extract them into < 4 output bytes.
+  if (!e && nUnitsInExtraPackedWord > 0) {
+    U32 lastUnpackedWord = (*packedWordP >> j) & mask;
+    memcpy((void*) dstUnpackedWordP, &lastUnpackedWord, nUnitsInExtraPackedWord);
+  }
+
+  return e;
 }
-#endif
-#endif
+
+static Error _pieceTogetherMappedStrips(StripDataS *sdP) {
+  if (!sdP || !sdP->ss.unpackedDataP || !sdP->sm.infP->inflatedDataP || !sdP->unstrippedDataA
+      || sdP->ss.nUnitsPerStrip == 0) {
+    return E_BAD_ARGS;
+  } 
+  // Piece together strips
+  StripmapElem *smElemP = sdP->sm.infP->inflatedDataP;
+  StripmapElem *smElemEndP = smElemP + sdP->sm.nIndices;
+  U8 *unstrippedDataP = sdP->unstrippedDataA;
+  for (; smElemP < smElemEndP; ++smElemP, unstrippedDataP += sdP->ss.nUnitsPerStrip) {
+    memcpy(unstrippedDataP,
+           sdP->ss.unpackedDataP + (*smElemP * sdP->ss.nUnitsPerStrip),
+           sdP->ss.nUnitsPerStrip);
+  }
+
+  return SUCCESS;
+}
+
+Error stripIni(StripDataS *sdP) {
+  Error e = inflatableIni(sdP->ss.infP);
+  if (!e) {
+    e = inflatableIni(sdP->sm.infP);
+  }
+  if (!e) {
+    e = _unpackStripset(&sdP->ss);
+  }
+  if (!e) {
+    e = arrayNew((void**) &sdP->unstrippedDataA, 
+                 sizeof(U8), 
+                 sdP->sm.nIndices * sdP->ss.nUnitsPerStrip);
+  }
+  if (!e) {
+    e = _pieceTogetherMappedStrips(sdP);
+  }
+  return e;
+}
