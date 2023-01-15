@@ -20,7 +20,7 @@ Error cmGen(Colormap *cmP) {
 
 	if (cmP != NULL && cmP->sdP != NULL) {
 		// Check if the image has already been reconstructed. If so, get out.
-		if (cmP->sdP->unmappedDataA != NULL) {   // Colormap has already been reconstructed.
+		if (cmP->sdP->unstrippedDataA != NULL) {   // Colormap has already been reconstructed.
 			return SUCCESS;  
     }
 		// If not reconstructed yet, inflate strip set if it's still compressed (inflate() checks internally).
@@ -42,7 +42,7 @@ Error cmGen(Colormap *cmP) {
     }
 		// Allocate colormap memory.
 		if (!e) {
-			e = jbAlloc((void**) &cmP->sdP->unmappedDataA, sizeof(U8), cmP->w * cmP->h);
+			e = jbAlloc((void**) &cmP->sdP->unstrippedDataA, sizeof(U8), cmP->w * cmP->h);
     }
 	}
 	else {
@@ -54,15 +54,15 @@ Error cmGen(Colormap *cmP) {
     // Mapped stripsets need to be both unpacked and indexed. They may need strips to be flipped too.
 		switch (cmP->bpp) {
 			case 1:
-        inflateStripsWithBpu1(&cmP->sdP->ss, &cmP->sdP->sm, (U32*) cmP->sdP->unmappedDataA);
+        //inflateStripsWithBpu1(&cmP->sdP->ss, &cmP->sdP->sm, (U32*) cmP->sdP->unstrippedDataA);
 				break;
 			case 2:
         // First read all mapped strips into the target colormap.
-        inflateStripsWithBpu2(&cmP->sdP->ss, &cmP->sdP->sm, (U32*) cmP->sdP->unmappedDataA);
+        //inflateStripsWithBpu2(&cmP->sdP->ss, &cmP->sdP->sm, (U32*) cmP->sdP->unstrippedDataA);
 				break;
 			case 4: 
         // First read all mapped strips into the target colormap.
-        inflateStripsWithBpu4(&cmP->sdP->ss, &cmP->sdP->sm, (U32*) cmP->sdP->unmappedDataA);
+        //inflateStripsWithBpu4(&cmP->sdP->ss, &cmP->sdP->sm, (U32*) cmP->sdP->unstrippedDataA);
 				break;
 			default:  
 				e = E_UNSUPPORTED_PIXEL_FORMAT;
@@ -250,7 +250,7 @@ Error xRenderIniComp(System *sP, void *compDataP, void *compDataSrcP) {
 
 	// Apply color palette to color map.
 	if (!e)
-		e = surfaceIni(surfaceP, imgP->nColors, imgP->colorA, imgP->colorMapP->sdP->unmappedDataA);
+		e = surfaceIni(surfaceP, imgP->nColors, imgP->colorA, imgP->colorMapP->sdP->unstrippedDataA);
 
 	// Create texture from surface. 
 	if (!e && surfaceP)

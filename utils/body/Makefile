@@ -48,5 +48,5 @@ ${BINDIR}:
 # Cleaner
 .PHONY: clean
 clean:
-	rm -rf ${BUILDDIR}
-	rm -rf ${BINDIR}
+	rm -rf ${BUILDDIR}/*
+	rm -rf ${BINDIR}/*

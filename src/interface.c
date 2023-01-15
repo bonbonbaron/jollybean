@@ -63,7 +63,7 @@ Error surfaceNew(Surface_ **surfacePP, Colormap *cmP) {
 }
 
 Error surfaceIni(Surface_ *surfaceP, Colormap *cmP, ColorPalette *cpP) {
-  if (!surfaceP || !cmP || !cmP->sdP || !cmP->sdP->unmappedDataA || !cpP || !cpP->colorA
+  if (!surfaceP || !cmP || !cmP->sdP || !cmP->sdP->unstrippedDataA || !cpP || !cpP->colorA
       || cpP->nColors == 0) {
     return E_BAD_ARGS;
   }
@@ -93,7 +93,7 @@ Error surfaceIni(Surface_ *surfaceP, Colormap *cmP, ColorPalette *cpP) {
   memcpy(surfaceP->format->palette->colors, cpP->colorA, arrayGetElemSz(cpP->colorA) * cpP->nColors);
   //surfaceP->pixels = cmDataP;
   printf("copying pixels into surface pixels");
-  memcpy(surfaceP->pixels, cmP->sdP->unmappedDataA, arrayGetElemSz(cmP->sdP->unmappedDataA) * arrayGetNElems(cmP->sdP->unmappedDataA));
+  memcpy(surfaceP->pixels, cmP->sdP->unstrippedDataA, arrayGetElemSz(cmP->sdP->unstrippedDataA) * arrayGetNElems(cmP->sdP->unstrippedDataA));
   return SUCCESS;
 #endif
 }

@@ -1,7 +1,7 @@
 #include "previewImg.h"
 
 Error previewImg(Colormap *cmP, ColorPalette *cpP, U32 preview_ms) {
-  if (!cmP || !cmP->dataP || !cpP || preview_ms == 0) {
+  if (!cmP || !cmP->sdP || !cmP->sdP->unstrippedDataA || !cpP || preview_ms == 0) {
     return E_BAD_ARGS;
   }
 

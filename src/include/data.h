@@ -192,7 +192,6 @@ typedef struct {
 typedef struct {
   U8 nUnitsPerStrip;
   U8 bpu;  // bits per unit
-  U16 nStrips;
   U32 nUnits;
   Flipset flipset;
   Inflatable *infP;  // strip set's compressed source data
@@ -207,7 +206,7 @@ typedef struct {
 typedef struct {
   Stripmap sm;
   Stripset ss;
-  U8 *unmappedDataA;
+  U8 *unstrippedDataA;
 } StripDataS;
 
 void stripClr(StripDataS *sdP);
@@ -276,7 +275,7 @@ void stripClr(StripDataS *sdP);
 #ifdef inline
 #undef inline
 #endif
-
+#if 0
 // Stripped data inflation
 #ifdef __ARM_NEON__
 #define defineUnpackStripFunction_(Bpu_, maskByte_) \
@@ -314,56 +313,7 @@ __inline__ static void _unpackStrip##Bpu_##Bpu(U32 **srcStripPP, U32 **dstStripP
       *dstStripP++ =  (*srcStripP >> j) & maskWord_;\
 }
 #endif
-
-#define defineUnpackRemainderUnitsFunction_(Bpu_, maskByte_) \
-__inline__ static void _unpackRemainderUnits##Bpu_(U8 *byteA, U8 *outputByteP, U32 nRemainderUnits) {\
-  U8 *byteP = byteA;\
-  U8 *byteEndP = byteP + countWholeBytesFor##Bpu_##BpuUnits_(nRemainderUnits);\
-  /* Handle all the whole bytes of units. */\
-  while (byteP < byteEndP)\
-    for (U8 i = 0; i < N_BITS_PER_BYTE; i += SHIFT_INCREMENT_##Bpu_##BPU)\
-      *outputByteP++ =  (*(byteP++) >> i) & maskByte_;\
-  /* Handle the last, partial byte of data. */\
-  U8 iEnd = countUnitsInPartialByte##Bpu_##BPU_(nRemainderUnits);\
-  for (U8 i = 0; i < iEnd; i += SHIFT_INCREMENT_##Bpu_##BPU)\
-    *outputByteP++ =  (*(byteP++) >> i) & maskByte_;\
-}
-
+#endif
 void flipUnpackedStrips(Stripset *stripsetP, void *outputDataP);
 
-#define declareInflateStripsWithBpu_(Bpu_) void inflateStripsWithBpu##Bpu_ (Stripset *stripsetP, Stripmap *stripmapP, U32 *dstStripP)
-
-#define defineInflateStripsWithBpu_(Bpu_)\
-  declareInflateStripsWithBpu_(Bpu_) {\
-    U32 *srcStripP; \
-    U32 *dstStripOriginP = dstStripP; /* keep track of beginning as pointer gets incremented */ \
-    /* Count remainder of pixels to process after all the whole strips. */ \
-    U32 nWholeStrips = countWholeStrips_(stripsetP->nUnits); \
-    U32 nRemainderUnits = countRemainderUnits_(stripsetP->nUnits); \
-    /* Mapped stripsets need to be both unpacked and indexed. They may need strips to be flipped too. */ \
-    /* First read all mapped strips into the target colormap. */\
-    if (stripmapP) {\
-      U16 *mapEndP = ((U16*) stripmapP->infP->inflatedDataP) + nWholeStrips;\
-      for (U16 *ssIdxP = (U16*) stripmapP->infP->inflatedDataP; ssIdxP < mapEndP; ssIdxP++) {\
-        srcStripP = stripsetP->infP->inflatedDataP + stripIdxTo##Bpu_##BpuStripPtr_(*ssIdxP);  \
-        _unpackStrip##Bpu_##Bpu(&srcStripP, &dstStripP);\
-      }\
-      srcStripP = stripsetP->infP->inflatedDataP + stripsetP->nStrips - 1;\
-      _unpackRemainderUnits##Bpu_((U8*) srcStripP, (U8*) dstStripP, nRemainderUnits);\
-      /* Then flip whatever strips need flipping. Remember data's already expanded to U8s! */\
-      if (stripsetP->flipset.nFlips) \
-        flipUnpackedStrips(stripsetP, dstStripOriginP);\
-    } \
-    /* Unmapped stripsets are already ordered, so they only need to be unpacked. */\
-    else {\
-      U32 *srcEndP = stripsetP->infP->inflatedDataP + stripIdxTo1BpuStripPtr_(nWholeStrips);\
-      for (U32 *srcStripP = stripsetP->infP->inflatedDataP; srcStripP < srcEndP; srcStripP++) \
-        _unpackStrip##Bpu_##Bpu(&srcStripP, &dstStripP);\
-      _unpackRemainderUnits##Bpu_((U8*) srcStripP, (U8*) dstStripP, nRemainderUnits);\
-    }\
-  }
-
-declareInflateStripsWithBpu_(1);
-declareInflateStripsWithBpu_(2);
-declareInflateStripsWithBpu_(4);
 #endif

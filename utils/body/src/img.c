@@ -24,8 +24,8 @@ static void _printColormap(Colormap *cmP) {
   return;
   printf("colormap elements:\n");
   if (cmP && cmP->sdP) {
-    for (int i = 0; i < arrayGetNElems(cmP->sdP->unmappedDataA); ++i) {
-      printf("%d", cmP->sdP->unmappedDataA[i]);
+    for (int i = 0; i < arrayGetNElems(cmP->sdP->unstrippedDataA); ++i) {
+      printf("%d", cmP->sdP->unstrippedDataA[i]);
     }
   }
 }
@@ -422,8 +422,8 @@ Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *an
     if (!e) {
       // We're gonna cheat and preview the ground truth image here. 
       // We'll test stripIni properly in _validateWholeInput().
-      arrayDel((void**) &cmP->sdP->unmappedDataA);
-      cmP->sdP->unmappedDataA = colormapA;
+      arrayDel((void**) &cmP->sdP->unstrippedDataA);
+      cmP->sdP->unstrippedDataA = colormapA;
     }
     // Sanity check before making strips
     if (!e && verbose) {
@@ -461,9 +461,9 @@ static Error _validateWholeInput(Colormap *cmP, ColorPalette *cpP) {
   U32 hOrig = cmP->h;
   U32 bppOrig = cmP->bpp;
   U8 *cmOrigP = NULL;
-  Error e = arrayNew((void**) &cmOrigP, arrayGetElemSz(cmP->sdP->unmappedDataA), arrayGetNElems(cmP->sdP->unmappedDataA));
+  Error e = arrayNew((void**) &cmOrigP, arrayGetElemSz(cmP->sdP->unstrippedDataA), arrayGetNElems(cmP->sdP->unstrippedDataA));
   if (!e) {
-    memcpy(cmOrigP, cmP->sdP->unmappedDataA, arrayGetElemSz(cmP->sdP->unmappedDataA) * arrayGetNElems(cmP->sdP->unmappedDataA));
+    memcpy(cmOrigP, cmP->sdP->unstrippedDataA, arrayGetElemSz(cmP->sdP->unstrippedDataA) * arrayGetNElems(cmP->sdP->unstrippedDataA));
   }
   // Clear out old colormap
   if (!e) {
@@ -478,14 +478,14 @@ static Error _validateWholeInput(Colormap *cmP, ColorPalette *cpP) {
 #if 1
   // Verify array lengths match.
   printf("orig cm has %d elems; new cm has %d\n", 
-       arrayGetNElems(cmOrigP), arrayGetNElems(cmP->sdP->unmappedDataA));
+       arrayGetNElems(cmOrigP), arrayGetNElems(cmP->sdP->unstrippedDataA));
   printf("orig cm elem size is %d; new cm elem size is %d\n", 
-       arrayGetElemSz(cmOrigP), arrayGetElemSz(cmP->sdP->unmappedDataA));
-  if (!e && (arrayGetNElems(cmP->sdP->unmappedDataA) != arrayGetNElems(cmOrigP))) {
+       arrayGetElemSz(cmOrigP), arrayGetElemSz(cmP->sdP->unstrippedDataA));
+  if (!e && (arrayGetNElems(cmP->sdP->unstrippedDataA) != arrayGetNElems(cmOrigP))) {
     e = E_BAD_ARGS;
   }
   // Verify array elem sizes match.
-  if (!e && (arrayGetElemSz(cmP->sdP->unmappedDataA) != arrayGetElemSz(cmOrigP))) {
+  if (!e && (arrayGetElemSz(cmP->sdP->unstrippedDataA) != arrayGetElemSz(cmOrigP))) {
     e = E_BAD_ARGS;
   }
 #endif
@@ -498,22 +498,22 @@ static Error _validateWholeInput(Colormap *cmP, ColorPalette *cpP) {
       printf("%d", *p);
     }
     printf("\n\nNew colormap array:\n");
-    for (U8 *p = cmP->sdP->unmappedDataA; p < cmP->sdP->unmappedDataA + arrayGetNElems(cmP->sdP->unmappedDataA); ++p) {
+    for (U8 *p = cmP->sdP->unstrippedDataA; p < cmP->sdP->unstrippedDataA + arrayGetNElems(cmP->sdP->unstrippedDataA); ++p) {
       printf("%d", *p);
     }
     printf("\n\n\n");
 #endif
-    if (theyMatch = !memcmp(cmP->sdP->unmappedDataA, 
+    if (theyMatch = !memcmp(cmP->sdP->unstrippedDataA, 
                            cmOrigP, 
-                           arrayGetElemSz(cmP->sdP->unmappedDataA) 
-                           * arrayGetNElems(cmP->sdP->unmappedDataA))) {
+                           arrayGetElemSz(cmP->sdP->unstrippedDataA) 
+                           * arrayGetNElems(cmP->sdP->unstrippedDataA))) {
       printf("\n\nthey match!\n");
     }
     else {
       printf("\n\nthey don't match :( \n");
     }
-    if (1 || theyMatch) {
-      //e = previewImg(cmP, cpP, 5000);
+    if (theyMatch) {
+      e = previewImg(cmP, cpP, 1000);
     }
   }
 

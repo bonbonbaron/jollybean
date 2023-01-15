@@ -145,10 +145,12 @@ static Error _checkMatch(U32 *srcUnpackedWordP, U8 *srcUnpackedDataP, U32 dstUnp
     return E_BAD_DATA;
   }
   else {
+#if 0
     printf("Src unpacked word %9d of %9d: %9d == dst\n", 
         srcUnpackedWordP - (U32*) srcUnpackedDataP, 
         (nUnits >> 2) - 1,  // bytes / 4 = # words
         *srcUnpackedWordP);
+#endif
     return SUCCESS;
   }
 }
@@ -224,6 +226,12 @@ static Error _stripsetUnpack(Stripset *ssP) {
   if (!ssP || (ssP && !ssP->infP) || (ssP && ssP->infP && !ssP->infP->compressedDataA)) {
     return E_BAD_ARGS;
   }
+  // Packed data is all whole words. Unpacked may not be.
+  // Only way to tell is by looking at the number of units.
+  const U32 nPackedUnitsPerWord     = N_BITS_PER_WORD / ssP->bpu;
+  const U32 nWhollyPackedWords      = ssP->nUnits / nPackedUnitsPerWord;
+  U32 nUnitsInExtraPackedWord = ssP->nUnits % nPackedUnitsPerWord; 
+
   // start copy
   Error e = arrayNew((void**) &ssP->unpackedDataP, sizeof(U8), ssP->nUnits);
   if (e) {
@@ -246,36 +254,61 @@ static Error _stripsetUnpack(Stripset *ssP) {
       return SUCCESS;
   }
 
-  U32 *wholePackedWordP    = (U32*) ssP->infP->inflatedDataP;
-  U32 *wholePackedWordEndP = (U32*) (ssP->infP->inflatedDataP + ssP->infP->inflatedLen);
+  U32 *packedWordP    = (U32*) ssP->infP->inflatedDataP;
+  U32 *packedWordEndP = (U32*) ((U8*) ssP->infP->inflatedDataP + (ssP->infP->inflatedLen))
+                             - (nUnitsInExtraPackedWord > 0);  // stop short of partially packed word
   U32 *dstUnpackedWordP    = (U32*) ssP->unpackedDataP;
   U32 stripNum = 0;
 
-  for (; wholePackedWordP < wholePackedWordEndP; ++wholePackedWordP) {
-    U8 *dstBookmarkP = (U8*) dstUnpackedWordP;
-    for (U32 j = 0; j < N_BITS_PER_BYTE; j += ssP->bpu) {
-      *(dstUnpackedWordP++) = (*wholePackedWordP >> j) & mask;
+  U32 j;
+  // Unpack whole words with reckless abandon (CRAZY GORILLA MODE)
+  for (; packedWordP < packedWordEndP; ++packedWordP) {
+    for (j = 0; j < N_BITS_PER_BYTE; j += ssP->bpu) {
+      *(dstUnpackedWordP++) = (*packedWordP >> j) & mask;
     }
-    printf("[_stripsetUnpack] strip %5d: ", stripNum++);
-    for (U32 i = 0; i < ssP->nUnitsPerStrip; ++i) {
-      printf("%d", dstBookmarkP[i]);
-    }
-    printf("\n");
+  }
+  // While theres >= 4 units left in packed word...
+  for (j = 0; 
+       !e && nUnitsInExtraPackedWord >= sizeof(U32); 
+       nUnitsInExtraPackedWord -= sizeof(U32), j += ssP->bpu) {
+    *(dstUnpackedWordP++) = (*packedWordP >> j) & mask;
+#if DEBUG_
+    printf("\n[_stripsetUnpack] last unpacked word: %d %d %d %d\n\n", 
+        ((U8*) (dstUnpackedWordP - 1))[0],
+        ((U8*) (dstUnpackedWordP - 1))[1],
+        ((U8*) (dstUnpackedWordP - 1))[2],
+        ((U8*) (dstUnpackedWordP - 1))[3]);
+#endif
+  }
+  // Fewer than 4 packed units remaining in last word
+  // If last word has fewer than 4 units remaining, carefully extract them into < 4 output bytes.
+  if (!e && nUnitsInExtraPackedWord > 0) {
+    U32 lastUnpackedWord = (*packedWordP >> j) & mask;
+    memcpy((void*) dstUnpackedWordP, &lastUnpackedWord, nUnitsInExtraPackedWord);
+#if DEBUG_
+    printf("\n[_stripsetUnpack] last unpacked word: %d %d %d %d\n\n", 
+        ((U8*) &lastUnpackedWord)[0],
+        ((U8*) &lastUnpackedWord)[1],
+        ((U8*) &lastUnpackedWord)[2],
+        ((U8*) &lastUnpackedWord)[3]);
+#endif
   }
 
   return e;
 }
 
 static Error _pieceTogetherMappedStrips(StripDataS *sdP) {
-  if (!sdP || !sdP->ss.unpackedDataP || !sdP->sm.infP->inflatedDataP || !sdP->unmappedDataA) {
+  if (!sdP || !sdP->ss.unpackedDataP || !sdP->sm.infP->inflatedDataP || !sdP->unstrippedDataA
+      || sdP->ss.nUnitsPerStrip == 0) {
     return E_BAD_ARGS;
-  }
+  } 
   // Piece together strips
-  for (StripmapElem *smElemP = sdP->sm.infP->inflatedDataP;
-       smElemP < (StripmapElem*) sdP->sm.infP->inflatedDataP + sdP->sm.nIndices;
-       ++smElemP) {
-    memcpy(sdP->unmappedDataA + (*smElemP * sdP->ss.nUnitsPerStrip),
-           sdP->ss.unpackedDataP,
+  StripmapElem *smElemP = sdP->sm.infP->inflatedDataP;
+  StripmapElem *smElemEndP = smElemP + sdP->sm.nIndices;
+  U8 *unstrippedDataP = sdP->unstrippedDataA;
+  for (; smElemP < smElemEndP; ++smElemP, unstrippedDataP += sdP->ss.nUnitsPerStrip) {
+    memcpy(unstrippedDataP,
+           sdP->ss.unpackedDataP + (*smElemP * sdP->ss.nUnitsPerStrip),
            sdP->ss.nUnitsPerStrip);
   }
 
@@ -291,7 +324,7 @@ Error stripIni(StripDataS *sdP) {
     e = _stripsetUnpack(&sdP->ss);
   }
   if (!e) {
-    e = arrayNew((void**) &sdP->unmappedDataA, 
+    e = arrayNew((void**) &sdP->unstrippedDataA, 
                  sizeof(U8), 
                  sdP->sm.nIndices * sdP->ss.nUnitsPerStrip);
   }
@@ -320,16 +353,16 @@ static void _flipStrip(U8 *unflippedStripP, U32 nBytesPerUnpackedStrip, U8 *flip
 
 #if DEBUG_
 static Error _validateStripmapping(U8 *ssA, U32 nBytesPerUnpackedStrip, StripmapElem *smA, 
-                                   StripmapElem *flipsetA, U32 nFlips, U8 *origDataA) {
-  if (!ssA || !smA || !origDataA) {
+                                   StripmapElem *flipsetA, U32 nFlips, U8 *srcA) {
+  if (!ssA || !smA || !srcA) {
     return E_BAD_ARGS;
   }
 
   StripmapElem *smElemP = smA;
   StripmapElem *smElemEndP = smElemP + arrayGetNElems(smA);
   U8 *ssElemP = NULL;
-  U8 *origElemP = origDataA;
-  U8 *origElemEndP = origElemP + arrayGetNElems(origDataA);
+  U8 *origElemP = srcA;
+  U8 *origElemEndP = origElemP + arrayGetNElems(srcA);
 
   U8 flippedStrip[nBytesPerUnpackedStrip];
 
@@ -370,12 +403,15 @@ static Error _validateStripmapping(U8 *ssA, U32 nBytesPerUnpackedStrip, Stripmap
       }
     }  // if original strip does not match one in stripset
     else {
+      if (*smElemP == 23) printf("AAAAAAAAAH found idx 23\n");
+#if 0
       U32 smElemNumber = smElemP - smA;
       printf("sm Idx %5d = src strip %5d: ", *smElemP, smElemNumber);
       for (U32 i = 0; i < nBytesPerUnpackedStrip; ++i) {
         printf("%d", ssElemP[i]);
       }
       printf("\n");
+#endif
     }
     matchFound:
     continue;
@@ -406,10 +442,57 @@ static Error _validateInflatables(StripDataS *sdP, StripmapElem *smSrcA, U8 *pac
   if (!e) {
     printf("\nCONGRATS! We validated your stripset and stripmap inflatables!\n\n");
   }
-
+  inflatableClr(sdP->ss.infP);
+  inflatableClr(sdP->sm.infP);
   return e;
 }
 
+static Error _validateUnstrippedData(StripDataS *sdP, U8 *srcA) {
+  if (!sdP || !sdP->unstrippedDataA || !sdP->sm.infP || !sdP->sm.infP->inflatedDataP || !srcA) {
+    return E_BAD_ARGS;
+  }
+  // Validate output element size
+  if (arrayGetElemSz(sdP->unstrippedDataA) != arrayGetElemSz(srcA)) {
+    printf("[_validateUnstrippedData] Unstripped data's elements size %d doesn't match source data's element size %d.\n");
+    return E_BAD_DATA;
+  }
+  // Validate output element count
+  if (arrayGetNElems(sdP->unstrippedDataA) != arrayGetNElems(srcA)) {
+    printf("[_validateUnstrippedData] Unstripped data's %d elements doesn't match source data's %d elements.\n");
+    return E_BAD_DATA;
+  }
+
+  Error e = SUCCESS;
+  if (memcmp(srcA, sdP->unstrippedDataA, arrayGetElemSz(srcA) * arrayGetNElems(srcA))) {
+    printf("[_validateUnstrippedData] Unstripped data doesn't  match original.\n");
+    printf("[_validateUnstrippedData] Unstripped data:\n");
+    for (U32 i = 0; 
+         i < arrayGetElemSz(sdP->unstrippedDataA) * arrayGetNElems(sdP->unstrippedDataA); 
+         ++i) {
+      if (sdP->unstrippedDataA[i] != srcA[i]) {
+        e = E_BAD_DATA;
+        StripmapElem *smElemP = (StripmapElem*) sdP->sm.infP->inflatedDataP 
+                             + (i / sdP->ss.nUnitsPerStrip);
+        U32 maxStripIdx = (sdP->ss.nUnits / sdP->ss.nUnitsPerStrip) - 1;
+        printf("[_validateUnstrippedData] Element mismatch: output %3d (from stripset's strip %5d of %5d), source %3d\n", 
+            sdP->unstrippedDataA[i], *smElemP, maxStripIdx, srcA[i]);
+        if (*smElemP >= maxStripIdx) {
+          printf("Looks like the index is out of bounds. The true last strip is this:\n");
+          U8 *lastUnpackedStripP = sdP->ss.unpackedDataP + (sdP->ss.nUnitsPerStrip * (maxStripIdx));
+          for (U32 i = 0; i < sdP->ss.nUnitsPerStrip; ++i) {
+            printf("%d", lastUnpackedStripP[i]);
+          }
+          printf("\n\n");
+          break;
+        }
+      }
+    }
+    printf("\n\n");
+    return E_BAD_DATA;
+  }
+
+  return e;
+}
 
 #endif
 
@@ -519,7 +602,6 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
         ++stripLabel;
       }  // if strip is unlabelled...
     }  // for all strips in original data...
-    --stripLabel;  // last increment is erroneous
     if (verbose) {
       printf("%d distinct strips out of a maximum possible %d strips\n", stripLabel, nStripsInOrigData);
     }
@@ -538,7 +620,7 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
 #endif
   // Slight compression isn't worth the trouble to inflate; keep as is.
   if (!e) {
-    U32 nUnitsInStripset = (stripLabel * nBytesPerUnpackedStrip);
+    U32 nUnitsInStripset = stripLabel * nBytesPerUnpackedStrip;
     // If it's worth doing, store compressed stuff into colormap profile.
     // Compress data into an inflatable.
     if (!e) {
@@ -555,7 +637,6 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
     if (!e) {
       (*sdPP)->ss.nUnits = nUnitsInStripset;
       (*sdPP)->ss.nUnitsPerStrip = nBytesPerUnpackedStrip;
-      (*sdPP)->ss.nStrips = stripLabel;
       (*sdPP)->ss.bpu = bitsPerPackedByte;
       e = inflatableNew((void*) ssPackedA, &(*sdPP)->ss.infP);
     }
@@ -579,14 +660,19 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
         + (*sdPP)->ss.infP->compressedLen
         + (*sdPP)->sm.infP->compressedLen);
     }
+#if DEBUG_
     if (!e && verbose) {
       e = _validateInflatables(*sdPP, smDataA, ssPackedA);
     }
+#endif
     if (!e) {
-      printf("(from inside of stripNew()...\n");
       e =  stripIni(*sdPP);
-      printf("(pssst... again, that was from inside of stripNew()...\n");
     }
+#if DEBUG_
+    if (!e) {
+      e = _validateUnstrippedData(*sdPP, srcA);
+    }
+#endif
   }
   else {
     inflatableDel(&(*sdPP)->ss.infP);
@@ -622,7 +708,6 @@ Error writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripDataS *sdP
     // Strip set 
     fprintf(fP, "Stripset %sStripset = {\n", objNameA);
     fprintf(fP, "\t.nUnitsPerStrip = %d,\n", sdP->ss.nUnitsPerStrip);  // in case we ever want to give each sprite its own strip length... wuh oh.
-    fprintf(fP, "\t.nStrips = %d,\n", sdP->ss.nStrips);
     fprintf(fP, "\t.nUnits  = %d,\n", sdP->ss.nUnits);
     fprintf(fP, "\t.bpu  = %d,\n", sdP->ss.bpu);
     fprintf(fP, "\t.flipset = {\n", objNameA);

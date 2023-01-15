@@ -35,10 +35,12 @@ int main(int argc, char ** argv) {
     if (!e) {
       e = img(argv[i], cpDbP, cmDbP, animP, verbose);
     }
+    goto skipColl;
     // Collision
     if (!e) {
       e = coll(argv[i], 0, animP, verbose);
     }
+skipColl:
     jbFree((void**) &animP);
     // Genome
     // Seed

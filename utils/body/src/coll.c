@@ -104,7 +104,7 @@ static Error findCollisionRects(Colormap *cmP, AnimJsonData *animP, RectNode **r
     return E_BAD_ARGS;
   }
   U32 nPixels = cmP->w * cmP->h;
-  U32 imgPitch = cmP->w * arrayGetElemSz(cmP->dataP);
+  U32 imgPitch = cmP->w * arrayGetElemSz(cmP->sdP->unstrippedDataA);
   Error e = SUCCESS;
 
   // Keep track of the first node so we don't pass out the most recent one and lose all predecessors. 
@@ -128,15 +128,15 @@ static Error findCollisionRects(Colormap *cmP, AnimJsonData *animP, RectNode **r
       /* If rect node creation succeeded... */ 
       if (!e) { 
         RectNode *rectNodeP = *currRectNodePP; 
-        U8 *pixelP = (U8*) calcFirstPixelP(fNodeP, cmP->dataP, arrayGetElemSz(cmP->dataP), imgPitch); 
+        U8 *pixelP = (U8*) calcFirstPixelP(fNodeP, cmP->sdP->unstrippedDataA, arrayGetElemSz(cmP->sdP->unstrippedDataA), imgPitch); 
         /* Number of pixels to jump from end of current frame's row to the start of its next row */
-        U32 nPixelsToNextRow = (imgPitch / arrayGetElemSz(cmP->dataP)) - fNodeP->w; 
+        U32 nPixelsToNextRow = (imgPitch / arrayGetElemSz(cmP->sdP->unstrippedDataA)) - fNodeP->w; 
         /* for each row in frame... */ 
         for (int i = 0; i < fNodeP->h; ++i, pixelP += nPixelsToNextRow) { 
           if (verbose) { 
             printf("%02d: ", i); 
           } 
-          U8 *pixelRowEndP = (U8*) calcLastPixelPInRowP(fNodeP, (U8*) pixelP, arrayGetElemSz(cmP->dataP)); 
+          U8 *pixelRowEndP = (U8*) calcLastPixelPInRowP(fNodeP, (U8*) pixelP, arrayGetElemSz(cmP->sdP->unstrippedDataA)); 
           /* for each pixel in frame's current row... */ 
           for (int j = 0; pixelP < pixelRowEndP; ++j, ++pixelP) { 
             if (verbose) { 
@@ -174,8 +174,8 @@ static Error findCollisionRects(Colormap *cmP, AnimJsonData *animP, RectNode **r
   }  /* if this is an animated collsion rectangle... */ 
   /* If this is not animated, you only need to find one rectangle. */ 
   else { 
-    U8 *pixelP = (U8*) calcFirstPixelP(NULL, cmP->dataP, arrayGetElemSz(cmP->dataP), imgPitch); 
-    U8 *lastPixelP = (U8*) calcLastPixelP(NULL, (U8*) pixelP, arrayGetElemSz(cmP->dataP)); 
+    U8 *pixelP = (U8*) calcFirstPixelP(NULL, cmP->sdP->unstrippedDataA, arrayGetElemSz(cmP->sdP->unstrippedDataA), imgPitch); 
+    U8 *lastPixelP = (U8*) calcLastPixelP(NULL, (U8*) pixelP, arrayGetElemSz(cmP->sdP->unstrippedDataA)); 
     e = rectNodeGrow(rectNodePP); 
     /* If rect node creation succeeded... */ 
     if (!e) { 
@@ -183,19 +183,19 @@ static Error findCollisionRects(Colormap *cmP, AnimJsonData *animP, RectNode **r
       for (; pixelP < lastPixelP; ++pixelP) { 
         if (*pixelP) { 
           if (rect.x < 0 ) { 
-            rect.x = (pixelP - cmP->dataP) % imgPitch; 
+            rect.x = (pixelP - cmP->sdP->unstrippedDataA) % imgPitch; 
           } 
           if (rect.y < 0) { 
-            rect.y = (pixelP - cmP->dataP) / imgPitch; 
+            rect.y = (pixelP - cmP->sdP->unstrippedDataA) / imgPitch; 
           } 
         } 
         /* If you've hit an empty pixel and you've found the rect's start already... */ 
         else { 
           if (rect.x >= 0 && !rect.w) { 
-            rect.w = ((pixelP - cmP->dataP) % imgPitch) - rect.x; 
+            rect.w = ((pixelP - cmP->sdP->unstrippedDataA) % imgPitch) - rect.x; 
           } 
           if (rect.y >= 0) {  /* height needs to be continually updated till end of rect */ 
-            rect.h = ((pixelP - cmP->dataP) / imgPitch) - rect.y; 
+            rect.h = ((pixelP - cmP->sdP->unstrippedDataA) / imgPitch) - rect.y; 
           } 
         }  /* If you've hit an empty pixel and you've found the rect's start already... */ 
       } 

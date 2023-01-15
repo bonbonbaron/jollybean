@@ -942,8 +942,7 @@ Error inflatableIni(Inflatable *inflatableP) {
 void inflatableClr(Inflatable *inflatableP) {
   if (inflatableP) {
     if (inflatableP->inflatedDataP) {
-      free(inflatableP->inflatedDataP);
-      inflatableP->inflatedDataP = NULL;
+      jbFree(&inflatableP->inflatedDataP);
     }
   }
 }
@@ -1177,11 +1176,11 @@ Error mailboxForward(Message *mailboxP, Message *msgP) {
 
 // TODO hard-code the used unpacker to step through it
 // Strip Inflation
-defineUnpackStripFunction_(1, 0x01);
-defineUnpackStripFunction_(2, 0x03);
+//defineUnpackStripFunction_(1, 0x01);
+//defineUnpackStripFunction_(2, 0x03);
 //defineUnpackStripFunction_(4, 0x0f);  // TODO uncomment
-defineUnpackRemainderUnitsFunction_(1, 0x01);
-defineUnpackRemainderUnitsFunction_(2, 0x03);
+//defineUnpackRemainderUnitsFunction_(1, 0x01);
+//defineUnpackRemainderUnitsFunction_(2, 0x03);
 //defineUnpackRemainderUnitsFunction_(4, 0x0f);  // TODO uncomment
 
 void stripClr(StripDataS *sdP) {
@@ -1189,7 +1188,7 @@ void stripClr(StripDataS *sdP) {
     inflatableClr(sdP->ss.infP);
     inflatableClr(sdP->sm.infP);
     arrayDel((void**) &sdP->ss.unpackedDataP);
-    arrayDel((void**) &sdP->unmappedDataA);
+    arrayDel((void**) &sdP->unstrippedDataA);
     // Gotta keep the stripmap elements, or you won't be able to re-inflate later!
   }
 }
@@ -1237,10 +1236,10 @@ void flipUnpackedStrips(Stripset *stripsetP, void *outputDataP) {
   }
 }
 
-defineInflateStripsWithBpu_(1);
-defineInflateStripsWithBpu_(2);
+//defineInflateStripsWithBpu_(1);
+//defineInflateStripsWithBpu_(2);
 //defineInflateStripsWithBpu_(4);
-
+#if 0
 // TODO delete everything below once bug is fixed
 // Stripped data inflation
 #ifdef __ARM_NEON__
@@ -1281,60 +1280,4 @@ __inline__ static void _unpackStrip4Bpu(U32 **srcStripPP, U32 **dstStripPP) {
   //printf("\tstrip #: %d\n", k++);
 }
 #endif
-
-__inline__ static void _unpackRemainderUnits4Bpu(U8 *byteA, U8 *outputByteP, U32 nRemainderUnits) {
-  U8 *byteP = byteA;
-  U8 *byteEndP = byteP + countWholeBytesFor4BpuUnits_(nRemainderUnits);
-  /* Handle all the whole bytes of units. */
-  //printf("# whole bytes of remainder data: %d\n", byteEndP - byteP);
-  while (byteP < byteEndP)
-    for (U8 i = 0; i < N_BITS_PER_BYTE; i += SHIFT_INCREMENT_4BPU)
-      *outputByteP++ =  (*(byteP++) >> i) & 0x0f;
-  /* Handle the last, partial byte of data. */
-  U8 iEnd = countUnitsInPartialByte4BPU_(nRemainderUnits);
-  //printf("# partial bytes of remainder data: %d\n", iEnd);
-  for (U8 i = 0; i < iEnd; i += SHIFT_INCREMENT_4BPU)
-    *outputByteP++ =  (*(byteP++) >> i) & 0x0f;
-}
-
-void inflateStripsWithBpu4 (Stripset *stripsetP, Stripmap *stripmapP, U32 *dstStripP) {
-  U32 *srcStripP; 
-  U32 *dstStripOriginP = dstStripP; /* keep track of beginning as pointer gets incremented */ 
-  /* Count remainder of pixels to process after all the whole strips. */ 
-  //printf("stripsetP->nUnits: %d\n", stripsetP->nUnits);
-  //printf("# bytes: %d\n", stripsetP->nUnits / 2);
-  U32 nWholeStrips = countWholeStrips_(stripsetP->nUnits); 
-  U32 nRemainderUnits = countRemainderUnits_(stripsetP->nUnits); 
-  /* Mapped stripsets need to be both unpacked and indexed. They may need strips to be flipped too. */ 
-  /* First read all mapped strips into the target colormap. */
-  // Things to check:
-  //    1) size of strip map's inflated data
-  //    2) size of strip set's inflated data
-  //    3) counting of whole strips
-  //    4) counting of remainder units
-  //    5) integrity of stripIdxTo4BpuStripPtr_(*stripmapElemP)
-  if (stripmapP) {
-    U16 *mapEndP = ((U16*) stripmapP->infP->inflatedDataP) + nWholeStrips;
-    //printf("nWholeStrips: %d\n", nWholeStrips);
-    //printf("nRemainderUnits: %d\n", nRemainderUnits);
-    for (U16 *stripmapElemP = (U16*) stripmapP->infP->inflatedDataP; stripmapElemP < mapEndP; stripmapElemP++) {
-      srcStripP = ((U32*) stripsetP->infP->inflatedDataP + stripIdxTo4BpuStripPtr_(*stripmapElemP));  
-      _unpackStrip4Bpu(&srcStripP, &dstStripP);
-    }
-    srcStripP = (U32*) stripsetP->infP->inflatedDataP + stripsetP->nStrips - 1;
-    //printf("doing partial strip now\n");
-    _unpackRemainderUnits4Bpu((U8*) srcStripP, (U8*) dstStripP, nRemainderUnits);
-    /* Then flip whatever strips need flipping. Remember data's already expanded to U8s! */
-    if (stripsetP->flipset.nFlips) {
-      //printf("doing flips\n");
-      flipUnpackedStrips(stripsetP, dstStripOriginP);
-    }
-  } 
-  /* Unmapped stripsets are already ordered, so they only need to be unpacked. */
-  else {
-    U32 *srcEndP = stripsetP->infP->inflatedDataP + stripIdxTo1BpuStripPtr_(nWholeStrips);
-    for (U32 *srcStripP = stripsetP->infP->inflatedDataP; srcStripP < srcEndP; srcStripP++) 
-      _unpackStrip4Bpu(&srcStripP, &dstStripP);
-    _unpackRemainderUnits4Bpu((U8*) srcStripP, (U8*) dstStripP, nRemainderUnits);
-  }
-}
+#endif
