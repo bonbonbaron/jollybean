@@ -417,11 +417,11 @@ Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *an
     }
     e = stripNew(colormapA, stripLen, cmP->bpp, &cmP->sdP, verbose);
     if (!e) {
-      e = stripDataIni(cmP->sdP);
+      e = stripIni(cmP->sdP);
     }
     if (!e) {
       // We're gonna cheat and preview the ground truth image here. 
-      // We'll test stripDataIni properly in _validateWholeInput().
+      // We'll test stripIni properly in _validateWholeInput().
       arrayDel((void**) &cmP->sdP->unmappedDataA);
       cmP->sdP->unmappedDataA = colormapA;
     }
@@ -470,7 +470,10 @@ static Error _validateWholeInput(Colormap *cmP, ColorPalette *cpP) {
     cmClr(cmP);
   }
   if (!e) {
-    e = stripDataIni(cmP->sdP);
+    e = stripIni(cmP->sdP);
+  }
+  if (!e) {
+    printStripData(cmP->sdP);
   }
 #if 1
   // Verify array lengths match.
@@ -560,6 +563,9 @@ Error img(char *entityNameP, Database *cpDirP, Database *cmDirP, AnimJsonData *a
   }
   if (!e && verbose) {
     e = _validateWholeInput(&cm, &cp);
+  }
+  if (!e && verbose) {
+    printStripData(cm.sdP);
   }
 
   // Update color palette database if necessary
