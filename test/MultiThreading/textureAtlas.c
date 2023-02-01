@@ -40,19 +40,20 @@ void* doIt(void *voidP) {
 static void _threadFuncArgArrayIni(ThreadFuncArg *argA, U32 *nThreadsNeededP, void *_array) {
   if (argA && _array) {
     U32 nElemsToProcess = arrayGetNElems(_array);
-    if (nElemsToProcess < *nThreadsNeededP) {
-      *nThreadsNeededP = nElemsToProcess;
+    U32 nThreads = arrayGetNElems(argA);
+    if (nElemsToProcess < nThreads) {
+      nThreads = nElemsToProcess;
     }
 
     // Tell each thread where to start in array and how many items to process
-    const U32 nElemsPerThread = ((nElemsToProcess + (*nThreadsNeededP >> 1)) / *nThreadsNeededP);
-    for (U32 i = 0; i < *nThreadsNeededP; ++i) {
+    const U32 nElemsPerThread = ((nElemsToProcess + (nThreads >> 1)) / nThreads);
+    for (U32 i = 0; i < nThreads; ++i) {
       argA[i].startIdx = i * nElemsPerThread;
       argA[i].nElemsToProcess = nElemsPerThread;
     }
     // Last thread may have a different number of elems to process then the rest
     // (This might be faster than modulo.)
-    argA[*nThreadsNeededP - 1].nElemsToProcess = nElemsToProcess - (nElemsPerThread * (*nThreadsNeededP - 1));
+    argA[nThreads - 1].nElemsToProcess = nElemsToProcess - (nElemsPerThread * (nThreads - 1));
   }
 }
 
@@ -67,15 +68,13 @@ Error multiThread( ThreadFunc funcP, void *_array) {
   Error e = arrayNew((void**) &thArgA, sizeof(ThreadFuncArg), N_CORES);
 
   if (!e) {
-    U32 nThreadsNeeded = N_CORES;
-    // nThreadsNeeded gets updated to fewer than N_CORES if fewer elements than cores exist.
-    _threadFuncArgArrayIni(thArgA, &nThreadsNeeded, _array);
+    _threadFuncArgArrayIni(thArgA, _array);
 
-    for (int i = 0; i < nThreadsNeeded; ++i) {
+    for (int i = 0; i < N_CORES; ++i) {
       threadIni_(&threadA[i], doIt, &thArgA[i]);
     }
 
-    for (int i = 0; i < nThreadsNeeded; ++i) {
+    for (int i = 0; i < N_CORES; ++i) {
       threadJoin_(threadA[i]);
     }
   }
