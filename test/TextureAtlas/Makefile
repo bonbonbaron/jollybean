@@ -11,7 +11,7 @@ CP_INC_DIR = ${COLOR_PALETTE_DIR}/include
 CP_OBJ_DIR = ${COLOR_PALETTE_DIR}/obj
 
 #~/jb/build/Seed/Genome/Gene/Body/Graybody/Colormap/src/I
-./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./textureAtlas.o ../../build/xRender.o ../../build/x.o ../../build/data.o ../../build/interface.o ../../build/data.o
+./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./textureAtlas.o ../../build/xRender.o ../../build/x.o ../../build/data.o ../../build/interface.o
 	gcc ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./textureAtlas.o ../../build/interface.o $(shell sdl2-config --libs) ../../build/xRender.o ../../build/x.o ../../build/data.o -o $@
 	touch $@
 

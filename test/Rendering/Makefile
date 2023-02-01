@@ -1,36 +1,50 @@
-./o: ${HOME}/jb/build/Seed/Genome/Gene/Body/Graybody/Colormap/obj/redColormap.o ${HOME}/jb/build/Seed/Genome/Gene/Body/Palette/Color/obj/redColorPalette.o ./render.o ../../build/xRender.o ../../build/x.o ../../build/data.o ../../build/interface.o ../../build/data.o
-	gcc ${HOME}/jb/build/Seed/Genome/Gene/Body/Graybody/Colormap/obj/redColormap.o ${HOME}/jb/build/Seed/Genome/Gene/Body/Palette/Color/obj/redColorPalette.o ./render.o ../../build/interface.o $(shell sdl2-config --libs) ../../utils/body/build/previewImg.o ../../build/xRender.o ../../build/x.o ../../build/data.o -o $@
+BODY_DIR = ${HOME}/jb/build/Seed/Genome/Gene/Body
+
+COLORMAP_DIR = ${BODY_DIR}/Graybody/Colormap
+CM_SRC_DIR = ${COLORMAP_DIR}/src
+CM_INC_DIR = ${COLORMAP_DIR}/include
+CM_OBJ_DIR = ${COLORMAP_DIR}/obj
+
+COLOR_PALETTE_DIR = ${BODY_DIR}/Palette/Color
+CP_SRC_DIR = ${COLOR_PALETTE_DIR}/src
+CP_INC_DIR = ${COLOR_PALETTE_DIR}/include
+CP_OBJ_DIR = ${COLOR_PALETTE_DIR}/obj
+
+./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./render.o ../../build/xRender.o ../../build/x.o ../../build/data.o ../../build/interface.o ../../utils/body/build/previewImg.o 
+	gcc ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./render.o ../../utils/body/build/previewImg.o ../../build/interface.o $(shell sdl2-config --libs) ../../build/xRender.o ../../build/x.o ../../build/data.o -o $@
 	touch $@
 
 ./render.o: ./render.c
-	gcc -g -c render.c -I../../src/include/ -I../../utils/body/src/include -I${HOME}/jb/build/Seed/Genome/Gene/Body/Graybody/Colormap/include/ -I${HOME}/jb/build/Seed/Genome/Gene/Body/Palette/Color/include/ $(shell sdl2-config --cflags --cflags) -o $@
+	gcc -g -c render.c -I../../src/include/ -I../../utils/body/src/include/ -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags --cflags) -o $@
 	touch $@
 
-${HOME}/jb/build/Seed/Genome/Gene/Body/Graybody/Colormap/obj/redColormap.o: ${HOME}/jb/build/Seed/Genome/Gene/Body/Graybody/Colormap/src/redColormap.c
+${CM_OBJ_DIR}/%Colormap.o: ${CM_SRC_DIR}/%Colormap.c
 	gcc -g -I../../src/include -c $< $(shell sdl2-config --cflags) -o $@
 	touch $@
 
-${HOME}/jb/build/Seed/Genome/Gene/Body/Palette/Color/obj/redColorPalette.o: ${HOME}/jb/build/Seed/Genome/Gene/Body/Palette/Color/src/redColorPalette.c
+${CP_OBJ_DIR}/%ColorPalette.o: ${CP_SRC_DIR}/%ColorPalette.c
 	gcc -g -I../../src/include -c $< $(shell sdl2-config --cflags) -o $@
 	touch $@
 
-#../../build/data.o: ../../src/data.c
-	#make -C ../../
+../../build/%.o: ../../src/%.c
+	make -C ../../
+	touch $@
 
-#../../build/xRender.o: ../../src/xRender.c: 
-	#make -C ../../
+${CP_SRC_DIR}/%ColorPalette.c:
+	../../utils/body/bin/body $*
+	touch $@
 
-${HOME}/jb/build/Seed/Genome/Gene/Body/Palette/Color/src/redColorPalette.c:
-	../../utils/body/bin/body red
-
-${HOME}/jb/build/Seed/Genome/Gene/Body/Graybody/Colormap/src/redColormap.c:
-	../../utils/body/bin/body red
+${CM_SRC_DIR}/%Colormap.c:
+	../../utils/body/bin/body $*
+	touch $@
 
 .PHONY: clean
 clean:
 	rm -f ./o 2>/dev/null
 	rm -f ./render.o 2>/dev/null
-	rm -f ${HOME}/jb/build/Seed/Genome/Gene/Body/Palette/Color/obj/redColorPalette.o 2>/dev/null
-	rm -f ${HOME}/jb/build/Seed/Genome/Gene/Body/Graybody/Colormap/obj/redColormap.o 2>/dev/null
-	rm -f ${HOME}/jb/build/Seed/Genome/Gene/Body/Palette/Color/src/redColorPalette.c 2>/dev/null
-	rm -f ${HOME}/jb/build/Seed/Genome/Gene/Body/Graybody/Colormap/src/redColormap.c 2>/dev/null
+	rm -f ${CP_INC_DIR}/*.h 2>/dev/null
+	rm -f ${CP_OBJ_DIR}/*.o 2>/dev/null
+	rm -f ${CP_SRC_DIR}/*.c 2>/dev/null
+	rm -f ${CM_INC_DIR}/*.h 2>/dev/null
+	rm -f ${CM_OBJ_DIR}/*.o 2>/dev/null
+	rm -f ${CM_SRC_DIR}/*.c 2>/dev/null

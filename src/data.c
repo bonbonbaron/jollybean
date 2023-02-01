@@ -1242,7 +1242,6 @@ static Error _unpackStripset(Stripset *ssP) {
       mask = 0x0f0f0f0f;
       break;
     default:
-      printf("[_unpackStripset] This data isn't packed.\n");
       return SUCCESS;
   }
 
@@ -1260,7 +1259,7 @@ static Error _unpackStripset(Stripset *ssP) {
   }
   // While theres >= 4 units left in packed word...
   for (j = 0; 
-       !e && nUnitsInExtraPackedWord >= sizeof(U32); 
+       nUnitsInExtraPackedWord >= sizeof(U32); 
        nUnitsInExtraPackedWord -= sizeof(U32), j += ssP->bpu) {
     *(dstUnpackedWordP++) = (*packedWordP >> j) & mask;
   }
