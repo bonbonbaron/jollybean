@@ -39,7 +39,7 @@ Error writeColorPalette(char *imgNameA, ColorPalette *cpP, U8 verbose) {
     fprintf(fP, "#include \"xRender.h\"\n\n");
     // Palette Array
     fprintf(fP, "Color_ %sPaletteA[] = {\n", imgNameA);
-    writeRawData32(fP, (U32*) cpP->colorA, cpP->nColors);
+    writeRawData8(fP, (U8*) cpP->colorA, cpP->nColors * sizeof(Color_));
     fprintf(fP, "};\n\n");
     fprintf(fP, "ColorPalette %sColorPalette = {\n", imgNameA);
     fprintf(fP, "\t.nColors = %d,\n", cpP->nColors);
@@ -83,7 +83,6 @@ Error writeAsepriteColorPalette(char *imgNameA, EntryData *paletteData, U8 verbo
   return SUCCESS;
 }
 
-
 Error writeColormapHeaderFile(char *imgNameA, U8 verbose) {
   FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Graybody/Colormap/include", imgNameA, "Colormap.h", verbose);
   if (fP) {
@@ -117,8 +116,6 @@ Error writeColormap(char *imgNameA, Colormap *cmP, U8 verbose) {
   if (verbose) {
     printf("writing colormap...\n");
   }
-  // Make target filepath to save this stripmap in.
-//Error getBuildFilePath(char **buildFilePath, char *buildLocalDirName, char *buildFileName, char *buildFileSuffix) {
   FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Graybody/Colormap/src", imgNameA, "Colormap.c", verbose);
   Error e = SUCCESS;
   if (fP) {
@@ -140,8 +137,7 @@ Error writeColormap(char *imgNameA, Colormap *cmP, U8 verbose) {
     fprintf(fP, "\t.w = %d,\n", cmP->w);
     fprintf(fP, "\t.h = %d,\n", cmP->h);
     fprintf(fP, "\t.pitch = %d,\n", cmP->pitch);
-    fprintf(fP, "\t.stripsetP = &%sStripset,\n", imgNameA);
-    fprintf(fP, "\t.stripmapP = &%sStripmap,\n", imgNameA);
+    fprintf(fP, "\t.sdP = &%sStripData,\n", imgNameA);
     fprintf(fP, "};\n\n");
   }
   // Close file.

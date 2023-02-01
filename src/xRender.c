@@ -25,10 +25,7 @@ Error cmGen(Colormap *cmP) {
     }
 		// If not reconstructed yet, inflate strip set if it's still compressed (inflate() checks internally).
 		if (cmP->sdP->ss.infP) {
-			e = inflatableIni(cmP->sdP->ss.infP);
-    }
-		else {
-			return E_NULL_VAR;
+      e = stripIni(cmP->sdP);
     }
 
     // TODO get rid ofthis once done debugging
@@ -36,41 +33,9 @@ Error cmGen(Colormap *cmP) {
     for (U8 *eP = (U8*) cmP->sdP->ss.infP->inflatedDataP; eP < (U8*) cmP->sdP->sm.infP->inflatedDataP + cmP->sdP->ss.infP->inflatedLen; ++eP) {
       printf("%d ", *eP);
     }
-		// If CM source is strip-mapped, inflate strip map if it's still compressed (same as above).
-		if (!e && cmP->sdP->sm.infP) {
-			e = inflatableIni(cmP->sdP->sm.infP);
-    }
-		// Allocate colormap memory.
-		if (!e) {
-			e = jbAlloc((void**) &cmP->sdP->unstrippedDataA, sizeof(U8), cmP->w * cmP->h);
-    }
 	}
 	else {
 		e = E_BAD_ARGS;
-  }
-	// Expand strip set into image.
-	if (!e) {
-    // Count remainder of pixels to process after all the whole strips.
-    // Mapped stripsets need to be both unpacked and indexed. They may need strips to be flipped too.
-		switch (cmP->bpp) {
-			case 1:
-        //inflateStripsWithBpu1(&cmP->sdP->ss, &cmP->sdP->sm, (U32*) cmP->sdP->unstrippedDataA);
-				break;
-			case 2:
-        // First read all mapped strips into the target colormap.
-        //inflateStripsWithBpu2(&cmP->sdP->ss, &cmP->sdP->sm, (U32*) cmP->sdP->unstrippedDataA);
-				break;
-			case 4: 
-        // First read all mapped strips into the target colormap.
-        //inflateStripsWithBpu4(&cmP->sdP->ss, &cmP->sdP->sm, (U32*) cmP->sdP->unstrippedDataA);
-				break;
-			default:  
-				e = E_UNSUPPORTED_PIXEL_FORMAT;
-				break;
-		}
-	}
-	else {
-		cmClr(cmP);
   }
 
 	return e;

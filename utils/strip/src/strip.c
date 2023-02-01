@@ -473,37 +473,42 @@ Error writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripDataS *sdP
     return E_BAD_ARGS;
   }
 
-  char infName[strlen(objNameA) + strlen("Stripset") + strlen("Inf")];
+  char smInfName[strlen(objNameA) + strlen("Stripmap") + strlen("Inf")];
+  memset(smInfName, 0, strlen(smInfName));
+  strcpy(smInfName, objNameA);
+  strcat(smInfName, "Stripmap");
+  strcat(smInfName, "Inf");
+  char ssInfName[strlen(objNameA) + strlen("Stripset") + strlen("Inf")];
+  memset(ssInfName, 0, strlen(ssInfName));
+  strcpy(ssInfName, objNameA);
+  strcat(ssInfName, "Stripset");
+  strcat(ssInfName, "Inf");
 
-  strcpy(infName, objNameA);
-  strcat(infName, "Stripset");
-  strcat(infName, "Inf");
 
-  Error e = inflatableAppend(sdP->ss.infP, fP, infName);
-
+  // Stripset inflatable
+  Error e = inflatableAppend(sdP->ss.infP, fP, ssInfName);
   if (!e) {
+    // Stripmap inflatable
+    e = inflatableAppend(sdP->sm.infP, fP, smInfName);
+  }
+  if (!e) {
+    //Stripmap
     fprintf(fP, "\n\n");
-    // Strip set 
-    fprintf(fP, "Stripset %sStripset = {\n", objNameA);
-    fprintf(fP, "\t.nUnitsPerStrip = %d,\n", sdP->ss.nUnitsPerStrip);  // in case we ever want to give each sprite its own strip length... wuh oh.
-    fprintf(fP, "\t.nUnits  = %d,\n", sdP->ss.nUnits);
-    fprintf(fP, "\t.bpu  = %d,\n", sdP->ss.bpu);
+    fprintf(fP, "StripDataS %sStripData = {\n", objNameA);
+    // Stripmap
+    fprintf(fP, "\t.sm = {\n");
+    fprintf(fP, "\t\t.nIndices = %d,\n", sdP->sm.nIndices);
+    fprintf(fP, "\t\t.infP = &%s\n", smInfName);
     fprintf(fP, "\t},\n");
-    fprintf(fP, "\t.infP = &%s,\n", infName);
-    fprintf(fP, "};\n\n");
-  }
-  if (!e) {
-    memset(infName, 0, strlen(infName));
-    strcpy(infName, objNameA);
-    strcat(infName, "Stripmap");
-    strcat(infName, "Inf");
-    e = inflatableAppend(sdP->sm.infP, fP, infName);
-  }
-  if (!e) {
-    fprintf(fP, "\n\n");
-    fprintf(fP, "Stripmap %sStripmap = {\n", objNameA);
-    fprintf(fP, "\t.nIndices = %d,\n", sdP->sm.nIndices);
-    fprintf(fP, "\t.infP = &%s\n", infName);
+    // Stripset
+    fprintf(fP, "\t.ss = {\n");
+    fprintf(fP, "\t\t.nUnitsPerStrip = %d,\n", sdP->ss.nUnitsPerStrip);  // in case we ever want to give each sprite its own strip length... wuh oh.
+    fprintf(fP, "\t\t.nUnits  = %d,\n", sdP->ss.nUnits);
+    fprintf(fP, "\t\t.bpu  = %d,\n", sdP->ss.bpu);
+    fprintf(fP, "\t\t.infP = &%s,\n", ssInfName);
+    fprintf(fP, "\t},\n");
+    // Unstripped data
+    fprintf(fP, "\t.unstrippedDataA = NULL\n");
     fprintf(fP, "};\n\n");
   }
 

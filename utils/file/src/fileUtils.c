@@ -66,6 +66,7 @@ void writeRawData8(FILE *fP, U8 *byteA, U32 nBytes) {
 void writeRawData16(FILE *fP, U16 *byteA, U16 nBytes) {
   U16 *cmpDataP = byteA;
   U16 *cmpDataEndP = cmpDataP + nBytes;
+  fprintf(fP, "\t");
   for (U16 counter = 0; cmpDataP < cmpDataEndP; ++cmpDataP) {
     fprintf(fP, "0x%04x, ", *cmpDataP);
     if (++counter >= 8) {

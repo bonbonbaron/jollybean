@@ -98,6 +98,7 @@ Error inflatableAppend(Inflatable *inflatableP, FILE *fP, char *inflatableNameA)
     fprintf(fP, "U8 %sInfCompressedDataA[] = {\n", inflatableNameA);
     U8 *infByteP = inflatableP->compressedDataA;
     U8 *infByteEndP = infByteP + inflatableP->compressedLen;
+    fprintf(fP, "\t");
     for (; infByteP < infByteEndP; ++infByteP) {
       fprintf(fP, "0x%02x, ", *infByteP);
       if (++counter >= 16) {
@@ -106,7 +107,7 @@ Error inflatableAppend(Inflatable *inflatableP, FILE *fP, char *inflatableNameA)
       }
       ++len;
     }
-    fprintf(fP, "};\n\n");
+    fprintf(fP, "\n};\n\n");
     // Inflatble itself
     fprintf(fP, "Inflatable %s = {\n", inflatableNameA);
     fprintf(fP, "\t.compressedLen  = %d,\n", inflatableP->compressedLen);

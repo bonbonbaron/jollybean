@@ -1,4 +1,5 @@
 #include "xRender.h"
+#include "previewImg.h"
 #include "redColormap.h"
 #include "redColorPalette.h"
 

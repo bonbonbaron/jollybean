@@ -90,7 +90,7 @@ Error surfaceIni(Surface_ *surfaceP, Colormap *cmP, ColorPalette *cpP) {
   //
   //SDL_SetColorKey(surfaceP, SDL_TRUE, 0);
   memset(surfaceP->format->palette->colors, 0, sizeof(Color_) * surfaceP->format->palette->ncolors);
-  memcpy(surfaceP->format->palette->colors, cpP->colorA, arrayGetElemSz(cpP->colorA) * cpP->nColors);
+  memcpy(surfaceP->format->palette->colors, cpP->colorA, sizeof(Color_) * cpP->nColors);
   //surfaceP->pixels = cmDataP;
   printf("copying pixels into surface pixels");
   memcpy(surfaceP->pixels, cmP->sdP->unstrippedDataA, arrayGetElemSz(cmP->sdP->unstrippedDataA) * arrayGetNElems(cmP->sdP->unstrippedDataA));
