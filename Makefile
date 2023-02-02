@@ -16,6 +16,7 @@ TGTINCLUDDIR = /usr/local/include/jollybean/
 IFLAGS=-I./src/include/
 
 CFLAGS_COMMON  = -Wall \
+								 -lpthread \
 							   $(IFLAGS) -ffunction-sections \
 							 	 -fdata-sections -s -fno-ident -fmerge-all-constants \
 							 	 -fomit-frame-pointer -fno-stack-protector -O0

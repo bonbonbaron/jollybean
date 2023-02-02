@@ -2,10 +2,9 @@
 #define INTERFACE_H
 #include "data.h"
 
-#define USE_SDL
+#define USE_SDL 1
 
-//#ifdef USE_SDL
-#if 1
+#if USE_SDL
 #include "SDL.h"
 // Video
 #define Color_ SDL_Color

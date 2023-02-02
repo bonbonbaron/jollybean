@@ -1,5 +1,7 @@
 #ifndef DATA_H
 #define DATA_H
+#include <pthread.h>
+//#include <bits/pthreadtypes.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -88,7 +90,7 @@ void* arrayGetVoidElemPtr(const void *arryP, S32 idx);
 Error arraySetVoidElem(void *arrayP, U32 idx, const void *elemSrcP);
 
 // Maps 
-// A bit's position in a bitfield is the Key to the map. The number of bits behind it is
+// A bit's position in a bitfield is the Key to the map. The number of high bits behind it is
 // the index of the key's value in the array.
 // If you know you're only going to put four things in the map, you'll only need one byte.
 // If you're putting more than 255 things in there, you'll need to typedef Key to U16 or,
@@ -134,6 +136,7 @@ void histoDel(U32 **histoPP);
 
 // Inflatables 
 typedef struct {
+  pthread_mutex_t lock;  // TODO Add an #ifdef to make this disappear in single core computers.
 	U32 compressedLen;
 	U32 inflatedLen;
 	void *inflatedDataP;
@@ -187,6 +190,7 @@ typedef U16 StripmapElem;
 
 // gtrip set's inflated data is in U32 format.
 typedef struct {
+  pthread_mutex_t lock;
   U8 nUnitsPerStrip;
   U8 bpu;  // bits per unit
   U32 nUnits;
@@ -200,6 +204,7 @@ typedef struct {
 } Stripmap;
 
 typedef struct {
+  pthread_mutex_t lock;
   Stripmap sm;
   Stripset ss;
   U8 *unstrippedDataA;
@@ -207,5 +212,28 @@ typedef struct {
 
 void stripClr(StripDataS *sdP);
 Error stripIni(StripDataS *sdP);
+Error stripsetUnpack(Stripset *ssP);
+Error stripAssemble(StripDataS *sdP);
+Error stripIni(StripDataS *sdP);
 
-#endif
+// ==============
+// Multithreading
+// ==============
+#define N_CORES (4)
+#define threadIni_(threadP_, funcP_, argP_) pthread_create(threadP_, NULL, (DummyFuncCast) funcP_, (void*) argP_)
+#define threadJoin_(threadP_) pthread_join(threadP_, NULL)
+
+typedef pthread_t Thread;
+
+typedef struct {
+  U32 startIdx;
+  U32 nElemsToProcess;
+  void *array;  // threads need to receive a copy of the pointer to data to operate on
+} ThreadFuncArg;
+
+typedef void* (*ThreadFunc)(ThreadFuncArg*);
+typedef void* (*DummyFuncCast)(void*);  // trick compiler into allowing ThreadFuncs in pthread_create
+
+Error multiThread( ThreadFunc funcP, void *_array);
+
+#endif  // #ifndef DATA_H

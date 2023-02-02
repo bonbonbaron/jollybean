@@ -919,22 +919,25 @@ void *tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_len, siz
 
 Error inflatableIni(Inflatable *inflatableP) {
 	Error e = SUCCESS;
-	long long unsigned int expectedInflatedLen;
-	if (inflatableP != NULL && inflatableP->inflatedDataP == NULL) {
-
-		e = jbAlloc(&inflatableP->inflatedDataP, inflatableP->inflatedLen, 1);
-		if (!e) {
-			expectedInflatedLen = inflatableP->inflatedLen;
-			inflatableP->inflatedDataP = tinfl_decompress_mem_to_heap(
-                                     (const void*) inflatableP->compressedDataA, 
-                                     (size_t) inflatableP->compressedLen, 
-                                     &inflatableP->inflatedLen,
-                                     TINFL_FLAG_PARSE_ZLIB_HEADER); 
-			if (inflatableP->inflatedLen != expectedInflatedLen) {
-				e = E_UNEXPECTED_DCMP_SZ;
-				jbFree(&inflatableP->inflatedDataP);
-			}
-		}
+	if (inflatableP != NULL) {
+    pthread_mutex_lock(&inflatableP->lock);
+    if (inflatableP->inflatedDataP == NULL) {
+      long long unsigned int expectedInflatedLen;
+      e = jbAlloc(&inflatableP->inflatedDataP, inflatableP->inflatedLen, 1);
+      if (!e) {
+        expectedInflatedLen = inflatableP->inflatedLen;
+        inflatableP->inflatedDataP = tinfl_decompress_mem_to_heap(
+                                       (const void*) inflatableP->compressedDataA, 
+                                       (size_t) inflatableP->compressedLen, 
+                                       &inflatableP->inflatedLen,
+                                       TINFL_FLAG_PARSE_ZLIB_HEADER); 
+        if (inflatableP->inflatedLen != expectedInflatedLen) {
+          e = E_UNEXPECTED_DCMP_SZ;
+          jbFree(&inflatableP->inflatedDataP);
+        }
+      }
+    }
+    pthread_mutex_unlock(&inflatableP->lock);
 	}
   return e;
 }
@@ -1215,10 +1218,11 @@ __inline__ static void _unpackStrip4Bpu(U32 **srcStripPP, U32 **dstStripPP) {
 #endif
 
 // Unpack bits to reconstruct original data (uesd for debugging img.c)
-static Error _unpackStripset(Stripset *ssP) {
+Error stripsetUnpack(Stripset *ssP) {
   if (!ssP || (ssP && !ssP->infP) || (ssP && ssP->infP && !ssP->infP->compressedDataA)) {
     return E_BAD_ARGS;
   }
+  pthread_mutex_lock(&ssP->lock);
   // Packed data is all whole words. Unpacked may not be.
   // Only way to tell is by looking at the number of units.
   const U32 nPackedUnitsPerWord     = N_BITS_PER_WORD / ssP->bpu;
@@ -1227,7 +1231,7 @@ static Error _unpackStripset(Stripset *ssP) {
   // start copy
   Error e = arrayNew((void**) &ssP->unpackedDataP, sizeof(U8), ssP->nUnits);
   if (e) {
-    return e;
+    goto rememberToUnlock;
   }
 
   U32 mask = 0;
@@ -1242,7 +1246,7 @@ static Error _unpackStripset(Stripset *ssP) {
       mask = 0x0f0f0f0f;
       break;
     default:
-      return SUCCESS;
+      goto rememberToUnlock;
   }
 
   U32 *packedWordP    = (U32*) ssP->infP->inflatedDataP;
@@ -1270,14 +1274,19 @@ static Error _unpackStripset(Stripset *ssP) {
     memcpy((void*) dstUnpackedWordP, &lastUnpackedWord, nUnitsInExtraPackedWord);
   }
 
+rememberToUnlock:
+  pthread_mutex_unlock(&ssP->lock);
+
   return e;
 }
 
-static Error _pieceTogetherMappedStrips(StripDataS *sdP) {
+Error stripAssemble(StripDataS *sdP) {
   if (!sdP || !sdP->ss.unpackedDataP || !sdP->sm.infP->inflatedDataP || !sdP->unstrippedDataA
       || sdP->ss.nUnitsPerStrip == 0) {
     return E_BAD_ARGS;
   } 
+  pthread_mutex_lock(&sdP->lock);
+  
   // Piece together strips
   StripmapElem *smElemP = sdP->sm.infP->inflatedDataP;
   StripmapElem *smElemEndP = smElemP + sdP->sm.nIndices;
@@ -1287,17 +1296,19 @@ static Error _pieceTogetherMappedStrips(StripDataS *sdP) {
            sdP->ss.unpackedDataP + (*smElemP * sdP->ss.nUnitsPerStrip),
            sdP->ss.nUnitsPerStrip);
   }
+  pthread_mutex_unlock(&sdP->lock);
 
   return SUCCESS;
 }
 
+// This is the single-threaded version of inflating stripd data.
 Error stripIni(StripDataS *sdP) {
   Error e = inflatableIni(sdP->ss.infP);
   if (!e) {
     e = inflatableIni(sdP->sm.infP);
   }
   if (!e) {
-    e = _unpackStripset(&sdP->ss);
+    e = stripsetUnpack(&sdP->ss);
   }
   if (!e) {
     e = arrayNew((void**) &sdP->unstrippedDataA, 
@@ -1305,7 +1316,60 @@ Error stripIni(StripDataS *sdP) {
                  sdP->sm.nIndices * sdP->ss.nUnitsPerStrip);
   }
   if (!e) {
-    e = _pieceTogetherMappedStrips(sdP);
+    e = stripAssemble(sdP);
   }
   return e;
 }
+
+// ==============
+// Multithreading 
+// ==============
+static void _threadFuncArgArrayIni(ThreadFuncArg *argA, U32 *nThreadsNeededP, void *_array) {
+  if (argA && _array) {
+    U32 nElemsToProcess = arrayGetNElems(_array);
+    if (nElemsToProcess < *nThreadsNeededP) {
+      *nThreadsNeededP = nElemsToProcess;
+    }
+
+    // Tell each thread where to start in array and how many items to process
+    const U32 nElemsPerThread = ((nElemsToProcess + (*nThreadsNeededP >> 1)) / *nThreadsNeededP);
+    for (U32 i = 0; i < *nThreadsNeededP; ++i) {
+      argA[i].startIdx = i * nElemsPerThread;
+      argA[i].nElemsToProcess = nElemsPerThread;
+      argA[i].array = _array;
+    }
+    // Last thread may have a different number of elems to process then the rest
+    // (This might be faster than modulo.)
+    argA[*nThreadsNeededP - 1].nElemsToProcess = nElemsToProcess - (nElemsPerThread * (*nThreadsNeededP - 1));
+  }
+}
+
+
+Error multiThread( ThreadFunc funcP, void *_array) {
+  if (!_array || !funcP) {
+    return E_BAD_ARGS;
+  }
+
+  Thread threadA[N_CORES];
+  ThreadFuncArg *thArgA = NULL;
+  Error e = arrayNew((void**) &thArgA, sizeof(ThreadFuncArg), N_CORES);
+
+  if (!e) {
+    U32 nThreadsNeeded = N_CORES;
+    // nThreadsNeeded gets updated to fewer than N_CORES if fewer elements than cores exist.
+    _threadFuncArgArrayIni(thArgA, &nThreadsNeeded, _array);
+
+    for (int i = 0; i < nThreadsNeeded; ++i) {
+      threadIni_(&threadA[i], funcP, &thArgA[i]);
+    }
+
+    for (int i = 0; i < nThreadsNeeded; ++i) {
+      threadJoin_(threadA[i]);
+    }
+  }
+
+  arrayDel((void**) &thArgA);
+
+  return e;
+}
+

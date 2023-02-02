@@ -110,7 +110,7 @@ typedef struct {
   U8 nEntitiesPossible;  // total number of positions in position node array
   U8 nEntitiesToSpawn;  // number of position nodes whose keyholes the *keyP fits
   Seed *seedP;
-  Key *keyP;   // if an entity can spawn in one of multiple places, the key determines which
+  Key *keyP;   // if an entity can spawn in one of multiple places, this determines which one.
   Map **geneMutationMPA;  // array of pointers to maps of gene mutations; ptrs are distro'd to entities
   PositionNode *positionNodeA;  // all possible places these seeds can spawn
 } Spawn;

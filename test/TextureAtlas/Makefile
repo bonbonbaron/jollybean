@@ -11,24 +11,20 @@ CP_INC_DIR = ${COLOR_PALETTE_DIR}/include
 CP_OBJ_DIR = ${COLOR_PALETTE_DIR}/obj
 
 #~/jb/build/Seed/Genome/Gene/Body/Graybody/Colormap/src/I
-./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./textureAtlas.o ../../build/xRender.o ../../build/x.o ../../build/data.o ../../build/interface.o
-	cc ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./textureAtlas.o ../../build/interface.o $(shell sdl2-config --libs) ../../build/xRender.o ../../build/x.o ../../build/data.o -lpthread -o $@
+./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./main.o ../../build/xRender.o ../../build/x.o ../../build/data.o ../../build/interface.o ../../utils/body/build/previewImg.o
+	cc ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ../../utils/body/build/previewImg.o ./main.o ../../build/interface.o $(shell sdl2-config --libs) ../../build/xRender.o ../../build/x.o ../../build/data.o -lpthread -o $@
 	touch $@
 
-./textureAtlas.o: ./textureAtlas.c
-	gcc -g -c textureAtlas.c -I../../src/include/ -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags --cflags) -lpthread -o $@
+./main.o: ./main.c
+	gcc -g -c main.c -I../../src/include/ -I../../utils/body/src/include -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags --cflags) -o $@
 	touch $@
 
 ${CM_OBJ_DIR}/%Colormap.o: ${CM_SRC_DIR}/%Colormap.c
-	gcc -g -I../../src/include -c $< $(shell sdl2-config --cflags) -o $@
+	gcc -g -I../../src/include -c ${CM_SRC_DIR}/$*Colormap.c $(shell sdl2-config --cflags) -o $@
 	touch $@
 
 ${CP_OBJ_DIR}/%ColorPalette.o: ${CP_SRC_DIR}/%ColorPalette.c
 	gcc -g -I../../src/include -c $< $(shell sdl2-config --cflags) -o $@
-	touch $@
-
-../../build/%.o: ../../src/%.c
-	make -C ../../
 	touch $@
 
 ${CP_SRC_DIR}/%ColorPalette.c:
@@ -39,6 +35,9 @@ ${CM_SRC_DIR}/%Colormap.c:
 	../../utils/body/bin/body $*
 	touch $@
 
+../../build/%.o: ../../src/%.c
+	make -C ../../
+	touch $@
 .PHONY: clean
 clean:
 	rm -f ./o 2>/dev/null
