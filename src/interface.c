@@ -7,7 +7,7 @@ Error guiNew(Window_ **windowPP, Renderer_ **rendererPP) {
   }
 	// Init SDL
 	if (SDL_Init(SDL_INIT_VIDEO) != SUCCESS) {
-    printf("[guiNew] SDL error: %s\n", SDL_GetError());
+    //printf("[guiNew] SDL error: %s\n", SDL_GetError());
 		return EXIT_FAILURE;
   }
 	// Init window
@@ -19,7 +19,7 @@ Error guiNew(Window_ **windowPP, Renderer_ **rendererPP) {
 	// Init renderer
 	*rendererPP = SDL_CreateRenderer(*windowPP, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 	if (!*rendererPP) {
-    printf("%s\n", SDL_GetError());
+    //printf("%s\n", SDL_GetError());
 		SDL_DestroyWindow(*windowPP);
 		SDL_Quit();
 		return EXIT_FAILURE;
@@ -50,11 +50,8 @@ Error surfaceNew(Surface_ **surfacePP, Colormap *cmP) {
   //*surfacePP = SDL_CreateRGBSurfaceWithFormat(0, w, h, 32, SDL_PIXELFORMAT_RGBA8888);
   //*surfacePP = SDL_CreateRGBSurfaceWithFormat(0, cmP->w, cmP->h, 8, SDL_PIXELFORMAT_INDEX8);
   *surfacePP = SDL_CreateRGBSurface(0, cmP->w, cmP->h, 8, 0, 0, 0, 0);
-  if (*surfacePP) {
-    printf("succefully made surface with %d colors\n", (*surfacePP)->format->palette->ncolors);
-  }
-  else {
-    printf("\n\nSDL error: %s\n\n\n", SDL_GetError());
+  if (!*surfacePP) {
+    //printf("\n\nSDL error: %s\n\n\n", SDL_GetError());
 		return E_UNSUPPORTED_PIXEL_FORMAT;
   }
 #endif
@@ -68,7 +65,6 @@ Error surfaceIni(Surface_ *surfaceP, Colormap *cmP, ColorPalette *cpP) {
     return E_BAD_ARGS;
   }
   //Palette_ palette = {nColors, colorA, 0, 0};
-  printf("starting to make palette\n");
 #if 0
   Palette_ *palP = NULL;
   Error e = jbAlloc((void**) &palP, sizeof(Palette_), 1);
@@ -92,7 +88,6 @@ Error surfaceIni(Surface_ *surfaceP, Colormap *cmP, ColorPalette *cpP) {
   memset(surfaceP->format->palette->colors, 0, sizeof(Color_) * surfaceP->format->palette->ncolors);
   memcpy(surfaceP->format->palette->colors, cpP->colorA, sizeof(Color_) * cpP->nColors);
   //surfaceP->pixels = cmDataP;
-  printf("copying pixels into surface pixels");
   memcpy(surfaceP->pixels, cmP->sdP->unstrippedDataA, arrayGetElemSz(cmP->sdP->unstrippedDataA) * arrayGetNElems(cmP->sdP->unstrippedDataA));
   return SUCCESS;
 #endif

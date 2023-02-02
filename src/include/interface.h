@@ -64,6 +64,7 @@
 typedef U8 ColormapIdx;
 #define N_COLORS_SUPPORTED_MAX_ (16)
 typedef struct {
+  atomic_uchar state;  // notice how we slid this byte in there for free B^)
   U8 bpp;
   U16 w, h, pitch;  // in pixel units; determine actual step size by pixel format
   StripDataS *sdP;
@@ -73,7 +74,6 @@ typedef struct {
   U8 nColors;
   Color_ *colorA;
 } ColorPalette;
-
 
 Error surfaceNew(Surface_ **surfacePP, Colormap *cmP);
 Error surfaceIni(Surface_ *surfaceP, Colormap *cmP, ColorPalette *cpP);

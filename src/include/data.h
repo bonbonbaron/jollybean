@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
+#include <stdatomic.h>
 
 typedef unsigned char U8;
 typedef char S8;
@@ -202,7 +203,6 @@ typedef struct {
 } Stripmap;
 
 typedef struct {
-  pthread_mutex_t lock;
   Stripmap sm;
   Stripset ss;
   U8 *unstrippedDataA;
@@ -222,16 +222,18 @@ Error stripIni(StripDataS *sdP);
 #define threadJoin_(threadP_) pthread_join(threadP_, NULL)
 
 typedef pthread_t Thread;
-
+typedef Error (*CriticalFunc)(void *argP);
 typedef struct {
+  U8 expectedState;  // state (atomic_uchar) must be this value for the thread to enter critical area
   U32 startIdx;
   U32 nElemsToProcess;
+  CriticalFunc funcP;
   void *array;  // threads need to receive a copy of the pointer to data to operate on
 } ThreadFuncArg;
 
 typedef void* (*ThreadFunc)(ThreadFuncArg*);
 typedef void* (*DummyFuncCast)(void*);  // trick compiler into allowing ThreadFuncs in pthread_create
 
-Error multiThread( ThreadFunc funcP, void *_array);
+Error multiThread( CriticalFunc funcP, const U8 expectedState, void *_array);
 
 #endif  // #ifndef DATA_H

@@ -1318,7 +1318,7 @@ Error stripIni(StripDataS *sdP) {
 // ==============
 // Multithreading 
 // ==============
-static void _threadFuncArgArrayIni(ThreadFuncArg *argA, U32 *nThreadsNeededP, void *_array) {
+static void _threadFuncArgArrayIni(CriticalFunc funcP, ThreadFuncArg *argA, U32 *nThreadsNeededP, U8 expectedState, void *_array) {
   if (argA && _array) {
     U32 nElemsToProcess = arrayGetNElems(_array);
     if (nElemsToProcess < *nThreadsNeededP) {
@@ -1328,8 +1328,10 @@ static void _threadFuncArgArrayIni(ThreadFuncArg *argA, U32 *nThreadsNeededP, vo
     // Tell each thread where to start in array and how many items to process
     const U32 nElemsPerThread = ((nElemsToProcess + (*nThreadsNeededP >> 1)) / *nThreadsNeededP);
     for (U32 i = 0; i < *nThreadsNeededP; ++i) {
+      argA[i].expectedState = expectedState;
       argA[i].startIdx = i * nElemsPerThread;
       argA[i].nElemsToProcess = nElemsPerThread;
+      argA[i].funcP = funcP;
       argA[i].array = _array;
     }
     // Last thread may have a different number of elems to process then the rest
@@ -1338,8 +1340,26 @@ static void _threadFuncArgArrayIni(ThreadFuncArg *argA, U32 *nThreadsNeededP, vo
   }
 }
 
+// Generic multithreading function
+static void* _mtGenericLoop(ThreadFuncArg *thargP) {
+  const U32 ptrIncr = arrayGetElemSz(thargP->array);
+  U8 *voidP = (U8*) thargP->array + ptrIncr * thargP->startIdx;
+  U8 *voidEndP = voidP + thargP->nElemsToProcess;
+  U8 desiredState = thargP->expectedState + 1;
+  Error e = SUCCESS;
+  for (; !e && voidP < voidEndP; voidP += ptrIncr) {
+    if (atomic_compare_exchange_strong(
+          (atomic_uchar*) *((atomic_uchar**) voidP), &thargP->expectedState, desiredState)) {
+        //if (!pthread_mutex_trylock(&(*cmPP)->sdP->lock)) {
+        e = thargP->funcP((void*) *((U32*) voidP));  // ugly AF but... how else to generalize?
+        //pthread_mutex_unlock(&(*cmPP)->sdP->lock);
+    }
+  }
+  return NULL;
+}
 
-Error multiThread( ThreadFunc funcP, void *_array) {
+// Multithreading entry point
+Error multiThread(CriticalFunc funcP, const U8 expectedState, void *_array) {
   if (!_array || !funcP) {
     return E_BAD_ARGS;
   }
@@ -1351,10 +1371,10 @@ Error multiThread( ThreadFunc funcP, void *_array) {
   if (!e) {
     U32 nThreadsNeeded = N_CORES;
     // nThreadsNeeded gets updated to fewer than N_CORES if fewer elements than cores exist.
-    _threadFuncArgArrayIni(thArgA, &nThreadsNeeded, _array);
+    _threadFuncArgArrayIni(funcP, thArgA, &nThreadsNeeded, expectedState, _array);
 
     for (int i = 0; i < nThreadsNeeded; ++i) {
-      threadIni_(&threadA[i], funcP, &thArgA[i]);
+      threadIni_(&threadA[i], _mtGenericLoop, &thArgA[i]);
     }
 
     for (int i = 0; i < nThreadsNeeded; ++i) {
