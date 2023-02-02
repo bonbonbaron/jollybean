@@ -136,7 +136,6 @@ void histoDel(U32 **histoPP);
 
 // Inflatables 
 typedef struct {
-  pthread_mutex_t lock;  // TODO Add an #ifdef to make this disappear in single core computers.
 	U32 compressedLen;
 	U32 inflatedLen;
 	void *inflatedDataP;
@@ -190,7 +189,6 @@ typedef U16 StripmapElem;
 
 // gtrip set's inflated data is in U32 format.
 typedef struct {
-  pthread_mutex_t lock;
   U8 nUnitsPerStrip;
   U8 bpu;  // bits per unit
   U32 nUnits;

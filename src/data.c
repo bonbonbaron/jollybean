@@ -1,5 +1,6 @@
 #include "data.h"
 
+// TODO make inflatableIni receive a lock rather than putting a 24-byte lock inside of inf, ss, & sd
 #define byteIdx_(key) ((key - 1) >> 3)
 #define bitFlag_(key) (1 << ((key - 1) & 0x07))
 
@@ -918,9 +919,8 @@ void *tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_len, siz
 */
 
 Error inflatableIni(Inflatable *inflatableP) {
-	Error e = SUCCESS;
 	if (inflatableP != NULL) {
-    pthread_mutex_lock(&inflatableP->lock);
+    Error e = SUCCESS;
     if (inflatableP->inflatedDataP == NULL) {
       long long unsigned int expectedInflatedLen;
       e = jbAlloc(&inflatableP->inflatedDataP, inflatableP->inflatedLen, 1);
@@ -937,9 +937,9 @@ Error inflatableIni(Inflatable *inflatableP) {
         }
       }
     }
-    pthread_mutex_unlock(&inflatableP->lock);
+    return e;
 	}
-  return e;
+  return E_BAD_ARGS;
 }
 
 void inflatableClr(Inflatable *inflatableP) {
@@ -1222,7 +1222,6 @@ Error stripsetUnpack(Stripset *ssP) {
   if (!ssP || (ssP && !ssP->infP) || (ssP && ssP->infP && !ssP->infP->compressedDataA)) {
     return E_BAD_ARGS;
   }
-  pthread_mutex_lock(&ssP->lock);
   // Packed data is all whole words. Unpacked may not be.
   // Only way to tell is by looking at the number of units.
   const U32 nPackedUnitsPerWord     = N_BITS_PER_WORD / ssP->bpu;
@@ -1231,7 +1230,7 @@ Error stripsetUnpack(Stripset *ssP) {
   // start copy
   Error e = arrayNew((void**) &ssP->unpackedDataP, sizeof(U8), ssP->nUnits);
   if (e) {
-    goto rememberToUnlock;
+    return e;
   }
 
   U32 mask = 0;
@@ -1246,7 +1245,7 @@ Error stripsetUnpack(Stripset *ssP) {
       mask = 0x0f0f0f0f;
       break;
     default:
-      goto rememberToUnlock;
+      return e;
   }
 
   U32 *packedWordP    = (U32*) ssP->infP->inflatedDataP;
@@ -1274,9 +1273,6 @@ Error stripsetUnpack(Stripset *ssP) {
     memcpy((void*) dstUnpackedWordP, &lastUnpackedWord, nUnitsInExtraPackedWord);
   }
 
-rememberToUnlock:
-  pthread_mutex_unlock(&ssP->lock);
-
   return e;
 }
 
@@ -1285,7 +1281,6 @@ Error stripAssemble(StripDataS *sdP) {
       || sdP->ss.nUnitsPerStrip == 0) {
     return E_BAD_ARGS;
   } 
-  pthread_mutex_lock(&sdP->lock);
   
   // Piece together strips
   StripmapElem *smElemP = sdP->sm.infP->inflatedDataP;
@@ -1296,7 +1291,6 @@ Error stripAssemble(StripDataS *sdP) {
            sdP->ss.unpackedDataP + (*smElemP * sdP->ss.nUnitsPerStrip),
            sdP->ss.nUnitsPerStrip);
   }
-  pthread_mutex_unlock(&sdP->lock);
 
   return SUCCESS;
 }

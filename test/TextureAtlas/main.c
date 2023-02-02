@@ -16,10 +16,12 @@ static void* mtColormapInflate(ThreadFuncArg *thargP) {
   Colormap **cmPP = ((Colormap**) thargP->array) + thargP->startIdx;
   Colormap **cmEndPP = cmPP + thargP->nElemsToProcess;
   for (Error e = SUCCESS; !e && cmPP < cmEndPP; ++cmPP) {
+    pthread_mutex_lock(&(*cmPP)->sdP->lock);
     e = inflatableIni((*cmPP)->sdP->ss.infP);
     if (!e) {
       e = inflatableIni((*cmPP)->sdP->sm.infP);
     }
+    pthread_mutex_unlock(&(*cmPP)->sdP->lock);
   }
 }
 
@@ -27,7 +29,9 @@ static void* mtColormapStripClr(ThreadFuncArg *thargP) {
   Colormap **cmPP = ((Colormap**) thargP->array) + thargP->startIdx;
   Colormap **cmEndPP = cmPP + thargP->nElemsToProcess;
   for (; cmPP < cmEndPP; ++cmPP) {
+    pthread_mutex_lock(&(*cmPP)->sdP->lock);
     stripClr((*cmPP)->sdP);
+    pthread_mutex_unlock(&(*cmPP)->sdP->lock);
   }
 }
 
@@ -35,7 +39,9 @@ static void* mtColormapStripUnpack(ThreadFuncArg *thargP) {
   Colormap **cmPP = ((Colormap**) thargP->array) + thargP->startIdx;
   Colormap **cmEndPP = cmPP + thargP->nElemsToProcess;
   for (Error e = SUCCESS; !e && cmPP < cmEndPP; ++cmPP) {
+    pthread_mutex_lock(&(*cmPP)->sdP->lock);
     e = stripsetUnpack(&(*cmPP)->sdP->ss);
+    pthread_mutex_unlock(&(*cmPP)->sdP->lock);
   }
 }
 
@@ -43,9 +49,11 @@ static void* mtColormapNewArray(ThreadFuncArg *thargP) {
   Colormap **cmPP = ((Colormap**) thargP->array) + thargP->startIdx;
   Colormap **cmEndPP = cmPP + thargP->nElemsToProcess;
   for (Error e = SUCCESS; !e && cmPP < cmEndPP; ++cmPP) {
+    pthread_mutex_lock(&(*cmPP)->sdP->lock);
     e = arrayNew((void**) &(*cmPP)->sdP->unstrippedDataA, 
                  sizeof(U8), 
                  (*cmPP)->sdP->sm.nIndices * (*cmPP)->sdP->ss.nUnitsPerStrip);
+    pthread_mutex_unlock(&(*cmPP)->sdP->lock);
   }
 }
 
@@ -53,7 +61,9 @@ static void* mtColormapStripAssemble(ThreadFuncArg *thargP) {
   Colormap **cmPP = ((Colormap**) thargP->array) + thargP->startIdx;
   Colormap **cmEndPP = cmPP + thargP->nElemsToProcess;
   for (Error e = SUCCESS; !e && cmPP < cmEndPP; ++cmPP) {
+    pthread_mutex_lock(&(*cmPP)->sdP->lock);
     e = stripAssemble((*cmPP)->sdP);
+    pthread_mutex_unlock(&(*cmPP)->sdP->lock);
   }
 }
 
@@ -190,13 +200,13 @@ int main(int argc, char **argv) {
     e = multiThread(mtColormapStripAssemble, colormapPA);
   }
   if (!e) {
+    e = previewImg(&blehColormap, &blehColorPalette, 1000);
+  }
+  if (!e) {
     e = previewImg(&redColormap, &redColorPalette, 1000);
   }
   if (!e) {
-    //e = previewImg(&blehColormap, &blehColorPalette, 1000);
-  }
-  if (!e) {
-    //e = previewImg(&heckColormap, &heckColorPalette, 1000);
+    e = previewImg(&heckColormap, &heckColorPalette, 1000);
   }
   // Deflate colormap inflatables
   if (!e) {
