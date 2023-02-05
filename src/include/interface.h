@@ -2,9 +2,18 @@
 #define INTERFACE_H
 #include "data.h"
 
-#define USE_SDL 1
+#define USE_PTHREAD_ 1
+#define USE_SDL_ 1
 
-#if USE_SDL
+#if USE_PTHREAD_
+#define MULTITHREADED_
+#endif
+
+// ==============
+// Rendering
+// ==============
+
+#if USE_SDL_
 #include "SDL.h"
 // Video
 #define Color_ SDL_Color
@@ -59,15 +68,14 @@
 #define EVENT_KEYUP_ SDL_KEYUP
 #define EVENT_KEYDOWN_ SDL_KEYDOWN
 #define EVENT_QUIT_ SDL_QUIT
-#endif  // #ifdef USE_SDL
+#endif  // #ifdef USE_SDL_
 
 typedef U8 ColormapIdx;
 #define N_COLORS_SUPPORTED_MAX_ (16)
 typedef struct {
-  atomic_uchar state;  // notice how we slid this byte in there for free B^)
+  StripDataS *sdP;  // this element MUST come first in a media (hence inflatable) gene for casting
   U8 bpp;
   U16 w, h, pitch;  // in pixel units; determine actual step size by pixel format
-  StripDataS *sdP;
 } Colormap;     
 
 typedef struct {
@@ -83,4 +91,30 @@ void textureDel(Texture_ **texturePP);
 Error textureSetAlpha(Texture_ *textureP);
 void clearScreen(Renderer_ *rendererP);
 
-#endif
+
+// ==============
+// Multithreading
+// ==============
+#if USE_PTHREAD_
+#include <pthread.h>
+#define N_CORES (4)  // TODO automate this via cmake later
+#define threadIni_(threadP_, argP_) pthread_create(threadP_, NULL, (DummyFuncCast) _mtGenericLoop, (void*) argP_)
+#define threadJoin_(threadP_) pthread_join(threadP_, NULL)
+
+typedef pthread_t Thread;
+typedef Error (*CriticalFunc)(void *argP);
+typedef struct {
+  U32 startIdx;
+  U32 nElemsToProcess;
+  CriticalFunc funcP;
+  void *array;  // threads need to receive a copy of the pointer to data to operate on
+} ThreadFuncArg;
+
+typedef void* (*ThreadFunc)(ThreadFuncArg*);
+typedef void* (*DummyFuncCast)(void*);  // trick compiler into allowing ThreadFuncs in pthread_create
+
+Error multiThread( CriticalFunc funcP, void *_array);
+
+#endif // #if USE_PTHREAD_
+
+#endif  // #ifndef INTERFACE_H

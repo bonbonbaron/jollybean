@@ -1,12 +1,10 @@
 #ifndef DATA_H
 #define DATA_H
-#include <pthread.h>
 //#include <bits/pthreadtypes.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
-#include <stdatomic.h>
 
 typedef unsigned char U8;
 typedef char S8;
@@ -210,30 +208,9 @@ typedef struct {
 
 void stripClr(StripDataS *sdP);
 Error stripIni(StripDataS *sdP);
-Error stripsetUnpack(Stripset *ssP);
-Error stripAssemble(StripDataS *sdP);
+Error sdInflate(StripDataS *sdP);
+Error sdUnpack(StripDataS *sdP);
+Error sdAssemble(StripDataS *sdP);
 Error stripIni(StripDataS *sdP);
-
-// ==============
-// Multithreading
-// ==============
-#define N_CORES (4)
-#define threadIni_(threadP_, funcP_, argP_) pthread_create(threadP_, NULL, (DummyFuncCast) funcP_, (void*) argP_)
-#define threadJoin_(threadP_) pthread_join(threadP_, NULL)
-
-typedef pthread_t Thread;
-typedef Error (*CriticalFunc)(void *argP);
-typedef struct {
-  U8 expectedState;  // state (atomic_uchar) must be this value for the thread to enter critical area
-  U32 startIdx;
-  U32 nElemsToProcess;
-  CriticalFunc funcP;
-  void *array;  // threads need to receive a copy of the pointer to data to operate on
-} ThreadFuncArg;
-
-typedef void* (*ThreadFunc)(ThreadFuncArg*);
-typedef void* (*DummyFuncCast)(void*);  // trick compiler into allowing ThreadFuncs in pthread_create
-
-Error multiThread( CriticalFunc funcP, const U8 expectedState, void *_array);
 
 #endif  // #ifndef DATA_H

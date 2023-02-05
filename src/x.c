@@ -91,7 +91,7 @@ U32 xGetNComponents(System *sP) {
 	return arrayGetNElems(sP->cF);
 }
 
-Error xAddComp(System *sP, Entity entity, Key compType, void *compDataP, void *compDataSrcP, Map *switchMP) {
+Error xAddComp(System *sP, Entity entity, Key compType, void *compDataP, Map *switchMP) {
   if (!sP || !compDataP)
     return E_BAD_ARGS;
   // Skip entities who already have a component in this system.
@@ -104,11 +104,7 @@ Error xAddComp(System *sP, Entity entity, Key compType, void *compDataP, void *c
   // Put component in first empty slot. (Will be garbage if this is a map. That's okay.)
   U32 cIdx; 
   Error e = frayAdd(sP->cF, compDataP, &cIdx); 
-  if (!e && !(sP->flags & FLG_NO_CF_SRC_A_)) 
-    e = arraySetVoidElem(sP->cFSrcA, cIdx, compDataSrcP);
   // Assign this component to its entity and, if necessary, prepare it for the system.
-  if (!e)
-    e = sP->iniComp(sP, compDataP, compDataSrcP);  
   if (!e && switchMP)   
     e = mapSet(sP->switchMPMP, entity, &switchMP);
   // Add lookups from C -> E and E -> C.

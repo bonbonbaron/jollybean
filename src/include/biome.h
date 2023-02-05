@@ -13,12 +13,11 @@
   .genePA = {__VA_ARGS__}\
 }
 
-#define Gene_(name_, geneClass_, type_, typeEnum_, switchU_, rawDataName_, srcDataName_) Gene geneName_(name_) = {\
+#define Gene_(name_, geneClass_, type_, typeEnum_, switchU_, rawDataName_) Gene geneName_(name_) = {\
   .geneClass = geneClass_,\
   .type = typeEnum_,\
   .size = sizeof(type_),\
   .dataP = &rawDataName_,\
-  .srcDataP = &srcDataName_\
 }
 
 #define Personality_(name_, quirkA_) \
@@ -37,7 +36,8 @@ Personality personalityName_(name_) = {\
 #define personalityName_(name_) name_##Personality
 #define seedName_(name_) name_##Seed
 
-typedef enum {EXCLUSIVE_GENE, SHARED_GENE, BB_GENE} GeneClass;
+// Media genes are inflated, unpacked, and assembled into original data.
+typedef enum {EXCLUSIVE_GENE, SHARED_GENE, BB_GENE, MEDIA_GENE} GeneClass;
 typedef enum {SCENE_START, SCENE_CHANGE, SCENE_STOP} SceneAction;
 
 typedef struct {
@@ -64,8 +64,7 @@ typedef struct {
 	U8 type;         // image, audio, text, battle stats, etc. (used to target the correct shared pool/system)
 	U8 size;         // sizeof destination component type (so we can memcpy the right size into the ECS target system/sharedPool/BB)
   Key key;         // key that lets you mutate a seed's gene to this one; 0 for immutable
-  void *dataP;     // the destination data of the gene to be populated via srcDataP
-  void *srcDataP;  // the data needed to initialize the destination data
+  void *dataP;     // the destination data of the gene 
 } Gene;
 
 typedef struct {

@@ -1217,11 +1217,21 @@ __inline__ static void _unpackStrip4Bpu(U32 **srcStripPP, U32 **dstStripPP) {
 #endif
 #endif
 
+Error sdInflate(StripDataS *sdP) {
+  Error e = inflatableIni(sdP->ss.infP);
+  if (!e) {
+    e = inflatableIni(sdP->sm.infP);
+  }
+  return e;
+}
+
 // Unpack bits to reconstruct original data (uesd for debugging img.c)
-Error stripsetUnpack(Stripset *ssP) {
-  if (!ssP || (ssP && !ssP->infP) || (ssP && ssP->infP && !ssP->infP->compressedDataA)) {
+Error sdUnpack(StripDataS *sdP) {
+  if (!sdP || (sdP->ss.infP && !sdP->ss.infP->compressedDataA)) {
     return E_BAD_ARGS;
   }
+
+  Stripset *ssP = &sdP->ss;
   // Packed data is all whole words. Unpacked may not be.
   // Only way to tell is by looking at the number of units.
   const U32 nPackedUnitsPerWord     = N_BITS_PER_WORD / ssP->bpu;
@@ -1276,114 +1286,37 @@ Error stripsetUnpack(Stripset *ssP) {
   return e;
 }
 
-Error stripAssemble(StripDataS *sdP) {
-  if (!sdP || !sdP->ss.unpackedDataP || !sdP->sm.infP->inflatedDataP || !sdP->unstrippedDataA
+Error sdAssemble(StripDataS *sdP) {
+  if (!sdP || !sdP->ss.unpackedDataP || !sdP->sm.infP->inflatedDataP || sdP->unstrippedDataA
       || sdP->ss.nUnitsPerStrip == 0) {
     return E_BAD_ARGS;
   } 
+
+  Error e = arrayNew((void**) &sdP->unstrippedDataA, sizeof(U8), sdP->sm.nIndices * sdP->ss.nUnitsPerStrip);
   
   // Piece together strips
-  StripmapElem *smElemP = sdP->sm.infP->inflatedDataP;
-  StripmapElem *smElemEndP = smElemP + sdP->sm.nIndices;
-  U8 *unstrippedDataP = sdP->unstrippedDataA;
-  for (; smElemP < smElemEndP; ++smElemP, unstrippedDataP += sdP->ss.nUnitsPerStrip) {
-    memcpy(unstrippedDataP,
-           sdP->ss.unpackedDataP + (*smElemP * sdP->ss.nUnitsPerStrip),
-           sdP->ss.nUnitsPerStrip);
+  if (!e) {
+    StripmapElem *smElemP = sdP->sm.infP->inflatedDataP;
+    StripmapElem *smElemEndP = smElemP + sdP->sm.nIndices;
+    U8 *unstrippedDataP = sdP->unstrippedDataA;
+    for (; smElemP < smElemEndP; ++smElemP, unstrippedDataP += sdP->ss.nUnitsPerStrip) {
+      memcpy(unstrippedDataP,
+             sdP->ss.unpackedDataP + (*smElemP * sdP->ss.nUnitsPerStrip),
+             sdP->ss.nUnitsPerStrip);
+    }
   }
 
-  return SUCCESS;
+  return e;
 }
 
 // This is the single-threaded version of inflating stripd data.
 Error stripIni(StripDataS *sdP) {
-  Error e = inflatableIni(sdP->ss.infP);
+  Error e = sdInflate(sdP);
   if (!e) {
-    e = inflatableIni(sdP->sm.infP);
+    e = sdUnpack(sdP);
   }
   if (!e) {
-    e = stripsetUnpack(&sdP->ss);
-  }
-  if (!e) {
-    e = arrayNew((void**) &sdP->unstrippedDataA, 
-                 sizeof(U8), 
-                 sdP->sm.nIndices * sdP->ss.nUnitsPerStrip);
-  }
-  if (!e) {
-    e = stripAssemble(sdP);
+    e = sdAssemble(sdP);
   }
   return e;
 }
-
-// ==============
-// Multithreading 
-// ==============
-static void _threadFuncArgArrayIni(CriticalFunc funcP, ThreadFuncArg *argA, U32 *nThreadsNeededP, U8 expectedState, void *_array) {
-  if (argA && _array) {
-    U32 nElemsToProcess = arrayGetNElems(_array);
-    if (nElemsToProcess < *nThreadsNeededP) {
-      *nThreadsNeededP = nElemsToProcess;
-    }
-
-    // Tell each thread where to start in array and how many items to process
-    const U32 nElemsPerThread = ((nElemsToProcess + (*nThreadsNeededP >> 1)) / *nThreadsNeededP);
-    for (U32 i = 0; i < *nThreadsNeededP; ++i) {
-      argA[i].expectedState = expectedState;
-      argA[i].startIdx = i * nElemsPerThread;
-      argA[i].nElemsToProcess = nElemsPerThread;
-      argA[i].funcP = funcP;
-      argA[i].array = _array;
-    }
-    // Last thread may have a different number of elems to process then the rest
-    // (This might be faster than modulo.)
-    argA[*nThreadsNeededP - 1].nElemsToProcess = nElemsToProcess - (nElemsPerThread * (*nThreadsNeededP - 1));
-  }
-}
-
-// Generic multithreading function
-static void* _mtGenericLoop(ThreadFuncArg *thargP) {
-  const U32 ptrIncr = arrayGetElemSz(thargP->array);
-  U8 *voidP = (U8*) thargP->array + ptrIncr * thargP->startIdx;
-  U8 *voidEndP = voidP + thargP->nElemsToProcess;
-  U8 desiredState = thargP->expectedState + 1;
-  Error e = SUCCESS;
-  for (; !e && voidP < voidEndP; voidP += ptrIncr) {
-    if (atomic_compare_exchange_strong(
-          (atomic_uchar*) *((atomic_uchar**) voidP), &thargP->expectedState, desiredState)) {
-        //if (!pthread_mutex_trylock(&(*cmPP)->sdP->lock)) {
-        e = thargP->funcP((void*) *((U32*) voidP));  // ugly AF but... how else to generalize?
-        //pthread_mutex_unlock(&(*cmPP)->sdP->lock);
-    }
-  }
-  return NULL;
-}
-
-// Multithreading entry point
-Error multiThread(CriticalFunc funcP, const U8 expectedState, void *_array) {
-  if (!_array || !funcP) {
-    return E_BAD_ARGS;
-  }
-
-  Thread threadA[N_CORES];
-  ThreadFuncArg *thArgA = NULL;
-  Error e = arrayNew((void**) &thArgA, sizeof(ThreadFuncArg), N_CORES);
-
-  if (!e) {
-    U32 nThreadsNeeded = N_CORES;
-    // nThreadsNeeded gets updated to fewer than N_CORES if fewer elements than cores exist.
-    _threadFuncArgArrayIni(funcP, thArgA, &nThreadsNeeded, expectedState, _array);
-
-    for (int i = 0; i < nThreadsNeeded; ++i) {
-      threadIni_(&threadA[i], _mtGenericLoop, &thArgA[i]);
-    }
-
-    for (int i = 0; i < nThreadsNeeded; ++i) {
-      threadJoin_(threadA[i]);
-    }
-  }
-
-  arrayDel((void**) &thArgA);
-
-  return e;
-}
-

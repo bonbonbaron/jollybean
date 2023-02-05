@@ -157,7 +157,7 @@ TaNode* taNodeGrow(S32 w, S32 h) {
     return taNodeGrowRight(w, h);
   else if (shouldGrowDown)
     return taNodeGrowDown(w, h);
-  else if (canGrowRight)
+  else if (canGrowRight)            // This favors growing rigth over growing down.
    return taNodeGrowRight(w, h);
   else if (canGrowDown)
     return taNodeGrowDown(w, h);

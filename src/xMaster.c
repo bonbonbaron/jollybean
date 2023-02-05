@@ -28,13 +28,13 @@ Error xMasterIniSys(System *sP, void *sParamsP) {
   if (xMasterIniSysPrmsP) 
     for (U32 i = 0; !e && i < nSystemsExceptGoSys; i++) 
       if (xMasterIniSysPrmsP->xSysPA[i])
-        e = xAddComp(sP, xMasterIniSysPrmsP->xSysPA[i]->id, sP->id, (void**) &xMasterIniSysPrmsP->xSysPA[i], NULL, NULL);
+        e = xAddComp(sP, xMasterIniSysPrmsP->xSysPA[i]->id, sP->id, (void**) &xMasterIniSysPrmsP->xSysPA[i], NULL);
 
   XGo *xGoP = NULL;
   // Add Go System to Master's components.
   if (!e && xMasterIniSysPrmsP->behaviorSysP) {
     xGoP = (XGo*) xMasterIniSysPrmsP->behaviorSysP;
-    e = xAddComp(sP, xGoP->system.id, sP->id, (void**) &sGoP, NULL, NULL);
+    e = xAddComp(sP, xGoP->system.id, sP->id, (void**) &sGoP, NULL);
   }
 
   // Extract biome.

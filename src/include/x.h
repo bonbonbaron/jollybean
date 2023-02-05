@@ -137,7 +137,7 @@ typedef struct _System {
 
 Error    xIniSys(System *sP, U32 nComps, void *miscP);
 Error    xIniComp(System *sP, const Entity entity, const void *cmpP);
-Error    xAddComp(System *sP, Entity entity, Key compType, void *compDataP, void *compDataSrcP, Map *switchMP);
+Error    xAddComp(System *sP, Entity entity, Key compType, void *compDataP, Map *switchMP);
 //void*    xGetComp(System *sP, Entity entity);
 U32      xGetNComps(System *sP);
 void*    xGetCompValP(System *sP, Entity entity, Key key);

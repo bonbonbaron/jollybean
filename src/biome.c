@@ -351,7 +351,7 @@ Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGenesMPP, 
             for (Entity entityEnd = entity + spawnP->nEntitiesToSpawn; 
                  !e && entity < entityEnd; 
                  ++entity)
-              e = xAddComp(childSysP, entity, gene.type, gene.dataP, gene.srcDataP, spawnP->geneMutationMPA[gene.type]);
+              e = xAddComp(childSysP, entity, gene.type, gene.dataP, spawnP->geneMutationMPA[gene.type]);
           }
           break;
         // Shared objects are kept by the master system. 
@@ -367,8 +367,6 @@ Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGenesMPP, 
               e = mapSet(innerMapP, entity, (const void*) &gene);  
           break;
         case BB_GENE:
-          if (gene.srcDataP)
-            e = E_BB_GENES_DONT_DO_INITIALIZATION;
           if (!e && !gene.dataP)
             e = E_NULL_GENE_DATA;
           // Fill up the blackboard with the gene pointers
@@ -433,7 +431,7 @@ static Error _distributeQuirks(Biome *biomeP, System *masterSysP, System *goSysP
         }
       }
       // Start entity out with an empty activity component while storing inner activity map in outer map.
-      e = xAddComp(goSysP, entity, goSysP->id, &emptyActivity, NULL, activityMP);
+      e = xAddComp(goSysP, entity, goSysP->id, &emptyActivity, activityMP);
     }
   }
   return e;
