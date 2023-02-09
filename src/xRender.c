@@ -24,15 +24,7 @@ Error cmGen(Colormap *cmP) {
 			return SUCCESS;  
     }
 		// If not reconstructed yet, inflate strip set if it's still compressed (inflate() checks internally).
-		if (cmP->sdP->ss.infP) {
-      e = stripIni(cmP->sdP);
-    }
-
-    // TODO get rid ofthis once done debugging
-    printf("let us commence on spillin the strip set inflatable beans....\n");
-    for (U8 *eP = (U8*) cmP->sdP->ss.infP->inflatedDataP; eP < (U8*) cmP->sdP->sm.infP->inflatedDataP + cmP->sdP->ss.infP->inflatedLen; ++eP) {
-      printf("%d ", *eP);
-    }
+    e = stripIni(cmP->sdP);
 	}
 	else {
 		e = E_BAD_ARGS;
@@ -147,8 +139,8 @@ TaNode *taNodeGrowDown(w, h) {
 
 
 TaNode* taNodeGrow(S32 w, S32 h) {
-  var canGrowDown  = (w <= this.root.w);
-  var canGrowRight = (h <= this.root.h);
+  var canGrowDown  = (w <= this.root.w);  // width below must fit inside root width
+  var canGrowRight = (h <= this.root.h);  // height to right must fit inside root height
 
   var shouldGrowRight = canGrowRight && (this.root.h >= (this.root.w + w)); // attempt to keep square-ish by growing right when height is much greater than width
   var shouldGrowDown  = canGrowDown  && (this.root.w >= (this.root.h + h)); // attempt to keep square-ish by growing down  when width  is much greater than height

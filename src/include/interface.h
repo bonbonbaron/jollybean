@@ -113,6 +113,7 @@ typedef struct {
 typedef void* (*ThreadFunc)(ThreadFuncArg*);
 typedef void* (*DummyFuncCast)(void*);  // trick compiler into allowing ThreadFuncs in pthread_create
 
+#define multithread_(funcP_, array_) multiThread((CriticalFunc) funcP_, array_)
 Error multiThread( CriticalFunc funcP, void *_array);
 
 #endif // #if USE_PTHREAD_
