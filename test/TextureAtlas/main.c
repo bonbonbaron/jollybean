@@ -252,6 +252,7 @@ int main(int argc, char **argv) {
   }
 
   // Inflate colormap inflatables
+#if 0
   if (!e) {
     e = multithread_(sdInflate, (void*) sdPA);
   }
@@ -263,6 +264,11 @@ int main(int argc, char **argv) {
   if (!e) {
     e = multithread_(sdAssemble, (void*) sdPA);
   }
+#else 
+  for (int i = 0; !e && i < N_SAMPLES; ++i) {
+    e = stripIni(*((StripDataS**) genePA[i]->dataP));
+  }
+#endif
 
   // Sort rectangles
   SortedRect *sortedRectA = NULL;
@@ -291,7 +297,7 @@ int main(int argc, char **argv) {
       e = surfaceIni(tempSurfaceP, (Colormap*) genePA[i]->dataP, cpPA[i]); 
     }
     if (tempSurfaceP) {
-      SDL_FreeSurface(tempSurfaceP);
+      //SDL_FreeSurface(tempSurfaceP);
       tempSurfaceP = NULL;
     }
   }
@@ -299,7 +305,13 @@ int main(int argc, char **argv) {
   // Deflate colormap inflatables
   if (!e) {
     printf("before clear\n");
+#if 0
     e = multithread_(stripClr,   (void*) sdPA);
+#else
+    for (int i = 0; !e && i < N_SAMPLES; ++i) {
+      stripClr(*((StripDataS**) genePA[i]->dataP));
+    }
+#endif
     printf("after clear\n");
   }
 
