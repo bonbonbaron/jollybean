@@ -1,3 +1,4 @@
+#include "interface.h"
 #include "xRender.h"
 #include "blehColormap.h"
 #include "blehColorPalette.h"
@@ -13,12 +14,12 @@
 #define CAN_RIGHT     (0x00000001)
 #define SHOULD_RIGHT  (0x00000003)  // implies "can"
 #define CAN_DOWN      (0x00000004)
-#define SHOULD_DOWN   (0x000000a0)  // implies "can"
+#define SHOULD_DOWN   (0x0000000c)  // implies "can"
 #define SHOULD_RIGHT_CAN_DOWN (SHOULD_RIGHT | CAN_DOWN)
 #define CAN_RIGHT_SHOULD_DOWN (SHOULD_DOWN | CAN_RIGHT)
 #define SHOULD_RIGHT_DOWN  (SHOULD_RIGHT | SHOULD_DOWN)
-#define getNthRightDescendant_(n_) (1 << (n_)) - 1
-#define getNthLowerDescendant_(n_) (1 << (n_)) - 2
+#define getNthRightDescendant_(n_) ((1 << (n_)) - 1)
+#define getNthLowerDescendant_(n_) ((2 << (n_)) - 2)
 // Rightward children are odd, downward even. 
 // We leverage this knowledge to navigate backwards without re-entering already-explored nodes.
 #define getParentAtlasIdx_(childIdx_) ((childIdx_ - 1 - !(cameFromRight = childIdx_ & 1)) >> 1)
@@ -48,6 +49,7 @@ static void _atlasElemIni(AtlasElem *rootP, U32 atlasIdx, SortedRect *sortedRect
   sortedRectP->rect.x = rootP[atlasIdx].x;
   sortedRectP->rect.y = rootP[atlasIdx].y;
   // Right child
+  printf("populating child %d\n", getRightAtlasChildIdx_(atlasIdx));
   _atlasElemChildIni(
       &rootP[getRightAtlasChildIdx_(atlasIdx)], 
       rootP[atlasIdx].x + sortedRectP->rect.w,
@@ -55,6 +57,7 @@ static void _atlasElemIni(AtlasElem *rootP, U32 atlasIdx, SortedRect *sortedRect
       rootP[atlasIdx].remWidth - sortedRectP->rect.w,
       sortedRectP->rect.h);  // rectHeight splits node to a shelf rightward and full width downward
   // Bottom child
+  printf("populating child %d\n", getLowerAtlasChildIdx_(atlasIdx));
   _atlasElemChildIni(
       &rootP[getLowerAtlasChildIdx_(atlasIdx)], 
       rootP[atlasIdx].x,
@@ -64,7 +67,7 @@ static void _atlasElemIni(AtlasElem *rootP, U32 atlasIdx, SortedRect *sortedRect
 }
 
 static inline U32 _rectFits(Rect_ *rectP, AtlasElem *atlasElemP) {
-  return (rectP->w >= atlasElemP->remWidth && rectP->h >= atlasElemP->remHeight);
+  return (rectP->w <= atlasElemP->remWidth && rectP->h <= atlasElemP->remHeight);
 }
 
 // Sort colormaps by largest dimension
@@ -117,14 +120,14 @@ Error sortRects(SortedRect **sortedRectAP, const U32 N_SAMPLES, Gene **genePA) {
 Error atlasGen(AtlasElem **atlasAP, const U32 N_SAMPLES, SortedRect *sortedRectA) {
   // Binary tree of rects
 
-  Error e = binaryTreeNew_((void**) atlasAP, sizeof(AtlasElem), N_SAMPLES);
+  // Allocate enough room for even the extraneous children to avoid child init branching.
+  Error e = binaryTreeNew_((void**) atlasAP, sizeof(AtlasElem), N_SAMPLES * 2 + 2);
 
   if (!e) {
     AtlasElem *atlasA = *atlasAP;
     // For each sorted rectangle...
-    SortedRect *sortedRectP = sortedRectA;
-    SortedRect *sortedRectEndP = sortedRectP + arrayGetNElems(sortedRectA);
-    printf("n sorted rects: %d\n", sortedRectEndP - sortedRectP);
+    SortedRect *sortedRectP = sortedRectA + 1;  // 0th elem gets pre-inserted into atlas
+    SortedRect *sortedRectEndP = sortedRectA + arrayGetNElems(sortedRectA);
     U32 nAtlasElems = arrayGetNElems(atlasA), searchIdx, cameFromRight,
     nGrowthsRight = 0, nGrowthsDown  = 0;
     // Initialize the first atlas elem manually so the elem ini magic works branchlessly.
@@ -170,25 +173,25 @@ Error atlasGen(AtlasElem **atlasAP, const U32 N_SAMPLES, SortedRect *sortedRectA
       }
 
       // If no space was found (searchIdx == 0 now), it's time to expand the atlas.
-      switch (
-          (sortedRectP->rect.h <= atlasA[0].remHeight)         // can right
-        | (atlasA[0].remHeight >= atlasA[0].remWidth  + sortedRectP->rect.w)  << 1 // should right
-        | (sortedRectP->rect.w <= atlasA[0].remWidth)  << 2  // can down
-        | (atlasA[0].remWidth  >= atlasA[0].remHeight + sortedRectP->rect.h)  << 3 // should down
+      U32 todoDeleteThis = ((sortedRectP->rect.h <= atlasA[0].remHeight))         // can right
+        | ((atlasA[0].remHeight >= atlasA[0].remWidth  + sortedRectP->rect.w)  << 1) // should right
+        | ((sortedRectP->rect.w <= atlasA[0].remWidth)  << 2)  // can down
+        | ((atlasA[0].remWidth  >= atlasA[0].remHeight + sortedRectP->rect.h)  << 3); // should down
+      switch (todoDeleteThis
       ) {
-        case SHOULD_RIGHT:
         case SHOULD_RIGHT_CAN_DOWN:
         case SHOULD_RIGHT_DOWN:
+        case SHOULD_RIGHT:
         case CAN_RIGHT:
           atlasA[0].remWidth += sortedRectP->rect.w;
-          atlasA[getNthRightDescendant_(++nGrowthsRight)].remWidth += sortedRectP->rect.w;
+          atlasA[getNthRightDescendant_(++nGrowthsRight)].remWidth = sortedRectP->rect.w;
           _atlasElemIni(atlasA, getNthRightDescendant_(nGrowthsRight), sortedRectP);
           break;
         case CAN_RIGHT_SHOULD_DOWN:
         case SHOULD_DOWN:
         case CAN_DOWN:
           atlasA[0].remHeight += sortedRectP->rect.h;
-          atlasA[getNthLowerDescendant_(++nGrowthsDown)].remHeight += sortedRectP->rect.h;
+          atlasA[getNthLowerDescendant_(++nGrowthsDown)].remHeight = sortedRectP->rect.h;
           _atlasElemIni(atlasA, getNthLowerDescendant_(nGrowthsDown), sortedRectP);
           break;
         default:
@@ -211,6 +214,11 @@ int main(int argc, char **argv) {
   // ====================================================
   Error e = arrayNew((void**) &genePA, sizeof(void*), N_SAMPLES);
 
+  ColorPalette *cpPA[N_SAMPLES] = {
+    &blehColorPalette,
+    &redColorPalette,
+    &heckColorPalette
+  };
   // Mock up some genes.
   if (!e) {
     for (U32 i = 0; !e && i < N_SAMPLES; ++i) {
@@ -228,6 +236,7 @@ int main(int argc, char **argv) {
     genePA[1]->dataP = &redColormap;
     genePA[2]->dataP = &heckColormap;
   }
+
   // Extract stripdata from each media gene into an array of contiguous strip data pointers.
   StripDataS **sdPA = NULL;
   if (!e) {
@@ -235,8 +244,11 @@ int main(int argc, char **argv) {
   }
   if (!e) {
     for (U32 i = 0, iEnd = arrayGetNElems(sdPA); i < iEnd; ++i) {
-      sdPA[i] = *((StripDataS**) genePA[i]->dataP);
+      // dataP should point to a struct whose first member is a StripDataS pointer,
+      // so treat it like a StripDataS double-pointer.
+      sdPA[i] = *((StripDataS**) genePA[i]->dataP);  
     }
+    printf("i\n");
   }
 
   // Inflate colormap inflatables
@@ -250,10 +262,6 @@ int main(int argc, char **argv) {
   // Assemble colormaps from strips
   if (!e) {
     e = multithread_(sdAssemble, (void*) sdPA);
-  }
-  // Deflate colormap inflatables
-  if (!e) {
-    e = multithread_(stripClr,   (void*) sdPA);
   }
 
   // Sort rectangles
@@ -271,6 +279,28 @@ int main(int argc, char **argv) {
   AtlasElem *atlasA = NULL;
   if (!e) {
     e = atlasGen(&atlasA, N_SAMPLES, sortedRectA);
+  }
+
+  for (int i = 0; i < N_SAMPLES; ++i) {
+    Surface_ *tempSurfaceP = NULL;
+    if (!e) {
+      printf("looking at colormap %d\n", sortedRectA[i].srcIdx);
+      e = surfaceNew(&tempSurfaceP, (Colormap*) genePA[sortedRectA[i].srcIdx]->dataP);
+    }
+    if (!e) {
+      e = surfaceIni(tempSurfaceP, (Colormap*) genePA[i]->dataP, cpPA[i]); 
+    }
+    if (tempSurfaceP) {
+      SDL_FreeSurface(tempSurfaceP);
+      tempSurfaceP = NULL;
+    }
+  }
+
+  // Deflate colormap inflatables
+  if (!e) {
+    printf("before clear\n");
+    e = multithread_(stripClr,   (void*) sdPA);
+    printf("after clear\n");
   }
 
   // ====================================================

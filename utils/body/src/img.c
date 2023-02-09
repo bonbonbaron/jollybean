@@ -412,9 +412,9 @@ Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *an
       stripLen = animP->frameNodeA[0].w;
     }
     e = stripNew(colormapA, stripLen, cmP->bpp, &cmP->sdP, verbose);
-    if (!e) {
-      e = stripIni(cmP->sdP);
-    }
+    //if (!e) {
+      //e = stripIni(cmP->sdP);
+    //}
     if (!e) {
       // We're gonna cheat and preview the ground truth image here. 
       // We'll test stripIni properly in _validateWholeInput().

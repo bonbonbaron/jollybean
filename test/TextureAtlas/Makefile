@@ -12,7 +12,7 @@ CP_OBJ_DIR = ${COLOR_PALETTE_DIR}/obj
 
 #~/jb/build/Seed/Genome/Gene/Body/Graybody/Colormap/src/I
 ./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./main.o ../../build/xRender.o ../../build/x.o ../../build/data.o ../../build/interface.o ../../utils/body/build/previewImg.o
-	cc ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ../../utils/body/build/previewImg.o ./main.o ../../build/interface.o $(shell sdl2-config --libs) ../../build/xRender.o ../../build/x.o ../../build/data.o -lpthread -o $@
+	gcc ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ../../utils/body/build/previewImg.o ./main.o ../../build/interface.o $(shell sdl2-config --libs) ../../build/xRender.o ../../build/x.o ../../build/data.o -lpthread -o $@
 	touch $@
 
 ./main.o: ./main.c
@@ -38,6 +38,7 @@ ${CM_SRC_DIR}/%Colormap.c:
 ../../build/%.o: ../../src/%.c
 	make -C ../../
 	touch $@
+
 .PHONY: clean
 clean:
 	rm -f ./o 2>/dev/null
