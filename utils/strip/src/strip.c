@@ -31,11 +31,20 @@ const static U8 bitIdx4Bpu[] = {
 void printStripData(StripDataS *sdP) {
   if (sdP) {
     if (sdP->ss.unpackedDataP) {
+      int i = 0, j = 0;
       printf("Stripset data:\n");
+      printf("%d strips %d units each\n", sdP->ss.nUnits / sdP->ss.nUnitsPerStrip, sdP->ss.nUnitsPerStrip);
+      printf("\n%03d) ", j++);
       U8 *byteP    = sdP->ss.unpackedDataP;
       U8 *byteEndP = byteP + arrayGetNElems(sdP->ss.unpackedDataP);
       for (; byteP < byteEndP; ++byteP) {
         printf("%d", *byteP);
+        if (++i >= sdP->ss.nUnitsPerStrip) {
+          i = 0;
+          if ((byteP + 1) < byteEndP) {
+            printf("\n%03d) ", j++);
+          }
+        }
       }
       printf("\n\n");
     }
@@ -44,10 +53,11 @@ void printStripData(StripDataS *sdP) {
     }
     if (sdP->sm.infP->inflatedDataP) {
       printf("Stripmap data:\n");
-      U8 *byteP    = sdP->sm.infP->inflatedDataP;
-      U8 *byteEndP = byteP + sdP->sm.infP->inflatedLen;
-      for (; byteP < byteEndP; ++byteP) {
-        printf("%d", *byteP);
+      printf("%d elems\n", sdP->sm.nIndices);
+      U16 *shortP    = sdP->sm.infP->inflatedDataP;
+      U16 *shortEndP = shortP + sdP->sm.nIndices;
+      for (; shortP < shortEndP; ++shortP) {
+        printf("%02d ", *shortP);
       }
       printf("\n\n");
     }

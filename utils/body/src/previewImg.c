@@ -12,11 +12,7 @@ Error previewImg(Colormap *cmP, ColorPalette *cpP, U32 preview_ms) {
 
   Error e = guiNew(&windowP, &rendererP);
   if (!e) {
-    //e = surfaceNew(&surfaceP, cmP->w, cmP->h, sizeof(ColormapIdx) * 8);
-    e = surfaceNew(&surfaceP, cmP);
-  }
-  if (!e) {
-    e = surfaceIni(surfaceP, cmP, cpP);
+    e = surfaceNew(&surfaceP, cmP, cpP);
   }
   if (!e && surfaceP) {
     e = textureNew(&textureP, rendererP, surfaceP);
@@ -27,10 +23,11 @@ Error previewImg(Colormap *cmP, ColorPalette *cpP, U32 preview_ms) {
   if (!e) {
     e = textureSetAlpha(textureP);
   }
-  Rect_ dstRect = {0, 0, cmP->w, cmP->h};
+  Rect_ dstRect = {0, 0, cmP->w * 8, cmP->h * 8};
   if (!e) {
     clearScreen(rendererP);
     e = copy_(rendererP, textureP, NULL, &dstRect);
+    //e = copy_(rendererP, textureP, NULL, NULL);
   }
 	if (!e) {
 		present_(rendererP);

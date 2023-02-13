@@ -21,11 +21,15 @@ static void _printColors(ColorPalette *cpP) {
 }
 
 static void _printColormap(Colormap *cmP) {
-  return;
   printf("colormap elements:\n");
   if (cmP && cmP->sdP) {
+    int j = 0;
     for (int i = 0; i < arrayGetNElems(cmP->sdP->unstrippedDataA); ++i) {
       printf("%d", cmP->sdP->unstrippedDataA[i]);
+      if (++j >= cmP->sdP->ss.nUnitsPerStrip) {
+        j = 0;
+        printf("\n");
+      }
     }
   }
 }
@@ -291,7 +295,7 @@ Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *an
   if (!e) {
     srcPixelSize = PNG_IMAGE_PIXEL_SIZE(pngP->format);
     cmP->pitch = PNG_IMAGE_ROW_STRIDE(*pngP);
-    U32 bufferSz = PNG_IMAGE_BUFFER_SIZE(*pngP, cmP->pitch);
+    U32 bufferSz = PNG_IMAGE_BUFFER_SIZE(*pngP, cmP->pitch);  // number of bytes whole src image
     cmP->w = cmP->pitch / srcPixelSize;
     cmP->h = bufferSz / cmP->pitch;
 
@@ -353,7 +357,7 @@ Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *an
           Color_ *pixelEndP = (Color_*) srcPixelA + arrayGetNElems(srcPixelA);
           assert ((pixelEndP - pixelP) == (bufferSz / srcPixelSize));
           assert ((pixelEndP - pixelP) == (cmP->w * cmP->h));
-#if 0
+#if src 
           for (; pixelP < pixelEndP; ++pixelP) {
             printf("{%d, %d, %d, %d}, ", pixelP->r, pixelP->g, pixelP->b, pixelP->a);
           }
@@ -423,7 +427,7 @@ Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *an
     }
     // Sanity check before making strips
     if (!e && verbose) {
-      //e = previewImg(cmP, cpP, 500);
+      e = previewImg(cmP, cpP, 1000);
     }
   }
 
@@ -463,12 +467,18 @@ static Error _validateWholeInput(Colormap *cmP, ColorPalette *cpP) {
   }
   // Clear out old colormap
   if (!e) {
+    printf("original input\n");
+    printStripData(cmP->sdP);
+    e = previewImg(cmP, cpP, 1000);
+  }
+  if (!e) {
     cmClr(cmP);
   }
   if (!e) {
     e = stripIni(cmP->sdP);
   }
   if (!e) {
+    printf("reconstructed input\n");
     printStripData(cmP->sdP);
   }
 #if 1
@@ -499,10 +509,10 @@ static Error _validateWholeInput(Colormap *cmP, ColorPalette *cpP) {
     }
     printf("\n\n\n");
 #endif
-    if (theyMatch = !memcmp(cmP->sdP->unstrippedDataA, 
+    if ((theyMatch = !memcmp(cmP->sdP->unstrippedDataA, 
                            cmOrigP, 
                            arrayGetElemSz(cmP->sdP->unstrippedDataA) 
-                           * arrayGetNElems(cmP->sdP->unstrippedDataA))) {
+                           * arrayGetNElems(cmP->sdP->unstrippedDataA)))) {
       printf("\n\nthey match!\n");
     }
     else {
@@ -554,14 +564,10 @@ Error img(char *entityNameP, Database *cpDirP, Database *cmDirP, AnimJsonData *a
   }
   // Verify input independently of how the output treats it
   if (!e && verbose) {
-    _printColors(&cp);
-    _printColormap(&cm);
-  }
-  if (!e && verbose) {
     e = _validateWholeInput(&cm, &cp);
   }
   if (!e && verbose) {
-    printStripData(cm.sdP);
+    //printStripData(cm.sdP);
   }
 
   // Update color palette database if necessary

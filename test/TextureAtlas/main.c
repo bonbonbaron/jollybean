@@ -71,8 +71,8 @@ static inline U32 _rectFits(Rect_ *rectP, AtlasElem *atlasElemP) {
 }
 
 // Sort colormaps by largest dimension
-Error sortRects(SortedRect **sortedRectAP, const U32 N_SAMPLES, Gene **genePA) {
-  if (!sortedRectAP || !genePA) {
+Error sortRects(SortedRect **sortedRectAP, const U32 N_SAMPLES, Colormap **cmPA) {
+  if (!sortedRectAP || !cmPA) {
     return E_BAD_ARGS;
   }
 
@@ -82,35 +82,36 @@ Error sortRects(SortedRect **sortedRectAP, const U32 N_SAMPLES, Gene **genePA) {
     SortedRect *sortedRectA = *sortedRectAP;
     // Loop through unsorted rectangles
     sortedRectA[0].srcIdx = 0;
-    sortedRectA[0].maxDim = ((Colormap*) genePA[0]->dataP)->w > ((Colormap*) genePA[0]->dataP)->h ?
-                            ((Colormap*) genePA[0]->dataP)->w : ((Colormap*) genePA[0]->dataP)->h;
-    sortedRectA[0].rect.w = ((Colormap*) genePA[0]->dataP)->w;
-    sortedRectA[0].rect.h = ((Colormap*) genePA[0]->dataP)->h;
+    sortedRectA[0].maxDim = cmPA[0]->w > cmPA[0]->h ?  cmPA[0]->w : cmPA[0]->h;
+    sortedRectA[0].rect.w = cmPA[0]->w;
+    sortedRectA[0].rect.h = cmPA[0]->h;
 
+    // Loop through the unsorted rectangles
     for (U32 i = 1; i < N_SAMPLES; ++i) {
-      // Loop through sorted rectangles
-      U32 currRectMaxDim = ((Colormap*) genePA[i]->dataP)->w > ((Colormap*) genePA[i]->dataP)->h ?
-                           ((Colormap*) genePA[i]->dataP)->w : ((Colormap*) genePA[i]->dataP)->h;
-      for (U32 j = 0; j <= i; ++j) {
+      U32 currRectMaxDim = cmPA[i]->w > cmPA[i]->h ?
+                           cmPA[i]->w : cmPA[i]->h;
+      // Loop through sorted rectangles to see where the current unsorted one should go.
+      for (U32 j = 0; j < i; ++j) {
         if (currRectMaxDim > sortedRectA[j].maxDim) {
-          memcpy(&sortedRectA[j + 1], &sortedRectA[j], sizeof(SortedRect) * (1 + i - j));
+          memcpy(&sortedRectA[j + 1], &sortedRectA[j], sizeof(SortedRect) * (i - j));
           sortedRectA[j].maxDim = currRectMaxDim;  // larger of height or width
-          sortedRectA[j].srcIdx    = i;  // index of sample in original array
+          sortedRectA[j].srcIdx = i;  // index of sample in original array
           //sortedRectA[j].rect.x = 0;
           //sortedRectA[j].rect.y = 0;
-          sortedRectA[j].rect.w = ((Colormap*) genePA[i]->dataP)->w;
-          sortedRectA[j].rect.h = ((Colormap*) genePA[i]->dataP)->h;
-          break;
-        }
-        else if (j == i) {
-          sortedRectA[j].maxDim = currRectMaxDim;  // larger of height or width
-          sortedRectA[j].srcIdx    = i;  // index of sample in original array
-          //sortedRectA[j].rect.x = 0;
-          //sortedRectA[j].rect.y = 0;
-          sortedRectA[j].rect.w = ((Colormap*) genePA[i]->dataP)->w;
-          sortedRectA[j].rect.h = ((Colormap*) genePA[i]->dataP)->h;
+          sortedRectA[j].rect.w = cmPA[i]->w;
+          sortedRectA[j].rect.h = cmPA[i]->h;
+          goto nextUnsortedRect;
         }
       }
+      // If loop ended without placing rect anywhere, it belongs in last element.
+      sortedRectA[i].maxDim = currRectMaxDim;  // larger of height or width
+      sortedRectA[i].srcIdx = i;  // index of sample in original array
+      //sortedRectA[i].rect.x = 0;
+      //sortedRectA[i].rect.y = 0;
+      sortedRectA[i].rect.w = cmPA[i]->w;
+      sortedRectA[i].rect.h = cmPA[i]->h;
+      nextUnsortedRect:
+      continue;
     }
   }
   return e;
@@ -207,52 +208,41 @@ Error atlasGen(AtlasElem **atlasAP, const U32 N_SAMPLES, SortedRect *sortedRectA
 
 #define N_SAMPLES (3)
 int main(int argc, char **argv) {
-  Gene **genePA = NULL;
-
   // ====================================================
   // Repeat things done in multithreadingg test for setup
   // ====================================================
-  Error e = arrayNew((void**) &genePA, sizeof(void*), N_SAMPLES);
-
   ColorPalette *cpPA[N_SAMPLES] = {
     &blehColorPalette,
     &redColorPalette,
     &heckColorPalette
   };
   // Mock up some genes.
-  if (!e) {
-    for (U32 i = 0; !e && i < N_SAMPLES; ++i) {
-      Gene *geneP = NULL;
-      e = jbAlloc((void**) &geneP, sizeof(Gene), 1);
-      if (!e) {
-        genePA[i] = geneP;
-        genePA[i]->geneClass = MEDIA_GENE;
-        genePA[i]->key = 0;
-        genePA[i]->size = sizeof(XRenderComp);
-        genePA[i]->type = RENDER;
-      }
-    }
-    genePA[0]->dataP = &blehColormap;
-    genePA[1]->dataP = &redColormap;
-    genePA[2]->dataP = &heckColormap;
+  Colormap *cmPA[N_SAMPLES] = {
+    &blehColormap,
+    &redColormap,
+    &heckColormap
+  };
+
+  // Offset color palette and colormap indices to match future texture atlas destinations
+  U8 atlasOffset = 0;
+  for (int i = 0; i < N_SAMPLES; ++i) {
+    cpPA[i]->atlasOffset = cmPA[i]->sdP->ss.offset = atlasOffset;
+    atlasOffset += cpPA[i]->nColors;
   }
 
-  // Extract stripdata from each media gene into an array of contiguous strip data pointers.
+  // Extract stripdatas into an array so we can multithread process them all.
   StripDataS **sdPA = NULL;
-  if (!e) {
-    e = arrayNew((void**) &sdPA, sizeof(StripDataS*), arrayGetNElems(genePA));
-  }
+  Error e = arrayNew((void**) &sdPA, sizeof(StripDataS*), N_SAMPLES);
+
   if (!e) {
     for (U32 i = 0, iEnd = arrayGetNElems(sdPA); i < iEnd; ++i) {
-      // dataP should point to a struct whose first member is a StripDataS pointer,
-      // so treat it like a StripDataS double-pointer.
-      sdPA[i] = *((StripDataS**) genePA[i]->dataP);  
+      sdPA[i] = cmPA[i]->sdP;
     }
-    printf("i\n");
   }
 
+#define MULTITHREADED 1
   // Inflate colormap inflatables
-#if 0
+#if MULTITHREADED
   if (!e) {
     e = multithread_(sdInflate, (void*) sdPA);
   }
@@ -262,54 +252,104 @@ int main(int argc, char **argv) {
   }
   // Assemble colormaps from strips
   if (!e) {
-    e = multithread_(sdAssemble, (void*) sdPA);
+    //e = multithread_(sdAssemble, (void*) sdPA);
   }
 #else 
   for (int i = 0; !e && i < N_SAMPLES; ++i) {
-    e = stripIni(*((StripDataS**) genePA[i]->dataP));
+    e = sdInflate(cmPA[i]->sdP);
+    if (!e) {
+      sdUnpack(cmPA[i]->sdP);
+    }
   }
 #endif
 
   // Sort rectangles
   SortedRect *sortedRectA = NULL;
   if (!e) {
-    e = sortRects(&sortedRectA, N_SAMPLES, genePA);
-  }
-  if (!e) {
-    for (U32 i = 0; i < N_SAMPLES; ++i) {
-      printf("%d: w: %d, h: %d\n", i, sortedRectA[i].rect.w, sortedRectA[i].rect.h);
-    }
+    e = sortRects(&sortedRectA, N_SAMPLES, cmPA);
   }
 
-  // Make texture atlas
+  // Texture atlas
   AtlasElem *atlasA = NULL;
+  U8 *atlasPixelA = NULL;
+  Surface_ *textureSurfaceP = NULL;
   if (!e) {
     e = atlasGen(&atlasA, N_SAMPLES, sortedRectA);
   }
-
-  for (int i = 0; i < N_SAMPLES; ++i) {
-    Surface_ *tempSurfaceP = NULL;
-    if (!e) {
-      printf("looking at colormap %d\n", sortedRectA[i].srcIdx);
-      e = surfaceNew(&tempSurfaceP, (Colormap*) genePA[sortedRectA[i].srcIdx]->dataP);
-    }
-    if (!e) {
-      e = surfaceIni(tempSurfaceP, (Colormap*) genePA[i]->dataP, cpPA[i]); 
-    }
-    if (tempSurfaceP) {
-      //SDL_FreeSurface(tempSurfaceP);
-      tempSurfaceP = NULL;
+  // Texture atlas array
+  if (!e) {
+    e = arrayNew((void**) &atlasPixelA, sizeof(U8), atlasA[0].remWidth * atlasA[0].remHeight);
+  }
+  if (!e) {
+    const U32 ATLAS_WIDTH = atlasA[0].remWidth;
+    U32 nStripsPerRow;
+    StripmapElem *smElemP, *smElemEndP;
+    U8 *dstP;
+    U32 nUnitsPerStrip;
+    U32 srcIdx;
+    // For each sample...
+    for (int i = 0; i < N_SAMPLES; ++i) {
+      srcIdx = sortedRectA[i].srcIdx;
+      nUnitsPerStrip = cmPA[srcIdx]->sdP->ss.nUnitsPerStrip;
+      nStripsPerRow = cmPA[srcIdx]->w / nUnitsPerStrip;
+      smElemP    = (StripmapElem*) cmPA[srcIdx]->sdP->sm.infP->inflatedDataP;
+      // For each row of this sample's atlas rectangle...
+      for (int j = 0; j < sortedRectA[i].rect.h; ++j) {
+        smElemEndP = smElemP + nStripsPerRow;
+        dstP       = atlasPixelA + sortedRectA[i].rect.x + (j + sortedRectA[i].rect.y) * ATLAS_WIDTH;
+        // Paste rectangle row
+        for (; smElemP < smElemEndP; ++smElemP, dstP += nUnitsPerStrip) {
+          memcpy(dstP, 
+                 cmPA[srcIdx]->sdP->ss.unpackedDataP + (*smElemP * nUnitsPerStrip), 
+                 nUnitsPerStrip);
+        }
+      }
     }
   }
+  // Texture surface
+  if (!e) {
+    textureSurfaceP = SDL_CreateRGBSurfaceWithFormatFrom((void*) atlasPixelA, 
+        atlasA[0].remWidth, atlasA[0].remHeight, 8, atlasA[0].remWidth, SDL_PIXELFORMAT_INDEX8);
+  }
+  if (!textureSurfaceP) {
+    e = E_NO_MEMORY;
+  }
+  // Texture surface palette
+  if (!e) {
+    for (int i = 0 ; i < N_SAMPLES; ++i) {
+      SDL_SetPaletteColors(textureSurfaceP->format->palette, 
+          cpPA[i]->colorA, cpPA[i]->atlasOffset, cpPA[i]->nColors);
+    }
+  }
+  // Sanity check
+  // Window and renderer 
+  Renderer_ *rendererP = NULL;
+  Window_ *windowP = NULL;
+  if (!e) {
+    e = guiNew(&windowP, &rendererP);
+  }
+  // Texture
+  Texture_ *textureP = NULL;
+  if (!e) {
+    e = textureNew(&textureP, rendererP, textureSurfaceP);
+  }
+  // Render it
+  if (!e) {
+    clearScreen(rendererP);
+    copy_(rendererP, textureP, NULL, NULL);
+    present_(rendererP);
+    SDL_Delay(2000);
+  }
+
 
   // Deflate colormap inflatables
   if (!e) {
     printf("before clear\n");
-#if 0
+#if MULTITHREADED
     e = multithread_(stripClr,   (void*) sdPA);
 #else
     for (int i = 0; !e && i < N_SAMPLES; ++i) {
-      stripClr(*((StripDataS**) genePA[i]->dataP));
+      stripClr(cmPA[i]->sdP);
     }
 #endif
     printf("after clear\n");
@@ -318,12 +358,9 @@ int main(int argc, char **argv) {
   // ====================================================
   // Clean up
   // ====================================================
+  arrayDel((void**) &atlasPixelA);
   arrayDel((void**) &sortedRectA);
   binaryTreeDel_((void**) &atlasA);
   arrayDel((void**) &sdPA);
-  for (U32 i = 0; i < arrayGetNElems(genePA); ++i) {
-    jbFree((void**) &genePA[i]);
-  }
-  arrayDel((void**) &genePA);
   return e;
 }

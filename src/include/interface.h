@@ -74,17 +74,18 @@ typedef U8 ColormapIdx;
 #define N_COLORS_SUPPORTED_MAX_ (16)
 typedef struct {
   StripDataS *sdP;  // this element MUST come first in a media (hence inflatable) gene for casting
+  U8 state;
   U8 bpp;
   U16 w, h, pitch;  // in pixel units; determine actual step size by pixel format
 } Colormap;     
 
 typedef struct {
+  U8 atlasOffset;
   U8 nColors;
   Color_ *colorA;
 } ColorPalette;
 
-Error surfaceNew(Surface_ **surfacePP, Colormap *cmP);
-Error surfaceIni(Surface_ *surfaceP, Colormap *cmP, ColorPalette *cpP);
+Error surfaceNew(Surface_ **surfacePP, Colormap *cmP, ColorPalette *cpP);
 Error guiNew(Window_ **windowPP, Renderer_ **rendererPP);
 Error textureNew(Texture_ **texturePP, Renderer_ *rendererP, Surface_ *surfaceP);
 void textureDel(Texture_ **texturePP);

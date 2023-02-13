@@ -1258,6 +1258,11 @@ Error sdUnpack(StripDataS *sdP) {
       return e;
   }
 
+  const U32 offset = (sdP->ss.offset << 24) |
+                     (sdP->ss.offset << 16) |
+                     (sdP->ss.offset <<  8) |
+                     (sdP->ss.offset      );
+
   U32 *packedWordP    = (U32*) ssP->infP->inflatedDataP;
   U32 *packedWordEndP = (U32*) ((U8*) ssP->infP->inflatedDataP + (ssP->infP->inflatedLen))
                              - (nUnitsInExtraPackedWord > 0);  // stop short of partially packed word
@@ -1267,19 +1272,19 @@ Error sdUnpack(StripDataS *sdP) {
   // Unpack whole words with reckless abandon (CRAZY GORILLA MODE)
   for (; packedWordP < packedWordEndP; ++packedWordP) {
     for (j = 0; j < N_BITS_PER_BYTE; j += ssP->bpu) {
-      *(dstUnpackedWordP++) = (*packedWordP >> j) & mask;
+      *(dstUnpackedWordP++) = ((*packedWordP >> j) & mask) + offset;
     }
   }
   // While theres >= 4 units left in packed word...
   for (j = 0; 
        nUnitsInExtraPackedWord >= sizeof(U32); 
        nUnitsInExtraPackedWord -= sizeof(U32), j += ssP->bpu) {
-    *(dstUnpackedWordP++) = (*packedWordP >> j) & mask;
+    *(dstUnpackedWordP++) = ((*packedWordP >> j) & mask) + offset;
   }
   // Fewer than 4 packed units remaining in last word
   // If last word has fewer than 4 units remaining, carefully extract them into < 4 output bytes.
   if (!e && nUnitsInExtraPackedWord > 0) {
-    U32 lastUnpackedWord = (*packedWordP >> j) & mask;
+    U32 lastUnpackedWord = ((*packedWordP >> j) & mask) + offset;
     memcpy((void*) dstUnpackedWordP, &lastUnpackedWord, nUnitsInExtraPackedWord);
   }
 

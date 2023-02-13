@@ -190,6 +190,7 @@ typedef U16 StripmapElem;
 typedef struct {
   U8 nUnitsPerStrip;
   U8 bpu;  // bits per unit
+  U8 offset;  // amount to increment all units by (e.g. for sub-palette in atlas color palette)
   U32 nUnits;
   Inflatable *infP;  // strip set's compressed source data
   U8 *unpackedDataP;
