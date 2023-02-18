@@ -25,7 +25,7 @@ Error xCollisionIniSys(System *sP, void *sParamsP) {
 //======================================================
 // Initialize xCollision's components, which are Images.
 //======================================================
-Error xCollisionIniComp(System *sP, void *compDataP, void *compDataSrcP) {
+Error xCollisionIniCompElem(System *sP, void *compDataP, void *compDataSrcP) {
   assert(sP && compDataP && compDataSrcP);
   XCollisionComp *cP = (XCollisionComp*) compDataP;
   cP->type = *((U8*) compDataSrcP);

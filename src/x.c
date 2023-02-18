@@ -1,9 +1,7 @@
 #include "x.h"
-#include "data.h"
 
 // Copied these from data.c since I don't know how to inline across files.
 inline static U32 _fast_arrayGetElemSz(const void *arryP) {
-  printf("array's elem size is %d\n", *((U32*) arryP - 2));
 	return *((U32*) arryP - 2);
 }
 
@@ -119,25 +117,33 @@ Error xAddComp(System *sP, Entity entity, Key compType, void *compDataP, Map *sw
 Error xIniSys(System *sP, U32 nComps, void *miscP) {
   // Sytems with special parts need to initialize maps in sIniU().
   Error e = frayNew((void**) &sP->cF, sP->compSz, nComps);
-  if (!e)
+  if (!e) {
     e = arrayNew((void**) &sP->cIdx2eA, sizeof(Entity), nComps);
-  if (!e)
+  }
+  if (!e) {
+    e = frayNew((void**) &sP->deactivateQueueF, sizeof(Entity), nComps);
+  }
+  if (!e) {
+    e = frayNew((void**) &sP->pauseQueueF, sizeof(Entity), nComps);
+  }
+  if (!e) {
     e = mapNew(&sP->e2cIdxMP, sizeof(Key), nComps);
-  if (!e && !(sP->flags & FLG_NO_SWITCHES_))
+  }
+  if (!e && !(sP->flags & FLG_NO_SWITCHES_)) {
     e = mapNew(&sP->switchMPMP, sizeof(XSwitchCompU), nComps);
-  if (!e && !(sP->flags & FLG_NO_CHECKS_))
-    e = frayNew((void**) &sP->checkF, sizeof(Check), nComps);
-  if (!e && !(sP->flags & FLG_NO_CF_SRC_A_))
-    e = arrayNew((void**) &sP->cFSrcA, sizeof(void*), nComps);
+  }
 	// Allocate inbox ONLY. Caller points sP->outboxF at another system's inboxF.
-	if (!e)
+	if (!e) {
 		e = frayNew((void**) &sP->inboxF, sP->id, nComps);
+  }
   // Finally, call the system's unique initializer.
-  if (!e)
+  if (!e) {
     e = (*sP->iniSys)(sP, miscP);
+  }
   // Clean up if there are any problems.
-  if (e) 
+  if (e) {
     xClr(sP);
+  }
 
   return e;
 }
@@ -146,8 +152,9 @@ Error xIniSys(System *sP, U32 nComps, void *miscP) {
 void xClr(System *sP) {
   sP->clr(sP);  // This MUST run first as it may rely on things we're about to erase,
   frayDel((void**) &sP->cF);         // ... like maps of switches with cleanup cases.
-  frayDel((void**) &sP->checkF);
   frayDel((void**) &sP->inboxF);
+  frayDel((void**) &sP->deactivateQueueF);
+  frayDel((void**) &sP->pauseQueueF);
   mapDel(&sP->e2cIdxMP);
   if (sP->switchMPMP) {
     Map **mapPP = sP->switchMPMP->mapA;
@@ -157,34 +164,7 @@ void xClr(System *sP) {
   }
   mapDel(&sP->switchMPMP);
   arrayDel((void**) &sP->cIdx2eA);
-  arrayDel((void**) &sP->cFSrcA);
   sP->outboxF = NULL;
-}
-
-static Error _xDoChecks(System *sP) {
-  Error e = SUCCESS;
-  Check *checkP = sP->checkF;
-  Check *checkEndP = checkP + frayGetFirstInactiveIdx((void*) checkP);
-  // For each active check...
-  while (checkP < checkEndP) {
-    Entity entity = _getEntityByCompIdx(sP, *checkP->cIdxP);
-    // Run check. If it returns true, update target flag. 
-    if (checkP->cbA[checkP->currCbIdx](entity, checkP->operandP)) {
-      *checkP->resultFlagsP |= checkP->outputIfTrueA[checkP->currCbIdx];
-      // Tell potentially sleeping tree to wake up.
-      e = mailboxWrite(sP->outboxF, entity, checkP->root, 0, 0);
-      // Toggle to alternate check if necessary. Otherwise, deactivate this check.
-      if (checkP->doesToggle) { 
-        checkP->currCbIdx = !checkP->currCbIdx;
-        checkP++;
-      }
-      else {
-        frayDeactivate(sP->checkF, checkP - sP->checkF);
-        --checkEndP;
-      }
-    }
-  }
-  return e;
 }
 
 void xSwitchComponent(System *sP, Entity entity, Key newCompKey) {
@@ -235,11 +215,55 @@ void _xReadInbox(System *sP) {
   frayClr(sP->inboxF);
 }
 
+static void _pauseQueue(System *sP) {
+  U32 nPausedEntities = *frayGetFirstEmptyIdxP(sP->pauseQueueF);
+  if (nPausedEntities) {
+    Entity *entityP = sP->pauseQueueF;
+    Entity *entityEndP = entityP + nPausedEntities;
+    for (; entityP < entityEndP; ++entityP) {
+      xPauseComponentByEntity(sP, *entityP);
+    }
+    frayClr(sP->pauseQueueF);
+  }
+}
+
+static void _deactivateQueue(System *sP) {
+  U32 nDeactivatedEntities = *frayGetFirstEmptyIdxP(sP->deactivateQueueF);
+  if (nDeactivatedEntities) {
+    Entity *entityP = sP->deactivateQueueF;
+    Entity *entityEndP = entityP + nDeactivatedEntities;
+    for (; entityP < entityEndP; ++entityP) {
+      xPauseComponentByEntity(sP, *entityP);
+    }
+    frayClr(sP->deactivateQueueF);
+  }
+}
+
+inline static Entity _getEntityByVoidComponentPtr(System *sP, void *componentP) {
+  Entity compIdx = ((U32) componentP - (U32) sP->cF) / sP->compSz;
+  return xGetEntityByCompIdx(sP, compIdx);
+}
+
+
+void xQueuePause(System *sP, void *componentP) {
+  Entity entity = _getEntityByVoidComponentPtr(sP, componentP);
+  frayAdd(sP->pauseQueueF, &entity, NULL);
+}
+
+void xQueueDeactivate(System *sP, void *componentP) {
+  Entity entity = _getEntityByVoidComponentPtr(sP, componentP);
+  frayAdd(sP->deactivateQueueF, &entity, NULL);
+}
+
+
 /* This is how the entire ECS framework works. */
 Error xRun(System *sP) {
   _xReadInbox(sP);
   Error e = sP->run(sP);
-  if (!e)
-    e = _xDoChecks(sP);
+  // Pause and deactivate all components that need to be.
+  if (!e) {
+    _pauseQueue(sP);
+    _deactivateQueue(sP);
+  }
 	return e;
 }

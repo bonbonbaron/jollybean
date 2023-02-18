@@ -32,7 +32,7 @@ typedef enum {ACTIVATED, DEACTIVATED} BuiltinMsgArg;
     .outboxF           = NULL,\
     .cFSrcA            = NULL,\
     .iniSys            = x##name_##IniSys,\
-    .iniComp           = x##name_##IniComp,\
+    .iniComp           = x##name_##IniCompElem,\
     .clr               = x##name_##Clr,\
     .getShare          = x##name_##GetShare,\
     .processMessage    = x##name_##ProcessMessage,\
@@ -42,7 +42,7 @@ typedef enum {ACTIVATED, DEACTIVATED} BuiltinMsgArg;
 struct _System;
 
 typedef Error (*XIniSU)(struct _System *sP, void* sParamsP);
-typedef Error (*XIniCompU)(struct _System *sP, void *dataP, void *dataSrcP);
+typedef Error (*XIniCompElemU)(struct _System *sP, void *dataP, void *dataSrcP);
 typedef Error (*XRunU)(struct _System *sP);
 typedef Error (*XClrU)(struct _System *sP);
 typedef Error (*XProcMsgU)(struct _System *sP, Message *messageP);
@@ -50,7 +50,7 @@ typedef Error (*XGetShareU)(struct _System *sP, Map *shareMMP);
 typedef void* (*XSwitchCompU)(Key key);
 
 #define XIniSysFuncDef_(name_)   Error x##name_##IniSys(System *sP, void *sParamsP)
-#define XIniCompFuncDef_(name_)  Error x##name_##IniComp(System *sP, void *dataP, void *dataSrcP)
+#define XIniCompElemFuncDef_(name_)  Error x##name_##IniCompElem(System *sP, void *dataP, void *dataSrcP)
 #define XClrFuncDef_(name_)      Error x##name_##Clr(System *sP)
 #define XProcMsgFuncDef_(name_)  Error x##name_##ProcessMessage(System *sP, Message *msgP)
 #define XGetShareFuncDefUnused_(name_) Error x##name_##GetShare(System *sP, Map *shareMMP) {\
@@ -95,7 +95,7 @@ typedef struct _System {
   Message      *outboxF;             // Where this system talks to the outside world; can actually point to another system's inbox if you want 
   // Function pointers 
   XIniSU       iniSys;               // System init function pointer 
-  XIniCompU    iniComp;              // Some systems need to inflate components before using them. 
+  XIniCompElemU    iniComp;              // Some systems need to inflate components before using them. 
   XRunU        run;                  // runs the system 
   XClrU        clr;                  // for system cleanup (not deleting system itself) 
   XProcMsgU    processMessage;       // What to do in response to commands in inbox messages. 
@@ -103,7 +103,7 @@ typedef struct _System {
 } System;
 
 Error    xIniSys(System *sP, U32 nComps, void *miscP);
-Error    xIniComp(System *sP, const Entity entity, const void *cmpP);
+Error    xIniCompElem(System *sP, const Entity entity, const void *cmpP);
 Error    xAddComp(System *sP, Entity entity, Key compType, void *compDataP, void *compDataSrcP, XSwitchCompU switchCompU);
 void*    xGetComp(System *sP, Entity entity);
 U32      xGetNComps(System *sP);

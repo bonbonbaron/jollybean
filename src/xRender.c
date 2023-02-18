@@ -1,4 +1,5 @@
 #include "jb.h"
+#include "x.h"
 // Compressed images are already in memory in JB. 
 // JB just reconstructs them from strips of staggered pixels.   // TODO illustrate this with ASCII art
 // Packed bits are staggered to allow JB to unpack and (if necessary) flip 4 color-mapped pixels at a time.
@@ -33,135 +34,183 @@ Error cmGen(Colormap *cmP) {
 	return e;
 }
 
-// Source: https://codeincomplete.com/articles/bin-packing/
-// ========================================================
+static inline void _atlasElemChildIni(AtlasElem *childP, U32 x, U32 y, U32 remW, U32 remH) {
+  childP->x = x,
+  childP->y = y,
+  childP->remWidth = remW;
+  childP->remHeight = remH;
+  childP->used = 0;
+}
 
-// Scratch area
-// ============
+static void _atlasElemIni(AtlasElem *rootP, U32 atlasIdx, SortedRect *sortedRectP) {
+  printf("putting rect %d in elem %d.\n", sortedRectP->srcIdx, atlasIdx);
+  // Current node
+  rootP[atlasIdx].used = TRUE;
+  sortedRectP->rect.x = rootP[atlasIdx].x;
+  sortedRectP->rect.y = rootP[atlasIdx].y;
+  // Right child
+  printf("populating child %d\n", getRightAtlasChildIdx_(atlasIdx));
+  _atlasElemChildIni(
+      &rootP[getRightAtlasChildIdx_(atlasIdx)], 
+      rootP[atlasIdx].x + sortedRectP->rect.w,
+      rootP[atlasIdx].y,
+      rootP[atlasIdx].remWidth - sortedRectP->rect.w,
+      sortedRectP->rect.h);  // rectHeight splits node to a shelf rightward and full width downward
+  // Bottom child
+  printf("populating child %d\n", getLowerAtlasChildIdx_(atlasIdx));
+  _atlasElemChildIni(
+      &rootP[getLowerAtlasChildIdx_(atlasIdx)], 
+      rootP[atlasIdx].x,
+      rootP[atlasIdx].y + sortedRectP->rect.h,
+      rootP[atlasIdx].remWidth,
+      rootP[atlasIdx].remHeight - sortedRectP->rect.h);
+}
 
-// First, we sort the rectangles by their area (using a LUT). 
-// Second, we put them in the atlas based on how much room there is.
-#if 0  // let's just get the rectangle sorting to compile first, shall we?
-// TA stands for "Texture Atlas". Let's spare readers' eyes.
-typedef struct {
-  Key srcRectIdx;  // indexes the shared source rectangle array in xMaster
-  Key used;
-  U16 remainingWidthRight, remainingHeightDown;  // U16 works if the max texture dimension the Pi supports is 4096.
-} TaNode;  // 6 bytes
+static inline U32 _rectFits(Rect_ *rectP, AtlasElem *atlasElemP) {
+  return (rectP->w <= atlasElemP->remWidth && rectP->h <= atlasElemP->remHeight);
+}
 
-Error fit(Rect_ *srcRectA) {
-  if (!srcRectA)
+// Sort colormaps by largest dimension
+static Error _sortRects(SortedRect **sortedRectAP, const U32 N_SAMPLES, Colormap **cmPA) {
+  if (!sortedRectAP || !cmPA) {
     return E_BAD_ARGS;
-  Error e = SUCCESS;
-  Rect_ *rectP = srcRectA;
-  Rect_ *rectEndP = rectP + arrayGetNElems(srcRectA);
-  for (; !e && rectP < rectEndP; ++rectP) {
-    if (node = this.findNode(this.root, block.w, block.h))
-      e = this.splitNode(node, block.w, block.h);
+  }
+
+  Error e = arrayNew((void**) sortedRectAP, sizeof(SortedRect), N_SAMPLES);
+
+  if (!e) {
+    SortedRect *sortedRectA = *sortedRectAP;
+    // Loop through unsorted rectangles
+    sortedRectA[0].srcIdx = 0;
+    sortedRectA[0].maxDim = cmPA[0]->w > cmPA[0]->h ?  cmPA[0]->w : cmPA[0]->h;
+    sortedRectA[0].rect.w = cmPA[0]->w;
+    sortedRectA[0].rect.h = cmPA[0]->h;
+
+    // Loop through the unsorted rectangles
+    for (U32 i = 1; i < N_SAMPLES; ++i) {
+      U32 currRectMaxDim = cmPA[i]->w > cmPA[i]->h ?
+                           cmPA[i]->w : cmPA[i]->h;
+      // Loop through sorted rectangles to see where the current unsorted one should go.
+      for (U32 j = 0; j < i; ++j) {
+        if (currRectMaxDim > sortedRectA[j].maxDim) {
+          memcpy(&sortedRectA[j + 1], &sortedRectA[j], sizeof(SortedRect) * (i - j));
+          sortedRectA[j].maxDim = currRectMaxDim;  // larger of height or width
+          sortedRectA[j].srcIdx = i;  // index of sample in original array
+          //sortedRectA[j].rect.x = 0;
+          //sortedRectA[j].rect.y = 0;
+          sortedRectA[j].rect.w = cmPA[i]->w;
+          sortedRectA[j].rect.h = cmPA[i]->h;
+          goto nextUnsortedRect;
+        }
+      }
+      // If loop ended without placing rect anywhere, it belongs in last element.
+      sortedRectA[i].maxDim = currRectMaxDim;  // larger of height or width
+      sortedRectA[i].srcIdx = i;  // index of sample in original array
+      //sortedRectA[i].rect.x = 0;
+      //sortedRectA[i].rect.y = 0;
+      sortedRectA[i].rect.w = cmPA[i]->w;
+      sortedRectA[i].rect.h = cmPA[i]->h;
+      nextUnsortedRect:
+      continue;
+    }
   }
   return e;
 }
 
-Key taNodeFind(TaNode *nodeA, Key idx, S32 w, S32 h) {
-  // If this node's used up, continue looking in its neighboring nodes (going right first).
-  // When it reaches the right border, it looks beneath the rightmost node.
-  if (nodeP->used)
-    return taNodeFind(nodeA, nodeP->right, w, h) || taNodeFind(nodeA, nodeP->down, w, h);
-  // When it finds an empty node, it returns that node.
-  else if ((w <= nodeA[idx].w) && (h <= nodeA[idx].h))  
-    return idx;
-  else
-    return 0;  // This node won't work. Hopefully the next one will when this returns.
-    // The first node is already automatically used by the first (largest) rectangle.
-    // So a return value of 0 means the current rectangle won't fit in this node.
+// Texture atlas
+static Error _atlasGen(AtlasElem **atlasAP, const U32 N_SAMPLES, SortedRect *sortedRectA) {
+  // Binary tree of rects
+
+  // Allocate enough room for even the extraneous children to avoid child init branching.
+  Error e = binaryTreeNew_((void**) atlasAP, sizeof(AtlasElem), N_SAMPLES * 2 + 2);
+
+  if (!e) {
+    AtlasElem *atlasA = *atlasAP;
+    // For each sorted rectangle...
+    SortedRect *sortedRectP = sortedRectA + 1;  // 0th elem gets pre-inserted into atlas
+    SortedRect *sortedRectEndP = sortedRectA + arrayGetNElems(sortedRectA);
+    U32 nAtlasElems = arrayGetNElems(atlasA), searchIdx, cameFromRight,
+    nGrowthsRight = 0, nGrowthsDown  = 0;
+    // Initialize the first atlas elem manually so the elem ini magic works branchlessly.
+    atlasA[0].x = 0;
+    atlasA[0].y = 0;
+    atlasA[0].remWidth = sortedRectA[0].rect.w;
+    atlasA[0].remHeight = sortedRectA[0].rect.h;
+    _atlasElemIni(atlasA, 0, &sortedRectA[0]);
+    for (searchIdx = 0; sortedRectP < sortedRectEndP; ++sortedRectP) {
+      // Forward search in texture atlas
+      searchForward:  // moves only right and down till a fit or a dead-end is found
+      while (searchIdx < nAtlasElems) {
+        // If current node is not used, fill it (since we're sorted).
+        if (!atlasA[searchIdx].used) {
+          _atlasElemIni(atlasA, searchIdx, sortedRectP);
+          goto nextRect;
+        }
+        // Does rect fit to the right?
+        if (_rectFits(&sortedRectP->rect, atlasA + getRightAtlasChildIdx_(searchIdx))) {
+          searchIdx = getRightAtlasChildIdx_(searchIdx);
+          continue;
+        }
+        // Does rect fit beneath?
+        else if (_rectFits(&sortedRectP->rect, atlasA + getRightAtlasChildIdx_(searchIdx))) {
+          searchIdx = getLowerAtlasChildIdx_(searchIdx);
+          continue;
+        }
+        // If you've hit a dead-end, back out until an unexplored lower direction is found.
+        goto backOut;
+      }
+
+      // TODO implement if (searchIdx >= nAtlasElems) safety check here if necessary.
+
+      // Backing out of dead ends
+      backOut:  // moves only up and left till an unexplored downward direction or root is found
+      while (searchIdx) {
+        searchIdx = getParentAtlasIdx_(searchIdx);
+        if (cameFromRight // sneakily populated in getParentAtlasIdx_()
+            && _rectFits(&sortedRectP->rect, atlasA + getLowerAtlasChildIdx_(searchIdx))) {
+          searchIdx = getLowerAtlasChildIdx_(searchIdx);
+          goto searchForward;
+        }
+      }
+
+      // If no space was found (searchIdx == 0 now), it's time to expand the atlas.
+      U32 todoDeleteThis = ((sortedRectP->rect.h <= atlasA[0].remHeight))         // can right
+        | ((atlasA[0].remHeight >= atlasA[0].remWidth  + sortedRectP->rect.w)  << 1) // should right
+        | ((sortedRectP->rect.w <= atlasA[0].remWidth)  << 2)  // can down
+        | ((atlasA[0].remWidth  >= atlasA[0].remHeight + sortedRectP->rect.h)  << 3); // should down
+      switch (todoDeleteThis
+      ) {
+        case SHOULD_RIGHT_CAN_DOWN:
+        case SHOULD_RIGHT_DOWN:
+        case SHOULD_RIGHT:
+        case CAN_RIGHT:
+          atlasA[0].remWidth += sortedRectP->rect.w;
+          atlasA[getNthRightDescendant_(++nGrowthsRight)].remWidth = sortedRectP->rect.w;
+          _atlasElemIni(atlasA, getNthRightDescendant_(nGrowthsRight), sortedRectP);
+          break;
+        case CAN_RIGHT_SHOULD_DOWN:
+        case SHOULD_DOWN:
+        case CAN_DOWN:
+          atlasA[0].remHeight += sortedRectP->rect.h;
+          atlasA[getNthLowerDescendant_(++nGrowthsDown)].remHeight = sortedRectP->rect.h;
+          _atlasElemIni(atlasA, getNthLowerDescendant_(nGrowthsDown), sortedRectP);
+          break;
+        default:
+          break;
+      }
+      nextRect:
+      continue;
+    }  // for each sorted rectangle
+  }  // if binary tree is successfully made
+
+  return e;
 }
 
-// This is where nodes are born: mitosis. w and h represent the remaining w and h in the direction from this block.
-TaNode* taNodeSplit(TaNode *nodeA, Key idx, S32 w, S32 h) {
-  nodeA[idx].down.x = nodeA[idx].x;
-  nodeA[idx].down.y = nodeA[idx].y + h;
-  nodeA[idx].down.w = nodeA[idx].w;
-  nodeA[idx].down.h = nodeA[idx].h - h;
-  nodeP->down  = { x: nodeP->x,     y: nodeP->y + h, w: nodeP->w,     h: nodeP->h - h };
-  nodeP->right = { x: nodeP->x + w, y: nodeP->y,     w: nodeP->w - w, h: h          };
-  return node;
-}
-
-// Prevent copies with new member in XRenderComponentSrc struct: S16 textureAtlasIdx.
-// For array-based binary trees, left child is (parent*2)+1; right child is (parent*2)+2. So...
-// p0, c01, c02, ... then you can't have an independent parent. They all descend from p0.
-// p0, c01, c02, c01_01, c01_02, c02_01, c02_02, c01_01_01, c01_01_02... etc.
-void taNodeFitNewBlock() {
-  var n, node, block, len = blocks.length;
-  var w = len > 0 ? blocks[0].w : 0;
-  var h = len > 0 ? blocks[0].h : 0;
-  this.root = { x: 0, y: 0, w: w, h: h };
-  for (n = 0; n < len ; n++) {
-    block = blocks[n];
-    if (node = taNodeFind(this.root, block.w, block.h))
-      taNodeFit = taNodeSplit(node, block.w, block.h);
-    else
-      taNodeFit = taNodeGrow(block.w, block.h);
-  }
-}
-
-TaNode* taNodeGrowRight(w, h) {
-  this.root = {
-    used: true,
-    x: 0,
-    y: 0,
-    w: this.root.w + w,
-    h: this.root.h,
-    down: this.root,
-    right: { x: this.root.w, y: 0, w: w, h: this.root.h }
-  };
-  if (node = taNodeFind(this.root, w, h))
-    return taNodeSplit(node, w, h);
-  else
-    return null;
-}
-
-TaNode *taNodeGrowDown(w, h) {
-  this.root = {
-    used: true,
-    x: 0,
-    y: 0,
-    w: this.root.w,
-    h: this.root.h + h,
-    down:  { x: 0, y: this.root.h, w: this.root.w, h: h },
-    right: this.root
-  };
-  if (node = taNodeFind(this.root, w, h))
-    return taNodeSplit(node, w, h);
-  else
-    return null;
-}
 
 
-TaNode* taNodeGrow(S32 w, S32 h) {
-  var canGrowDown  = (w <= this.root.w);  // width below must fit inside root width
-  var canGrowRight = (h <= this.root.h);  // height to right must fit inside root height
-
-  var shouldGrowRight = canGrowRight && (this.root.h >= (this.root.w + w)); // attempt to keep square-ish by growing right when height is much greater than width
-  var shouldGrowDown  = canGrowDown  && (this.root.w >= (this.root.h + h)); // attempt to keep square-ish by growing down  when width  is much greater than height
-
-  if (shouldGrowRight)
-    return taNodeGrowRight(w, h);
-  else if (shouldGrowDown)
-    return taNodeGrowDown(w, h);
-  else if (canGrowRight)            // This favors growing rigth over growing down.
-   return taNodeGrowRight(w, h);
-  else if (canGrowDown)
-    return taNodeGrowDown(w, h);
-  else
-    return null; // need to ensure sensible root starting size to avoid this happening
-}
-// This is where I'll write the texture atlas algorithm.
-//
-// Write a insert-sort by rect w/h function that memcpys in an inner insert.
-// Write some array-based binary tree functionality -- perhaps within data.c. Only what's needed.
-// Sort all rectangles by 
-
+#if 1
+//***************** orphaned code from here....
+// .................. ... to here
 #endif
 
 
@@ -174,65 +223,44 @@ Error xRenderIniSys(System *sP, void *sParamsP) {
   return SUCCESS;
 }
 
-//======================================================
-// Initialize xRender's components, which are Images.
-//======================================================
-#define DO_IT_THE_OLD_DUMB_WAY 0
-Error xRenderIniComp(System *sP, void *compDataP, void *compDataSrcP) {
-	if (!sP || !compDataP || !compDataSrcP)
+//=========================================================================
+// Initialize xRender's components' elements (Colormaps and Color Palettes)
+//=========================================================================
+Error xRenderIniCompElem(System *sP, const Entity entity, const Key subtype, void *dataP) {
+	if (!sP || !entity || !dataP) {
 		return E_BAD_ARGS;
-	// Build colormap.
-	//XRender *xRenderSysP = (XRender*) sP;
-	//XRenderComp *cP = (XRenderComp*) compDataP;
-  XRenderCompSrc *imgP = (XRenderCompSrc*) compDataSrcP;
-	Error e = cmGen(imgP->colorMapP);  // I think I'm keeping this to vectorize better.
-
-  return e;  // here for now to make the compiler happy
-
-#if DO_IT_THE_OLD_DUMB_WAY
-  // Skip things that're already done.
-	if (cP->textureP) 
-		return SUCCESS;
-  else if (imgP->textureP) {
-    cP->textureP = imgP->textureP;
-    return SUCCESS;
   }
-#endif
-  
-#if DO_IT_THE_OLD_DUMB_WAY  // I think the texture atlas obsoletes all this.
-	// Make surface out of colormap and color palette.
-	Surface_ *surfaceP = NULL;
-	if (!e)
-		e = surfaceNew(&surfaceP, imgP->colorMapP->w, imgP->colorMapP->h, imgP->colorMapP->bpp);
 
-	// Apply color palette to color map.
-	if (!e)
-		e = surfaceIni(surfaceP, imgP->nColors, imgP->colorA, imgP->colorMapP->sdP->unstrippedDataA);
+  ColorPalette *cpP;
+  Colormap *cmP;
 
-	// Create texture from surface. 
-	if (!e && surfaceP)
-		e = textureNew(&imgP->textureP, xRenderSysP->rendererP, surfaceP);
+  XRender *xRenderP = (XRender*) sP;
 
-	if (!e && !imgP->textureP) 
-		e = E_BAD_ARGS;
+  // If it's a color palette, increment the system's atlas palette offset.
+  // We use type to determine system.
+  // Then we use subtype to determine what it does with it. 
+  switch (subtype) {
+    case COLORMAP:
+      cmP = (Colormap*) dataP;
+      if (!(cmP->state & INITIALIZED)) {
+        cmP->state |= INITIALIZED;
+        // TODO sort-insert a new rect while you're here
+      }
+      break;
+    case COLOR_PALETTE:
+      cpP = (ColorPalette*) dataP;
+      // Prevent copies of sub-palettes in texture atlas palette by marking them as initialized.
+      if (!(cpP->state & INITIALIZED)) {
+        cpP->state |= INITIALIZED;
+        cpP->atlasPaletteOffset = xRenderP->atlasPaletteOffset;
+        xRenderP->atlasPaletteOffset += cpP->nColors;
+      }
+      break;
+    default:
+      break;
+  }
 
-	if (!e) 
-		e = textureSetAlpha(imgP->textureP);
-
-  // Everything's ready to hand over to the component.
-	if (!e)  
-    cP->textureP = imgP->textureP;  // All other imgP attributes are set later by a b-tree.
-
-	//SDL_FreeSurface(surfaceP);  // Program crashes when I do this. Maybe textureP needs it?
-
-	// Clean up if anything bad happened.
-	if (e) {
-		_cmClr(imgP->colorMapP);
-		if (imgP->textureP) 
-			textureDel(&imgP->textureP);
-	}
-	return e;
-#endif
+  return SUCCESS;  // here for now to make the compiler happy
 }
 
 // TODO Is the source rect MPMP already shared?
@@ -260,6 +288,107 @@ static Error _getSharedMap(Map *shareMPMP, Key key, Map **outputMPP) {
   return SUCCESS;
 }
 
+/* TODO things to move to XRender structure:
+ * cmPA -> cmPF
+ * cpPA -> cpPF
+ * atlasTextureSurfaceP
+ * atlasTextureP
+ */
+// Post-processing of components is done AFTER media genes are inflated and unpacked.
+// Rendering media genes are flagged to skip the strip-assembling stage; that's done here.
+XPostprocessCompsDef_(Render) {
+  Error e = SUCCESS;
+  XRender *renderSysP = (XRender*) sP;
+  Entity entity;
+
+  // Set each component's src and dest rectangle indices.
+  XRenderComp *cP = sP->cF;
+  XRenderComp *cEndP = cP + arrayGetNElems(sP->cF);
+  cP = sP->cF;
+  cEndP = cP + arrayGetNElems(sP->cF);
+  for (; !e && cP < cEndP; ++cP) {
+    entity = xGetEntityByCompIdx(sP, cP - (XRenderComp*) sP->cF);
+    e = mapGetIndex(renderSysP->srcRectMP, entity, &cP->srcRectIdx);
+    if (!e) {
+      e = mapGetIndex(renderSysP->dstRectMP, entity, &cP->dstRectIdx);
+    }
+  }
+
+  // Sort rectangles
+  SortedRect *sortedRectA = NULL;
+  if (!e) {
+    e = _sortRects(&sortedRectA, N_SAMPLES, cmPA);
+  }
+
+  // Texture atlas
+  AtlasElem *atlasA = NULL;
+  U8 *atlasPixelA = NULL;
+  Surface_ *textureSurfaceP = NULL;
+  if (!e) {
+    e = _atlasGen(&atlasA, N_SAMPLES, sortedRectA);
+  }
+  // Texture atlas array
+  if (!e) {
+    e = arrayNew((void**) &atlasPixelA, sizeof(U8), atlasA[0].remWidth * atlasA[0].remHeight);
+  }
+  if (!e) {
+    const U32 ATLAS_WIDTH = atlasA[0].remWidth;
+    U32 nStripsPerRow;
+    StripmapElem *smElemP, *smElemEndP;
+    U8 *dstP;
+    U32 nUnitsPerStrip;
+    U32 srcIdx;
+    // For each sample...
+    for (int i = 0; i < N_SAMPLES; ++i) {
+      srcIdx = sortedRectA[i].srcIdx;
+      nUnitsPerStrip = cmPA[srcIdx]->sdP->ss.nUnitsPerStrip;
+      nStripsPerRow = cmPA[srcIdx]->w / nUnitsPerStrip;
+      smElemP    = (StripmapElem*) cmPA[srcIdx]->sdP->sm.infP->inflatedDataP;
+      // For each row of this sample's atlas rectangle...
+      for (int j = 0; j < sortedRectA[i].rect.h; ++j) {
+        smElemEndP = smElemP + nStripsPerRow;
+        dstP       = atlasPixelA + sortedRectA[i].rect.x + (j + sortedRectA[i].rect.y) * ATLAS_WIDTH;
+        // Paste rectangle row
+        for (; smElemP < smElemEndP; ++smElemP, dstP += nUnitsPerStrip) {
+          memcpy(dstP, 
+                 cmPA[srcIdx]->sdP->ss.unpackedDataP + (*smElemP * nUnitsPerStrip), 
+                 nUnitsPerStrip);
+        }
+      }
+    }
+  }
+  // Texture surface
+  if (!e) {
+    textureSurfaceP = SDL_CreateRGBSurfaceWithFormatFrom((void*) atlasPixelA, 
+        atlasA[0].remWidth, atlasA[0].remHeight, 8, atlasA[0].remWidth, SDL_PIXELFORMAT_INDEX8);
+  }
+  if (!textureSurfaceP) {
+    e = E_NO_MEMORY;
+  }
+  // Texture surface palette
+  if (!e) {
+    for (int i = 0 ; i < N_SAMPLES; ++i) {
+      SDL_SetPaletteColors(textureSurfaceP->format->palette, 
+          cpPA[i]->colorA, cpPA[i]->atlasPaletteOffset , cpPA[i]->nColors);
+    }
+  }
+  // Sanity check
+  // Window and renderer 
+  Renderer_ *rendererP = NULL;
+  Window_ *windowP = NULL;
+  if (!e) {
+    e = guiNew(&windowP, &rendererP);
+  }
+  // Texture
+  Texture_ *textureP = NULL;
+  if (!e) {
+    e = textureNew(&textureP, rendererP, textureSurfaceP);
+  }
+
+
+  return SUCCESS;
+}
+
 // Only get the render and window. Components' src & dst rects come from SCENE_START stimulus to XGo.
 XGetShareFuncDef_(Render) {
   XRenderComp *cP = NULL;
@@ -280,19 +409,6 @@ XGetShareFuncDef_(Render) {
   if (!e)
     // Animation system nicely makes a map of pointers to its components' srcRect arrays (2D: first dim is anim # (not important), second is array of src rects).
     e = _getSharedMap(shareMMP, SRC_RECT_ARRAY, &renderSysP->srcRectMAMP);  // represents all the possible source rectangles to keep track of in texture atlas
-
-  // Get each component's src and dest rectangle indices.
-  if (!e) {
-    cP = sP->cF;
-    cEndP = cP + arrayGetNElems(sP->cF);
-    for (; !e && cP < cEndP; ++cP) {
-      entity = xGetEntityByCompIdx(sP, cP - (XRenderComp*) sP->cF);
-      e = mapGetIndex(renderSysP->srcRectMP, entity, &cP->srcRectIdx);
-      if (!e) 
-        e = mapGetIndex(renderSysP->dstRectMP, entity, &cP->dstRectIdx);
-    }
-  }
-
   // Get all the animation rectangles we need to update when building our texture atlas.
   // First count all the rectangles we're going to need.
   U32 nRectangles = 0;

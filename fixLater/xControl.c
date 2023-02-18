@@ -102,7 +102,7 @@ Error xControlRun(System *sP) {
 XProcMsgFuncDefUnused_(Control);
 XClrFuncDefUnused_(Control);
 XIniSysFuncDefUnused_(Control);
-XIniCompFuncDefUnused_(Control);
+XIniCompElemFuncDefUnused_(Control);
 XGetShareFuncDefUnused_(Control);
 
 //======================================================

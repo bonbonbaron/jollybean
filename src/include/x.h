@@ -10,10 +10,10 @@ typedef Key Entity;
 
 typedef enum {ACTIVATED, DEACTIVATED} BuiltinMsgArg;
 
-typedef struct {
-  Key key;
-  void *alternateComponentP;
-} ComponentChoice;
+// Pieces are parts of components. For example, Rendering components have colormaps and color palettes.
+typedef enum { INITIALIZED = 1 } PieceState; 
+#define MASK_COMPONENT_TYPE    (0xfc)
+#define MASK_COMPONENT_SUBTYPE (~MASK_COMPONENT_TYPE)
 
 #define X_(name_, id_, flags_) \
   X##name_ x##name_ = { .system = System_(name_, id_, flags_)};\
@@ -24,18 +24,18 @@ typedef struct {
   {\
     .id                = id_,\
     .compSz            = sizeof(X##name_##Comp),\
-    .compSrcSz         = sizeof(X##name_##CompSrc),\
     .flags             = flags_,\
     .cF                = NULL,\
     .cIdx2eA           = NULL,\
     .e2cIdxMP          = NULL,\
     .switchMPMP        = NULL,\
-    .checkF            = NULL,\
     .inboxF            = NULL,\
     .outboxF           = NULL,\
-    .cFSrcA            = NULL,\
+    .deactivateQueueF  = NULL,\
+    .pauseQueueF       = NULL,\
     .iniSys            = x##name_##IniSys,\
-    .iniComp           = x##name_##IniComp,\
+    .iniCompElem       = x##name_##IniCompElem,\
+    .postprocessComps  = x##name_##PostprocessComps,\
     .clr               = x##name_##Clr,\
     .getShare          = x##name_##GetShare,\
     .processMessage    = x##name_##ProcessMessage,\
@@ -44,91 +44,79 @@ typedef struct {
 
 struct _System;
 
+// Function pointer types
 typedef Error (*XIniSU)(struct _System *sP, void* sParamsP);
-typedef Error (*XIniCompU)(struct _System *sP, void *dataP, void *dataSrcP);
+typedef Error (*XIniCompElemU)(struct _System *sP, const Entity entity, const Key subtype, void *dataP);
 typedef Error (*XRunU)(struct _System *sP);
 typedef Error (*XClrU)(struct _System *sP);
 typedef Error (*XProcMsgU)(struct _System *sP, Message *messageP);
 typedef Error (*XGetShareU)(struct _System *sP, Map *shareMMP);
+typedef Error (*XPostprocessCompsU)(struct _System *sP);
 typedef void* (*XSwitchCompU)(Key key);  // used to switch between a multi-form component, like rect's position.
 
-#define XIniSysFuncDefUnused_(name_) XIniSysFuncDef_(name_) {\
+#define XPostprocessCompsDefUnused_(name_) XPostprocessCompsDef_(name_) {\
+  unused_(sP);\
+  return SUCCESS;\
+}
+#define XPostprocessCompsDef_(name_) Error x##name_##PostprocessComps(System *sP)
+
+#define XIniSysFuncDefUnused_(name_) xIniSysFuncDef_(name_) {\
   unused_(sP);\
   unused_(sParamsP);\
   return SUCCESS;\
 }
-#define XIniSysFuncDef_(name_)   Error x##name_##IniSys(System *sP, void *sParamsP)
-#define XIniCompFuncDefUnused_(name_) XIniCompFuncDef_(name_) {\
+#define xIniSysFuncDef_(name_) Error x##name_##IniSys(System *sP, void *sParamsP)
+
+#define XIniCompElemFuncDefUnused_(name_) XIniCompElemFuncDef_(name_) {\
   unused_(sP);\
+  unused_(entity);\
+  unused_(subtype);\
   unused_(dataP);\
-  unused_(dataSrcP);\
   return SUCCESS;\
 }
-#define XIniCompFuncDefUnused_(name_) XIniCompFuncDef_(name_) {\
-  unused_(sP);\
-  unused_(dataP);\
-  unused_(dataSrcP);\
-  return SUCCESS;\
-}
-#define XIniCompFuncDef_(name_)  Error x##name_##IniComp(System *sP, void *dataP, void *dataSrcP)
+#define XIniCompElemFuncDef_(name_)  Error x##name_##IniCompElem(System *sP, const Entity entity, const Key subtype, void *dataP)
+
 #define XClrFuncDefUnused_(name_) XClrFuncDef_(name_) {\
   unused_(sP);\
   return SUCCESS;\
 }
 #define XClrFuncDef_(name_)      Error x##name_##Clr(System *sP)
+
 #define XProcMsgFuncDefUnused_(name_)  XProcMsgFuncDef_(name_) {\
   unused_(sP);\
   unused_(msgP);\
   return SUCCESS;\
 }
 #define XProcMsgFuncDef_(name_)  Error x##name_##ProcessMessage(System *sP, Message *msgP)
+
 #define XGetShareFuncDefUnused_(name_) Error x##name_##GetShare(System *sP, Map *shareMMP) {\
   unused_(sP); \
   unused_(shareMMP); \
   return SUCCESS; \
 }
 #define XGetShareFuncDef_(name_) Error x##name_##GetShare(System *sP, Map *shareMMP)
+
 #define xGetShareErrCheck \
   if (!sP || !shareMMP) \
     return E_BAD_ARGS;
 
-// Checks 
-// ======
-//    Checks prevent a function from having to test a condition on all the components 
-// again every frame. The original vision was for behavior tree nodes to test these
-// conditions; now we're making that the responsibility of systems
-// themselves. Because systems have more immediate access to these components.
-//    Therefore, we're spreading delegating these tests to the systems concerned.
-typedef Bln (*CheckCbP)(Entity entity, void *operandP);
-
-typedef struct {
-  Bln    doesToggle;                 // if true, switch back and forth between two callbacks on true; if false, retire this check after first time checkCb returns true.
-  Key   *cIdxP;                      // entity this check regards... so you get entity's tree map, and you unlock the correct tree with the root key.
-  Key    root;                       // root of behavior tree to fire 
-  U8     outputIfTrueA[2];           // condition flag to be OR'd into if true
-  U8     currCbIdx;                  // index to cbA
-  CheckCbP cbA[2];                   // Up to two different callbacks based on whether it toggles.
-  U8    *resultFlagsP;               // condition to update through a simple pointer
-  void  *operandP;                   // operand to pass into CheckCbP; gets assigned by tree node
-} Check;
-
+// TODO add postprocess function
 typedef struct _System {
   Key           id;                  // ID of system 
   Key           compSz;              // components are the same size in all of this system's activities 
-  Key           compSrcSz;           // size of source of each component (in the case of singletons)
   U8            flags;               // System flags; one example use is preventing unnecessary allocations of unused system parts
   void         *cF;                  // component fray 
-  void         *cFSrcA;              // array of components' sources; used for cleaning up and avoiding double-pointer traversal of singletons during run-time
+  void         *pauseQueueF;         // queue for pausing
+  void         *deactivateQueueF;    // queue for pausing
   Key          *cIdx2eA;             // insert component index to get entity 
   Map          *e2cIdxMP;            // insert entity to get component index 
   Map          *switchMPMP;          // key = Entity, val = maps to void pointers (triple pointer EW)
-  Check        *checkF;              // Fray of checks; these check for conditions about component's and alert the world about them when true 
   Message      *inboxF;              // Where commands come in from the outside world 
   Message      *outboxF;             // Where this system talks to the outside world; can actually point to another system's inbox if you want 
-  Key          *deactivateF;         // Fray holding indices of components to deactivate
   // Function pointers 
   XIniSU       iniSys;               // System init function pointer 
-  XIniCompU    iniComp;              // Some systems need to inflate components before using them. 
+  XIniCompElemU iniCompElem;              // Some systems need to inflate components before using them. 
+  XPostprocessCompsU postprocessComps;  // If components are composites, piece them together here.
   XRunU        run;                  // runs the system 
   XClrU        clr;                  // for system cleanup (not deleting system itself) 
   XProcMsgU    processMessage;       // What to do in response to commands in inbox messages. 
@@ -136,7 +124,7 @@ typedef struct _System {
 } System;
 
 Error    xIniSys(System *sP, U32 nComps, void *miscP);
-Error    xIniComp(System *sP, const Entity entity, const void *cmpP);
+Error    xIniCompElem(System *sP, const Entity entity, const void *cmpP);
 Error    xAddComp(System *sP, Entity entity, Key compType, void *compDataP, Map *switchMP);
 //void*    xGetComp(System *sP, Entity entity);
 U32      xGetNComps(System *sP);
@@ -150,6 +138,8 @@ void     xUnpauseComponentByEntity(System *sP, Entity entity);
 void     xSwitchComponent(System *sP, Entity entity, Key newCompKey);
 void     xActivateComponentByIdx(System *sP, Key compOrigIdx);
 void     xDeactivateComponentByIdx(System *sP, Key compOrigIdx);
+void     xQueuePause(System *sP, void *componentP);
+void     xQueueDeactivate(System *sP, void *componentP);
 void     xClr(System *sP);
 Error    xRun(System *sP);
 #endif

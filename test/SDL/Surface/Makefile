@@ -14,11 +14,11 @@ JB_DIR = ../../../
 
 #~/jb/build/Seed/Genome/Gene/Body/Graybody/Colormap/src/I
 ./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./main.o ${JB_DIR}build/xRender.o ${JB_DIR}build/x.o ${JB_DIR}build/data.o ${JB_DIR}build/interface.o ${JB_DIR}utils/body/build/previewImg.o
-	gcc ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ${JB_DIR}utils/body/build/previewImg.o ./main.o ${JB_DIR}build/interface.o $(shell sdl2-config --libs) ${JB_DIR}build/xRender.o ${JB_DIR}build/x.o ${JB_DIR}build/data.o -lpthread -o $@
+	gcc ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ${JB_DIR}utils/body/build/previewImg.o ./main.o ${JB_DIR}build/interface.o -L/usr/local/lib -Wl,-rpath,/usr/local/lib -Wl,--enable-new-dtags $(shell sdl2-config --libs) ${JB_DIR}build/xRender.o ${JB_DIR}build/x.o ${JB_DIR}build/data.o -lpthread -o $@
 	touch $@
 
 ./main.o: ./main.c
-	gcc -g -c main.c -I${JB_DIR}src/include/ -I${JB_DIR}utils/body/src/include -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags --cflags) -o $@
+	gcc -g -c main.c -I${JB_DIR}src/include/ -I${JB_DIR}utils/body/src/include -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags) -o $@
 	touch $@
 
 ${CM_OBJ_DIR}/%Colormap.o: ${CM_SRC_DIR}/%Colormap.c

@@ -37,7 +37,7 @@ Personality personalityName_(name_) = {\
 #define seedName_(name_) name_##Seed
 
 // Media genes are inflated, unpacked, and assembled into original data.
-typedef enum {EXCLUSIVE_GENE, SHARED_GENE, BB_GENE, MEDIA_GENE} GeneClass;
+typedef enum {EXCLUSIVE_GENE, SHARED_GENE, BB_GENE, MEDIA_GENE, COMPOSITE_GENE} GeneClass;
 typedef enum {SCENE_START, SCENE_CHANGE, SCENE_STOP} SceneAction;
 
 typedef struct {
@@ -60,8 +60,8 @@ typedef struct {
 /******** GENOME  *********/
 /**************************/
 typedef struct {
-	U8 geneClass;    // exclusive, shared, or blackboard gene
-	U8 type;         // image, audio, text, battle stats, etc. (used to target the correct shared pool/system)
+	U8 geneClass;    // exclusive, shared, blackboard, media, or composite gene
+	U8 type;         // upper 6 bits hold system this belongs to, lower 2 is component subtype
 	U8 size;         // sizeof destination component type (so we can memcpy the right size into the ECS target system/sharedPool/BB)
   Key key;         // key that lets you mutate a seed's gene to this one; 0 for immutable
   void *dataP;     // the destination data of the gene 

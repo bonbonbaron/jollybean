@@ -342,10 +342,6 @@ Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGenesMPP, 
         case EXCLUSIVE_GENE:
           childSysP = *((System**) xGetCompPByEntity(masterSysP, gene.type));
           if (childSysP) {
-            // YES! I didn't realize it, but I AM saving memory through this map of maps design.
-            // They're both pointers to maps. Therefore, the second pointer will be the SAME 
-            // pointer for all entities of the same type!! Yes!!!
-
             // histo's 1D array represents a 2D array: columns are spawn #s, rows are system #s.
             // So we have to index it awkwardly as hell. :)
             for (Entity entityEnd = entity + spawnP->nEntitiesToSpawn; 
@@ -373,6 +369,11 @@ Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGenesMPP, 
           if (!e)
             for (Entity entityEnd = entity + spawnP->nEntitiesToSpawn; entity < entityEnd; ++entity)
               e = mapSet(bbMP, gene.type, &gene.dataP);
+          break;
+        // Media are the only things needing inflating and unpacking.
+        case MEDIA_GENE:
+          break;
+        case COMPOSITE_GENE:
           break;
         default:
           e = E_BAD_COMPONENT_TYPE;
@@ -461,3 +462,4 @@ void hivemindDel(Map **hivemindMPP) {
   }
   mapDel(hivemindMPP);
 }
+// TODO add postprocessing to the steps in  gene distribution

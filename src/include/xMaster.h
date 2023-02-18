@@ -26,9 +26,11 @@ typedef struct {
 extern XMaster xMaster;
 extern System *sMasterP;
 
+XPostprocessCompsDefUnused_(Master);
+
 Error xIni(System **sPA, U16 nSystems, U8 nSystemsMax, Biome *biomeP);
 Error xMasterIniSys(System *sP, void *sParamsP);
-Error xMasterIniComp(System *sP, void *dataP, void *dataSrcP);
+XIniCompElemFuncDef_(Master);
 Error xMasterIni(XMaster *xMasterSysP, System *goSysP, System **sPA, U16 nXSystems, Key nXSystemsMax, Biome *biomeP);
 Error xMasterGetShare(System *sP, Map *shareMMP);
 Error xMasterProcessMessage(System *sP, Message *msgP);

@@ -12,7 +12,7 @@ Error xMotionTransIniSys(System *sP, void *sParamsP) {
 //======================================================
 // Initialize xMotionTrans's components, which are Images.
 //======================================================
-Error xMotionTransIniComp(System *sP, void *compDataP, void *compDataSrcP) {
+Error xMotionTransIniCompElem(System *sP, void *compDataP, void *compDataSrcP) {
   unused_(sP);
   unused_(compDataP);
   unused_(compDataSrcP);

@@ -74,13 +74,14 @@ typedef U8 ColormapIdx;
 #define N_COLORS_SUPPORTED_MAX_ (16)
 typedef struct {
   StripDataS *sdP;  // this element MUST come first in a media (hence inflatable) gene for casting
-  U8 state;
+  U8 state;         // prevents copies of this from being added to texture atlas or inflated
   U8 bpp;
   U16 w, h, pitch;  // in pixel units; determine actual step size by pixel format
 } Colormap;     
 
 typedef struct {
-  U8 atlasOffset;
+  U8 state;   /// prevents copies of sub-palettes from being added to texture atlas palette
+  U8 atlasPaletteOffset;  // offset of this sub-palette in texture atlas color palette
   U8 nColors;
   Color_ *colorA;
 } ColorPalette;

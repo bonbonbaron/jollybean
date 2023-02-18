@@ -1920,8 +1920,8 @@ XClrU	libbotox/src/include/x.h	/^typedef Error (*XClrU)(struct _System *sP);$/;"
 XGetShareFuncDefUnused_	libbotox/src/include/x.h	56;"	d
 XGetShareFuncDef_	libbotox/src/include/x.h	61;"	d
 XGetShareU	libbotox/src/include/x.h	/^typedef Error (*XGetShareU)(struct _System *sP, Map *shareMMP);$/;"	t
-XIniCompFuncDef_	libbotox/src/include/x.h	53;"	d
-XIniCompU	libbotox/src/include/x.h	/^typedef Error (*XIniCompU)(struct _System *sP, void *dataP, void *dataSrcP);$/;"	t
+XIniCompElemFuncDef_	libbotox/src/include/x.h	53;"	d
+XIniCompElemU	libbotox/src/include/x.h	/^typedef Error (*XIniCompElemU)(struct _System *sP, void *dataP, void *dataSrcP);$/;"	t
 XIniSU	libbotox/src/include/x.h	/^typedef Error (*XIniSU)(struct _System *sP, void* sParamsP);$/;"	t
 XIniSysFuncDef_	libbotox/src/include/x.h	52;"	d
 XProcMsgFuncDef_	libbotox/src/include/x.h	55;"	d
@@ -5994,7 +5994,7 @@ info_version_internal	build/CMakeFiles/3.18.4/CompilerIdC/CMakeCCompilerId.c	/^c
 info_version_internal	build/CMakeFiles/3.18.4/CompilerIdCXX/CMakeCXXCompilerId.cpp	/^char const info_version_internal[] = {$/;"	v
 info_version_internal	example/out/CMakeFiles/3.18.4/CompilerIdC/CMakeCCompilerId.c	/^char const info_version_internal[] = {$/;"	v
 info_version_internal	example/out/CMakeFiles/3.18.4/CompilerIdCXX/CMakeCXXCompilerId.cpp	/^char const info_version_internal[] = {$/;"	v
-iniComp	libbotox/src/include/x.h	/^  XIniCompU    iniComp;              \/\/ Some systems need to inflate components before using them. $/;"	m	struct:_System
+iniComp	libbotox/src/include/x.h	/^  XIniCompElemU    iniComp;              \/\/ Some systems need to inflate components before using them. $/;"	m	struct:_System
 iniSys	libbotox/src/include/x.h	/^  XIniSU       iniSys;               \/\/ System init function pointer $/;"	m	struct:_System
 init	src/fluid_gen.h	/^	char init;		\/* Does the generator need to be initialized (cfr. fluid_voice_init()) *\/$/;"	m	struct:_fluid_gen_info_t
 init_blocksize	stb/stb_vorbis.c	/^static int init_blocksize(vorb *f, int b, int n)$/;"	f	file:

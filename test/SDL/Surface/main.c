@@ -77,20 +77,39 @@ int main(int argc, char **argv) {
   }
 #endif
 
+  // *********************************************
 	// Init SDL
+  // *********************************************
+  for (int i = 0; i < SDL_GetNumVideoDrivers(); ++i) {
+    printf("%s\n", SDL_GetVideoDriver(i));
+  }
+  //return 0;
+  printf("before sdl init\n");
 	if (SDL_Init(SDL_INIT_VIDEO) != SUCCESS) {
     //printf("[guiNew] SDL error: %s\n", SDL_GetError());
 		return EXIT_FAILURE;
   }
+  printf("after sdl init\n");
 
   // Window and renderer
   SDL_Window *windowP = NULL;
   SDL_Renderer *rendererP = NULL;
-	windowP = SDL_CreateWindow("Hello world!", 100, 100, 400, 300, 0);
+#if 0
+	windowP = SDL_CreateWindow("Hello world!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1080, 1920, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_OPENGL);
+#else
+  printf("before window\n");
+	windowP = SDL_CreateWindow("Hello world!", 100, 100, 500, 500, SDL_WINDOW_OPENGL );
+  printf("after window\n");
+#endif
 	if (!windowP) {
 		return EXIT_FAILURE;
   }
-	rendererP = SDL_CreateRenderer(windowP, -1, 0);
+  printf("before renderer\n");
+	rendererP = SDL_CreateRenderer(windowP, 0, 0);
+  SDL_RendererInfo info;
+  SDL_GetRendererInfo(rendererP, &info);
+  printf("using renderer %s\n", info.name);
+  printf("after renderer\n");
 	if (!rendererP) {
 		SDL_DestroyWindow(windowP);
 		SDL_Quit();

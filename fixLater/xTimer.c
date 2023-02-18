@@ -13,7 +13,7 @@ Error xTimerIniSys(System *sP, void *sParamsP) {
 //======================================================
 // Initialize xTimer's components, which are Images.
 //======================================================
-Error xTimerIniComp(System *sP, void *compDataP, void *compDataSrcP) {
+Error xTimerIniCompElem(System *sP, void *compDataP, void *compDataSrcP) {
   unused_(sP);
   unused_(compDataP);
   unused_(compDataSrcP);
