@@ -35,7 +35,6 @@ typedef struct {
   Rect_ rect;  // avoid chasing pointers back to the orignal rectangle
 } SortedRect;
 
-
 // Backgrounds are made of tiles, although their source images are made of strips.  
 // Therefore, the bg's ROM image is the tileset. The tileset gets compressed into
 // strips just like all the other (foreground) images.
@@ -68,15 +67,18 @@ extern XRenderPresentU present;
 extern XPostprocessCompsDef_(Render);
 
 typedef struct {
-  System system;
-  U8 atlasPaletteOffset;
-  Window_ *windowP;
-  Renderer_ *rendererP;
-  Texture_ *textureP;
-  Map *srcRectMAMP;  // Lets rendering system update the source rectangles' positions according to their placement in the texture atlas.
-  Map *srcRectMP;   // Keeps rendering system posted on the animation frame of each animated entity.
-  Map *dstRectMP;   // Keeps rendering system posted on the position and scale of each mobile entity.
-  Map *xRenderCompSourceMP;
+  System         system;
+  U8             atlasPaletteOffset;
+  Colormap     **cmPA;
+  ColorPalette **cpPA;
+  Window_       *windowP;
+  Renderer_     *rendererP;
+  Surface_      *atlasSurfaceP;
+  Texture_      *atlasTextureP;
+  Map           *srcRectMAMP;  // Lets rendering system update the source rectangles' positions according to their placement in the texture atlas.
+  Map           *srcRectMP;   // Stores the latest src rect map grabbed from srcRectMAMP.
+  Map           *dstRectMP;   // shared array of destination rectangles
+  Map           *xRenderCompSourceMP;
 } XRender;
 
 extern System *sRenderP;

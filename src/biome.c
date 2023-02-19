@@ -310,27 +310,33 @@ Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGenesMPP, 
 
 
   Error e = _geneHistoIni(&geneHisto, biomeP->nEntitiesToSpawn, nSystemsMax);
-  if (!e)
+  if (!e) {
     e = _histoGenes(&geneHisto, biomeP, nSystemsMax);
-  if (!e)
+  }
+  if (!e) {
     e = _subsystemsIni(masterSysP, &geneHisto);
-  if (!e)
+  }
+  if (!e) {
     e = _sharedGenesMapNew(sharedGenesMPP, &geneHisto);
+  }
   if (!e) {
     sharedGenesMP = *sharedGenesMPP;
     e = _addSpecialSharedGene(sharedGenesMP, windowP, 1);
   }
-  if (!e)
+  if (!e) {
     e = _addSpecialSharedGene(sharedGenesMP, rendererP, 2);
-  if (!e)
+  }
+  if (!e) {
     e = _makeMutationMapArrays(biomeP, &geneHisto, nSystemsMax);
+  }
 
   // For each spawn...
   for (Entity entity = 1; !e && spawnP < spawnEndP; ++spawnP, ++entity) {
     // Make a blackboard map for this entity if it has any genes to put in it.
     bbMP = NULL;
-    if (geneHisto.histoBbElemA[entity])
+    if (geneHisto.histoBbElemA[entity]) {
       e = mapNew(&bbMP, sizeof(void*), geneHisto.histoBbElemA[entity]);
+    }
 
     genomeP = spawnP->seedP->genomeP;
     genePP = spawnP->seedP->genomeP->genePA;
@@ -346,8 +352,9 @@ Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGenesMPP, 
             // So we have to index it awkwardly as hell. :)
             for (Entity entityEnd = entity + spawnP->nEntitiesToSpawn; 
                  !e && entity < entityEnd; 
-                 ++entity)
+                 ++entity) {
               e = xAddComp(childSysP, entity, gene.type, gene.dataP, spawnP->geneMutationMPA[gene.type]);
+            }
           }
           break;
         // Shared objects are kept by the master system. 
@@ -358,17 +365,22 @@ Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGenesMPP, 
           innerMapP = (Map*) mapGet(sharedGenesMP, gene.type);  
           // Inner map is a map of components. 
           // Map knows how big gene's header's container is.
-          if (innerMapP)
-            for (Entity entityEnd = entity + spawnP->nEntitiesToSpawn; entity < entityEnd; ++entity)
+          if (innerMapP) {
+            for (Entity entityEnd = entity + spawnP->nEntitiesToSpawn; entity < entityEnd; ++entity) {
               e = mapSet(innerMapP, entity, (const void*) &gene);  
+            }
+          }
           break;
         case BB_GENE:
-          if (!e && !gene.dataP)
+          if (!e && !gene.dataP) {
             e = E_NULL_GENE_DATA;
+          }
           // Fill up the blackboard with the gene pointers
-          if (!e)
-            for (Entity entityEnd = entity + spawnP->nEntitiesToSpawn; entity < entityEnd; ++entity)
+          if (!e) {
+            for (Entity entityEnd = entity + spawnP->nEntitiesToSpawn; entity < entityEnd; ++entity) {
               e = mapSet(bbMP, gene.type, &gene.dataP);
+            }
+          }
           break;
         // Media are the only things needing inflating and unpacking.
         case MEDIA_GENE:
