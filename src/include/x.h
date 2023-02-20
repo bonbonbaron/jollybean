@@ -12,7 +12,7 @@ typedef enum {ACTIVATED, DEACTIVATED} BuiltinMsgArg;
 
 // Pieces are parts of components. For example, Rendering components have colormaps and color palettes.
 typedef enum { INITIALIZED = 1 } PieceState; 
-#define MASK_COMPONENT_TYPE    (0xfc)
+#define MASK_COMPONENT_TYPE    (0x3f)
 #define MASK_COMPONENT_SUBTYPE (~MASK_COMPONENT_TYPE)
 
 #define X_(name_, id_, flags_) \

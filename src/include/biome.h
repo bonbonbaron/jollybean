@@ -13,13 +13,6 @@
   .genePA = {__VA_ARGS__}\
 }
 
-#define Gene_(name_, geneClass_, type_, typeEnum_, switchU_, rawDataName_) Gene geneName_(name_) = {\
-  .geneClass = geneClass_,\
-  .type = typeEnum_,\
-  .size = sizeof(type_),\
-  .dataP = &rawDataName_,\
-}
-
 #define Personality_(name_, quirkA_) \
 Personality personalityName_(name_) = {\
   .nQuirks = sizeof(quirkA_) / sizeof(quirkA_[0]),\
@@ -41,30 +34,43 @@ typedef enum {EXCLUSIVE_GENE, SHARED_GENE, BB_GENE, MEDIA_GENE, COMPOSITE_GENE} 
 typedef enum {SCENE_START, SCENE_CHANGE, SCENE_STOP} SceneAction;
 
 typedef struct {
-  Key size;  // size of system's component
-  Key count; 
-  Key geneType;
-  Key geneClass;
+  Key size;      // size of system's component
+  Key count;     // number of such components in said system
+  Key geneType;  // target system gene will flow into
+  Key geneClass; // whether this gene s
 } XHistoElem;
 
 typedef U32 BbGeneHistoElem;
+typedef U32 MediaGeneHistoElem;
+typedef U32 CompositeGeneHistoElem;
 
 typedef struct {
   Key *histoSpawnMutations;  // first dimension: entity #s. second dimension: system #s.
   XHistoElem *histoXElemA;  // determines each subsystem's number of components and share-maps' # of elements
   BbGeneHistoElem *histoBbElemA;  // determines each entity's number of blackboard elements
-  Key nDistinctShareds;  // determines number of maps of shared elements
+  CompositeGeneHistoElem *histoCompositeElemA;
+  U32 *nDistinctMedia;   // determines number of strip data to inflate, unpack, and assemble into media
+  U32 nDistinctShareds;  // determines number of maps of shared elements
 } GeneHisto;
 
 /**************************/
 /******** GENOME  *********/
 /**************************/
-typedef struct {
+struct _Gene;
+typedef struct _Gene {
 	U8 geneClass;    // exclusive, shared, blackboard, media, or composite gene
-	U8 type;         // upper 6 bits hold system this belongs to, lower 2 is component subtype
-	U8 size;         // sizeof destination component type (so we can memcpy the right size into the ECS target system/sharedPool/BB)
-  Key key;         // key that lets you mutate a seed's gene to this one; 0 for immutable
-  void *dataP;     // the destination data of the gene 
+  union {
+    struct {
+      U8 type;         // upper 6 bits hold system this belongs to, lower 2 is component subtype
+      U8 size;         // sizeof destination component type (so we can memcpy the right size into the ECS target system/sharedPool/BB)
+      Key key;         // key that lets you mutate a seed's gene to this one; 0 for immutable
+      void *dataP;     // the destination data of the gene 
+    } unitary;
+    struct {
+      U8 nGenes;
+      struct _Gene **genePA;
+    } composite;
+  } u;
 } Gene;
 
 typedef struct {

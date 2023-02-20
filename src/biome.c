@@ -50,19 +50,85 @@ static Error _histoHivemindTriggers(U32 **histoAP, Biome *biomeP, U32 *totalDist
   return e;
 }
 
-static Error _histoGenes(GeneHisto *geneHistoP, Biome *biomeP, U32 nSystemsMax) {
+/*
+ * Okay, so what's the relationship between compoiste genes and systems' populations?
+ * Body has ?animation, ?collsion, ?collision palette, colormap, and color palette.
+ * That means I have to dig in, avoid false positives, and multi-counting.
+ * But I have to do so while remaining agnostic to the types of sytems out there.
+ *
+ *
+ */
+
+static Error _histoGene(
+    Gene **genePP, 
+    const Biome *biomeP, 
+    const U32 nSystemsMax,
+    Entity *entityP, 
+    Spawn *spawnP, 
+    GeneHisto *geneHistoP) {
   Error e = SUCCESS;
-  if (!geneHistoP || !geneHistoP->histoXElemA || !biomeP)
-    return E_BAD_ARGS;
 
   XHistoElem *histoA = geneHistoP->histoXElemA;
   XHistoElem *xHistoElemP = NULL;
   Key *spawnMutationHistoA = geneHistoP->histoSpawnMutations;
   Key mutationHistoElemIdx;
 
+  StripDataS *sdP;
+
+  Gene gene = **genePP;
+  xHistoElemP = &histoA[gene.u.unitary.type];
+  switch (gene.geneClass) {
+    case SHARED_GENE:
+      geneHistoP->nDistinctShareds += !xHistoElemP->count;
+      // Don't break; the logic in exclusive gene case applies too.
+    case EXCLUSIVE_GENE:
+      // Systems might consume multiple genes per component-- "sub"-components, if you will.
+      // For example, XRender needs to consume both a colormap and color palette for each component.
+      // But we don't want to interpret multiple pieces as implying multiple entities.
+      // So, to sidestep that, we only count when the MASK_COMPONENT_SUBTYPE portion is 0.
+      // That implies this is the first of up to four ingredients for a component.
+      if (!(gene.u.unitary.type & MASK_COMPONENT_SUBTYPE)) {
+        xHistoElemP->count += spawnP->nEntitiesToSpawn;
+        xHistoElemP->size = gene.u.unitary.size;
+        xHistoElemP->geneClass = gene.geneClass;
+        xHistoElemP->geneType = gene.u.unitary.type;
+        *entityP += spawnP->nEntitiesToSpawn;
+        if (gene.u.unitary.key) {
+          mutationHistoElemIdx = (spawnP - biomeP->spawnA) * nSystemsMax + gene.u.unitary.type;
+          ++spawnMutationHistoA[mutationHistoElemIdx];
+        }
+      }
+      break;
+    case BB_GENE:
+      for (Entity entityEnd = *entityP + spawnP->nEntitiesToSpawn; *entityP < entityEnd; ++*entityP){
+        ++(geneHistoP->histoBbElemA[*entityP]);
+      }
+      break;
+    case MEDIA_GENE:
+      sdP = (StripDataS*) gene.u.unitary.dataP;
+      if (!(sdP->flags & SD_IS_COUNTED_)) {
+        sdP->flags |= SD_IS_COUNTED_;
+        ++geneHistoP->nDistinctMedia;
+      }
+      break;
+    case COMPOSITE_GENE:
+      for (int i = 0; i < gene.u.composite.nGenes; ++i) {
+        _histoGene(&gene.u.composite.genePA[i], biomeP, nSystemsMax, entityP, spawnP, geneHistoP);
+      }
+    default:
+      e = E_INVALID_GENE_CLASS;
+      break;
+  }
+  return e;
+}
+
+static Error _histoGenes(GeneHisto *geneHistoP, const Biome *biomeP, const U32 nSystemsMax) {
+  Error e = SUCCESS;
+  if (!geneHistoP || !geneHistoP->histoXElemA || !biomeP)
+    return E_BAD_ARGS;
+
   Genome *genomeP;
   Gene **genePP, **geneEndPP;   // pointers to an array of gene header pointers and its end
-  Gene gene;  // faster access to double pointer'd gene header
 
   Spawn *spawnP = biomeP->spawnA;
   Spawn *spawnEndP = spawnP + biomeP->nSpawns;   // pointer to the end of the above array
@@ -73,31 +139,7 @@ static Error _histoGenes(GeneHisto *geneHistoP, Biome *biomeP, U32 nSystemsMax) 
     geneEndPP = genePP + genomeP->nGenes;
     // Histo genome's genes that aren't blackboard items.
     for (; !e && genePP < geneEndPP; genePP++) {
-      gene = **genePP;
-      xHistoElemP = &histoA[gene.type];
-      switch (gene.geneClass) {
-        case SHARED_GENE:
-          geneHistoP->nDistinctShareds += !xHistoElemP->count;
-          // Don't break; the logic in exclusive gene case applies too.
-        case EXCLUSIVE_GENE:
-          xHistoElemP->count += spawnP->nEntitiesToSpawn;
-          xHistoElemP->size = gene.size;
-          xHistoElemP->geneClass = gene.geneClass;
-          xHistoElemP->geneType = gene.type;
-          entity += spawnP->nEntitiesToSpawn;
-          if (gene.key) {
-            mutationHistoElemIdx = (spawnP - biomeP->spawnA) * nSystemsMax + gene.type;
-            ++spawnMutationHistoA[mutationHistoElemIdx];
-          }
-          break;
-        case BB_GENE:
-          for (Entity entityEnd = entity + spawnP->nEntitiesToSpawn; entity < entityEnd; ++entity)
-            ++(geneHistoP->histoBbElemA[entity]);
-          break;
-        default:
-          e = E_INVALID_GENE_CLASS;
-          break;
-      }
+      _histoGene(genePP, biomeP, nSystemsMax, &entity, spawnP, geneHistoP);
     }
   }
   return SUCCESS;
@@ -198,19 +240,30 @@ static Error _sharedGenesMapNew(Map **sharedGenesMPP, GeneHisto *geneHistoP) {
 }
 
 static Error _geneHistoIni(GeneHisto *geneHistoP, Entity nEntities, Entity nSystemsMax) {
+  geneHistoP->nDistinctMedia   = 0;
+  geneHistoP->nDistinctShareds = 0;
   Error e = arrayNew((void**) &geneHistoP->histoSpawnMutations, sizeof(Key), nSystemsMax * nEntities);
-  if (!e) 
+  if (!e) {
     e = arrayNew((void**) &geneHistoP->histoXElemA, sizeof(XHistoElem), nSystemsMax);
-  if (!e) 
-    e = arrayNew((void**) &geneHistoP->histoBbElemA, sizeof(BbGeneHistoElem), 255);
+  }
+  if (!e) {
+    e = arrayNew((void**) &geneHistoP->histoBbElemA, sizeof(BbGeneHistoElem), KEY_MAX);
+  }
+  if (!e) {
+    e = arrayNew((void**) &geneHistoP->histoCompositeElemA, sizeof(CompositeGeneHistoElem), KEY_MAX);
+  }
   return e;
 }
 
 static void _geneHistoClr(GeneHisto *geneHistoP) {
   if (geneHistoP) {
+    geneHistoP->nDistinctMedia   = 0;
+    geneHistoP->nDistinctShareds = 0;
     arrayDel((void**) &geneHistoP->histoSpawnMutations);
     arrayDel((void**) &geneHistoP->histoBbElemA);
     arrayDel((void**) &geneHistoP->histoXElemA);
+    arrayDel((void**) &geneHistoP->histoCompositeElemA);
+
   }
 }
 
@@ -281,9 +334,9 @@ static Error _makeMutationMapArrays(Biome *biomeP, GeneHisto *geneHistoP, Key nS
     for (; !e && genePP < geneEndPP; genePP++) {  // genePP is a pointer to a pointer to a global singleton of a component
       gene = **genePP;
       if (gene.geneClass == EXCLUSIVE_GENE) {
-        mutationMapP = spawnP->geneMutationMPA[gene.type];  // current spawn's current mutation map
+        mutationMapP = spawnP->geneMutationMPA[gene.u.unitary.type];  // current spawn's current mutation map
         // Trusting data's been intialized by now, because it's being full-copied over.
-        e = mapSet(mutationMapP, gene.key, gene.dataP);
+        e = mapSet(mutationMapP, gene.u.unitary.key, gene.u.unitary.dataP);
       }  // add this gene to this spawn's mutation map
     }  // for each gene in this spawn's genome
   }  // for each spawn 
@@ -346,14 +399,14 @@ Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGenesMPP, 
       gene = **genePP;
       switch (gene.geneClass) {
         case EXCLUSIVE_GENE:
-          childSysP = *((System**) xGetCompPByEntity(masterSysP, gene.type));
+          childSysP = *((System**) xGetCompPByEntity(masterSysP, gene.u.unitary.type));
           if (childSysP) {
             // histo's 1D array represents a 2D array: columns are spawn #s, rows are system #s.
             // So we have to index it awkwardly as hell. :)
             for (Entity entityEnd = entity + spawnP->nEntitiesToSpawn; 
                  !e && entity < entityEnd; 
                  ++entity) {
-              e = xAddComp(childSysP, entity, gene.type, gene.dataP, spawnP->geneMutationMPA[gene.type]);
+              e = xAddComp(childSysP, entity, gene.u.unitary.type, gene.u.unitary.dataP, spawnP->geneMutationMPA[gene.u.unitary.type]);
             }
           }
           break;
@@ -362,7 +415,7 @@ Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGenesMPP, 
         case SHARED_GENE: 
           // Outer map is a map of map pointers. The key to it is the enumerated type of shared object.
           // Inner map knows how big gene's header's container is.
-          innerMapP = (Map*) mapGet(sharedGenesMP, gene.type);  
+          innerMapP = (Map*) mapGet(sharedGenesMP, gene.u.unitary.type);  
           // Inner map is a map of components. 
           // Map knows how big gene's header's container is.
           if (innerMapP) {
@@ -372,13 +425,13 @@ Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGenesMPP, 
           }
           break;
         case BB_GENE:
-          if (!e && !gene.dataP) {
+          if (!e && !gene.u.unitary.dataP) {
             e = E_NULL_GENE_DATA;
           }
           // Fill up the blackboard with the gene pointers
           if (!e) {
             for (Entity entityEnd = entity + spawnP->nEntitiesToSpawn; entity < entityEnd; ++entity) {
-              e = mapSet(bbMP, gene.type, &gene.dataP);
+              e = mapSet(bbMP, gene.u.unitary.type, &gene.u.unitary.dataP);
             }
           }
           break;

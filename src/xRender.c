@@ -211,8 +211,13 @@ static Error _atlasGen(AtlasElem **atlasAP, const U32 N_SAMPLES, SortedRect *sor
 //======================================================
 Error xRenderIniSys(System *sP, void *sParamsP) {
 	unused_(sParamsP);
-  unused_(sP);
-  return SUCCESS;
+  XRender *xRenderP = (XRender*) sP;
+  // Components array should have already been allocated by this point, so it's safe to get its size.
+  Error e = arrayNew((void**) xRenderP->cmPA, sizeof(Colormap*), xGetNComps(sP));
+  if (!e) {
+    e = arrayNew((void**) xRenderP->cpPA, sizeof(ColorPalette*), xGetNComps(sP));
+  }
+  return e;
 }
 
 //=========================================================================
@@ -236,7 +241,6 @@ Error xRenderIniCompElem(System *sP, const Entity entity, const Key subtype, voi
       cmP = (Colormap*) dataP;
       if (!(cmP->state & INITIALIZED)) {
         cmP->state |= INITIALIZED;
-        // TODO sort-insert a new rect while you're here
       }
       break;
     case COLOR_PALETTE:
@@ -264,7 +268,12 @@ Error xRenderProcessMessage(System *sP, Message *msgP) {
 
 // None of the render system's specials should be cleared as the main system owns them.
 XClrFuncDef_(Render) {
-  unused_(sP);
+  XRender *xRenderP = (XRender*) sP;
+  arrayDel((void**) &xRenderP->cmPA);
+  arrayDel((void**) &xRenderP->cpPA);
+  textureDel(&xRenderP->atlasTextureP);
+  // Surface_      *atlasSurfaceP;
+  // Texture_      *atlasTextureP;
   return SUCCESS;
 }
 
