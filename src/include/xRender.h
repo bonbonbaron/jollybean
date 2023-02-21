@@ -69,8 +69,9 @@ extern XPostprocessCompsDef_(Render);
 typedef struct {
   System         system;
   U8             atlasPaletteOffset;
-  Colormap     **cmPA;
-  ColorPalette **cpPA;
+  Colormap     **cmPF;
+  ColorPalette **cpPF;
+  Entity        *entityF;  // components aren't added till postProcess(), so track entities here
   Window_       *windowP;
   Renderer_     *rendererP;
   Surface_      *atlasSurfaceP;

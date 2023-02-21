@@ -26,7 +26,7 @@ typedef enum {ACTIVATED, DEACTIVATED} BuiltinMsgArg;
     .cF                = NULL,\
     .cIdx2eA           = NULL,\
     .e2cIdxMP          = NULL,\
-    .switchMP        = NULL,\
+    .mutationMP        = NULL,\
     .checkF            = NULL,\
     .inboxF            = NULL,\
     .outboxF           = NULL,\
@@ -89,7 +89,7 @@ typedef struct _System {
   void         *cFSrcA;              // array of components' sources; used for cleaning up and avoiding double-pointer traversal of singletons during run-time
   Key          *cIdx2eA;             // insert component index to get entity 
   Map          *e2cIdxMP;            // insert entity to get component index 
-  Map          *switchMP;            // key = Entity, val = function that'll return based on command (can be implemented as index to array or switch statement)
+  Map          *mutationMP;            // key = Entity, val = function that'll return based on command (can be implemented as index to array or switch statement)
   Check        *checkF;              // Fray of checks; these check for conditions about component's and alert the world about them when true 
   Message      *inboxF;              // Where commands come in from the outside world 
   Message      *outboxF;             // Where this system talks to the outside world; can actually point to another system's inbox if you want 

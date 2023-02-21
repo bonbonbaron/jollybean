@@ -22,20 +22,20 @@ Error xMotionTransIniSubcomp(System *sP, void *compDataP, void *compDataSrcP) {
 Error xMotionTransProcessMessage(System *sP, Message *msgP) {
   Error e = SUCCESS;
   // Get entity's map of switchable components.
-  Map **switchMPP = (Map**) mapGet(sP->switchMPMP, msgP->attn);
-  if (!switchMPP)
+  Map **mutationMPP = (Map**) mapGet(sP->mutationMPMP, msgP->attn);
+  if (!mutationMPP)
     e = E_BAD_KEY;
-  Map *switchMP;
+  Map *mutationMP;
   if (!e) {
-    switchMP = *switchMPP;
-    if (!switchMP) 
+    mutationMP = *mutationMPP;
+    if (!mutationMP) 
       e = E_BAD_KEY;
   }
   if (!e) {
     // Get entity's map of components to switch to.
     void *compP = xGetCompPByEntity(sP, msgP->attn);
     if (compP) {
-      void *tmpP = mapGet(switchMP, msgP->arg);
+      void *tmpP = mapGet(mutationMP, msgP->arg);
       if (tmpP)
         memcpy(compP, tmpP, sP->compSz - sizeof(Rect_*));  // don't copy over source rect pointer!
       else

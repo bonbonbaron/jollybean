@@ -109,7 +109,7 @@ Error xAddComp(System *sP, Entity entity, Key compType, void *compDataP, void *c
   if (!e)
     e = sP->iniComp(sP, compDataP, compDataSrcP);  
   if (!e && switchCompU)   
-    e = mapSet(sP->switchMP, entity, switchCompU);
+    e = mapSet(sP->mutationMP, entity, switchCompU);
   // Add lookups from C -> E and E -> C.
   if (!e)
     e = mapSet(sP->e2cIdxMP, entity, &cIdx);
@@ -127,7 +127,7 @@ Error xIniSys(System *sP, U32 nComps, void *miscP) {
   if (!e)
     e = mapNew(&sP->e2cIdxMP, sizeof(Key), nComps);
   if (!e && !(sP->flags & FLG_NO_SWITCHES_))
-    e = mapNew(&sP->switchMP, sizeof(XSwitchCompU), nComps);
+    e = mapNew(&sP->mutationMP, sizeof(XSwitchCompU), nComps);
   if (!e && !(sP->flags & FLG_NO_CHECKS_))
     e = frayNew((void**) &sP->checkF, sizeof(Check), nComps);
   if (!e && !(sP->flags & FLG_NO_CF_SRC_A_))
@@ -152,7 +152,7 @@ void xClr(System *sP) {
   frayDel((void**) &sP->checkF);
   frayDel((void**) &sP->inboxF);
   mapDel(&sP->e2cIdxMP);
-  mapDel(&sP->switchMP);
+  mapDel(&sP->mutationMP);
   arrayDel((void**) &sP->cIdx2eA);
   arrayDel((void**) &sP->cFSrcA);
   sP->outboxF = NULL;
@@ -187,7 +187,7 @@ static Error _xDoChecks(System *sP) {
 static void _switch(System *sP, Message *msgP) {
   // Get the entity's switch function. 
   // (Keep in mind this function can also just grab into an array if you tell it to.)
-  XSwitchCompU switchU = (XSwitchCompU) mapGet(sP->switchMP, msgP->attn);
+  XSwitchCompU switchU = (XSwitchCompU) mapGet(sP->mutationMP, msgP->attn);
   if (switchU) {
     void* compP = _getCompPByEntity(sP, msgP->attn);
     if (compP) {

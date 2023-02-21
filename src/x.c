@@ -90,6 +90,14 @@ U32 xGetNComponents(System *sP) {
 	return arrayGetNElems(sP->cF);
 }
 
+Error xAddMutationMap(System *sP, Entity entity, Map *mutationMP) {
+  if (mutationMP && entity && sP && sP->mutationMPMP) {
+    return mapSet(sP->mutationMPMP, entity, &mutationMP);
+  }
+  return E_BAD_ARGS;
+}
+
+
 Error xAddComp(System *sP, Entity entity, void *compDataP) {
   // Skip entities who already have a component in this system.
   if (mapGet(sP->e2cIdxMP, entity)) {
@@ -108,28 +116,22 @@ Error xAddComp(System *sP, Entity entity, void *compDataP) {
   return e;
 }
 
-Error xAddSubcomp(System *sP, Entity entity, Key compType, void *compDataP, Map *switchMP) {
-  if (!sP || !compDataP) {
+Error xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP) {
+  if (!sP || !entity || !compType | !entityDataP) {
     return E_BAD_ARGS;
   }
   // Make sure the component belongs to this system. This is only checked at load-time.
   if ((compType & MASK_COMPONENT_TYPE) != sP->id) {
     return E_SYS_CMP_MISMATCH;
   }
-  // Give subcomponent to the system.
-  // TODO call xAddSubcomp() from here. 
-  // TODO call xAddComp() after we know they're ready. Probably from inside the system.
-  // TODO tell render to map the entities to its subcomponents somehow. I think I'll 
-  //      pair the entitie and palette together so I can zip through the colormaps for atlassing, 
-  //      and then I can match them back up to the original ordering. I'm not sure I'm 
-  // TODO tell render when a colormap has already been sorted and added to texture atlas.
-  // Assign this component to its entity and, if necessary, prepare it for the system.
-  // Mask with subcomponent to ensure we only do so one time per entity.
-  if (switchMP && !(compType & MASK_COMPONENT_SUBTYPE)) {
-    return mapSet(sP->switchMPMP, entity, &switchMP);
+  // If upper two bits are nonzero, this is a subcomponent. 
+  if (compType & MASK_COMPONENT_SUBTYPE) {
+    return sP->iniSubcomp(sP, entity, compType, entityDataP);
   }
-
-  return SUCCESS;
+  // If it's the main component, feed it straight in.
+  else {
+    return xAddComp(sP, entity, entityDataP);
+  }
 }
 
 Error xIniSys(System *sP, U32 nComps, void *miscP) {
@@ -148,7 +150,7 @@ Error xIniSys(System *sP, U32 nComps, void *miscP) {
     e = mapNew(&sP->e2cIdxMP, sizeof(Key), nComps);
   }
   if (!e && !(sP->flags & FLG_NO_SWITCHES_)) {
-    e = mapNew(&sP->switchMPMP, sizeof(XSwitchCompU), nComps);
+    e = mapNew(&sP->mutationMPMP, sizeof(XSwitchCompU), nComps);
   }
 	// Allocate inbox ONLY. Caller points sP->outboxF at another system's inboxF.
 	if (!e) {
@@ -174,25 +176,25 @@ void xClr(System *sP) {
   frayDel((void**) &sP->deactivateQueueF);
   frayDel((void**) &sP->pauseQueueF);
   mapDel(&sP->e2cIdxMP);
-  if (sP->switchMPMP) {
-    Map **mapPP = sP->switchMPMP->mapA;
-    Map **mapEndPP = sP->switchMPMP->mapA + arrayGetNElems(sP->switchMPMP->mapA);
+  if (sP->mutationMPMP) {
+    Map **mapPP = sP->mutationMPMP->mapA;
+    Map **mapEndPP = sP->mutationMPMP->mapA + arrayGetNElems(sP->mutationMPMP->mapA);
     for (; mapPP < mapEndPP; ++mapPP) 
       mapDel(mapPP);
   }
-  mapDel(&sP->switchMPMP);
+  mapDel(&sP->mutationMPMP);
   arrayDel((void**) &sP->cIdx2eA);
   sP->outboxF = NULL;
 }
 
 void xSwitchComponent(System *sP, Entity entity, Key newCompKey) {
-  Map **switchMPP = (Map**) mapGet(sP->switchMPMP, entity);
-  if (switchMPP) {
-    Map *switchMP = *switchMPP;
-    if (switchMP) {
+  Map **mutationMPP = (Map**) mapGet(sP->mutationMPMP, entity);
+  if (mutationMPP) {
+    Map *mutationMP = *mutationMPP;
+    if (mutationMP) {
       void* activeCompP = _getCompPByEntity(sP, entity);
       if (activeCompP) {
-        void **tmpP = mapGet(switchMP, newCompKey);
+        void **tmpP = mapGet(mutationMP, newCompKey);
         if (tmpP)
           memcpy(activeCompP, *tmpP, sP->compSz);
       }

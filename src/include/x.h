@@ -4,9 +4,12 @@
 
 typedef Key Entity;
 
-#define FLG_NO_SWITCHES_   (1 << 0)
-#define FLG_NO_CF_SRC_A_   (1 << 1)
-#define FLG_NO_CHECKS_     (1 << 2)
+// System type flags
+#define FLG_NO_SWITCHES_    (0x01)
+#define FLG_NO_CF_SRC_A_    (0x02)
+#define FLG_NO_CHECKS_      (0x04)
+#define FLG_ADD_COMP_LATER_ (0x08)
+#define FLG_HAS_SUBCOMPS_   (0x10)
 
 typedef enum {ACTIVATED, DEACTIVATED} BuiltinMsgArg;
 
@@ -28,7 +31,7 @@ typedef enum { INITIALIZED = 1 } PieceState;
     .cF                = NULL,\
     .cIdx2eA           = NULL,\
     .e2cIdxMP          = NULL,\
-    .switchMPMP        = NULL,\
+    .mutationMPMP        = NULL,\
     .inboxF            = NULL,\
     .outboxF           = NULL,\
     .deactivateQueueF  = NULL,\
@@ -104,13 +107,13 @@ typedef void* (*XSwitchCompU)(Key key);  // used to switch between a multi-form 
 typedef struct _System {
   Key           id;                  // ID of system 
   Key           compSz;              // components are the same size in all of this system's activities 
-  U8            flags;               // System flags; one example use is preventing unnecessary allocations of unused system parts
+  U8            flags;               // System flags. Use this however you want.
   void         *cF;                  // component fray 
   void         *pauseQueueF;         // queue for pausing
   void         *deactivateQueueF;    // queue for pausing
   Key          *cIdx2eA;             // insert component index to get entity 
   Map          *e2cIdxMP;            // insert entity to get component index 
-  Map          *switchMPMP;          // key = Entity, val = maps to void pointers (triple pointer EW)
+  Map          *mutationMPMP;        // key = Entity, val = maps to void pointers (triple pointer EW)
   Message      *inboxF;              // Where commands come in from the outside world 
   Message      *outboxF;             // Where this system talks to the outside world; can actually point to another system's inbox if you want 
   // Function pointers 
@@ -123,9 +126,12 @@ typedef struct _System {
   XGetShareU   getShare;             // Some systems' components share pointers to common data. This is how it retrieves them by a parent system's call. 
 } System;
 
+Error xAddComp(System *sP, Entity entity, void *compDataP);
 Error    xIniSys(System *sP, U32 nComps, void *miscP);
+Error    xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP);
 Error    xIniSubcomp(System *sP, const Entity entity, const void *cmpP);
-Error    xAddEntity(System *sP, Entity entity, Key compType, void *compDataP, Map *switchMP);
+Error    xAddEntity(System *sP, Entity entity, Key compType, void *compDataP, Map *mutationMP);
+Error    xAddMutationMap(System *sP, Entity entity, Map *mutationMP);
 //void*    xGetComp(System *sP, Entity entity);
 U32      xGetNComps(System *sP);
 void*    xGetCompValP(System *sP, Entity entity, Key key);

@@ -1,8 +1,5 @@
 #include "jb.h"
 #include "x.h"
-// Compressed images are already in memory in JB. 
-// JB just reconstructs them from strips of staggered pixels.   // TODO illustrate this with ASCII art
-// Packed bits are staggered to allow JB to unpack and (if necessary) flip 4 color-mapped pixels at a time.
 
 // =========================================
 // Clear color map and all its related data.
@@ -68,8 +65,8 @@ static inline U32 _rectFits(Rect_ *rectP, AtlasElem *atlasElemP) {
 }
 
 // Sort colormaps by largest dimension
-static Error _sortRects(SortedRect **sortedRectAP, const U32 N_SAMPLES, Colormap **cmPA) {
-  if (!sortedRectAP || !cmPA) {
+static Error _sortRects(SortedRect **sortedRectAP, const U32 N_SAMPLES, Colormap **cmPF) {
+  if (!sortedRectAP || !cmPF) {
     return E_BAD_ARGS;
   }
 
@@ -79,14 +76,14 @@ static Error _sortRects(SortedRect **sortedRectAP, const U32 N_SAMPLES, Colormap
     SortedRect *sortedRectA = *sortedRectAP;
     // Loop through unsorted rectangles
     sortedRectA[0].srcIdx = 0;
-    sortedRectA[0].maxDim = cmPA[0]->w > cmPA[0]->h ?  cmPA[0]->w : cmPA[0]->h;
-    sortedRectA[0].rect.w = cmPA[0]->w;
-    sortedRectA[0].rect.h = cmPA[0]->h;
+    sortedRectA[0].maxDim = cmPF[0]->w > cmPF[0]->h ?  cmPF[0]->w : cmPF[0]->h;
+    sortedRectA[0].rect.w = cmPF[0]->w;
+    sortedRectA[0].rect.h = cmPF[0]->h;
 
     // Loop through the unsorted rectangles
     for (U32 i = 1; i < N_SAMPLES; ++i) {
-      U32 currRectMaxDim = cmPA[i]->w > cmPA[i]->h ?
-                           cmPA[i]->w : cmPA[i]->h;
+      U32 currRectMaxDim = cmPF[i]->w > cmPF[i]->h ?
+                           cmPF[i]->w : cmPF[i]->h;
       // Loop through sorted rectangles to see where the current unsorted one should go.
       for (U32 j = 0; j < i; ++j) {
         if (currRectMaxDim > sortedRectA[j].maxDim) {
@@ -95,8 +92,8 @@ static Error _sortRects(SortedRect **sortedRectAP, const U32 N_SAMPLES, Colormap
           sortedRectA[j].srcIdx = i;  // index of sample in original array
           //sortedRectA[j].rect.x = 0;
           //sortedRectA[j].rect.y = 0;
-          sortedRectA[j].rect.w = cmPA[i]->w;
-          sortedRectA[j].rect.h = cmPA[i]->h;
+          sortedRectA[j].rect.w = cmPF[i]->w;
+          sortedRectA[j].rect.h = cmPF[i]->h;
           goto nextUnsortedRect;
         }
       }
@@ -105,8 +102,8 @@ static Error _sortRects(SortedRect **sortedRectAP, const U32 N_SAMPLES, Colormap
       sortedRectA[i].srcIdx = i;  // index of sample in original array
       //sortedRectA[i].rect.x = 0;
       //sortedRectA[i].rect.y = 0;
-      sortedRectA[i].rect.w = cmPA[i]->w;
-      sortedRectA[i].rect.h = cmPA[i]->h;
+      sortedRectA[i].rect.w = cmPF[i]->w;
+      sortedRectA[i].rect.h = cmPF[i]->h;
       nextUnsortedRect:
       continue;
     }
@@ -156,8 +153,6 @@ static Error _atlasGen(AtlasElem **atlasAP, const U32 N_SAMPLES, SortedRect *sor
         // If you've hit a dead-end, back out until an unexplored lower direction is found.
         goto backOut;
       }
-
-      // TODO implement if (searchIdx >= nAtlasElems) safety check here if necessary.
 
       // Backing out of dead ends
       backOut:  // moves only up and left till an unexplored downward direction or root is found
@@ -210,9 +205,13 @@ Error xRenderIniSys(System *sP, void *sParamsP) {
 	unused_(sParamsP);
   XRender *xRenderP = (XRender*) sP;
   // Components array should have already been allocated by this point, so it's safe to get its size.
-  Error e = arrayNew((void**) xRenderP->cmPA, sizeof(Colormap*), xGetNComps(sP));
+  U32 nComponents = xGetNComps(sP);
+  Error e = frayNew((void**) xRenderP->cmPF, sizeof(Colormap*), nComponents);
   if (!e) {
-    e = arrayNew((void**) xRenderP->cpPA, sizeof(ColorPalette*), xGetNComps(sP));
+    e = frayNew((void**) xRenderP->cpPF, sizeof(ColorPalette*), nComponents);
+  }
+  if (!e) {
+    e = frayNew((void**) xRenderP->entityF, sizeof(Entity), nComponents);
   }
   return e;
 }
@@ -221,7 +220,7 @@ Error xRenderIniSys(System *sP, void *sParamsP) {
 // Initialize xRender's components' elements (Colormaps and Color Palettes)
 //=========================================================================
 Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void *dataP) {
-	if (!sP || !entity || !dataP) {
+	if (!sP || !entity || !dataP || !subtype) {
 		return E_BAD_ARGS;
   }
 
@@ -229,6 +228,7 @@ Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void
   Colormap *cmP;
 
   XRender *xRenderP = (XRender*) sP;
+  Error e = SUCCESS;
 
   // If it's a color palette, increment the system's atlas palette offset.
   // We use type to determine system.
@@ -237,7 +237,7 @@ Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void
     case COLORMAP:
       cmP = (Colormap*) dataP;
       if (!(cmP->state & INITIALIZED)) {
-
+        e = frayAdd(xRenderP->cmPF, dataP, NULL);
         cmP->state |= INITIALIZED;
       }
       break;
@@ -247,17 +247,20 @@ Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void
       if (!(cpP->state & INITIALIZED)) {
         cpP->atlasPaletteOffset = xRenderP->atlasPaletteOffset;
         xRenderP->atlasPaletteOffset += cpP->nColors;
+        e = frayAdd(xRenderP->cpPF, dataP, NULL);
         cpP->state |= INITIALIZED;
       }
       break;
     default:
       break;
   }
+  if (!e) {
+    e = frayAdd(xRenderP->entityF, (void*) &entity, NULL);
+  }
 
-  return SUCCESS;  // here for now to make the compiler happy
+  return e;
 }
 
-// TODO Is the source rect MPMP already shared?
 Error xRenderProcessMessage(System *sP, Message *msgP) {
 	unused_(sP);
 	unused_(msgP);
@@ -267,8 +270,9 @@ Error xRenderProcessMessage(System *sP, Message *msgP) {
 // None of the render system's specials should be cleared as the main system owns them.
 XClrFuncDef_(Render) {
   XRender *xRenderP = (XRender*) sP;
-  arrayDel((void**) &xRenderP->cmPA);
-  arrayDel((void**) &xRenderP->cpPA);
+  frayDel((void**) &xRenderP->cmPF);
+  frayDel((void**) &xRenderP->cpPF);
+  frayDel((void**) &xRenderP->entityF);
   textureDel(&xRenderP->atlasTextureP);
   // Surface_      *atlasSurfaceP;
   // Texture_      *atlasTextureP;
@@ -296,16 +300,16 @@ static Error _assembleTextureAtlas(XRender *xRenderP, AtlasElem *atlasA, SortedR
   U32 nUnitsPerStrip;
   const U32 ATLAS_WIDTH = atlasA[0].remWidth;
   const U32 nEntities = xGetNComps(&xRenderP->system);
-  const Colormap **cmPA = (const Colormap**) xRenderP->cmPA;
+  const Colormap **cmPF = (const Colormap**) xRenderP->cmPF;
   Error e = arrayNew((void**) atlasPixelAP, sizeof(U8), atlasA[0].remWidth * atlasA[0].remHeight);
   // For each sample...
   if (!e) {
     U8 *atlasPixelA = *atlasPixelAP;
     for (int i = 0; i < nEntities; ++i) {
       srcIdx = sortedRectA[i].srcIdx;
-      nUnitsPerStrip = cmPA[srcIdx]->sdP->ss.nUnitsPerStrip;
-      nStripsPerRow = cmPA[srcIdx]->w / nUnitsPerStrip;
-      smElemP    = (StripmapElem*) cmPA[srcIdx]->sdP->sm.infP->inflatedDataP;
+      nUnitsPerStrip = cmPF[srcIdx]->sdP->ss.nUnitsPerStrip;
+      nStripsPerRow = cmPF[srcIdx]->w / nUnitsPerStrip;
+      smElemP    = (StripmapElem*) cmPF[srcIdx]->sdP->sm.infP->inflatedDataP;
       // For each row of this sample's atlas rectangle...
       for (int j = 0; j < sortedRectA[i].rect.h; ++j) {
         smElemEndP = smElemP + nStripsPerRow;
@@ -313,7 +317,7 @@ static Error _assembleTextureAtlas(XRender *xRenderP, AtlasElem *atlasA, SortedR
         // Paste rectangle row
         for (; smElemP < smElemEndP; ++smElemP, dstP += nUnitsPerStrip) {
           memcpy(dstP, 
-                 cmPA[srcIdx]->sdP->ss.unpackedDataP + (*smElemP * nUnitsPerStrip), 
+                 cmPF[srcIdx]->sdP->ss.unpackedDataP + (*smElemP * nUnitsPerStrip), 
                  nUnitsPerStrip);
         }
       }
@@ -324,6 +328,8 @@ static Error _assembleTextureAtlas(XRender *xRenderP, AtlasElem *atlasA, SortedR
 
 // Update src (usually animation) rectangles to reflect their global positions in the texture atlas.
 // Prior to updating, they only reflect their local offsets.
+// Good news is, entities don't need to know where their source rectangle maps are; 
+// entities with common maps share a common pointer, so only one needs to update it.
 static Error _updateSrcRects(XRender *xRenderP, SortedRect *sortedRectA) {
   // Get all the animation rectangles we need to update when building our texture atlas.
   // First count all the rectangles we're going to need.
@@ -331,8 +337,7 @@ static Error _updateSrcRects(XRender *xRenderP, SortedRect *sortedRectA) {
   Rect_ *srcRectA = NULL;
   Rect_ **srcRectAP = NULL;
   Rect_ **srcRectAEndP = NULL;
-  Rect_ **srcRectAA = NULL;
-  Rect_ ***srcRectAAP = NULL;
+  Map     *srcRectAMP = NULL;     // pointer to a map of arrays of animation frame rectangles
   System *sP = &xRenderP->system;
   Rect_ *rectP = NULL;
   Rect_ *rectEndP = NULL;
@@ -347,25 +352,18 @@ static Error _updateSrcRects(XRender *xRenderP, SortedRect *sortedRectA) {
   for (; sortedRectP < sortedRectEndP; ++sortedRectP) {
     entity = xGetEntityByCompIdx(sP, sortedRectP->srcIdx);
     // Get entity's array of arrays of source rectangles.
-    srcRectAAP = (Rect_***) mapGet(xRenderP->srcRectMAMP, entity);
-    if (srcRectAAP) {
-      srcRectAA = *srcRectAAP;
-    }
-    else {
-      e = E_NULL_VAR;
-    }
+    e = mapGetNestedMapP(xRenderP->srcRectMAMP, entity, &srcRectAMP);
     if (!e) {
-      srcRectAP = srcRectAA;
-      srcRectAEndP = srcRectAP + arrayGetNElems(srcRectAA);
-      // For each animation strip...
+      srcRectAP = srcRectAMP->mapA;
+      srcRectAEndP = srcRectAP + arrayGetNElems(srcRectAMP->mapA);
+      // Offset each rectangle in animation strip to point to position in atlas.
       for (; srcRectAP < srcRectAEndP; ++srcRectAP) {
         srcRectA = *srcRectAP;  // don't check for null arrays as we already did before
         rectP = srcRectA;
         rectEndP = rectP + arrayGetNElems(srcRectA);
-        // For each rectangle in this strip...
         for (; rectP < rectEndP; ++rectP) {
-          rectP->x = sortedRectP->rect.x;
-          rectP->y = sortedRectP->rect.y;
+          rectP->x += sortedRectP->rect.x;
+          rectP->y += sortedRectP->rect.y;
         }
       }
     }
@@ -376,34 +374,16 @@ static Error _updateSrcRects(XRender *xRenderP, SortedRect *sortedRectA) {
 // Post-processing of components is done AFTER media genes are inflated and unpacked.
 // Rendering media genes are flagged to skip the strip-assembling stage; that's done here.
 XPostprocessCompsDef_(Render) {
-  Error e = SUCCESS;
   XRender *xRenderP = (XRender*) sP;
-  Entity entity;
 
   SortedRect *sortedRectA = NULL;
   AtlasElem *atlasA = NULL;
   U8 *atlasPixelA = NULL;
 
-  // Set each component's src and dest rectangle indices.
-  XRenderComp *cP = sP->cF;
-  XRenderComp *cEndP = cP + arrayGetNElems(sP->cF);
-  cP = sP->cF;
-  cEndP = cP + arrayGetNElems(sP->cF);
-  U32 nEntities = xGetNComps(sP);
-
-  for (; !e && cP < cEndP; ++cP) {
-    entity = xGetEntityByCompIdx(sP, cP - (XRenderComp*) sP->cF);
-    e = mapGetIndex(xRenderP->srcRectMP, entity, &cP->srcRectIdx);
-    if (!e) {
-      e = mapGetIndex(xRenderP->dstRectMP, entity, &cP->dstRectIdx);
-    }
-  }
-  // TODO have xRenderIniSys() produce its colormap and color palette arrays. Called in xIniSys().
+  Key nEntities = xGetNComps(sP);
 
   // Sort rectangles
-  if (!e) {
-    e = _sortRects(&sortedRectA, nEntities, xRenderP->cmPA);
-  }
+  Error e = _sortRects(&sortedRectA, nEntities, xRenderP->cmPF);
   // Texture atlas
   if (!e) {
     e = _atlasGen(&atlasA, nEntities, sortedRectA);
@@ -413,19 +393,14 @@ XPostprocessCompsDef_(Render) {
   }
   // Texture surface
   if (!e) {
-    // TODO abstract away anythihng SDL-related to interface.c
-    xRenderP->atlasSurfaceP = SDL_CreateRGBSurfaceWithFormatFrom((void*) atlasPixelA, 
-        atlasA[0].remWidth, atlasA[0].remHeight, 8, atlasA[0].remWidth, SDL_PIXELFORMAT_INDEX8);
-  }
-  if (!xRenderP->atlasSurfaceP) {
-    e = E_NO_MEMORY;
+    e = surfaceNew(&xRenderP->atlasSurfaceP, (void*) atlasPixelA, atlasA[0].remWidth, atlasA[0].remHeight);
   }
   // Texture surface palette
   if (!e) {
-    for (int i = 0 ; i < nEntities; ++i) {
-      // TODO abstract away anythihng SDL-related to interface.c
-      SDL_SetPaletteColors(xRenderP->atlasSurfaceP->format->palette, 
-          xRenderP->cpPA[i]->colorA, xRenderP->cpPA[i]->atlasPaletteOffset, xRenderP->cpPA[i]->nColors);
+    ColorPalette **cpPP = xRenderP->cpPF;
+    ColorPalette **cpEndPP = cpPP + arrayGetNElems(xRenderP->cpPF);
+    for (; cpPP < cpEndPP; ++cpPP) {
+      appendAtlasPalette(xRenderP->atlasSurfaceP, *cpPP);
     }
   }
   // Texture
@@ -436,12 +411,31 @@ XPostprocessCompsDef_(Render) {
   if (!e) {
     e = _updateSrcRects(xRenderP, sortedRectA);
   }
+  // Finally, initialize our components (src and dst rect indices).
+  if (!e) {
+    Entity *entityP = xRenderP->entityF;
+    Entity *entityEndP = entityP + arrayGetNElems(xRenderP->entityF);
+    XRenderComp component = {0};
+    for (; !e && entityP < entityEndP; ++entityP) {
+      e = mapGetIndex(xRenderP->srcRectMP, *entityP, &component.srcRectIdx);
+      if (!e) {
+        e = mapGetIndex(xRenderP->dstRectMP, *entityP, &component.dstRectIdx);
+      }
+      if (!e) {
+        e = xAddComp(sP, *entityP, (void*) &component);
+      }
+    }
+  }
+
   // Clean up.
   arrayDel((void**) &sortedRectA);
   arrayDel((void**) &atlasA);
   arrayDel((void**) &atlasPixelA);
+  frayDel((void**) &xRenderP->cmPF);
+  frayDel((void**) &xRenderP->cpPF);
+  frayDel((void**) &xRenderP->entityF);
 
-  return SUCCESS;
+  return e;
 }
 
 // Only get the render and window. Components' src & dst rects come from SCENE_START stimulus to XGo.
@@ -453,8 +447,7 @@ XGetShareFuncDef_(Render) {
   if (!e) {
     e = mapGetNestedMapPElem(shareMMP, WINDOW_GENE_TYPE, WINDOW_KEY_, (void**) &xRenderP->windowP);
   }
-
-  // Extract all source and dest rectangles we need to keep track of (they get updated by other systems).
+// Extract all source and dest rectangles we need to keep track of (they get updated by other systems).
   if (!e) {
     e = _getSharedMap(shareMMP, SRC_RECT, &xRenderP->srcRectMP); 
   }

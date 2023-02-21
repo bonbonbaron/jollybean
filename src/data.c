@@ -294,14 +294,15 @@ Error mapRem(Map *mapP, const Key key) {
 	return e;
 }
 
-Error mapGetNestedMapP(Map *mapP, Key mapKey, Map **mapPP) {
-  if (!mapP || !mapKey)
+Error mapGetNestedMapP(Map *outerMapP, Key mapKey, Map **innerMapPP) {
+  if (!innerMapPP || !outerMapP || !mapKey) {
     return E_BAD_ARGS;
+  }
 
-  Map **_mapPP = (Map**) mapGet(mapP, mapKey);
+  Map **_innerMapPP = (Map**) mapGet(outerMapP, mapKey);
 
-  if (_mapPP && *_mapPP)
-    *mapPP = *_mapPP;
+  if (_innerMapPP && *_innerMapPP)
+    *innerMapPP = *_innerMapPP;
   else
     return E_BAD_KEY;
 

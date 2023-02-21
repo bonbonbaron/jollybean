@@ -50,15 +50,6 @@ static Error _histoHivemindTriggers(U32 **histoAP, Biome *biomeP, U32 *totalDist
   return e;
 }
 
-/*
- * Okay, so what's the relationship between compoiste genes and systems' populations?
- * Body has ?animation, ?collsion, ?collision palette, colormap, and color palette.
- * That means I have to dig in, avoid false positives, and multi-counting.
- * But I have to do so while remaining agnostic to the types of sytems out there.
- *
- *
- */
-
 static Error _histoGene(
     Gene **genePP, 
     const Biome *biomeP, 
@@ -76,7 +67,8 @@ static Error _histoGene(
   StripDataS *sdP;
 
   Gene gene = **genePP;
-  xHistoElemP = &histoA[gene.u.unitary.type];
+  // Get the element we're incrementing.
+  xHistoElemP = &histoA[gene.u.unitary.type & MASK_COMPONENT_TYPE];
   switch (gene.geneClass) {
     case SHARED_GENE:
       geneHistoP->nDistinctShareds += !xHistoElemP->count;
@@ -85,8 +77,9 @@ static Error _histoGene(
       // Systems might consume multiple genes per component-- "sub"-components, if you will.
       // For example, XRender needs to consume both a colormap and color palette for each component.
       // But we don't want to interpret multiple pieces as implying multiple entities.
-      // So, to sidestep that, we only count when the MASK_COMPONENT_SUBTYPE portion is 0.
-      // That implies this is the first of up to four ingredients for a component.
+      // So, to sidestep that, we only increment a system's size if subtype is 0.
+      // Subtype 0 means this is a component, not sub-component.
+      // That implies this is the first of up to three ingredients for a component.
       if (!(gene.u.unitary.type & MASK_COMPONENT_SUBTYPE)) {
         xHistoElemP->count += spawnP->nEntitiesToSpawn;
         xHistoElemP->size = gene.u.unitary.size;
@@ -290,14 +283,18 @@ static Error _addSpecialSharedGene(Map *sharedGeneMPMP, void *geneP, Key geneTyp
 static void _mutationMapArrayDel(Biome *biomeP) {
   Spawn *spawnP = biomeP->spawnA;
   Spawn *spawnEndP = spawnP + biomeP->nSpawns;
-  for (; spawnP < spawnEndP; ++spawnP) 
+  for (; spawnP < spawnEndP; ++spawnP) {
+#if 0  // I think we want to leave this out; systems consume map pointers.
     if (spawnP->geneMutationMPA) {
       Map **mapPP = spawnP->geneMutationMPA;
       Map **mapEndPP = mapPP + arrayGetNElems(spawnP->geneMutationMPA);
-      for (; mapPP < mapEndPP; ++mapPP) 
+      for (; mapPP < mapEndPP; ++mapPP) {
         mapDel(mapPP);
-      arrayDel((void**) spawnP->geneMutationMPA);
+      }
     }
+#endif
+    arrayDel((void**) &spawnP->geneMutationMPA);
+  }
 }
 
 static Error _makeMutationMapArrays(Biome *biomeP, GeneHisto *geneHistoP, Key nSystemsMax) {
@@ -315,18 +312,19 @@ static Error _makeMutationMapArrays(Biome *biomeP, GeneHisto *geneHistoP, Key nS
 
   /* For each spawn, we have an array of mutation maps: one for each system.
    * Each mutation map has any number of mutations for the entity's component in that system.
-   * First we must allocate all the maps. 
-   * Then we must populate each map one gene at a time, given it's not null.
+   * First we allocate all the maps. 
+   * Then we populate each map one gene at a time.
    */
   for (; !e && spawnP < spawnEndP; ++spawnP) {
     e = arrayNew((void**) &spawnP->geneMutationMPA, sizeof(Map*), nSystemsMax);
     // Allocate a map for each mutable gene for this spawn.
     for (Key systemTypeNum = 1; !e && systemTypeNum < nSystemsMax; ++systemTypeNum) {
       nMutationsForCurrGene = geneHistoP->histoSpawnMutations[(spawnP - biomeP->spawnA) * nSystemsMax + systemTypeNum];
-      if (nMutationsForCurrGene) 
+      if (nMutationsForCurrGene) {
         e = mapNew(&spawnP->geneMutationMPA[systemTypeNum], 
                    geneHistoP->histoXElemA[systemTypeNum].size,
                    nMutationsForCurrGene);
+      }
     }
     genomeP = spawnP->seedP->genomeP;
     genePP = spawnP->seedP->genomeP->genePA;
@@ -407,7 +405,10 @@ Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGenesMPP, 
             for (Entity entityEnd = entity + spawnP->nEntitiesToSpawn; 
                  !e && entity < entityEnd; 
                  ++entity) {
-              e = xAddComp(childSysP, entity, gene.u.unitary.type, gene.u.unitary.dataP, spawnP->geneMutationMPA[gene.u.unitary.type]);
+              e = xAddEntityData(childSysP, entity, gene.u.unitary.type, gene.u.unitary.dataP);
+              if (!e) {
+                e = xAddMutationMap(childSysP, entity, spawnP->geneMutationMPA[gene.u.unitary.type]);
+              }
             }
           }
           break;
@@ -437,6 +438,8 @@ Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGenesMPP, 
           }
           break;
         // Media are the only things needing inflating and unpacking.
+        // TODO implement media inflation 
+        // TODO recurse through this for composites
         case MEDIA_GENE:
           break;
         case COMPOSITE_GENE:
@@ -447,8 +450,9 @@ Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGenesMPP, 
       }
     }
     // If this entity has a blackboard, stick it into the map of entity blackboards.
-    if (!e && bbMP) 
-      e = mapSet(masterSysP->switchMPMP, entity, &bbMP);
+    if (!e && bbMP) {
+      e = mapSet(masterSysP->mutationMPMP, entity, &bbMP);
+    }
   }
 
   // Shared genes can't be distributed till components that use them exist in the first place.
@@ -479,7 +483,7 @@ static Error _distributeQuirks(Biome *biomeP, System *masterSysP, System *goSysP
   for (Entity entity = 1; !e && spawnP < spawnEndP; ++spawnP, ++entity) {
     personalityP = spawnP->seedP->personalityP;
     // Because of this line, you must run _distributeGenes() before this.
-    Map **bbMPP = (Map**) mapGet(masterSysP->switchMPMP, entity);
+    Map **bbMPP = (Map**) mapGet(masterSysP->mutationMPMP, entity);
     // Allocate current entity's map of activities to switch to on different triggers.
     e = mapNew(&activityMP, sizeof(Activity), (personalityP->nQuirks));
     if (!e) {
@@ -500,7 +504,12 @@ static Error _distributeQuirks(Biome *biomeP, System *masterSysP, System *goSysP
         }
       }
       // Start entity out with empty activity component while storing inner activity map in outer map.
-      e = xAddComp(goSysP, entity, goSysP->id, &emptyActivity, activityMP);
+      if (!e) {
+        e = xAddEntityData(goSysP, entity, goSysP->id, &emptyActivity);
+      }
+      if (!e) {
+        e = xAddMutationMap(goSysP, entity, activityMP);
+      }
     }
   }
   return e;

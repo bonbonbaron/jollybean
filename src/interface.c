@@ -31,21 +31,25 @@ Error guiNew(Window_ **windowPP, Renderer_ **rendererPP) {
 	return SUCCESS;
 }
 
-
-Error surfaceNew(Surface_ **surfacePP, Colormap *cmP, ColorPalette *cpP) {
-	if (!surfacePP)
+// Makes palette without setting its colors.
+Error surfaceNew(Surface_ **surfacePP, void *pixelDataA, U32 w, U32 h) {
+	if (!surfacePP) {
     return E_BAD_ARGS;
+  }
   SDL_ClearError();
-  *surfacePP = SDL_CreateRGBSurfaceWithFormatFrom(cmP->sdP->unstrippedDataA, 
-          cmP->w, cmP->h, 8, cmP->w, SDL_PIXELFORMAT_INDEX8);
+  *surfacePP = SDL_CreateRGBSurfaceWithFormatFrom(pixelDataA, w, h, 8, w, SDL_PIXELFORMAT_INDEX8);
   // Palette
-  SDL_SetPaletteColors((*surfacePP)->format->palette, cpP->colorA, 0, cpP->nColors);
   if (!*surfacePP) {
     printf("\n\nSDL error: %s\n\n\n", SDL_GetError());
 		return E_UNSUPPORTED_PIXEL_FORMAT;
   }
 
 	return SUCCESS;
+}
+
+void appendAtlasPalette(Surface_ *atlasSurfaceP, ColorPalette *srcPaletteP) {
+  SDL_SetPaletteColors(atlasSurfaceP->format->palette, 
+      srcPaletteP->colorA, srcPaletteP->atlasPaletteOffset, srcPaletteP->nColors);
 }
 
 Error textureNew(Texture_ **texturePP, Renderer_ *rendererP, Surface_ *surfaceP) {

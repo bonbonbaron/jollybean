@@ -20,7 +20,7 @@ static Error _triggerIndividual(XGo *xGoSysP, Message *msgP) {
   if (!cP)
     return E_BAD_KEY;
   // Get the personality, one per entity.
-  Map **activityMPP = (Map**) mapGet(sP->switchMPMP, msgP->attn);
+  Map **activityMPP = (Map**) mapGet(sP->mutationMPMP, msgP->attn);
   if (!activityMPP || !(*activityMPP))
     return E_BAD_KEY;
   // Get the tree that *would* be triggered if the entity is inactive or doing something less important. 

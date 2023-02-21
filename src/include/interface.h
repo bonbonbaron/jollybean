@@ -86,7 +86,8 @@ typedef struct {
   Color_ *colorA;
 } ColorPalette;
 
-Error surfaceNew(Surface_ **surfacePP, Colormap *cmP, ColorPalette *cpP);
+Error surfaceNew(Surface_ **surfacePP, void *pixelDataA, U32 w, U32 h);
+void appendAtlasPalette(Surface_ *atlasSurfaceP, ColorPalette *srcPaletteP);
 Error guiNew(Window_ **windowPP, Renderer_ **rendererPP);
 Error textureNew(Texture_ **texturePP, Renderer_ *rendererP, Surface_ *surfaceP);
 void textureDel(Texture_ **texturePP);

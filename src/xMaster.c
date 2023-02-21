@@ -25,16 +25,19 @@ Error xMasterIniSys(System *sP, void *sParamsP) {
 
   // Add subsystems to master system. Don't add Go yet.
   U8 nSystemsExceptGoSys = xMasterIniSysPrmsP->nXSystems - 1;
-  if (xMasterIniSysPrmsP) 
-    for (U32 i = 0; !e && i < nSystemsExceptGoSys; i++) 
-      if (xMasterIniSysPrmsP->xSysPA[i])
-        e = xAddComp(sP, xMasterIniSysPrmsP->xSysPA[i]->id, sP->id, (void**) &xMasterIniSysPrmsP->xSysPA[i], NULL);
+  if (xMasterIniSysPrmsP) {
+    for (U32 i = 0; !e && i < nSystemsExceptGoSys; i++) {
+      if (xMasterIniSysPrmsP->xSysPA[i]) {
+        e = xAddEntityData(sP, xMasterIniSysPrmsP->xSysPA[i]->id, sP->id, (void**) &xMasterIniSysPrmsP->xSysPA[i]);
+      }
+    }
+  }
 
   XGo *xGoP = NULL;
   // Add Go System to Master's components.
   if (!e && xMasterIniSysPrmsP->behaviorSysP) {
     xGoP = (XGo*) xMasterIniSysPrmsP->behaviorSysP;
-    e = xAddComp(sP, xGoP->system.id, sP->id, (void**) &sGoP, NULL);
+    e = xAddEntityData(sP, xGoP->system.id, sP->id, (void**) &sGoP);
   }
 
   // Extract biome.
