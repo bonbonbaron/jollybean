@@ -1,7 +1,7 @@
 #include "xGo.h"
 
 XIniSysFuncDefUnused_(Go);
-XIniCompElemFuncDefUnused_(Go);
+XIniSubcompFuncDefUnused_(Go);
 
 XClrFuncDef_(Go) {
   XGo *xGoSysP = (XGo*) sP;

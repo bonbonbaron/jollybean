@@ -34,7 +34,7 @@ typedef enum { INITIALIZED = 1 } PieceState;
     .deactivateQueueF  = NULL,\
     .pauseQueueF       = NULL,\
     .iniSys            = x##name_##IniSys,\
-    .iniCompElem       = x##name_##IniCompElem,\
+    .iniSubcomp       = x##name_##IniSubcomp,\
     .postprocessComps  = x##name_##PostprocessComps,\
     .clr               = x##name_##Clr,\
     .getShare          = x##name_##GetShare,\
@@ -46,7 +46,7 @@ struct _System;
 
 // Function pointer types
 typedef Error (*XIniSU)(struct _System *sP, void* sParamsP);
-typedef Error (*XIniCompElemU)(struct _System *sP, const Entity entity, const Key subtype, void *dataP);
+typedef Error (*XIniSubcompU)(struct _System *sP, const Entity entity, const Key subtype, void *dataP);
 typedef Error (*XRunU)(struct _System *sP);
 typedef Error (*XClrU)(struct _System *sP);
 typedef Error (*XProcMsgU)(struct _System *sP, Message *messageP);
@@ -67,14 +67,14 @@ typedef void* (*XSwitchCompU)(Key key);  // used to switch between a multi-form 
 }
 #define xIniSysFuncDef_(name_) Error x##name_##IniSys(System *sP, void *sParamsP)
 
-#define XIniCompElemFuncDefUnused_(name_) XIniCompElemFuncDef_(name_) {\
+#define XIniSubcompFuncDefUnused_(name_) XIniSubcompFuncDef_(name_) {\
   unused_(sP);\
   unused_(entity);\
   unused_(subtype);\
   unused_(dataP);\
   return SUCCESS;\
 }
-#define XIniCompElemFuncDef_(name_)  Error x##name_##IniCompElem(System *sP, const Entity entity, const Key subtype, void *dataP)
+#define XIniSubcompFuncDef_(name_)  Error x##name_##IniSubcomp(System *sP, const Entity entity, const Key subtype, void *dataP)
 
 #define XClrFuncDefUnused_(name_) XClrFuncDef_(name_) {\
   unused_(sP);\
@@ -115,7 +115,7 @@ typedef struct _System {
   Message      *outboxF;             // Where this system talks to the outside world; can actually point to another system's inbox if you want 
   // Function pointers 
   XIniSU       iniSys;               // System init function pointer 
-  XIniCompElemU iniCompElem;              // Some systems need to inflate components before using them. 
+  XIniSubcompU iniSubcomp;              // Some systems need to inflate components before using them. 
   XPostprocessCompsU postprocessComps;  // If components are composites, piece them together here.
   XRunU        run;                  // runs the system 
   XClrU        clr;                  // for system cleanup (not deleting system itself) 
@@ -124,8 +124,8 @@ typedef struct _System {
 } System;
 
 Error    xIniSys(System *sP, U32 nComps, void *miscP);
-Error    xIniCompElem(System *sP, const Entity entity, const void *cmpP);
-Error    xAddComp(System *sP, Entity entity, Key compType, void *compDataP, Map *switchMP);
+Error    xIniSubcomp(System *sP, const Entity entity, const void *cmpP);
+Error    xAddEntity(System *sP, Entity entity, Key compType, void *compDataP, Map *switchMP);
 //void*    xGetComp(System *sP, Entity entity);
 U32      xGetNComps(System *sP);
 void*    xGetCompValP(System *sP, Entity entity, Key key);

@@ -43,13 +43,11 @@ static inline void _atlasElemChildIni(AtlasElem *childP, U32 x, U32 y, U32 remW,
 }
 
 static void _atlasElemIni(AtlasElem *rootP, U32 atlasIdx, SortedRect *sortedRectP) {
-  printf("putting rect %d in elem %d.\n", sortedRectP->srcIdx, atlasIdx);
   // Current node
   rootP[atlasIdx].used = TRUE;
   sortedRectP->rect.x = rootP[atlasIdx].x;
   sortedRectP->rect.y = rootP[atlasIdx].y;
   // Right child
-  printf("populating child %d\n", getRightAtlasChildIdx_(atlasIdx));
   _atlasElemChildIni(
       &rootP[getRightAtlasChildIdx_(atlasIdx)], 
       rootP[atlasIdx].x + sortedRectP->rect.w,
@@ -57,7 +55,6 @@ static void _atlasElemIni(AtlasElem *rootP, U32 atlasIdx, SortedRect *sortedRect
       rootP[atlasIdx].remWidth - sortedRectP->rect.w,
       sortedRectP->rect.h);  // rectHeight splits node to a shelf rightward and full width downward
   // Bottom child
-  printf("populating child %d\n", getLowerAtlasChildIdx_(atlasIdx));
   _atlasElemChildIni(
       &rootP[getLowerAtlasChildIdx_(atlasIdx)], 
       rootP[atlasIdx].x,
@@ -223,7 +220,7 @@ Error xRenderIniSys(System *sP, void *sParamsP) {
 //=========================================================================
 // Initialize xRender's components' elements (Colormaps and Color Palettes)
 //=========================================================================
-Error xRenderIniCompElem(System *sP, const Entity entity, const Key subtype, void *dataP) {
+Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void *dataP) {
 	if (!sP || !entity || !dataP) {
 		return E_BAD_ARGS;
   }
@@ -240,6 +237,7 @@ Error xRenderIniCompElem(System *sP, const Entity entity, const Key subtype, voi
     case COLORMAP:
       cmP = (Colormap*) dataP;
       if (!(cmP->state & INITIALIZED)) {
+
         cmP->state |= INITIALIZED;
       }
       break;
@@ -247,9 +245,9 @@ Error xRenderIniCompElem(System *sP, const Entity entity, const Key subtype, voi
       cpP = (ColorPalette*) dataP;
       // Prevent copies of sub-palettes in texture atlas palette by marking them as initialized.
       if (!(cpP->state & INITIALIZED)) {
-        cpP->state |= INITIALIZED;
         cpP->atlasPaletteOffset = xRenderP->atlasPaletteOffset;
         xRenderP->atlasPaletteOffset += cpP->nColors;
+        cpP->state |= INITIALIZED;
       }
       break;
     default:

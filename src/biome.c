@@ -91,7 +91,7 @@ static Error _histoGene(
         xHistoElemP->count += spawnP->nEntitiesToSpawn;
         xHistoElemP->size = gene.u.unitary.size;
         xHistoElemP->geneClass = gene.geneClass;
-        xHistoElemP->geneType = gene.u.unitary.type;
+        xHistoElemP->geneType = gene.u.unitary.type & MASK_COMPONENT_TYPE;  // used to find system
         *entityP += spawnP->nEntitiesToSpawn;
         if (gene.u.unitary.key) {
           mutationHistoElemIdx = (spawnP - biomeP->spawnA) * nSystemsMax + gene.u.unitary.type;
@@ -115,6 +115,7 @@ static Error _histoGene(
       for (int i = 0; i < gene.u.composite.nGenes; ++i) {
         _histoGene(&gene.u.composite.genePA[i], biomeP, nSystemsMax, entityP, spawnP, geneHistoP);
       }
+      break;
     default:
       e = E_INVALID_GENE_CLASS;
       break;
@@ -399,7 +400,7 @@ Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGenesMPP, 
       gene = **genePP;
       switch (gene.geneClass) {
         case EXCLUSIVE_GENE:
-          childSysP = *((System**) xGetCompPByEntity(masterSysP, gene.u.unitary.type));
+          childSysP = *((System**) xGetCompPByEntity(masterSysP, gene.u.unitary.type & MASK_COMPONENT_TYPE));
           if (childSysP) {
             // histo's 1D array represents a 2D array: columns are spawn #s, rows are system #s.
             // So we have to index it awkwardly as hell. :)
@@ -461,8 +462,9 @@ Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGenesMPP, 
 }
 
 static Error _distributeQuirks(Biome *biomeP, System *masterSysP, System *goSysP) {
-  if (!biomeP) 
+  if (!biomeP) {
     return E_BAD_ARGS;
+  }
   // Add all components to system.
   Personality *personalityP = NULL;
   Activity activity = {0};
@@ -487,8 +489,9 @@ static Error _distributeQuirks(Biome *biomeP, System *masterSysP, System *goSysP
       for (; !e && quirkP < quirkEndP; ++quirkP) {
         activity.btP = quirkP->btP;
         e = btIni(activity.btP);  // Skips singleton trees that're already initialized.
-        if (!e)
+        if (!e) {
           e = btStatNew(&activity.btStatP, activity.btP->rootP);
+        }
         if (!e) {
           activity.priority = quirkP->priority;
           // Same blackboard pointer goes everywhere for easy memcpys.
@@ -496,7 +499,7 @@ static Error _distributeQuirks(Biome *biomeP, System *masterSysP, System *goSysP
           e = mapSet(activityMP, quirkP->triggerKey, &activity);
         }
       }
-      // Start entity out with an empty activity component while storing inner activity map in outer map.
+      // Start entity out with empty activity component while storing inner activity map in outer map.
       e = xAddComp(goSysP, entity, goSysP->id, &emptyActivity, activityMP);
     }
   }
@@ -521,10 +524,16 @@ void hivemindDel(Map **hivemindMPP) {
     if (hivemindMP && hivemindMP->mapA) {
       Entity **entityAP = hivemindMP->mapA;
       Entity **entityEndAP = hivemindMP->mapA + arrayGetNElems(hivemindMP->mapA);
-      for (; entityAP < entityEndAP; entityAP++)
+      for (; entityAP < entityEndAP; entityAP++) {
         arrayDel((void**) entityAP);
+      }
     }
   }
   mapDel(hivemindMPP);
 }
-// TODO add postprocessing to the steps in  gene distribution
+/* TODO add postprocessing to the steps in  gene distribution
+ *      \make x check only lower 6 bits for system ID match
+ *      make biome do so also when picking out the system
+ *      
+ *
+ */

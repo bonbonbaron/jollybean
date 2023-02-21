@@ -12,7 +12,7 @@ Error xREPLACEMEIniSys(System *sP, void *sParamsP) {
 //======================================================
 // Initialize xREPLACEME's components, which are Images.
 //======================================================
-Error xREPLACEMEIniCompElem(System *sP, void *compDataP, void *compDataSrcP) {
+Error xREPLACEMEIniSubcomp(System *sP, void *compDataP, void *compDataSrcP) {
 	if (!sP || !compDataP || !compDataSrcP)
 		return E_BAD_ARGS;
 

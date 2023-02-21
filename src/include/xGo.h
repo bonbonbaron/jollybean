@@ -10,7 +10,7 @@ typedef struct {
 } XGo;
 
 XClrFuncDef_(Go);
-XIniCompElemFuncDef_(Go);
+XIniSubcompFuncDef_(Go);
 XPostprocessCompsDef_(Go);
 
 extern XGo xGo;

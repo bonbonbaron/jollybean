@@ -37,8 +37,9 @@ void xActivateComponentByEntity(System *sP, Entity entity) {
   Key  compNewIdx   = frayActivate(sP->cF, *compOrigIdxP);
   if (compNewIdx != *compOrigIdxP) {
     // Existence of paused elements requires an additional, intermediate swap.
-    if (!frayGetNPaused(sP->cF)) 
+    if (!frayGetNPaused(sP->cF)) {
       _xSwap(sP, compOrigIdxP, compNewIdx);
+    }
     else {
       Key intermediateIdx = frayGetFirstInactiveIdx(sP->cF) - 1;
       _xSwap(sP, compOrigIdxP, intermediateIdx);
@@ -89,29 +90,46 @@ U32 xGetNComponents(System *sP) {
 	return arrayGetNElems(sP->cF);
 }
 
-Error xAddComp(System *sP, Entity entity, Key compType, void *compDataP, Map *switchMP) {
-  if (!sP || !compDataP)
-    return E_BAD_ARGS;
+Error xAddComp(System *sP, Entity entity, void *compDataP) {
   // Skip entities who already have a component in this system.
-  if (mapGet(sP->e2cIdxMP, entity))
+  if (mapGet(sP->e2cIdxMP, entity)) {
     return SUCCESS;
-  // Make sure the component belongs to this system. This is only checked at load-time.
-  if (compType != sP->id)
-    return E_SYS_CMP_MISMATCH;
-  
+  }
   // Put component in first empty slot. (Will be garbage if this is a map. That's okay.)
   U32 cIdx; 
   Error e = frayAdd(sP->cF, compDataP, &cIdx); 
-  // Assign this component to its entity and, if necessary, prepare it for the system.
-  if (!e && switchMP)   
-    e = mapSet(sP->switchMPMP, entity, &switchMP);
   // Add lookups from C -> E and E -> C.
-  if (!e)
+  if (!e) {
     e = mapSet(sP->e2cIdxMP, entity, &cIdx);
-  if (!e)
+  }
+  if (!e) {
     sP->cIdx2eA[cIdx] = entity;
-
+  }
   return e;
+}
+
+Error xAddSubcomp(System *sP, Entity entity, Key compType, void *compDataP, Map *switchMP) {
+  if (!sP || !compDataP) {
+    return E_BAD_ARGS;
+  }
+  // Make sure the component belongs to this system. This is only checked at load-time.
+  if ((compType & MASK_COMPONENT_TYPE) != sP->id) {
+    return E_SYS_CMP_MISMATCH;
+  }
+  // Give subcomponent to the system.
+  // TODO call xAddSubcomp() from here. 
+  // TODO call xAddComp() after we know they're ready. Probably from inside the system.
+  // TODO tell render to map the entities to its subcomponents somehow. I think I'll 
+  //      pair the entitie and palette together so I can zip through the colormaps for atlassing, 
+  //      and then I can match them back up to the original ordering. I'm not sure I'm 
+  // TODO tell render when a colormap has already been sorted and added to texture atlas.
+  // Assign this component to its entity and, if necessary, prepare it for the system.
+  // Mask with subcomponent to ensure we only do so one time per entity.
+  if (switchMP && !(compType & MASK_COMPONENT_SUBTYPE)) {
+    return mapSet(sP->switchMPMP, entity, &switchMP);
+  }
+
+  return SUCCESS;
 }
 
 Error xIniSys(System *sP, U32 nComps, void *miscP) {

@@ -33,7 +33,7 @@ Error xControlProcessMessage(System *sP, Message *msgP);
 Error xControlIniSys();
 Error xControlClr(System *sP);
 Error xControlProcessMessage(System *sP, Message *msgP);
-XIniCompElemFuncDef_(Control);
+XIniSubcompFuncDef_(Control);
 XGetShareFuncDef_(Control);
 
 extern XControl xControl;

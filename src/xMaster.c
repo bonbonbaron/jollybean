@@ -64,7 +64,7 @@ Error xMasterProcessMessage(System *sP, Message *msgP) {
   return SUCCESS; // TODO impement maste logi c ier
 }
 
-XIniCompElemFuncDefUnused_(Master);
+XIniSubcompFuncDefUnused_(Master);
 XGetShareFuncDefUnused_(Master);
 XClrFuncDefUnused_(Master);
 

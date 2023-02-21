@@ -12,7 +12,7 @@ Error xAnimIniSys(System *sP, void *sParamsP) {
 //======================================================
 // Initialize xAnim's components, which are Images.
 //======================================================
-Error xAnimIniCompElem(System *sP, void *compDataP, void *compDataSrcP) {
+Error xAnimIniSubcomp(System *sP, void *compDataP, void *compDataSrcP) {
   unused_(sP);
   unused_(compDataP);
   unused_(compDataSrcP);
