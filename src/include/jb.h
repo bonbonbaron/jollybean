@@ -3,10 +3,8 @@
 
 // Core
 #include "botox.h"
-
 // Core jb objects
 #include "body.h"
-
 // Child systems
 #include "xRender.h"
 #if 0  // add back in later after fixing mess

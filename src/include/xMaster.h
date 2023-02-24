@@ -1,8 +1,131 @@
 #ifndef XMAIN_
 #define XMAIN_
-#include "xGo.h"
-
 #define MASTER_ (1)
+#include "interface.h"
+#include "x.h"
+
+#define geneName_(name_) name_##Gene
+#define genomeName_(name_) name_##Genome
+#define compositeName_(name_) name_##Composite
+
+#define Genome_(name_, ...) \
+  Gene* name_##GenomeGenePA[] = {\
+    __VA_ARGS__\
+  };\
+  Genome genomeName_(name_) = {\
+    .nGenes = nArgs_(Gene*, __VA_ARGS__),\
+    .genePA = name_##GenomeGenePA\
+  };
+
+#define UnitaryGene_(name_, geneClass_, geneType_, key_, dataType_)\
+  Gene geneName_(name_) = {\
+    .geneClass = geneClass_,\
+    .u.unitary = {\
+      .dataP = &name_,\
+      .key = key_,\
+      .size = sizeof(dataType_),\
+      .type = geneType_\
+    }\
+  };
+
+#define CompositeGene_(name_, ...)\
+  /* Genome that's gonna act like a composite gene */\
+  Gene* name_##Components[] = {\
+    __VA_ARGS__\
+  };\
+  /* Composite gene */\
+  Gene geneName_(name_) = {\
+    .geneClass = COMPOSITE_GENE,\
+    .u.composite = {\
+      .genePA = name_##Components,\
+      .nGenes = nArgs_(Gene*, __VA_ARGS__)\
+    }\
+  };
+
+
+#define Biome_(name_, ...) Biome name_ = {\
+  .nEntities = nArgs_(Spawn, __VA_ARGS__),\
+  .spawnA = {__VA_ARGS__}\
+}
+
+// Media genes are inflated, unpacked, and assembled into original data.
+typedef enum {EXCLUSIVE_GENE, SHARED_GENE, BB_GENE, MEDIA_GENE, COMPOSITE_GENE} GeneClass;
+typedef enum {SCENE_START, SCENE_CHANGE, SCENE_STOP} SceneAction;
+
+typedef struct {
+  Key size;      // size of system's component
+  Key count;     // number of such components in said system
+  Key geneType;  // target system gene will flow into
+  Key geneClass; // whether this gene s
+} XHistoElem;
+
+typedef U32 BbGeneHistoElem;
+typedef U32 MediaGeneHistoElem;
+typedef U32 CompositeGeneHistoElem;
+
+typedef struct {
+  Key *histoSpawnMutations;  // first dimension: entity #s. second dimension: system #s.
+  XHistoElem *histoXElemA;  // determines each subsystem's number of components and share-maps' # of elements
+  BbGeneHistoElem *histoBbElemA;  // determines each entity's number of blackboard elements
+  CompositeGeneHistoElem *histoCompositeElemA;
+  U32 nDistinctMedia;   // determines number of strip data to inflate, unpack, and assemble into media
+  U32 nDistinctShareds;  // determines number of maps of shared elements
+} GeneHisto;
+
+/**************************/
+/******** GENOME  *********/
+/**************************/
+struct _Gene;
+
+typedef struct {
+  U8 nGenes;
+	struct _Gene **genePA;   // pointers prevent multiple entities with same genes from reinitializing them
+} Genome;
+
+typedef Genome Composite;  // We can lego block genomes together to form more complex entites.
+
+typedef struct _Gene {
+	U8 geneClass;    // exclusive, shared, blackboard, media, or composite gene
+  union {
+    struct {
+      U8 type;         // upper 6 bits hold system this belongs to, lower 2 is component subtype
+      U8 size;         // sizeof destination component type (so we can memcpy the right size into the ECS target system/sharedPool/BB)
+      Key key;         // key that lets you mutate a seed's gene to this one; 0 for immutable
+      void *dataP;     // the destination data of the gene 
+    } unitary;
+    Composite composite;
+  } u;
+} Gene;
+
+/************************/
+/******** BIOME *********/
+/************************/
+typedef struct {
+  S32 x;
+  S32 y;
+} Position;
+
+typedef struct {
+  Key keyhole;
+  Position position;
+} PositionNode;
+
+typedef struct {
+  U8 nEntitiesPossible;  // total number of positions in position node array
+  U8 nEntitiesToSpawn;  // number of position nodes whose keyholes the *keyP fits
+  Genome *genomeP;
+  Key *keyP;   // if an entity can spawn in one of multiple places, this determines which one.
+  Map **geneMutationMPA;  // array of pointers to maps of gene mutations; ptrs are distro'd to entities
+  PositionNode *positionNodeA;  // all possible places these seeds can spawn
+} Spawn;
+
+typedef struct {
+  Key nEntitiesToSpawn;  // number of individual entities to spawn
+  Key nSpawns;  // number of spawns (a spawn can hold one or more entities, each with a uniqe position)
+  Spawn *spawnA;
+} Biome;
+
+
 typedef enum {QUIT_ALL, SWITCH_BIOME} MasterMsgType;
 typedef System* XMasterComp;  // master component is a pointer to a child system
 typedef struct {} XMasterCompSrc;
@@ -26,8 +149,8 @@ typedef struct {
 extern XMaster xMaster;
 extern System *sMasterP;
 
-XPostprocessCompsDefUnused_(Master);
 
+Error xMasterPostprocessComps(System *sP);  // If components are composites, piece them together here.
 Error xIni(System **sPA, U16 nSystems, U8 nSystemsMax, Biome *biomeP);
 Error xMasterIniSys(System *sP, void *sParamsP);
 XIniSubcompFuncDef_(Master);

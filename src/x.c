@@ -86,7 +86,7 @@ void xDeactivateComponentByIdx(System *sP, Key compOrigIdx) {
   xDeactivateComponentByEntity(sP, sP->cIdx2eA[compOrigIdx]);
 }
 
-U32 xGetNComponents(System *sP) {
+U32 xGetNComps(System *sP) {
 	return arrayGetNElems(sP->cF);
 }
 
@@ -282,8 +282,8 @@ Error xRun(System *sP) {
   Error e = sP->run(sP);
   // Pause and deactivate all components that need to be.
   if (!e) {
-    _pauseQueue(sP);
     _deactivateQueue(sP);
+    _pauseQueue(sP);
   }
 	return e;
 }

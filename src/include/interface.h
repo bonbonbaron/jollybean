@@ -2,6 +2,7 @@
 #define INTERFACE_H
 #include "data.h"
 
+#define MULTITHREADED 1
 #define USE_PTHREAD_ 1
 #define USE_SDL_ 1
 

@@ -31,6 +31,7 @@ typedef U8 Bln;   // Boolean
 #define FALSE (0)
 #define KEY_MIN (1)
 #define KEY_MAX ((1 << (sizeof(Key) * 8)) - 1)
+#define arrayNElems_(x_) (sizeof(x_) / sizeof(x_[0]))
 
 #define swap_(a, b) {a^=b; b^=a; a^=b;}
 

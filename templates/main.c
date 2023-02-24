@@ -7,10 +7,11 @@ int main() {
     <<SYSTEMS_HERE>>
 	}; 
 
-	Error e = xMasterIni(&xMaster, sGoP, sPA, sizeof(sPA) / sizeof(sPA[0]), N_SYSTEM_TYPES, &<<INITIAL_BIOME_HERE>>);
+	Error e = xMasterIni(&xMaster, sPA, arrayNElems_(sPA), N_SYSTEM_TYPES, &<<INITIAL_BIOME_HERE>>);
 
-	while (!e) 
+	while (!e) {
 		e = xRun(&xMaster.system);
+  }
 
   return e;
 }
