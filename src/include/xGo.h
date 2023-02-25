@@ -10,31 +10,32 @@
 void hivemindDel(Map **hivemindMPP);
 void activityMPMPDel(Map **activityMPMPP);
 
-// Union of quirk, blackboard, and tree status.
-typedef struct {
-	U8           priority;       // priority of this activity to compare to any other requested one
-	BTree       *btP;        // current tree from system's switch
-  Map         *bbMP;           // blackboard
-  BTreeStatus *btStatP;        // status of tree's nodes for this activity's owner (entity)
-} Activity;  
-
-typedef Activity XGoComp;
+typedef Error (*Action)(Entity entity, Map *bbMP);
 
 typedef struct {
   Key    trigger;
   U8     priority;
-  BTree *btP;
+  Action actionU;
 } Quirk;
 
 typedef struct {
   U32 nQuirks;
   Quirk **quirkPA;
-} Personality;   // Gene
+} Personality;   // Gene-level data we expect to receive
 
 typedef struct {
   Entity entity;
   Personality *personalityP;
 } EntityPersonalityPair;
+
+// Union of quirk, blackboard, and tree status.
+typedef struct {
+  Entity       entity;
+  Quirk       *quirkP;         // action 
+  Map         *bbMP;           // blackboard
+} Activity;  
+
+typedef Activity XGoComp;
 
 typedef struct {
 	System                 system;

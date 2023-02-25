@@ -26,6 +26,9 @@ typedef enum{WINDOW_GENE_TYPE = 1, RENDERER_GENE_TYPE, N_MASTER_GENES} GeneType;
 #define COLORMAP      (0x40)
 #define COLOR_PALETTE (0x80)
 
+#define IS_OFFSET (0x01)
+#define FRAME_TIME_UP (N_XMAIL_BUILTIN_CMDS + 1)
+
 typedef struct {
   U32 used, x, y, remWidth, remHeight;  // rem = "remaining" (space remaining without this rect)
 } AtlasElem;
@@ -35,7 +38,6 @@ typedef struct {
   U32 srcIdx;     // index in source data
   Rect_ rect;  // avoid chasing pointers back to the orignal rectangle
 } SortedRect;
-
 // Backgrounds are made of tiles, although their source images are made of strips.  
 // Therefore, the bg's ROM image is the tileset. The tileset gets compressed into
 // strips just like all the other (foreground) images.
@@ -54,9 +56,13 @@ typedef struct {
 } XRenderCompSrc; 
 
 typedef struct {
-  Key srcRectIdx;
-  Key dstRectIdx;
+  Rect_ *srcRectP;
+  Rect_ *dstRectP;
 } XRenderComp;
+
+typedef struct {
+  S32 x, y;
+} RectOffset;
 
 // Images
 Error cmGen(Colormap *imgP);
@@ -77,9 +83,9 @@ typedef struct {
   Renderer_     *rendererP;
   Surface_      *atlasSurfaceP;
   Texture_      *atlasTextureP;
-  Map           *srcRectMAMP;  // Lets rendering system update the source rectangles' positions according to their placement in the texture atlas.
-  Map           *srcRectMP;   // Stores the latest src rect map grabbed from srcRectMAMP.
-  Map           *dstRectMP;   // shared array of destination rectangles
+  Map           *entity2Anim2AnimStripMPMP;
+  Rect_         *staticSrcRectF;  // array for non-animated images' rectangles
+  Map           *dstRectMP;   // shortcut-pointer to shared array of destination rectangles
   Map           *xRenderCompSourceMP;
 } XRender;
 

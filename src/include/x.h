@@ -14,7 +14,7 @@ typedef Key Entity;
 typedef enum {ACTIVATED, DEACTIVATED} BuiltinMsgArg;
 
 // Pieces are parts of components. For example, Rendering components have colormaps and color palettes.
-typedef enum { INITIALIZED = 1 } PieceState; 
+typedef enum { INITIALIZED = 1 } SubcomponentState; 
 #define MASK_COMPONENT_TYPE    (0x3f)
 #define MASK_COMPONENT_SUBTYPE (~MASK_COMPONENT_TYPE)
 
@@ -103,7 +103,18 @@ typedef void* (*XSwitchCompU)(Key key);  // used to switch between a multi-form 
   if (!sP || !shareMMP) \
     return E_BAD_ARGS;
 
-// TODO add postprocess function
+// Communcication
+typedef enum {
+  ACTIVATE,
+  DEACTIVATE,
+  PAUSE,
+  UNPAUSE,
+  SWITCH, 
+  SWITCH_AND_ACTIVATE, 
+  SWITCH_AND_DEACTIVATE, 
+  N_XMAIL_BUILTIN_CMDS
+} XMailCmd;
+
 typedef struct _System {
   Key           id;                  // ID of system 
   Key           compSz;              // components are the same size in all of this system's activities 

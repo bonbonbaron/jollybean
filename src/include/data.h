@@ -160,19 +160,10 @@ U32*  frayGetFirstInactiveIdxP(const void *frayP);
 U32*  frayGetFirstEmptyIdxP(const void *frayP);
 U32   frayGetNPaused(const void *frayP);
 U32   frayGetFirstPausedIdx(const void *frayP);
+void frayActivateAll(const void *frayP);
+void frayDeactivateAll(const void *frayP);
 
-// Communcication
-typedef enum {
-  ACTIVATE,
-  DEACTIVATE,
-  PAUSE,
-  UNPAUSE,
-  SWITCH, 
-  SWITCH_AND_ACTIVATE, 
-  SWITCH_AND_DEACTIVATE, 
-  N_MAIL_BUILTIN_CMDS
-} MailCmd;
-
+// Mailboxes
 typedef struct {
 	Key address;   // e.g. motion system
 	Key attn;      // e.g. specific component in motion system 

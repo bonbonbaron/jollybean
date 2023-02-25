@@ -1,4 +1,6 @@
 #include "xRender.h"
+#include "body.h"
+#include "xMaster.h"
 
 // =========================================
 // Clear color map and all its related data.
@@ -38,11 +40,13 @@ static inline void _atlasElemChildIni(AtlasElem *childP, U32 x, U32 y, U32 remW,
   childP->used = 0;
 }
 
-static void _atlasElemIni(AtlasElem *rootP, U32 atlasIdx, SortedRect *sortedRectP) {
+static void _atlasElemIni(AtlasElem *rootP, U32 atlasIdx, SortedRect *sortedRectP, RectOffset *offsetA) {
   // Current node
   rootP[atlasIdx].used = TRUE;
   sortedRectP->rect.x = rootP[atlasIdx].x;
   sortedRectP->rect.y = rootP[atlasIdx].y;
+  offsetA[sortedRectP->srcIdx].x = sortedRectP->rect.x;
+  offsetA[sortedRectP->srcIdx].y = sortedRectP->rect.y;
   // Right child
   _atlasElemChildIni(
       &rootP[getRightAtlasChildIdx_(atlasIdx)], 
@@ -111,7 +115,7 @@ static Error _sortRects(SortedRect **sortedRectAP, const U32 N_SAMPLES, Colormap
 }
 
 // Texture atlas
-static Error _atlasGen(AtlasElem **atlasAP, const U32 N_SAMPLES, SortedRect *sortedRectA) {
+static Error _atlasGen(AtlasElem **atlasAP, const U32 N_SAMPLES, SortedRect *sortedRectA, RectOffset *offsetA) {
   // Binary tree of rects
 
   // Allocate enough room for even the extraneous children to avoid child init branching.
@@ -129,14 +133,14 @@ static Error _atlasGen(AtlasElem **atlasAP, const U32 N_SAMPLES, SortedRect *sor
     atlasA[0].y = 0;
     atlasA[0].remWidth = sortedRectA[0].rect.w;
     atlasA[0].remHeight = sortedRectA[0].rect.h;
-    _atlasElemIni(atlasA, 0, &sortedRectA[0]);
+    _atlasElemIni(atlasA, 0, &sortedRectA[0], offsetA);
     for (searchIdx = 0; sortedRectP < sortedRectEndP; ++sortedRectP) {
       // Forward search in texture atlas
       searchForward:  // moves only right and down till a fit or a dead-end is found
       while (searchIdx < nAtlasElems) {
         // If current node is not used, fill it (since we're sorted).
         if (!atlasA[searchIdx].used) {
-          _atlasElemIni(atlasA, searchIdx, sortedRectP);
+          _atlasElemIni(atlasA, searchIdx, sortedRectP, offsetA);
           goto nextRect;
         }
         // Does rect fit to the right?
@@ -177,14 +181,14 @@ static Error _atlasGen(AtlasElem **atlasAP, const U32 N_SAMPLES, SortedRect *sor
         case CAN_RIGHT:
           atlasA[0].remWidth += sortedRectP->rect.w;
           atlasA[getNthRightDescendant_(++nGrowthsRight)].remWidth = sortedRectP->rect.w;
-          _atlasElemIni(atlasA, getNthRightDescendant_(nGrowthsRight), sortedRectP);
+          _atlasElemIni(atlasA, getNthRightDescendant_(nGrowthsRight), sortedRectP, offsetA);
           break;
         case CAN_RIGHT_SHOULD_DOWN:
         case SHOULD_DOWN:
         case CAN_DOWN:
           atlasA[0].remHeight += sortedRectP->rect.h;
           atlasA[getNthLowerDescendant_(++nGrowthsDown)].remHeight = sortedRectP->rect.h;
-          _atlasElemIni(atlasA, getNthLowerDescendant_(nGrowthsDown), sortedRectP);
+          _atlasElemIni(atlasA, getNthLowerDescendant_(nGrowthsDown), sortedRectP, offsetA);
           break;
         default:
           break;
@@ -212,6 +216,12 @@ Error xRenderIniSys(System *sP, void *sParamsP) {
   if (!e) {
     e = frayNew((void**) &xRenderP->entityF, sizeof(Entity), nComponents);
   }
+  if (!e) {
+    e = frayNew((void**) &xRenderP->staticSrcRectF, sizeof(Rect_), nComponents);
+  }
+  if (!e) {
+    e = mapNew(&xRenderP->entity2Anim2AnimStripMPMP, sizeof(Animation*), nComponents);
+  }
   return e;
 }
 
@@ -225,6 +235,7 @@ Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void
 
   ColorPalette *cpP;
   Colormap *cmP;
+  Animation *animP;
 
   XRender *xRenderP = (XRender*) sP;
   Error e = SUCCESS;
@@ -252,6 +263,23 @@ Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void
         cpP->state |= INITIALIZED;
       }
       break;
+    case ANIMATION:
+      animP = (Animation*) dataP;
+      U32 nStrips = 0;
+      if (!animP->stripMP && animP->keyStripPairA && 
+          ((nStrips = arrayGetNElems(animP->keyStripPairA) > 0))) {
+        // First, allocate animation's key-to-strip map.
+        // The reason we do pointers to anim strip is preventing multi-offsetting their rects later.
+        e = mapNew(&animP->stripMP, sizeof(AnimStrip*), nStrips);
+        if (!e) {
+          KeyStripPair *keyStripPairP = animP->keyStripPairA;
+          KeyStripPair *keyStripPairEndP = keyStripPairP + arrayGetNElems(animP->keyStripPairA);
+          for (; keyStripPairP < keyStripPairEndP; ++keyStripPairP) {
+            mapSet(animP->stripMP, keyStripPairP->key, &keyStripPairP->animStripP);
+          }
+        }
+      }
+      break;
     default:
       break;
   }
@@ -264,9 +292,25 @@ Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void
 }
 
 Error xRenderProcessMessage(System *sP, Message *msgP) {
-	unused_(sP);
-	unused_(msgP);
-	return SUCCESS;
+  Error e = SUCCESS;
+  if (msgP->cmd == FRAME_TIME_UP) {
+    Map *entityAnimationMP = NULL;
+    e = mapGetNestedMapP(sP->mutationMPMP, msgP->attn, &entityAnimationMP);
+    if (!e && entityAnimationMP) {
+      // Get entity's map of components to switch to.
+      void *compP = xGetCompPByEntity(sP, msgP->attn);
+      if (compP) {
+        void *tmpP = mapGet(entityAnimationMP, msgP->arg);  // arg = key of animation strip
+        if (tmpP) {
+          memcpy(compP, tmpP, sP->compSz - sizeof(Rect_*));  // don't copy over source rect pointer!
+        }
+        else {
+          e = E_BAD_ARGS;
+        }
+      }
+    }
+  }
+	return e;
 }
 
 // None of the render system's specials should be cleared as the main system owns them.
@@ -275,21 +319,17 @@ XClrFuncDef_(Render) {
   frayDel((void**) &xRenderP->cmPF);
   frayDel((void**) &xRenderP->cpPF);
   frayDel((void**) &xRenderP->entityF);
+  Animation **animPP = xRenderP->entity2Anim2AnimStripMPMP->mapA;
+  Animation **animEndPP = animPP + arrayGetNElems(xRenderP->entity2Anim2AnimStripMPMP->mapA);
+  // Although some holes exist in entity2Anim2AnimStripMPMP, we're safe here; 
+  // those holes' stripMPs will look NULL to the loop below.
+  for (; animPP < animEndPP; ++animPP) {
+    if ((*animPP)->stripMP) {
+      mapDel(&(*animPP)->stripMP);
+    }
+  }
+  mapDel(&xRenderP->entity2Anim2AnimStripMPMP);
   textureDel(&xRenderP->atlasTextureP);
-  // Surface_      *atlasSurfaceP;
-  // Texture_      *atlasTextureP;
-  return SUCCESS;
-}
-
-static Error _getSharedMap(Map *shareMPMP, Key key, Map **outputMPP) {
-  if (!shareMPMP || !outputMPP)
-    return E_BAD_ARGS;
-  Map **shareMPP = (Map**) mapGet(shareMPMP, key);
-  if (!shareMPP)
-    return E_BAD_KEY;
-  *outputMPP = *shareMPP;
-  if (!*outputMPP)
-    return E_BAD_ARGS;
   return SUCCESS;
 }
 
@@ -332,42 +372,62 @@ static Error _assembleTextureAtlas(XRender *xRenderP, AtlasElem *atlasA, SortedR
 // Prior to updating, they only reflect their local offsets.
 // Good news is, entities don't need to know where their source rectangle maps are; 
 // entities with common maps share a common pointer, so only one needs to update it.
-static Error _updateSrcRects(XRender *xRenderP, SortedRect *sortedRectA) {
+static Error _updateSrcRects(XRender *xRenderP, RectOffset *offsetA) {
   // Get all the animation rectangles we need to update when building our texture atlas.
   // First count all the rectangles we're going to need.
-  Entity entity = 0;
-  Rect_ *srcRectA = NULL;
-  Rect_ **srcRectAP = NULL;
-  Rect_ **srcRectAEndP = NULL;
-  Map     *srcRectAMP = NULL;     // pointer to a map of arrays of animation frame rectangles
-  System *sP = &xRenderP->system;
-  Rect_ *rectP = NULL;
-  Rect_ *rectEndP = NULL;
-
+  Map    *animMP = NULL;
+  AnimStrip *animStripP, *animStripEndP;
+  AnimFrame *frameP, *frameEndP;
   Error e = SUCCESS;
   
-  SortedRect *sortedRectP = sortedRectA;
-  SortedRect *sortedRectEndP = sortedRectP + arrayGetNElems(sortedRectA);
-
+  U32 staticSrcRectIdx;
+  Rect_ staticSrcRect;
+  Colormap *cmP;
+  RectOffset *offsetP = offsetA;
+  RectOffset *offsetEndP = offsetP + arrayGetNElems(offsetA);
+  Entity *entityP = xRenderP->entityF;
+  Entity *entityEndP = entityP + arrayGetNElems(xRenderP->entityF);
+  XRenderComp c;
   // Update all source rectangles' XY coordinates to their global positions in texture atlas.
   // For each entity...
-  for (; sortedRectP < sortedRectEndP; ++sortedRectP) {
-    entity = xGetEntityByCompIdx(sP, sortedRectP->srcIdx);
-    // Get entity's array of arrays of source rectangles.
-    e = mapGetNestedMapP(xRenderP->srcRectMAMP, entity, &srcRectAMP);
-    if (!e) {
-      srcRectAP = srcRectAMP->mapA;
-      srcRectAEndP = srcRectAP + arrayGetNElems(srcRectAMP->mapA);
-      // Offset each rectangle in animation strip to point to position in atlas.
-      for (; srcRectAP < srcRectAEndP; ++srcRectAP) {
-        srcRectA = *srcRectAP;  // don't check for null arrays as we already did before
-        rectP = srcRectA;
-        rectEndP = rectP + arrayGetNElems(srcRectA);
-        for (; rectP < rectEndP; ++rectP) {
-          rectP->x += sortedRectP->rect.x;
-          rectP->y += sortedRectP->rect.y;
+  for (; !e && entityP < entityEndP && offsetP < offsetEndP; ++offsetP, ++entityP) {
+    e = mapGetNestedMapP(xRenderP->entity2Anim2AnimStripMPMP, *entityP, &animMP);
+    // If image is animated, update all its individual frames' source rectangles.
+    if (!e && animMP) {
+      animStripP = animMP->mapA;
+      // Since entities with identical images share animation strips, avoid multi-offsetting them.
+      if (!(animStripP->flags & IS_OFFSET)) {
+        animStripP->flags |= IS_OFFSET;
+        animStripEndP = animStripP + arrayGetNElems(animMP->mapA);
+        // Initialize an animated component's src rect to the first strip's first frame.
+        c.srcRectP = &animStripP->frameA[0].rect;
+        // Offset all the frames' rectangles in this strip to reflect their texture atlas offsets.
+        for (; animStripP < animStripEndP; ++animStripP) {
+          frameP = animStripP->frameA;
+          frameEndP = frameP + arrayGetNElems(animStripP->frameA);
+          for (; frameP < frameEndP; ++frameP) {
+            frameP->rect.x += offsetP->x;
+            frameP->rect.y += offsetP->y;
+          }
         }
       }
+    }
+    // Otherwise, if image is not animated, use the static rectangle fray instead.
+    else if (e == E_BAD_KEY) {
+      e = SUCCESS;
+      cmP = xRenderP->cmPF[entityP - xRenderP->entityF];
+      staticSrcRect.x = offsetP->x;
+      staticSrcRect.y = offsetP->y;
+      staticSrcRect.w = cmP->w;
+      staticSrcRect.h = cmP->h;
+      e = frayAdd(xRenderP->staticSrcRectF, &staticSrcRect, &staticSrcRectIdx);
+      // Point to where you just inserted your new src rect. 
+      if (!e) {
+        c.srcRectP = &xRenderP->staticSrcRectF[staticSrcRectIdx];
+      }
+    }
+    if (!e) {
+      e = xAddComp(&xRenderP->system, *entityP, &c);
     }
   }
   return e;
@@ -379,16 +439,20 @@ XPostprocessCompsDef_(Render) {
   XRender *xRenderP = (XRender*) sP;
 
   SortedRect *sortedRectA = NULL;
+  RectOffset *offsetA = NULL;
   AtlasElem *atlasA = NULL;
   U8 *atlasPixelA = NULL;
 
   Key nEntities = xGetNComps(sP);
 
   // Sort rectangles
-  Error e = _sortRects(&sortedRectA, nEntities, xRenderP->cmPF);
+  Error e = _sortRects(&sortedRectA, nEntities, xRenderP->cmPF); // Rectangle offsets
+  if (!e) {
+    e = arrayNew((void**) &offsetA, sizeof(RectOffset), xGetNComps(&xRenderP->system));
+  }
   // Texture atlas
   if (!e) {
-    e = _atlasGen(&atlasA, nEntities, sortedRectA);
+    e = _atlasGen(&atlasA, nEntities, sortedRectA, offsetA);
   }
   if (!e) {
     e = _assembleTextureAtlas(xRenderP, atlasA, sortedRectA, &atlasPixelA);
@@ -411,25 +475,35 @@ XPostprocessCompsDef_(Render) {
   }
   // Update source rectangles. That way animation system knows where its frames are in texture atlas.
   if (!e) {
-    e = _updateSrcRects(xRenderP, sortedRectA);
+    e = _updateSrcRects(xRenderP, offsetA);
   }
-  // Finally, initialize our components (src and dst rect indices).
+  // Finally, initialize our components' dst rect pointers.
   if (!e) {
     Entity *entityP = xRenderP->entityF;
     Entity *entityEndP = entityP + arrayGetNElems(xRenderP->entityF);
-    XRenderComp component = {0};
+    XRenderComp *cP = NULL;
     for (; !e && entityP < entityEndP; ++entityP) {
-      e = mapGetIndex(xRenderP->srcRectMP, *entityP, &component.srcRectIdx);
-      if (!e) {
-        e = mapGetIndex(xRenderP->dstRectMP, *entityP, &component.dstRectIdx);
+      cP = (XRenderComp*) xGetCompPByEntity(sP, *entityP);
+      if (cP) {
+        cP->dstRectP = (Rect_*) mapGet(xRenderP->dstRectMP, *entityP);
+        printf("dst rect before; {%d %d}\n", cP->dstRectP->x, cP->dstRectP->y);
+        cP->dstRectP->w = cP->srcRectP->w;
+        cP->dstRectP->h = cP->srcRectP->h;
+        printf("dst rect after; {%d %d}\n", cP->dstRectP->x, cP->dstRectP->y);
       }
-      if (!e) {
-        e = xAddComp(sP, *entityP, (void*) &component);
+      if (!cP->dstRectP) {
+        e = E_BAD_KEY;
       }
     }
   }
 
+  // TODO remove this when you're ready to try out XGo-based initialization.
+  if (!e) {
+    frayActivateAll(sP->cF);
+  }
+
   // Clean up.
+  arrayDel((void**) &offsetA);
   arrayDel((void**) &sortedRectA);
   arrayDel((void**) &atlasA);
   arrayDel((void**) &atlasPixelA);
@@ -437,6 +511,8 @@ XPostprocessCompsDef_(Render) {
   frayDel((void**) &xRenderP->cpPF);
   frayDel((void**) &xRenderP->entityF);
 
+
+  return E_BAD_ARGS; // TODO remove forced bomb-out
   return e;
 }
 
@@ -449,12 +525,17 @@ XGetShareFuncDef_(Render) {
   if (!e) {
     e = mapGetNestedMapPElem(shareMMP, WINDOW_GENE_TYPE, WINDOW_KEY_, (void**) &xRenderP->windowP);
   }
-// Extract all source and dest rectangles we need to keep track of (they get updated by other systems).
+  // Only dest rects are shared. Nobody needs to know about src rects but the renderer,
+  // who now owns the animation frames with my latest design change as of 2023/02/25.
   if (!e) {
-    e = _getSharedMap(shareMMP, SRC_RECT, &xRenderP->srcRectMP); 
-  }
-  if (!e) {
-    e = _getSharedMap(shareMMP, DST_RECT, &xRenderP->dstRectMP);  // represents current destination rectangle for, say, a mobile, scalable entity
+    // dst rects represent current destination rectangle for, say, a mobile, scalable entity
+    Map *dstRectMP;
+    e = mapGetNestedMapP(shareMMP, DST_RECT, &dstRectMP);  
+    Rect_* rP = (Rect_*) mapGet(dstRectMP, 1);
+    printf("dst rect at map load, different; {%d %d}\n", rP->x, rP->y);
+    e = mapGetNestedMapP(shareMMP, DST_RECT, &xRenderP->dstRectMP);  
+    rP = (Rect_*) mapGet(xRenderP->dstRectMP, 1);
+    printf("dst rect at map load; {%d %d}\n", rP->x, rP->y);
   }
   return e;
 }
@@ -471,12 +552,10 @@ Error xRenderRun(System *sP) {
 	XRenderComp *cEndP = cP + frayGetFirstInactiveIdx(sP->cF);
 	Renderer_ *rendererP = xRenderP->rendererP;
   Texture_ *sysTextureP = xRenderP->atlasTextureP;
-  Rect_ *srcRectA = (Rect_*) xRenderP->srcRectMP->mapA;
-  Rect_ *dstRectA = (Rect_*) xRenderP->dstRectMP->mapA;
 
 	clearScreen(rendererP);
 	for (; !e && cP < cEndP; cP++) {
-		e = copy_(rendererP, sysTextureP, &srcRectA[cP->srcRectIdx], &dstRectA[cP->dstRectIdx]);
+		e = copy_(rendererP, sysTextureP, cP->srcRectP, cP->dstRectP);
   }
 	if (!e) {
 		present_(rendererP);

@@ -1,67 +1,22 @@
 #include "xAnim.h"
 
-//======================================================
-// Initialize Anim's system.
-//======================================================
-Error xAnimIniSys(System *sP, void *sParamsP) {
-	unused_(sParamsP);
-  unused_(sP);
-  return SUCCESS;
-}
-
-//======================================================
-// Initialize xAnim's components, which are Images.
-//======================================================
-Error xAnimIniSubcomp(System *sP, void *compDataP, void *compDataSrcP) {
-  unused_(sP);
-  unused_(compDataP);
-  unused_(compDataSrcP);
-	return SUCCESS;
-}
-
 Error xAnimProcessMessage(System *sP, Message *msgP) {
-  Error e = SUCCESS;
-  // Get entity's map of switchable components.
-  Map **mutationMPP = (Map**) mapGet(sP->mutationMPMP, msgP->attn);
-  if (!mutationMPP)
-    e = E_BAD_KEY;
-  Map *mutationMP;
-  if (!e) {
-    mutationMP = *mutationMPP;
-    if (!mutationMP) 
-      e = E_BAD_KEY;
-  }
+  Map *entityAnimationMP = NULL;
+  Error e = mapGetNestedMapP(sP->mutationMPMP, msgP->attn, &entityAnimationMP);
   if (!e) {
     // Get entity's map of components to switch to.
     void *compP = xGetCompPByEntity(sP, msgP->attn);
     if (compP) {
-      void *tmpP = mapGet(mutationMP, msgP->arg);
-      if (tmpP)
+      AnimStrip *animStripP = mapGet(entityAnimationMP, msgP->arg);  // arg = key of animation strip
+      if (tmpP) {
         memcpy(compP, tmpP, sP->compSz - sizeof(Rect_*));  // don't copy over source rect pointer!
-      else
+      }
+      else {
         e = E_BAD_ARGS;
+      }
     }
   }
 	return e;
-}
-
-XClrFuncDef_(Anim) {
-  unused_(sP);
-  return SUCCESS;
-}
-
-// TODO: does this break if we call this BEFORE add
-XGetShareFuncDef_(Anim) {
-  if (!sP->cF)
-    return E_BAD_ARGS;
-	XAnimComp *cP = (XAnimComp*) sP->cF;
-  XAnimComp *cStartP = cP;
-	XAnimComp *cEndP = cP + frayGetFirstInactiveIdx(sP->cF);
-
-  for (; cP < cEndP; ++cP)
-    cP->srcRectP = (Rect_*) mapGet(shareMMP, xGetEntityByCompIdx(sP, cP - cStartP));
-
-  return SUCCESS;
 }
 
 //======================================================

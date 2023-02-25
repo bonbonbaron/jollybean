@@ -4,12 +4,26 @@
 #include "interface.h"
 
 typedef struct {
-  U8     timeLeft; 
-  U8     currIdx;
-  Bln    repeat;
-  U8    *timeA;     
-  Rect_ *srcRectA;    // This is the array of animation rectangles. We draw FROM this part of the source image.
-  Rect_ *srcRectP;  // Pointer to rectangle shared across multiple systems. We draw TO this part of the dest image.
+  Rect_ rect;
+  U32 duration;
+} AnimFrame;
+
+typedef struct {
+  U8  nFrames;
+  Bln flags;
+  Bln repeat;       
+  Bln pingPong;       
+  AnimFrame *frameA;
+} AnimStrip;
+
+typedef struct {
+  Key key;
+  AnimStrip *animStripP;
+} KeyStripPair;
+
+typedef struct {
+  KeyStripPair *keyStripPairA;  // maps keys to animations
+  Map          *stripMP;  // animStripMappingA gets converted to a map on startup
 } Animation;
 
 typedef struct {

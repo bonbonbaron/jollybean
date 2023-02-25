@@ -1,4 +1,5 @@
 #include "xMaster.h"
+#include "jb.h"
 
 X_(Master, 1, FLG_NO_CF_SRC_A_); 
 
@@ -122,8 +123,9 @@ static Error _histoGenes(GeneHisto *geneHistoP, const Biome *biomeP, const U32 n
   Spawn *spawnP = biomeP->spawnA;
   Spawn *spawnEndP = spawnP + biomeP->nSpawns;   // pointer to the end of the above array
   Gene **genePP, **geneEndPP;   // pointers to an array of gene header pointers and its end
+  Entity entity = 0;
   // Loop through genomes
-  for (Entity entity = 0; !e && spawnP < spawnEndP; spawnP++) {
+  for (; !e && spawnP < spawnEndP; spawnP++) {
     genePP = &spawnP->genomeP->genePA[0];
     geneEndPP = genePP + spawnP->genomeP->nGenes;
     // Histo genome's genes that aren't blackboard items.
@@ -161,7 +163,9 @@ static Error _subsystemsIni(System *masterSysP, GeneHisto *geneHistoP) {
 
 static Error _sharedGenesMapNew(Map **sharedGenesMPP, GeneHisto *geneHistoP) {
   // Create all the inner maps according to the histo'd number of elements they hold.
-  Error e = mapNew(sharedGenesMPP, sizeof(Map*), geneHistoP->nDistinctShareds + 2);  // + 2 for window and renderer!
+  // Add 3 to total number for window, renderer, and dest rect shares.
+  // Dest rect is implied due to spawn's positions.
+  Error e = mapNew(sharedGenesMPP, sizeof(Map*), geneHistoP->nDistinctShareds + 3);  
   if (!e) {
     Map *sharedGenesMP = *sharedGenesMPP;
     XHistoElem *xHistoElemP    = &geneHistoP->histoXElemA[0];
@@ -207,12 +211,12 @@ static void _geneHistoClr(GeneHisto *geneHistoP) {
   }
 }
 
-static void _distributeSharedGenesToSubsystems(System *masterSysP, Map *sharedGenesMP) {
+static void _distributeSharedGenesToSubsystems(System *masterSysP, Map *sharedGenesMPMP) {
   System **subSysPP = masterSysP->cF;
   System **subSysEndPP = subSysPP + arrayGetNElems((void*) masterSysP->cF);
   for (; subSysPP < subSysEndPP; subSysPP++) {
     if ((*subSysPP)->getShare) {
-      ((*subSysPP)->getShare)(*subSysPP, sharedGenesMP);
+      ((*subSysPP)->getShare)(*subSysPP, sharedGenesMPMP);
     }
   }
 }
@@ -221,10 +225,54 @@ static void _distributeSharedGenesToSubsystems(System *masterSysP, Map *sharedGe
 static Error _addSpecialSharedGene(Map *sharedGeneMPMP, void *geneP, Key geneType) {
   Map *mapP = NULL;
   Error e = mapNew(&mapP, sizeof(void*), 1);
-  if (!e)
+  if (!e) {
     e = mapSet(mapP, 1, &geneP);  // only one window
-  if (!e)
+  }
+  if (!e) {
     e = mapSet(sharedGeneMPMP, geneType, (void**) &mapP);
+  }
+  return e;
+}
+
+static void _pollDestRect(Map *sharedMPMP, U32 i) {
+  // dst rects represent current destination rectangle for, say, a mobile, scalable entity
+  Map *dstRectMP;
+  Error e = mapGetNestedMapP(sharedMPMP, DST_RECT, &dstRectMP);  
+  if (!e) {
+    Rect_* rP = (Rect_*) mapGet(dstRectMP, 1);
+    printf("dst rect %d; {%d %d}\n", i, rP->x, rP->y);
+  }
+}
+
+// This is for adding dest rect. Maybe other stuff in the future too.
+static Error _addDestRectSharedGenes(Map *sharedGeneMPMP, Biome *biomeP) {
+  if (!sharedGeneMPMP || !biomeP || !biomeP->nEntitiesToSpawn || !biomeP->nSpawns || !biomeP->spawnA) {
+    return E_BAD_ARGS;
+  }
+  Map *entity2RectMP = NULL;
+  Error e = mapNew(&entity2RectMP, sizeof(Rect_), biomeP->nEntitiesToSpawn);
+  if (!e) {
+    Rect_ rect = {0};
+    Spawn *spawnP = biomeP->spawnA;
+    Spawn *spawnEndP = spawnP + biomeP->nEntitiesToSpawn;
+    PositionNode *posP;
+    PositionNode *posEndP;
+    Entity entity = 0;
+    for (; !e && spawnP < spawnEndP; ++spawnP) {
+      posP = spawnP->positionNodeA;
+      posEndP = posP + spawnP->nEntitiesPossible;
+      for (; !e && entity < biomeP->nEntitiesToSpawn && posP < posEndP; ++posP) {
+        if (!spawnP->keyP || *spawnP->keyP == posP->keyhole) {
+          rect.x = posP->position.x;
+          rect.y = posP->position.y;
+          e = mapSet(entity2RectMP, ++entity, &rect);
+        }
+      }
+    }
+  }
+  if (!e) {
+    e = mapSet(sharedGeneMPMP, DST_RECT, (void**) &entity2RectMP);
+  }
   return e;
 }
 
@@ -411,7 +459,7 @@ static Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGen
   Genome *genomeP;
   Gene **genePP, **geneEndPP;   // pointers to an array of gene header pointers and its end
   Map *bbMP = NULL;
-  Map *sharedGenesMP;
+  Map *sharedGenesMPMP;
   GeneHisto geneHisto = {0};
   StripDataS **sdPF = NULL;
 
@@ -432,15 +480,19 @@ static Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGen
     e = _sharedGenesMapNew(sharedGenesMPP, &geneHisto);
   }
   if (!e) {
-    sharedGenesMP = *sharedGenesMPP;
-    e = (!sharedGenesMP) ? E_NULL_VAR : SUCCESS;
+    sharedGenesMPMP = *sharedGenesMPP;
+    e = (!sharedGenesMPMP) ? E_NULL_VAR : SUCCESS;
   }
   if (!e) {
-    e = _addSpecialSharedGene(sharedGenesMP, windowP, 1);
+    e = _addSpecialSharedGene(sharedGenesMPMP, windowP, 1);
   }
   if (!e) {
-    e = _addSpecialSharedGene(sharedGenesMP, rendererP, 2);
+    e = _addSpecialSharedGene(sharedGenesMPMP, rendererP, 2);
   }
+  if (!e) {
+    e = _addDestRectSharedGenes(sharedGenesMPMP, biomeP);
+  }
+  if (!e) { _pollDestRect(sharedGenesMPMP, 1); }
   if (!e) {
     e = _makeMutationMapArrays(biomeP, &geneHisto, nSystemsMax);
   }
@@ -448,10 +500,12 @@ static Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGen
     e = frayNew((void**) &sdPF, sizeof(StripDataS*), geneHisto.nDistinctMedia);
   }
 
+  if (!e) { _pollDestRect(sharedGenesMPMP, 2); }
   // For each spawn...
   for (Entity entity = 1; !e && spawnP < spawnEndP; ++spawnP, ++entity) {
     // Make a blackboard map for this entity if it has any genes to put in it.
     bbMP = NULL;
+  if (!e) { _pollDestRect(sharedGenesMPMP, 8); }
     if (geneHisto.histoBbElemA[entity]) {
       e = mapNew(&bbMP, sizeof(void*), geneHisto.histoBbElemA[entity]);
     }
@@ -459,14 +513,17 @@ static Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGen
     genePP = spawnP->genomeP->genePA;
     geneEndPP = genePP + genomeP->nGenes;
     // For each gene of this spawn...
+  if (!e) { _pollDestRect(sharedGenesMPMP, 7); }
     for (; !e && genePP < geneEndPP; genePP++) {  // genePP is a pointer to a pointer to a global singleton of a component
-      e = _distributeGene(entity, genePP, sdPF, masterSysP, sharedGenesMP, bbMP, spawnP);
+      e = _distributeGene(entity, genePP, sdPF, masterSysP, sharedGenesMPMP, bbMP, spawnP);
     }
+  if (!e) { _pollDestRect(sharedGenesMPMP, 6); }
     // If this entity has a blackboard, stick it into the map of entity blackboards.
     if (!e && bbMP) {
       e = mapSet(masterSysP->mutationMPMP, entity, &bbMP);
     }
   }
+  if (!e) { _pollDestRect(sharedGenesMPMP, 3); }
 
   // Inflate all media-type genes. All components using them will see it from inside their systems.
   if (!e) {
@@ -475,9 +532,11 @@ static Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGen
   // Shared genes can't be distributed till components using them exist.
   // Some systems like xRender need to wait till post-processing to make their components.
   // So we're only guaranteed components' existence after post-processing.
+  if (!e) { _pollDestRect(sharedGenesMPMP, 4); }
   if (!e) {
-    _distributeSharedGenesToSubsystems(masterSysP, sharedGenesMP);
+    _distributeSharedGenesToSubsystems(masterSysP, sharedGenesMPMP);
   }
+  if (!e) { _pollDestRect(sharedGenesMPMP, 5); }
   // Post-process all children systems.
   // Some systems using composite genes don't make components until they have all their ingredients.
   if (!e) {
@@ -522,6 +581,12 @@ Error xMasterIniSys(System *sP, void *sParamsP) {
   if (!e) {
     e = _distributeGenes(xMasterSysP->biomeP, sP, &xMasterSysP->sharedMPMP, xMasterSysP->windowP, xMasterSysP->rendererP, xMasterIniSysPrmsP->nXSystemsMax);
   }
+
+  // Avoid moving things by cheating and telling the fray everything's active.
+  if (!e) {
+    frayActivateAll(sP->cF);
+  }
+
 
   return e;
 }

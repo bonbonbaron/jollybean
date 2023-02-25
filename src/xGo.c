@@ -128,7 +128,7 @@ static Error _triggerIndividual(XGo *xGoSysP, Message *msgP) {
   if (cNewP) {
     // Queue new action if it's higher priority than old or entity's inactive.
     if (!frayElemIsActive(sP->cF, msgP->attn) || 
-        _isHigherPriority(cNewP->priority, cP->priority)) {
+        _isHigherPriority(cNewP->quirkP->priority, cP->quirkP->priority)) {
       *cP = *cNewP;
     }
     // Activate activity.
@@ -176,10 +176,11 @@ XProcMsgFuncDef_(Go) {
 Error xGoRun(System *sP) {
   XGoComp *cP = sP->cF;
   XGoComp *cEndP = cP + frayGetFirstInactiveIdx(sP->cF);
-  for (; cP < cEndP; cP++) {
-    btRun(cP->btP, cP->btStatP, cP->bbMP, sP->outboxF);
+  Error e = SUCCESS;
+  for (; !e && cP < cEndP; cP++) {
+    e = cP->quirkP->actionU(cP->entity, cP->bbMP);
   }
-  return SUCCESS;
+  return e;
 }
 
 X_(Go, 2, FLG_NO_CF_SRC_A_);
