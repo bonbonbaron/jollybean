@@ -260,8 +260,9 @@ Error mapSet(Map *mapP, const Key key, const void *valP) {
   U32 nBytesToMove;
   Error e = preMapSet(mapP, key, &elemP, &nextElemP, &nBytesToMove);
   if (!e) {
-    if (nBytesToMove) 
+    if (nBytesToMove) {
       memcpy(nextElemP, (const void*) elemP, nBytesToMove);
+    }
 		/* Write value to map element. */
 		memcpy(elemP, valP, _getMapElemSz(mapP));
 		/* Set flag. */
@@ -270,8 +271,9 @@ Error mapSet(Map *mapP, const Key key, const void *valP) {
 		/* Increment all prevBitCounts in bytes above affected one. */
 #ifdef __ARM_NEON__
 #else
-		while (++byteIdx < N_FLAG_BYTES) 
+		while (++byteIdx < N_FLAG_BYTES) {
 		  ++mapP->flagA[byteIdx].prevBitCount;
+    }
 #endif
 	}
 	return e;
@@ -282,14 +284,16 @@ Error mapRem(Map *mapP, const Key key) {
   U32 nBytesToMove;
   Error e = preMapSet(mapP, key, &elemP, &nextElemP, &nBytesToMove);
   if (!e) {
-    if (nBytesToMove) 
+    if (nBytesToMove) {
       memcpy(elemP, (const void*) nextElemP, nBytesToMove);
+    }
 		/* Unset flag. */
 		U8 byteIdx = byteIdx_(key);
 		mapP->flagA[byteIdx].flags &= ~bitFlag_(key);  /* key's bit position byteIdx'th byte */
 		/* Increment all prevBitCounts in bytes above affected one. */
-		while (++byteIdx < N_FLAG_BYTES) 
+		while (++byteIdx < N_FLAG_BYTES) {
 			--mapP->flagA[byteIdx].prevBitCount;
+    }
 	}
 	return e;
 }
@@ -301,27 +305,32 @@ Error mapGetNestedMapP(Map *outerMapP, Key mapKey, Map **innerMapPP) {
 
   Map **_innerMapPP = (Map**) mapGet(outerMapP, mapKey);
 
-  if (_innerMapPP && *_innerMapPP)
+  if (_innerMapPP && *_innerMapPP) {
     *innerMapPP = *_innerMapPP;
-  else
+  }
+  else {
     return E_BAD_KEY;
+  }
 
   return SUCCESS;
 }
 
 Error mapGetNestedMapPElem(Map *mapP, Key mapKey, Key elemKey, void **returnedItemPP) {
-  if (!elemKey || !returnedItemPP)
+  if (!elemKey || !returnedItemPP) {
     return E_BAD_ARGS;
+  }
 
   Map *nestedMapP = NULL;
   Error e = mapGetNestedMapP(mapP, mapKey, &nestedMapP);
 
   if (!e) {
     void **valPP = mapGet(nestedMapP, elemKey);
-    if (valPP)
+    if (valPP) {
       *returnedItemPP = *valPP;
-    if (!*returnedItemPP)
+    }
+    if (!*returnedItemPP) {
       return E_BAD_KEY;
+    }
   }
 
   return SUCCESS;
@@ -1054,13 +1063,15 @@ inline static U8 _frayHasRoom(const void *frayP) {
 
 // Returns index of added element
 Error frayAdd(const void *frayP, void *elemP, U32 *elemNewIdxP) {
-  if (!_frayHasRoom(frayP))
+  if (!_frayHasRoom(frayP)) {
     return E_FRAY_FULL;
+  }
   U32 *firstEmptyIdxP = _frayGetFirstEmptyIdxP(frayP);
   void *dstP = frayGetElemByIdx_(frayP, (*firstEmptyIdxP)++);
-  memcpy(dstP, elemP, frayGetElemSz_(frayP));
-  if (elemNewIdxP)
+  memcpy(dstP, elemP, arrayGetElemSz(frayP));
+  if (elemNewIdxP) {
     *elemNewIdxP = *firstEmptyIdxP - 1;
+  }
   return SUCCESS;
 }
 

@@ -19,7 +19,7 @@ JB_DIR=../../../
 	touch $@
 
 ./main.o: ./main.c
-	gcc -g -c main.c -I${JB_DIR}/src/include/ -I${JB_DIR}/utils/body/src/include -I${CM_INC_DIR} -I${CP_INC_DIR} -o $@
+	gcc -g -c main.c -I${JB_DIR}/src/include/ -I${JB_DIR}/utils/body/src/include -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags) -o $@
 	touch $@
 
 ${CM_OBJ_DIR}/%Colormap.o: ${CM_SRC_DIR}/%Colormap.c
@@ -53,7 +53,7 @@ ${JB_DIR}/build/%.o: ${JB_DIR}/src/%.c
 .PHONY: clean
 clean:
 	rm -f ./o 2>/dev/null
-	rm -f ./render.o 2>/dev/null
+	rm -f ./*.o 2>/dev/null
 	rm -f ${CP_INC_DIR}/*.h 2>/dev/null
 	rm -f ${CP_OBJ_DIR}/*.o 2>/dev/null
 	rm -f ${CP_SRC_DIR}/*.c 2>/dev/null

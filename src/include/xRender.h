@@ -23,7 +23,8 @@ typedef enum{WINDOW_GENE_TYPE = 1, RENDERER_GENE_TYPE, N_MASTER_GENES} GeneType;
 // We leverage this knowledge to navigate backwards without re-entering already-explored nodes.
 #define getParentAtlasIdx_(childIdx_) ((childIdx_ - 1 - !(cameFromRight = childIdx_ & 1)) >> 1)
 
-typedef enum { COLORMAP, COLOR_PALETTE } RenderSubtype;
+#define COLORMAP      (0x40)
+#define COLOR_PALETTE (0x80)
 
 typedef struct {
   U32 used, x, y, remWidth, remHeight;  // rem = "remaining" (space remaining without this rect)

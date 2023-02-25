@@ -1,5 +1,4 @@
-#include "jb.h"
-#include "x.h"
+#include "xRender.h"
 
 // =========================================
 // Clear color map and all its related data.
@@ -206,12 +205,12 @@ Error xRenderIniSys(System *sP, void *sParamsP) {
   XRender *xRenderP = (XRender*) sP;
   // Components array should have already been allocated by this point, so it's safe to get its size.
   U32 nComponents = xGetNComps(sP);
-  Error e = frayNew((void**) xRenderP->cmPF, sizeof(Colormap*), nComponents);
+  Error e = frayNew((void**) &xRenderP->cmPF, sizeof(Colormap*), nComponents);
   if (!e) {
-    e = frayNew((void**) xRenderP->cpPF, sizeof(ColorPalette*), nComponents);
+    e = frayNew((void**) &xRenderP->cpPF, sizeof(ColorPalette*), nComponents);
   }
   if (!e) {
-    e = frayNew((void**) xRenderP->entityF, sizeof(Entity), nComponents);
+    e = frayNew((void**) &xRenderP->entityF, sizeof(Entity), nComponents);
   }
   return e;
 }
@@ -237,7 +236,8 @@ Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void
     case COLORMAP:
       cmP = (Colormap*) dataP;
       if (!(cmP->state & INITIALIZED)) {
-        e = frayAdd(xRenderP->cmPF, dataP, NULL);
+        // dataP points to the colormap itself, so make sure frayAdd() only memcpy's pointer to it.
+        e = frayAdd(xRenderP->cmPF, (void*) &cmP, NULL);
         cmP->state |= INITIALIZED;
       }
       break;
@@ -247,14 +247,16 @@ Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void
       if (!(cpP->state & INITIALIZED)) {
         cpP->atlasPaletteOffset = xRenderP->atlasPaletteOffset;
         xRenderP->atlasPaletteOffset += cpP->nColors;
-        e = frayAdd(xRenderP->cpPF, dataP, NULL);
+        // frayAdd() will memcpy the pointer of color palette into cpPF, not 4 bytes of palette itself.
+        e = frayAdd(xRenderP->cpPF, (void*) &cpP, NULL);
         cpP->state |= INITIALIZED;
       }
       break;
     default:
       break;
   }
-  if (!e) {
+  // Only track entity for the first subcomponent. 0x40 is the lowest of the upper two bits.
+  if (!e && subtype == 0x40) {
     e = frayAdd(xRenderP->entityF, (void*) &entity, NULL);
   }
 
@@ -453,10 +455,6 @@ XGetShareFuncDef_(Render) {
   }
   if (!e) {
     e = _getSharedMap(shareMMP, DST_RECT, &xRenderP->dstRectMP);  // represents current destination rectangle for, say, a mobile, scalable entity
-  }
-  if (!e) {
-    // Animation system nicely makes a map of pointers to its components' srcRect arrays (2D: first dim is anim # (not important), second is array of src rects).
-    e = _getSharedMap(shareMMP, SRC_RECT_ARRAY, &xRenderP->srcRectMAMP);  // represents all the possible source rectangles to keep track of in texture atlas
   }
   return e;
 }

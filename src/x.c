@@ -91,9 +91,17 @@ U32 xGetNComps(System *sP) {
 }
 
 Error xAddMutationMap(System *sP, Entity entity, Map *mutationMP) {
-  if (mutationMP && entity && sP && sP->mutationMPMP) {
-    return mapSet(sP->mutationMPMP, entity, &mutationMP);
+  if (entity && sP) {
+    // If the component is immutable, that's fine, don't worry about it. 
+    if (!mutationMP && !sP->mutationMPMP) {
+      return SUCCESS;
+    }
+    // If the user intended to mutate the gene, ensure we have both pieces of data.
+    if (mutationMP && sP->mutationMPMP) {
+      return mapSet(sP->mutationMPMP, entity, &mutationMP);
+    }
   }
+  // Otherwise bomb out.
   return E_BAD_ARGS;
 }
 
@@ -126,7 +134,7 @@ Error xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP)
   }
   // If upper two bits are nonzero, this is a subcomponent. 
   if (compType & MASK_COMPONENT_SUBTYPE) {
-    return sP->iniSubcomp(sP, entity, compType, entityDataP);
+    return sP->iniSubcomp(sP, entity, compType & MASK_COMPONENT_SUBTYPE, entityDataP);
   }
   // If it's the main component, feed it straight in.
   else {

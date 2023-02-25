@@ -27,6 +27,32 @@ static void _countEntitiesToSpawn(Biome *biomeP) {
 /*************************/
 /*****  HISTOGRAMS  ******/
 /*************************/
+// Systems might require "sub"-components (incredients) to make components.
+// In such a case, gene.u.unitary.type & MASK_COMPONENT_SUBTYPE will be nonzero.
+// A system cannot consume both genes for full and sub-components; 
+// It either has to make them out of sub-components or it copies them straight into sp->cF.
+//
+// For example, XRender needs to consume both a colormap and color palette for each component.
+//
+// But we must ensure multiple sub-comps don't increment system population by more than one.
+// To prevent that, we either increment its population with 
+//    * exclusive component genes or 
+//    * exclusive or media sub-comp genes if gene.u.unitary.type & MASK_SUBCOMPONENT = 0x40.
+//
+// Subtype 0 means this is a component, not sub-component.
+// Because 0x40 is the first bit of the upper two, meaning the first ingredient.
+inline static U8 _incrementXHistoElem(XHistoElem *xheP, Gene *geneP, Key incrementBy) {
+  // This combines a subtype needing to be 0x40 or being a full-component gene into one comparison.
+  if ((geneP->u.unitary.type & MASK_COMPONENT_SUBTYPE) <= 0x40) {
+    xheP->count += incrementBy;
+    xheP->size = geneP->u.unitary.size;
+    xheP->geneClass = geneP->geneClass;
+    xheP->geneType = geneP->u.unitary.type & MASK_COMPONENT_TYPE;  // used to find system
+    return 1;
+  }
+  return 0;
+}
+
 static Error _histoGene(
     Gene **genePP, 
     const Biome *biomeP, 
@@ -45,32 +71,24 @@ static Error _histoGene(
   StripDataS *sdP;
 
   Gene gene = **genePP;
-  // Get the element we're incrementing.
+  // Get the ECS histo element for the system this gene belongs to.
   xHistoElemP = &histoA[gene.u.unitary.type & MASK_COMPONENT_TYPE];
   switch (gene.geneClass) {
     case COMPOSITE_GENE:
-      for (int i = 0; i < gene.u.composite.nGenes; ++i) {
-        _histoGene(&gene.u.composite.genePA[i], biomeP, nSystemsMax, entityP, spawnP, geneHistoP);
+      for (int i = 0; !e && i < gene.u.composite.nGenes; ++i) {
+        e = _histoGene(&gene.u.composite.genePA[i], biomeP, nSystemsMax, entityP, spawnP, geneHistoP);
       }
       break;
     case SHARED_GENE:
       geneHistoP->nDistinctShareds += !xHistoElemP->count;
       // Don't break; the logic in exclusive gene case applies too.
     case EXCLUSIVE_GENE:
-      // Systems might consume multiple genes per component-- "sub"-components, if you will.
-      // For example, XRender needs to consume both a colormap and color palette for each component.
-      // But we don't want to interpret multiple pieces as implying multiple entities.
-      // So, to sidestep that, we only increment a system's size if subtype is 0.
-      // Subtype 0 means this is a component, not sub-component.
-      // That implies this is the first of up to three ingredients for a component.
-      if (!(gene.u.unitary.type & MASK_COMPONENT_SUBTYPE)) {
-        xHistoElemP->count += spawnP->nEntitiesToSpawn;
-        xHistoElemP->size = gene.u.unitary.size;
-        xHistoElemP->geneClass = gene.geneClass;
-        xHistoElemP->geneType = gene.u.unitary.type & MASK_COMPONENT_TYPE;  // used to find system
+      if (_incrementXHistoElem(xHistoElemP, &gene, spawnP->nEntitiesToSpawn)) {
         *entityP += spawnP->nEntitiesToSpawn;
         if (gene.u.unitary.key) {
-          mutationHistoElemIdx = (spawnP - biomeP->spawnA) * nSystemsMax + gene.u.unitary.type;
+          // The mutation histo is 2D: dim 0: system ID, dim 1: entity.
+          // So you track how many mutations each entity has in each system.
+          mutationHistoElemIdx = (spawnP - biomeP->spawnA) * nSystemsMax + (gene.u.unitary.type & MASK_COMPONENT_TYPE);
           ++spawnMutationHistoA[mutationHistoElemIdx];
         }
       }
@@ -81,11 +99,12 @@ static Error _histoGene(
       }
       break;
     case MEDIA_GENE:
-      sdP = (StripDataS*) gene.u.unitary.dataP;
+      sdP = *((StripDataS**) gene.u.unitary.dataP);
       if (!(sdP->flags & SD_IS_COUNTED_)) {
         sdP->flags |= SD_IS_COUNTED_;
         ++geneHistoP->nDistinctMedia;
       }
+      _incrementXHistoElem(xHistoElemP, &gene, spawnP->nEntitiesToSpawn);
       break;
     default:
       e = E_INVALID_GENE_CLASS;
@@ -125,13 +144,17 @@ static Error _subsystemsIni(System *masterSysP, GeneHisto *geneHistoP) {
   XHistoElem *histoElemP, *histoElemEndP;
   histoElemP = &geneHistoP->histoXElemA[0];
   histoElemEndP = histoElemP + arrayGetNElems(geneHistoP->histoXElemA);
-  for (; !e && histoElemP < histoElemEndP; histoElemP++) 
-    if (histoElemP->geneClass == EXCLUSIVE_GENE && histoElemP->count)  {  // i.e. if any entities exist having components for this system...
-      System **_sPP = (System**) xGetCompPByEntity(masterSysP, histoElemP->geneType);
-      if (_sPP)
+  for (; !e && histoElemP < histoElemEndP; histoElemP++) {
+    /* "<= MEDIA_GENE" includes MEDIA_GENE and EXCLUSIVE_GENE, 
+       both of which can go into systems. */
+    if (histoElemP->geneClass <= MEDIA_GENE && histoElemP->count)  {  // i.e. if any entities exist having components for this system...
+      System **_sPP = (System**) xGetCompPByEntity(masterSysP, histoElemP->geneType & MASK_COMPONENT_TYPE);
+      if (_sPP) {
         // Assume no subsystems need extra parameters.
         e = xIniSys(*_sPP, histoElemP->count, NULL);  
+      }
     }
+  }
 
   return e;
 }
@@ -227,7 +250,7 @@ static Error _makeMutationMapArrays(Biome *biomeP, GeneHisto *geneHistoP, Key nS
   Gene **genePP;
   Gene **geneEndPP;
   Gene gene;
-  Map *mutationMapP;
+  Map *currSpawnMutationMP;
 
   Spawn *spawnP = biomeP->spawnA;
   Spawn *spawnEndP = spawnP + biomeP->nSpawns;   // pointer to the end of the above array
@@ -242,23 +265,23 @@ static Error _makeMutationMapArrays(Biome *biomeP, GeneHisto *geneHistoP, Key nS
   for (; !e && spawnP < spawnEndP; ++spawnP) {
     e = arrayNew((void**) &spawnP->geneMutationMPA, sizeof(Map*), nSystemsMax);
     // Allocate a map for each mutable gene for this spawn.
-    for (Key systemTypeNum = 1; !e && systemTypeNum < nSystemsMax; ++systemTypeNum) {
-      nMutationsForCurrGene = geneHistoP->histoSpawnMutations[(spawnP - biomeP->spawnA) * nSystemsMax + systemTypeNum];
+    for (Key systemId = 1; !e && systemId < nSystemsMax; ++systemId) {
+      nMutationsForCurrGene = geneHistoP->histoSpawnMutations[(spawnP - biomeP->spawnA) * nSystemsMax + systemId];
       if (nMutationsForCurrGene) {
-        e = mapNew(&spawnP->geneMutationMPA[systemTypeNum], 
-                   geneHistoP->histoXElemA[systemTypeNum].size,
+        e = mapNew(&spawnP->geneMutationMPA[systemId], 
+                   geneHistoP->histoXElemA[systemId].size,
                    nMutationsForCurrGene);
       }
     }
+    // Populate all of this spawn's maps of gene mutations.
     genePP = spawnP->genomeP->genePA;
     geneEndPP = genePP + spawnP->genomeP->nGenes;
-    // Populate all of this spawn's maps of gene mutations.
     for (; !e && genePP < geneEndPP; genePP++) {  // genePP is a pointer to a pointer to a global singleton of a component
       gene = **genePP;
       if (gene.geneClass == EXCLUSIVE_GENE) {
-        mutationMapP = spawnP->geneMutationMPA[gene.u.unitary.type];  // current spawn's current mutation map
+        currSpawnMutationMP = spawnP->geneMutationMPA[gene.u.unitary.type & MASK_COMPONENT_TYPE];
         // Trusting data's been intialized by now, because it's being full-copied over.
-        e = mapSet(mutationMapP, gene.u.unitary.key, gene.u.unitary.dataP);
+        e = mapSet(currSpawnMutationMP, gene.u.unitary.key, gene.u.unitary.dataP);
       }  // add this gene to this spawn's mutation map
     }  // for each gene in this spawn's genome
   }  // for each spawn 
@@ -307,18 +330,20 @@ static Error _distributeGene(
   Error e = SUCCESS;
   switch (gene.geneClass) {
     case COMPOSITE_GENE:
-      compositeGenePP = (*genePP)->u.composite.genePA;
-      compositeGeneEndPP = compositeGenePP + (*genePP)->u.composite.nGenes;
+      compositeGenePP = gene.u.composite.genePA;
+      compositeGeneEndPP = compositeGenePP + gene.u.composite.nGenes;
       for (; compositeGenePP < compositeGeneEndPP; ++ compositeGenePP) {
         e = _distributeGene(entity, compositeGenePP, sdPF, masterSysP, sharedGenesMP, bbMP, spawnP);
       }
       break;
     case MEDIA_GENE:
+      // dataP is a pointer to an object that in turn has another pointer to a strip data.
+      // frayAdd() copies the CONTENTS of the passed-in pointer, so it works out beautifully.
       if ((e = frayAdd(sdPF, gene.u.unitary.dataP, NULL))) {
         break;
       }
-      // Fall through to next case to distribute media gene to the system.
-      // These media are still compressed at this point, but it'll be inflated after distro'ing.
+    // Fall through to next case to distribute media gene to the system.
+    // These media are still compressed at this point, but it'll be inflated after distro'ing.
     case EXCLUSIVE_GENE:
       childSysP = *((System**) xGetCompPByEntity(masterSysP, gene.u.unitary.type & MASK_COMPONENT_TYPE));
       if (childSysP) {
@@ -329,7 +354,7 @@ static Error _distributeGene(
              ++entity) {
           e = xAddEntityData(childSysP, entity, gene.u.unitary.type, gene.u.unitary.dataP);
           if (!e) {
-            e = xAddMutationMap(childSysP, entity, spawnP->geneMutationMPA[gene.u.unitary.type]);
+            e = xAddMutationMap(childSysP, entity, spawnP->geneMutationMPA[gene.u.unitary.type & MASK_COMPONENT_TYPE]);
           }
         }
       }
@@ -339,10 +364,10 @@ static Error _distributeGene(
     case SHARED_GENE: 
       // Outer map is a map of map pointers. The key to it is the enumerated type of shared object.
       // Inner map knows how big gene's header's container is.
-      innerMapP = (Map*) mapGet(sharedGenesMP, gene.u.unitary.type);  
+      e = mapGetNestedMapP(sharedGenesMP, gene.u.unitary.type & MASK_COMPONENT_TYPE, &innerMapP);
       // Inner map is a map of components. 
       // Map knows how big gene's header's container is.
-      if (innerMapP) {
+      if (!e) {
         for (Entity entityEnd = entity + spawnP->nEntitiesToSpawn; entity < entityEnd; ++entity) {
           e = mapSet(innerMapP, entity, (const void*) &gene);  
         }
@@ -369,10 +394,10 @@ return e;
 
 static Error _postProcessChildrenSystems(System *masterSysP) {
   Error e = SUCCESS;
-  System *childSysP = masterSysP->cF;
-  System *childSysEndP = childSysP + xGetNComps(masterSysP);
-  for (; childSysP < childSysEndP; ++childSysP) {
-    e = childSysP->postprocessComps(childSysP);
+  System **childSysPP = masterSysP->cF;
+  System **childSysEndPP = childSysPP + xGetNComps(masterSysP);
+  for (; !e && childSysPP < childSysEndPP; ++childSysPP) {
+    e = (*childSysPP)->postprocessComps(*childSysPP);
   }
   return e;
 }
@@ -447,16 +472,16 @@ static Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGen
   if (!e) {
     e = _biomeMediaInflate(sdPF);
   }
-  // Post-process all children systems.
-  // Some systems using composite genes don't make components until they have all their ingredients.
-  if (!e) {
-    e = _postProcessChildrenSystems(masterSysP);
-  }
   // Shared genes can't be distributed till components using them exist.
   // Some systems like xRender need to wait till post-processing to make their components.
   // So we're only guaranteed components' existence after post-processing.
   if (!e) {
     _distributeSharedGenesToSubsystems(masterSysP, sharedGenesMP);
+  }
+  // Post-process all children systems.
+  // Some systems using composite genes don't make components until they have all their ingredients.
+  if (!e) {
+    e = _postProcessChildrenSystems(masterSysP);
   }
 
   _mutationMapArrayDel(biomeP);
@@ -495,7 +520,7 @@ Error xMasterIniSys(System *sP, void *sParamsP) {
 
   // Distribute biome's genomes to entities.
   if (!e) {
-    e = _distributeGenes(xMasterSysP->biomeP, sP, &xMasterSysP->sharedMMP, xMasterSysP->windowP, xMasterSysP->rendererP, xMasterIniSysPrmsP->nXSystemsMax);
+    e = _distributeGenes(xMasterSysP->biomeP, sP, &xMasterSysP->sharedMPMP, xMasterSysP->windowP, xMasterSysP->rendererP, xMasterIniSysPrmsP->nXSystemsMax);
   }
 
   return e;
@@ -524,17 +549,16 @@ XClrFuncDefUnused_(Master);
 XPostprocessCompsDefUnused_(Master);
 
 /* xIni() initializes the parent system as well as its children. */
-Error xMasterIni(XMaster *xMasterSysP, System *goSysP, System **sPA, U16 nXSystems, Key nXSystemsMax, Biome *biomeP) {
+Error xMasterIni(XMaster *xMasterSysP, System **sPA, U16 nXSystems, Key nXSystemsMax, Biome *biomeP) {
   if (!sPA || nXSystems < 1 || !biomeP) {
     return E_BAD_ARGS;
   }
 
   XMasterIniSysPrms xMasterSysIniPrms = {
-    .nXSystemsMax = nXSystemsMax + 1, // + 1 for "go"-system
+    .nXSystemsMax = nXSystemsMax, // + 1 for "go"-system
     .nXSystems = nXSystems,
     .biomeP = biomeP,
     .xSysPA = sPA,
-    .behaviorSysP = goSysP
   };
 
   return xIniSys(&xMasterSysP->system, xMasterSysIniPrms.nXSystems, (void*) &xMasterSysIniPrms);
