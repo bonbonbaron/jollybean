@@ -29,8 +29,7 @@ Rect_ dummyDstRect = {0};  // this'll be updated later
 // TODO make everybody share the same dummy dest rect to save room.
 UnitaryGene_(redColormap,     MEDIA_GENE,     RENDER | COLORMAP,      0, Colormap);
 UnitaryGene_(redColorPalette, EXCLUSIVE_GENE, RENDER | COLOR_PALETTE, 0, Colormap);
-UnitaryGene_(dummyDstRect,    SHARED_GENE,    DST_RECT,               0, Rect_);
-CompositeGene_(redGraybody, &geneName_(redColormap), &geneName_(dummyDstRect));
+CompositeGene_(redGraybody, &geneName_(redColormap));
 CompositeGene_(redPalette,  &geneName_(redColorPalette));
 Genome_(redBody, &geneName_(redGraybody), &geneName_(redPalette));
 
@@ -38,10 +37,10 @@ Spawn biome1SpawnA[] = {
   {
     .geneMutationMPA = NULL,
     .keyP = NULL,
-    .nEntitiesPossible = 1,
-    .nEntitiesToSpawn = 1,
+    .nEntitiesPossible = 2,
+    .nEntitiesToSpawn = 0,
     .positionNodeA = spawn1PosNodeA,
-    .genomeP = &redBodyGenome
+    .genomeP = &genomeName_(redBody)
   }
 };
 

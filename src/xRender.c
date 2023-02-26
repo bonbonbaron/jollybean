@@ -236,6 +236,7 @@ Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void
   ColorPalette *cpP;
   Colormap *cmP;
   Animation *animP;
+  U32 nStrips;
 
   XRender *xRenderP = (XRender*) sP;
   Error e = SUCCESS;
@@ -249,7 +250,7 @@ Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void
       if (!(cmP->state & INITIALIZED)) {
         // dataP points to the colormap itself, so make sure frayAdd() only memcpy's pointer to it.
         e = frayAdd(xRenderP->cmPF, (void*) &cmP, NULL);
-        cmP->state |= INITIALIZED;
+        cmP->state |= INITIALIZED;  // TODO this is how you're going to sneak a 4th subcomponent in. ;)
       }
       break;
     case COLOR_PALETTE:
@@ -265,9 +266,8 @@ Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void
       break;
     case ANIMATION:
       animP = (Animation*) dataP;
-      U32 nStrips = 0;
       if (!animP->stripMP && animP->keyStripPairA && 
-          ((nStrips = arrayGetNElems(animP->keyStripPairA) > 0))) {
+          ((nStrips = arrayGetNElems(animP->keyStripPairA)) > 0)) {
         // First, allocate animation's key-to-strip map.
         // The reason we do pointers to anim strip is preventing multi-offsetting their rects later.
         e = mapNew(&animP->stripMP, sizeof(AnimStrip*), nStrips);
@@ -511,8 +511,6 @@ XPostprocessCompsDef_(Render) {
   frayDel((void**) &xRenderP->cpPF);
   frayDel((void**) &xRenderP->entityF);
 
-
-  return E_BAD_ARGS; // TODO remove forced bomb-out
   return e;
 }
 

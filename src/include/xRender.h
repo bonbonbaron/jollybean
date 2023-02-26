@@ -5,7 +5,6 @@
 // TODO is both being 1 a bug, or is that the *inner* key value?
 #define WINDOW_KEY_ (1)
 #define RENDERER_KEY_ (1)
-typedef enum{WINDOW_GENE_TYPE = 1, RENDERER_GENE_TYPE, N_MASTER_GENES} GeneType;
 
 #define getRightAtlasChildIdx_  getLeftChildIdx_
 #define getLowerAtlasChildIdx_  getRightChildIdx_
@@ -25,6 +24,7 @@ typedef enum{WINDOW_GENE_TYPE = 1, RENDERER_GENE_TYPE, N_MASTER_GENES} GeneType;
 
 #define COLORMAP      (0x40)
 #define COLOR_PALETTE (0x80)
+#define ANIMATION     (0xC0)
 
 #define IS_OFFSET (0x01)
 #define FRAME_TIME_UP (N_XMAIL_BUILTIN_CMDS + 1)
@@ -49,11 +49,14 @@ typedef struct {
   U16 *tileMapA;  // not to be confused with strip map
 } BgTilemap;
 
+/* This is used to map ownership of colormaps etc. to entities when 
+   the rendering system is ready to create its components (after atlas creation). */
 typedef struct {
-  U8 textureAtlasRectIdx;
-  ColorPalette *colorPalette;
+  Entity entity;
   Colormap *colorMapP;
-} XRenderCompSrc; 
+  ColorPalette *colorPalette;
+  Animation *animationP;
+} Image;   
 
 typedef struct {
   Rect_ *srcRectP;
