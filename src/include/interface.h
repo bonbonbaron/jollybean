@@ -77,6 +77,7 @@ typedef struct {
   StripDataS *sdP;  // this element MUST come first in a media (hence inflatable) gene for casting
   U8 state;         // prevents copies of this from being added to texture atlas or inflated
   U8 bpp;
+  Key sortedRectIdx;  // Index of sorted rectangle so you can adjust src rect's XY offset in atlas
   U16 w, h, pitch;  // in pixel units; determine actual step size by pixel format
 } Colormap;     
 

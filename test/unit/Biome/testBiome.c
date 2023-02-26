@@ -23,10 +23,6 @@ PositionNode spawn1PosNodeA[] = {
   }
 };
 
-Rect_ dummySrcRect = {0};  // this'll be updated later
-Rect_ dummyDstRect = {0};  // this'll be updated later
-
-// TODO make everybody share the same dummy dest rect to save room.
 UnitaryGene_(redColormap,     MEDIA_GENE,     RENDER | COLORMAP,      0, Colormap);
 UnitaryGene_(redColorPalette, EXCLUSIVE_GENE, RENDER | COLOR_PALETTE, 0, Colormap);
 CompositeGene_(redGraybody, &geneName_(redColormap));

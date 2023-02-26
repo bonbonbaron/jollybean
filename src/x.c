@@ -131,7 +131,7 @@ inline static Error _iniSubcompOwner(System *sP, Entity entity, Key subcompType,
   }
   SubcompOwner newSubcompOwner = {0};
   newSubcompOwner.owner = entity;
-  newSubcompOwner.subcompA[subcompType / SUBCTYPE_TO_IDX_DIVISOR] = dataP;
+  newSubcompOwner.subcompA[getSubcompIdx_(subcompType)] = dataP;
   return mapSet(sP->subcompOwnerMP, entity, &newSubcompOwner);
 }
 
@@ -155,7 +155,7 @@ Error xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP)
     }
     // Otherwise, update its existing onwership record.
     else {
-      subcompOwnerP->subcompA[subcompType / SUBCTYPE_TO_IDX_DIVISOR] = entityDataP;
+      subcompOwnerP->subcompA[getSubcompIdx_(subcompType)] = entityDataP;
     }
     // Now you can operate on the subcomponent in the system carefree.
     if (!e) {

@@ -19,6 +19,7 @@ typedef enum { INITIALIZED = 1 } SubcomponentState;
 // This is equivalent to bit-shifting 0xc0 by 6 bits to the right (if 0xc0 is subcomp mask).
 // That way you can just change one value to affect all these definitions.
 #define SUBCTYPE_TO_IDX_DIVISOR (MASK_COMPONENT_TYPE + 1)   /* compiler converts this to shift :) */
+#define getSubcompIdx_(x_) ((x_ / SUBCTYPE_TO_IDX_DIVISOR) - 1)
 #define N_POSSIBLE_SUBCOMPS    (MASK_COMPONENT_SUBTYPE / (SUBCTYPE_TO_IDX_DIVISOR))
 
 #define X_(name_, id_, flags_) \
