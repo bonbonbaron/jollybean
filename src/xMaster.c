@@ -585,7 +585,7 @@ Error xMasterProcessMessage(System *sP, Message *msgP) {
     if (!cP) {
       return E_MAILBOX_BAD_RECIPIENT;
     }
-    Error e = mailboxForward((*cP)->inboxF, msgP);
+    Error e = mailboxForward((*cP)->mailboxF, msgP);
     // Wake up sleeping systems when someone sends them messages.
     if (!e) {
       if (!frayElemIsActive((*cP)->cF, cP - (XMasterComp*) sP->cF)) {

@@ -9,14 +9,17 @@ typedef Key Entity;
 #define FLG_NO_CF_SRC_A_    (0x02)
 #define FLG_NO_CHECKS_      (0x04)
 #define FLG_ADD_COMP_LATER_ (0x08)
-#define FLG_HAS_SUBCOMPS_   (0x10)
 
 typedef enum {ACTIVATED, DEACTIVATED} BuiltinMsgArg;
 
 // Pieces are parts of components. For example, Rendering components have colormaps and color palettes.
 typedef enum { INITIALIZED = 1 } SubcomponentState; 
 #define MASK_COMPONENT_TYPE    (0x3f)
-#define MASK_COMPONENT_SUBTYPE (~MASK_COMPONENT_TYPE)
+#define MASK_COMPONENT_SUBTYPE (~MASK_COMPONENT_TYPE & 0xff)
+// This is equivalent to bit-shifting 0xc0 by 6 bits to the right (if 0xc0 is subcomp mask).
+// That way you can just change one value to affect all these definitions.
+#define SUBCTYPE_TO_IDX_DIVISOR (MASK_COMPONENT_TYPE + 1)   /* compiler converts this to shift :) */
+#define N_POSSIBLE_SUBCOMPS    (MASK_COMPONENT_SUBTYPE / (SUBCTYPE_TO_IDX_DIVISOR))
 
 #define X_(name_, id_, flags_) \
   X##name_ x##name_ = { .system = System_(name_, id_, flags_)};\
@@ -31,13 +34,13 @@ typedef enum { INITIALIZED = 1 } SubcomponentState;
     .cF                = NULL,\
     .cIdx2eA           = NULL,\
     .e2cIdxMP          = NULL,\
-    .mutationMPMP        = NULL,\
-    .inboxF            = NULL,\
-    .outboxF           = NULL,\
+    .mutationMPMP      = NULL,\
+    .mailboxF          = NULL,\
     .deactivateQueueF  = NULL,\
     .pauseQueueF       = NULL,\
+    .subcompOwnerMP    = NULL,\
     .iniSys            = x##name_##IniSys,\
-    .iniSubcomp       = x##name_##IniSubcomp,\
+    .iniSubcomp        = x##name_##IniSubcomp,\
     .postprocessComps  = x##name_##PostprocessComps,\
     .clr               = x##name_##Clr,\
     .getShare          = x##name_##GetShare,\
@@ -103,6 +106,11 @@ typedef void* (*XSwitchCompU)(Key key);  // used to switch between a multi-form 
   if (!sP || !shareMMP) \
     return E_BAD_ARGS;
 
+typedef struct {
+  Entity owner;
+  void* subcompA[N_POSSIBLE_SUBCOMPS];
+} SubcompOwner;
+
 // Communcication
 typedef enum {
   ACTIVATE,
@@ -122,11 +130,11 @@ typedef struct _System {
   void         *cF;                  // component fray 
   void         *pauseQueueF;         // queue for pausing
   void         *deactivateQueueF;    // queue for pausing
+  Map          *subcompOwnerMP;       // keeps track of subcomponents' owners since cF isn't pop'd then
   Key          *cIdx2eA;             // insert component index to get entity 
   Map          *e2cIdxMP;            // insert entity to get component index 
   Map          *mutationMPMP;        // key = Entity, val = maps to void pointers (triple pointer EW)
-  Message      *inboxF;              // Where commands come in from the outside world 
-  Message      *outboxF;             // Where this system talks to the outside world; can actually point to another system's inbox if you want 
+  Message      *mailboxF;            // Where commands come in from and go out to outside world
   // Function pointers 
   XIniSU       iniSys;               // System init function pointer 
   XIniSubcompU iniSubcomp;              // Some systems need to inflate components before using them. 
@@ -137,7 +145,7 @@ typedef struct _System {
   XGetShareU   getShare;             // Some systems' components share pointers to common data. This is how it retrieves them by a parent system's call. 
 } System;
 
-Error xAddComp(System *sP, Entity entity, void *compDataP);
+Error    xAddComp(System *sP, Entity entity, void *compDataP);
 Error    xIniSys(System *sP, U32 nComps, void *miscP);
 Error    xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP);
 Error    xIniSubcomp(System *sP, const Entity entity, const void *cmpP);

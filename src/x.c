@@ -46,7 +46,7 @@ void xActivateComponentByEntity(System *sP, Entity entity) {
       _xSwap(sP, &intermediateIdx, compNewIdx);
     }
     // Example: If somebody starts moving, coll sys and trackers will want to know!
-    mailboxWrite(sP->outboxF, 0, entity, sP->id, ACTIVATED);  
+    mailboxWrite(sP->mailboxF, 0, entity, sP->id, ACTIVATED);  
   }
 }
 
@@ -64,7 +64,7 @@ void xDeactivateComponentByEntity(System *sP, Entity entity) {
       _xSwap(sP, &intermediateIdx, compNewIdx);
     }
     // Example: If somebody starts moving, coll sys and trackers will want to know!
-    mailboxWrite(sP->outboxF, 0, entity, sP->id, DEACTIVATED);
+    mailboxWrite(sP->mailboxF, 0, entity, sP->id, DEACTIVATED);
   }
 }
 
@@ -124,6 +124,18 @@ Error xAddComp(System *sP, Entity entity, void *compDataP) {
   return e;
 }
 
+inline static Error _iniSubcompOwner(System *sP, Entity entity, Key subcompType, void *dataP) {
+  // If subcomponent type doesn't fall into subcomponent mask
+  if (!((subcompType & MASK_COMPONENT_SUBTYPE) == subcompType)) {
+    return E_BAD_ARGS;
+  }
+  SubcompOwner newSubcompOwner = {0};
+  newSubcompOwner.owner = entity;
+  newSubcompOwner.subcompA[subcompType / SUBCTYPE_TO_IDX_DIVISOR] = dataP;
+  return mapSet(sP->subcompOwnerMP, entity, &newSubcompOwner);
+}
+
+
 Error xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP) {
   if (!sP || !entity || !compType | !entityDataP) {
     return E_BAD_ARGS;
@@ -134,7 +146,22 @@ Error xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP)
   }
   // If upper two bits are nonzero, this is a subcomponent. 
   if (compType & MASK_COMPONENT_SUBTYPE) {
-    return sP->iniSubcomp(sP, entity, compType & MASK_COMPONENT_SUBTYPE, entityDataP);
+    Error e = SUCCESS;
+    // If entity doesn't own any subcomponents yet, make a slot for it in subcomp ownership map.
+    SubcompOwner *subcompOwnerP = mapGet(sP->subcompOwnerMP, entity);
+    Key subcompType = compType & MASK_COMPONENT_SUBTYPE;
+    if (!subcompOwnerP) {
+      e = _iniSubcompOwner(sP, entity, subcompType, entityDataP);
+    }
+    // Otherwise, update its existing onwership record.
+    else {
+      subcompOwnerP->subcompA[subcompType / SUBCTYPE_TO_IDX_DIVISOR] = entityDataP;
+    }
+    // Now you can operate on the subcomponent in the system carefree.
+    if (!e) {
+      e = sP->iniSubcomp(sP, entity, compType & MASK_COMPONENT_SUBTYPE, entityDataP);
+    }
+    return e;
   }
   // If it's the main component, feed it straight in.
   else {
@@ -160,9 +187,12 @@ Error xIniSys(System *sP, U32 nComps, void *miscP) {
   if (!e && !(sP->flags & FLG_NO_SWITCHES_)) {
     e = mapNew(&sP->mutationMPMP, sizeof(XSwitchCompU), nComps);
   }
-	// Allocate inbox ONLY. Caller points sP->outboxF at another system's inboxF.
+	// Only allocate one mailbox; it serves as input and output.
 	if (!e) {
-		e = frayNew((void**) &sP->inboxF, sP->id, nComps);
+		e = frayNew((void**) &sP->mailboxF, sP->id, nComps);
+  }
+  if (!e) {
+    e = mapNew(&sP->subcompOwnerMP, sizeof(SubcompOwner), nComps);
   }
   // Finally, call the system's unique initializer.
   if (!e) {
@@ -180,9 +210,10 @@ Error xIniSys(System *sP, U32 nComps, void *miscP) {
 void xClr(System *sP) {
   sP->clr(sP);  // This MUST run first as it may rely on things we're about to erase,
   frayDel((void**) &sP->cF);         // ... like maps of switches with cleanup cases.
-  frayDel((void**) &sP->inboxF);
+  frayDel((void**) &sP->mailboxF);
   frayDel((void**) &sP->deactivateQueueF);
   frayDel((void**) &sP->pauseQueueF);
+  mapDel(&sP->subcompOwnerMP);
   mapDel(&sP->e2cIdxMP);
   if (sP->mutationMPMP) {
     Map **mapPP = sP->mutationMPMP->mapA;
@@ -192,7 +223,6 @@ void xClr(System *sP) {
   }
   mapDel(&sP->mutationMPMP);
   arrayDel((void**) &sP->cIdx2eA);
-  sP->outboxF = NULL;
 }
 
 void xSwitchComponent(System *sP, Entity entity, Key newCompKey) {
@@ -212,8 +242,8 @@ void xSwitchComponent(System *sP, Entity entity, Key newCompKey) {
 
 void _xReadInbox(System *sP) {
   Error e = SUCCESS;
-  Message *msgP = sP->inboxF;
-  Message *msgEndP = msgP + frayGetFirstInactiveIdx(sP->inboxF);
+  Message *msgP = sP->mailboxF;
+  Message *msgEndP = msgP + frayGetFirstInactiveIdx(sP->mailboxF);
   for (; !e && msgP < msgEndP; msgP++) {
     switch(msgP->cmd) {
       case SWITCH_AND_ACTIVATE: 
@@ -240,7 +270,7 @@ void _xReadInbox(System *sP) {
         break;
     }
   }
-  frayClr(sP->inboxF);
+  frayClr(sP->mailboxF);
 }
 
 static void _pauseQueue(System *sP) {
