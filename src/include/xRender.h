@@ -24,7 +24,7 @@
 
 #define COLORMAP      (0x40)
 #define COLOR_PALETTE (0x80)
-#define ANIMATION     (0xC0)
+#define TILEMAP       (0xC0)
 
 #define IS_OFFSET (0x01)
 #define FRAME_TIME_UP (N_XMAIL_BUILTIN_CMDS + 1)
@@ -55,7 +55,6 @@ typedef struct {
   Entity entity;
   Colormap *colorMapP;
   ColorPalette *colorPalette;
-  Animation *animationP;
 } Image;   
 
 typedef struct {
@@ -86,8 +85,8 @@ typedef struct {
   Renderer_     *rendererP;
   Surface_      *atlasSurfaceP;
   Texture_      *atlasTextureP;
-  Map           *entity2Anim2AnimStripMPMP;
-  Rect_         *staticSrcRectF;  // array for non-animated images' rectangles
+  Rect_         *offsetRectF;
+  Map           *srcRectMP;   // shortcut-pointer to shared array of source rectangles
   Map           *dstRectMP;   // shortcut-pointer to shared array of destination rectangles
   Map           *xRenderCompSourceMP;
 } XRender;

@@ -1,5 +1,6 @@
 #include "xRender.h"
 #include "body.h"
+#include "jb.h"
 #include "x.h"
 #include "xMaster.h"
 
@@ -215,12 +216,6 @@ Error xRenderIniSys(System *sP, void *sParamsP) {
   if (!e) {
     e = frayNew((void**) &xRenderP->entityF, sizeof(Entity), nComponents);
   }
-  if (!e) {
-    e = frayNew((void**) &xRenderP->staticSrcRectF, sizeof(Rect_), nComponents);
-  }
-  if (!e) {
-    e = mapNew(&xRenderP->entity2Anim2AnimStripMPMP, sizeof(Animation*), nComponents);
-  }
   return e;
 }
 
@@ -234,8 +229,6 @@ Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void
 
   ColorPalette *cpP;
   Colormap *cmP;
-  Animation *animP;
-  U32 nStrips;
 
   XRender *xRenderP = (XRender*) sP;
   Error e = SUCCESS;
@@ -263,21 +256,8 @@ Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void
         cpP->state |= INITIALIZED;
       }
       break;
-    case ANIMATION:
-      animP = (Animation*) dataP;
-      if (!animP->stripMP && animP->keyStripPairA && 
-          ((nStrips = arrayGetNElems(animP->keyStripPairA)) > 0)) {
-        // First, allocate animation's key-to-strip map.
-        // The reason we do pointers to anim strip is preventing multi-offsetting their rects later.
-        e = mapNew(&animP->stripMP, sizeof(AnimStrip*), nStrips);
-        if (!e) {
-          KeyStripPair *keyStripPairP = animP->keyStripPairA;
-          KeyStripPair *keyStripPairEndP = keyStripPairP + arrayGetNElems(animP->keyStripPairA);
-          for (; keyStripPairP < keyStripPairEndP; ++keyStripPairP) {
-            mapSet(animP->stripMP, keyStripPairP->key, &keyStripPairP->animStripP);
-          }
-        }
-      }
+    case TILEMAP:   // this is for backgrounds
+      // TODO 
       break;
     default:
       break;
@@ -292,23 +272,8 @@ Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void
 
 Error xRenderProcessMessage(System *sP, Message *msgP) {
   Error e = SUCCESS;
-  if (msgP->cmd == FRAME_TIME_UP) {
-    Map *entityAnimationMP = NULL;
-    e = mapGetNestedMapP(sP->mutationMPMP, msgP->attn, &entityAnimationMP);
-    if (!e && entityAnimationMP) {
-      // Get entity's map of components to switch to.
-      void *compP = xGetCompPByEntity(sP, msgP->attn);
-      if (compP) {
-        void *tmpP = mapGet(entityAnimationMP, msgP->arg);  // arg = key of animation strip
-        if (tmpP) {
-          memcpy(compP, tmpP, sP->compSz - sizeof(Rect_*));  // don't copy over source rect pointer!
-        }
-        else {
-          e = E_BAD_ARGS;
-        }
-      }
-    }
-  }
+  unused_(sP);
+  unused_(msgP);
 	return e;
 }
 
@@ -318,16 +283,6 @@ XClrFuncDef_(Render) {
   frayDel((void**) &xRenderP->cmPF);
   frayDel((void**) &xRenderP->cpPF);
   frayDel((void**) &xRenderP->entityF);
-  Animation **animPP = xRenderP->entity2Anim2AnimStripMPMP->mapA;
-  Animation **animEndPP = animPP + arrayGetNElems(xRenderP->entity2Anim2AnimStripMPMP->mapA);
-  // Although some holes exist in entity2Anim2AnimStripMPMP, we're safe here; 
-  // those holes' stripMPs will look NULL to the loop below.
-  for (; animPP < animEndPP; ++animPP) {
-    if ((*animPP)->stripMP) {
-      mapDel(&(*animPP)->stripMP);
-    }
-  }
-  mapDel(&xRenderP->entity2Anim2AnimStripMPMP);
   textureDel(&xRenderP->atlasTextureP);
   return SUCCESS;
 }
@@ -372,68 +327,54 @@ static Error _assembleTextureAtlas(XRender *xRenderP, AtlasElem *atlasA, SortedR
 // Good news is, entities don't need to know where their source rectangle maps are; 
 // entities with common maps share a common pointer, so only one needs to update it.
 #define COLORMAP_SUBCOMP_IDX getSubcompIdx_(COLORMAP)
-#define ANIMATION_SUBCOMP_IDX getSubcompIdx_(ANIMATION)
+#define TILEMAP_SUBCOMP_IDX getSubcompIdx_(TILEMAP)
 #define COLOR_PALETTE_SUBCOMP_IDX getSubcompIdx_(COLOR_PALETTE)
+// Here's the way this is going to work:
+//
+// xRender gets shared offset FRAY
+// xRender updates offset for entity and stores it in that fray, getting index
+// xRender writes message to animation system for each update with index and entity
+// xAnimaiton gets messages and updates all its animation rectangles
+// (?) How does it know if a deall is anim'd?
+// Then it gets shared map of source rectangles and updates the rect there.
 static Error _updateSrcRects(XRender *xRenderP, SortedRect *sortedRectA) {
   // Get all the animation rectangles we need to update when building our texture atlas.
   // First count all the rectangles we're going to need.
   Error e = SUCCESS;
-
-  U32 staticSrcRectIdx;
-  Rect_ staticSrcRect;
 
   XRenderComp c;
 
   SubcompOwner *scoP = xRenderP->system.subcompOwnerMP->mapA;
   SubcompOwner *scoEndP = scoP + arrayGetNElems(xRenderP->system.subcompOwnerMP->mapA);
 
-  Animation *animP;
-  AnimStrip *animStripP, *animStripEndP;
-  AnimFrame *frameP, *frameEndP;
+  Rect_ offsetRect = {0};
+  U32  offsetIdx  = 0;
   Colormap  *cmP;
   // Update all source rectangles' XY coordinates to their global positions in texture atlas.
   // For each entity...
   for (; !e && scoP < scoEndP; ++scoP) {
-    // Otherwise, if image is not animated, use the static rectangle fray instead.
     cmP = (Colormap*) scoP->subcompA[COLORMAP_SUBCOMP_IDX];
     e = scoP->owner ? SUCCESS : E_NULL_VAR;  // Having a colormap is mandatory for xRender components.
     if (!e) {
-      animP = (Animation*) scoP->subcompA[ANIMATION_SUBCOMP_IDX];
-    }
-    // If image is animated, update all its individual frames' source rectangles.
-    if (animP) {
-      animStripP = animP->stripMP->mapA;
-      // Since entities with identical images share animation strips, avoid multi-offsetting them.
-      if (!(animStripP->flags & IS_OFFSET)) {
-        animStripP->flags |= IS_OFFSET;
-        animStripEndP = animStripP + arrayGetNElems(animP->stripMP->mapA);
-        // Initialize an animated component's src rect to the first strip's first frame.
-        c.srcRectP = &animStripP->frameA[0].rect;
-        // Offset all the frames' rectangles in this strip to reflect their texture atlas offsets.
-        for (; animStripP < animStripEndP; ++animStripP) {
-          frameP = animStripP->frameA;
-          frameEndP = frameP + arrayGetNElems(animStripP->frameA);
-          for (; frameP < frameEndP; ++frameP) {
-            frameP->rect.x += sortedRectA[cmP->sortedRectIdx].rect.x;
-            frameP->rect.y += sortedRectA[cmP->sortedRectIdx].rect.y;
-          }
-        }
-      }
-    }
-    if (!e) {
-      //cmP = xRenderP->cmPF[entityP - xRenderP->entityF];
-      staticSrcRect.x = sortedRectA[cmP->sortedRectIdx].rect.x;
-      staticSrcRect.y = sortedRectA[cmP->sortedRectIdx].rect.y;
-      staticSrcRect.w = cmP->w;
-      staticSrcRect.h = cmP->h;
-      e = frayAdd(xRenderP->staticSrcRectF, &staticSrcRect, &staticSrcRectIdx);
-      // Point to where you just inserted your new src rect. 
-      if (!e) {
-        c.srcRectP = &xRenderP->staticSrcRectF[staticSrcRectIdx];
-      }
-    }
-    if (!e) {
+      // TODO get shared src rect map
+      // TODO get shared rect offset map
+      // Source rectangle initialization
+      c.srcRectP = (Rect_*) mapGet(xRenderP->srcRectMP, scoP->owner);
+      c.srcRectP->x = sortedRectA[cmP->sortedRectIdx].rect.x;
+      c.srcRectP->y = sortedRectA[cmP->sortedRectIdx].rect.y;
+      c.srcRectP->w = sortedRectA[cmP->sortedRectIdx].rect.w;
+      c.srcRectP->h = sortedRectA[cmP->sortedRectIdx].rect.h;
+      // Add component to system
       e = xAddComp(&xRenderP->system, scoP->owner, &c);
+      // Tell animation system to update its source rects for this entity if entity has anim component.
+      if (!e) {
+        offsetRect.x = c.srcRectP->x;
+        offsetRect.y = c.srcRectP->y;
+        e = frayAdd(xRenderP->offsetRectF, &offsetRect, &offsetIdx);
+      }
+      if (!e) {
+        e = mailboxWrite(xRenderP->system.mailboxF, ANIMATION, scoP->owner, UPDATE_RECT, offsetIdx);
+      }
     }
   }
   return e;
@@ -536,7 +477,16 @@ XGetShareFuncDef_(Render) {
   if (!e) {
     e = mapGetNestedMapPElem(shareMMP, WINDOW_GENE_TYPE, WINDOW_KEY_, (void**) &xRenderP->windowP);
   }
-  // Get dest rect map (src rects aren't shared; xRender owns them exclusively)
+  // Get source rect map
+  if (!e) {
+    e = mapGetNestedMapP(shareMMP, SRC_RECT, &xRenderP->srcRectMP);  
+  }
+  // Get rect offset map
+  if (!e) {
+    // Sure, it's not a map, but shhhh... ;)
+    e = mapGetNestedMapP(shareMMP, RECT_OFFSET, (Map**) &xRenderP->offsetRectF);  
+  }
+  // Get dest rect map
   if (!e) {
     e = mapGetNestedMapP(shareMMP, DST_RECT, &xRenderP->dstRectMP);  
   }
