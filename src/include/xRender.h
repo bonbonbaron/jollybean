@@ -29,6 +29,8 @@
 #define IS_OFFSET (0x01)
 #define FRAME_TIME_UP (N_XMAIL_BUILTIN_CMDS + 1)
 
+#define RENDER_SYS_OWNS_SRC_AND_OFFSET (0x04)
+
 typedef struct {
   U32 used, x, y, remWidth, remHeight;  // rem = "remaining" (space remaining without this rect)
 } AtlasElem;
@@ -81,7 +83,7 @@ typedef struct {
   Renderer_     *rendererP;
   Surface_      *atlasSurfaceP;
   Texture_      *atlasTextureP;
-  Rect_         *offsetRectF;
+  Map           *offsetRectMP;
   Map           *srcRectMP;   // shortcut-pointer to shared array of source rectangles
   Map           *dstRectMP;   // shortcut-pointer to shared array of destination rectangles
   Map           *xRenderCompSourceMP;

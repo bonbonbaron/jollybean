@@ -30,6 +30,7 @@ igList_(animation,
 // It's VERY IMPORTANT to make sure these line up with their enum values. This will likely be a pain.
 // TODO Probably a pain worth developing a tool for.
 ImplicitGenesList* iglA[] = {
+  NULL,             // empty (first system ID is 1)
   NULL,             // MASTER
   igl_(renderer),   // RENDERER
   igl_(animation),  // ANIMATION

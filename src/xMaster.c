@@ -179,9 +179,8 @@ inline static Error _addSharedSubmap(Map *outerShareMP, Key type, U8 size, Key n
 
 static Error _sharedGenesMapNew(Map **sharedGenesMPP, GeneHisto *geneHistoP) {
   // Create all the inner maps according to the histo'd number of elements they hold.
-  // Add 5 to total number for window and renderer shares.
-  // Dst rect is implied due to spawn's positions.
-  Error e = mapNew(sharedGenesMPP, sizeof(Map*), geneHistoP->nDistinctShareds + 2);  
+  // Add RENDERER_GENE_TYPE (= 2) to total number for window and renderer shares.
+  Error e = mapNew(sharedGenesMPP, sizeof(Map*), geneHistoP->nDistinctShareds + RENDERER_GENE_TYPE);  
   if (!e) {
     Map *sharedGenesMP = *sharedGenesMPP;
     XHistoElem *xHistoElemP    = &geneHistoP->histoXElemA[0];
@@ -204,7 +203,7 @@ static Error _sharedGenesMapNew(Map **sharedGenesMPP, GeneHisto *geneHistoP) {
               sharedGenesMP, 
               iglA[i]->listA[j].type,
               iglA[i]->listA[j].size,
-              xHistoElemP->count);
+              geneHistoP->histoXElemA[i].count);
         }
       }
     }
@@ -240,14 +239,16 @@ static void _geneHistoClr(GeneHisto *geneHistoP) {
   }
 }
 
-static void _distributeSharedGenesToSubsystems(System *masterSysP, Map *sharedGenesMPMP) {
+static Error _distributeSharedGenesToSubsystems(System *masterSysP, Map *sharedGenesMPMP) {
   System **subSysPP = masterSysP->cF;
   System **subSysEndPP = subSysPP + arrayGetNElems((void*) masterSysP->cF);
-  for (; subSysPP < subSysEndPP; subSysPP++) {
+  Error e = SUCCESS;
+  for (; !e && subSysPP < subSysEndPP; subSysPP++) {
     if ((*subSysPP)->getShare) {
-      ((*subSysPP)->getShare)(*subSysPP, sharedGenesMPMP);
+      e = ((*subSysPP)->getShare)(*subSysPP, sharedGenesMPMP);
     }
   }
+  return e;
 }
 
 // This is for adding the window and renderer to master's map of shared genes.
@@ -274,7 +275,7 @@ static Error _spawnEntities(Map *sharedGeneMPMP, Biome *biomeP) {
   Spawn *spawnEndP = spawnP + biomeP->nEntitiesToSpawn;
   PositionNode *posP, *posEndP;
   Map  *dstRectMP;
-  Rect_ *dstRectP;
+  Rect_ dstRect = {0};
 
   Error e = SUCCESS;
 
@@ -287,24 +288,19 @@ static Error _spawnEntities(Map *sharedGeneMPMP, Biome *biomeP) {
     for (Entity entity = 1; !e && spawnP < spawnEndP; ++spawnP) {
       posP = spawnP->positionNodeA;
       posEndP = posP + spawnP->nEntitiesPossible;
-      for (; !e && entity < biomeP->nEntitiesToSpawn && posP < posEndP; ++posP, ++entity) {
-        dstRectP = (Rect_*) mapGet(dstRectMP, entity);
+      for (; !e && entity <= biomeP->nEntitiesToSpawn && posP < posEndP; ++posP, ++entity) {
         // If this entity has a dest rect component, place it where it belongs.
-        if (dstRectP) {
-          if (!spawnP->keyP || *spawnP->keyP == posP->keyhole) {
-            // Set dst rect
-            if (!e) {
-              dstRectP->x = posP->position.x;
-              dstRectP->y = posP->position.y;
-            }
-          }
+        if (!spawnP->keyP || *spawnP->keyP == posP->keyhole) {
+          // Set dst rect
+          dstRect.x = posP->position.x;
+          dstRect.y = posP->position.y;
+          e = mapSet(dstRectMP, entity, &dstRect);
         }
       }
     }
     if (!e) {
       e = mapSet(sharedGeneMPMP, DST_RECT, (void**) &dstRectMP);
     }
-    return e;
   }
   
   return e;
@@ -435,14 +431,10 @@ static Error _distributeGene(
       if (childSysP) {
         // histo's 1D array represents a 2D array: columns are spawn #s, rows are system #s.
         // So we have to index it awkwardly as hell. :)
-        //for (Entity entityEnd = entity + spawnP->nEntitiesToSpawn; 
-             //!e && entity < entityEnd; 
-             //++entity) {
-          e = xAddEntityData(childSysP, entity, gene.u.unitary.type, gene.u.unitary.dataP);
-          if (!e) {
-            e = xAddMutationMap(childSysP, entity, spawnP->geneMutationMPA[gene.u.unitary.type & MASK_COMPONENT_TYPE]);
-          }
-        //}
+        e = xAddEntityData(childSysP, entity, gene.u.unitary.type, gene.u.unitary.dataP);
+        if (!e) {
+          e = xAddMutationMap(childSysP, entity, spawnP->geneMutationMPA[gene.u.unitary.type & MASK_COMPONENT_TYPE]);
+        }
       }
       break;
     // Shared objects are kept by the master system. 
@@ -567,7 +559,7 @@ static Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGen
   // Some systems like xRender need to wait till post-processing to make their components.
   // So we're only guaranteed components' existence after post-processing.
   if (!e) {
-    _distributeSharedGenesToSubsystems(masterSysP, sharedGenesMPMP);
+    e = _distributeSharedGenesToSubsystems(masterSysP, sharedGenesMPMP);
   }
   // Post-process all children systems.
   // Some systems using composite genes don't make components until they have all their ingredients.

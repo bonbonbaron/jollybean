@@ -1,5 +1,6 @@
 #include "xRender.h"
 #include "body.h"
+#include "data.h"
 #include "jb.h"
 #include "x.h"
 #include "xMaster.h"
@@ -284,6 +285,10 @@ XClrFuncDef_(Render) {
   frayDel((void**) &xRenderP->cpPF);
   frayDel((void**) &xRenderP->entityF);
   textureDel(&xRenderP->atlasTextureP);
+  if (sP->flags & RENDER_SYS_OWNS_SRC_AND_OFFSET) {
+    mapDel(&xRenderP->srcRectMP);
+    mapDel(&xRenderP->offsetRectMP);
+  }
   return SUCCESS;
 }
 
@@ -347,33 +352,42 @@ static Error _updateSrcRects(XRender *xRenderP, SortedRect *sortedRectA) {
   SubcompOwner *scoP = xRenderP->system.subcompOwnerMP->mapA;
   SubcompOwner *scoEndP = scoP + arrayGetNElems(xRenderP->system.subcompOwnerMP->mapA);
 
-  Rect_ offsetRect = {0};
+  RectOffset rectOffset = {0};
   U32  offsetIdx  = 0;
   Colormap  *cmP;
+  // If we own the src rect map, we better populate its flags before we access it.
+    // Give everybody an empty rectangle for now.
+  if (xRenderP->system.flags & RENDER_SYS_OWNS_SRC_AND_OFFSET) {
+    // Copy the flags from one map to another. It's a cheat code.
+    memcpy(xRenderP->srcRectMP->flagA, xRenderP->dstRectMP->flagA, N_FLAG_BYTES * sizeof(FlagInfo));
+  }
   // Update all source rectangles' XY coordinates to their global positions in texture atlas.
   // For each entity...
   for (; !e && scoP < scoEndP; ++scoP) {
     cmP = (Colormap*) scoP->subcompA[COLORMAP_SUBCOMP_IDX];
     e = scoP->owner ? SUCCESS : E_NULL_VAR;  // Having a colormap is mandatory for xRender components.
     if (!e) {
-      // TODO get shared src rect map
-      // TODO get shared rect offset map
       // Source rectangle initialization
       c.srcRectP = (Rect_*) mapGet(xRenderP->srcRectMP, scoP->owner);
+      if (!c.srcRectP) {
+        return E_BAD_KEY;
+      }
       c.srcRectP->x = sortedRectA[cmP->sortedRectIdx].rect.x;
       c.srcRectP->y = sortedRectA[cmP->sortedRectIdx].rect.y;
       c.srcRectP->w = sortedRectA[cmP->sortedRectIdx].rect.w;
       c.srcRectP->h = sortedRectA[cmP->sortedRectIdx].rect.h;
       // Add component to system
       e = xAddComp(&xRenderP->system, scoP->owner, &c);
-      // Tell animation system to update its source rects for this entity if entity has anim component.
-      if (!e) {
-        offsetRect.x = c.srcRectP->x;
-        offsetRect.y = c.srcRectP->y;
-        e = frayAdd(xRenderP->offsetRectF, &offsetRect, &offsetIdx);
-      }
-      if (!e) {
-        e = mailboxWrite(xRenderP->system.mailboxF, ANIMATION, scoP->owner, UPDATE_RECT, offsetIdx);
+      // If there's an animation system (which tells master that rect offsets are implied),
+      // tell the animation system to update its frame rectangles' XY coordinates to their places
+      // in the texture atlas.
+      if (!e && xRenderP->offsetRectMP) {
+        rectOffset.x = c.srcRectP->x;
+        rectOffset.y = c.srcRectP->y;
+        e = mapSet(xRenderP->offsetRectMP, scoP->owner, &rectOffset);
+        if (!e) {
+          e = mailboxWrite(xRenderP->system.mailboxF, ANIMATION, scoP->owner, UPDATE_RECT, offsetIdx);
+        }
       }
     }
   }
@@ -477,18 +491,24 @@ XGetShareFuncDef_(Render) {
   if (!e) {
     e = mapGetNestedMapPElem(shareMMP, WINDOW_GENE_TYPE, WINDOW_KEY_, (void**) &xRenderP->windowP);
   }
-  // Get source rect map
-  if (!e) {
-    e = mapGetNestedMapP(shareMMP, SRC_RECT, &xRenderP->srcRectMP);  
-  }
-  // Get rect offset map
-  if (!e) {
-    // Sure, it's not a map, but shhhh... ;)
-    e = mapGetNestedMapP(shareMMP, RECT_OFFSET, (Map**) &xRenderP->offsetRectF);  
-  }
-  // Get dest rect map
+  // Get dest rect map (implied by render component)
   if (!e) {
     e = mapGetNestedMapP(shareMMP, DST_RECT, &xRenderP->dstRectMP);  
+  }
+  // Get source rect and rect offset maps. Give both a chance to run if we enter this block.
+  if (!e) {
+    e = mapGetNestedMapP(shareMMP, SRC_RECT, &xRenderP->srcRectMP);  
+    // If there's no animation system, there won't be a source rect shared map in master.
+    e = mapGetNestedMapP(shareMMP, RECT_OFFSET, &xRenderP->offsetRectMP);  
+  }
+  // We need to tolerate an animation system not existing.
+  // SRC_RECT and RECT_OFFSET share maps don't exist without an animation system.
+  // Therefore, if they both don't exist, cool, just make your own src rect map. 
+  // But if only one doesn't, bomb out.
+  if (e && !xRenderP->srcRectMP && !xRenderP->offsetRectMP && 
+            xRenderP->rendererP && xRenderP->windowP) {
+    xRenderP->system.flags |= RENDER_SYS_OWNS_SRC_AND_OFFSET;
+    e = mapNew(&xRenderP->srcRectMP, sizeof(Rect_), xGetNComps(sP));
   }
   return e;
 }
