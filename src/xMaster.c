@@ -1,5 +1,5 @@
 #include "xMaster.h"
-#include "jb.h"
+#include "implicitGenes.h"
 
 X_(Master, 1, FLG_NO_CF_SRC_A_); 
 
@@ -133,6 +133,13 @@ static Error _histoGenes(GeneHisto *geneHistoP, const Biome *biomeP, const U32 n
       _histoGene(genePP, biomeP, nSystemsMax, &entity, spawnP, geneHistoP);
     }
   }
+  // Loop through implicit genes.
+  for (Key i = 0, iEnd = arrayGetNElems(geneHistoP->histoXElemA); 
+       i < iEnd; ++i) {
+    if (geneHistoP->histoXElemA[i].count && iglA[i]) {
+      geneHistoP->nDistinctShareds += iglA[i]->nGenes;  // each imp only goes to one exclusive
+    }
+  }
   return SUCCESS;
 }
 
@@ -161,21 +168,43 @@ static Error _subsystemsIni(System *masterSysP, GeneHisto *geneHistoP) {
   return e;
 }
 
+inline static Error _addSharedSubmap(Map *outerShareMP, Key type, U8 size, Key num) {
+  Map *innerShareMP = NULL;
+  Error e = mapNew(&innerShareMP, size, num);
+  if (!e) {
+    e = mapSet(outerShareMP, type, (void**) &innerShareMP);
+  }
+  return e;
+}
+
 static Error _sharedGenesMapNew(Map **sharedGenesMPP, GeneHisto *geneHistoP) {
   // Create all the inner maps according to the histo'd number of elements they hold.
-  // Add 5 to total number for window, renderer, src rect, rect offset, and dest rect shares.
+  // Add 5 to total number for window and renderer shares.
   // Dst rect is implied due to spawn's positions.
-  Error e = mapNew(sharedGenesMPP, sizeof(Map*), geneHistoP->nDistinctShareds + 5);  
+  Error e = mapNew(sharedGenesMPP, sizeof(Map*), geneHistoP->nDistinctShareds + 2);  
   if (!e) {
     Map *sharedGenesMP = *sharedGenesMPP;
     XHistoElem *xHistoElemP    = &geneHistoP->histoXElemA[0];
     XHistoElem *xHistoElemEndP = xHistoElemP + arrayGetNElems(geneHistoP->histoXElemA);
-    Map *sharedGenesSubmapP = NULL;
+    // Loop through explicit shared genes.
     for (; !e && xHistoElemP < xHistoElemEndP; xHistoElemP++) {
       if (xHistoElemP->geneClass == SHARED_GENE && xHistoElemP->count) {
-        e = mapNew(&sharedGenesSubmapP, xHistoElemP->size, xHistoElemP->count);
-        if (!e) {
-          e = mapSet(sharedGenesMP, xHistoElemP->geneType, (void**) &sharedGenesSubmapP);
+        e = _addSharedSubmap(
+            sharedGenesMP, 
+            xHistoElemP->geneType & MASK_COMPONENT_TYPE,
+            xHistoElemP->size,
+            xHistoElemP->count);
+      }
+    }
+    // Loop through implicit shared genes.
+    for (Key i = 0, iEnd = arrayGetNElems(geneHistoP->histoXElemA); !e && i < iEnd; ++i) {
+      if (geneHistoP->histoXElemA[i].count && iglA[i]) {
+        for (Key j = 0, jEnd = iglA[i]->nGenes; !e && j < jEnd; ++j) {
+          e = _addSharedSubmap(
+              sharedGenesMP, 
+              iglA[i]->listA[j].type,
+              iglA[i]->listA[j].size,
+              xHistoElemP->count);
         }
       }
     }
@@ -235,57 +264,49 @@ static Error _addSpecialSharedGene(Map *sharedGeneMPMP, void *geneP, Key geneTyp
 }
 
 // This is for adding dest rect. Maybe other stuff in the future too.
-static Error _addRectSharedGenes(Map *sharedGeneMPMP, Biome *biomeP) {
+static Error _spawnEntities(Map *sharedGeneMPMP, Biome *biomeP) {
   if (!sharedGeneMPMP || !biomeP || !biomeP->nEntitiesToSpawn || !biomeP->nSpawns || !biomeP->spawnA) {
     return E_BAD_ARGS;
   }
-  Map   *srcRectMP   = NULL;
-  Map   *dstRectMP   = NULL;
-  Rect_ *rectOffsetF = NULL;
-  // Allocate rect-related maps/frays.
-  Error e = mapNew(&dstRectMP, sizeof(Rect_), biomeP->nEntitiesToSpawn);
-  if (!e) {
-    e = mapNew(&srcRectMP, sizeof(Rect_), biomeP->nEntitiesToSpawn);
-  }
-  if (!e) {
-    e = frayNew((void**) &rectOffsetF, sizeof(Rect_), biomeP->nEntitiesToSpawn);
-  }
   // Master doesn't touch rect offset fray. Renderer updates it and messages Anim to use it.
   // Populate above resources.
-  if (!e) {
-    const Rect_ srcRect = {0};
-    Rect_ dstRect = {0};
-    Spawn *spawnP = biomeP->spawnA;
-    Spawn *spawnEndP = spawnP + biomeP->nEntitiesToSpawn;
-    PositionNode *posP;
-    PositionNode *posEndP;
-    Entity entity = 0;
-    for (; !e && spawnP < spawnEndP; ++spawnP) {
+  Spawn *spawnP = biomeP->spawnA;
+  Spawn *spawnEndP = spawnP + biomeP->nEntitiesToSpawn;
+  PositionNode *posP, *posEndP;
+  Map  *dstRectMP;
+  Rect_ *dstRectP;
+
+  Error e = SUCCESS;
+
+  // Do we have a dst rect shared map?
+  e = mapGetNestedMapP(sharedGeneMPMP, DST_RECT, &dstRectMP);
+  if (e == E_BAD_KEY) {
+    return SUCCESS;  // Hmmm... No dest rects, huh? Let's assume the user knows what they're doing.
+  }
+  else if (!e) {
+    for (Entity entity = 1; !e && spawnP < spawnEndP; ++spawnP) {
       posP = spawnP->positionNodeA;
       posEndP = posP + spawnP->nEntitiesPossible;
       for (; !e && entity < biomeP->nEntitiesToSpawn && posP < posEndP; ++posP, ++entity) {
-        if (!spawnP->keyP || *spawnP->keyP == posP->keyhole) {
-          // Set src rect
-          e = mapSet(srcRectMP, entity, &srcRect);
-          // Set dst rect
-          if (!e) {
-            dstRect.x = posP->position.x;
-            dstRect.y = posP->position.y;
-            e = mapSet(dstRectMP, entity, &dstRect);
+        dstRectP = (Rect_*) mapGet(dstRectMP, entity);
+        // If this entity has a dest rect component, place it where it belongs.
+        if (dstRectP) {
+          if (!spawnP->keyP || *spawnP->keyP == posP->keyhole) {
+            // Set dst rect
+            if (!e) {
+              dstRectP->x = posP->position.x;
+              dstRectP->y = posP->position.y;
+            }
           }
         }
       }
     }
+    if (!e) {
+      e = mapSet(sharedGeneMPMP, DST_RECT, (void**) &dstRectMP);
+    }
+    return e;
   }
-  if (!e) {
-    e = mapSet(sharedGeneMPMP, SRC_RECT, (void**) &srcRectMP);
-  }
-  if (!e) {
-    e = mapSet(sharedGeneMPMP, DST_RECT, (void**) &dstRectMP);
-  }
-  if (!e) {
-    e = mapSet(sharedGeneMPMP, RECT_OFFSET, (void**) &rectOffsetF);
-  }
+  
   return e;
 }
 
@@ -507,7 +528,7 @@ static Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGen
     e = _addSpecialSharedGene(sharedGenesMPMP, rendererP, RENDERER_GENE_TYPE);
   }
   if (!e) {
-    e = _addRectSharedGenes(sharedGenesMPMP, biomeP);
+    e = _spawnEntities(sharedGenesMPMP, biomeP);
   }
   if (!e) {
     e = _makeMutationMapArrays(biomeP, &geneHisto, nSystemsMax);
@@ -516,7 +537,7 @@ static Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGen
     e = frayNew((void**) &sdPF, sizeof(StripDataS*), geneHisto.nDistinctMedia);
   }
 
-  // For each spawn...
+  // Distribute genes to all spawned entties.
   for (Entity entity = 1; !e && spawnP < spawnEndP; ++spawnP) {
     for (Entity entityEnd = entity + spawnP->nEntitiesToSpawn; entity < entityEnd; ++entity) {
       // Make a blackboard map for this entity if it has any genes to put in it.

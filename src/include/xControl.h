@@ -1,8 +1,5 @@
 #ifndef SYS_CONTROL
 #define SYS_CONTROL
-#include "botox.h"
-#include "interface.h"
-#include "xMaster.h"
 #include "jb.h"
 
 typedef U32 XControlComp;

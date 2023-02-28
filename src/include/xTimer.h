@@ -1,6 +1,6 @@
 #ifndef SYS_Timer
 #define SYS_Timer
-#include "botox.h"
+#include "x.h"
 
 typedef enum {START_TIMER, PAUSE_TIMER, STOP_TIMER, TIME_UP} TimerKeychain;
 

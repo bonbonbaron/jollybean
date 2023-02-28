@@ -24,7 +24,7 @@ PositionNode spawn1PosNodeA[] = {
 };
 
 UnitaryGene_(redColormap,     MEDIA_GENE,     RENDER | COLORMAP,      0, Colormap);
-UnitaryGene_(redColorPalette, EXCLUSIVE_GENE, RENDER | COLOR_PALETTE, 0, Colormap);
+UnitaryGene_(redColorPalette, EXCLUSIVE_GENE, RENDER | COLOR_PALETTE, 0, ColorPalette);
 CompositeGene_(redGraybody, &geneName_(redColormap));
 CompositeGene_(redPalette,  &geneName_(redColorPalette));
 Genome_(redBody, &geneName_(redGraybody), &geneName_(redPalette));

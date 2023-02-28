@@ -49,7 +49,7 @@
 }
 
 // Media genes are inflated, unpacked, and assembled into original data.
-typedef enum {EXCLUSIVE_GENE, MEDIA_GENE, SHARED_GENE, BB_GENE, COMPOSITE_GENE} GeneClass;
+typedef enum {EXCLUSIVE_GENE, MEDIA_GENE, SHARED_GENE, BB_GENE, COMPOSITE_GENE, IMPLICIT_GENE} GeneClass;
 typedef enum {SCENE_START, SCENE_CHANGE, SCENE_STOP} SceneAction;
 
 typedef struct {
@@ -97,13 +97,28 @@ typedef struct _Gene {
   } u;
 } Gene;
 
+/* Implicit genes are shared genes that start out empty, which would be a 
+   waste to store in ROM (not to mention annoying to have to remember).
+   Better to automate them. */
+typedef struct {
+  U8 type;
+  U8 size;
+} ImplicitGene;
+
+typedef struct {
+  U32 nGenes;
+  ImplicitGene *listA;
+} ImplicitGenesList;
+
 /************************/
 /******** BIOME *********/
 /************************/
 typedef struct {
   S32 x;
   S32 y;
-} Position;
+} Position;  // used for placing visible entities around the level
+
+typedef Position RectOffset;  // used for offsetting animation rectangles after making texture atlas
 
 typedef struct {
   Key keyhole;
@@ -124,7 +139,6 @@ typedef struct {
   Key nSpawns;  // number of spawns (a spawn can hold one or more entities, each with a uniqe position)
   Spawn *spawnA;
 } Biome;
-
 
 typedef enum {QUIT_ALL, SWITCH_BIOME} MasterMsgType;
 typedef System* XMasterComp;  // master component is a pointer to a child system

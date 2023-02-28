@@ -4,27 +4,33 @@
 // Unused X functions
 XIniSysFuncDefUnused_(Anim);
 XPostprocessCompsDefUnused_(Anim);
-XIniSubcompFuncDefUnused_(Anim);
+#define XIniSubcompFuncDef_(name_)  Error x##name_##IniSubcomp(System *sP, const Entity entity, const Key subtype, void *dataP)
+XIniSubcompFuncDef_(Anim) {
+// iniSubcomp
+  Animation *animP = (Animation*) dataP;
+  U32 nAnimStrips;
+  Error e = SUCCESS;
+  // If anim strip map isn't yet initialized, initialize it.
+  if (!animP->stripMP && animP->keyStripPairA && 
+      ((nAnimStrips = arrayGetNElems(animP->keyStripPairA)) > 0)) {
+    // First, allocate animation's key-to-strip map.
+    // The reason we do pointers to anim strip is preventing multi-offsetting their rects later.
+    e = mapNew(&animP->stripMP, sizeof(AnimStrip*), nAnimStrips);
+    if (!e) {
+      KeyStripPair *keyStripPairP = animP->keyStripPairA;
+      KeyStripPair *keyStripPairEndP = keyStripPairP + arrayGetNElems(animP->keyStripPairA);
+      for (; keyStripPairP < keyStripPairEndP; ++keyStripPairP) {
+        mapSet(animP->stripMP, keyStripPairP->key, &keyStripPairP->animStripP);
+      }
+    }
+  }
+  return e;
+}
+
 XClrFuncDefUnused_(Anim);
 // TODO get shared offset fray
 // TODO process UPDATE_RECT messages with below "updateSrcRects" code block
 // TODO 
-// iniSubcomp
-      animP = (Animation*) dataP;
-      if (!animP->stripMP && animP->keyStripPairA && 
-          ((nStrips = arrayGetNElems(animP->keyStripPairA)) > 0)) {
-        // First, allocate animation's key-to-strip map.
-        // The reason we do pointers to anim strip is preventing multi-offsetting their rects later.
-        e = mapNew(&animP->stripMP, sizeof(AnimStrip*), nStrips);
-        if (!e) {
-          KeyStripPair *keyStripPairP = animP->keyStripPairA;
-          KeyStripPair *keyStripPairEndP = keyStripPairP + arrayGetNElems(animP->keyStripPairA);
-          for (; keyStripPairP < keyStripPairEndP; ++keyStripPairP) {
-            mapSet(animP->stripMP, keyStripPairP->key, &keyStripPairP->animStripP);
-          }
-        }
-      }
-
 //clrFunc
   Animation **animPP = xRenderP->entity2Anim2AnimStripMPMP->mapA;
   Animation **animEndPP = animPP + arrayGetNElems(xRenderP->entity2Anim2AnimStripMPMP->mapA);

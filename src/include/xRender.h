@@ -62,10 +62,6 @@ typedef struct {
   Rect_ *dstRectP;
 } XRenderComp;
 
-typedef struct {
-  S32 x, y;
-} RectOffset;
-
 // Images
 Error cmGen(Colormap *imgP);
 void  cmClr(Colormap *imgP);
