@@ -6,7 +6,6 @@
 #include "x.h"
 // Core jb objects
 #include "interface.h"
-#include "body.h"
 // Child systems
 #include "xMaster.h"
 #include "xRender.h"

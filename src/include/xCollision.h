@@ -2,9 +2,17 @@
 #define SYS_Collision
 #include "jb.h"
 
-// Dummy struct to keep macro X_ happy.
 typedef struct {
-} XCollisionCompSrc; 
+  Entity entity;   // Collider
+  Key    type;     // Colliding elements react according to each other's type.
+  Key    layer;
+  Key    rectIdx;  // Rect index of Collidee (i swear i don't talk like this)
+} Collision;
+
+typedef struct {
+  U8 nCollisionTypes;
+  U8 *colissionA;
+} CollisionPalette;
 
 typedef Collision XCollisionComp;
 

@@ -1,5 +1,4 @@
 #include "xRender.h"
-#include "body.h"
 #include "data.h"
 #include "jb.h"
 #include "x.h"
@@ -241,20 +240,18 @@ Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void
     case COLORMAP:
       cmP = (Colormap*) dataP;
       if (!(cmP->state & INITIALIZED)) {
-        // dataP points to the colormap itself, so make sure frayAdd() only memcpy's pointer to it.
+        cmP->state |= INITIALIZED;
         e = frayAdd(xRenderP->cmPF, (void*) &cmP, NULL);
-        cmP->state |= INITIALIZED;  // TODO this is how you're going to sneak a 4th subcomponent in. ;)
       }
       break;
     case COLOR_PALETTE:
       cpP = (ColorPalette*) dataP;
       // Prevent copies of sub-palettes in texture atlas palette by marking them as initialized.
       if (!(cpP->state & INITIALIZED)) {
+        cpP->state |= INITIALIZED;
         cpP->atlasPaletteOffset = xRenderP->atlasPaletteOffset;
         xRenderP->atlasPaletteOffset += cpP->nColors;
-        // frayAdd() will memcpy the pointer of color palette into cpPF, not 4 bytes of palette itself.
         e = frayAdd(xRenderP->cpPF, (void*) &cpP, NULL);
-        cpP->state |= INITIALIZED;
       }
       break;
     case TILEMAP:   // this is for backgrounds

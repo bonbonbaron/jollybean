@@ -3,9 +3,6 @@
 #include "interface.h"
 #include "jb.h"
 
-typedef struct {
-} XMotionTransCompSrc; 
-
 // Have a #ifdef here. You can do this version for vanilla JB. 
 // Vectorized JB should keep this aligned to the original dest rect shared array.
 typedef struct {

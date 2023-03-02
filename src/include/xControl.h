@@ -23,8 +23,6 @@ typedef struct {
   Entity focus;   // this is the entity who has control's focus right now;
 } XControl; 
 
-typedef struct {} XControlCompSrc;
-
 Error xControlRun(System *sP);
 Error xControlProcessMessage(System *sP, Message *msgP);
 Error xControlIniSys();

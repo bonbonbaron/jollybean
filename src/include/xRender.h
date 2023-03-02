@@ -2,6 +2,9 @@
 #define SYS_RENDER
 #include "jb.h"
 
+// TODO Kaizen: Give subcomponents bitshifting enum macro.
+//              Then put an example of it in the template header file.
+
 // TODO is both being 1 a bug, or is that the *inner* key value?
 #define WINDOW_KEY_ (1)
 #define RENDERER_KEY_ (1)
@@ -22,6 +25,7 @@
 // We leverage this knowledge to navigate backwards without re-entering already-explored nodes.
 #define getParentAtlasIdx_(childIdx_) ((childIdx_ - 1 - !(cameFromRight = childIdx_ & 1)) >> 1)
 
+// 
 #define COLORMAP      (0x40)
 #define COLOR_PALETTE (0x80)
 #define TILEMAP       (0xC0)
@@ -50,14 +54,6 @@ typedef struct {
   U16 *tileSetA;  // not to be confused with strip set
   U16 *tileMapA;  // not to be confused with strip map
 } BgTilemap;
-
-/* This is used to map ownership of colormaps etc. to entities when 
-   the rendering system is ready to create its components (after atlas creation). */
-typedef struct {
-  Entity entity;
-  Colormap *colorMapP;
-  ColorPalette *colorPalette;
-} Image;   
 
 typedef struct {
   Rect_ *srcRectP;

@@ -142,7 +142,6 @@ typedef struct {
 
 typedef enum {QUIT_ALL, SWITCH_BIOME} MasterMsgType;
 typedef System* XMasterComp;  // master component is a pointer to a child system
-typedef struct {} XMasterCompSrc;
 
 typedef struct {
 	U8 nXSystemsMax;

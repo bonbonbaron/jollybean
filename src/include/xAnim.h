@@ -1,9 +1,34 @@
 #ifndef SYS_Anim
 #define SYS_Anim
 #include "jb.h"
-#include "body.h"
+
 typedef struct {
-} XAnimCompSrc; 
+  Rect_ rect;
+  U32 duration;
+} AnimFrame;
+
+typedef struct {
+  U8  nFrames;
+  Bln flags;
+  Bln repeat;       
+  Bln pingPong;       
+  AnimFrame *frameA;
+} AnimStrip;
+
+typedef struct {
+  Key key;
+  AnimStrip *animStripP;
+} KeyStripPair;
+
+typedef struct {
+  U8  state;  // Use this to tell subcomp ini when an animation has been counted.
+  Key nKeyStripPairs;
+  KeyStripPair *keyStripPairA;  // maps keys to animations
+} AnimKeyPairSet;
+
+typedef struct {
+  Map          *stripMP;  // animStripMappingA gets converted to a map on startup
+} Animation;
 
 typedef Animation XAnimComp;
 
@@ -13,7 +38,7 @@ Error xAnimProcessMessage(System *sP, Message *msgP);
 
 typedef struct {
   System system;
-  Rect_ *rectOffsetF;
+  AnimKeyPairSet *animKeyPairSetF;
 } XAnim;
 
 extern System *sAnimP;
