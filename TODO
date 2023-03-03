@@ -5,3 +5,4 @@ All those confusing directory trees in the game folder don't need to exist. Ever
 This may be a good business idea with a free layer for the vast majority of things and the ability to sell individual or collections of resources (art, music, behavior, system, whatever). We rake in 20%. JB should be similar in structure to git or docker package management systems; you can push, pull, backup, etc. any given resource. JB needs to make editing anything either by itself or with its dependencies as easy as cake from anywhere on the machine. But maybe multiple versions of something should exist; if you updated a resource and want another game to keep the old version without losing its ability to be built without the new one, there's gotta be a flexible way to do that.
 
 
+get Animation to go through for red in body.c

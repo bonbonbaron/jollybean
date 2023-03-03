@@ -1,8 +1,8 @@
 #include "xGo.h"
 
 
-//#define xIniSysFuncDef_(name_) Error x##name_##IniSys(System *sP, void *sParamsP)
-xIniSysFuncDef_(Go) {
+//#define XIniSysFuncDef_(name_) Error x##name_##IniSys(System *sP, void *sParamsP)
+XIniSysFuncDef_(Go) {
   unused_(sParamsP);
   XGo *xGoP = (XGo*) sP;
   xGoP->nDistinctHivemindTriggers = 0;

@@ -67,12 +67,12 @@ typedef void* (*XSwitchCompU)(Key key);  // used to switch between a multi-form 
 }
 #define XPostprocessCompsDef_(name_) Error x##name_##PostprocessComps(System *sP)
 
-#define XIniSysFuncDefUnused_(name_) xIniSysFuncDef_(name_) {\
+#define XIniSysFuncDefUnused_(name_) XIniSysFuncDef_(name_) {\
   unused_(sP);\
   unused_(sParamsP);\
   return SUCCESS;\
 }
-#define xIniSysFuncDef_(name_) Error x##name_##IniSys(System *sP, void *sParamsP)
+#define XIniSysFuncDef_(name_) Error x##name_##IniSys(System *sP, void *sParamsP)
 
 #define XIniSubcompFuncDefUnused_(name_) XIniSubcompFuncDef_(name_) {\
   unused_(sP);\
