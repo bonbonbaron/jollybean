@@ -1,126 +1,57 @@
 #include "xAnim.h"
 #include "data.h"
+#include "x.h"
 
 // Unused X functions
-XIniSysFuncDef_(Anim) {
-  unused_(sParamsP);
-  XAnim *xAnimP = (XAnim*) sP;
-  Error e = frayNew((void**) &xAnimP->animKeyPairSetPF, sizeof(KeyStripPair), xGetNComps(sP));
-  if (!e) {
-    e = mapNew(&xAnimP->animMPMP, sizeof(Map*), xGetNComps(sP));
-  }
-  return e;
-}
+XIniSysFuncDefUnused_(Anim);
+XIniSubcompFuncDefUnused_(Anim);
+XClrFuncDefUnused_(Anim);
 
-#define ANIMATION_SUBCOMP_IDX getSubcompIdx_(0x40)
+// You only need to give every component its source rect once.
 XPostprocessCompsDef_(Anim) {
-  if (!sP) {
-    return E_BAD_ARGS;
-  }
-
+  XAnimComp *cP = (XAnimComp*) sP->cF;
+  XAnimComp *cEndP = cP + *frayGetFirstEmptyIdxP(sP->cF);
+  Entity entity;
   Error e = SUCCESS;
-
   XAnim *xP = (XAnim*) sP;
 
-  AnimKeyPairSet **setPP = xP->animKeyPairSetPF;
-  AnimKeyPairSet **setEndPP = setPP + *frayGetFirstEmptyIdxP(xP->animKeyPairSetPF);
-  KeyStripPair   *kvPairP, *kvPairEndP;
-
-  // Initialize all submaps before placing them into (outer) entity-to-animation map.
-  for (; !e && setPP < setEndPP; ++setPP) {
-    e = mapNew(&(*setPP)->animMP, sizeof(AnimStrip), (*setPP)->nKeyStripPairs);
+  // Give each component its source rectangle.
+  for (; !e && cP < cEndP; ++cP) {
+    entity = xGetEntityByVoidComponentPtr(sP, (void*) cP);
+    if (!entity) {
+      e = E_NULL_VAR;
+    }
     if (!e) {
-      // Set all the keys in the key-pair set to their values in the inner animation map.
-      kvPairP = (*setPP)->keyStripPairA;
-      kvPairEndP = kvPairP + (*setPP)->nKeyStripPairs;
-      for (; !e && kvPairP < kvPairEndP; ++kvPairP) {
-        e = mapSet((*setPP)->animMP, kvPairP->key, kvPairP->animStripP);
+      cP->srcRectP = (Rect_*) mapGet(xP->srcRectMP, entity);
+      if (!cP->srcRectP) {
+        e = E_BAD_KEY;
       }
     }
   }
-
-  // Put all the animation maps into the entity-to-animation map of maps.
-  if (!e) {
-    SubcompOwner *scoP = sP->subcompOwnerMP->mapA;
-    SubcompOwner *scoEndP = scoP + arrayGetNElems(sP->subcompOwnerMP->mapA);
-    for (; !e && scoP < scoEndP; ++scoP) {
-      setPP = scoP->subcompA[ANIMATION_SUBCOMP_IDX];
-      e = mapSet(xP->animMPMP, scoP->owner, &(*setPP)->animMP);
-    }
-  }
-
-  frayDel((void**) &xP->animKeyPairSetPF);
-
-  return e;
-}
-
-XIniSubcompFuncDef_(Anim) {
-	if (!sP || !entity || !dataP || !subtype) {
-		return E_BAD_ARGS;
-  }
-
-  AnimKeyPairSet *animKeyPairSetP;
-
-  XAnim *xP = (XAnim*) sP;
-  Error e = SUCCESS;
-
-  // We use type to determine system.
-  // Then we use subtype to determine what it does with it. 
-  if (subtype == ANIMATION) {
-    animKeyPairSetP = (AnimKeyPairSet*) dataP;
-    if (!(animKeyPairSetP->state & INITIALIZED)) {
-      animKeyPairSetP->state |= INITIALIZED;
-      e = frayAdd(xP->animKeyPairSetPF, (void*) &animKeyPairSetP, NULL);
-    }
-  }
-
-  return e;
-
-}
-
-XClrFuncDef_(Anim) {
-  if (!sP) {
-    return E_BAD_ARGS;
-  }
-
-  XAnim *xP = (XAnim*) sP;
-
-  frayDel((void**) &xP->animKeyPairSetPF);
-
-  // Delete submaps of animations
-  AnimKeyPairSet **setPP = xP->animKeyPairSetPF;
-  AnimKeyPairSet **setEndPP = setPP + *frayGetFirstEmptyIdxP(xP->animKeyPairSetPF);
-  for (; setPP < setEndPP; ++setPP) {
-    mapDel(&(*setPP)->animMP);
-  }
-
-  mapDel(&xP->animMPMP);
 
   return SUCCESS;
 }
 
 Error xAnimProcessMessage(System *sP, Message *msgP) {
   Error e = SUCCESS;
-  // Handle request to offset animation frames' coordinates (e.g. for new positions in texture atlas)
-  if (msgP->cmd == ANIMATE) {
-    AnimStrip *stripP = NULL;
-    XAnimComp *cP = NULL;
-    e = mapGetNestedMapPElem(sP->mutationMPMP, msgP->attn, msgP->arg, (void**) &stripP);
-    if (!e) {
-      cP = xGetCompPByEntity(sP, msgP->attn);
-    }
-    if (!e && cP) {
-      cP->currFrameIdx = 0;
-      cP->currStripP = stripP;
-      cP->incrDecrement = 1;
-      cP->timeLeft = stripP->frameA[0].duration;
-      *cP->srcRectP = stripP->frameA[0].rect;
-    }
-  }
   /* When the render system makes a texture atlas, the animation frames' rectangles no longer
      have the correct XY coordinates. We have to offset them here to ensure we draw from the 
      right place in the atlas. */
-  else if (msgP->cmd == UPDATE_RECT) {
+  if (msgP->cmd == ANIMATE) {
+    AnimStrip *animStripP = NULL;
+    XAnimComp *cP = NULL;
+    e = mapGetNestedMapPElem(sP->mutationMPMP, msgP->attn, msgP->arg, (void**) &animStripP);
+    if (!e) {
+      cP = (XAnimComp*) xGetCompPByEntity(sP, msgP->attn);
+      e = cP ? SUCCESS : E_NULL_VAR;
+    }
+    if (!e) {
+      cP->currStripP = animStripP;
+      cP->currFrameIdx = 0;
+      cP->incrDecrement = 1;
+    }
+  }
+  if (msgP->cmd == UPDATE_RECT) {
     XAnim *xP = (XAnim*) sP;
     AnimStrip *animStripP, *animStripEndP;
     AnimFrame *frameP, *frameEndP;
@@ -129,7 +60,7 @@ Error xAnimProcessMessage(System *sP, Message *msgP) {
 
     // Get animation subcomponent and offset to apply to all its frames.
     if (!e) {
-      animMP = mapGet(xP->animMPMP, msgP->attn);
+      animMP = mapGet(xP->system.mutationMPMP, msgP->attn);
     }
     if (!e && animMP) {
       offsetP = (RectOffset*) mapGet(xP->offsetMP, msgP->attn);
@@ -164,15 +95,12 @@ XGetShareFuncDef_(Anim) {
   if (!sP) {
     return E_BAD_ARGS;
   }
-
-  XAnim *xP = (XAnim*) sP;
-
   // Get shared inner maps of resources we need (offsets and source rects)
+  XAnim *xP = (XAnim*) sP;
   Error e = mapGetNestedMapP(shareMMP, RECT_OFFSET, &xP->offsetMP);
   if (!e) {
     mapGetNestedMapP(shareMMP, SRC_RECT, &xP->srcRectMP);
   }
-
   return e;
 }
 

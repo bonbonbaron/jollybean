@@ -153,6 +153,7 @@ Error    xIniSubcomp(System *sP, const Entity entity, const void *cmpP);
 Error    xAddEntity(System *sP, Entity entity, Key compType, void *compDataP, Map *mutationMP);
 Error    xAddMutationMap(System *sP, Entity entity, Map *mutationMP);
 //void*    xGetComp(System *sP, Entity entity);
+Entity   xGetEntityByVoidComponentPtr(System *sP, void *componentP);
 U32      xGetNComps(System *sP);
 void*    xGetCompValP(System *sP, Entity entity, Key key);
 Entity   xGetEntityByCompIdx(System *sP, Key compIdx);

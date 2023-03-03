@@ -12,7 +12,11 @@ Error previewImg(Colormap *cmP, ColorPalette *cpP, U32 preview_ms) {
 
   Error e = guiNew(&windowP, &rendererP);
   if (!e) {
-    e = surfaceNew(&surfaceP, cmP, cpP);
+//Error surfaceNew(Surface_ **surfacePP, void *pixelDataA, U32 w, U32 h) {
+    e = surfaceNew(&surfaceP, cmP, cmP->w, cmP->h);
+  }
+  if (!e) {
+    appendAtlasPalette(surfaceP, cpP);
   }
   if (!e && surfaceP) {
     e = textureNew(&textureP, rendererP, surfaceP);

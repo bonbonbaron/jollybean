@@ -297,19 +297,19 @@ static void _deactivateQueue(System *sP) {
   }
 }
 
-inline static Entity _getEntityByVoidComponentPtr(System *sP, void *componentP) {
+Entity xGetEntityByVoidComponentPtr(System *sP, void *componentP) {
   Entity compIdx = ((U32) componentP - (U32) sP->cF) / sP->compSz;
   return xGetEntityByCompIdx(sP, compIdx);
 }
 
 
 void xQueuePause(System *sP, void *componentP) {
-  Entity entity = _getEntityByVoidComponentPtr(sP, componentP);
+  Entity entity = xGetEntityByVoidComponentPtr(sP, componentP);
   frayAdd(sP->pauseQueueF, &entity, NULL);
 }
 
 void xQueueDeactivate(System *sP, void *componentP) {
-  Entity entity = _getEntityByVoidComponentPtr(sP, componentP);
+  Entity entity = xGetEntityByVoidComponentPtr(sP, componentP);
   frayAdd(sP->deactivateQueueF, &entity, NULL);
 }
 
