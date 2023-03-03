@@ -1,24 +1,6 @@
 #include "xAnim.h"
 #include "data.h"
 
-/* TODO
- * Kaizen: 
- *   I keep wondering what to do with these system functions. In my system template, 
- *
- *   At least populate functions with argument error-checking.
- * 
- *   I should describe what each function does, provide a small example, and even give a comment-
- *     able, finished line for an unused function if necessary.
- *  
- *   Finally, I should outline a general workflow for component- vs. subcomponent-based systems.
- *
- *   Standardize your sprint flow and figure out what works best. Measure it for science.
- *     For now, this is what I'm thinking:
- *     Day 1: Goals and Design. They intermingle enough to coincide.
- *            Make design concrete enough for rapid development.
- *     Day 2: Dev, build, and test in a tight loop, one function at a time.
- *
- */
 // Unused X functions
 XIniSysFuncDef_(Anim) {
   unused_(sParamsP);

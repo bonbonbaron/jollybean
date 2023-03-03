@@ -2,9 +2,6 @@
 #define SYS_RENDER
 #include "jb.h"
 
-// TODO Kaizen: Give subcomponents bitshifting enum macro.
-//              Then put an example of it in the template header file.
-
 // TODO is both being 1 a bug, or is that the *inner* key value?
 #define WINDOW_KEY_ (1)
 #define RENDERER_KEY_ (1)
