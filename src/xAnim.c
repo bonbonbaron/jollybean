@@ -1,6 +1,4 @@
 #include "xAnim.h"
-#include "data.h"
-#include "x.h"
 
 // Unused X functions
 XIniSysFuncDefUnused_(Anim);
@@ -29,6 +27,11 @@ XPostprocessCompsDef_(Anim) {
     }
   }
 
+  // TODO get rid of this after you implement action system
+  if (!e) {
+    frayActivateAll(sP->cF);
+  }
+
   return SUCCESS;
 }
 
@@ -37,6 +40,7 @@ Error xAnimProcessMessage(System *sP, Message *msgP) {
   /* When the render system makes a texture atlas, the animation frames' rectangles no longer
      have the correct XY coordinates. We have to offset them here to ensure we draw from the 
      right place in the atlas. */
+  // Put the most commonly used logic first.
   if (msgP->cmd == ANIMATE) {
     AnimStrip *animStripP = NULL;
     XAnimComp *cP = NULL;
@@ -51,7 +55,7 @@ Error xAnimProcessMessage(System *sP, Message *msgP) {
       cP->incrDecrement = 1;
     }
   }
-  if (msgP->cmd == UPDATE_RECT) {
+  else if (msgP->cmd == UPDATE_RECT) {
     XAnim *xP = (XAnim*) sP;
     AnimStrip *animStripP, *animStripEndP;
     AnimFrame *frameP, *frameEndP;

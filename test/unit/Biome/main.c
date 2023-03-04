@@ -4,7 +4,8 @@ int main(int argc, char **argv) {
   extern Biome testBiome;
 
 	System *sPA[] = {
-    sRenderP
+    sRenderP,
+    sAnimP
 	}; 
 
 	Error e = xMasterIni(&xMaster, sPA, arrayNElems_(sPA), N_SYSTEM_TYPES, &testBiome);

@@ -308,7 +308,7 @@ Error writeAnimJsonData(char *entityName, AnimJsonData *animP, U8 verbose) {
   // Write frame arrays.
   for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
     // AnimJsonData frame arrays
-    fprintf(fP, "AnimFrame *frame_%s_%s_A[] = {\n", entityName, tagP->name);
+    fprintf(fP, "AnimFrame frame_%s_%s_A[] = {\n", entityName, tagP->name);
     FrameNode *frameNodeP = getFrameNode(animP->frameNodeA, tagP->from);
     if (!frameNodeP)
       return E_BAD_ARGS;
@@ -325,10 +325,10 @@ Error writeAnimJsonData(char *entityName, AnimJsonData *animP, U8 verbose) {
     }
     fprintf(fP, "};\n\n");
     // AnimJsonData strips
-    fprintf(fP, "AnimStrip animStrip_%s_%s = {\n", entityName, tagP->name);
+    fprintf(fP, "AnimStrip %sAnimStrip_%s = {\n", entityName, tagP->name);
     fprintf(fP, "\t.nFrames = %d,\n", 1 + tagP->to - tagP->from);
     fprintf(fP, "\t.flags = %d,\n", 0);
-    // Aseprite left out looping in their tags for some reason, so using the otherwise useless reverse!
+    // Aseprite doesn't have a "repeat" animation attribute, so we use its useless "reverse" instead.
     Bln isReverse = !strncasecmp(tagP->direction, "reverse", 4);
     fprintf(fP, "\t.repeat = %d,\n", isReverse);  
     Bln isPingPong = !strncasecmp(tagP->direction, "pingpong", 4);
@@ -337,18 +337,35 @@ Error writeAnimJsonData(char *entityName, AnimJsonData *animP, U8 verbose) {
     fprintf(fP, "};\n\n");
     ++nKeyValPairs;
   }
-  // Write key-val pairs between tag names and coll strips
-  fprintf(fP, "KeyStripPairArray tagName2AnimStripmap_%s[] = {\n", entityName);
-  fprintf(fP, "\t.nKeyStripPairs = %d,\n", nKeyValPairs);
-  fprintf(fP, "\t.keyValPairA = {\n");
+#if 1
+  // Key-animation pair array
+  fprintf(fP, "KeyAnimStripPair %sKasPairA[] = {\n", entityName);
   for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
-    fprintf(fP, "\t\t{\n");
-    fprintf(fP, "\t\t\t.key  = %s,\n", tagP->name);
-    fprintf(fP, "\t\t\t.animStripP = &animStrip_%s_%s\n", entityName, tagP->name);
-    fprintf(fP, "\t\t},\n");
+    fprintf(fP, "\t{\n");
+    fprintf(fP, "\t\t.key  = %s,\n", tagP->name);
+    fprintf(fP, "\t\t.animStripP = &%sAnimStrip_%s\n", entityName, tagP->name);
+    fprintf(fP, "\t},\n");
   }
-  fprintf(fP, "\t}\n");
-  fprintf(fP, "};\n\n");
+  fprintf(fP, "};\n\n");  
+  // Animation 
+  fprintf(fP, "Animation %sAnimation = {\n", entityName);
+  fprintf(fP, "\t.nPairs = %d,\n", nKeyValPairs);
+  fprintf(fP, "\t.kasPairA = %sKasPairA,\n", entityName);
+  fprintf(fP, "\t.animMP = NULL\n", entityName);  // animation map starts out uninitialized
+  fprintf(fP, "};\n");  
+#endif
+  fclose(fP);
+
+  return SUCCESS;
+}
+
+Error writeAnimHeader(char *entityName, AnimJsonData *animP, U8 verbose) {
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Graybody/Animation/include", entityName, "Anim.h", verbose); 
+  if (!fP) {
+    return E_FILE_IO;
+  }
+  fprintf(fP, "#include \"xAnim.h\"\n");
+  fprintf(fP, "extern Animation %sAnimation;\n", entityName);
   fclose(fP);
 
   return SUCCESS;
@@ -402,6 +419,9 @@ Error anim (char *entityNameP, U8 verbose, AnimJsonData **animPP) {
   }
   if (!e) {
     e = writeAnimJsonData(entityNameP, animP, verbose);
+  }
+  if (!e) {
+    e = writeAnimHeader(entityNameP, animP, verbose);
   }
 
   // Return animation if it's good; otherwise free it and return NULL.

@@ -18,12 +18,13 @@ typedef struct {
 typedef struct {
   Key key;
   AnimStrip *animStripP;
-} KeyStripPair;
+} KeyAnimStripPair;
 
 typedef struct {
-  U32 nKeyStripPairs;
-  KeyStripPair *keyStripPairA;
-} KeyStripPairArray;
+  Key nPairs;
+  KeyAnimStripPair *kasPairA;
+  Map *animMP;  // initialized with key anim-strip pair data at system start-up
+} Animation;
 
 typedef struct {
   U32        timeLeft;      // time left for current animation frame
@@ -37,6 +38,7 @@ typedef struct {
   System system;
   Map        *offsetMP;   // derived inner share map from parent system
   Map        *srcRectMP;  // derived inner source rectangle map from parent system
+  Map        *animMPMP;   // maps entity to animation map, which in turn maps strip ID to anim strip
 } XAnim;
 
 extern System *sAnimP;

@@ -344,6 +344,7 @@ static Error _makeMutationMapArrays(Biome *biomeP, GeneHisto *geneHistoP, Key nS
     e = arrayNew((void**) &spawnP->geneMutationMPA, sizeof(Map*), nSystemsMax);
     // Allocate a map for each mutable gene for this spawn.
     for (Key systemId = 1; !e && systemId < nSystemsMax; ++systemId) {
+      // Indexing a 2D array (dim 1: # of systems; dim 2: # of entities)
       nMutationsForCurrGene = geneHistoP->histoSpawnMutations[(spawnP - biomeP->spawnA) * nSystemsMax + systemId];
       if (nMutationsForCurrGene) {
         e = mapNew(&spawnP->geneMutationMPA[systemId], 
@@ -354,7 +355,8 @@ static Error _makeMutationMapArrays(Biome *biomeP, GeneHisto *geneHistoP, Key nS
     // Populate all of this spawn's maps of gene mutations.
     genePP = spawnP->genomeP->genePA;
     geneEndPP = genePP + spawnP->genomeP->nGenes;
-    for (; !e && genePP < geneEndPP; genePP++) {  // genePP is a pointer to a pointer to a global singleton of a component
+    // genePP is a pointer to a pointer to a global singleton of a component
+    for (; !e && genePP < geneEndPP; genePP++) {  
       gene = **genePP;
       if (gene.geneClass == EXCLUSIVE_GENE) {
         currSpawnMutationMP = spawnP->geneMutationMPA[gene.u.unitary.type & MASK_COMPONENT_TYPE];

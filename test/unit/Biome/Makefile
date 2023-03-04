@@ -23,7 +23,7 @@ JB_DIR=../../../
 	gcc ./main.o -L${JB_DIR}/lib -ljollybean $(shell sdl2-config --libs) -lpthread ./testBiome.o ${CM_OBJ_DIR}/redColormap.o  ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ${ANIM_OBJ_DIR}/redAnim.o -o $@
 	touch $@
 
-./main.o: ./main.c
+./main.o: ./main.c 
 	gcc -g -c main.c -I${JB_DIR}/src/include/ -I${JB_DIR}/utils/body/src/include -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags) -o $@
 	touch $@
 
@@ -35,7 +35,7 @@ ${CP_OBJ_DIR}/%ColorPalette.o: ${CP_SRC_DIR}/%ColorPalette.c
 	gcc -g -I${JB_DIR}/src/include -c $< $(shell sdl2-config --cflags) -o $@
 	touch $@
 
-${ANIM_OBJ_DIR}/%Anim.o: ${ANIM_SRC_DIR}/%Anim.c
+${ANIM_OBJ_DIR}/%Anim.o: ${ANIM_SRC_DIR}/%Anim.c ${ANIM_INC_DIR}/%Anim.h
 	gcc -g -I${JB_DIR}/src/include -I${HOME}/jb/src/Keyring/ -c $< $(shell sdl2-config --cflags) -o $@
 	touch $@
 
@@ -51,8 +51,12 @@ ${ANIM_SRC_DIR}/%Anim.c:
 	${JB_DIR}/utils/body/bin/body $*
 	touch $@
 
+${ANIM_INC_DIR}/%Anim.h:
+	${JB_DIR}/utils/body/bin/body $*
+	touch $@
+
 ./testBiome.o: ./testBiome.c
-	gcc -g -c testBiome.c -I${JB_DIR}/src/include -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags) -o testBiome.o
+	gcc -g -c testBiome.c -I${HOME}/jb/src/Keyring/ -I${JB_DIR}/src/include -I${ANIM_INC_DIR} -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags) -o testBiome.o
 	touch $@
 
 ${JB_DIR}/lib/libjollybean.a: ${JB_DIR}/build/*.o
