@@ -22,6 +22,8 @@
   not checking e in loops
   not iterating to fray's first empty element
   not passing the address of a pointer to a map of pointers
+  system's message command might equal an existing default one
+  not reading mapGet's resuilt as a double pointer when it is one
 
 // Kaizen explain why existing framework doesn't work before foregoing it
 // TODO Kaizen: Give subcomponents bitshifting enum macro.

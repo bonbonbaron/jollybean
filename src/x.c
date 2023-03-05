@@ -188,7 +188,7 @@ Error xIniSys(System *sP, U32 nComps, void *miscP) {
   }
 	// Only allocate one mailbox; it serves as input and output.
 	if (!e) {
-		e = frayNew((void**) &sP->mailboxF, sP->id, nComps);
+		e = frayNew((void**) &sP->mailboxF, sizeof(Message), nComps);
   }
   if (!e) {
     e = mapNew(&sP->subcompOwnerMP, sizeof(SubcompOwner), nComps);
@@ -242,7 +242,7 @@ void xSwitchComponent(System *sP, Entity entity, Key newCompKey) {
 void _xReadInbox(System *sP) {
   Error e = SUCCESS;
   Message *msgP = sP->mailboxF;
-  Message *msgEndP = msgP + frayGetFirstInactiveIdx(sP->mailboxF);
+  Message *msgEndP = msgP + *frayGetFirstEmptyIdxP(sP->mailboxF);
   for (; !e && msgP < msgEndP; msgP++) {
     switch(msgP->cmd) {
       case SWITCH_AND_ACTIVATE: 

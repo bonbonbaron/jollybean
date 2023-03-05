@@ -350,7 +350,6 @@ static Error _updateSrcRects(XRender *xRenderP, SortedRect *sortedRectA) {
   SubcompOwner *scoEndP = scoP + arrayGetNElems(xRenderP->system.subcompOwnerMP->mapA);
 
   RectOffset rectOffset = {0};
-  U32  offsetIdx  = 0;
   Colormap  *cmP;
   // If we own the src rect map, we better populate its flags before we access it.
     // Give everybody an empty rectangle for now.
@@ -386,7 +385,7 @@ static Error _updateSrcRects(XRender *xRenderP, SortedRect *sortedRectA) {
         rectOffset.y = c.srcRectP->y;
         e = mapSet(xRenderP->offsetRectMP, scoP->owner, &rectOffset);
         if (!e) {
-          e = mailboxWrite(xRenderP->system.mailboxF, ANIMATION, scoP->owner, UPDATE_RECT, offsetIdx);
+          e = mailboxWrite(xRenderP->system.mailboxF, ANIMATION, scoP->owner, UPDATE_RECT, 0);
         }
       }
     }

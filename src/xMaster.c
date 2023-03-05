@@ -1,8 +1,17 @@
 #include "xMaster.h"
 #include "implicitGenes.h"
 #include "jb.h"
+#include "x.h"
 
 X_(Master, 1, FLG_NO_CF_SRC_A_); 
+
+XProcMsgFuncDefUnused_(Master);
+XIniSubcompFuncDefUnused_(Master);
+XGetShareFuncDefUnused_(Master);
+// TODO implement clr function to delete all shared objects
+XClrFuncDefUnused_(Master);
+XPostprocessCompsDefUnused_(Master);
+
 
 // Number of entities to spawn (both total and per spawn struct)
 static void _countEntitiesToSpawn(Biome *biomeP) {
@@ -485,15 +494,19 @@ static Error _postProcessChildrenSystems(System *masterSysP) {
   return e;
 }
 
-static Error _xMasterForwardMail(XMaster *xP, Message *mailboxF) {
-  Message *msgP = mailboxF;
-  Message *msgEndP = msgP + *frayGetFirstEmptyIdxP(mailboxF);
+static Error _xMasterForwardMail(XMaster *xP, System *writerSysP) {
+  Message *msgP = writerSysP->mailboxF;
+  Message *msgEndP = msgP + *frayGetFirstEmptyIdxP(writerSysP->mailboxF);
 
   Error e = SUCCESS;
 
   for (; !e && msgP < msgEndP; ++msgP) {
     XMasterComp *cP = (XMasterComp*) xGetCompPByEntity(&xP->system, msgP->address);
-    e = mailboxForward((*cP)->mailboxF, msgP);
+    /* Mailboxes are both input and output. If this mailbox has received forwarded
+       messages already, we don't want to re-forward it to the same recipient. */
+    if (writerSysP->id != msgP->address) {
+      e = mailboxForward((*cP)->mailboxF, msgP);
+    }
   }
 
   return e;
@@ -637,9 +650,10 @@ Error xMasterIniSys(System *sP, void *sParamsP) {
     XMasterComp *cP = sP->cF;
     XMasterComp *cEndP = cP + *frayGetFirstEmptyIdxP(sP->cF);
 
+    // If this child system has any mail to send, send it.
     for (; !e && cP < cEndP; ++cP) {
       if (*frayGetFirstEmptyIdxP((*cP)->mailboxF)) {
-        e = _xMasterForwardMail(xP, (*cP)->mailboxF);
+        e = _xMasterForwardMail(xP, *cP);
       }
     }
   }
@@ -652,30 +666,6 @@ Error xMasterIniSys(System *sP, void *sParamsP) {
 
   return e;
 }
-
-// TODO this function is useless
-Error xMasterProcessMessage(System *sP, Message *msgP) {
-  if (msgP->address != MASTER_) {
-    XMasterComp *cP = (XMasterComp*) xGetCompPByEntity(sP, msgP->address);
-    if (!cP) {
-      return E_MAILBOX_BAD_RECIPIENT;
-    }
-    Error e = mailboxForward((*cP)->mailboxF, msgP);
-    // Wake up sleeping systems when someone sends them messages.
-    if (!e) {
-      if (!frayElemIsActive((*cP)->cF, cP - (XMasterComp*) sP->cF)) {
-        frayActivate(sP->cF, cP - (XMasterComp*) sP->cF);
-      }
-    }
-  }
-  return SUCCESS; // TODO impement maste logi c ier
-}
-
-XIniSubcompFuncDefUnused_(Master);
-XGetShareFuncDefUnused_(Master);
-// TODO implement clr function to delete all shared objects
-XClrFuncDefUnused_(Master);
-XPostprocessCompsDefUnused_(Master);
 
 /* xIni() initializes the parent system as well as its children. */
 Error xMasterIni(XMaster *xMasterSysP, System **sPA, U16 nXSystems, Key nXSystemsMax, Biome *biomeP) {
@@ -704,7 +694,7 @@ Error xMasterRun(System *sP) {
   for (; !e && cP < cEndP; ++cP) {
     e = xRun(*cP);  // cP is a pointer to XMasterComp, which itself is also a pointer.
     if (*frayGetFirstEmptyIdxP((*cP)->mailboxF)) {
-      e = _xMasterForwardMail(xP, (*cP)->mailboxF);
+      e = _xMasterForwardMail(xP, *cP);
     }
   }
   return e;

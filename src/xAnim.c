@@ -44,6 +44,7 @@ XIniSubcompFuncDef_(Anim) {
     e = mapSet(xP->animMPMP, entity, &animP->animMP);
   }
 
+  // Add entity's component to system as first available animation strip.
   if (!e) {
     Map *entityAnimMP;
     e = mapGetNestedMapP(xP->animMPMP, entity, &entityAnimMP);
@@ -90,6 +91,16 @@ XPostprocessCompsDef_(Anim) {
       if (!cP->srcRectP) {
         e = E_BAD_KEY;
       }
+      // Now change the W and H since original reflect entire animation strip's dimensions.
+      Map *animMP;
+      e = mapGetNestedMapP(xP->animMPMP, entity, &animMP);
+      if (!e && animMP) {
+        AnimStrip *stripP = animMP->mapA;
+        if (stripP) {
+          cP->srcRectP->w = stripP->frameA[0].rect.w;
+          cP->srcRectP->h = stripP->frameA[0].rect.h;
+        }
+      }
     }
   }
 
@@ -130,7 +141,7 @@ Error xAnimProcessMessage(System *sP, Message *msgP) {
 
     // Get animation subcomponent and offset to apply to all its frames.
     if (!e) {
-      animMP = mapGet(xP->animMPMP, msgP->attn);
+      e = mapGetNestedMapP(xP->animMPMP, msgP->attn, &animMP);
     }
     if (!e && animMP) {
       offsetP = (RectOffset*) mapGet(xP->offsetMP, msgP->attn);
