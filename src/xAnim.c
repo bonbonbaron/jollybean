@@ -1,9 +1,75 @@
 #include "xAnim.h"
 
+/* TODO
+ *
+ * \update src rcts in local animMPMP again
+ * \prevent xAddComp with a new system flag
+ * \create animatino map and make everybdoy grab from it
+ * \clean up animation maps in ... TODO where's dataP coming from?
+ */
+
 // Unused X functions
-XIniSysFuncDefUnused_(Anim);
-XIniSubcompFuncDefUnused_(Anim);
-XClrFuncDefUnused_(Anim);
+XIniSysFuncDef_(Anim) {
+  XAnim *xP = (XAnim*) sP;
+  Error e = mapNew(&xP->animMPMP, sizeof(Map*), xGetNComps(sP));
+  return e;
+}
+
+// sP, entity, subtype, dataP
+XIniSubcompFuncDef_(Anim) {
+  XAnim* xP = (XAnim*) sP;
+  if (!sP || !entity || subtype != ANIMATION_SUBTYPE || !dataP || !xP->animMPMP) {
+    return E_BAD_ARGS;
+  }
+
+  Error e = SUCCESS;
+
+  Animation *animP = (Animation*) dataP;
+
+  // Make a single map of animation strips for everybody who uses this particular one.
+  if (!animP->animMP) {
+    e = mapNew(&animP->animMP, sizeof(AnimStrip), animP->nPairs);
+    if (!e) {
+      KeyAnimStripPair *kasPairP = animP->kasPairA;
+      KeyAnimStripPair *kasPairEndP = kasPairP + animP->nPairs;
+
+      for (; !e && kasPairP < kasPairEndP; ++kasPairP) {
+        e = mapSet(animP->animMP, kasPairP->key, kasPairP->animStripP);
+      }
+    }
+  }
+
+  // Map from entity to the above animation map in the system's map of animation maps
+  if (!e) {
+    e = mapSet(xP->animMPMP, entity, &animP->animMP);
+  }
+
+  if (!e) {
+    Map *entityAnimMP;
+    e = mapGetNestedMapP(xP->animMPMP, entity, &entityAnimMP);
+    if (!e && entityAnimMP) {
+      AnimStrip *stripP = (AnimStrip*) entityAnimMP->mapA;
+      XAnimComp c = {
+        .currFrameIdx = 0,
+        .currStripP = stripP,  // point at first anim strip for now
+        .incrDecrement = 1,
+        .srcRectP = NULL,  // we'll set this in post-process function
+        .timeLeft = stripP->frameA[0].duration
+      };
+      e = xAddComp(sP, entity, &c);
+    }
+  }
+  return e;
+}
+
+XClrFuncDef_(Anim) {
+  if (!sP) {
+    return E_BAD_ARGS;
+  }
+  XAnim *xP = (XAnim*) sP;
+  mapDel(&xP->animMPMP);
+  return SUCCESS;
+}
 
 // You only need to give every component its source rect once.
 XPostprocessCompsDef_(Anim) {
@@ -37,6 +103,7 @@ XPostprocessCompsDef_(Anim) {
 
 Error xAnimProcessMessage(System *sP, Message *msgP) {
   Error e = SUCCESS;
+  XAnim *xP = (XAnim*) sP;
   /* When the render system makes a texture atlas, the animation frames' rectangles no longer
      have the correct XY coordinates. We have to offset them here to ensure we draw from the 
      right place in the atlas. */
@@ -44,7 +111,7 @@ Error xAnimProcessMessage(System *sP, Message *msgP) {
   if (msgP->cmd == ANIMATE) {
     AnimStrip *animStripP = NULL;
     XAnimComp *cP = NULL;
-    e = mapGetNestedMapPElem(sP->mutationMPMP, msgP->attn, msgP->arg, (void**) &animStripP);
+    e = mapGetNestedMapPElem(xP->animMPMP, msgP->attn, msgP->arg, (void**) &animStripP);
     if (!e) {
       cP = (XAnimComp*) xGetCompPByEntity(sP, msgP->attn);
       e = cP ? SUCCESS : E_NULL_VAR;
@@ -56,7 +123,6 @@ Error xAnimProcessMessage(System *sP, Message *msgP) {
     }
   }
   else if (msgP->cmd == UPDATE_RECT) {
-    XAnim *xP = (XAnim*) sP;
     AnimStrip *animStripP, *animStripEndP;
     AnimFrame *frameP, *frameEndP;
     Map *animMP = NULL;
@@ -64,7 +130,7 @@ Error xAnimProcessMessage(System *sP, Message *msgP) {
 
     // Get animation subcomponent and offset to apply to all its frames.
     if (!e) {
-      animMP = mapGet(xP->system.mutationMPMP, msgP->attn);
+      animMP = mapGet(xP->animMPMP, msgP->attn);
     }
     if (!e && animMP) {
       offsetP = (RectOffset*) mapGet(xP->offsetMP, msgP->attn);
@@ -156,5 +222,4 @@ Error xAnimRun(System *sP) {
 //======================================================
 // System definition
 //======================================================
-#define FLAGS_HERE (0)
-X_(Anim, ANIMATION, FLAGS_HERE);
+X_(Anim, ANIMATION, FLG_DONT_ADD_COMP);

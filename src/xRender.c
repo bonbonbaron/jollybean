@@ -356,7 +356,7 @@ static Error _updateSrcRects(XRender *xRenderP, SortedRect *sortedRectA) {
     // Give everybody an empty rectangle for now.
   if (xRenderP->system.flags & RENDER_SYS_OWNS_SRC_AND_OFFSET) {
     // Copy the flags from one map to another. It's a cheat code.
-    memcpy(xRenderP->srcRectMP->flagA, xRenderP->dstRectMP->flagA, N_FLAG_BYTES * sizeof(FlagInfo));
+    e = mapCopyKeys(xRenderP->srcRectMP, xRenderP->dstRectMP);
   }
   // Update all source rectangles' XY coordinates to their global positions in texture atlas.
   // For each entity...
@@ -364,7 +364,10 @@ static Error _updateSrcRects(XRender *xRenderP, SortedRect *sortedRectA) {
     cmP = (Colormap*) scoP->subcompA[COLORMAP_SUBCOMP_IDX];
     e = scoP->owner ? SUCCESS : E_NULL_VAR;  // Having a colormap is mandatory for xRender components.
     if (!e) {
-      // Source rectangle initialization
+      // Source rectangle initialization (set flag first because implicit share maps don't know 
+      // which entities they should be mapped to ahead of time... would be nice if I found a way
+      // to use mapCopyKeys() for all systems prior to this function)
+      mapSetFlag(xRenderP->srcRectMP, scoP->owner);
       c.srcRectP = (Rect_*) mapGet(xRenderP->srcRectMP, scoP->owner);
       if (!c.srcRectP) {
         return E_BAD_KEY;
@@ -495,7 +498,9 @@ XGetShareFuncDef_(Render) {
   // Get source rect and rect offset maps. Give both a chance to run if we enter this block.
   if (!e) {
     e = mapGetNestedMapP(shareMMP, SRC_RECT, &xRenderP->srcRectMP);  
+  }
     // If there's no animation system, there won't be a source rect shared map in master.
+  if (!e) {
     e = mapGetNestedMapP(shareMMP, RECT_OFFSET, &xRenderP->offsetRectMP);  
   }
   // We need to tolerate an animation system not existing.

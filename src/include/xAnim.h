@@ -2,6 +2,8 @@
 #define SYS_Anim
 #include "jb.h"
 
+#define ANIMATION_SUBTYPE (0x40)
+
 typedef struct {
   Rect_ rect;
   U32 duration;

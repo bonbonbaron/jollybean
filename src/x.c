@@ -91,18 +91,16 @@ U32 xGetNComps(System *sP) {
 }
 
 Error xAddMutationMap(System *sP, Entity entity, Map *mutationMP) {
-  if (entity && sP) {
-    // If the component is immutable, that's fine, don't worry about it. 
-    if (!mutationMP && !sP->mutationMPMP) {
-      return SUCCESS;
-    }
-    // If the user intended to mutate the gene, ensure we have both pieces of data.
-    if (mutationMP && sP->mutationMPMP) {
-      return mapSet(sP->mutationMPMP, entity, &mutationMP);
-    }
+  if (!entity || !sP) { // null mutation map is okay
+    return E_BAD_ARGS;
+  }
+  // If the component is immutable, that's fine, don't worry about it. 
+  // If the user intended to mutate the gene, ensure we have both pieces of data.
+  if (mutationMP && sP->mutationMPMP) {
+    return mapSet(sP->mutationMPMP, entity, &mutationMP);
   }
   // Otherwise bomb out.
-  return E_BAD_ARGS;
+  return SUCCESS;
 }
 
 
@@ -144,9 +142,9 @@ Error xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP)
   if ((compType & MASK_COMPONENT_TYPE) != sP->id) {
     return E_SYS_CMP_MISMATCH;
   }
+  Error e = SUCCESS;
   // If upper two bits are nonzero, this is a subcomponent. 
   if (compType & MASK_COMPONENT_SUBTYPE) {
-    Error e = SUCCESS;
     // If entity doesn't own any subcomponents yet, make a slot for it in subcomp ownership map.
     SubcompOwner *subcompOwnerP = mapGet(sP->subcompOwnerMP, entity);
     Key subcompType = compType & MASK_COMPONENT_SUBTYPE;
@@ -164,9 +162,10 @@ Error xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP)
     return e;
   }
   // If it's the main component, feed it straight in.
-  else {
-    return xAddComp(sP, entity, entityDataP);
+  else if (!(sP->flags & FLG_DONT_ADD_COMP)) {
+    e = xAddComp(sP, entity, entityDataP);
   }
+  return e;
 }
 
 Error xIniSys(System *sP, U32 nComps, void *miscP) {

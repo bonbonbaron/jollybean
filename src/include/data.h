@@ -56,7 +56,6 @@ typedef enum Error {
   E_MAILBOX_BAD_COMMAND,
   E_MAILBOX_BAD_ARG,
   E_MAILBOX_BAD_ATTN,
-  E_MAILBOX_BAD_COMMAND,
   E_BB_GENES_DONT_DO_INITIALIZATION,
   E_NULL_GENE_DATA,
   E_INVALID_GENE_CLASS
@@ -124,6 +123,8 @@ void  mapDel(Map **mapPP);
 Error mapSet(Map *mapP, const U8 key, const void *valP);
 void* mapGet(const Map *mapP, const U8 key);
 Error mapGetIndex(const Map *mapP, const Key key, Key *idxP);
+void  mapSetFlag(Map *mapP, const Key key);
+Error mapCopyKeys(Map *dstMP, Map *srcMP);
 Error mapGetNestedMapP(Map *mapP, Key mapKey, Map **mapPP);
 Error mapGetNestedMapPElem(Map *mapP, Key mapKey, Key elemKey, void **returnedItemPP);
 

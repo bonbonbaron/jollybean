@@ -1,5 +1,6 @@
 #include "xMaster.h"
 #include "implicitGenes.h"
+#include "jb.h"
 
 X_(Master, 1, FLG_NO_CF_SRC_A_); 
 
@@ -199,6 +200,7 @@ static Error _sharedGenesMapNew(Map **sharedGenesMPP, GeneHisto *geneHistoP) {
     for (Key i = 0, iEnd = arrayGetNElems(geneHistoP->histoXElemA); !e && i < iEnd; ++i) {
       if (geneHistoP->histoXElemA[i].count && iglA[i]) {
         for (Key j = 0, jEnd = iglA[i]->nGenes; !e && j < jEnd; ++j) {
+          if (iglA[i]->listA[j].type == RECT_OFFSET) printf ("rect offset found\n");
           e = _addSharedSubmap(
               sharedGenesMP, 
               iglA[i]->listA[j].type,
@@ -469,7 +471,8 @@ static Error _distributeGene(
       e = E_BAD_COMPONENT_TYPE;
       break;
   }
-return e;
+
+  return e;
 }
 
 static Error _postProcessChildrenSystems(System *masterSysP) {
@@ -479,6 +482,20 @@ static Error _postProcessChildrenSystems(System *masterSysP) {
   for (; !e && childSysPP < childSysEndPP; ++childSysPP) {
     e = (*childSysPP)->postprocessComps(*childSysPP);
   }
+  return e;
+}
+
+static Error _xMasterForwardMail(XMaster *xP, Message *mailboxF) {
+  Message *msgP = mailboxF;
+  Message *msgEndP = msgP + *frayGetFirstEmptyIdxP(mailboxF);
+
+  Error e = SUCCESS;
+
+  for (; !e && msgP < msgEndP; ++msgP) {
+    XMasterComp *cP = (XMasterComp*) xGetCompPByEntity(&xP->system, msgP->address);
+    e = mailboxForward((*cP)->mailboxF, msgP);
+  }
+
   return e;
 }
 
@@ -569,6 +586,11 @@ static Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGen
     e = _postProcessChildrenSystems(masterSysP);
   }
 
+  // TODO get rid of this after impl'ing behavior s ystem
+  if (!e) {
+    frayActivateAll(masterSysP->cF);
+  }
+
   _mutationMapArrayDel(biomeP);
   _geneHistoClr(&geneHisto);
   return e;
@@ -608,6 +630,20 @@ Error xMasterIniSys(System *sP, void *sParamsP) {
     e = _distributeGenes(xMasterSysP->biomeP, sP, &xMasterSysP->sharedMPMP, xMasterSysP->windowP, xMasterSysP->rendererP, xMasterIniSysPrmsP->nXSystemsMax);
   }
 
+  // Forward all mail that may have been written by this time.
+  if (!e) {
+    XMaster *xP = (XMaster*) sP;
+
+    XMasterComp *cP = sP->cF;
+    XMasterComp *cEndP = cP + *frayGetFirstEmptyIdxP(sP->cF);
+
+    for (; !e && cP < cEndP; ++cP) {
+      if (*frayGetFirstEmptyIdxP((*cP)->mailboxF)) {
+        e = _xMasterForwardMail(xP, (*cP)->mailboxF);
+      }
+    }
+  }
+
   // Avoid moving things by cheating and telling the fray everything's active.
   if (!e) {
     frayActivateAll(sP->cF);
@@ -617,6 +653,7 @@ Error xMasterIniSys(System *sP, void *sParamsP) {
   return e;
 }
 
+// TODO this function is useless
 Error xMasterProcessMessage(System *sP, Message *msgP) {
   if (msgP->address != MASTER_) {
     XMasterComp *cP = (XMasterComp*) xGetCompPByEntity(sP, msgP->address);
@@ -658,14 +695,16 @@ Error xMasterIni(XMaster *xMasterSysP, System **sPA, U16 nXSystems, Key nXSystem
 
 Error xMasterRun(System *sP) {
   Error e = SUCCESS;
-  XMasterComp *cIniP =sP->cF;
-  XMasterComp *cP = cIniP;
+
+  XMaster *xP = (XMaster*) sP;
+
+  XMasterComp *cP = sP->cF;
   XMasterComp *cEndP = cP + frayGetFirstInactiveIdx(sP->cF);
-  while (cP < cEndP) {
+
+  for (; !e && cP < cEndP; ++cP) {
     e = xRun(*cP);  // cP is a pointer to XMasterComp, which itself is also a pointer.
-    // Put idle subsystems to sleep.
-    if (!e && (frayGetFirstInactiveIdx((System*) cP) == 0)) {  
-      xQueueDeactivate(sP, cP);
+    if (*frayGetFirstEmptyIdxP((*cP)->mailboxF)) {
+      e = _xMasterForwardMail(xP, (*cP)->mailboxF);
     }
   }
   return e;

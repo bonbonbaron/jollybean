@@ -255,6 +255,19 @@ static Error preMapSet(const Map *mapP, const Key key, void **elemPP, void **nex
     return E_BAD_ARGS;
 }
 
+void mapSetFlag(Map *mapP, const Key key) {
+  Key byteIdx = byteIdx_(key);
+  mapP->flagA[byteIdx].flags |= bitFlag_(key);  /* flagNum & 0x07 gives you # of bits in the Nth byte */
+  /* Increment all prevBitCounts in bytes above affected one. */
+#ifdef __ARM_NEON__
+  // TODO vectorize the below if it's available
+#else
+  while (++byteIdx < N_FLAG_BYTES) {
+    ++mapP->flagA[byteIdx].prevBitCount;
+  }
+#endif
+}
+
 Error mapSet(Map *mapP, const Key key, const void *valP) {
 	void *elemP, *nextElemP;
   U32 nBytesToMove;
@@ -266,15 +279,7 @@ Error mapSet(Map *mapP, const Key key, const void *valP) {
 		/* Write value to map element. */
 		memcpy(elemP, valP, _getMapElemSz(mapP));
 		/* Set flag. */
-		Key byteIdx = byteIdx_(key);
-		mapP->flagA[byteIdx].flags |= bitFlag_(key);  /* flagNum & 0x07 gives you # of bits in the Nth byte */
-		/* Increment all prevBitCounts in bytes above affected one. */
-#ifdef __ARM_NEON__
-#else
-		while (++byteIdx < N_FLAG_BYTES) {
-		  ++mapP->flagA[byteIdx].prevBitCount;
-    }
-#endif
+    mapSetFlag(mapP, key);
 	}
 	return e;
 }
@@ -296,6 +301,14 @@ Error mapRem(Map *mapP, const Key key) {
     }
 	}
 	return e;
+}
+
+Error mapCopyKeys(Map *dstMP, Map *srcMP) {
+  if (!dstMP || !srcMP) {
+    return E_BAD_ARGS;
+  }
+  memcpy(dstMP->flagA, srcMP->flagA, N_FLAG_BYTES * sizeof(FlagInfo));
+  return SUCCESS;
 }
 
 Error mapGetNestedMapP(Map *outerMapP, Key mapKey, Map **innerMapPP) {

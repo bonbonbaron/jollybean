@@ -8,7 +8,7 @@ typedef Key Entity;
 #define FLG_NO_SWITCHES_    (0x01)
 #define FLG_NO_CF_SRC_A_    (0x02)
 #define FLG_NO_CHECKS_      (0x04)
-#define FLG_ADD_COMP_LATER_ (0x08)
+#define FLG_DONT_ADD_COMP   (0x08)
 
 typedef enum {ACTIVATED, DEACTIVATED} BuiltinMsgArg;
 

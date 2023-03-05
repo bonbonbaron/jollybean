@@ -18,6 +18,11 @@
  *
  */
 
+ lots of problems occur in:
+  not checking e in loops
+  not iterating to fray's first empty element
+  not passing the address of a pointer to a map of pointers
+
 // Kaizen explain why existing framework doesn't work before foregoing it
 // TODO Kaizen: Give subcomponents bitshifting enum macro.
 //              Then put an example of it in the template header file.
