@@ -438,6 +438,24 @@ XPostprocessCompsDef_(Render) {
       appendAtlasPalette(xRenderP->atlasSurfaceP, *cpPP);
     }
   }
+  // Zero the alpha out on black pixels since that's our invisible pixel.
+  if (!e) {
+    Color_ BLACK_PIXEL = {
+      .r = 0,
+      .g = 0,
+      .b = 0,
+      .a = 255
+    };
+    Color_ INVISIBLE_PIXEL = {0};
+    Color_ *colorP = xRenderP->atlasSurfaceP->format->palette->colors;
+    Color_ *colorEndP = colorP + xRenderP->atlasSurfaceP->format->palette->ncolors;
+    for (; colorP < colorEndP; ++colorP) {
+      if (!memcmp(colorP, &BLACK_PIXEL, sizeof(Color_))) {
+        printf("making an invisible pixel\n");
+        *colorP = INVISIBLE_PIXEL;
+      }
+    }
+  }
   // Texture
   if (!e) {
     e = textureNew(&xRenderP->atlasTextureP, xRenderP->rendererP, xRenderP->atlasSurfaceP);

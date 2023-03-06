@@ -58,10 +58,12 @@ Error textureNew(Texture_ **texturePP, Renderer_ *rendererP, Surface_ *surfaceP)
 
   //TODO add an #if that only uses this code when interfacing SDL
 	*texturePP = SDL_CreateTextureFromSurface(rendererP, surfaceP);
-	if (!*texturePP)
+	if (!*texturePP) {
 		return E_UNSUPPORTED_PIXEL_FORMAT;
+  }
+  Error e = textureSetAlpha(*texturePP);
 
-	return SUCCESS;
+	return e;
 }
 
 void textureDel(Texture_ **texturePP) {
@@ -70,8 +72,9 @@ void textureDel(Texture_ **texturePP) {
 }
 
 Error textureSetAlpha(Texture_ *textureP) {
-	if (!textureP)
+	if (!textureP) {
 		return E_BAD_ARGS;
+  }
 	return SDL_SetTextureBlendMode(textureP, SDL_BLENDMODE_BLEND);
 }
 

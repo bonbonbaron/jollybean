@@ -18,6 +18,9 @@ inline static Entity _getEntityByCompIdx(System *sP, Key compIdx) {
 }
 
 void* xGetCompPByEntity(System *sP, Entity entity) {
+  if (!sP || !entity) {
+    return NULL;
+  }
   return _getCompPByEntity(sP, entity);
 }
 

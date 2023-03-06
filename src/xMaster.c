@@ -209,7 +209,6 @@ static Error _sharedGenesMapNew(Map **sharedGenesMPP, GeneHisto *geneHistoP) {
     for (Key i = 0, iEnd = arrayGetNElems(geneHistoP->histoXElemA); !e && i < iEnd; ++i) {
       if (geneHistoP->histoXElemA[i].count && iglA[i]) {
         for (Key j = 0, jEnd = iglA[i]->nGenes; !e && j < jEnd; ++j) {
-          if (iglA[i]->listA[j].type == RECT_OFFSET) printf ("rect offset found\n");
           e = _addSharedSubmap(
               sharedGenesMP, 
               iglA[i]->listA[j].type,

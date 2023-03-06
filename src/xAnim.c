@@ -200,31 +200,44 @@ Error xAnimRun(System *sP) {
       // If we've reached the last frame, ask if this is a pingpong or repeating animation strip.
       if (cP->currFrameIdx == (cP->currStripP->nFrames - 1)) {
         // If this is a repeating animation strip, reset index, time left, and srcRectP.
-        if (cP->currStripP->repeat) {
-          cP->currFrameIdx = 0;
-          cP->timeLeft = cP->currStripP->frameA[0].duration;
-        } 
-        // Otherwise, if this is a pingpong animation strip, reverse directions.
-        else if (cP->currStripP->pingPong) {
+        if (cP->currStripP->pingPong) {
           cP->incrDecrement *= -1;
+          cP->currFrameIdx -= 1;
         }
+        else if (cP->currStripP->repeat) {
+          cP->currFrameIdx = 0;
+        } 
+        // Deactivate if not repeating or reversing order for pingpong.
         else {
           xQueueDeactivate(sP, cP);
           continue;
         }
       }
       // Otherwise, if this is a ping pong strip returning to the first frame, reverse directions.
-      else if (cP->currFrameIdx == 0 && cP->currStripP->pingPong && cP->currStripP->repeat) {
-        cP->incrDecrement *= -1;
+      else if (cP->currFrameIdx == 0) {
+        if (cP->currStripP->pingPong) {
+          // If we just finished going backwards in a pingpong
+          if (cP->incrDecrement == -1) {
+            // Start over if we're repeating
+            if (cP->currStripP->repeat) {
+              cP->incrDecrement = 1;
+              cP->currFrameIdx += 1;
+            }
+            // Deactivate if not repeating pingpong.
+            else {
+              xQueueDeactivate(sP, cP);
+              continue;
+            }
+          }
+        }
       }
       else {
-        xQueueDeactivate(sP, cP);
-        continue;
+        cP->currFrameIdx += cP->incrDecrement;
       }
+      // Advance the animation frame in whatever direction we're going.
+      cP->timeLeft = cP->currStripP->frameA[cP->currFrameIdx].duration;
+      *cP->srcRectP = cP->currStripP->frameA[cP->currFrameIdx].rect;
     }
-    // Advance the animation frame in whatever direction we're going.
-    cP->currFrameIdx += cP->incrDecrement;
-    *cP->srcRectP = cP->currStripP->frameA[cP->currFrameIdx].rect;
   }
 
 	return e;
