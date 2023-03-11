@@ -135,9 +135,9 @@ int main(int argc, char **argv) {
 //SDL_CreateRGBSurfaceWithFormatFrom(void *pixels,
                          //int width, int height, int depth, int pitch,
                          //Uint32 format)
-      //surfPA[i] = SDL_CreateRGBSurfaceWithFormatFrom(cmP->sdP->unstrippedDataA, 
+      //surfPA[i] = SDL_CreateRGBSurfaceWithFormatFrom(cmP->sdP->assembledDataA, 
           //cmP->w, cmP->h, 8, cmP->w, 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
-      surfPA[i] = SDL_CreateRGBSurfaceWithFormatFrom(cmP->sdP->unstrippedDataA, 
+      surfPA[i] = SDL_CreateRGBSurfaceWithFormatFrom(cmP->sdP->assembledDataA, 
           cmP->w, cmP->h, 8, cmP->w, SDL_PIXELFORMAT_INDEX8);
       SDL_SetPaletteColors(surfPA[i]->format->palette, cpPA[i]->colorA, 0, cpPA[i]->nColors);
 

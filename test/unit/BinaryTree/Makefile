@@ -13,8 +13,8 @@ CP_OBJ_DIR = ${COLOR_PALETTE_DIR}/obj
 JB_DIR = ${HOME}/hack/jollybean
 
 #~/jb/build/Seed/Genome/Gene/Body/Graybody/Colormap/src/I
-./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./main.o ${JB_DIR}/build/xRender.o ${JB_DIR}/build/x.o ${JB_DIR}/build/data.o ${JB_DIR}/build/interface.o ${JB_DIR}/utils/body/build/previewImg.o
-	gcc ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ${JB_DIR}/utils/body/build/previewImg.o ./main.o ${JB_DIR}/build/interface.o $(shell sdl2-config --libs) ${JB_DIR}/build/xRender.o ${JB_DIR}/build/x.o ${JB_DIR}/build/data.o -lpthread -o $@
+./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./main.o ${JB_DIR}/build/data.o 
+	gcc ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./main.o ${JB_DIR}/build/data.o -o $@
 	touch $@
 
 ./main.o: ./main.c
@@ -37,8 +37,8 @@ ${CM_SRC_DIR}/%Colormap.c:
 	${JB_DIR}/utils/body/bin/body $*
 	touch $@
 
-${JB_DIR}/build/%.o: ${JB_DIR}/src/%.c
-	make -C ${JB_DIR}/
+${JB_DIR}/build/data.o: ${JB_DIR}/src/data.c
+	${CC} -c ${JB_DIR}/src/data.c -I${JB_DIR}/src/include -o $@
 	touch $@
 
 .PHONY: clean

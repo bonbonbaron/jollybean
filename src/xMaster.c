@@ -167,10 +167,10 @@ static Error _subsystemsIni(System *masterSysP, GeneHisto *geneHistoP) {
     /* "<= MEDIA_GENE" includes MEDIA_GENE and EXCLUSIVE_GENE, 
        both of which can go into systems. */
     if (histoElemP->geneClass <= MEDIA_GENE && histoElemP->count)  {  // i.e. if any entities exist having components for this system...
-      System **_sPP = (System**) xGetCompPByEntity(masterSysP, histoElemP->geneType & MASK_COMPONENT_TYPE);
-      if (_sPP) {
+      XMasterComp *cP = (XMasterComp*) xGetCompPByEntity(masterSysP, histoElemP->geneType & MASK_COMPONENT_TYPE);
+      if (cP) {
         // Assume no subsystems need extra parameters.
-        e = xIniSys(*_sPP, histoElemP->count, NULL);  
+        e = xIniSys(*cP, histoElemP->count, NULL);  
       }
     }
   }
@@ -412,7 +412,7 @@ static Error _distributeGene(
     Map *bbMP,
     Spawn *spawnP) {
   Gene gene = **genePP;
-  System *childSysP = NULL;
+  XMasterComp *childSysPP = NULL;
   Map *innerMapP;
   Gene **compositeGenePP;
   Gene **compositeGeneEndPP;
@@ -439,13 +439,13 @@ static Error _distributeGene(
     // Fall through to next case to distribute media gene to the system.
     // These media are still compressed at this point, but it'll be inflated after distro'ing.
     case EXCLUSIVE_GENE:
-      childSysP = *((System**) xGetCompPByEntity(masterSysP, gene.u.unitary.type & MASK_COMPONENT_TYPE));
-      if (childSysP) {
+      childSysPP = (XMasterComp*) xGetCompPByEntity(masterSysP, gene.u.unitary.type & MASK_COMPONENT_TYPE);
+      if (childSysPP) {
         // histo's 1D array represents a 2D array: columns are spawn #s, rows are system #s.
         // So we have to index it awkwardly as hell. :)
-        e = xAddEntityData(childSysP, entity, gene.u.unitary.type, gene.u.unitary.dataP);
+        e = xAddEntityData(*childSysPP, entity, gene.u.unitary.type, gene.u.unitary.dataP);
         if (!e) {
-          e = xAddMutationMap(childSysP, entity, spawnP->geneMutationMPA[gene.u.unitary.type & MASK_COMPONENT_TYPE]);
+          e = xAddMutationMap(*childSysPP, entity, spawnP->geneMutationMPA[gene.u.unitary.type & MASK_COMPONENT_TYPE]);
         }
       }
       break;
@@ -503,8 +503,10 @@ static Error _xMasterForwardMail(XMaster *xP, System *writerSysP) {
     XMasterComp *cP = (XMasterComp*) xGetCompPByEntity(&xP->system, msgP->address);
     /* Mailboxes are both input and output. If this mailbox has received forwarded
        messages already, we don't want to re-forward it to the same recipient. */
-    if (writerSysP->id != msgP->address) {
-      e = mailboxForward((*cP)->mailboxF, msgP);
+    if (cP) {  // If a letter is bound to a nonexistent recipient, just drop it on the floor.
+      if (writerSysP->id != msgP->address) {
+        e = mailboxForward((*cP)->mailboxF, msgP);
+      }
     }
   }
 
@@ -596,6 +598,11 @@ static Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGen
   // Some systems using composite genes don't make components until they have all their ingredients.
   if (!e) {
     e = _postProcessChildrenSystems(masterSysP);
+  }
+  // Clean up your strip data
+  if (sdPF) {
+    e = multithread_(stripClr, (void*) sdPF);
+    frayDel((void**) &sdPF);
   }
 
   // TODO get rid of this after impl'ing behavior s ystem

@@ -39,6 +39,7 @@ typedef enum Error {
 	SUCCESS,
 	E_BAD_ARGS,
 	E_NO_MEMORY,
+  E_INFLATION_FAILED,
   E_FILE_IO,
   E_BAD_DATA,
 	E_BAD_INDEX,
@@ -129,11 +130,31 @@ Error mapGetNestedMapP(Map *mapP, Key mapKey, Map **mapPP);
 Error mapGetNestedMapPElem(Map *mapP, Key mapKey, Key elemKey, void **returnedItemPP);
 
 // Binary trees
-#define binaryTreeNew_ arrayNew 
-#define binaryTreeDel_ arrayDel 
-#define getLeftChildIdx_(parentIdx_) ((parentIdx_ << 1) + 1)
-#define getRightChildIdx_(parentIdx_) ((parentIdx_ << 1) + 2)
-#define getParentIdx_(childIdx_) ((childIdx_ - 1 - !(childIdx_ & 1)) >> 1)
+#define BINARY_TREE_NODE_UNUSED_ (0)
+#define BINARY_TREE_NODE_USED_   (1)
+
+typedef enum { LEFT_CHILD, RIGHT_CHILD } Child;
+
+typedef struct {
+  Key /* these all need to be the same type */
+    childIdxA[2],
+    parentIdx;
+  Key used;  /* this doesn't need to be the same type */
+} BinaryTreeElem;
+
+typedef struct {
+  Key maxIdx,
+      leftmostIdx,   /* if you think of bin tree as a triangle, "leftmost" is bottom-left corner. */
+      rightmostIdx,  /* likewise for "rightmost"; bottom-right corner. */
+      nextEmptyIdx;
+  BinaryTreeElem *idxA;  // this array contains parent/child indices and used status
+} BinaryTree;
+
+Error binaryTreeNew(BinaryTree **btPP, U32 nElems);
+void  binaryTreeDel(BinaryTree **btPP);
+void  binaryTreeElemSetUsed(BinaryTreeElem *elemP);
+Error binaryTreeAddChild(BinaryTree *treeP, Child child, BinaryTreeElem *parentP);
+Error binaryTreeIni(BinaryTree *btP);
 
 // Histograms 
 Error histoNew(U32 **histoPP, const U32 maxVal);
@@ -213,7 +234,7 @@ typedef struct {
   U32 flags;     // used to indicate distinct histo inclusion, flags to skip inflation steps, etc.
   Stripmap sm;
   Stripset ss;
-  U8 *unstrippedDataA;  // destination of strip data's assembling step, if not skipped
+  U8 *assembledDataA;  // destination of strip data's assembling step, if not skipped
 } StripDataS;
 
 void stripClr(StripDataS *sdP);

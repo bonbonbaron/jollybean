@@ -1,13 +1,5 @@
 #include "xAnim.h"
 
-/* TODO
- *
- * \update src rcts in local animMPMP again
- * \prevent xAddComp with a new system flag
- * \create animatino map and make everybdoy grab from it
- * \clean up animation maps in ... TODO where's dataP coming from?
- */
-
 // Unused X functions
 XIniSysFuncDef_(Anim) {
   XAnim *xP = (XAnim*) sP;
@@ -93,7 +85,9 @@ XPostprocessCompsDef_(Anim) {
       }
       // Now change the W and H since original reflect entire animation strip's dimensions.
       Map *animMP;
-      e = mapGetNestedMapP(xP->animMPMP, entity, &animMP);
+      if (!e) { 
+        e = mapGetNestedMapP(xP->animMPMP, entity, &animMP);
+      }
       if (!e && animMP) {
         AnimStrip *stripP = animMP->mapA;
         if (stripP) {
@@ -157,7 +151,7 @@ Error xAnimProcessMessage(System *sP, Message *msgP) {
         // Offset all the frames' rectangles in this strip to reflect their texture atlas offsets.
         for (; animStripP < animStripEndP; ++animStripP) {
           frameP = animStripP->frameA;
-          frameEndP = frameP + arrayGetNElems(animStripP->frameA);
+          frameEndP = frameP + animStripP->nFrames;
           for (; frameP < frameEndP; ++frameP) {
             frameP->rect.x += offsetP->x;
             frameP->rect.y += offsetP->y;
@@ -169,6 +163,8 @@ Error xAnimProcessMessage(System *sP, Message *msgP) {
   else {
     e = E_MAILBOX_BAD_RECIPIENT;
   }
+
+
 	return e;
 }
 

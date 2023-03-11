@@ -1,15 +1,16 @@
 #include "data.h"
 
-// TODO make inflatableIni receive a lock rather than putting a 24-byte lock inside of inf, ss, & sd
 #define byteIdx_(key) ((key - 1) >> 3)
 #define bitFlag_(key) (1 << ((key - 1) & 0x07))
 
 inline Error jbAlloc(void **voidPP, U32 elemSz, U32 nElems) {
-	if (voidPP == NULL)
+	if (voidPP == NULL) {
 		return E_BAD_ARGS;
+  }
 	*voidPP = malloc(nElems * elemSz);
-	if (*voidPP == NULL)
+	if (*voidPP == NULL) {
 		return E_NO_MEMORY;
+  }
 	return SUCCESS;
 }
 
@@ -24,20 +25,24 @@ inline void jbFree(void **voidPP) {
 /********** ARRAYS (1D & 2D) ********/
 /************************************/
 Error arrayNew(void **arryPP, U32 elemSz, U32 nElems) {
-	if (elemSz <= 0 || nElems < 0 || arryPP == NULL) 
+  Error e = SUCCESS;
+  U32 *ptr;
+	if (elemSz <= 0 || nElems < 0 || arryPP == NULL) {
 		return E_BAD_ARGS;  /* TODO: replace with reasonable error type */
-	if (nElems == 0) 
+  }
+	if (nElems == 0) {
 		*arryPP = NULL;
+  }
 	else {
-		U32 *ptr = (U32*) malloc((elemSz * nElems) + (2 * sizeof(U32)));
-		if (ptr == NULL) 
-			return E_NO_MEMORY;
-		ptr[0] = elemSz;
-		ptr[1] = nElems;
-		*arryPP = (ptr + 2);
-		memset(*arryPP, 0, elemSz * nElems);
+		e = jbAlloc((void**) &ptr, (elemSz * nElems) + (2 * sizeof(U32)), 1);
+    if (!e) {
+      ptr[0] = elemSz;
+      ptr[1] = nElems;
+      *arryPP = (ptr + 2);
+      memset(*arryPP, 0, elemSz * nElems);
+    }
 	}
-	return SUCCESS;
+	return e;
 }
 
 void arrayDel(void **arryPP) {
@@ -349,8 +354,76 @@ Error mapGetNestedMapPElem(Map *mapP, Key mapKey, Key elemKey, void **returnedIt
   return SUCCESS;
 }
 
-// Binary Trees
-// We're letting the user define the search function, because every object is different and callbacks are slow.
+/* Binary trees
+ * ============
+ * The binary tree in this algorithm merely describes another array.
+ * The binary tree just tells you the binary parent-child relationships of all the other array's elements.
+ *
+ * Originally jollybean used the array-based implementation of binary trees found here:
+ *    https://www.geeksforgeeks.org/binary-tree-array-implementation/
+ *
+ * However, in the worst-case scenario 
+ *   (i.e. every right child only gets another right child, leading to 256 binary tree levels), 
+ *   that implementation would require (2^256) * elemSize bytes.
+ * And that's if you just use 1-byte keys.
+ *
+ * Therefore, this more scalable implementation minimizes memory footprint.
+ * Whether it's faster or slower than the above depends on whether 
+ * tighter data locality outweighs double array-access (once for tree, again for actual data).
+ *
+ */
+Error binaryTreeNew(BinaryTree **btPP, U32 nElems) {
+  if (!btPP || !nElems) {
+    return E_BAD_ARGS;
+  }
+
+  // Allocate tree metadata.
+  Error e = jbAlloc((void**) btPP, sizeof(BinaryTree), 1);
+
+  // Allocate array for element parent/child-index metadata.
+  if (!e) {
+    memset(*btPP, 0, sizeof(BinaryTree));
+    (*btPP)->maxIdx = nElems - 1;
+    e = arrayNew((void**) &(*btPP)->idxA, sizeof(BinaryTreeElem), nElems);
+  }
+
+  return e;
+}
+
+void binaryTreeDel(BinaryTree **btPP) {
+  if (btPP) {
+    arrayDel((void**) &(*btPP)->idxA);
+    jbFree((void**) btPP);
+  }
+}
+
+void binaryTreeElemSetUsed(BinaryTreeElem *elemP) {
+  elemP->used = BINARY_TREE_NODE_USED_;
+}
+
+Error binaryTreeAddChild(BinaryTree *treeP, Child child, BinaryTreeElem *parentP) {
+  if (!treeP || !parentP || treeP->nextEmptyIdx > treeP->maxIdx) {
+    return E_BAD_ARGS;
+  }
+  // Give parent its child.
+  parentP->childIdxA[child] = treeP->nextEmptyIdx;
+  // Give child its parent.
+  treeP->idxA[treeP->nextEmptyIdx++].parentIdx = parentP - treeP->idxA;
+  return SUCCESS;
+}
+
+// This assumes the user will manually seed the first element of his actual data array.
+Error binaryTreeIni(BinaryTree *btP) {
+  if (!btP) {
+    return E_BAD_ARGS;
+  }
+  btP->idxA[0].used = 1;
+  btP->idxA[0].parentIdx = 0;
+  btP->idxA[0].childIdxA[0] = 0;  // has no children yet
+  btP->idxA[0].childIdxA[1] = 0;
+  ++btP->nextEmptyIdx;
+  return SUCCESS;
+}
 
 /************************************/
 /************ HISTOGRAMS ************/
@@ -427,7 +500,7 @@ enum
 //  Function returns a pointer to the decompressed data, or NULL on failure.
 //  *pOut_len will be set to the decompressed data's size, which could be larger than src_buf_len on uncompressible data.
 //  The caller must free() the returned block when it's no longer needed.
-void *tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_len, size_t *pOut_len, int flags);
+//Error tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_len, void *pDst_buf, size_t *pOut_len);
 
 // tinfl_decompress_mem_to_mem() decompresses a block in memory to another block in memory.
 // Returns TINFL_DECOMPRESS_MEM_TO_MEM_FAILED on failure, or the number of bytes written on success.
@@ -506,9 +579,10 @@ struct tinfl_decompressor_tag
 #include <string.h>
 
 // MZ_MALLOC, etc. are only used by the optional high-depth helper functions.
+#define MINIZ_NO_MALLOC
 #ifdef MINIZ_NO_MALLOC
   #define MZ_MALLOC(x) NULL
-  #define MZ_FREE(x) x, ((void)0)
+  #define MZ_FREE(x) /*x, ((void)0) */
   #define MZ_REALLOC(p, x) NULL
 #else
   #define MZ_MALLOC(x) malloc(x)
@@ -877,37 +951,67 @@ common_exit:
 }
 
 // Higher depth helper functions.
-void *tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_len, size_t *pOut_len, int flags) {
-  tinfl_decompressor decomp; void *pBuf = NULL, *pNew_buf; size_t src_buf_ofs = 0, out_buf_capacity = 0;
+Error tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_len, void **ppDst_buf, size_t *pOut_len) {
+  Error e= jbAlloc(ppDst_buf, *pOut_len, 1);
+  if (e) {
+    return e;
+  }
+  tinfl_decompressor decomp; 
+  void *pDst_buf = *ppDst_buf;
+  //void *pNew_buf; 
+  size_t 
+    src_buf_ofs = 0, 
+    out_buf_capacity = 0;
   *pOut_len = 0;
   tinflIni(&decomp);
   tinfl_status status;
   for (;;) {
-    size_t src_buf_size = src_buf_len - src_buf_ofs, dst_buf_size = out_buf_capacity - *pOut_len, new_out_buf_capacity;
-    status = tinfl_decompress(&decomp, (const mz_uint8*)pSrc_buf + src_buf_ofs, &src_buf_size, (mz_uint8*)pBuf, pBuf ? (mz_uint8*)pBuf + *pOut_len : NULL, &dst_buf_size,
-      (flags & ~TINFL_FLAG_HAS_MORE_INPUT) | TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF);
+    size_t 
+      src_buf_size = src_buf_len - src_buf_ofs, 
+      dst_buf_size = out_buf_capacity - *pOut_len,
+      new_out_buf_capacity;
+    status = tinfl_decompress(
+        &decomp, 
+        (const mz_uint8*) pSrc_buf + src_buf_ofs, 
+        &src_buf_size, 
+        (mz_uint8*)pDst_buf, 
+        (mz_uint8*)pDst_buf + *pOut_len, 
+        &dst_buf_size,
+        (TINFL_FLAG_PARSE_ZLIB_HEADER & ~TINFL_FLAG_HAS_MORE_INPUT) 
+          | TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF
+    );
 
     if ((status < 0) || (status == TINFL_STATUS_NEEDS_MORE_INPUT)) {
-      MZ_FREE(pBuf); *pOut_len = 0; return NULL;
+      *pOut_len = 0; 
+      return E_INFLATION_FAILED;
 		}
 
     src_buf_ofs += src_buf_size;
     *pOut_len += dst_buf_size;
 
-    if (status == TINFL_STATUS_DONE) 
+    if (status == TINFL_STATUS_DONE) {
 			break;
+    }
+#if 1
+    new_out_buf_capacity = out_buf_capacity * 2; 
+    if (new_out_buf_capacity < 128) {
+      new_out_buf_capacity = 128;
+    }
+    //pNew_buf = MZ_REALLOC(pDst_buf, new_out_buf_capacity);
 
-    new_out_buf_capacity = out_buf_capacity * 2; if (new_out_buf_capacity < 128) new_out_buf_capacity = 128;
-    pNew_buf = MZ_REALLOC(pBuf, new_out_buf_capacity);
-
-    if (!pNew_buf) {
-      MZ_FREE(pBuf); *pOut_len = 0; return NULL;
+    //if (!pNew_buf) {
+    if (!pDst_buf) {
+      MZ_FREE(pDst_buf); 
+      *pOut_len = 0; 
+      return E_INFLATION_FAILED;
 		}
 
-    pBuf = pNew_buf; out_buf_capacity = new_out_buf_capacity;
+    //pDst_buf = pNew_buf; 
+    out_buf_capacity = new_out_buf_capacity;
+#endif
   }
 
-  return pBuf;
+  return SUCCESS;
 }
 
 
@@ -946,18 +1050,17 @@ Error inflatableIni(Inflatable *inflatableP) {
     Error e = SUCCESS;
     if (inflatableP->inflatedDataP == NULL) {
       long long unsigned int expectedInflatedLen;
-      e = jbAlloc(&inflatableP->inflatedDataP, inflatableP->inflatedLen, 1);
-      if (!e) {
-        expectedInflatedLen = inflatableP->inflatedLen;
-        inflatableP->inflatedDataP = tinfl_decompress_mem_to_heap(
-                                       (const void*) inflatableP->compressedDataA, 
-                                       (size_t) inflatableP->compressedLen, 
-                                       &inflatableP->inflatedLen,
-                                       TINFL_FLAG_PARSE_ZLIB_HEADER); 
-        if (inflatableP->inflatedLen != expectedInflatedLen) {
-          e = E_UNEXPECTED_DCMP_SZ;
-          jbFree(&inflatableP->inflatedDataP);
-        }
+      //e = jbAlloc(&inflatableP->inflatedDataP, inflatableP->inflatedLen, 1);
+      expectedInflatedLen = inflatableP->inflatedLen;
+      e = tinfl_decompress_mem_to_heap(
+         (const void*) inflatableP->compressedDataA, 
+         (size_t) inflatableP->compressedLen, 
+         &inflatableP->inflatedDataP,
+         &inflatableP->inflatedLen
+      ); 
+      if (inflatableP->inflatedLen != expectedInflatedLen) {
+        e = E_UNEXPECTED_DCMP_SZ;
+        jbFree(&inflatableP->inflatedDataP);
       }
     }
     return e;
@@ -984,13 +1087,17 @@ void inflatableClr(Inflatable *inflatableP) {
 #define frayGetElemSz_ arrayGetElemSz
 #define frayGetElemByIdx_ _fast_arrayGetElemByIdx
 Error frayNew(void **fPP, U32 elemSz, U32 nElems) {
-	if (elemSz <= 0 || nElems <= 0 || fPP == NULL) 
+  Error e = SUCCESS;
+  U32 *ptr;
+	if (elemSz <= 0 || nElems <= 0 || fPP == NULL) {
 		return E_BAD_ARGS;  
+  }
 	else {
     // Add 1 more element for swaps. 
-		U32 *ptr = (U32*) malloc((elemSz * nElems) + ((N_PREFRAY_ELEMS + 1) * sizeof(U32)));
-		if (ptr == NULL) 
+		e = jbAlloc((void**) &ptr, (elemSz * (nElems + 1)) + ((N_PREFRAY_ELEMS) * sizeof(U32)), 1);
+		if (ptr == NULL) {
 			return E_NO_MEMORY;
+    }
 		ptr[N_PREFRAY_ELEMS - OFFSET_INACTIVE]   = 0;       
 		ptr[N_PREFRAY_ELEMS - OFFSET_N_PAUSED]   = 0;  
 		ptr[N_PREFRAY_ELEMS - OFFSET_1ST_EMPTY]  = 0;       
@@ -999,7 +1106,7 @@ Error frayNew(void **fPP, U32 elemSz, U32 nElems) {
 		*fPP = (ptr + N_PREFRAY_ELEMS);
 		memset(*fPP, 0, elemSz * nElems);
   }
-  return SUCCESS;
+  return e;
 }
 
 void frayDel(void **frayPP) {
@@ -1212,13 +1319,13 @@ Error mailboxForward(Message *mailboxP, Message *msgP) {
   return frayAdd((void*) mailboxP, msgP, NULL);
 }
 
+// Stripmapped Data
 void stripClr(StripDataS *sdP) {
   if (sdP) {
     inflatableClr(sdP->ss.infP);
     inflatableClr(sdP->sm.infP);
     arrayDel((void**) &sdP->ss.unpackedDataP);
-    arrayDel((void**) &sdP->unstrippedDataA);
-    // Gotta keep the stripmap elements, or you won't be able to re-inflate later!
+    arrayDel((void**) &sdP->assembledDataA);
   }
 }
 
@@ -1253,6 +1360,9 @@ __inline__ static void _unpackStrip4Bpu(U32 **srcStripPP, U32 **dstStripPP) {
 #endif
 
 Error sdInflate(StripDataS *sdP) {
+  if (sdP->flags & SD_SKIP_INFLATION_) {
+    return SUCCESS;
+  }
   Error e = inflatableIni(sdP->ss.infP);
   if (!e) {
     e = inflatableIni(sdP->sm.infP);
@@ -1264,6 +1374,10 @@ Error sdInflate(StripDataS *sdP) {
 Error sdUnpack(StripDataS *sdP) {
   if (!sdP || (sdP->ss.infP && !sdP->ss.infP->compressedDataA)) {
     return E_BAD_ARGS;
+  }
+
+  if (sdP->flags & SD_SKIP_UNPACKING_) {
+    return SUCCESS;
   }
 
   Stripset *ssP = &sdP->ss;
@@ -1327,18 +1441,22 @@ Error sdUnpack(StripDataS *sdP) {
 }
 
 Error sdAssemble(StripDataS *sdP) {
-  if (!sdP || !sdP->ss.unpackedDataP || !sdP->sm.infP->inflatedDataP || sdP->unstrippedDataA
+  if (!sdP || !sdP->ss.unpackedDataP || !sdP->sm.infP->inflatedDataP || sdP->assembledDataA
       || sdP->ss.nUnitsPerStrip == 0) {
     return E_BAD_ARGS;
   } 
 
-  Error e = arrayNew((void**) &sdP->unstrippedDataA, sizeof(U8), sdP->sm.nIndices * sdP->ss.nUnitsPerStrip);
+  if (sdP->flags & SD_SKIP_ASSEMBLY_) {
+    return SUCCESS;
+  }
+
+  Error e = arrayNew((void**) &sdP->assembledDataA, sizeof(U8), sdP->sm.nIndices * sdP->ss.nUnitsPerStrip);
   
   // Piece together strips
   if (!e) {
     StripmapElem *smElemP = sdP->sm.infP->inflatedDataP;
     StripmapElem *smElemEndP = smElemP + sdP->sm.nIndices;
-    U8 *unstrippedDataP = sdP->unstrippedDataA;
+    U8 *unstrippedDataP = sdP->assembledDataA;
     for (; smElemP < smElemEndP; ++smElemP, unstrippedDataP += sdP->ss.nUnitsPerStrip) {
       memcpy(unstrippedDataP,
              sdP->ss.unpackedDataP + (*smElemP * sdP->ss.nUnitsPerStrip),

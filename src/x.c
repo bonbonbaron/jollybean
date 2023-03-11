@@ -1,16 +1,8 @@
 #include "x.h"
 
 // Copied these from data.c since I don't know how to inline across files.
-inline static U32 _fast_arrayGetElemSz(const void *arryP) {
-	return *((U32*) arryP - 2);
-}
-
 inline static Key* _getCompIdxPByEntity(System *sP, Entity entity) {
   return (Key*) mapGet(sP->e2cIdxMP, entity);
-}
-
-inline static void* _getCompPByEntity(System *sP, Entity entity) {
-	return (void*) ((U8*) sP->cF + (*_getCompIdxPByEntity(sP, entity) * _fast_arrayGetElemSz(sP->cF)));
 }
 
 inline static Entity _getEntityByCompIdx(System *sP, Key compIdx) {
@@ -21,7 +13,11 @@ void* xGetCompPByEntity(System *sP, Entity entity) {
   if (!sP || !entity) {
     return NULL;
   }
-  return _getCompPByEntity(sP, entity);
+  Key *elemIdxP = _getCompIdxPByEntity(sP, entity);
+  if (!elemIdxP) {
+    return NULL;
+  }
+	return (void*) ((U8*) sP->cF + *elemIdxP * arrayGetElemSz(sP->cF));
 }
 
 Entity xGetEntityByCompIdx(System *sP, Key compIdx) {
@@ -232,7 +228,7 @@ void xSwitchComponent(System *sP, Entity entity, Key newCompKey) {
   if (mutationMPP) {
     Map *mutationMP = *mutationMPP;
     if (mutationMP) {
-      void* activeCompP = _getCompPByEntity(sP, entity);
+      void* activeCompP = xGetCompPByEntity(sP, entity);
       if (activeCompP) {
         void **tmpP = mapGet(mutationMP, newCompKey);
         if (tmpP)

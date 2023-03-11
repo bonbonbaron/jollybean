@@ -279,34 +279,34 @@ static Error _validateInflatables(StripDataS *sdP, StripmapElem *smSrcA, U8 *pac
 }
 
 static Error _validateUnstrippedData(StripDataS *sdP, U8 *srcA) {
-  if (!sdP || !sdP->unstrippedDataA || !sdP->sm.infP || !sdP->sm.infP->inflatedDataP || !srcA) {
+  if (!sdP || !sdP->assembledDataA || !sdP->sm.infP || !sdP->sm.infP->inflatedDataP || !srcA) {
     return E_BAD_ARGS;
   }
   // Validate output element size
-  if (arrayGetElemSz(sdP->unstrippedDataA) != arrayGetElemSz(srcA)) {
+  if (arrayGetElemSz(sdP->assembledDataA) != arrayGetElemSz(srcA)) {
     printf("[_validateUnstrippedData] Unstripped data's elements size %d doesn't match source data's element size %d.\n");
     return E_BAD_DATA;
   }
   // Validate output element count
-  if (arrayGetNElems(sdP->unstrippedDataA) != arrayGetNElems(srcA)) {
+  if (arrayGetNElems(sdP->assembledDataA) != arrayGetNElems(srcA)) {
     printf("[_validateUnstrippedData] Unstripped data's %d elements doesn't match source data's %d elements.\n");
     return E_BAD_DATA;
   }
 
   Error e = SUCCESS;
-  if (memcmp(srcA, sdP->unstrippedDataA, arrayGetElemSz(srcA) * arrayGetNElems(srcA))) {
+  if (memcmp(srcA, sdP->assembledDataA, arrayGetElemSz(srcA) * arrayGetNElems(srcA))) {
     printf("[_validateUnstrippedData] Unstripped data doesn't  match original.\n");
     printf("[_validateUnstrippedData] Unstripped data:\n");
     for (U32 i = 0; 
-         i < arrayGetElemSz(sdP->unstrippedDataA) * arrayGetNElems(sdP->unstrippedDataA); 
+         i < arrayGetElemSz(sdP->assembledDataA) * arrayGetNElems(sdP->assembledDataA); 
          ++i) {
-      if (sdP->unstrippedDataA[i] != srcA[i]) {
+      if (sdP->assembledDataA[i] != srcA[i]) {
         e = E_BAD_DATA;
         StripmapElem *smElemP = (StripmapElem*) sdP->sm.infP->inflatedDataP 
                              + (i / sdP->ss.nUnitsPerStrip);
         U32 maxStripIdx = (sdP->ss.nUnits / sdP->ss.nUnitsPerStrip) - 1;
         printf("[_validateUnstrippedData] Element mismatch: output %3d (from stripset's strip %5d of %5d), source %3d\n", 
-            sdP->unstrippedDataA[i], *smElemP, maxStripIdx, srcA[i]);
+            sdP->assembledDataA[i], *smElemP, maxStripIdx, srcA[i]);
         if (*smElemP >= maxStripIdx) {
           printf("Looks like the index is out of bounds. The true last strip is this:\n");
           U8 *lastUnpackedStripP = sdP->ss.unpackedDataP + (sdP->ss.nUnitsPerStrip * (maxStripIdx));
@@ -327,7 +327,7 @@ static Error _validateUnstrippedData(StripDataS *sdP, U8 *srcA) {
 
 #endif
 
-Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPackedByte, StripDataS **sdPP, U8 verbose) {
+Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPackedByte, StripDataS **sdPP, U32 flags, U8 verbose) {
   if (!srcA 
       || !sdPP 
       || !nBytesPerUnpackedStrip
@@ -374,6 +374,9 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
     memset(ssUnpackedA, 0, sizeof(U8) * nStripsInOrigData * nBytesPerUnpackedStrip);
     // Strip map
     e = arrayNew((void**) &smDataA, sizeof(StripmapElem), nStripsInOrigData);
+  }
+  if (!e) {
+    (*sdPP)->flags = flags;
   }
   if (verbose) {
     printf("Analyzing viability of breaking image into %d strips of %d units each...\n", nStripsInOrigData, nBytesPerUnpackedStrip);
@@ -518,7 +521,7 @@ Error writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripDataS *sdP
     fprintf(fP, "\t\t.infP = &%s,\n", ssInfName);
     fprintf(fP, "\t},\n");
     // Unstripped data
-    fprintf(fP, "\t.unstrippedDataA = NULL\n");
+    fprintf(fP, "\t.assembledDataA = NULL\n");
     fprintf(fP, "};\n\n");
   }
 

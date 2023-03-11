@@ -53,8 +53,9 @@ void appendAtlasPalette(Surface_ *atlasSurfaceP, ColorPalette *srcPaletteP) {
 }
 
 Error textureNew(Texture_ **texturePP, Renderer_ *rendererP, Surface_ *surfaceP) {
-	if (!texturePP || !rendererP || !surfaceP)
+	if (!texturePP || !rendererP || !surfaceP) {
 		return E_BAD_ARGS;
+  }
 
   //TODO add an #if that only uses this code when interfacing SDL
 	*texturePP = SDL_CreateTextureFromSurface(rendererP, surfaceP);

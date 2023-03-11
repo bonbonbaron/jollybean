@@ -1,8 +1,4 @@
 #include "xRender.h"
-#include "data.h"
-#include "jb.h"
-#include "x.h"
-#include "xMaster.h"
 
 // =========================================
 // Clear color map and all its related data.
@@ -21,7 +17,7 @@ Error cmGen(Colormap *cmP) {
 
 	if (cmP != NULL && cmP->sdP != NULL) {
 		// Check if the image has already been reconstructed. If so, get out.
-		if (cmP->sdP->unstrippedDataA != NULL) {   // Colormap has already been reconstructed.
+		if (cmP->sdP->assembledDataA != NULL) {   // Colormap has already been reconstructed.
 			return SUCCESS;  
     }
 		// If not reconstructed yet, inflate strip set if it's still compressed (inflate() checks internally).
@@ -119,7 +115,7 @@ static Error _atlasGen(AtlasElem **atlasAP, const U32 N_SAMPLES, SortedRect *sor
   // Binary tree of rects
 
   // Allocate enough room for even the extraneous children to avoid child init branching.
-  Error e = binaryTreeNew_((void**) atlasAP, sizeof(AtlasElem), N_SAMPLES * 2 + 2);
+  Error e = binaryTreeNew_(atlasAP, sizeof(AtlasElem), N_SAMPLES);
 
   if (!e) {
     AtlasElem *atlasA = *atlasAP;
@@ -180,15 +176,15 @@ static Error _atlasGen(AtlasElem **atlasAP, const U32 N_SAMPLES, SortedRect *sor
         case SHOULD_RIGHT:
         case CAN_RIGHT:
           atlasA[0].remWidth += sortedRectP->rect.w;
-          atlasA[getNthRightDescendant_(++nGrowthsRight)].remWidth = sortedRectP->rect.w;
-          _atlasElemIni(atlasA, getNthRightDescendant_(nGrowthsRight), sortedRectP);
+          atlasA[getNthRightAtlasDescendant_(++nGrowthsRight)].remWidth = sortedRectP->rect.w;
+          _atlasElemIni(atlasA, getNthRightAtlasDescendant_(nGrowthsRight), sortedRectP);
           break;
         case CAN_RIGHT_SHOULD_DOWN:
         case SHOULD_DOWN:
         case CAN_DOWN:
           atlasA[0].remHeight += sortedRectP->rect.h;
-          atlasA[getNthLowerDescendant_(++nGrowthsDown)].remHeight = sortedRectP->rect.h;
-          _atlasElemIni(atlasA, getNthLowerDescendant_(nGrowthsDown), sortedRectP);
+          atlasA[getNthLowerAtlasDescendant_(++nGrowthsDown)].remHeight = sortedRectP->rect.h;
+          _atlasElemIni(atlasA, getNthLowerAtlasDescendant_(nGrowthsDown), sortedRectP);
           break;
         default:
           break;
@@ -356,6 +352,10 @@ static Error _updateSrcRects(XRender *xRenderP, SortedRect *sortedRectA) {
   if (xRenderP->system.flags & RENDER_SYS_OWNS_SRC_AND_OFFSET) {
     // Copy the flags from one map to another. It's a cheat code.
     e = mapCopyKeys(xRenderP->srcRectMP, xRenderP->dstRectMP);
+    assert(arrayGetNElems(xRenderP->srcRectMP->mapA) == 
+           arrayGetNElems(xRenderP->dstRectMP->mapA)); 
+    assert(arrayGetElemSz(xRenderP->srcRectMP->mapA) == 
+           arrayGetElemSz(xRenderP->dstRectMP->mapA)); 
   }
   // Update all source rectangles' XY coordinates to their global positions in texture atlas.
   // For each entity...
@@ -366,7 +366,9 @@ static Error _updateSrcRects(XRender *xRenderP, SortedRect *sortedRectA) {
       // Source rectangle initialization (set flag first because implicit share maps don't know 
       // which entities they should be mapped to ahead of time... would be nice if I found a way
       // to use mapCopyKeys() for all systems prior to this function)
-      mapSetFlag(xRenderP->srcRectMP, scoP->owner);
+      if (!(xRenderP->system.flags & RENDER_SYS_OWNS_SRC_AND_OFFSET)) {
+        mapSetFlag(xRenderP->srcRectMP, scoP->owner);
+      }
       c.srcRectP = (Rect_*) mapGet(xRenderP->srcRectMP, scoP->owner);
       if (!c.srcRectP) {
         return E_BAD_KEY;
@@ -401,6 +403,7 @@ static void _updateCmSrcRectIndices(Colormap **cmPF, SortedRect *sortedRectA) {
     cmPF[srP->srcIdx]->sortedRectIdx = srP - sortedRectA;
   }
 }
+
 // Post-processing of components is done AFTER media genes are inflated and unpacked.
 // Rendering media genes are flagged to skip the strip-assembling stage; that's done here.
 XPostprocessCompsDef_(Render) {
@@ -425,12 +428,12 @@ XPostprocessCompsDef_(Render) {
   if (!e) {
     e = _assembleTextureAtlas(xRenderP, atlasA, sortedRectA, &atlasPixelA);
   }
-  // TODO purge color-keyed pixels' alphas
   // Texture surface
   if (!e) {
     e = surfaceNew(&xRenderP->atlasSurfaceP, (void*) atlasPixelA, atlasA[0].remWidth, atlasA[0].remHeight);
   }
   // Texture surface palette
+#if 1
   if (!e) {
     ColorPalette **cpPP = xRenderP->cpPF;
     ColorPalette **cpEndPP = cpPP + *frayGetFirstEmptyIdxP(xRenderP->cpPF);
@@ -451,11 +454,11 @@ XPostprocessCompsDef_(Render) {
     Color_ *colorEndP = colorP + xRenderP->atlasSurfaceP->format->palette->ncolors;
     for (; colorP < colorEndP; ++colorP) {
       if (!memcmp(colorP, &BLACK_PIXEL, sizeof(Color_))) {
-        printf("making an invisible pixel\n");
         *colorP = INVISIBLE_PIXEL;
       }
     }
   }
+#endif
   // Texture
   if (!e) {
     e = textureNew(&xRenderP->atlasTextureP, xRenderP->rendererP, xRenderP->atlasSurfaceP);
@@ -474,11 +477,13 @@ XPostprocessCompsDef_(Render) {
       cP = (XRenderComp*) xGetCompPByEntity(sP, *entityP);
       if (cP) {
         cP->dstRectP = (Rect_*) mapGet(xRenderP->dstRectMP, *entityP);
-        cP->dstRectP->w = cP->srcRectP->w;
-        cP->dstRectP->h = cP->srcRectP->h;
-      }
-      if (!cP->dstRectP) {
-        e = E_BAD_KEY;
+        if (!cP->dstRectP) {
+          e = E_BAD_KEY;
+        }
+        if (!e) {
+          cP->dstRectP->w = cP->srcRectP->w;
+          cP->dstRectP->h = cP->srcRectP->h;
+        }
       }
     }
   }
@@ -527,7 +532,25 @@ XGetShareFuncDef_(Render) {
   if (e && !xRenderP->srcRectMP && !xRenderP->offsetRectMP && 
             xRenderP->rendererP && xRenderP->windowP) {
     xRenderP->system.flags |= RENDER_SYS_OWNS_SRC_AND_OFFSET;
+    // Make new maps
     e = mapNew(&xRenderP->srcRectMP, sizeof(Rect_), xGetNComps(sP));
+    if (!e) {
+      e = mapNew(&xRenderP->offsetRectMP, sizeof(RectOffset), xGetNComps(sP));
+    }
+    // Copy dst rect map's keys to them
+    if (!e) {
+      e = mapCopyKeys(xRenderP->srcRectMP, xRenderP->dstRectMP);
+    }
+    if (!e) {
+      e = mapCopyKeys(xRenderP->offsetRectMP, xRenderP->dstRectMP);
+    }
+    // Plug them into shared map just in case
+    if (!e) {
+      e = mapSet(shareMMP, SRC_RECT, &xRenderP->srcRectMP);
+    }
+    if (!e) {
+      e = mapSet(shareMMP, RECT_OFFSET, &xRenderP->offsetRectMP);
+    }
   }
   return e;
 }
@@ -535,6 +558,7 @@ XGetShareFuncDef_(Render) {
 //======================================================
 // Render activity
 //======================================================
+static int i = 0;
 Error xRenderRun(System *sP) {
 	Error e = SUCCESS;
 
@@ -549,6 +573,10 @@ Error xRenderRun(System *sP) {
   }
 	if (!e) {
 		present_(xRenderP->rendererP);
+  }
+
+  if (++i == 10) {
+    return E_BAD_ARGS;
   }
 
 	return e;

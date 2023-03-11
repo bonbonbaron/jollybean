@@ -16,12 +16,11 @@
 #define SHOULD_RIGHT_CAN_DOWN (SHOULD_RIGHT | CAN_DOWN)
 #define CAN_RIGHT_SHOULD_DOWN (SHOULD_DOWN | CAN_RIGHT)
 #define SHOULD_RIGHT_DOWN  (SHOULD_RIGHT | SHOULD_DOWN)
-#define getNthRightDescendant_(n_) ((1 << (n_)) - 1)
-#define getNthLowerDescendant_(n_) ((2 << (n_)) - 2)
 // Rightward children are odd, downward even. 
 // We leverage this knowledge to navigate backwards without re-entering already-explored nodes.
 #define getParentAtlasIdx_(childIdx_) ((childIdx_ - 1 - !(cameFromRight = childIdx_ & 1)) >> 1)
-
+#define getNthRightAtlasDescendant_ getNthLeftDescendant_
+#define getNthLowerAtlasDescendant_ getNthRightDescendant_
 // 
 #define COLORMAP      (0x40)
 #define COLOR_PALETTE (0x80)

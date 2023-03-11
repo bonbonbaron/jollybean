@@ -1,11 +1,13 @@
 #include "xRender.h"
+#include "jb.h"
+#include "interface.h"
 #include "blehColormap.h"
 #include "blehColorPalette.h"
 #include "heckColormap.h"
 #include "heckColorPalette.h"
 #include "redColormap.h"
 #include "redColorPalette.h"
-#include "previewImg.h"
+
 int main(int argc, char **argv) {
   Gene **genePA = NULL;
 
@@ -19,14 +21,14 @@ int main(int argc, char **argv) {
       if (!e) {
         genePA[i] = geneP;
         genePA[i]->geneClass = MEDIA_GENE;
-        genePA[i]->key = 0;
-        genePA[i]->size = sizeof(XRenderComp);
-        genePA[i]->type = RENDER;
+        genePA[i]->u.unitary.key = 0;
+        genePA[i]->u.unitary.size = sizeof(XRenderComp);
+        genePA[i]->u.unitary.type = RENDER;
       }
     }
-    genePA[0]->dataP = &blehColormap;
-    genePA[1]->dataP = &redColormap;
-    genePA[2]->dataP = &heckColormap;
+    genePA[0]->u.unitary.dataP = &blehColormap;
+    genePA[1]->u.unitary.dataP = &redColormap;
+    genePA[2]->u.unitary.dataP = &heckColormap;
   }
 
   // Extract stripdata from each media gene into an array of contiguous strip data pointers.
@@ -36,34 +38,53 @@ int main(int argc, char **argv) {
   }
   if (!e) {
     for (int i = 0, iEnd = arrayGetNElems(sdPA); i < iEnd; ++i) {
-      sdPA[i] = *((StripDataS**) genePA[i]->dataP);
+      sdPA[i] = *((StripDataS**) genePA[i]->u.unitary.dataP);
     }
   }
 
+  U32 sum = 0;
+  for (StripDataS **sdPP = sdPA; sdPP < sdPA + arrayGetNElems(sdPA); ++sdPP) {
+    printf("sm inf sz: %d\n", (*sdPP)->sm.infP->inflatedLen);
+    printf("ss inf sz: %d\n", (*sdPP)->ss.infP->inflatedLen);
+    sum += (*sdPP)->ss.infP->inflatedLen;
+    sum += (*sdPP)->sm.infP->inflatedLen;
+  }
+  printf("sum: %d\n", sum);
+
   // Inflate colormap inflatables
+#if 0
   if (!e) {
-    e = multiThread(sdInflate, (void*) sdPA);
+    e = multithread_(sdInflate, (void*) sdPA);
   }
   // Unpack stripsets
   if (!e) {
-    e = multiThread(sdUnpack, (void*) sdPA);
+    e = multithread_(sdUnpack, (void*) sdPA);
   }
   // Assemble colormaps from strips
   if (!e) {
-    e = multiThread(sdAssemble, (void*) sdPA);
+    e = multithread_(sdAssemble, (void*) sdPA);
   }
-  if (!e) {
-    e = previewImg(&blehColormap, &blehColorPalette, 1000);
-  }
-  if (!e) {
-    e = previewImg(&redColormap, &redColorPalette, 1000);
-  }
-  if (!e) {
-    e = previewImg(&heckColormap, &heckColorPalette, 1000);
-  }
+#endif
   // Deflate colormap inflatables
-  if (!e) {
-    e = multiThread(stripClr,   (void*) sdPA);
+  if (sdPA) {
+    //e = multithread_(stripClr,   (void*) sdPA);
+    for (StripDataS **sdPP = sdPA; !e && sdPP < sdPA + arrayGetNElems(sdPA); ++sdPP) {
+#if 0
+      arrayDel((void**)&(*sdPP)->assembledDataA);
+      arrayDel((void**)&(*sdPP)->ss.unpackedDataP);
+      free((void**)(*sdPP)->ss.infP->inflatedDataP);
+      free((void**)(*sdPP)->sm.infP->inflatedDataP);
+#elif 0
+      e = stripIni(*sdPP);
+      stripClr(*sdPP);
+#elif 1
+      inflatableIni((*sdPP)->sm.infP);
+      inflatableClr((*sdPP)->sm.infP);
+#else
+      jbAlloc(&(*sdPP)->sm.infP->inflatedDataP, (*sdPP)->sm.infP->inflatedLen, 1);
+      jbFree(&(*sdPP)->sm.infP->inflatedDataP);
+#endif
+    }
   }
 
   arrayDel((void**) &sdPA);
