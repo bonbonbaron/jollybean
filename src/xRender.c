@@ -30,6 +30,10 @@ Error cmGen(Colormap *cmP) {
 	return e;
 }
 
+#define getRightAtlasChildIdx_(x) 0
+#define getLowerAtlasChildIdx_(x) 0
+#define getNthRightAtlasDescendant_(x) 0
+#define getNthLowerAtlasDescendant_(x) 0
 static inline void _atlasElemChildIni(AtlasElem *childP, U32 x, U32 y, U32 remW, U32 remH) {
   childP->x = x,
   childP->y = y,
@@ -115,7 +119,7 @@ static Error _atlasGen(AtlasElem **atlasAP, const U32 N_SAMPLES, SortedRect *sor
   // Binary tree of rects
 
   // Allocate enough room for even the extraneous children to avoid child init branching.
-  Error e = binaryTreeNew_(atlasAP, sizeof(AtlasElem), N_SAMPLES);
+  Error e = binaryTreeNew(atlasAP, N_SAMPLES);
 
   if (!e) {
     AtlasElem *atlasA = *atlasAP;

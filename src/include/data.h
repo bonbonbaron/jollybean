@@ -144,8 +144,7 @@ typedef struct {
 
 typedef struct {
   Key maxIdx,
-      leftmostIdx,   /* if you think of bin tree as a triangle, "leftmost" is bottom-left corner. */
-      rightmostIdx,  /* likewise for "rightmost"; bottom-right corner. */
+      extremityA[2],   /* extremities are right-and-leftmost POPULATED elements with root on top */
       nextEmptyIdx;
   BinaryTreeElem *idxA;  // this array contains parent/child indices and used status
 } BinaryTree;
@@ -154,6 +153,7 @@ Error binaryTreeNew(BinaryTree **btPP, U32 nElems);
 void  binaryTreeDel(BinaryTree **btPP);
 void  binaryTreeElemSetUsed(BinaryTreeElem *elemP);
 Error binaryTreeAddChild(BinaryTree *treeP, Child child, BinaryTreeElem *parentP);
+Error binaryTreeExpand(BinaryTree *btP, Child child);
 Error binaryTreeIni(BinaryTree *btP);
 
 // Histograms 

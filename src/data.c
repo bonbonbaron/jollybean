@@ -401,18 +401,31 @@ void binaryTreeElemSetUsed(BinaryTreeElem *elemP) {
   elemP->used = BINARY_TREE_NODE_USED_;
 }
 
-Error binaryTreeAddChild(BinaryTree *treeP, Child child, BinaryTreeElem *parentP) {
-  if (!treeP || !parentP || treeP->nextEmptyIdx > treeP->maxIdx) {
+Error binaryTreeAddChild(BinaryTree *btP, Child child, BinaryTreeElem *parentP) {
+  if (!btP || !parentP || btP->nextEmptyIdx > btP->maxIdx) {
     return E_BAD_ARGS;
   }
   // Give parent its child.
-  parentP->childIdxA[child] = treeP->nextEmptyIdx;
+  parentP->childIdxA[child] = btP->nextEmptyIdx;
   // Give child its parent.
-  treeP->idxA[treeP->nextEmptyIdx++].parentIdx = parentP - treeP->idxA;
+  btP->idxA[btP->nextEmptyIdx++].parentIdx = parentP - btP->idxA;
   return SUCCESS;
 }
 
-// This assumes the user will manually seed the first element of his actual data array.
+// This takes the farthest child from the root in the childth direction and adds a child to it.
+Error binaryTreeExpand(BinaryTree *btP, Child child) {
+  if (!btP || btP->nextEmptyIdx > btP->maxIdx) {
+    return E_BAD_ARGS;
+  }
+  BinaryTreeElem *parentP = &btP->idxA[btP->extremityA[child]];
+  Error e = binaryTreeAddChild(btP, child, parentP);
+  if (!e) {
+    btP->extremityA[child] = btP->nextEmptyIdx - 1;
+  }
+  return e;
+}
+
+// This assumes the user will manually populate the first element of the actual data array.
 Error binaryTreeIni(BinaryTree *btP) {
   if (!btP) {
     return E_BAD_ARGS;
@@ -421,6 +434,11 @@ Error binaryTreeIni(BinaryTree *btP) {
   btP->idxA[0].parentIdx = 0;
   btP->idxA[0].childIdxA[0] = 0;  // has no children yet
   btP->idxA[0].childIdxA[1] = 0;
+  // Extremities are optional. 
+  // Call binaryTreeExpand if you want to leverage them by appending to the last descendant
+  // in either direction without having to search for them.
+  btP->extremityA[LEFT_CHILD] = 0;
+  btP->extremityA[RIGHT_CHILD] = 0;
   ++btP->nextEmptyIdx;
   return SUCCESS;
 }
