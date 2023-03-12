@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
   for (; statP < statEndP; ++statP) {
     for (Child child = LEFT_CHILD; child <= RIGHT_CHILD; ++child) {
       for (BattleStat *stat2P = statP + 1; stat2P < statEndP; ++stat2P) {
-        if (btIsAnOrphan_(&stat2P->header)) {
+        if (btIsAnOrphan_(btP, stat2P - btP)) {
           btLinkNodes_(btP, statP, stat2P, child);
           break;
         }

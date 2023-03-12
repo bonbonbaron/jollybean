@@ -151,7 +151,7 @@ typedef enum { LEFT_CHILD, RIGHT_CHILD } Child;
     ORPHAN_BYTE_ << 16 | \
     ORPHAN_BYTE_ <<  8 | \
     ORPHAN_BYTE_)
-#define btIsAnOrphan_(btElHeaderP_) (*((U32*) btElHeaderP_) == ORPHAN_)
+#define btIsAnOrphan_(btP_, idx_) (*((U32*) &btP_[(idx_)].header) == ORPHAN_)
 #define btHasChild_(btElHeaderP_, child_) btElHeaderP_->childA[child_]  /* if nonzero, non-orphan has childn*/
 #define btEraseHeader_(btElHeaderP) *((U32*) btElHeaderP) = 0
 #define btLinkNodes_(btP_, parentP_, childP_, child_) \
