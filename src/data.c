@@ -90,14 +90,15 @@ inline static void* _arrayGetElemByIdx(const void *arryP, S32 idx) {
 void* arrayGetVoidElemPtr(const void *arryP, S32 idx) {
   const U32 nElems = arrayGetNElems(arryP);
   /* If idx < 0, return void pointer past end of array. */
-  if (idx < 0) 
-    return (void*) (((U8*) arryP) + (nElems * arrayGetElemSz(arryP)));
+  if ((U32) idx < nElems) {
   /* If idx is valid, return void pointer to indexed element. */
-  else if ((U32) idx < nElems)
     return (void*) ((U8*) arryP + (idx * arrayGetElemSz(arryP)));
+  }
+  else if (idx < 0) {
+    return (void*) (((U8*) arryP) + (nElems * arrayGetElemSz(arryP)));
+  }
   /* Index is invalid. */
-  else
-    return NULL;  
+  return NULL;  
 }
 
 Error arraySetVoidElem(void *arrayP, U32 idx, const void *elemSrcompP) {
@@ -354,93 +355,23 @@ Error mapGetNestedMapPElem(Map *mapP, Key mapKey, Key elemKey, void **returnedIt
   return SUCCESS;
 }
 
-/* Binary trees
- * ============
- * The binary tree in this algorithm merely describes another array.
- * The binary tree just tells you the binary parent-child relationships of all the other array's elements.
- *
- * Originally jollybean used the array-based implementation of binary trees found here:
- *    https://www.geeksforgeeks.org/binary-tree-array-implementation/
- *
- * However, in the worst-case scenario 
- *   (i.e. every right child only gets another right child, leading to 256 binary tree levels), 
- *   that implementation would require (2^256) * elemSize bytes.
- * And that's if you just use 1-byte keys.
- *
- * Therefore, this more scalable implementation minimizes memory footprint.
- * Whether it's faster or slower than the above depends on whether 
- * tighter data locality outweighs double array-access (once for tree, again for actual data).
- *
- */
-Error binaryTreeNew(BinaryTree **btPP, U32 nElems) {
-  if (!btPP || !nElems) {
+// Binary trees
+Error btNew(void **btAP, U32 elemSz, U32 nElems) {
+  if (!btAP || !elemSz || !nElems) {
     return E_BAD_ARGS;
   }
 
-  // Allocate tree metadata.
-  Error e = jbAlloc((void**) btPP, sizeof(BinaryTree), 1);
+  Error e = arrayNew(btAP, elemSz, nElems);
 
-  // Allocate array for element parent/child-index metadata.
+  // This pre-configures the headers in each element to indicate orphan-hood till tree node is linked.
+  // We trust the user to re-assign the non-header values in the struct.
   if (!e) {
-    memset(*btPP, 0, sizeof(BinaryTree));
-    (*btPP)->maxIdx = nElems - 1;
-    e = arrayNew((void**) &(*btPP)->idxA, sizeof(BinaryTreeElem), nElems);
+    memset(*btAP, ORPHAN_BYTE_, elemSz * nElems);
+    BtElHeader *firstHeaderP = *btAP;
+    btEraseHeader_(firstHeaderP);
   }
 
   return e;
-}
-
-void binaryTreeDel(BinaryTree **btPP) {
-  if (btPP) {
-    arrayDel((void**) &(*btPP)->idxA);
-    jbFree((void**) btPP);
-  }
-}
-
-void binaryTreeElemSetUsed(BinaryTreeElem *elemP) {
-  elemP->used = BINARY_TREE_NODE_USED_;
-}
-
-Error binaryTreeAddChild(BinaryTree *btP, Child child, BinaryTreeElem *parentP) {
-  if (!btP || !parentP || btP->nextEmptyIdx > btP->maxIdx) {
-    return E_BAD_ARGS;
-  }
-  // Give parent its child.
-  parentP->childIdxA[child] = btP->nextEmptyIdx;
-  // Give child its parent.
-  btP->idxA[btP->nextEmptyIdx++].parentIdx = parentP - btP->idxA;
-  return SUCCESS;
-}
-
-// This takes the farthest child from the root in the childth direction and adds a child to it.
-Error binaryTreeExpand(BinaryTree *btP, Child child) {
-  if (!btP || btP->nextEmptyIdx > btP->maxIdx) {
-    return E_BAD_ARGS;
-  }
-  BinaryTreeElem *parentP = &btP->idxA[btP->extremityA[child]];
-  Error e = binaryTreeAddChild(btP, child, parentP);
-  if (!e) {
-    btP->extremityA[child] = btP->nextEmptyIdx - 1;
-  }
-  return e;
-}
-
-// This assumes the user will manually populate the first element of the actual data array.
-Error binaryTreeIni(BinaryTree *btP) {
-  if (!btP) {
-    return E_BAD_ARGS;
-  }
-  btP->idxA[0].used = 1;
-  btP->idxA[0].parentIdx = 0;
-  btP->idxA[0].childIdxA[0] = 0;  // has no children yet
-  btP->idxA[0].childIdxA[1] = 0;
-  // Extremities are optional. 
-  // Call binaryTreeExpand if you want to leverage them by appending to the last descendant
-  // in either direction without having to search for them.
-  btP->extremityA[LEFT_CHILD] = 0;
-  btP->extremityA[RIGHT_CHILD] = 0;
-  ++btP->nextEmptyIdx;
-  return SUCCESS;
 }
 
 /************************************/

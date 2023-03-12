@@ -1,62 +1,42 @@
 #include "data.h"
 #define N_SAMPLES (256)
+// SOURCE
+typedef struct {
+  BtElHeader header;
+  U32 hp;
+  U32 mp;
+  U16 power;
+  U16 stamina;
+} BattleStat;
+
 int main(int argc, char **argv) {
-  BinaryTree *btP;
-  Error e = binaryTreeNew(&btP, N_SAMPLES);
-  if (!e) {
-    e = binaryTreeIni(btP);
-  }
+  BattleStat *btP;
   // =============================
   // Plain adding into binary tree
   // =============================
-  BinaryTreeElem *parentP = &btP->idxA[0];
-  for (U32 i = 0, iEnd = N_SAMPLES / 3; !e && i < iEnd; ++i) {
-    binaryTreeElemSetUsed(parentP);
-    e = binaryTreeAddChild(btP, LEFT_CHILD, parentP);
-    if (!e && i < iEnd - 1) {
-      e = binaryTreeAddChild(btP, RIGHT_CHILD, parentP++);
+  Error e = btNew((void**) &btP, sizeof(BattleStat), N_SAMPLES);
+  BattleStat 
+    *statP = btP,
+    *statEndP = statP + arrayGetNElems(btP);
+  for (; statP < statEndP; ++statP) {
+    for (Child child = LEFT_CHILD; child <= RIGHT_CHILD; ++child) {
+      for (BattleStat *stat2P = statP + 1; stat2P < statEndP; ++stat2P) {
+        if (btIsAnOrphan_(&stat2P->header)) {
+          btLinkNodes_(btP, statP, stat2P, child);
+          break;
+        }
+      }
     }
   }
-  // Review contents of binary tree.
-#if 0
-  printf("adding-to-tree test\n");
+  printf("reviewing results\n=================\n");
   for (U32 i = 0; !e && i < N_SAMPLES; ++i) {
-    printf("btP->idx[%3d]: parent: %3d, left: %3d, right %3d, used: %1d\n", 
+    printf("btP->idx[%3d]: parent: %3d, left: %3d, right %3d, misc: %3d\n", 
         i,
-        btP->idxA[i].parentIdx,
-        btP->idxA[i].childIdxA[LEFT_CHILD],
-        btP->idxA[i].childIdxA[RIGHT_CHILD],
-        btP->idxA[i].used);
+        btP[i].header.parent,
+        btP[i].header.childA[LEFT_CHILD],
+        btP[i].header.childA[RIGHT_CHILD],
+        btP[i].header.misc);
   }
-#endif
-  binaryTreeDel(&btP);
- 
-  // ===================
-  // Growing binary tree
-  // ===================
-  e = binaryTreeNew(&btP, N_SAMPLES);
-  if (!e) {
-    e = binaryTreeIni(btP);
-  }
-  parentP = &btP->idxA[0];
-  for (U32 i = 0, iEnd = N_SAMPLES / 3; !e && i < iEnd; ++i) {
-    e = binaryTreeExpand(btP, LEFT_CHILD);
-    binaryTreeElemSetUsed(&btP->idxA[btP->extremityA[LEFT_CHILD]]);
-    if (!e && i < iEnd - 1) {
-      e = binaryTreeExpand(btP, RIGHT_CHILD);
-      binaryTreeElemSetUsed(&btP->idxA[btP->extremityA[RIGHT_CHILD]]);
-    }
-  }
-  // Review contents of binary tree.
-  printf("expanding-tree test\n");
-  for (U32 i = 0; !e && i < 20; ++i) {
-    printf("btP->idx[%3d]: parent: %3d, left: %3d, right %3d, used: %1d\n", 
-        i,
-        btP->idxA[i].parentIdx,
-        btP->idxA[i].childIdxA[LEFT_CHILD],
-        btP->idxA[i].childIdxA[RIGHT_CHILD],
-        btP->idxA[i].used);
-  }
-  binaryTreeDel(&btP);
+  btDel_((void**) &btP);
   return e;
 }

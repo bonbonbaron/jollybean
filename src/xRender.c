@@ -119,7 +119,7 @@ static Error _atlasGen(AtlasElem **atlasAP, const U32 N_SAMPLES, SortedRect *sor
   // Binary tree of rects
 
   // Allocate enough room for even the extraneous children to avoid child init branching.
-  Error e = binaryTreeNew(atlasAP, N_SAMPLES);
+  Error e = btNew(atlasAP, sizeof(AtlasElem), N_SAMPLES);
 
   if (!e) {
     AtlasElem *atlasA = *atlasAP;

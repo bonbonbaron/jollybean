@@ -8,6 +8,9 @@
 #include "redColorPalette.h"
 #include "previewImg.h"
 
+#define RIGHT_RECT (LEFT_CHILD)
+#define LOWER_RECT (RIGHT_CHILD)
+
 #define TEXTURE_MAX_DIM_    (4096)
 #define CAN_RIGHT     (0x00000001)
 #define SHOULD_RIGHT  (0x00000003)  // implies "can"
@@ -18,43 +21,65 @@
 #define SHOULD_RIGHT_DOWN  (SHOULD_RIGHT | SHOULD_DOWN)
 
 typedef struct {
+  BtElHeader header;
   Rect_ rect;
   U32 maxDim,
     remWidth,   // remaining atlas width  as if this rect weren't here
     remHeight;  // remaining atlas height as if this rect weren't here
-  U32 srcIdx;   // index in source data
+  U32 srcIdx;   // index in source data  // can you eliminate ths with BT Elem?
 } _AtlasElem;
 
-static inline void _atlasElemChildIni(_AtlasElem *childP, U32 x, U32 y, U32 remW, U32 remH) {
-  childP->rect.x = x,
-  childP->rect.y = y,
-  childP->remWidth = remW;
-  childP->remHeight = remH;
+typedef struct {
+  Child extremites[2];
+  Key nextOrphanIdx;
+  _AtlasElem *btP;
+} Atlas;
+
+static inline Error _atlasLinkNodes(
+    Atlas *atlasP,
+    Key parent, 
+    Child child, 
+    U32 x, 
+    U32 y, 
+    U32 remW, 
+    U32 remH) {
+  Key childIdx = atlasP->nextOrphanIdx++;
+  if (!childIdx || childIdx >= arrayGetNElems(atlasP->btP)) {
+    return E_SEGFAULT;
+  }
+  printf("birthing child %d out of %d\n", childIdx + 1, arrayGetNElems(atlasP->btP));
+  atlasP->btP[childIdx].rect.x = x,
+  atlasP->btP[childIdx].rect.y = y,
+  atlasP->btP[childIdx].remWidth = remW;
+  atlasP->btP[childIdx].remHeight = remH;
+  btLinkNodes_(atlasP->btP, &atlasP->btP[parent], &atlasP->btP[childIdx], child);
+  printf("setting xy = {%d, %d}\n", atlasP->btP[childIdx].rect.x, atlasP->btP[childIdx].rect.y);
+  return SUCCESS;
 }
 
-static void _atlasElemIni(_AtlasElem *rootP, BinaryTree *btP, BinaryTreeElem *currBinTreeElP) {
-  U32 atlasIdx = currBinTreeElP - btP->idxA;
+static Error _atlasFill(Atlas *atlasP, const Key parent, Child child) {
   // Current node
-  binaryTreeElemSetUsed(currBinTreeElP);
-  // Right rect
-  Error e = binaryTreeAddChild(btP, LEFT_CHILD, currBinTreeElP);  // confusing: left child is rect to the right
-  if (!e) {
-    _atlasElemChildIni(
-        &rootP[currBinTreeElP->childIdxA[LEFT_CHILD]], 
-        rootP[atlasIdx].rect.x + rootP[atlasIdx].rect.w,
-        rootP[atlasIdx].rect.y,
-        rootP[atlasIdx].remWidth - rootP[atlasIdx].rect.w,
-        rootP[atlasIdx].rect.h);  // rectHeight splits node to a shelf rightward and full width downward
-  // Bottom rect
-    e = binaryTreeAddChild(btP, RIGHT_CHILD, currBinTreeElP);  // confusing: left child is rect to the right
+  printf("filling node %d out of %d\n", parent + 1, arrayGetNElems(atlasP->btP));
+  // rectHeight splits node to a shelf rightward and full width downward
+  if (child == RIGHT_RECT) {
+    return _atlasLinkNodes(
+      atlasP,
+      parent,
+      RIGHT_RECT, 
+      atlasP->btP[parent].rect.x + atlasP->btP[parent].rect.w,
+      atlasP->btP[parent].rect.y,
+      atlasP->btP[parent].remWidth - atlasP->btP[parent].rect.w,
+      atlasP->btP[parent].rect.h);  
   }
-  if (!e) {
-    _atlasElemChildIni(
-        &rootP[currBinTreeElP->childIdxA[RIGHT_CHILD]], 
-        rootP[atlasIdx].rect.x,
-        rootP[atlasIdx].rect.y + rootP[atlasIdx].rect.h,
-        rootP[atlasIdx].remWidth,
-        rootP[atlasIdx].remHeight - rootP[atlasIdx].rect.h);
+  else {  /* implicit "if child == LOWER_RECT */
+    return _atlasLinkNodes(
+      atlasP,
+      parent,
+      LOWER_RECT, 
+      atlasP->btP[parent].rect.x,
+      atlasP->btP[parent].rect.y + atlasP->btP[parent].rect.h,
+      atlasP->btP[parent].remWidth,
+      atlasP->btP[parent].remHeight - atlasP->btP[parent].rect.h);
   }
 }
 
@@ -62,16 +87,24 @@ static inline U32 _rectFits(Rect_ *rectP, _AtlasElem *atlasElemP) {
   return (rectP->w <= atlasElemP->remWidth && rectP->h <= atlasElemP->remHeight);
 }
 
+// To guard against segfaults from adding children to last element
+#define N_PADDING_ELEMS (2)
+
 // Sort colormaps by largest dimension
-Error _atlasNew(_AtlasElem **atlasAP, const U32 N_SAMPLES, Colormap **cmPA) {
-  if (!atlasAP || !N_SAMPLES || !cmPA) {
+Error atlasNew(Atlas **atlasPP, const U32 N_SAMPLES, Colormap **cmPA) {
+  if (!atlasPP || !N_SAMPLES || !cmPA) {
     return E_BAD_ARGS;
   }
 
-  Error e = arrayNew((void**) atlasAP, sizeof(_AtlasElem), N_SAMPLES);
+  // We give the atlas 2 extra elements to reflect the extra 2 children 
+  // its corresponding binary tree may need for safety.
+  Error e = jbAlloc((void**) atlasPP, sizeof(Atlas), 1);
+  if (!e) {
+    e = btNew((void**) &(*atlasPP)->btP, sizeof(_AtlasElem), N_SAMPLES);
+  }
 
   if (!e) {
-    _AtlasElem *atlasA = *atlasAP;
+    _AtlasElem *atlasA = (*atlasPP)->btP;
     // Loop through unsorted rectangles
     atlasA[0].srcIdx = 0;
     atlasA[0].maxDim = cmPA[0]->w > cmPA[0]->h ?  cmPA[0]->w : cmPA[0]->h;
@@ -109,103 +142,102 @@ Error _atlasNew(_AtlasElem **atlasAP, const U32 N_SAMPLES, Colormap **cmPA) {
   return e;
 }
 
+void atlasDel(Atlas **atlasPP) {
+  if (atlasPP) {
+    btDel_((void**) &(*atlasPP)->btP);
+    jbFree((void**) atlasPP);
+  }
+}
+
 // Texture atlas
-Error atlasPlanPlacements(_AtlasElem *atlasA) {
-  if (!atlasA) {
+Error atlasPlanPlacements(Atlas *atlasP) {
+  if (!atlasP) {
     return E_BAD_ARGS;
   }
-  // Binary tree tracks parent-child relationships of all atlas array elements.
-  BinaryTree *btP;
-  Error e = binaryTreeNew(&btP, arrayGetNElems(atlasA));
 
-  if (!e) {
-    // For each sorted rectangle...
-    _AtlasElem *elemP = atlasA + 1;  // 0th elem gets pre-inserted into atlas
-    _AtlasElem *elemEndP = elemP + arrayGetNElems(atlasA);
-    U32 nAtlasElems = arrayGetNElems(atlasA), searchIdx, parentIdx, cameFromRight;
-    // Initialize the first atlas elem manually so the elem ini magic works branchlessly.
-    atlasA[0].rect.x = 0;
-    atlasA[0].rect.y = 0;
-    atlasA[0].remWidth = atlasA[0].rect.w;
-    atlasA[0].remHeight = atlasA[0].rect.h;
-    _atlasElemIni(atlasA, btP, &btP->idxA[0]);
-    for (searchIdx = 0; elemP < elemEndP; ++elemP) {
-      // Forward search in texture atlas
-      searchForward:  // moves only right and down till a fit or a dead-end is found
-      while (searchIdx < nAtlasElems) {
-        // If current node is not used, fill it (since we've already proven it fits here).
-        if (!btP->idxA[searchIdx].used) {
-          _atlasElemIni(atlasA, btP, &btP->idxA[searchIdx]);
-          goto nextRect;
-        }
-        // Does rect fit to the right? (left in binary tree-speak means rect to the right)
-        printf("[r]testing fit in %d out of %d\n", btP->idxA[searchIdx].childIdxA[LEFT_CHILD],
-            arrayGetNElems(atlasA));
-        if (_rectFits(&elemP->rect, atlasA + btP->idxA[searchIdx].childIdxA[LEFT_CHILD])) {
-          searchIdx = btP->idxA[searchIdx].childIdxA[LEFT_CHILD];
-          continue;
-        }
-        printf("[d]testing fit in %d out of %d\n", btP->idxA[searchIdx].childIdxA[RIGHT_CHILD],
-            arrayGetNElems(atlasA));
-        // Does rect fit beneath? (right in binary tree-speak means rect to the right)
-        if (_rectFits(&elemP->rect, atlasA + btP->idxA[searchIdx].childIdxA[RIGHT_CHILD])) {
-          searchIdx = btP->idxA[searchIdx].childIdxA[RIGHT_CHILD];
-          continue;
-        }
-        // If you've hit a dead-end, back out until an unexplored lower direction is found.
-        goto backOut;
+  // For each sorted rectangle...
+  _AtlasElem *elemP = atlasP->btP + 1;  // 0th elem gets pre-inserted into atlas
+  _AtlasElem *elemEndP = atlasP->btP + arrayGetNElems(atlasP->btP);
+  Child child = LOWER_RECT;
+  U32 searchIdx, 
+      parent, 
+      cameFromRight;
+  // Initialize the first atlas elem manually so the elem ini magic works branchlessly.
+  atlasP->btP[0].rect.x = 0;
+  atlasP->btP[0].rect.y = 0;
+  atlasP->btP[0].remWidth = atlasP->btP[0].rect.w;
+  atlasP->btP[0].remHeight = atlasP->btP[0].rect.h;
+  Key *childA;
+  Error e = SUCCESS;
+  for (searchIdx = 0; !e && elemP < elemEndP; ++elemP) {
+    // Forward search in texture atlas
+    searchForward:  // moves only right and down till a fit or a dead-end is found
+    while (searchIdx < atlasP->nextOrphanIdx) {
+      // If current node is not used, fill it (since we've already proven it fits here).
+      if (!btIsAnOrphan_(&atlasP->btP[searchIdx].header)) {
+        e = _atlasFill(atlasP, searchIdx, child);
+        goto nextRect;
       }
+      // Does rect fit to the right? (left in binary tree-speak means rect to the right)
+      childA = atlasP->btP[searchIdx].header.childA;  // left is index 0
+      if (_rectFits(&elemP->rect, &atlasP->btP[childA[RIGHT_RECT]])) {
+        searchIdx = childA[child = RIGHT_RECT];
+        continue;
+      }
+      // Does rect fit beneath? (right in binary tree-speak means rect to the right)
+      if (_rectFits(&elemP->rect, &atlasP->btP[childA[LOWER_RECT]])) {
+        searchIdx = childA[child = LOWER_RECT];
+        continue;
+      }
+      // Dead-end. Back out until an unexplored lower direction is found.
+      goto backOut;
+    }
 
-      // Backing out of dead ends
-      backOut:  // moves only up and left till an unexplored downward direction or root is found
-      while (searchIdx) {
-        // Geez this line is ugly.
-        parentIdx = btP->idxA[searchIdx].parentIdx;
-        cameFromRight = searchIdx == btP->idxA[parentIdx].childIdxA[LEFT_CHILD];
-        searchIdx = parentIdx;
-        if (cameFromRight // sneakily populated in getParentAtlasIdx_()
-            && _rectFits(&elemP->rect, atlasA + btP->idxA[searchIdx].childIdxA[RIGHT_CHILD])) {
-          searchIdx = btP->idxA[searchIdx].childIdxA[RIGHT_CHILD];
-          goto searchForward;
+    // Backing out of dead ends
+    backOut:  // moves only up and left till an unexplored downward direction or root is found
+    while (searchIdx) {
+      parent = btP->idxA[searchIdx].parent;
+      cameFromRight = searchIdx == btP->idxA[parent].childA[RIGHT_RECT];
+      searchIdx = parent;
+      if (cameFromRight // sneakily populated in getParentAtlasIdx_()
+          && _rectFits(&elemP->rect, atlasA + btP->idxA[searchIdx].childA[LOWER_RECT])) {
+        searchIdx = btP->idxA[searchIdx].childA[LOWER_RECT];
+        goto searchForward;
+      }
+    }
+
+    // If no space was found (searchIdx == 0 now), it's time to expand the atlas.
+    U32 todoDeleteThis = 
+        ((elemP->rect.h <= atlasA[0].remHeight))                              // can right
+      | ((atlasA[0].remHeight >= atlasA[0].remWidth  + elemP->rect.w)  << 1)  // should right
+      | ((elemP->rect.w <= atlasA[0].remWidth)  << 2)                         // can down
+      | ((atlasA[0].remWidth  >= atlasA[0].remHeight + elemP->rect.h)  << 3); // should down
+    switch (todoDeleteThis) {
+      case SHOULD_RIGHT_CAN_DOWN:
+      case SHOULD_RIGHT_DOWN:
+      case SHOULD_RIGHT:
+      case CAN_RIGHT:
+      default:
+        if (!e) {
+          atlasA[0].remWidth += elemP->rect.w;
+          atlasA[btP->extremityA[RIGHT_RECT]].remWidth = elemP->rect.w;
+          e = _atlasFill(atlasA, btP, btP->extremityA[RIGHT_RECT]);
         }
-      }
+        break;
+      case CAN_RIGHT_SHOULD_DOWN:
+      case SHOULD_DOWN:
+      case CAN_DOWN:
+        if (!e) {
+          atlasA[0].remHeight += elemP->rect.h;
+          atlasA[btP->extremityA[LOWER_RECT]].remHeight = elemP->rect.h;
+          e = _atlasFill(atlasA, btP, btP->extremityA[LOWER_RECT]);
+        }
+        break;
+    }
+    nextRect:
+    continue;
+  }  // for each sorted rectangle
 
-      // If no space was found (searchIdx == 0 now), it's time to expand the atlas.
-      U32 todoDeleteThis = ((elemP->rect.h <= atlasA[0].remHeight))         // can right
-        | ((atlasA[0].remHeight >= atlasA[0].remWidth  + elemP->rect.w)  << 1) // should right
-        | ((elemP->rect.w <= atlasA[0].remWidth)  << 2)  // can down
-        | ((atlasA[0].remWidth  >= atlasA[0].remHeight + elemP->rect.h)  << 3); // should down
-      switch (todoDeleteThis) {
-        case SHOULD_RIGHT_CAN_DOWN:
-        case SHOULD_RIGHT_DOWN:
-        case SHOULD_RIGHT:
-        case CAN_RIGHT:
-          e = binaryTreeExpand(btP, LEFT_CHILD);
-          if (!e) {
-            atlasA[0].remWidth += elemP->rect.w;
-            atlasA[btP->extremityA[LEFT_CHILD]].remWidth = elemP->rect.w;
-            _atlasElemIni(atlasA, btP, &btP->idxA[btP->extremityA[LEFT_CHILD]]);
-          }
-          break;
-        case CAN_RIGHT_SHOULD_DOWN:
-        case SHOULD_DOWN:
-        case CAN_DOWN:
-          e = binaryTreeExpand(btP, RIGHT_CHILD);
-          if (!e) {
-            atlasA[0].remHeight += elemP->rect.h;
-            atlasA[btP->extremityA[RIGHT_CHILD]].remHeight = elemP->rect.h;
-            _atlasElemIni(atlasA, btP, &btP->idxA[btP->extremityA[RIGHT_CHILD]]);
-          }
-          break;
-        default:
-          break;
-      }
-      nextRect:
-      continue;
-    }  // for each sorted rectangle
-  }  // if binary tree is successfully made
-
-  binaryTreeDel(&btP);
   return e;
 }
 
@@ -267,18 +299,18 @@ int main(int argc, char **argv) {
 #endif
 
   // Create an unfinished atlas with colormap rectangles sorted by size in descending order.
-  _AtlasElem *atlasA = NULL;
+  Atlas *atlasP = NULL;
   if (!e) {
-    e = _atlasNew(&atlasA, N_SAMPLES, cmPA);
+    e = atlasNew(&atlasP, N_SAMPLES, cmPA);
   }
   // Texture atlas
+  if (!e) {
+    e = atlasPlanPlacements(atlasP);
+  }
+#if 1
+  // Texture atlas array
   U8 *atlasPixelA = NULL;
   Surface_ *textureSurfaceP = NULL;
-  if (!e) {
-    e = atlasPlanPlacements(atlasA);
-  }
-#if 0
-  // Texture atlas array
   if (!e) {
     e = arrayNew((void**) &atlasPixelA, sizeof(U8), atlasA[0].remWidth * atlasA[0].remHeight);
   }
@@ -361,6 +393,7 @@ int main(int argc, char **argv) {
   // ====================================================
   arrayDel((void**) &atlasPixelA);
   arrayDel((void**) &atlasA);
+  atlasDel((void**) &atlasP);
   arrayDel((void**) &sdPA);
   return e;
 }

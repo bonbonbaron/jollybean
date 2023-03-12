@@ -1,8 +1,6 @@
 #ifndef X_GO
 #define X_GO
-#include "bt.h"
-
-// TODO make this either bt-based or function pointer-based
+#include "x.h"
 
 #define GO_ (2)
 #define PERSONALITY (0x40)
