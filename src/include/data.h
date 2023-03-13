@@ -163,7 +163,7 @@ typedef struct {
   Key            /* these all need to be the same type */
     childA[2],   // children of this element
     parent,      // parent of this element
-    misc;      
+    srcIdx;      // in case you want to tie this to source data
 } BtElHeader;
 
 Error btNew(void **btAP, U32 elemSz, U32 nElems);
