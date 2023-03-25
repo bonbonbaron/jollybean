@@ -21,7 +21,8 @@
 #define igl_(name_) &igl_##name_
 
 igList_(renderer, 
-    ig_(DST_RECT, Rect_))
+    ig_(DST_RECT, Rect_),
+    ig_(SCALE, U32));    // scaling U32 is fixed point: 16 bits as decimal places
 igList_(animation, 
     ig_(SRC_RECT, Rect_), 
     ig_(RECT_OFFSET, RectOffset));

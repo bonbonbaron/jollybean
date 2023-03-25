@@ -9,6 +9,7 @@
 #include "previewImg.h"
 
 int main(int argc, char **argv) {
+  printf("%d\n", sizeof(AtlasElem));
   // ====================================================
   // Repeat things done in multithreadingg test for setup
   // ====================================================
@@ -71,26 +72,37 @@ int main(int argc, char **argv) {
   if (!e) {
     e = atlasNew(&atlasP, N_SAMPLES, cmPA);
   }
-  // Texture atlas
-  if (!e) {
-    e = atlasPlanPlacements(atlasP);
-  }
-  // Texture atlas array
-  U8 *atlasPixelA = NULL;
-  Surface_ *textureSurfaceP = NULL;
-  if (!e) {
-    e = arrayNew((void**) &atlasPixelA, sizeof(U8), atlasP->btP[0].remW * atlasP->btP[0].remH);
-  }
   for (int i = 0 ; i < N_SAMPLES; i++) {
-    printf("{%d, %d, %d, %d}, {%d, %d}, srcIdx = %d\n", 
+    printf("BEFORE planning placements:\n{%d, %d, %d, %d}, {%d, %d}, srcIdx = %d\n", 
         atlasP->btP[i].rect.x,
         atlasP->btP[i].rect.y,
         atlasP->btP[i].rect.w,
         atlasP->btP[i].rect.h,
         atlasP->btP[i].remW,
         atlasP->btP[i].remH,
-        atlasP->btP[i].header.srcIdx
+        atlasP->btP[i].srcIdx
         );
+  }
+  // Texture atlas
+  if (!e) {
+    e = atlasPlanPlacements(atlasP);
+  }
+  for (int i = 0 ; i < N_SAMPLES; i++) {
+    printf("AFTER planning placements:\n{%d, %d, %d, %d}, {%d, %d}, srcIdx = %d\n", 
+        atlasP->btP[i].rect.x,
+        atlasP->btP[i].rect.y,
+        atlasP->btP[i].rect.w,
+        atlasP->btP[i].rect.h,
+        atlasP->btP[i].remW,
+        atlasP->btP[i].remH,
+        atlasP->btP[i].srcIdx
+        );
+  }
+  // Texture atlas array
+  U8 *atlasPixelA = NULL;
+  Surface_ *textureSurfaceP = NULL;
+  if (!e) {
+    e = arrayNew((void**) &atlasPixelA, sizeof(U8), atlasP->btP[0].remW * atlasP->btP[0].remH);
   }
   if (!e) {
     const U32 ATLAS_WIDTH = atlasP->btP[0].remW;
@@ -106,7 +118,7 @@ int main(int argc, char **argv) {
           atlasP->btP[i].rect.y,
           atlasP->btP[i].rect.w,
           atlasP->btP[i].rect.h);
-      srcIdx = atlasP->btP[i].header.srcIdx;
+      srcIdx = atlasP->btP[i].srcIdx;
       nUnitsPerStrip = cmPA[srcIdx]->sdP->ss.nUnitsPerStrip;
       nStripsPerRow = cmPA[srcIdx]->w / nUnitsPerStrip;
       smElemP    = (StripmapElem*) cmPA[srcIdx]->sdP->sm.infP->inflatedDataP;
@@ -178,8 +190,8 @@ int main(int argc, char **argv) {
   arrayDel((void**) &atlasPixelA);
   atlasDel(&atlasP);
   arrayDel((void**) &sdPA);
-  SDL_DestroyTexture(textureP);
   SDL_FreeSurface(textureSurfaceP);
+  SDL_DestroyTexture(textureP);
   SDL_Quit();
   return e;
 }

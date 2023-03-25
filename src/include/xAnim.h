@@ -34,12 +34,14 @@ typedef struct {
   U8         currFrameIdx;  // keeps track of where we are in animation system
   AnimStrip *currStripP;    // current animation strip
   Rect_     *srcRectP;      // shared source rectangle to update; this pointer stays constant
+  Rect_     *dstRectP;      // shared source rectangle to update; this pointer stays constant
 } XAnimComp;
 
 typedef struct {
   System system;
   Map        *offsetMP;   // derived inner share map from parent system
   Map        *srcRectMP;  // derived inner source rectangle map from parent system
+  Map        *dstRectMP;  // derived inner source rectangle map from parent system
   Map        *animMPMP;   // maps entity to animation map, which in turn maps strip ID to anim strip
 } XAnim;
 

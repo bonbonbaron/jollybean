@@ -31,6 +31,19 @@ Error guiNew(Window_ **windowPP, Renderer_ **rendererPP) {
 	return SUCCESS;
 }
 
+void guiDel(Window_ **windowPP, Renderer_ **rendererPP) {
+  if (rendererPP && *rendererPP) {
+    SDL_DestroyRenderer(*rendererPP);
+    *rendererPP = NULL;
+  }
+  if (windowPP && *windowPP) {
+    SDL_DestroyWindow(*windowPP);
+    *windowPP = NULL;
+  }
+  SDL_Quit();
+}
+
+
 // Makes palette without setting its colors.
 Error surfaceNew(Surface_ **surfacePP, void *pixelDataA, U32 w, U32 h) {
 	if (!surfacePP) {
@@ -45,6 +58,13 @@ Error surfaceNew(Surface_ **surfacePP, void *pixelDataA, U32 w, U32 h) {
   }
 
 	return SUCCESS;
+}
+
+void surfaceDel(Surface_ **surfacePP) {
+  if (surfacePP && *surfacePP) {
+    SDL_FreeSurface(*surfacePP);
+    *surfacePP = NULL;
+  }
 }
 
 void appendAtlasPalette(Surface_ *atlasSurfaceP, ColorPalette *srcPaletteP) {

@@ -5,7 +5,7 @@ int main(int argc, char **argv) {
 
 	System *sPA[] = {
     sRenderP,
-    //sAnimP
+    sAnimP
 	}; 
 
 	Error e = xMasterIni(&xMaster, sPA, arrayNElems_(sPA), N_SYSTEM_TYPES, &testBiome);
@@ -13,6 +13,7 @@ int main(int argc, char **argv) {
 	while (!e) {
 		e = xRun(&xMaster.system);
   }
+  xClr(&xMaster.system);
 
   return e;
 }

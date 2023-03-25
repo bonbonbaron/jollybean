@@ -5,14 +5,6 @@
 
 X_(Master, 1, FLG_NO_CF_SRC_A_); 
 
-void reportShares(Map *sharedGenesMPMP) {
-  // TODO delete 
-  Map **mapPP = sharedGenesMPMP->mapA;
-  Map **mapEndPP = mapPP + sharedGenesMPMP->population;
-  for (U32 i = 0; mapPP < mapEndPP; ++mapPP, ++i) {
-    printf("map[%d] = 0x%08x\n", i, (U32) *mapPP);
-  }
-}
 // Unused functions
 XProcMsgFuncDefUnused_(Master);
 XIniSubcompFuncDefUnused_(Master);
@@ -21,14 +13,8 @@ XPostprocessCompsDefUnused_(Master);
 
 XClrFuncDef_(Master) {
   XMaster *xP = (XMaster*) sP;
-  guiDel(&xP->windowP, &xP->rendererP);
   xMasterDelShareMap(&xP->sharedMPMP);
-
-  XMasterComp *cP = sP->cF;
-  XMasterComp *cEndP = cP + *frayGetFirstEmptyIdxP(sP->cF);
-  for (; cP < cEndP; ++cP) {
-    xClr(*cP);  // cP is a pointer to a system pointer.
-  }
+  guiDel(&xP->windowP, &xP->rendererP);
   return SUCCESS;
 }
 
@@ -200,11 +186,9 @@ static Error _subsystemsIni(System *masterSysP, GeneHisto *geneHistoP) {
 inline static Error _addSharedSubmap(Map *outerShareMP, Key type, U8 size, Key num) {
   Map *innerShareMP = NULL;
   Error e = mapNew(&innerShareMP, size, num);
-  printf("making new map w/ key %d at 0x%08x\n", type, (U32) innerShareMP);
   if (!e) {
     e = mapSet(outerShareMP, type, (void**) &innerShareMP);
   }
-  reportShares(outerShareMP);
   return e;
 }
 
@@ -245,23 +229,10 @@ Error xMasterNewShareMap(Map **sharedGenesMPP, GeneHisto *geneHistoP) {
 void xMasterDelShareMap(Map **sharedMPMPP) {
   if (sharedMPMPP && *sharedMPMPP) {
     Map *sharedMPMP = *sharedMPMPP;
-    /* Assume first 2 elements are window and renderer.
-       We want to delete textures before the renderer, which takes textures along with it.
-       Otherwise we risk double-freeing those. */
-    Map **mapPP = ((Map**) sharedMPMP->mapA) + 2;
-    Map **mapEndPP = mapPP + arrayGetNElems(sharedMPMP->mapA) - 2;
+    Map **mapPP = (Map**) sharedMPMP->mapA;
+    Map **mapEndPP = mapPP + arrayGetNElems(sharedMPMP->mapA);
     for (; mapPP < mapEndPP; ++mapPP) {
-      printf("getting rid of map at 0x%08x\n", (U32) *mapPP);
       mapDel(mapPP);
-    }
-    if (arrayGetNElems(sharedMPMP->mapA) >= 1) {
-      mapPP = (Map**) sharedMPMP->mapA;
-      printf("getting rid of map at 0x%08x\n", (U32) mapPP[0]);
-      mapDel(&mapPP[0]);
-    }
-    if (arrayGetNElems(sharedMPMP->mapA) >= 2) {
-      printf("getting rid of map at 0x%08x\n", (U32) mapPP[1]);
-      mapDel(&mapPP[1]);
     }
     mapDel(sharedMPMPP);
   }
@@ -310,15 +281,13 @@ static Error _distributeSharedGenesToSubsystems(System *masterSysP, Map *sharedG
 
 // This is for adding the window and renderer to master's map of shared genes.
 static Error _addSpecialSharedGene(Map *sharedGeneMPMP, void *geneP, Key geneType) {
-  Map *innerMapP = NULL;
-  // Make the inner map first inside the outer map.
-  Error e = _addSharedSubmap(sharedGeneMPMP, geneType, sizeof(void*), 1);
-  // Then get the inner map and set its element the special gene pointer.
+  Map *mapP = NULL;
+  Error e = mapNew(&mapP, sizeof(void*), 1);
   if (!e) {
-    e = mapGetNestedMapP(sharedGeneMPMP, geneType, &innerMapP);
+    e = mapSet(mapP, 1, &geneP);  // only one window
   }
   if (!e) {
-    e = mapSet(innerMapP, 1, &geneP);
+    e = mapSet(sharedGeneMPMP, geneType, (void**) &mapP);
   }
   return e;
 }
@@ -600,7 +569,6 @@ static Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGen
   if (!e) {
     e = _addSpecialSharedGene(sharedGenesMPMP, rendererP, RENDERER_GENE_TYPE);
   }
-
   if (!e) {
     e = _spawnEntities(sharedGenesMPMP, biomeP);
   }

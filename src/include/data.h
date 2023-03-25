@@ -45,6 +45,7 @@ typedef enum Error {
   E_BAD_DATA,
 	E_BAD_INDEX,
 	E_BAD_KEY,
+  E_MAP_FULL,
 	E_MSG_TO_ECS_TYPE_MISMATCH,
 	E_MSG_TO_ID_MISMATCH,
 	E_MSG_INVALID_CMD,
@@ -117,6 +118,7 @@ typedef struct {
 
 typedef struct {
 	FlagInfo flagA[N_FLAG_BYTES];  // "A" means "Array" for JB's naming standards 
+  Key    population;
 	void  *mapA;  
 } Map;
 
@@ -147,13 +149,13 @@ typedef enum { LEFT_CHILD, RIGHT_CHILD } Child;
 // The rest is just because I'm a dork.
 #define ORPHAN_BYTE_ (0x33)
 #define ORPHAN_ (\
-    ORPHAN_BYTE_ << 24 | \
+    /* ORPHAN_BYTE_ << 24 | */ \
     ORPHAN_BYTE_ << 16 | \
     ORPHAN_BYTE_ <<  8 | \
     ORPHAN_BYTE_)
-#define btIsAnOrphan_(btP_, idx_) (*((U32*) &btP_[(idx_)].header) == ORPHAN_)
+#define btIsAnOrphan_(btP_, idx_) ((*((U32*) &btP_[(idx_)].header) & 0x00ffffff) == ORPHAN_)
 #define btHasChild_(btElHeaderP_, child_) btElHeaderP_->childA[child_]  /* if nonzero, non-orphan has childn*/
-#define btEraseHeader_(btElHeaderP) *((U32*) btElHeaderP) = 0
+#define btEraseHeader_(btElHeaderP_) memset(btElHeaderP_, 0, sizeof(BtElHeader))
 #define btLinkNodes_(btP_, parentP_, childP_, child_) \
   (parentP_)->header.childA[child_] = (childP_) - btP_;\
   btEraseHeader_(&(childP_)->header);\
@@ -162,8 +164,7 @@ typedef enum { LEFT_CHILD, RIGHT_CHILD } Child;
 typedef struct {
   Key            /* these all need to be the same type */
     childA[2],   // children of this element
-    parent,      // parent of this element
-    srcIdx;      // in case you want to tie this to source data
+    parent;      // parent of this element
 } BtElHeader;
 
 Error btNew(void **btAP, U32 elemSz, U32 nElems);

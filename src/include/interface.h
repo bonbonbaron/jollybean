@@ -89,8 +89,10 @@ typedef struct {
 } ColorPalette;
 
 Error surfaceNew(Surface_ **surfacePP, void *pixelDataA, U32 w, U32 h);
+void surfaceDel(Surface_ **surfacePP);
 void appendAtlasPalette(Surface_ *atlasSurfaceP, ColorPalette *srcPaletteP);
 Error guiNew(Window_ **windowPP, Renderer_ **rendererPP);
+void guiDel(Window_ **windowPP, Renderer_ **rendererPP);
 Error textureNew(Texture_ **texturePP, Renderer_ *rendererP, Surface_ *surfaceP);
 void textureDel(Texture_ **texturePP);
 Error textureSetAlpha(Texture_ *textureP);

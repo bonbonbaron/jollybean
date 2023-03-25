@@ -169,6 +169,8 @@ Error xMasterIniSys(System *sP, void *sParamsP);
 XIniSubcompFuncDef_(Master);
 Error xMasterIni(XMaster *xMasterSysP, System **sPA, U16 nXSystems, Key nXSystemsMax, Biome *biomeP);
 Error xMasterGetShare(System *sP, Map *shareMMP);
+Error xMasterNewShareMap(Map **sharedGenesMPP, GeneHisto *geneHistoP);
+void  xMasterDelShareMap(Map **sharedGenesMPMPP);
 Error xMasterProcessMessage(System *sP, Message *msgP);
 Error xMasterClr(System *sP);
 Error xMasterRun(System *sP);

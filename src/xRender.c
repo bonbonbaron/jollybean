@@ -42,13 +42,33 @@ static inline Error __atlasLinkNodes(
   if (childIdx >= arrayGetNElems(atlasP->btP)) {
     return E_SEGFAULT;
   }
+    printf("before linking: childA[%d] = {%d, %d, %d, %d}, {%d, %d}, srcIdx = %d\n", 
+        childIdx,
+        atlasP->btP[childIdx].rect.x,
+        atlasP->btP[childIdx].rect.y,
+        atlasP->btP[childIdx].rect.w,
+        atlasP->btP[childIdx].rect.h,
+        atlasP->btP[childIdx].remW,
+        atlasP->btP[childIdx].remH,
+        atlasP->btP[childIdx].srcIdx
+        );
   printf("parent %d adopts child %d out of %d\n", parentIdx, childIdx, arrayGetNElems(atlasP->btP));
   atlasP->btP[childIdx].rect.x = x,
   atlasP->btP[childIdx].rect.y = y,
   atlasP->btP[childIdx].remW = remW;
   atlasP->btP[childIdx].remH = remH;
+  
   btLinkNodes_(atlasP->btP, &atlasP->btP[parentIdx], &atlasP->btP[childIdx], child);
-  printf("setting node %d's xy = {%d, %d}\n", childIdx, atlasP->btP[childIdx].rect.x, atlasP->btP[childIdx].rect.y);
+  printf("after linking: childA[%d] = {%d, %d, %d, %d}, {%d, %d}, srcIdx = %d\n", 
+      childIdx,
+      atlasP->btP[childIdx].rect.x,
+      atlasP->btP[childIdx].rect.y,
+      atlasP->btP[childIdx].rect.w,
+      atlasP->btP[childIdx].rect.h,
+      atlasP->btP[childIdx].remW,
+      atlasP->btP[childIdx].remH,
+      atlasP->btP[childIdx].srcIdx
+      );
   return SUCCESS;
 }
 
@@ -90,51 +110,54 @@ static inline U32 _rectFitsBelow(Rect_ *orphanRectP, AtlasElem *parentElemP) {
 
 inline static void _setRectData(AtlasElem *elP, U32 _max, S32 w, S32 h, Key srcIdx) {
   elP->maxDim = _max;  // larger of height or width
-  elP->header.srcIdx = srcIdx;  // index of sample in original array
+  elP->srcIdx = srcIdx;  // index of sample in original array
   elP->rect.x = 0;
   elP->rect.y = 0;
-  elP->remW = 0;
-  elP->remH = 0;
   elP->rect.w = w;
   elP->rect.h = h;
+  elP->remW = 0;
+  elP->remH = 0;
 }
 
 // Sort colormaps by largest dimension
-Error atlasNew(Atlas **atlasPP, const U32 N_SAMPLES, Colormap **cmPA) {
-  if (!atlasPP || !N_SAMPLES || !cmPA) {
+// TODO treat cmPA as a fray, not an array. There needs to be something to guard against this.
+Error atlasNew(Atlas **atlasPP, Colormap **cmPF) {
+  if (!atlasPP || !cmPF) {
     return E_BAD_ARGS;
   }
 
+  U32 N_ATLAS_ELEMS = *frayGetFirstEmptyIdxP(cmPF);
+
   Error e = jbAlloc((void**) atlasPP, sizeof(Atlas), 1);
   if (!e) {
-    e = btNew((void**) &(*atlasPP)->btP, sizeof(AtlasElem), N_SAMPLES);
+    e = btNew((void**) &(*atlasPP)->btP, sizeof(AtlasElem), N_ATLAS_ELEMS);
   }
 
   if (!e) {
     AtlasElem *atlasA = (*atlasPP)->btP;
     // Populate first element so the next one has something to sort against.
-    _setRectData(&atlasA[0], cmPA[0]->w > cmPA[0]->h ?  cmPA[0]->w : cmPA[0]->h,
-                 cmPA[0]->w, cmPA[0]->h, 0);
+    _setRectData(&atlasA[0], cmPF[0]->w > cmPF[0]->h ?  cmPF[0]->w : cmPF[0]->h,
+                 cmPF[0]->w, cmPF[0]->h, 0);
 
     (*atlasPP)->extremityA[0] = 0;
     (*atlasPP)->extremityA[1] = 0;
 
     // Loop through the unsorted rectangles
-    for (U32 i = 1; i < N_SAMPLES; ++i) {
-      U32 currRectMaxDim = cmPA[i]->w > cmPA[i]->h ?
-                           cmPA[i]->w : cmPA[i]->h;
+    for (U32 i = 1; i < N_ATLAS_ELEMS; ++i) {
+      U32 currRectMaxDim = cmPF[i]->w > cmPF[i]->h ?
+                           cmPF[i]->w : cmPF[i]->h;
       // Loop through sorted rectangles to see where the current unsorted one should go.
       for (U32 j = 0; j < i; ++j) {
         if (currRectMaxDim > atlasA[j].maxDim) {
           memcpy(&atlasA[j + 1], &atlasA[j], sizeof(AtlasElem) * (i - j));
-          _setRectData(&atlasA[j], currRectMaxDim, cmPA[i]->w, cmPA[i]->h, i);
+          _setRectData(&atlasA[j], currRectMaxDim, cmPF[i]->w, cmPF[i]->h, i);
           printf("src %d to sorted %d\n", i, j);
           goto nextUnsortedRect;
         }
       }
       // If loop ended without placing rect anywhere, it belongs in last element.
-      _setRectData(&atlasA[i], currRectMaxDim, cmPA[i]->w, cmPA[i]->h, i);
-          printf("src %d to sorted %d\n", i, i);
+      _setRectData(&atlasA[i], currRectMaxDim, cmPF[i]->w, cmPF[i]->h, i);
+      printf("src %d to sorted %d\n", i, i);
       nextUnsortedRect:
       continue;
     }
@@ -331,6 +354,7 @@ Error xRenderProcessMessage(System *sP, Message *msgP) {
 
 // None of the render system's specials should be cleared as the main system owns them.
 XClrFuncDef_(Render) {
+  printf("\n\nrunning render clr\n\n\n");
   XRender *xRenderP = (XRender*) sP;
   frayDel((void**) &xRenderP->cmPF);
   frayDel((void**) &xRenderP->cpPF);
@@ -358,7 +382,7 @@ static Error _assembleTextureAtlas(XRender *xRenderP, Atlas *atlasP, U8 **atlasP
     U32 iEnd = arrayGetNElems(atlasP->btP);
     // For each sample...
     for (U32 i = 0; i < iEnd; ++i) {
-      srcIdx = atlasP->btP[i].header.srcIdx;
+      srcIdx = atlasP->btP[i].srcIdx;
       nUnitsPerStrip = cmPF[srcIdx]->sdP->ss.nUnitsPerStrip;
       nStripsPerRow  = cmPF[srcIdx]->w / nUnitsPerStrip;
       smElemP        = (StripmapElem*) cmPF[srcIdx]->sdP->sm.infP->inflatedDataP;
@@ -458,7 +482,7 @@ static void _updateCmSrcRectIndices(Colormap **cmPF, Atlas *atlasP) {
   AtlasElem *aeP = atlasP->btP;
   AtlasElem *aeEndP = aeP + arrayGetNElems(atlasP->btP);
   for (; aeP < aeEndP; ++aeP) {
-    cmPF[aeP->header.srcIdx]->sortedRectIdx = aeP - atlasP->btP;
+    cmPF[aeP->srcIdx]->sortedRectIdx = aeP - atlasP->btP;
   }
 }
 
@@ -469,11 +493,10 @@ XPostprocessCompsDef_(Render) {
 
   Atlas *atlasP = NULL;
   U8 *atlasPixelA = NULL;
-
-  Key nEntities = xGetNComps(sP);
+  Surface_ *atlasSurfaceP;
 
   // Texture atlas
-  Error e = atlasNew(&atlasP, nEntities, xRenderP->cmPF);
+  Error e = atlasNew(&atlasP, xRenderP->cmPF);
   if (!e) {
     e = atlasPlanPlacements(atlasP);
   }
@@ -486,7 +509,7 @@ XPostprocessCompsDef_(Render) {
   }
   // Texture surface
   if (!e) {
-    e = surfaceNew(&xRenderP->atlasSurfaceP, (void*) atlasPixelA, atlasP->btP[0].remW, atlasP->btP[0].remH);
+    e = surfaceNew(&atlasSurfaceP, (void*) atlasPixelA, atlasP->btP[0].remW, atlasP->btP[0].remH);
   }
   // Texture surface palette
 #if 1
@@ -494,7 +517,7 @@ XPostprocessCompsDef_(Render) {
     ColorPalette **cpPP = xRenderP->cpPF;
     ColorPalette **cpEndPP = cpPP + *frayGetFirstEmptyIdxP(xRenderP->cpPF);
     for (; cpPP < cpEndPP; ++cpPP) {
-      appendAtlasPalette(xRenderP->atlasSurfaceP, *cpPP);
+      appendAtlasPalette(atlasSurfaceP, *cpPP);
     }
   }
   // Zero the alpha out on black pixels since that's our invisible pixel.
@@ -506,8 +529,8 @@ XPostprocessCompsDef_(Render) {
       .a = 255
     };
     Color_ INVISIBLE_PIXEL = {0};
-    Color_ *colorP = xRenderP->atlasSurfaceP->format->palette->colors;
-    Color_ *colorEndP = colorP + xRenderP->atlasSurfaceP->format->palette->ncolors;
+    Color_ *colorP = atlasSurfaceP->format->palette->colors;
+    Color_ *colorEndP = colorP + atlasSurfaceP->format->palette->ncolors;
     for (; colorP < colorEndP; ++colorP) {
       if (!memcmp(colorP, &BLACK_PIXEL, sizeof(Color_))) {
         *colorP = INVISIBLE_PIXEL;
@@ -517,8 +540,13 @@ XPostprocessCompsDef_(Render) {
 #endif
   // Texture
   if (!e) {
-    e = textureNew(&xRenderP->atlasTextureP, xRenderP->rendererP, xRenderP->atlasSurfaceP);
+    e = textureNew(&xRenderP->atlasTextureP, xRenderP->rendererP, atlasSurfaceP);
   }
+  /* "Pixel data is not managed automatically with SDL_CreateRGBSurfaceWithFormatFrom().
+      You must free the surface before you free the pixel data." */
+  surfaceDel(&atlasSurfaceP);
+  arrayDel((void**) &atlasPixelA);
+
   // Update source rectangles. That way animation system knows where its frames are in texture atlas.
   if (!e) {
     e = _updateSrcRects(xRenderP, atlasP);
@@ -551,7 +579,6 @@ XPostprocessCompsDef_(Render) {
 
   // Clean up.
   atlasDel(&atlasP);
-  arrayDel((void**) &atlasPixelA);
   frayDel((void**) &xRenderP->cmPF);
   frayDel((void**) &xRenderP->cpPF);
   frayDel((void**) &xRenderP->entityF);
@@ -577,7 +604,7 @@ XGetShareFuncDef_(Render) {
     e = mapGetNestedMapP(shareMMP, SRC_RECT, &xRenderP->srcRectMP);  
   }
     // If there's no animation system, there won't be a source rect shared map in master.
-  if (!e) {
+  if (!e || e == E_BAD_KEY) {
     e = mapGetNestedMapP(shareMMP, RECT_OFFSET, &xRenderP->offsetRectMP);  
   }
   // We need to tolerate an animation system not existing.
@@ -598,13 +625,6 @@ XGetShareFuncDef_(Render) {
     }
     if (!e) {
       e = mapCopyKeys(xRenderP->offsetRectMP, xRenderP->dstRectMP);
-    }
-    // Plug them into shared map just in case
-    if (!e) {
-      e = mapSet(shareMMP, SRC_RECT, &xRenderP->srcRectMP);
-    }
-    if (!e) {
-      e = mapSet(shareMMP, RECT_OFFSET, &xRenderP->offsetRectMP);
     }
   }
   return e;

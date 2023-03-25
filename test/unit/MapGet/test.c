@@ -285,5 +285,6 @@ int main(int argc, char **argv) {
     printf("switchGet got %d\n", *iP);
   }
 #endif
+  mapDel(&mapP);
   return 0;
 }

@@ -130,10 +130,13 @@ Error mapNew(Map **mapPP, const U8 elemSz, const Key nElems) {
     return E_BAD_ARGS;
   }
   Error e = jbAlloc((void**) mapPP, sizeof(Map), 1);
-	if (!e)
+	if (!e) {
 		e = arrayNew(&(*mapPP)->mapA, elemSz, nElems);
-  if (!e) 
+  }
+  if (!e) {
     memset((*mapPP)->flagA, 0, sizeof(FlagInfo) * N_FLAG_BYTES);
+    (*mapPP)->population = 0;
+  }
   else {
     arrayDel((*mapPP)->mapA);
     jbFree((void**)mapPP);
@@ -204,10 +207,6 @@ inline static U32 _getMapElemSz(const Map *mapP) {
   return arrayGetElemSz(mapP->mapA);
 }
 
-inline static U32 _getNBitsSet(const Map *mapP) {
-  return mapP->flagA[LAST_FLAG_BYTE_IDX].prevBitCount + _countBits(mapP->flagA[LAST_FLAG_BYTE_IDX].flags);
-}
-
 void* mapGet(const Map *mapP, const Key key) {
 	const register U32 keyMinus1 = key - 1;
 	const register FlagInfo f = mapP->flagA[keyMinus1 >> 3];
@@ -245,12 +244,11 @@ static Error preMapSet(const Map *mapP, const Key key, void **elemPP, void **nex
     f = _getFlagInfo(mapP, key);
     *elemPP = _getElemP(mapP, f, key);
 	  if (*elemPP) {  /* Side-stepping mapGet() to avoid NULL pointers and double-calling _isMapValid() */
-      U32 nBitsSet = _getNBitsSet(mapP);
 			U32 keyElemIdx = _getElemIdx(f, key);
       /* If something's already in the target index, move everything over one. */
-      if (_idxIsPopulated(nBitsSet, keyElemIdx)) {
+      if (_idxIsPopulated(mapP->population, keyElemIdx)) {
         U32 mapElemSz = _getMapElemSz(mapP);
-        *nBytesTMoveP = (nBitsSet - keyElemIdx) * mapElemSz;
+        *nBytesTMoveP = (mapP->population - keyElemIdx) * mapElemSz;
         *nextElemPP = (U8*) *elemPP + mapElemSz;
       }
       return SUCCESS;
@@ -275,6 +273,12 @@ void mapSetFlag(Map *mapP, const Key key) {
 }
 
 Error mapSet(Map *mapP, const Key key, const void *valP) {
+  if (!mapP || !key || !valP) {
+    return E_BAD_ARGS;
+  }
+  if (mapP->population >= arrayGetNElems(mapP->mapA)) {
+    return E_MAP_FULL;
+  }
 	void *elemP, *nextElemP;
   U32 nBytesToMove;
   Error e = preMapSet(mapP, key, &elemP, &nextElemP, &nBytesToMove);
@@ -286,6 +290,8 @@ Error mapSet(Map *mapP, const Key key, const void *valP) {
 		memcpy(elemP, valP, _getMapElemSz(mapP));
 		/* Set flag. */
     mapSetFlag(mapP, key);
+    /* Increment map's population. */
+    ++mapP->population;
 	}
 	return e;
 }

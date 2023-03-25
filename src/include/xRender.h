@@ -29,6 +29,7 @@
 
 typedef struct {
   BtElHeader header;
+  Key srcIdx;  // keeps track of element in an unsorted array to relate them
   Rect_ rect;
   U32 maxDim,
     remW,   // remaining atlas width  as if this rect weren't here
@@ -59,7 +60,7 @@ typedef struct {
 // Images
 Error cmGen(Colormap *imgP);
 void  cmClr(Colormap *imgP);
-Error atlasNew(Atlas **atlasPP, const U32 N_SAMPLES, Colormap **cmPA);
+Error atlasNew(Atlas **atlasPP, Colormap **cmPF);
 Error atlasPlanPlacements(Atlas *atlasP);
 void atlasDel(Atlas **atlasPP);
 Error xRenderIniS(System *sP, void *sParamsP);
@@ -76,7 +77,6 @@ typedef struct {
   Entity        *entityF;  // components aren't added till postProcess(), so track entities here
   Window_       *windowP;
   Renderer_     *rendererP;
-  Surface_      *atlasSurfaceP;
   Texture_      *atlasTextureP;
   Map           *offsetRectMP;
   Map           *srcRectMP;   // shortcut-pointer to shared array of source rectangles

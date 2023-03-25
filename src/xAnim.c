@@ -78,12 +78,19 @@ XPostprocessCompsDef_(Anim) {
     if (!entity) {
       e = E_NULL_VAR;
     }
+    // Give each entity its source and destination rectangle pointers.
     if (!e) {
       cP->srcRectP = (Rect_*) mapGet(xP->srcRectMP, entity);
       if (!cP->srcRectP) {
         e = E_BAD_KEY;
       }
-      // Now change the W and H since original reflect entire animation strip's dimensions.
+      if (!e) {
+        cP->dstRectP = (Rect_*) mapGet(xP->dstRectMP, entity);
+        if (!cP->dstRectP) {
+          e = E_BAD_KEY;
+        }
+      }
+      // Now change the W and H since originals reflect entire animation strip's dimensions.
       Map *animMP;
       if (!e) { 
         e = mapGetNestedMapP(xP->animMPMP, entity, &animMP);
@@ -91,8 +98,8 @@ XPostprocessCompsDef_(Anim) {
       if (!e && animMP) {
         AnimStrip *stripP = animMP->mapA;
         if (stripP) {
-          cP->srcRectP->w = stripP->frameA[0].rect.w;
-          cP->srcRectP->h = stripP->frameA[0].rect.h;
+          cP->srcRectP->w = cP->dstRectP->w = stripP->frameA[0].rect.w;
+          cP->srcRectP->h = cP->dstRectP->h = stripP->frameA[0].rect.h;
         }
       }
     }
@@ -178,6 +185,9 @@ XGetShareFuncDef_(Anim) {
   if (!e) {
     mapGetNestedMapP(shareMMP, SRC_RECT, &xP->srcRectMP);
   }
+  if (!e) {
+    mapGetNestedMapP(shareMMP, DST_RECT, &xP->dstRectMP);
+  }
   return e;
 }
 
@@ -225,6 +235,9 @@ Error xAnimRun(System *sP) {
               continue;
             }
           }
+          else {
+            cP->currFrameIdx += cP->incrDecrement;
+          }
         }
       }
       else {
@@ -233,6 +246,8 @@ Error xAnimRun(System *sP) {
       // Advance the animation frame in whatever direction we're going.
       cP->timeLeft = cP->currStripP->frameA[cP->currFrameIdx].duration;
       *cP->srcRectP = cP->currStripP->frameA[cP->currFrameIdx].rect;
+      cP->dstRectP->w = cP->srcRectP->w;
+      cP->dstRectP->h = cP->srcRectP->h;
     }
   }
 

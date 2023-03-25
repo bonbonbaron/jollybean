@@ -30,12 +30,11 @@ int main(int argc, char **argv) {
   }
   printf("reviewing results\n=================\n");
   for (U32 i = 0; !e && i < N_SAMPLES; ++i) {
-    printf("btP->idx[%3d]: parent: %3d, left: %3d, right %3d, misc: %3d\n", 
+    printf("btP->idx[%3d]: parent: %3d, left: %3d, right %3d\n", 
         i,
         btP[i].header.parent,
         btP[i].header.childA[LEFT_CHILD],
-        btP[i].header.childA[RIGHT_CHILD],
-        btP[i].header.misc);
+        btP[i].header.childA[RIGHT_CHILD]);
   }
   btDel_((void**) &btP);
   return e;

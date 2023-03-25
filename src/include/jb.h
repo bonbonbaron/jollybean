@@ -22,6 +22,6 @@
 typedef enum {UPDATE_RECT = N_XMAIL_BUILTIN_CMDS, ANIMATE} MessageCommand;
 typedef enum {MASTER = 1, RENDER, ANIMATION, TIMER, COLLISION, N_SYSTEM_TYPES} SystemType; 
 // Make sure you don't get rid of the 3! 2 belongs to Master.
-typedef enum{WINDOW_GENE_TYPE = 1, RENDERER_GENE_TYPE, SRC_RECT, RECT_OFFSET, DST_RECT, N_MASTER_GENES} ShareType;
+typedef enum{WINDOW_GENE_TYPE = 1, RENDERER_GENE_TYPE, SRC_RECT, RECT_OFFSET, DST_RECT, SCALE, N_MASTER_GENES} ShareType;
 
 #endif
