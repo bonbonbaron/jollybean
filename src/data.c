@@ -138,7 +138,7 @@ Error mapNew(Map **mapPP, const U8 elemSz, const Key nElems) {
     (*mapPP)->population = 0;
   }
   else {
-    arrayDel((*mapPP)->mapA);
+    arrayDel(&(*mapPP)->mapA);
     jbFree((void**)mapPP);
   }
 	return e;
@@ -360,6 +360,18 @@ Error mapGetNestedMapPElem(Map *mapP, Key mapKey, Key elemKey, void **returnedIt
 
   return SUCCESS;
 }
+
+// TODO: figure out why jbFree on the 2nd inner map of animMPMP is double-freed or corrupted.
+void mapOfNestedMapsDel(Map **outerMapPP) {
+  if (outerMapPP && *outerMapPP) {
+    Map **mapPP = (Map**) (*outerMapPP)->mapA;
+    Map **mapEndPP = mapPP + (*outerMapPP)->population;
+    for (; mapPP < mapEndPP; ++mapPP) {
+      mapDel(mapPP);
+    }
+  }
+}
+
 
 // Binary trees
 Error btNew(void **btAP, U32 elemSz, U32 nElems) {

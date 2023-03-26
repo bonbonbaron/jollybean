@@ -1,8 +1,1 @@
-Something's coming into view for me: 
-
-All those confusing directory trees in the game folder don't need to exist. Everything that's not game-specific (basically just biomes) are storable in a trove (and locally and remotely). Even the tree stuff can be stored in the trove, because lots of behaviors (like NPCs walking around a town in an RPG) are reusable. Even the object files can be stored in the trove. Really, the game directory should have game-specific stuff, like the setup of a biome's spawn targets (not sure what other attributes to give it yet-- e.g. music doesn't really "belong" to any placeable entity). This is good because the spirit of DRY permeates down to the lowest levels of tree nodes, speeds up build times for things already built, and vastly simplifies the game development environment as far as the dev's concerned. 
-
-This may be a good business idea with a free layer for the vast majority of things and the ability to sell individual or collections of resources (art, music, behavior, system, whatever). We rake in 20%. JB should be similar in structure to git or docker package management systems; you can push, pull, backup, etc. any given resource. JB needs to make editing anything either by itself or with its dependencies as easy as cake from anywhere on the machine. But maybe multiple versions of something should exist; if you updated a resource and want another game to keep the old version without losing its ability to be built without the new one, there's gotta be a flexible way to do that.
-
-
-get Animation to go through for red in body.c
+// TODO: figure out why jbFree on the 2nd inner map of animMPMP is double-freed or corrupted.

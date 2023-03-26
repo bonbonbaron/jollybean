@@ -12,7 +12,6 @@ Error previewImg(Colormap *cmP, ColorPalette *cpP, U32 preview_ms) {
 
   Error e = guiNew(&windowP, &rendererP);
   if (!e) {
-//Error surfaceNew(Surface_ **surfacePP, void *pixelDataA, U32 w, U32 h) {
     e = surfaceNew(&surfaceP, cmP, cmP->w, cmP->h);
   }
   if (!e) {
@@ -31,14 +30,19 @@ Error previewImg(Colormap *cmP, ColorPalette *cpP, U32 preview_ms) {
   if (!e) {
     clearScreen(rendererP);
     e = copy_(rendererP, textureP, NULL, &dstRect);
-    //e = copy_(rendererP, textureP, NULL, NULL);
   }
 	if (!e) {
 		present_(rendererP);
     SDL_Delay(preview_ms);
   }
+  if (surfaceP) {
+    SDL_FreeSurface(surfaceP);
+  }
   if (textureP) {
     textureDel(&textureP);
+  }
+  if (rendererP) {
+    SDL_DestroyRenderer(rendererP);
   }
   if (windowP) {
     SDL_DestroyWindow(windowP);

@@ -425,7 +425,7 @@ static Error _updateSrcRects(XRender *xRenderP, Atlas *atlasP) {
   XRenderComp c;
 
   SubcompOwner *scoP = xRenderP->system.subcompOwnerMP->mapA;
-  SubcompOwner *scoEndP = scoP + arrayGetNElems(xRenderP->system.subcompOwnerMP->mapA);
+  SubcompOwner *scoEndP = scoP + xRenderP->system.subcompOwnerMP->population;
 
   RectOffset rectOffset = {0};
   Colormap  *cmP;
@@ -434,10 +434,8 @@ static Error _updateSrcRects(XRender *xRenderP, Atlas *atlasP) {
   if (xRenderP->system.flags & RENDER_SYS_OWNS_SRC_AND_OFFSET) {
     // Copy the flags from one map to another. It's a cheat code.
     e = mapCopyKeys(xRenderP->srcRectMP, xRenderP->dstRectMP);
-    assert(arrayGetNElems(xRenderP->srcRectMP->mapA) == 
-           arrayGetNElems(xRenderP->dstRectMP->mapA)); 
-    assert(arrayGetElemSz(xRenderP->srcRectMP->mapA) == 
-           arrayGetElemSz(xRenderP->dstRectMP->mapA)); 
+    assert(xRenderP->srcRectMP->population == xRenderP->dstRectMP->population); 
+    assert(arrayGetElemSz(xRenderP->srcRectMP->mapA) == arrayGetElemSz(xRenderP->dstRectMP->mapA)); 
   }
   // Update all source rectangles' XY coordinates to their global positions in texture atlas.
   // For each entity...

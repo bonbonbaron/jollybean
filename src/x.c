@@ -215,9 +215,10 @@ void xClr(System *sP) {
   mapDel(&sP->e2cIdxMP);
   if (sP->mutationMPMP) {
     Map **mapPP = sP->mutationMPMP->mapA;
-    Map **mapEndPP = sP->mutationMPMP->mapA + arrayGetNElems(sP->mutationMPMP->mapA);
-    for (; mapPP < mapEndPP; ++mapPP) 
+    Map **mapEndPP = sP->mutationMPMP->mapA + sP->mutationMPMP->population;
+    for (; mapPP < mapEndPP; ++mapPP) {
       mapDel(mapPP);
+    }
   }
   mapDel(&sP->mutationMPMP);
   arrayDel((void**) &sP->cIdx2eA);

@@ -97,7 +97,7 @@ void hivemindDel(Map **hivemindMPP) {
     Map *hivemindMP = *hivemindMPP;
     if (hivemindMP && hivemindMP->mapA) {
       Entity **entityAP = hivemindMP->mapA;
-      Entity **entityEndAP = hivemindMP->mapA + arrayGetNElems(hivemindMP->mapA);
+      Entity **entityEndAP = hivemindMP->mapA + hivemindMP->population;
       for (; entityAP < entityEndAP; entityAP++) {
         arrayDel((void**) entityAP);
       }

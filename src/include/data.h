@@ -131,6 +131,7 @@ void  mapSetFlag(Map *mapP, const Key key);
 Error mapCopyKeys(Map *dstMP, Map *srcMP);
 Error mapGetNestedMapP(Map *mapP, Key mapKey, Map **mapPP);
 Error mapGetNestedMapPElem(Map *mapP, Key mapKey, Key elemKey, void **returnedItemPP);
+void  mapOfNestedMapsDel(Map **outerMapPP);
 
 /* Binary trees
  * ============

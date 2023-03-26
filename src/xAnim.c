@@ -1,4 +1,5 @@
 #include "xAnim.h"
+#include "data.h"
 
 // Unused X functions
 XIniSysFuncDef_(Anim) {
@@ -60,7 +61,7 @@ XClrFuncDef_(Anim) {
     return E_BAD_ARGS;
   }
   XAnim *xP = (XAnim*) sP;
-  mapDel(&xP->animMPMP);
+  mapOfNestedMapsDel(&xP->animMPMP);
   return SUCCESS;
 }
 
@@ -154,7 +155,7 @@ Error xAnimProcessMessage(System *sP, Message *msgP) {
       // Avoid offsetting any animation more than once.
       if (!(animStripP->flags & IS_OFFSET)) {
         animStripP->flags |= IS_OFFSET;
-        animStripEndP = animStripP + arrayGetNElems(animMP->mapA);
+        animStripEndP = animStripP + animMP->population;
         // Offset all the frames' rectangles in this strip to reflect their texture atlas offsets.
         for (; animStripP < animStripEndP; ++animStripP) {
           frameP = animStripP->frameA;

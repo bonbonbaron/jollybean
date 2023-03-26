@@ -9,38 +9,46 @@
 #include "previewImg.h"
 
 int main(int argc, char **argv) {
-  printf("%d\n", sizeof(AtlasElem));
   // ====================================================
   // Repeat things done in multithreadingg test for setup
   // ====================================================
-  ColorPalette *cpPA[] = {
-    &blehColorPalette,
-    &redColorPalette,
-    &heckColorPalette
-  };
-  // Mock up some genes.
+  Colormap **cmPF = NULL;
+
   Colormap *cmPA[] = {
     &blehColormap,
     &redColormap,
     &heckColormap
   };
 
-  U32 N_SAMPLES = sizeof(cmPA) / sizeof(cmPA[0]);
+  ColorPalette *cpPA[] = {
+    &blehColorPalette,
+    &redColorPalette,
+    &heckColorPalette
+  };
+
+  Error e = frayNew((void**) &cmPF, sizeof(Colormap*), 3);
+  for (U32 i = 0; !e && i < 3; ++i) {
+    e = frayAdd(cmPF, &cmPA[i], NULL);
+  }
+
+  U32 N_SAMPLES = *frayGetFirstEmptyIdxP(cmPF);
 
   // Offset color palette and colormap indices to match future texture atlas destinations
   U8 atlasOffset = 0;
-  for (int i = 0; i < N_SAMPLES; ++i) {
-    cpPA[i]->atlasPaletteOffset = cmPA[i]->sdP->ss.offset = atlasOffset;
+  for (int i = 0; !e && i < N_SAMPLES; ++i) {
+    cpPA[i]->atlasPaletteOffset = cmPF[i]->sdP->ss.offset = atlasOffset;
     atlasOffset += cpPA[i]->nColors;
   }
 
   // Extract stripdatas into an array so we can multithread process them all.
   StripDataS **sdPA = NULL;
-  Error e = arrayNew((void**) &sdPA, sizeof(StripDataS*), N_SAMPLES);
+  if (!e) {
+    e = arrayNew((void**) &sdPA, sizeof(StripDataS*), N_SAMPLES);
+  }
 
   if (!e) {
     for (U32 i = 0, iEnd = arrayGetNElems(sdPA); i < iEnd; ++i) {
-      sdPA[i] = cmPA[i]->sdP;
+      sdPA[i] = cmPF[i]->sdP;
     }
   }
 
@@ -60,9 +68,9 @@ int main(int argc, char **argv) {
   }
 #else 
   for (int i = 0; !e && i < N_SAMPLES; ++i) {
-    e = sdInflate(cmPA[i]->sdP);
+    e = sdInflate(cmPF[i]->sdP);
     if (!e) {
-      sdUnpack(cmPA[i]->sdP);
+      sdUnpack(cmPF[i]->sdP);
     }
   }
 #endif
@@ -70,7 +78,7 @@ int main(int argc, char **argv) {
   // Create an unfinished atlas with colormap rectangles sorted by size in descending order.
   Atlas *atlasP = NULL;
   if (!e) {
-    e = atlasNew(&atlasP, N_SAMPLES, cmPA);
+    e = atlasNew(&atlasP, cmPF);
   }
   for (int i = 0 ; i < N_SAMPLES; i++) {
     printf("BEFORE planning placements:\n{%d, %d, %d, %d}, {%d, %d}, srcIdx = %d\n", 
@@ -119,9 +127,9 @@ int main(int argc, char **argv) {
           atlasP->btP[i].rect.w,
           atlasP->btP[i].rect.h);
       srcIdx = atlasP->btP[i].srcIdx;
-      nUnitsPerStrip = cmPA[srcIdx]->sdP->ss.nUnitsPerStrip;
-      nStripsPerRow = cmPA[srcIdx]->w / nUnitsPerStrip;
-      smElemP    = (StripmapElem*) cmPA[srcIdx]->sdP->sm.infP->inflatedDataP;
+      nUnitsPerStrip = cmPF[srcIdx]->sdP->ss.nUnitsPerStrip;
+      nStripsPerRow = cmPF[srcIdx]->w / nUnitsPerStrip;
+      smElemP    = (StripmapElem*) cmPF[srcIdx]->sdP->sm.infP->inflatedDataP;
       // For each row of this sample's atlas rectangle...
       for (int j = 0, h = atlasP->btP[i].rect.h; j < h; ++j) {
         smElemEndP = smElemP + nStripsPerRow;
@@ -129,7 +137,7 @@ int main(int argc, char **argv) {
         // Paste rectangle row
         for (; smElemP < smElemEndP; ++smElemP, dstP += nUnitsPerStrip) {
           memcpy(dstP, 
-                 cmPA[srcIdx]->sdP->ss.unpackedDataP + (*smElemP * nUnitsPerStrip), 
+                 cmPF[srcIdx]->sdP->ss.unpackedDataP + (*smElemP * nUnitsPerStrip), 
                  nUnitsPerStrip);
         }
       }
@@ -179,7 +187,7 @@ int main(int argc, char **argv) {
     e = multithread_(stripClr,   (void*) sdPA);
 #else
     for (int i = 0; !e && i < N_SAMPLES; ++i) {
-      stripClr(cmPA[i]->sdP);
+      stripClr(cmPF[i]->sdP);
     }
 #endif
   }
@@ -187,11 +195,13 @@ int main(int argc, char **argv) {
   // ====================================================
   // Clean up
   // ====================================================
-  arrayDel((void**) &atlasPixelA);
   atlasDel(&atlasP);
   arrayDel((void**) &sdPA);
+  frayDel((void**) &cmPF);
   SDL_FreeSurface(textureSurfaceP);
+  arrayDel((void**) &atlasPixelA);
   SDL_DestroyTexture(textureP);
+  SDL_DestroyRenderer(rendererP);
   SDL_Quit();
   return e;
 }

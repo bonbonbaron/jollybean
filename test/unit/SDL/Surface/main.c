@@ -33,14 +33,14 @@ int main(int argc, char **argv) {
       if (!e) {
         genePA[i] = geneP;
         genePA[i]->geneClass = MEDIA_GENE;
-        genePA[i]->key = 0;
-        genePA[i]->size = sizeof(XRenderComp);
-        genePA[i]->type = RENDER;
+        genePA[i]->u.unitary.key = 0;
+        genePA[i]->u.unitary.size = sizeof(XRenderComp);
+        genePA[i]->u.unitary.type = RENDER;
       }
     }
-    genePA[0]->dataP = &blehColormap;
-    genePA[1]->dataP = &redColormap;
-    genePA[2]->dataP = &heckColormap;
+    genePA[0]->u.unitary.dataP = &blehColormap;
+    genePA[1]->u.unitary.dataP = &redColormap;
+    genePA[2]->u.unitary.dataP = &heckColormap;
   }
 
 
@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
     for (U32 i = 0, iEnd = arrayGetNElems(sdPA); i < iEnd; ++i) {
       // dataP should point to a struct whose first member is a StripDataS pointer,
       // so treat it like a StripDataS double-pointer.
-      sdPA[i] = *((StripDataS**) genePA[i]->dataP);  
+      sdPA[i] = *((StripDataS**) genePA[i]->u.unitary.dataP);  
     }
   }
 
@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
     printf("surface %d\n", i);
     if (!e) {
       printf("newing\n");
-      Colormap *cmP = (Colormap*) genePA[i]->dataP;
+      Colormap *cmP = (Colormap*) genePA[i]->u.unitary.dataP;
 /*
     SDL_Surface * SDL_CreateRGBSurfaceFrom(
         void *pixels, int width, int height, int depth, int pitch,

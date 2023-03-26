@@ -21,7 +21,6 @@ XPostprocessCompsDefUnused_(Master);
 
 XClrFuncDef_(Master) {
   XMaster *xP = (XMaster*) sP;
-  guiDel(&xP->windowP, &xP->rendererP);
   xMasterDelShareMap(&xP->sharedMPMP);
 
   XMasterComp *cP = sP->cF;
@@ -29,6 +28,7 @@ XClrFuncDef_(Master) {
   for (; cP < cEndP; ++cP) {
     xClr(*cP);  // cP is a pointer to a system pointer.
   }
+  guiDel(&xP->windowP, &xP->rendererP);
   return SUCCESS;
 }
 
@@ -249,17 +249,17 @@ void xMasterDelShareMap(Map **sharedMPMPP) {
        We want to delete textures before the renderer, which takes textures along with it.
        Otherwise we risk double-freeing those. */
     Map **mapPP = ((Map**) sharedMPMP->mapA) + 2;
-    Map **mapEndPP = mapPP + arrayGetNElems(sharedMPMP->mapA) - 2;
+    Map **mapEndPP = mapPP + sharedMPMP->population - 2;
     for (; mapPP < mapEndPP; ++mapPP) {
       printf("getting rid of map at 0x%08x\n", (U32) *mapPP);
       mapDel(mapPP);
     }
-    if (arrayGetNElems(sharedMPMP->mapA) >= 1) {
+    if (sharedMPMP->population >= 1) {
       mapPP = (Map**) sharedMPMP->mapA;
       printf("getting rid of map at 0x%08x\n", (U32) mapPP[0]);
       mapDel(&mapPP[0]);
     }
-    if (arrayGetNElems(sharedMPMP->mapA) >= 2) {
+    if (sharedMPMP->population >= 2) {
       printf("getting rid of map at 0x%08x\n", (U32) mapPP[1]);
       mapDel(&mapPP[1]);
     }

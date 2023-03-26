@@ -1,5 +1,7 @@
 BODY_DIR = ${HOME}/jb/build/Seed/Genome/Gene/Body
 
+JB = ${HOME}/hack/jollybean
+
 COLORMAP_DIR = ${BODY_DIR}/Graybody/Colormap
 CM_SRC_DIR = ${COLORMAP_DIR}/src
 CM_INC_DIR = ${COLORMAP_DIR}/include
@@ -10,32 +12,32 @@ CP_SRC_DIR = ${COLOR_PALETTE_DIR}/src
 CP_INC_DIR = ${COLOR_PALETTE_DIR}/include
 CP_OBJ_DIR = ${COLOR_PALETTE_DIR}/obj
 
-./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./render.o ../../build/xRender.o ../../build/x.o ../../build/data.o ../../build/interface.o ../../utils/body/build/previewImg.o 
-	gcc ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./render.o ../../utils/body/build/previewImg.o ../../build/interface.o $(shell sdl2-config --libs) ../../build/xRender.o ../../build/x.o ../../build/data.o -o $@
+./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./render.o ${JB}/build/xRender.o ${JB}/build/x.o ${JB}/build/data.o ${JB}/build/interface.o ${JB}/utils/body/build/previewImg.o 
+	gcc ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./render.o ${JB}/utils/body/build/previewImg.o ${JB}/build/interface.o $(shell sdl2-config --libs) ${JB}/build/xRender.o ${JB}/build/x.o ${JB}/build/data.o -lpthread -o $@
 	touch $@
 
 ./render.o: ./render.c
-	gcc -g -c render.c -I../../src/include/ -I../../utils/body/src/include/ -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags --cflags) -o $@
+	gcc -g -c render.c -I${JB}/src/include/ -I${JB}/utils/body/src/include/ -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags --cflags) -o $@
 	touch $@
 
 ${CM_OBJ_DIR}/%Colormap.o: ${CM_SRC_DIR}/%Colormap.c
-	gcc -g -I../../src/include -c $< $(shell sdl2-config --cflags) -o $@
+	gcc -g -I${JB}/src/include -c $< $(shell sdl2-config --cflags) -o $@
 	touch $@
 
 ${CP_OBJ_DIR}/%ColorPalette.o: ${CP_SRC_DIR}/%ColorPalette.c
-	gcc -g -I../../src/include -c $< $(shell sdl2-config --cflags) -o $@
+	gcc -g -I${JB}/src/include -c $< $(shell sdl2-config --cflags) -o $@
 	touch $@
 
-../../build/%.o: ../../src/%.c
-	make -C ../../
+${JB}/build/%.o: ${JB}/src/%.c
+	make -C ${JB}/
 	touch $@
 
 ${CP_SRC_DIR}/%ColorPalette.c:
-	../../utils/body/bin/body $*
+	${JB}/utils/body/bin/body $*
 	touch $@
 
 ${CM_SRC_DIR}/%Colormap.c:
-	../../utils/body/bin/body $*
+	${JB}/utils/body/bin/body $*
 	touch $@
 
 .PHONY: clean
