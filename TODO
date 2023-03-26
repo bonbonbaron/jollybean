@@ -1,1 +1,1 @@
-// TODO: figure out why jbFree on the 2nd inner map of animMPMP is double-freed or corrupted.
+mapSet() is uncharacteristically unstable when master creates shared's inner maps. 

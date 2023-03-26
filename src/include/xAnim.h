@@ -42,6 +42,7 @@ typedef struct {
   Map        *offsetMP;   // derived inner share map from parent system
   Map        *srcRectMP;  // derived inner source rectangle map from parent system
   Map        *dstRectMP;  // derived inner source rectangle map from parent system
+  Animation  *animSingletonF;  // fray of singleton animations
   Map        *animMPMP;   // maps entity to animation map, which in turn maps strip ID to anim strip
 } XAnim;
 

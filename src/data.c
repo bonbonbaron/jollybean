@@ -146,7 +146,9 @@ Error mapNew(Map **mapPP, const U8 elemSz, const Key nElems) {
 
 void mapDel(Map **mapPP) {
 	if (mapPP != NULL && *mapPP != NULL) {
-		arrayDel(&(*mapPP)->mapA);
+    if ((*mapPP)->mapA != NULL) {
+      arrayDel(&(*mapPP)->mapA);
+    }
 		jbFree((void**) mapPP);
 	}
 }
@@ -369,6 +371,7 @@ void mapOfNestedMapsDel(Map **outerMapPP) {
     for (; mapPP < mapEndPP; ++mapPP) {
       mapDel(mapPP);
     }
+    mapDel(outerMapPP);
   }
 }
 

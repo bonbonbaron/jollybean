@@ -5,6 +5,9 @@
 XIniSysFuncDef_(Anim) {
   XAnim *xP = (XAnim*) sP;
   Error e = mapNew(&xP->animMPMP, sizeof(Map*), xGetNComps(sP));
+  if (!e) {
+    e = frayNew((void**) &xP->animSingletonF, sizeof(Animation*), xGetNComps(sP));
+  }
   return e;
 }
 
@@ -19,7 +22,7 @@ XIniSubcompFuncDef_(Anim) {
 
   Animation *animP = (Animation*) dataP;
 
-  // Make a single map of animation strips for everybody who uses this particular one.
+  // Make a SINGLETON map of animation strips for everybody who uses this particular one.
   if (!animP->animMP) {
     e = mapNew(&animP->animMP, sizeof(AnimStrip), animP->nPairs);
     if (!e) {
@@ -29,6 +32,9 @@ XIniSubcompFuncDef_(Anim) {
       for (; !e && kasPairP < kasPairEndP; ++kasPairP) {
         e = mapSet(animP->animMP, kasPairP->key, kasPairP->animStripP);
       }
+    }
+    if (!e) {
+      e = frayAdd(xP->animSingletonF, &animP, NULL);
     }
   }
 
@@ -61,7 +67,13 @@ XClrFuncDef_(Anim) {
     return E_BAD_ARGS;
   }
   XAnim *xP = (XAnim*) sP;
-  mapOfNestedMapsDel(&xP->animMPMP);
+  mapDel(&xP->animMPMP);  // Don't delete inner maps; those are singletons properly deleted below.
+  Animation **animPP = (Animation**) xP->animSingletonF;
+  Animation **animEndPP = animPP + *frayGetFirstEmptyIdxP(xP->animSingletonF);
+  for (; animPP < animEndPP; ++animPP) {
+    mapDel(&(*animPP)->animMP);
+  }
+  frayDel((void**) &xP->animSingletonF);
   return SUCCESS;
 }
 
