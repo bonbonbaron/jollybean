@@ -5,15 +5,6 @@
 
 X_(Master, 1, FLG_NO_CF_SRC_A_); 
 
-void reportShares(char *rendition, Map *sharedGenesMPMP) {
-  // TODO delete 
-  Map **mapPP = sharedGenesMPMP->mapA;
-  Map **mapEndPP = mapPP + sharedGenesMPMP->population;
-  printf("%s:\n", rendition);
-  for (U32 i = 0; mapPP < mapEndPP; ++mapPP, ++i) {
-    printf("\t\tmap[%d] = 0x%08x\n", i, (U32) *mapPP);
-  }
-}
 // Unused functions
 XProcMsgFuncDefUnused_(Master);
 XIniSubcompFuncDefUnused_(Master);
@@ -198,15 +189,13 @@ static Error _subsystemsIni(System *masterSysP, GeneHisto *geneHistoP) {
   return e;
 }
 
-inline static Error _addSharedSubmap(Map *outerShareMP, Key type, U8 size, Key num) {
+static Error _addSharedSubmap(Map *outerShareMP, Key type, U8 size, Key num) {
   Map *innerShareMP = NULL;
   Error e = mapNew(&innerShareMP, size, num);
   printf("outer: 0x%08x, key: %03d, inner: 0x%08x, size: %03d, count: %03d\n", (U32) outerShareMP, type, (U32) innerShareMP, size, num);
-  reportShares("before setting inner map", outerShareMP);
   if (!e) {
     e = mapSet(outerShareMP, type, (void**) &innerShareMP);
   }
-  reportShares("after setting inner map", outerShareMP);
   return e;
 }
 
