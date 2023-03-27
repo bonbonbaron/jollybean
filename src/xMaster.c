@@ -192,7 +192,6 @@ static Error _subsystemsIni(System *masterSysP, GeneHisto *geneHistoP) {
 static Error _addSharedSubmap(Map *outerShareMP, Key type, U8 size, Key num) {
   Map *innerShareMP = NULL;
   Error e = mapNew(&innerShareMP, size, num);
-  printf("outer: 0x%08x, key: %03d, inner: 0x%08x, size: %03d, count: %03d\n", (U32) outerShareMP, type, (U32) innerShareMP, size, num);
   if (!e) {
     e = mapSet(outerShareMP, type, (void**) &innerShareMP);
   }
@@ -242,16 +241,13 @@ void xMasterDelShareMap(Map **sharedMPMPP) {
     Map **mapPP = ((Map**) sharedMPMP->mapA) + 2;
     Map **mapEndPP = mapPP + sharedMPMP->population - 2;
     for (; mapPP < mapEndPP; ++mapPP) {
-      printf("getting rid of map at 0x%08x\n", (U32) *mapPP);
       mapDel(mapPP);
     }
     if (sharedMPMP->population >= 1) {
       mapPP = (Map**) sharedMPMP->mapA;
-      printf("getting rid of map at 0x%08x\n", (U32) mapPP[0]);
       mapDel(&mapPP[0]);
     }
     if (sharedMPMP->population >= 2) {
-      printf("getting rid of map at 0x%08x\n", (U32) mapPP[1]);
       mapDel(&mapPP[1]);
     }
     mapDel(sharedMPMPP);

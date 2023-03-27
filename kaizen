@@ -26,3 +26,4 @@
   system's message command might equal an existing default one
   not reading mapGet's resuilt as a double pointer when it is one
   maps and arrays might have multiple pointers to the same singleton; make this safe.
+  not knowing something CRUCIAL about a third-party function. From now on READ DOCUMENTATION to make sure you understand its proper use

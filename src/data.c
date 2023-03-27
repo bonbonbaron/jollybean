@@ -239,18 +239,6 @@ inline static U8 _idxIsPopulated(const U32 nBitsSet, U32 idx) {
   return (idx < nBitsSet);
 }
 
-#define d_(a, b) ((U32) ((U32) a - (U32) b))
-
-void reportShares(char *rendition, Key key, Map *sharedGenesMPMP) {
-  // TODO delete 
-  Map **mapPP = sharedGenesMPMP->mapA;
-  Map **mapEndPP = mapPP + arrayGetNElems(sharedGenesMPMP->mapA);
-  printf("%s:\n", rendition);
-  for (U32 i = 0; mapPP < mapEndPP; ++mapPP, ++i) {
-    printf("\t\tmap[%d] = 0x%08x\n", i, (U32) *mapPP);
-  }
-}
-
 static Error preMapSet(const Map *mapP, const Key key, void **elemPP, void **nextElemPP, U32 *nBytesTMoveP) {
   *nBytesTMoveP = 0;
   if (_isMapValid(mapP) && _isKeyValid(key)) {
@@ -265,11 +253,6 @@ static Error preMapSet(const Map *mapP, const Key key, void **elemPP, void **nex
         *nBytesTMoveP = (mapP->population - keyElemIdx) * mapElemSz;
         *nextElemPP = (U8*) *elemPP + mapElemSz;
       }
-      printf("moving %3d inner map ptrs from idx %3d to %3d\n",
-          *nBytesTMoveP / 4,
-          d_(*elemPP, mapP->mapA) / 4,
-          d_(*nextElemPP, mapP->mapA) / 4
-      );
       return SUCCESS;
     } else {
       return E_BAD_KEY;
@@ -296,25 +279,19 @@ Error mapSet(Map *mapP, const Key key, const void *valP) {
   if (mapP->population >= arrayGetNElems(mapP->mapA)) {
     return E_MAP_FULL;
   }
-  reportShares("initial", key, mapP);
 	void *elemP, *nextElemP;
   U32 nBytesToMove;
   Error e = preMapSet(mapP, key, &elemP, &nextElemP, &nBytesToMove);
-  reportShares("after preMapSet", key, mapP);
   if (!e) {
     if (nBytesToMove) {
-      memcpy(nextElemP, (const void*) elemP, nBytesToMove);
+      memmove(nextElemP, (const void*) elemP, nBytesToMove);
     }
-    reportShares("after memcpy 1", key, mapP);
 		/* Write value to map element. */
 		memcpy(elemP, valP, _getMapElemSz(mapP));
-    reportShares("after memcpy 2", key, mapP);
 		/* Set flag. */
     mapSetFlag(mapP, key);
-    reportShares("after mapSetFlag", key, mapP);
     /* Increment map's population. */
     ++mapP->population;
-    reportShares("after population incr", key, mapP);
 	}
 	return e;
 }
@@ -325,7 +302,7 @@ Error mapRem(Map *mapP, const Key key) {
   Error e = preMapSet(mapP, key, &elemP, &nextElemP, &nBytesToMove);
   if (!e) {
     if (nBytesToMove) {
-      memcpy(elemP, (const void*) nextElemP, nBytesToMove);
+      memmove(elemP, (const void*) nextElemP, nBytesToMove);
     }
 		/* Unset flag. */
 		U8 byteIdx = byteIdx_(key);

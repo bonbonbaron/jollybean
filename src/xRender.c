@@ -149,7 +149,7 @@ Error atlasNew(Atlas **atlasPP, Colormap **cmPF) {
       // Loop through sorted rectangles to see where the current unsorted one should go.
       for (U32 j = 0; j < i; ++j) {
         if (currRectMaxDim > atlasA[j].maxDim) {
-          memcpy(&atlasA[j + 1], &atlasA[j], sizeof(AtlasElem) * (i - j));
+          memmove(&atlasA[j + 1], &atlasA[j], sizeof(AtlasElem) * (i - j));
           _setRectData(&atlasA[j], currRectMaxDim, cmPF[i]->w, cmPF[i]->h, i);
           printf("src %d to sorted %d\n", i, j);
           goto nextUnsortedRect;
@@ -648,7 +648,7 @@ Error xRenderRun(System *sP) {
 		present_(xRenderP->rendererP);
   }
 
-  if (++i == 10) {
+  if (++i == 100) {
     return E_BAD_ARGS;
   }
 
