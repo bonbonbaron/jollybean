@@ -465,6 +465,8 @@ static Error _updateSrcRects(XRender *xRenderP, Atlas *atlasP) {
       if (!e && xRenderP->offsetRectMP) {
         rectOffset.x = c.srcRectP->x;
         rectOffset.y = c.srcRectP->y;
+        printf("Entity %3d is putting {%3d, %3d} in the offset bank.\n", 
+            scoP->owner, c.srcRectP->x, c.srcRectP->y);
         e = mapSet(xRenderP->offsetRectMP, scoP->owner, &rectOffset);
         if (!e) {
           e = mailboxWrite(xRenderP->system.mailboxF, ANIMATION, scoP->owner, UPDATE_RECT, 0);
@@ -648,7 +650,11 @@ Error xRenderRun(System *sP) {
 		present_(xRenderP->rendererP);
   }
 
-  if (++i == 100) {
+  if (i > 0 && (i % 100) == 0) {
+    mailboxWrite(sP->mailboxF, ANIMATION, sP->cIdx2eA[0], ANIMATE, 2);
+  }
+
+  if (++i == 1000) {
     return E_BAD_ARGS;
   }
 

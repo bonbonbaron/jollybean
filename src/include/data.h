@@ -7,11 +7,11 @@
 #include <assert.h>
 
 typedef unsigned char U8;
-typedef char S8;
+typedef signed char S8;
 typedef unsigned short U16;
-typedef short S16;
+typedef signed short S16;
 typedef unsigned int U32;
-typedef int S32;
+typedef signed int S32;
 typedef U8 Key;
 typedef U8 Bln;   // Boolean
 

@@ -29,7 +29,7 @@ typedef struct {
 } Animation;
 
 typedef struct {
-  U32        timeLeft;      // time left for current animation frame
+  S32        timeLeft;      // time left for current animation frame
   S8         incrDecrement; // increments or decrements animation frame depending on pingpong
   U8         currFrameIdx;  // keeps track of where we are in animation system
   AnimStrip *currStripP;    // current animation strip

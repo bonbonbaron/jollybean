@@ -44,8 +44,6 @@ void xActivateComponentByEntity(System *sP, Entity entity) {
       _xSwap(sP, compOrigIdxP, intermediateIdx);
       _xSwap(sP, &intermediateIdx, compNewIdx);
     }
-    // Example: If somebody starts moving, coll sys and trackers will want to know!
-    mailboxWrite(sP->mailboxF, 0, entity, sP->id, ACTIVATED);  
   }
 }
 
@@ -62,8 +60,6 @@ void xDeactivateComponentByEntity(System *sP, Entity entity) {
       _xSwap(sP, compOrigIdxP, intermediateIdx);
       _xSwap(sP, &intermediateIdx, compNewIdx);
     }
-    // Example: If somebody starts moving, coll sys and trackers will want to know!
-    mailboxWrite(sP->mailboxF, 0, entity, sP->id, DEACTIVATED);
   }
 }
 
@@ -239,7 +235,7 @@ void xSwitchComponent(System *sP, Entity entity, Key newCompKey) {
   }
 }
 
-void _xReadInbox(System *sP) {
+static Error _xReadInbox(System *sP) {
   Error e = SUCCESS;
   Message *msgP = sP->mailboxF;
   Message *msgEndP = msgP + *frayGetFirstEmptyIdxP(sP->mailboxF);
@@ -270,6 +266,7 @@ void _xReadInbox(System *sP) {
     }
   }
   frayClr(sP->mailboxF);
+  return e;
 }
 
 static void _pauseQueue(System *sP) {
@@ -290,7 +287,7 @@ static void _deactivateQueue(System *sP) {
     Entity *entityP = sP->deactivateQueueF;
     Entity *entityEndP = entityP + nDeactivatedEntities;
     for (; entityP < entityEndP; ++entityP) {
-      xPauseComponentByEntity(sP, *entityP);
+      xDeactivateComponentByEntity(sP, *entityP);
     }
     frayClr(sP->deactivateQueueF);
   }
@@ -315,8 +312,10 @@ void xQueueDeactivate(System *sP, void *componentP) {
 
 /* This is how the entire ECS framework works. */
 Error xRun(System *sP) {
-  _xReadInbox(sP);
-  Error e = sP->run(sP);
+  Error e =_xReadInbox(sP);
+  if (!e) {
+    e = sP->run(sP);
+  }
   // Pause and deactivate all components that need to be.
   if (!e) {
     _deactivateQueue(sP);

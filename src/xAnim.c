@@ -134,6 +134,7 @@ Error xAnimProcessMessage(System *sP, Message *msgP) {
      right place in the atlas. */
   // Put the most commonly used logic first.
   if (msgP->cmd == ANIMATE) {
+    printf("animation got ANIMATE command\n");
     AnimStrip *animStripP = NULL;
     XAnimComp *cP = NULL;
     e = mapGetNestedMapPElem(xP->animMPMP, msgP->attn, msgP->arg, (void**) &animStripP);
@@ -145,6 +146,7 @@ Error xAnimProcessMessage(System *sP, Message *msgP) {
       cP->currStripP = animStripP;
       cP->currFrameIdx = 0;
       cP->incrDecrement = 1;
+      xActivateComponentByEntity(sP, msgP->attn);
     }
   }
   else if (msgP->cmd == UPDATE_RECT) {
@@ -172,10 +174,18 @@ Error xAnimProcessMessage(System *sP, Message *msgP) {
         for (; animStripP < animStripEndP; ++animStripP) {
           frameP = animStripP->frameA;
           frameEndP = frameP + animStripP->nFrames;
+          printf("Entity %3d:\n", msgP->attn);
           for (; frameP < frameEndP; ++frameP) {
+            printf("\tframe %d (before): {%3d, %3d}\n", frameP - animStripP->frameA, 
+                frameP->rect.x, frameP->rect.y);
             frameP->rect.x += offsetP->x;
             frameP->rect.y += offsetP->y;
+            printf("\tframe %d (after ): {%3d, %3d}\n", frameP - animStripP->frameA, 
+                frameP->rect.x, frameP->rect.y);
           }
+          // TODO remove
+          animStripP->repeat = 0;
+          animStripP->pingPong = 1;
         }
       }
     }
@@ -215,7 +225,7 @@ Error xAnimRun(System *sP) {
 
   // Animation
   for (; cP < cEndP; ++cP) {
-    if (!(--cP->timeLeft)) {
+    if ((cP->timeLeft -= 9) <= 0) {  // TODO figure out time decrement
       // If we've reached the last frame, ask if this is a pingpong or repeating animation strip.
       if (cP->currFrameIdx == (cP->currStripP->nFrames - 1)) {
         // If this is a repeating animation strip, reset index, time left, and srcRectP.
@@ -236,11 +246,11 @@ Error xAnimRun(System *sP) {
       else if (cP->currFrameIdx == 0) {
         if (cP->currStripP->pingPong) {
           // If we just finished going backwards in a pingpong
-          if (cP->incrDecrement == -1) {
+          if (cP->incrDecrement < 0) {
             // Start over if we're repeating
             if (cP->currStripP->repeat) {
               cP->incrDecrement = 1;
-              cP->currFrameIdx += 1;
+              cP->currFrameIdx  = 1;
             }
             // Deactivate if not repeating pingpong.
             else {
@@ -251,6 +261,9 @@ Error xAnimRun(System *sP) {
           else {
             cP->currFrameIdx += cP->incrDecrement;
           }
+        }
+        else {
+          cP->currFrameIdx += cP->incrDecrement;
         }
       }
       else {

@@ -129,8 +129,8 @@ typedef struct _System {
   Key           compSz;              // components are the same size in all of this system's activities 
   U8            flags;               // System flags. Use this however you want.
   void         *cF;                  // component fray 
-  void         *pauseQueueF;         // queue for pausing
-  void         *deactivateQueueF;    // queue for pausing
+  Entity       *pauseQueueF;         // queue for pausing
+  Entity       *deactivateQueueF;    // queue for pausing
   Map          *subcompOwnerMP;       // keeps track of subcomponents' owners since cF isn't pop'd then
   Key          *cIdx2eA;             // insert component index to get entity 
   Map          *e2cIdxMP;            // insert entity to get component index 
