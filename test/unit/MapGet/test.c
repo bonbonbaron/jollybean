@@ -268,7 +268,7 @@ void *switchGet(Key key) {
 
 int main(int argc, char **argv) {
   Map *mapP;
-  Error e = mapNew(&mapP, sizeof(int), 255);
+  Error e = mapNew(&mapP, RAW_DATA, sizeof(int), 255);
 
   for (int i = 1; !e && i <= 255; i++) {
     e = mapSet(mapP, i, (void*) &i);

@@ -590,10 +590,10 @@ XPostprocessCompsDef_(Render) {
 XGetShareFuncDef_(Render) {
   XRender *xRenderP = (XRender*) sP;
   // Get renderer
-  Error e = mapGetNestedMapPElem(shareMMP, RENDERER_GENE_TYPE, RENDERER_KEY_, (void**) &xRenderP->rendererP);
+  Error e = mapGetNestedMapPElem(shareMMP, RENDERER_GENE_TYPE, RENDERER_KEY_, NONMAP_POINTER, (void**) &xRenderP->rendererP);
   // Get window
   if (!e) {
-    e = mapGetNestedMapPElem(shareMMP, WINDOW_GENE_TYPE, WINDOW_KEY_, (void**) &xRenderP->windowP);
+    e = mapGetNestedMapPElem(shareMMP, WINDOW_GENE_TYPE, WINDOW_KEY_, NONMAP_POINTER, (void**) &xRenderP->windowP);
   }
   // Get dest rect map (implied by render component)
   if (!e) {
@@ -615,9 +615,9 @@ XGetShareFuncDef_(Render) {
             xRenderP->rendererP && xRenderP->windowP) {
     xRenderP->system.flags |= RENDER_SYS_OWNS_SRC_AND_OFFSET;
     // Make new maps
-    e = mapNew(&xRenderP->srcRectMP, sizeof(Rect_), xGetNComps(sP));
+    e = mapNew(&xRenderP->srcRectMP, RAW_DATA, sizeof(Rect_), xGetNComps(sP));
     if (!e) {
-      e = mapNew(&xRenderP->offsetRectMP, sizeof(RectOffset), xGetNComps(sP));
+      e = mapNew(&xRenderP->offsetRectMP, RAW_DATA, sizeof(RectOffset), xGetNComps(sP));
     }
     // Copy dst rect map's keys to them
     if (!e) {
@@ -651,7 +651,7 @@ Error xRenderRun(System *sP) {
   }
 
   if (i > 0 && (i % 100) == 0) {
-    mailboxWrite(sP->mailboxF, ANIMATION, sP->cIdx2eA[0], ANIMATE, 2);
+    mailboxWrite(sP->mailboxF, ANIMATION, 1, ANIMATE, WALK_UP);
   }
 
   if (++i == 1000) {

@@ -191,7 +191,7 @@ static Error _subsystemsIni(System *masterSysP, GeneHisto *geneHistoP) {
 
 static Error _addSharedSubmap(Map *outerShareMP, Key type, U8 size, Key num) {
   Map *innerShareMP = NULL;
-  Error e = mapNew(&innerShareMP, size, num);
+  Error e = mapNew(&innerShareMP, RAW_DATA, size, num);
   if (!e) {
     e = mapSet(outerShareMP, type, (void**) &innerShareMP);
   }
@@ -201,7 +201,7 @@ static Error _addSharedSubmap(Map *outerShareMP, Key type, U8 size, Key num) {
 Error xMasterNewShareMap(Map **sharedGenesMPP, GeneHisto *geneHistoP) {
   // Create all the inner maps according to the histo'd number of elements they hold.
   // Add RENDERER_GENE_TYPE (= 2) to total number for window and renderer shares.
-  Error e = mapNew(sharedGenesMPP, sizeof(Map*), geneHistoP->nDistinctShareds + RENDERER_GENE_TYPE);  
+  Error e = mapNew(sharedGenesMPP, MAP_POINTER, sizeof(Map*), geneHistoP->nDistinctShareds + RENDERER_GENE_TYPE);  
   if (!e) {
     Map *sharedGenesMP = *sharedGenesMPP;
     XHistoElem *xHistoElemP    = &geneHistoP->histoXElemA[0];
@@ -393,6 +393,7 @@ static Error _makeMutationMapArrays(Biome *biomeP, GeneHisto *geneHistoP, Key nS
       nMutationsForCurrGene = geneHistoP->histoSpawnMutations[(spawnP - biomeP->spawnA) * nSystemsMax + systemId];
       if (nMutationsForCurrGene) {
         e = mapNew(&spawnP->geneMutationMPA[systemId], 
+                   RAW_DATA,
                    geneHistoP->histoXElemA[systemId].size,
                    nMutationsForCurrGene);
       }
@@ -604,7 +605,7 @@ static Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGen
       // Make a blackboard map for this entity if it has any genes to put in it.
       bbMP = NULL;
       if (geneHisto.histoBbElemA[entity]) {
-        e = mapNew(&bbMP, sizeof(void*), geneHisto.histoBbElemA[entity]);
+        e = mapNew(&bbMP, NONMAP_POINTER, sizeof(void*), geneHisto.histoBbElemA[entity]);
       }
       genomeP = spawnP->genomeP;
       genePP = spawnP->genomeP->genePA;

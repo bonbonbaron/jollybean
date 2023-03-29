@@ -4,6 +4,7 @@
 // Core
 #include "data.h"
 #include "x.h"
+#include "animKeyring.h"
 // Core jb objects
 #include "interface.h"
 // Child systems

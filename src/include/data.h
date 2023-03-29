@@ -46,6 +46,7 @@ typedef enum Error {
 	E_BAD_INDEX,
 	E_BAD_KEY,
   E_MAP_FULL,
+  E_MAP_WRONG_ELEM_TYPE,
 	E_MSG_TO_ECS_TYPE_MISMATCH,
 	E_MSG_TO_ID_MISMATCH,
 	E_MSG_INVALID_CMD,
@@ -116,13 +117,24 @@ typedef struct {
   KeyValPair *keyValA;
 } KeyValPairArray;
 
+typedef enum {
+  RAW_DATA, 
+  ARRAY,
+  NONMAP_POINTER,
+  MAP_POINTER,
+  FUNCTION_POINTER,
+  DOUBLE_POINTER,
+  N_MAP_ELEM_TYPES
+} MapElemType;
+
 typedef struct {
 	FlagInfo flagA[N_FLAG_BYTES];  // "A" means "Array" for JB's naming standards 
+  MapElemType elemType;  // is element a pointer? Double pointer? Raw data?
   Key    population;
 	void  *mapA;  
 } Map;
 
-Error mapNew(Map **mapPP, const U8 elemSz, const Key nElems);
+Error mapNew(Map **mapPP, MapElemType elemType, const U8 elemSz, const Key nElems);
 void  mapDel(Map **mapPP);
 Error mapSet(Map *mapP, const U8 key, const void *valP);
 void* mapGet(const Map *mapP, const U8 key);
@@ -130,7 +142,7 @@ Error mapGetIndex(const Map *mapP, const Key key, Key *idxP);
 void  mapSetFlag(Map *mapP, const Key key);
 Error mapCopyKeys(Map *dstMP, Map *srcMP);
 Error mapGetNestedMapP(Map *mapP, Key mapKey, Map **mapPP);
-Error mapGetNestedMapPElem(Map *mapP, Key mapKey, Key elemKey, void **returnedItemPP);
+Error mapGetNestedMapPElem(Map *mapP, Key mapKey, Key elemKey, MapElemType expectedElemType, void **returnedItemPP);
 void  mapOfNestedMapsDel(Map **outerMapPP);
 
 /* Binary trees

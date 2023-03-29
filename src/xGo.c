@@ -47,7 +47,7 @@ static Error _distributeHiveminds(XGo *xGoP) {
   }
   Entity **hivemindEntitiesAP = NULL;
   // Allocate hivemind map
-  Error e = mapNew(&xGoP->hivemindMP, sizeof(Entity*), xGoP->nDistinctHivemindTriggers);
+  Error e = mapNew(&xGoP->hivemindMP, ARRAY, sizeof(Entity*), xGoP->nDistinctHivemindTriggers);
   // Allocate empty hiveminds.
   if (!e) {
     U32 nElems = arrayGetNElems(xGoP->histoHivemindTriggerA);

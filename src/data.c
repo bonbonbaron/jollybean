@@ -125,7 +125,7 @@ inline static void* _fast_arrayGetElemByIdx(const void *arryP, U32 idx) {
 /***********************/
 /********* MAPS ********/
 /***********************/
-Error mapNew(Map **mapPP, const U8 elemSz, const Key nElems) {
+Error mapNew(Map **mapPP, MapElemType elemType, const U8 elemSz, const Key nElems) {
 	if (elemSz == 0 || nElems == 0) {
     return E_BAD_ARGS;
   }
@@ -136,6 +136,7 @@ Error mapNew(Map **mapPP, const U8 elemSz, const Key nElems) {
   if (!e) {
     memset((*mapPP)->flagA, 0, sizeof(FlagInfo) * N_FLAG_BYTES);
     (*mapPP)->population = 0;
+    (*mapPP)->elemType = elemType;
   }
   else {
     arrayDel(&(*mapPP)->mapA);
@@ -210,6 +211,9 @@ inline static U32 _getMapElemSz(const Map *mapP) {
 }
 
 void* mapGet(const Map *mapP, const Key key) {
+  if (!mapP || !key) {
+    return NULL;
+  }
 	const register U32 keyMinus1 = key - 1;
 	const register FlagInfo f = mapP->flagA[keyMinus1 >> 3];
 	const register U32 bitFlag = 1 << (keyMinus1 & 0x07);
@@ -323,12 +327,12 @@ Error mapCopyKeys(Map *dstMP, Map *srcMP) {
   return SUCCESS;
 }
 
-Error mapGetNestedMapP(Map *outerMapP, Key mapKey, Map **innerMapPP) {
-  if (!innerMapPP || !outerMapP || !mapKey) {
+Error mapGetNestedMapP(Map *outerMP, Key mapKey, Map **innerMapPP) {
+  if (!innerMapPP || !outerMP || !mapKey || outerMP->elemType != MAP_POINTER) {
     return E_BAD_ARGS;
   }
 
-  Map **_innerMapPP = (Map**) mapGet(outerMapP, mapKey);
+  Map **_innerMapPP = (Map**) mapGet(outerMP, mapKey);
 
   if (_innerMapPP && *_innerMapPP) {
     *innerMapPP = *_innerMapPP;
@@ -340,18 +344,44 @@ Error mapGetNestedMapP(Map *outerMapP, Key mapKey, Map **innerMapPP) {
   return SUCCESS;
 }
 
-Error mapGetNestedMapPElem(Map *mapP, Key mapKey, Key elemKey, void **returnedItemPP) {
-  if (!elemKey || !returnedItemPP) {
+Error mapGetNestedMapPElem(Map *mapP, Key mapKey, Key elemKey, MapElemType expectedElemType, void **returnedItemPP) {
+  if (!mapP || !mapKey || !elemKey || !returnedItemPP) {
     return E_BAD_ARGS;
   }
 
-  Map *nestedMapP = NULL;
-  Error e = mapGetNestedMapP(mapP, mapKey, &nestedMapP);
+  Map *nestedMP = NULL;
+  Error e = mapGetNestedMapP(mapP, mapKey, &nestedMP);
+  if (!e && nestedMP->elemType != expectedElemType) {
+    return E_MAP_WRONG_ELEM_TYPE;
+  }
 
+  void **valPP, ***valPPP;
   if (!e) {
-    void **valPP = mapGet(nestedMapP, elemKey);
-    if (valPP) {
-      *returnedItemPP = *valPP;
+    switch(nestedMP->elemType) {
+      case RAW_DATA: 
+        // This safely returns a single-pointer.
+        *returnedItemPP = mapGet(nestedMP, elemKey);
+        break;
+      case ARRAY:
+      case NONMAP_POINTER:
+      case MAP_POINTER:
+      case FUNCTION_POINTER:
+        // This prevents us from returning a double-pointer.
+        valPP = mapGet(nestedMP, elemKey);
+        if (valPP) {
+          *returnedItemPP = *valPP;
+        }
+        break;
+      case DOUBLE_POINTER:
+        // This prevents us from returning a triple-pointer.
+        valPPP = mapGet(nestedMP, elemKey);
+        if (valPPP) {
+          *returnedItemPP = *valPPP;
+        }
+        break;
+      default:
+        *returnedItemPP = NULL;
+        break;
     }
     if (!*returnedItemPP) {
       return E_BAD_KEY;

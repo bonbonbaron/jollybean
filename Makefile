@@ -13,7 +13,7 @@ JOLLBEANSRC      = $(shell find ./src -name "*.c")
 JOLLBEAN_OBJS     = $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(JOLLBEANSRC:.c=.o))
 JOLLBEAN_INCLUDES = $(shell find -name "*.h")
 TGTINCLUDDIR = /usr/local/include/jollybean/
-IFLAGS=-I./src/include/
+IFLAGS=-I./src/include/ -I/home/bonbonbaron/jb/src/Keyring/
 
 CFLAGS_COMMON  = -Wall -lpthread $(IFLAGS) #-ffunction-sections \
 							 	 -fdata-sections -s -fno-ident -fmerge-all-constants \

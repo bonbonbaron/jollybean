@@ -4,11 +4,15 @@
 // Unused X functions
 XIniSysFuncDef_(Anim) {
   XAnim *xP = (XAnim*) sP;
-  Error e = mapNew(&xP->animMPMP, sizeof(Map*), xGetNComps(sP));
+  Error e = mapNew(&xP->animMPMP, MAP_POINTER, sizeof(Map*), xGetNComps(sP));
   if (!e) {
     e = frayNew((void**) &xP->animSingletonF, sizeof(Animation*), xGetNComps(sP));
   }
   return e;
+}
+
+static void reportAnim(char *prepend, Entity entity, Map *mapP) {
+  printf("%s: entity %3d's map address:0x%08x\n", prepend, entity, (U32) mapP);
 }
 
 // sP, entity, subtype, dataP
@@ -22,43 +26,55 @@ XIniSubcompFuncDef_(Anim) {
 
   Animation *animP = (Animation*) dataP;
 
+  reportAnim("1", entity, animP->animMP);
+
   // Make a SINGLETON map of animation strips for everybody who uses this particular one.
   if (!animP->animMP) {
-    e = mapNew(&animP->animMP, sizeof(AnimStrip), animP->nPairs);
+    e = mapNew(&animP->animMP, RAW_DATA, sizeof(AnimStrip), animP->nPairs);
     if (!e) {
       KeyAnimStripPair *kasPairP = animP->kasPairA;
       KeyAnimStripPair *kasPairEndP = kasPairP + animP->nPairs;
-
+      // Map each animation key to an animation strip for this entity.
       for (; !e && kasPairP < kasPairEndP; ++kasPairP) {
         e = mapSet(animP->animMP, kasPairP->key, kasPairP->animStripP);
       }
     }
+    // Add the animation to a fray of singletons so we can delete them later.
     if (!e) {
       e = frayAdd(xP->animSingletonF, &animP, NULL);
     }
   }
+  reportAnim("2", entity, animP->animMP);
+
 
   // Map from entity to the above animation map in the system's map of animation maps
   if (!e) {
     e = mapSet(xP->animMPMP, entity, &animP->animMP);
   }
+  reportAnim("3", entity, animP->animMP);
+  if (!e) {
+    Map *testMP = NULL;
+    e = mapGetNestedMapP(xP->animMPMP, entity, &testMP);
+    if (!e) {
+      reportAnim("test get", entity, testMP);
+    }
+  }
+
 
   // Add entity's component to system as first available animation strip.
   if (!e) {
-    Map *entityAnimMP;
-    e = mapGetNestedMapP(xP->animMPMP, entity, &entityAnimMP);
-    if (!e && entityAnimMP) {
-      AnimStrip *stripP = (AnimStrip*) entityAnimMP->mapA;
-      XAnimComp c = {
-        .currFrameIdx = 0,
-        .currStripP = stripP,  // point at first anim strip for now
-        .incrDecrement = 1,
-        .srcRectP = NULL,  // we'll set this in post-process function
-        .timeLeft = stripP->frameA[0].duration
-      };
-      e = xAddComp(sP, entity, &c);
-    }
+    AnimStrip *stripP = (AnimStrip*) animP->animMP->mapA;
+    XAnimComp c = {
+      .currFrameIdx = 0,
+      .currStripP = stripP,  // point at first anim strip for now
+      .incrDecrement = 1,
+      .srcRectP = NULL,  // we'll set this in post-process function
+      .timeLeft = stripP->frameA[0].duration
+    };
+    e = xAddComp(sP, entity, &c);
   }
+  reportAnim("4", entity, animP->animMP);
+
   return e;
 }
 
@@ -109,6 +125,7 @@ XPostprocessCompsDef_(Anim) {
         e = mapGetNestedMapP(xP->animMPMP, entity, &animMP);
       }
       if (!e && animMP) {
+        reportAnim("5", entity, animMP);
         AnimStrip *stripP = animMP->mapA;
         if (stripP) {
           cP->srcRectP->w = cP->dstRectP->w = stripP->frameA[0].rect.w;
@@ -137,7 +154,7 @@ Error xAnimProcessMessage(System *sP, Message *msgP) {
     printf("animation got ANIMATE command\n");
     AnimStrip *animStripP = NULL;
     XAnimComp *cP = NULL;
-    e = mapGetNestedMapPElem(xP->animMPMP, msgP->attn, msgP->arg, (void**) &animStripP);
+    e = mapGetNestedMapPElem(xP->animMPMP, msgP->attn, msgP->arg, RAW_DATA, (void**) &animStripP);
     if (!e) {
       cP = (XAnimComp*) xGetCompPByEntity(sP, msgP->attn);
       e = cP ? SUCCESS : E_NULL_VAR;

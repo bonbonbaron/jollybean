@@ -176,17 +176,17 @@ Error xIniSys(System *sP, U32 nComps, void *miscP) {
     e = frayNew((void**) &sP->pauseQueueF, sizeof(Entity), nComps);
   }
   if (!e) {
-    e = mapNew(&sP->e2cIdxMP, sizeof(Key), nComps);
+    e = mapNew(&sP->e2cIdxMP, RAW_DATA, sizeof(Key), nComps);
   }
   if (!e && !(sP->flags & FLG_NO_SWITCHES_)) {
-    e = mapNew(&sP->mutationMPMP, sizeof(XSwitchCompU), nComps);
+    e = mapNew(&sP->mutationMPMP, FUNCTION_POINTER, sizeof(XSwitchCompU), nComps);
   }
 	// Only allocate one mailbox; it serves as input and output.
 	if (!e) {
 		e = frayNew((void**) &sP->mailboxF, sizeof(Message), nComps);
   }
   if (!e) {
-    e = mapNew(&sP->subcompOwnerMP, sizeof(SubcompOwner), nComps);
+    e = mapNew(&sP->subcompOwnerMP, RAW_DATA, sizeof(SubcompOwner), nComps);
   }
   // Finally, call the system's unique initializer.
   if (!e) {
