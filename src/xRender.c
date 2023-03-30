@@ -341,6 +341,9 @@ Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void
   // Only track entity for the first subcomponent. 0x40 is the lowest of the upper two bits.
   if (!e && subtype == 0x40) {
     e = frayAdd(xRenderP->entityF, (void*) &entity, NULL);
+    if (!e) {
+      printf("[render] added entity %3d!\n", entity);
+    }
   }
 return e;
 }
@@ -575,6 +578,7 @@ XPostprocessCompsDef_(Render) {
   // TODO remove this when you're ready to try out XGo-based initialization.
   if (!e) {
     frayActivateAll(sP->cF);
+    printf("[render] activated all\n");
   }
 
   // Clean up.
@@ -645,18 +649,21 @@ Error xRenderRun(System *sP) {
 	clearScreen(xRenderP->rendererP);
 	for (; !e && cP < cEndP; cP++) {
 		e = copy_(xRenderP->rendererP, xRenderP->atlasTextureP, cP->srcRectP, cP->dstRectP);
+    if (i > 0 && (i % 100) == 0) {
+      e = mailboxWrite(sP->mailboxF, ANIMATION, xGetEntityByVoidComponentPtr(sP, cP), ANIMATE, WALK_UP);
+      if (!e) {
+        printf("[render] system %d is sends message to system %d to make entity %d animate!\n", sP->id, ANIMATION, xGetEntityByVoidComponentPtr(sP, cP));
+      }
+    }
+
+  if (++i == 1000) {
+    return E_BAD_ARGS;
+  }
   }
 	if (!e) {
 		present_(xRenderP->rendererP);
   }
 
-  if (i > 0 && (i % 100) == 0) {
-    mailboxWrite(sP->mailboxF, ANIMATION, 1, ANIMATE, WALK_UP);
-  }
-
-  if (++i == 1000) {
-    return E_BAD_ARGS;
-  }
 
 	return e;
 }

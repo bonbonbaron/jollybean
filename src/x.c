@@ -107,12 +107,18 @@ Error xAddComp(System *sP, Entity entity, void *compDataP) {
   // Put component in first empty slot. (Will be garbage if this is a map. That's okay.)
   U32 cIdx; 
   Error e = frayAdd(sP->cF, compDataP, &cIdx); 
+  if (!e) {
+    printf("[x] system %d added entity %d to fray idx %d!\n", sP->id, entity, cIdx);
+  }
   // Add lookups from C -> E and E -> C.
   if (!e) {
     e = mapSet(sP->e2cIdxMP, entity, &cIdx);
   }
   if (!e) {
     sP->cIdx2eA[cIdx] = entity;
+  }
+  if (!e) {
+    printf("[x] system %d cIdx2eA[%d] = %d! \n", sP->id, cIdx, sP->cIdx2eA[cIdx]);
   }
   return e;
 }

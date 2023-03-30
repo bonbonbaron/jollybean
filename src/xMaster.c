@@ -189,9 +189,9 @@ static Error _subsystemsIni(System *masterSysP, GeneHisto *geneHistoP) {
   return e;
 }
 
-static Error _addSharedSubmap(Map *outerShareMP, Key type, U8 size, Key num) {
+static Error _addSharedSubmap(Map *outerShareMP, MapElemType elemType, Key type, U8 size, Key num) {
   Map *innerShareMP = NULL;
-  Error e = mapNew(&innerShareMP, RAW_DATA, size, num);
+  Error e = mapNew(&innerShareMP, elemType, size, num);
   if (!e) {
     e = mapSet(outerShareMP, type, (void**) &innerShareMP);
   }
@@ -211,6 +211,7 @@ Error xMasterNewShareMap(Map **sharedGenesMPP, GeneHisto *geneHistoP) {
       if (xHistoElemP->geneClass == SHARED_GENE && xHistoElemP->count) {
         e = _addSharedSubmap(
             sharedGenesMP, 
+            RAW_DATA,
             xHistoElemP->geneType & MASK_COMPONENT_TYPE,
             xHistoElemP->size,
             xHistoElemP->count);
@@ -222,6 +223,7 @@ Error xMasterNewShareMap(Map **sharedGenesMPP, GeneHisto *geneHistoP) {
         for (Key j = 0, jEnd = iglA[i]->nGenes; !e && j < jEnd; ++j) {
           e = _addSharedSubmap(
               sharedGenesMP, 
+              RAW_DATA,
               iglA[i]->listA[j].type,
               iglA[i]->listA[j].size,
               geneHistoP->histoXElemA[i].count);
@@ -299,7 +301,7 @@ static Error _distributeSharedGenesToSubsystems(System *masterSysP, Map *sharedG
 static Error _addSpecialSharedGene(Map *sharedGeneMPMP, void *geneP, Key geneType) {
   Map *innerMapP = NULL;
   // Make the inner map first inside the outer map.
-  Error e = _addSharedSubmap(sharedGeneMPMP, geneType, sizeof(void*), 1);
+  Error e = _addSharedSubmap(sharedGeneMPMP, NONMAP_POINTER, geneType, sizeof(void*), 1);
   // Then get the inner map and set its element the special gene pointer.
   if (!e) {
     e = mapGetNestedMapP(sharedGeneMPMP, geneType, &innerMapP);
