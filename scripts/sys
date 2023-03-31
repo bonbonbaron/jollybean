@@ -1,20 +1,47 @@
 #!/bin/bash
 ALREADY_EXISTS="already exists! Skipping its creation..."
 DOESNT_EXIST="doesn't exists! Skipping its removal..."
+#defaults
+JB_DIR=${HOME}/hack/jollybean
+TGT_SRC_DIR="$JB_DIR/src"
+TGT_INC_DIR="$JB_DIR/src/include"
+TEMPLATE_DIR=$JB_DIR/templates
+VERBOSE=0
+
 function sysNew {
+  while getopts "vd:" arg; do
+    case $arg in 
+    d)
+      if [ -d $(readlink -f $OPTARG) ]; then
+        echo "it exists!"
+        TGT_SRC_DIR=$(readlink -f ${OPTARG})
+        TGT_INC_DIR=$(readlink -f ${OPTARG})
+        echo ${TGT_SRC_DIR}
+        shift
+      else
+        echo "invalid directory $OPTARG"
+        exit
+      fi;;
+    v) VERBOSE=1;;
+    *) echo "invalid option: $OPT";;
+    esac
+  done
+  shift
+  SYS_NAME=$1
+  echo "SYS_NAME IS $SYS_NAME"
   ALREADY_EXISTS="already exists! Skipping..."
   if [ $1 ]; then
     for i in ${*:1}; do
-      C_FILE=./src/x${i}.c
-      H_FILE=./src/include/x${i}.h
+      C_FILE=${TGT_SRC_DIR}/x${i}.c
+      H_FILE=${TGT_INC_DIR}/x${i}.h
       if [ ! -f $C_FILE ]; then
-        echo "creating $C_FILE..."
-        sed "s/REPLACEME/$1/g" ./templates/system.c > ./src/x${i}.c
+        if $VERBOSE; then echo "creating $C_FILE..."; fi
+        sed "s/REPLACEME/$1/g" ${TEMPLATE_DIR}/system.c > ${TGT_SRC_DIR}/x${i}.c
       else echo "$C_FILE $ALREADY_EXISTS"
       fi;
       if [ ! -f $H_FILE ]; then
-        echo "creating $H_FILE..."
-        sed "s/REPLACEME/$1/g" ./templates/system.h > ./src/include/x${i}.h
+        if $VERBOSE; then echo "creating $H_FILE..."; fi
+        sed "s/REPLACEME/$1/g" ${TEMPLATE_DIR}/system.h > ${TGT_INC_DIR}/x${i}.h
       else echo "$H_FILE $ALREADY_EXISTS"
       fi;
     done;
@@ -26,16 +53,16 @@ function sysNew {
 function sysDel {
   if [ $1 ]; then
     for i in ${*:1}; do
-      C_FILE=./src/x${i}.c
-      H_FILE=./src/include/x${i}.h
+      C_FILE=${TGT_SRC_DIR}/x${i}.c
+      H_FILE=${TGT_INC_DIR}/x${i}.h
       if [ -f $C_FILE ]; then
-        echo "deleting $C_FILE..."
-        rm ./src/x${i}.c
+        if $VERBOSE; then echo "deleting $C_FILE..."; fi
+        rm ${TGT_SRC_DIR}/x${i}.c
       else echo "$C_FILE $DOESNT_EXIST"
       fi;
       if [ -f $H_FILE ]; then
-        echo "deleting $H_FILE..."
-        rm ./src/include/x${i}.h
+        if $VERBOSE; then echo "deleting $H_FILE..."; fi
+        rm ${TGT_INC_DIR}/x${i}.h
       else echo "$H_FILE $DOESNT_EXIST"
       fi;
     done;
@@ -45,8 +72,9 @@ function sysDel {
 }
 
 function sysLs {
-  declare -a a=$(ls ./src/*.c)
-  for aa in $a; do echo $(basename $aa .c); done;
+  declare -a a=$(ls ${TGT_SRC_DIR}/x[A-Z]*.c)
+  echo "Available systems:"
+  for aa in $a; do echo $(basename $aa .c) | sed -E 's/x([A-Z].*)/\t\1/'; done;
 }
 
 function sysExe {
