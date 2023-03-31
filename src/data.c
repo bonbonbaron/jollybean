@@ -1075,15 +1075,6 @@ void inflatableClr(Inflatable *inflatableP) {
 }
 
 // Efficient Arrays (frays)
-#define N_PREFRAY_ELEMS (5)
-#define OFFSET_INACTIVE     (5)  /* ptr[0] */
-#define OFFSET_N_PAUSED     (4)  /* ptr[1] */
-#define OFFSET_1ST_EMPTY    (3)  /* ptr[2] */
-#define OFFSET_ELEM_SZ      (2)  /* ptr[3] */
-#define OFFSET_N_ELEMS      (1)  /* ptr[4] */
-#define frayGetNElems_ arrayGetNElems
-#define frayGetElemSz_ arrayGetElemSz
-#define frayGetElemByIdx_ _fast_arrayGetElemByIdx
 Error frayNew(void **fPP, U32 elemSz, U32 nElems) {
   Error e = SUCCESS;
   U32 *ptr;
@@ -1115,70 +1106,7 @@ void frayDel(void **frayPP) {
 	}
 }
 
-void frayClr(void *fP) {
-  memset(fP, 0, frayGetElemSz_(fP) * arrayGetNElems(fP));
-  *frayGetFirstEmptyIdxP(fP) = 0;
-}
-
-// Pointers beat values. We usually inc/decrement it after using it. Avoids double-queries.
-inline static U32 _frayGetFirstInactiveIdx(const void *frayP) {
-  return *(((U32*) frayP - OFFSET_INACTIVE));
-}
-
-inline static U32* _frayGetFirstInactiveIdxP(const void *frayP) {
-  return ((U32*) frayP - OFFSET_INACTIVE);
-}
-
-inline static U32* _frayGetNPausedP(const void *frayP) {
-  return ((U32*) frayP - OFFSET_N_PAUSED);
-}
-
-inline static U32* _frayGetFirstEmptyIdxP(const void *frayP) {
-  return ((U32*) frayP - OFFSET_1ST_EMPTY);
-}
-
-// Non-static versions of the above for global use
-U32 frayGetFirstInactiveIdx(const void *frayP) {
-  return _frayGetFirstInactiveIdx(frayP);
-}
-
-U32* frayGetFirstInactiveIdxP(const void *frayP) {
-  return _frayGetFirstInactiveIdxP(frayP);
-}
-
-U32* frayGetNPausedP(const void *frayP) {
-  return _frayGetNPausedP(frayP);
-}
-
-inline static U32 _frayGetNPaused(const void *frayP) {
-  return *((U32*) frayP - OFFSET_N_PAUSED);
-}
-
-U32 frayGetNPaused(const void *frayP) {
-  return _frayGetNPaused(frayP);
-}
-
-U32 frayGetFirstPausedIdx(const void *frayP) {
-  return _frayGetFirstInactiveIdx(frayP) - _frayGetNPaused(frayP);
-}
-
-U32* frayGetFirstEmptyIdxP(const void *frayP) {
-  return _frayGetFirstEmptyIdxP(frayP);
-}
-
 /* Checks if the component, wherever it is in the jagged array, is before the function's stopping point in its array. */
-inline static U8 _frayElemIsActive(const void *frayP, U32 idx) {
-  return idx < _frayGetFirstInactiveIdx(frayP);
-}
-
-U8 frayElemIsActive(const void *frayP, U32 idx) {
-  return _frayElemIsActive(frayP, idx);
-}
-
-inline static U8 _frayHasRoom(const void *frayP) {
-  return (*_frayGetFirstEmptyIdxP(frayP) < frayGetNElems_(frayP));
-}
-
 // Returns index of added element
 Error frayAdd(const void *frayP, void *elemP, U32 *elemNewIdxP) {
   if (!_frayHasRoom(frayP)) {
@@ -1203,12 +1131,6 @@ static void _fraySwap(const void *frayP, U32 oldIdx, U32 newIdx) {
   memcpy(placeholderP, elem1P,       elemSz);
   memcpy(elem1P,       elem2P,       elemSz);
   memcpy(elem2P,       placeholderP, elemSz);
-}
-
-static U8 _frayElemIsPaused(const void *frayP, U32 idx) {
-  U32 firstInactiveIdx = frayGetFirstInactiveIdx(frayP);
-  return idx < firstInactiveIdx &&
-         idx > firstInactiveIdx - _frayGetNPaused(frayP);
 }
 
 // Pausing *active* elements moves them to the first paused position.
@@ -1251,7 +1173,7 @@ void frayUnpauseAll(const void *frayP) {
 
 void frayActivateAll(const void *frayP) {
   U32 *firstInactiveIdxP = _frayGetFirstInactiveIdxP(frayP);
-  *firstInactiveIdxP = *(frayGetFirstEmptyIdxP(frayP));
+  *firstInactiveIdxP = *_frayGetFirstEmptyIdxP(frayP);
 }
 
 void frayDeactivateAll(const void *frayP) {
@@ -1264,9 +1186,10 @@ U32 frayActivate(const void *frayP, U32 idx) {
   if (!_frayElemIsActive(frayP, idx)) {
     U32 *firstInactiveIdxP = _frayGetFirstInactiveIdxP(frayP);
     U32 newIdx;
-    U32 nPaused = _frayGetNPaused(frayP);
-    if (!nPaused)  // With no paused elements, we can blissfully single-swap.
+    U32 nPaused = *_frayGetNPausedP(frayP);
+    if (!nPaused) {  // With no paused elements, we can blissfully single-swap.
       newIdx = (*firstInactiveIdxP)++;            // swap with first inactive (from left side)
+    }
     else {  // Otherwise, we must double-swap to preserve intermediate paused elems' contiguity.
       newIdx = *firstInactiveIdxP;                // swap with first inactive (from right side)
       _fraySwap(frayP, idx, newIdx);
@@ -1285,9 +1208,10 @@ U32 frayDeactivate(const void *frayP, U32 idx) {
   if (_frayElemIsActive(frayP, idx)) {
     U32 *firstInactiveIdxP = _frayGetFirstInactiveIdxP(frayP);
     U32 newIdx;
-    U32 nPaused = _frayGetNPaused(frayP);
-    if (!nPaused)  // With no paused elements, we can blissfully single-swap.
+    U32 nPaused = *_frayGetNPausedP(frayP);
+    if (!nPaused) { // With no paused elements, we can blissfully single-swap.
       newIdx = --(*firstInactiveIdxP);            // swap with last active 
+    }
     else {  // Otherwise, we must double-swap to preserve intermediate paused elems' contiguity.
       newIdx = *firstInactiveIdxP - nPaused - 1;  // swap with last active
       _fraySwap(frayP, idx, newIdx);

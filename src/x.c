@@ -36,11 +36,11 @@ void xActivateComponentByEntity(System *sP, Entity entity) {
   Key  compNewIdx   = frayActivate(sP->cF, *compOrigIdxP);
   if (compNewIdx != *compOrigIdxP) {
     // Existence of paused elements requires an additional, intermediate swap.
-    if (!frayGetNPaused(sP->cF)) {
+    if (!*_frayGetNPausedP(sP->cF)) {
       _xSwap(sP, compOrigIdxP, compNewIdx);
     }
     else {
-      Key intermediateIdx = frayGetFirstInactiveIdx(sP->cF) - 1;
+      Key intermediateIdx = *_frayGetFirstInactiveIdxP(sP->cF) - 1;
       _xSwap(sP, compOrigIdxP, intermediateIdx);
       _xSwap(sP, &intermediateIdx, compNewIdx);
     }
@@ -49,14 +49,18 @@ void xActivateComponentByEntity(System *sP, Entity entity) {
 
 void xDeactivateComponentByEntity(System *sP, Entity entity) {
   Key *compOrigIdxP = _getCompIdxPByEntity(sP, entity);
+  if (!compOrigIdxP) {
+    printf("got a null pointer\n");
+    return;
+  }
   Key  compNewIdx   = frayDeactivate(sP->cF, *compOrigIdxP);
   if (compNewIdx != *compOrigIdxP) {
     // Existence of paused elements requires an additional, intermediate swap.
-    Key nPaused = frayGetNPaused(sP->cF);
+    Key nPaused = *_frayGetNPausedP(sP->cF);
     if (nPaused) 
       _xSwap(sP, compOrigIdxP, compNewIdx);
     else {
-      Key intermediateIdx = frayGetFirstInactiveIdx(sP->cF) - nPaused;
+      Key intermediateIdx = *_frayGetFirstInactiveIdxP(sP->cF) - nPaused;
       _xSwap(sP, compOrigIdxP, intermediateIdx);
       _xSwap(sP, &intermediateIdx, compNewIdx);
     }
@@ -244,7 +248,7 @@ void xSwitchComponent(System *sP, Entity entity, Key newCompKey) {
 static Error _xReadInbox(System *sP) {
   Error e = SUCCESS;
   Message *msgP = sP->mailboxF;
-  Message *msgEndP = msgP + *frayGetFirstEmptyIdxP(sP->mailboxF);
+  Message *msgEndP = msgP + *_frayGetFirstEmptyIdxP(sP->mailboxF);
   for (; !e && msgP < msgEndP; msgP++) {
     switch(msgP->cmd) {
       case SWITCH_AND_ACTIVATE: 
@@ -271,31 +275,32 @@ static Error _xReadInbox(System *sP) {
         break;
     }
   }
-  frayClr(sP->mailboxF);
+  _frayClr(sP->mailboxF);
   return e;
 }
 
 static void _pauseQueue(System *sP) {
-  U32 nPausedEntities = *frayGetFirstEmptyIdxP(sP->pauseQueueF);
+  U32 nPausedEntities = *_frayGetFirstEmptyIdxP(sP->pauseQueueF);
   if (nPausedEntities) {
     Entity *entityP = sP->pauseQueueF;
     Entity *entityEndP = entityP + nPausedEntities;
     for (; entityP < entityEndP; ++entityP) {
       xPauseComponentByEntity(sP, *entityP);
     }
-    frayClr(sP->pauseQueueF);
+    _frayClr(sP->pauseQueueF);
   }
 }
 
 static void _deactivateQueue(System *sP) {
-  U32 nDeactivatedEntities = *frayGetFirstEmptyIdxP(sP->deactivateQueueF);
+  U32 nDeactivatedEntities = *_frayGetFirstEmptyIdxP(sP->deactivateQueueF);
   if (nDeactivatedEntities) {
     Entity *entityP = sP->deactivateQueueF;
     Entity *entityEndP = entityP + nDeactivatedEntities;
     for (; entityP < entityEndP; ++entityP) {
+      printf("trying to deactivate entity %d\n", *entityP);
       xDeactivateComponentByEntity(sP, *entityP);
     }
-    frayClr(sP->deactivateQueueF);
+    _frayClr(sP->deactivateQueueF);
   }
 }
 

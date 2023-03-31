@@ -175,7 +175,7 @@ XProcMsgFuncDef_(Go) {
 
 Error xGoRun(System *sP) {
   XGoComp *cP = sP->cF;
-  XGoComp *cEndP = cP + frayGetFirstInactiveIdx(sP->cF);
+  XGoComp *cEndP = cP + _frayGetFirstInactiveIdx(sP->cF);
   Error e = SUCCESS;
   for (; !e && cP < cEndP; cP++) {
     e = cP->quirkP->actionU(cP->entity, cP->bbMP);

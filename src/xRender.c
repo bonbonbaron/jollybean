@@ -126,7 +126,7 @@ Error atlasNew(Atlas **atlasPP, Colormap **cmPF) {
     return E_BAD_ARGS;
   }
 
-  U32 N_ATLAS_ELEMS = *frayGetFirstEmptyIdxP(cmPF);
+  U32 N_ATLAS_ELEMS = *_frayGetFirstEmptyIdxP(cmPF);
 
   Error e = jbAlloc((void**) atlasPP, sizeof(Atlas), 1);
   if (!e) {
@@ -518,7 +518,7 @@ XPostprocessCompsDef_(Render) {
 #if 1
   if (!e) {
     ColorPalette **cpPP = xRenderP->cpPF;
-    ColorPalette **cpEndPP = cpPP + *frayGetFirstEmptyIdxP(xRenderP->cpPF);
+    ColorPalette **cpEndPP = cpPP + *_frayGetFirstEmptyIdxP(xRenderP->cpPF);
     for (; cpPP < cpEndPP; ++cpPP) {
       appendAtlasPalette(atlasSurfaceP, *cpPP);
     }
@@ -644,7 +644,7 @@ Error xRenderRun(System *sP) {
   XRender *xRenderP = (XRender*) sP;
 
 	XRenderComp *cP = (XRenderComp*) sP->cF;
-	XRenderComp *cEndP = cP + frayGetFirstInactiveIdx(sP->cF);
+	XRenderComp *cEndP = cP + *_frayGetFirstInactiveIdxP(sP->cF);
 
 	clearScreen(xRenderP->rendererP);
 	for (; !e && cP < cEndP; cP++) {

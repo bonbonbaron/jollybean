@@ -199,22 +199,69 @@ Error inflatableIni(Inflatable *inflatableP);
 void inflatableClr(Inflatable *inflatableP);
 
 // Efficient Arrays (frays)
+#define N_PREFRAY_ELEMS (5)
+#define OFFSET_INACTIVE     (5)  /* ptr[0] */
+#define OFFSET_N_PAUSED     (4)  /* ptr[1] */
+#define OFFSET_1ST_EMPTY    (3)  /* ptr[2] */
+#define OFFSET_ELEM_SZ      (2)  /* ptr[3] */
+#define OFFSET_N_ELEMS      (1)  /* ptr[4] */
+#define frayGetNElems_ arrayGetNElems
+#define frayGetElemSz_ arrayGetElemSz
+#define frayGetElemByIdx_ _fast_arrayGetElemByIdx
+
 Error frayNew(void **fPP, U32 elemSz, U32 nElems);
 void  frayDel(void **frayPP);
 Error frayAdd(const void *frayP, void *elemP, U32 *elemNewIdxP);
-void  frayClr(void *fP);
 U32   frayActivate(const void *frayP, U32 idx);
 U32   frayDeactivate(const void *frayP, U32 idx);
 U32   frayPause(const void *frayP, U32 idx);
 U32   frayUnpause(const void *frayP, U32 idx);
 U8    frayElemIsActive(const void *frayP, U32 idx);
-U32   frayGetFirstInactiveIdx(const void *frayP);
-U32*  frayGetFirstInactiveIdxP(const void *frayP);
-U32*  frayGetFirstEmptyIdxP(const void *frayP);
-U32   frayGetNPaused(const void *frayP);
-U32   frayGetFirstPausedIdx(const void *frayP);
-void frayActivateAll(const void *frayP);
-void frayDeactivateAll(const void *frayP);
+void  frayActivateAll(const void *frayP);
+void  frayDeactivateAll(const void *frayP);
+
+// Pointers beat values. We usually inc/decrement it after using it. Avoids double-queries.
+inline U32 _frayGetFirstInactiveIdx(const void *frayP) {
+  return *(((U32*) frayP - OFFSET_INACTIVE));
+}
+
+inline U32* _frayGetFirstInactiveIdxP(const void *frayP) {
+  return ((U32*) frayP - OFFSET_INACTIVE);
+}
+
+inline U32* _frayGetNPausedP(const void *frayP) {
+  return ((U32*) frayP - OFFSET_N_PAUSED);
+}
+
+inline U32 _frayGetFirstPausedIdx(const void *frayP) {
+  return *_frayGetFirstInactiveIdxP(frayP) - *_frayGetNPausedP(frayP);
+}
+
+inline U32* _frayGetFirstEmptyIdxP(const void *frayP) {
+  return ((U32*) frayP - OFFSET_1ST_EMPTY);
+}
+
+inline void _frayClr(void *fP) {
+  memset(((U32*) fP) - N_PREFRAY_ELEMS, 0, sizeof(U32) * 3);
+  /*  The above has this effect:
+      *_frayGetFirstEmptyIdxP(fP) = 0;
+      *_frayGetNPausedP(fP) = 0;
+      *_frayGetFirstInactiveIdxP(fP) = 0;
+  */
+}
+
+inline U8 _frayElemIsActive(const void *frayP, U32 idx) {
+  return idx < _frayGetFirstPausedIdx(frayP);
+}
+
+inline U8 _frayElemIsPaused(const void *frayP, U32 idx) {
+  return idx >= _frayGetFirstPausedIdx(frayP) && idx < _frayGetFirstInactiveIdx(frayP);
+}
+
+inline U8 _frayHasRoom(const void *frayP) {
+  return (*_frayGetFirstEmptyIdxP(frayP) < frayGetNElems_(frayP));
+}
+
 
 // Mailboxes
 typedef struct {

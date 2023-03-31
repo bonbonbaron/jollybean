@@ -85,7 +85,7 @@ XClrFuncDef_(Anim) {
   XAnim *xP = (XAnim*) sP;
   mapDel(&xP->animMPMP);  // Don't delete inner maps; those are singletons properly deleted below.
   Animation **animPP = (Animation**) xP->animSingletonF;
-  Animation **animEndPP = animPP + *frayGetFirstEmptyIdxP(xP->animSingletonF);
+  Animation **animEndPP = animPP + *_frayGetFirstEmptyIdxP(xP->animSingletonF);
   for (; animPP < animEndPP; ++animPP) {
     mapDel(&(*animPP)->animMP);
   }
@@ -96,7 +96,7 @@ XClrFuncDef_(Anim) {
 // You only need to give every component its source rect once.
 XPostprocessCompsDef_(Anim) {
   XAnimComp *cP = (XAnimComp*) sP->cF;
-  XAnimComp *cEndP = cP + *frayGetFirstEmptyIdxP(sP->cF);
+  XAnimComp *cEndP = cP + *_frayGetFirstEmptyIdxP(sP->cF);
   Entity entity;
   Error e = SUCCESS;
   XAnim *xP = (XAnim*) sP;
@@ -238,7 +238,7 @@ Error xAnimRun(System *sP) {
 	Error e = SUCCESS;
 
 	XAnimComp *cP = (XAnimComp*) sP->cF;
-	XAnimComp *cEndP = cP + frayGetFirstInactiveIdx(sP->cF);
+	XAnimComp *cEndP = cP + _frayGetFirstInactiveIdx(sP->cF);
 
   // Animation
   for (; cP < cEndP; ++cP) {

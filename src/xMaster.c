@@ -16,7 +16,7 @@ XClrFuncDef_(Master) {
   xMasterDelShareMap(&xP->sharedMPMP);
 
   XMasterComp *cP = sP->cF;
-  XMasterComp *cEndP = cP + *frayGetFirstEmptyIdxP(sP->cF);
+  XMasterComp *cEndP = cP + *_frayGetFirstEmptyIdxP(sP->cF);
   for (; cP < cEndP; ++cP) {
     xClr(*cP);  // cP is a pointer to a system pointer.
   }
@@ -211,7 +211,7 @@ Error xMasterNewShareMap(Map **sharedGenesMPP, GeneHisto *geneHistoP) {
       if (xHistoElemP->geneClass == SHARED_GENE && xHistoElemP->count) {
         e = _addSharedSubmap(
             sharedGenesMP, 
-            RAW_DATA,
+            RAW_DATA,  // TODO if this ever fails, add an element type field to implicit genes.
             xHistoElemP->geneType & MASK_COMPONENT_TYPE,
             xHistoElemP->size,
             xHistoElemP->count);
@@ -533,7 +533,7 @@ static Error _postProcessChildrenSystems(System *masterSysP) {
 
 static Error _xMasterForwardMail(XMaster *xP, System *writerSysP) {
   Message *msgP = writerSysP->mailboxF;
-  Message *msgEndP = msgP + *frayGetFirstEmptyIdxP(writerSysP->mailboxF);
+  Message *msgEndP = msgP + *_frayGetFirstEmptyIdxP(writerSysP->mailboxF);
 
   Error e = SUCCESS;
 
@@ -693,11 +693,11 @@ Error xMasterIniSys(System *sP, void *sParamsP) {
     XMaster *xP = (XMaster*) sP;
 
     XMasterComp *cP = sP->cF;
-    XMasterComp *cEndP = cP + *frayGetFirstEmptyIdxP(sP->cF);
+    XMasterComp *cEndP = cP + *_frayGetFirstEmptyIdxP(sP->cF);
 
     // If this child system has any mail to send, send it.
     for (; !e && cP < cEndP; ++cP) {
-      if (*frayGetFirstEmptyIdxP((*cP)->mailboxF)) {
+      if (*_frayGetFirstEmptyIdxP((*cP)->mailboxF)) {
         e = _xMasterForwardMail(xP, *cP);
       }
     }
@@ -734,11 +734,11 @@ Error xMasterRun(System *sP) {
   XMaster *xP = (XMaster*) sP;
 
   XMasterComp *cP = sP->cF;
-  XMasterComp *cEndP = cP + frayGetFirstInactiveIdx(sP->cF);
+  XMasterComp *cEndP = cP + _frayGetFirstInactiveIdx(sP->cF);
 
   for (; !e && cP < cEndP; ++cP) {
     e = xRun(*cP);  // cP is a pointer to XMasterComp, which itself is also a pointer.
-    if (*frayGetFirstEmptyIdxP((*cP)->mailboxF)) {
+    if (*_frayGetFirstEmptyIdxP((*cP)->mailboxF)) {
       e = _xMasterForwardMail(xP, *cP);
     }
   }
