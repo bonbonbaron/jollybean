@@ -31,7 +31,7 @@ int main(int argc, char **argv) {
     e = frayAdd(cmPF, &cmPA[i], NULL);
   }
 
-  U32 N_SAMPLES = *frayGetFirstEmptyIdxP(cmPF);
+  U32 N_SAMPLES = *_frayGetFirstEmptyIdxP(cmPF);
 
   // Offset color palette and colormap indices to match future texture atlas destinations
   U8 atlasOffset = 0;

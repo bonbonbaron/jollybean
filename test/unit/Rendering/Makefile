@@ -12,20 +12,22 @@ CP_SRC_DIR = ${COLOR_PALETTE_DIR}/src
 CP_INC_DIR = ${COLOR_PALETTE_DIR}/include
 CP_OBJ_DIR = ${COLOR_PALETTE_DIR}/obj
 
+KR_DIR = ${HOME}/jb/src/Keyring
+
 ./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./render.o ${JB}/build/xRender.o ${JB}/build/x.o ${JB}/build/data.o ${JB}/build/interface.o ${JB}/utils/body/build/previewImg.o 
-	gcc ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./render.o ${JB}/utils/body/build/previewImg.o ${JB}/build/interface.o $(shell sdl2-config --libs) ${JB}/build/xRender.o ${JB}/build/x.o ${JB}/build/data.o -lpthread -o $@
+	gcc -I${KR_DIR} ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./render.o ${JB}/utils/body/build/previewImg.o ${JB}/build/interface.o $(shell sdl2-config --libs) ${JB}/build/xRender.o ${JB}/build/x.o ${JB}/build/data.o -lpthread -o $@
 	touch $@
 
 ./render.o: ./render.c
-	gcc -g -c render.c -I${JB}/src/include/ -I${JB}/utils/body/src/include/ -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags --cflags) -o $@
+	gcc -g -c render.c -I${KR_DIR} -I${JB}/src/include/ -I${JB}/utils/body/src/include/ -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags --cflags) -o $@
 	touch $@
 
 ${CM_OBJ_DIR}/%Colormap.o: ${CM_SRC_DIR}/%Colormap.c
-	gcc -g -I${JB}/src/include -c $< $(shell sdl2-config --cflags) -o $@
+	gcc -g -I${KR_DIR} -I${JB}/src/include -c $< $(shell sdl2-config --cflags) -o $@
 	touch $@
 
 ${CP_OBJ_DIR}/%ColorPalette.o: ${CP_SRC_DIR}/%ColorPalette.c
-	gcc -g -I${JB}/src/include -c $< $(shell sdl2-config --cflags) -o $@
+	gcc -g -I${KR_DIR} -I${JB}/src/include -c $< $(shell sdl2-config --cflags) -o $@
 	touch $@
 
 ${JB}/build/%.o: ${JB}/src/%.c
