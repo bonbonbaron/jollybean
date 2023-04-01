@@ -124,6 +124,7 @@ typedef struct {
 typedef struct {
   Renderer_ *rendererP;
   Window_   *windowP;
+  Entity     context;   // this is what input events affect, e.g. main character, menu, text, etc.
   U32        buttonsPressed;
   Rect_     *cameraRectP;
   Entity     cameraEntity;
