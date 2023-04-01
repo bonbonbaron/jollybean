@@ -1,9 +1,6 @@
 #ifndef SYS_REPLACEME
 #define SYS_REPLACEME
-#include "botox.h"
-
-typedef struct {
-} XREPLACEMECompSrc; 
+#include "x.h"
 
 typedef struct {
 } XREPLACEMEComp;

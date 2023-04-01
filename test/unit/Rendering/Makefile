@@ -15,7 +15,7 @@ CP_OBJ_DIR = ${COLOR_PALETTE_DIR}/obj
 KR_DIR = ${HOME}/jb/src/Keyring
 
 ./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./render.o ${JB}/build/xRender.o ${JB}/build/x.o ${JB}/build/data.o ${JB}/build/interface.o ${JB}/utils/body/build/previewImg.o 
-	gcc -I${KR_DIR} ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./render.o ${JB}/utils/body/build/previewImg.o ${JB}/build/interface.o $(shell sdl2-config --libs) ${JB}/build/xRender.o ${JB}/build/x.o ${JB}/build/data.o -lpthread -o $@
+	gcc ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./render.o ${JB}/utils/body/build/previewImg.o ${JB}/build/interface.o $(shell sdl2-config --libs) ${JB}/build/xRender.o ${JB}/build/x.o ${JB}/build/data.o -lpthread -o $@
 	touch $@
 
 ./render.o: ./render.c

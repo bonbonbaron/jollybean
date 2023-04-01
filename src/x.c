@@ -1,4 +1,5 @@
 #include "x.h"
+#include "data.h"
 
 // Copied these from data.c since I don't know how to inline across files.
 inline static Key* _getCompIdxPByEntity(System *sP, Entity entity) {
@@ -24,15 +25,32 @@ Entity xGetEntityByCompIdx(System *sP, Key compIdx) {
   return _getEntityByCompIdx(sP, compIdx);
 }
 
-static void _xSwap(System *sP, Key *origIdxP, Key newIdx) {
-  Key *newIdxP  = mapGet(sP->e2cIdxMP, _getEntityByCompIdx(sP, newIdx));
+static Error _xSwap(System *sP, Key *origIdxP, Key newIdx) {
+  if (!sP || !origIdxP) {
+    return E_BAD_ARGS;
+  }
+  Entity entity = _getEntityByCompIdx(sP, newIdx);
+  if (!entity) {
+    return E_ENTITY_NOT_IN_SYSTEM;
+  }
+  Key *newIdxP  = mapGet(sP->e2cIdxMP, entity);
+  if (!newIdxP) {
+    return E_BAD_KEY;
+  }
   swap_(sP->cIdx2eA[newIdx], sP->cIdx2eA[*origIdxP]);
   swap_(*origIdxP, *newIdxP);
+  return SUCCESS;
 }
 
-void xActivateComponentByEntity(System *sP, Entity entity) {
+Error xActivateComponentByEntity(System *sP, Entity entity) {
+  if (!sP || !entity) {
+    return E_BAD_ARGS;
+  }
   // We use a pointer instead of a new one to swap its actual location later.
   Key *compOrigIdxP = _getCompIdxPByEntity(sP, entity);
+  if (!compOrigIdxP) {
+    return E_ENTITY_NOT_IN_SYSTEM;
+  }
   Key  compNewIdx   = frayActivate(sP->cF, *compOrigIdxP);
   if (compNewIdx != *compOrigIdxP) {
     // Existence of paused elements requires an additional, intermediate swap.
@@ -45,47 +63,77 @@ void xActivateComponentByEntity(System *sP, Entity entity) {
       _xSwap(sP, &intermediateIdx, compNewIdx);
     }
   }
+  return SUCCESS;
 }
 
-void xDeactivateComponentByEntity(System *sP, Entity entity) {
+Error xDeactivateComponentByEntity(System *sP, Entity entity) {
+  if (!sP || !entity) {
+    return E_BAD_ARGS;
+  }
   Key *compOrigIdxP = _getCompIdxPByEntity(sP, entity);
   if (!compOrigIdxP) {
-    printf("got a null pointer\n");
-    return;
+    return E_ENTITY_NOT_IN_SYSTEM;
   }
+  Error e = SUCCESS;
   Key  compNewIdx   = frayDeactivate(sP->cF, *compOrigIdxP);
   if (compNewIdx != *compOrigIdxP) {
     // Existence of paused elements requires an additional, intermediate swap.
     Key nPaused = *_frayGetNPausedP(sP->cF);
     if (nPaused) 
-      _xSwap(sP, compOrigIdxP, compNewIdx);
+      e = _xSwap(sP, compOrigIdxP, compNewIdx);
     else {
       Key intermediateIdx = *_frayGetFirstInactiveIdxP(sP->cF) - nPaused;
-      _xSwap(sP, compOrigIdxP, intermediateIdx);
-      _xSwap(sP, &intermediateIdx, compNewIdx);
+      if (!e) {
+        e = _xSwap(sP, compOrigIdxP, intermediateIdx);
+      }
+      if (!e) {
+        e = _xSwap(sP, &intermediateIdx, compNewIdx);
+      }
     }
   }
+  return e;
 }
 
-void xPauseComponentByEntity(System *sP, Entity entity) {
+Error xPauseComponentByEntity(System *sP, Entity entity) {
+  if (!sP || !entity) {
+    return E_BAD_ARGS;
+  }
   Key *compOrigIdxP = _getCompIdxPByEntity(sP, entity);
-  _xSwap(sP, compOrigIdxP, frayPause(sP->cF, *compOrigIdxP));
+  if (!compOrigIdxP) {
+    return E_ENTITY_NOT_IN_SYSTEM;
+  }
+  return _xSwap(sP, compOrigIdxP, frayPause(sP->cF, *compOrigIdxP));
 }
 
-void xUnpauseComponentByEntity(System *sP, Entity entity) {
+Error xUnpauseComponentByEntity(System *sP, Entity entity) {
+  if (!sP || !entity) {
+    return E_BAD_ARGS;
+  }
   Key *compOrigIdxP = _getCompIdxPByEntity(sP, entity);
-  _xSwap(sP, compOrigIdxP, frayUnpause(sP->cF, *compOrigIdxP));
+  if (!compOrigIdxP) {
+    return E_ENTITY_NOT_IN_SYSTEM;
+  }
+  return _xSwap(sP, compOrigIdxP, frayUnpause(sP->cF, *compOrigIdxP));
 }
 
-void xActivateComponentByIdx(System *sP, Key compOrigIdx) {
-  xActivateComponentByEntity(sP, sP->cIdx2eA[compOrigIdx]);
+Error xActivateComponentByIdx(System *sP, Key compOrigIdx) {
+  if (!sP) {
+    return E_BAD_ARGS;
+  }
+  return xActivateComponentByEntity(sP, sP->cIdx2eA[compOrigIdx]);
 }
 
-void xDeactivateComponentByIdx(System *sP, Key compOrigIdx) {
-  xDeactivateComponentByEntity(sP, sP->cIdx2eA[compOrigIdx]);
+Error xDeactivateComponentByIdx(System *sP, Key compOrigIdx) {
+  if (!sP) {
+    return E_BAD_ARGS;
+  }
+  return xDeactivateComponentByEntity(sP, sP->cIdx2eA[compOrigIdx]);
 }
 
 U32 xGetNComps(System *sP) {
+  if (!sP || !sP->cF) {
+    return E_BAD_ARGS;
+  }
 	return arrayGetNElems(sP->cF);
 }
 
@@ -104,6 +152,9 @@ Error xAddMutationMap(System *sP, Entity entity, Map *mutationMP) {
 
 
 Error xAddComp(System *sP, Entity entity, void *compDataP) {
+  if (!sP || !entity || !compDataP) {
+    return E_BAD_ARGS;
+  }
   // Skip entities who already have a component in this system.
   if (mapGet(sP->e2cIdxMP, entity)) {
     return SUCCESS;
@@ -111,18 +162,12 @@ Error xAddComp(System *sP, Entity entity, void *compDataP) {
   // Put component in first empty slot. (Will be garbage if this is a map. That's okay.)
   U32 cIdx; 
   Error e = frayAdd(sP->cF, compDataP, &cIdx); 
-  if (!e) {
-    printf("[x] system %d added entity %d to fray idx %d!\n", sP->id, entity, cIdx);
-  }
   // Add lookups from C -> E and E -> C.
   if (!e) {
     e = mapSet(sP->e2cIdxMP, entity, &cIdx);
   }
   if (!e) {
     sP->cIdx2eA[cIdx] = entity;
-  }
-  if (!e) {
-    printf("[x] system %d cIdx2eA[%d] = %d! \n", sP->id, cIdx, sP->cIdx2eA[cIdx]);
   }
   return e;
 }
@@ -212,8 +257,10 @@ Error xIniSys(System *sP, U32 nComps, void *miscP) {
 
 // Don't erase everything in a system. Some things should be permanent.
 void xClr(System *sP) {
-  sP->clr(sP);  // This MUST run first as it may rely on things we're about to erase,
-  frayDel((void**) &sP->cF);         // ... like maps of switches with cleanup cases.
+  if (!sP) {
+    return;
+  }
+  sP->clr(sP);  // This MUST run first as it may rely on things we're about to erase, frayDel((void**) &sP->cF);         // ... like maps of switches with cleanup cases.
   frayDel((void**) &sP->mailboxF);
   frayDel((void**) &sP->deactivateQueueF);
   frayDel((void**) &sP->pauseQueueF);
@@ -230,7 +277,10 @@ void xClr(System *sP) {
   arrayDel((void**) &sP->cIdx2eA);
 }
 
-void xSwitchComponent(System *sP, Entity entity, Key newCompKey) {
+Error xSwitchComponent(System *sP, Entity entity, Key newCompKey) {
+  if (!sP || !entity || !newCompKey) {
+    return E_BAD_ARGS;
+  }
   Map **mutationMPP = (Map**) mapGet(sP->mutationMPMP, entity);
   if (mutationMPP) {
     Map *mutationMP = *mutationMPP;
@@ -238,37 +288,46 @@ void xSwitchComponent(System *sP, Entity entity, Key newCompKey) {
       void* activeCompP = xGetCompPByEntity(sP, entity);
       if (activeCompP) {
         void **tmpP = mapGet(mutationMP, newCompKey);
-        if (tmpP)
+        if (tmpP) {
           memcpy(activeCompP, *tmpP, sP->compSz);
+        }
       }
     }
   }
+  return SUCCESS;
 }
 
 static Error _xReadInbox(System *sP) {
+  if (!sP || !sP->mailboxF) {
+    return E_BAD_ARGS;
+  }
   Error e = SUCCESS;
   Message *msgP = sP->mailboxF;
   Message *msgEndP = msgP + *_frayGetFirstEmptyIdxP(sP->mailboxF);
   for (; !e && msgP < msgEndP; msgP++) {
     switch(msgP->cmd) {
       case SWITCH_AND_ACTIVATE: 
-        xSwitchComponent(sP, msgP->attn, msgP->arg);
+        e = xSwitchComponent(sP, msgP->attn, msgP->arg);
       case ACTIVATE:
-        xActivateComponentByEntity(sP, msgP->attn);
+        if (!e) {
+          xActivateComponentByEntity(sP, msgP->attn);
+        }
         break;
       case SWITCH_AND_DEACTIVATE: 
-        xSwitchComponent(sP, msgP->attn, msgP->arg);
+        e = xSwitchComponent(sP, msgP->attn, msgP->arg);
       case DEACTIVATE:
-        xDeactivateComponentByEntity(sP, msgP->attn);
+        if (!e) {
+          e = xDeactivateComponentByEntity(sP, msgP->attn);
+        }
         break;
       case PAUSE:
-        xPauseComponentByEntity(sP, msgP->attn);
+        e = xPauseComponentByEntity(sP, msgP->attn);
         break;
       case UNPAUSE:
-        xUnpauseComponentByEntity(sP, msgP->attn);
+        e = xUnpauseComponentByEntity(sP, msgP->attn);
         break;
       case SWITCH:
-        xSwitchComponent(sP, msgP->attn, msgP->arg);
+        e = xSwitchComponent(sP, msgP->attn, msgP->arg);
         break;
       default:
         e = sP->processMessage(sP, msgP);  // some systems require more specific treatment
@@ -279,47 +338,64 @@ static Error _xReadInbox(System *sP) {
   return e;
 }
 
-static void _pauseQueue(System *sP) {
+static Error _pauseQueue(System *sP) {
+  if (!sP) {
+    return E_BAD_ARGS;
+  }
+  Error e = SUCCESS;
   U32 nPausedEntities = *_frayGetFirstEmptyIdxP(sP->pauseQueueF);
   if (nPausedEntities) {
     Entity *entityP = sP->pauseQueueF;
     Entity *entityEndP = entityP + nPausedEntities;
-    for (; entityP < entityEndP; ++entityP) {
-      xPauseComponentByEntity(sP, *entityP);
+    for (; !e && entityP < entityEndP; ++entityP) {
+      e = xPauseComponentByEntity(sP, *entityP);
     }
     _frayClr(sP->pauseQueueF);
   }
+  return e;
 }
 
-static void _deactivateQueue(System *sP) {
+static Error _deactivateQueue(System *sP) {
+  if (!sP) {
+    return E_BAD_ARGS;
+  }
+  Error e = SUCCESS;
   U32 nDeactivatedEntities = *_frayGetFirstEmptyIdxP(sP->deactivateQueueF);
   if (nDeactivatedEntities) {
     Entity *entityP = sP->deactivateQueueF;
     Entity *entityEndP = entityP + nDeactivatedEntities;
-    for (; entityP < entityEndP; ++entityP) {
-      printf("trying to deactivate entity %d\n", *entityP);
-      xDeactivateComponentByEntity(sP, *entityP);
+    for (; !e && entityP < entityEndP; ++entityP) {
+      e = xDeactivateComponentByEntity(sP, *entityP);
     }
     _frayClr(sP->deactivateQueueF);
   }
+  return e;
 }
 
 Entity xGetEntityByVoidComponentPtr(System *sP, void *componentP) {
+  if (!sP || !componentP) {
+    return 0;  // invalid entity
+  }
   Entity compIdx = ((U32) componentP - (U32) sP->cF) / sP->compSz;
   return xGetEntityByCompIdx(sP, compIdx);
 }
 
 
-void xQueuePause(System *sP, void *componentP) {
+Error xQueuePause(System *sP, void *componentP) {
   Entity entity = xGetEntityByVoidComponentPtr(sP, componentP);
-  frayAdd(sP->pauseQueueF, &entity, NULL);
+  if (entity) {
+    return frayAdd(sP->pauseQueueF, &entity, NULL);
+  }
+  return E_NULL_VAR;
 }
 
-void xQueueDeactivate(System *sP, void *componentP) {
+Error xQueueDeactivate(System *sP, void *componentP) {
   Entity entity = xGetEntityByVoidComponentPtr(sP, componentP);
-  frayAdd(sP->deactivateQueueF, &entity, NULL);
+  if (entity) {
+    return frayAdd(sP->deactivateQueueF, &entity, NULL);
+  }
+  return E_NULL_VAR;
 }
-
 
 /* This is how the entire ECS framework works. */
 Error xRun(System *sP) {
@@ -329,8 +405,10 @@ Error xRun(System *sP) {
   }
   // Pause and deactivate all components that need to be.
   if (!e) {
-    _deactivateQueue(sP);
-    _pauseQueue(sP);
+    e = _deactivateQueue(sP);
+  }
+  if (!e) {
+    e = _pauseQueue(sP);
   }
 	return e;
 }

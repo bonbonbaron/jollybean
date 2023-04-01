@@ -1,5 +1,5 @@
+#include "xA.h"
 #include "data.h"
-#include "xREPLACEME.h"
 
 // TODO make this file as helpful as possible.
 // TODO add xP casting in each USED function.
@@ -15,82 +15,82 @@
  *  That's so you can keep track of what will already have been done by each function call.
  */
 //======================================================
-// Initialize REPLACEME's system.
+// Initialize A's system.
 //======================================================
-#if 0
-XIniSysFuncDefUnused_(REPLACEME);
+#if 1
+XIniSysFuncDefUnused_(A);
 #else
-Error xREPLACEMEIniSys(System *sP, void *sParamsP) {
+Error xAIniSys(System *sP, void *sParamsP) {
 	unused_(sParamsP);
   unused_(sP);
   return SUCCESS;
 }
 #endif
 
-#if 0
-XIniSubcompFuncDefUnused_(REPLACEME);
+#if 1
+XIniSubcompFuncDefUnused_(A);
 #else
-Error xREPLACEMEIniSubcomp(System *sP, void *compDataP, void *compDataSrcP) {
+Error xAIniSubcomp(System *sP, void *compDataP, void *compDataSrcP) {
 	if (!sP || !compDataP || !compDataSrcP)
 		return E_BAD_ARGS;
 
   Error e = SUCCESS;
-	XREPLACEME *xREPLACEMESysP = (XREPLACEME*) sP;
-	XREPLACEMEComp *cP = (XREPLACEMEComp*) compDataP;
-  XREPLACEMECompSrc *imgP = (XREPLACEMECompSrc*) compDataSrcP;
+	XA *xASysP = (XA*) sP;
+	XAComp *cP = (XAComp*) compDataP;
+  XACompSrc *imgP = (XACompSrc*) compDataSrcP;
 
 	return e;
 }
 #endif
 
-#if 0
-XGetShareFuncDefUnused_(REPLACEME);
+#if 1
+XGetShareFuncDefUnused_(A);
 #else
-XGetShareFuncDef_(REPLACEME) {
-  XREPLACEME *xREPLACEMESysP = (XREPLACEME*) sP;
+XGetShareFuncDef_(A) {
+  XA *xASysP = (XA*) sP;
   Error e = SUCCESS;
   return e;
 }
 #endif
 
-#if 0
-XProcMsgFuncDefUnused_(REPLACEME);
+#if 1
+XProcMsgFuncDefUnused_(A);
 #else
-Error xREPLACEMEProcessMessage(System *sP, Message *msgP) {
+Error xAProcessMessage(System *sP, Message *msgP) {
 	unused_(sP);
 	unused_(msgP);
 	return SUCCESS;
 }
 #endif
 
-#if 0
-XPostprocessCompsDefUnused_(REPLACEME);
+#if 1
+XPostprocessCompsDefUnused_(A);
 #else
-Error XPostprocessComps(REPLACEME) {
+Error XPostprocessComps(A) {
   unused_(sP);
 }
 #endif
 
 //======================================================
-// REPLACEME run function
+// A run function
 //======================================================
-Error xREPLACEMERun(System *sP) {
+Error xARun(System *sP) {
 	Error e = SUCCESS;
 
-	XREPLACEMEComp *cP = (XREPLACEMEComp*) sP->cF;
-	XREPLACEMEComp *cEndP = cP + _frayGetFirstPausedIdx(sP->cF);
+	XAComp *cP = (XAComp*) sP->cF;
+	XAComp *cEndP = cP + _frayGetFirstPausedIdx(sP->cF);
 
   for (; cP < cEndP; cP++) {
-    // do something on each element here
+    printf("A: Entity %d's component cF[%d] = {a = %d, b = %d, c = %d}\n", xGetEntityByVoidComponentPtr(sP, cP), cP - (XAComp*) sP->cF, cP->a, cP->b, cP->c);
   }
 
 	return e;
 }
 
-#if 0
-XClrFuncDefUnused_(REPLACEME);
+#if 1
+XClrFuncDefUnused_(A);
 #else
-XClrFuncDef_(REPLACEME) {
+XClrFuncDef_(A) {
   unused_(sP);
   return SUCCESS;
 }
@@ -100,4 +100,4 @@ XClrFuncDef_(REPLACEME) {
 // System definition
 //======================================================
 #define FLAGS_HERE (0)
-X_(REPLACEME, 1, FLAGS_HERE);
+X_(A, 1, FLAGS_HERE);
