@@ -3,8 +3,7 @@
 #include "jb.h"
 
 // TODO is both being 1 a bug, or is that the *inner* key value?
-#define WINDOW_KEY_ (1)
-#define RENDERER_KEY_ (1)
+#define GUI_KEY_ (1)
 
 #define RIGHT_RECT (LEFT_CHILD)
 #define LOWER_RECT (RIGHT_CHILD)
@@ -65,7 +64,7 @@ Error atlasPlanPlacements(Atlas *atlasP);
 void atlasDel(Atlas **atlasPP);
 Error xRenderIniS(System *sP, void *sParamsP);
 Error xRenderProcessMessage(System *sP, Message *msgP);
-typedef void (*XRenderPresentU)(Renderer_ *rendererP);
+typedef void (*XRenderPresentU)(Renderer_ *rendererP);  // TODO uh.. what was this for again?
 extern XRenderPresentU present;
 extern XPostprocessCompsDef_(Render);
 
@@ -75,8 +74,7 @@ typedef struct {
   Colormap     **cmPF;
   ColorPalette **cpPF;
   Entity        *entityF;  // components aren't added till postProcess(), so track entities here
-  Window_       *windowP;
-  Renderer_     *rendererP;
+  Gui           *guiP;   // derived from shared component 
   Texture_      *atlasTextureP;
   Map           *offsetRectMP;
   Map           *srcRectMP;   // shortcut-pointer to shared array of source rectangles

@@ -12,15 +12,20 @@ XGetShareFuncDefUnused_(Master);
 XPostprocessCompsDefUnused_(Master);
 
 XClrFuncDef_(Master) {
+  if (!sP) {
+    return SUCCESS;
+  }
   XMaster *xP = (XMaster*) sP;
   xMasterDelShareMap(&xP->sharedMPMP);
 
-  XMasterComp *cP = sP->cF;
-  XMasterComp *cEndP = cP + *_frayGetFirstEmptyIdxP(sP->cF);
-  for (; cP < cEndP; ++cP) {
-    xClr(*cP);  // cP is a pointer to a system pointer.
+  if (sP->cF) {
+    XMasterComp *cP = sP->cF;
+    XMasterComp *cEndP = cP + *_frayGetFirstEmptyIdxP(sP->cF);
+    for (; cP < cEndP; ++cP) {
+      xClr(*cP);  // cP is a pointer to a system pointer.
+    }
   }
-  guiDel(&xP->windowP, &xP->rendererP);
+  guiDel(&xP->guiP);
   return SUCCESS;
 }
 
@@ -201,7 +206,7 @@ static Error _addSharedSubmap(Map *outerShareMP, MapElemType elemType, Key type,
 Error xMasterNewShareMap(Map **sharedGenesMPP, GeneHisto *geneHistoP) {
   // Create all the inner maps according to the histo'd number of elements they hold.
   // Add RENDERER_GENE_TYPE (= 2) to total number for window and renderer shares.
-  Error e = mapNew(sharedGenesMPP, MAP_POINTER, sizeof(Map*), geneHistoP->nDistinctShareds + RENDERER_GENE_TYPE);  
+  Error e = mapNew(sharedGenesMPP, MAP_POINTER, sizeof(Map*), geneHistoP->nDistinctShareds + GUI_GENE_TYPE);  
   if (!e) {
     Map *sharedGenesMP = *sharedGenesMPP;
     XHistoElem *xHistoElemP    = &geneHistoP->histoXElemA[0];
@@ -237,20 +242,17 @@ Error xMasterNewShareMap(Map **sharedGenesMPP, GeneHisto *geneHistoP) {
 void xMasterDelShareMap(Map **sharedMPMPP) {
   if (sharedMPMPP && *sharedMPMPP) {
     Map *sharedMPMP = *sharedMPMPP;
-    /* Assume first 2 elements are window and renderer.
+    /* Assume first element is the GUI.
        We want to delete textures before the renderer, which takes textures along with it.
        Otherwise we risk double-freeing those. */
-    Map **mapPP = ((Map**) sharedMPMP->mapA) + 2;
-    Map **mapEndPP = mapPP + sharedMPMP->population - 2;
+    Map **mapPP = ((Map**) sharedMPMP->mapA) + GUI_GENE_TYPE;
+    Map **mapEndPP = mapPP + sharedMPMP->population - GUI_GENE_TYPE;
     for (; mapPP < mapEndPP; ++mapPP) {
       mapDel(mapPP);
     }
-    if (sharedMPMP->population >= 1) {
+    if (sharedMPMP->population >= GUI_GENE_TYPE) {
       mapPP = (Map**) sharedMPMP->mapA;
       mapDel(&mapPP[0]);
-    }
-    if (sharedMPMP->population >= 2) {
-      mapDel(&mapPP[1]);
     }
     mapDel(sharedMPMPP);
   }
@@ -554,48 +556,39 @@ static Error _xMasterForwardMail(XMaster *xP, System *writerSysP) {
 // =====================================================================
 // Distribute all genes to their appropriate subsystems.
 // =====================================================================
-static Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGenesMPP, Window_ *windowP, Renderer_ *rendererP, Key nSystemsMax) {
-  Spawn *spawnP = biomeP->spawnA;
-  Spawn *spawnEndP = spawnP + biomeP->nSpawns;   // pointer to the end of the above array
+static Error _distributeGenes(XMaster *xP, Key nSystemsMax) {
+  if (!xP || !nSystemsMax || !xP->biomeP || !xP->biomeP->spawnA) {
+    return E_BAD_ARGS;
+  }
+  Spawn *spawnP = xP->biomeP->spawnA;
+  Spawn *spawnEndP = spawnP + xP->biomeP->nSpawns;   // pointer to the end of the above array
   Genome *genomeP;
   Gene **genePP, **geneEndPP;   // pointers to an array of gene header pointers and its end
   Map *bbMP = NULL;
-  Map *sharedGenesMPMP;
   GeneHisto geneHisto = {0};
   StripDataS **sdPF = NULL;
 
-  if (!biomeP || !masterSysP || !sharedGenesMPP || !nSystemsMax) {
-    return E_BAD_ARGS;
-  }
+  _countEntitiesToSpawn(xP->biomeP);
 
-  _countEntitiesToSpawn(biomeP);
-
-  Error e = _geneHistoIni(&geneHisto, biomeP->nEntitiesToSpawn, nSystemsMax);
+  Error e = _geneHistoIni(&geneHisto, xP->biomeP->nEntitiesToSpawn, nSystemsMax);
   if (!e) {
-    e = _histoGenes(&geneHisto, biomeP, nSystemsMax);
+    e = _histoGenes(&geneHisto, xP->biomeP, nSystemsMax);
   }
   if (!e) {
-    e = _subsystemsIni(masterSysP, &geneHisto);
+    e = _subsystemsIni(&xP->system, &geneHisto);
   }
   if (!e) {
-    e = xMasterNewShareMap(sharedGenesMPP, &geneHisto);
+    e = xMasterNewShareMap(&xP->sharedMPMP, &geneHisto);
   }
   if (!e) {
-    sharedGenesMPMP = *sharedGenesMPP;
-    e = (!sharedGenesMPMP) ? E_NULL_VAR : SUCCESS;
-  }
-  if (!e) {
-    e = _addSpecialSharedGene(sharedGenesMPMP, windowP, WINDOW_GENE_TYPE);
-  }
-  if (!e) {
-    e = _addSpecialSharedGene(sharedGenesMPMP, rendererP, RENDERER_GENE_TYPE);
+    e = _addSpecialSharedGene(xP->sharedMPMP, xP->guiP, GUI_GENE_TYPE);
   }
 
   if (!e) {
-    e = _spawnEntities(sharedGenesMPMP, biomeP);
+    e = _spawnEntities(xP->sharedMPMP, xP->biomeP);
   }
   if (!e) {
-    e = _makeMutationMapArrays(biomeP, &geneHisto, nSystemsMax);
+    e = _makeMutationMapArrays(xP->biomeP, &geneHisto, nSystemsMax);
   }
   if (!e) {
     e = frayNew((void**) &sdPF, sizeof(StripDataS*), geneHisto.nDistinctMedia);
@@ -614,11 +607,11 @@ static Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGen
       geneEndPP = genePP + genomeP->nGenes;
       // For each gene of this spawn...
       for (; !e && genePP < geneEndPP; genePP++) {  // genePP is a pointer to a pointer to a global singleton of a component
-        e = _distributeGene(entity, genePP, sdPF, masterSysP, sharedGenesMPMP, bbMP, spawnP);
+        e = _distributeGene(entity, genePP, sdPF, &xP->system, xP->sharedMPMP, bbMP, spawnP);
       }
       // If this entity has a blackboard, stick it into the map of entity blackboards.
       if (!e && bbMP) {
-        e = mapSet(masterSysP->mutationMPMP, entity, &bbMP);
+        e = mapSet(xP->system.mutationMPMP, entity, &bbMP);
       }
     }
   }
@@ -631,12 +624,12 @@ static Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGen
   // Some systems like xRender need to wait till post-processing to make their components.
   // So we're only guaranteed components' existence after post-processing.
   if (!e) {
-    e = _distributeSharedGenesToSubsystems(masterSysP, sharedGenesMPMP);
+    e = _distributeSharedGenesToSubsystems(&xP->system, xP->sharedMPMP);
   }
   // Post-process all children systems.
   // Some systems using composite genes don't make components until they have all their ingredients.
   if (!e) {
-    e = _postProcessChildrenSystems(masterSysP);
+    e = _postProcessChildrenSystems(&xP->system);
   }
   // Clean up your strip data
   if (sdPF) {
@@ -646,10 +639,10 @@ static Error _distributeGenes(Biome *biomeP, System *masterSysP, Map **sharedGen
 
   // TODO get rid of this after impl'ing behavior s ystem
   if (!e) {
-    frayActivateAll(masterSysP->cF);
+    _frayActivateAll(&xP->system.cF);
   }
 
-  _mutationMapArrayDel(biomeP);
+  _mutationMapArrayDel(xP->biomeP);
   _geneHistoClr(&geneHisto);
   return e;
 }
@@ -673,7 +666,7 @@ Error xMasterIniSys(System *sP, void *sParamsP) {
   xMasterSysP->biomeP = xMasterIniSysPrmsP->biomeP;
  
   // Initialize the GUI through whatever library we're using.
-  Error e = guiNew(&xMasterSysP->windowP, &xMasterSysP->rendererP);
+  Error e = guiNew(&xMasterSysP->guiP);
 
   if (xMasterIniSysPrmsP) {
     for (U32 i = 0; !e && i < xMasterIniSysPrmsP->nXSystems; i++) {
@@ -685,7 +678,7 @@ Error xMasterIniSys(System *sP, void *sParamsP) {
 
   // Distribute biome's genomes to entities.
   if (!e) {
-    e = _distributeGenes(xMasterSysP->biomeP, sP, &xMasterSysP->sharedMPMP, xMasterSysP->windowP, xMasterSysP->rendererP, xMasterIniSysPrmsP->nXSystemsMax);
+    e = _distributeGenes(xMasterSysP, xMasterIniSysPrmsP->nXSystemsMax);
   }
 
   // Forward all mail that may have been written by this time.
@@ -705,7 +698,7 @@ Error xMasterIniSys(System *sP, void *sParamsP) {
 
   // Avoid moving things by cheating and telling the fray everything's active.
   if (!e) {
-    frayActivateAll(sP->cF);
+    _frayActivateAll(sP->cF);
   }
 
 
@@ -737,9 +730,12 @@ Error xMasterRun(System *sP) {
   XMasterComp *cEndP = cP + _frayGetFirstInactiveIdx(sP->cF);
 
   for (; !e && cP < cEndP; ++cP) {
-    e = xRun(*cP);  // cP is a pointer to XMasterComp, which itself is also a pointer.
-    if (*_frayGetFirstEmptyIdxP((*cP)->mailboxF)) {
-      e = _xMasterForwardMail(xP, *cP);
+    e = guiProcessEvents(xP->guiP);
+    if (e != E_QUIT) {
+      e = xRun(*cP);  // cP is a pointer to XMasterComp, which itself is also a pointer.
+      if (*_frayGetFirstEmptyIdxP((*cP)->mailboxF)) {
+        e = _xMasterForwardMail(xP, *cP);
+      }
     }
   }
   return e;

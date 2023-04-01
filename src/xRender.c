@@ -42,33 +42,7 @@ static inline Error __atlasLinkNodes(
   if (childIdx >= arrayGetNElems(atlasP->btP)) {
     return E_SEGFAULT;
   }
-    printf("before linking: childA[%d] = {%d, %d, %d, %d}, {%d, %d}, srcIdx = %d\n", 
-        childIdx,
-        atlasP->btP[childIdx].rect.x,
-        atlasP->btP[childIdx].rect.y,
-        atlasP->btP[childIdx].rect.w,
-        atlasP->btP[childIdx].rect.h,
-        atlasP->btP[childIdx].remW,
-        atlasP->btP[childIdx].remH,
-        atlasP->btP[childIdx].srcIdx
-        );
-  printf("parent %d adopts child %d out of %d\n", parentIdx, childIdx, arrayGetNElems(atlasP->btP));
-  atlasP->btP[childIdx].rect.x = x,
-  atlasP->btP[childIdx].rect.y = y,
-  atlasP->btP[childIdx].remW = remW;
-  atlasP->btP[childIdx].remH = remH;
-  
   btLinkNodes_(atlasP->btP, &atlasP->btP[parentIdx], &atlasP->btP[childIdx], child);
-  printf("after linking: childA[%d] = {%d, %d, %d, %d}, {%d, %d}, srcIdx = %d\n", 
-      childIdx,
-      atlasP->btP[childIdx].rect.x,
-      atlasP->btP[childIdx].rect.y,
-      atlasP->btP[childIdx].rect.w,
-      atlasP->btP[childIdx].rect.h,
-      atlasP->btP[childIdx].remW,
-      atlasP->btP[childIdx].remH,
-      atlasP->btP[childIdx].srcIdx
-      );
   return SUCCESS;
 }
 
@@ -151,13 +125,11 @@ Error atlasNew(Atlas **atlasPP, Colormap **cmPF) {
         if (currRectMaxDim > atlasA[j].maxDim) {
           memmove(&atlasA[j + 1], &atlasA[j], sizeof(AtlasElem) * (i - j));
           _setRectData(&atlasA[j], currRectMaxDim, cmPF[i]->w, cmPF[i]->h, i);
-          printf("src %d to sorted %d\n", i, j);
           goto nextUnsortedRect;
         }
       }
       // If loop ended without placing rect anywhere, it belongs in last element.
       _setRectData(&atlasA[i], currRectMaxDim, cmPF[i]->w, cmPF[i]->h, i);
-      printf("src %d to sorted %d\n", i, i);
       nextUnsortedRect:
       continue;
     }
@@ -284,15 +256,15 @@ Error atlasPlanPlacements(Atlas *atlasP) {
 //======================================================
 Error xRenderIniSys(System *sP, void *sParamsP) {
 	unused_(sParamsP);
-  XRender *xRenderP = (XRender*) sP;
+  XRender *xP = (XRender*) sP;
   // Components array should have already been allocated by this point, so it's safe to get its size.
   U32 nComponents = xGetNComps(sP);
-  Error e = frayNew((void**) &xRenderP->cmPF, sizeof(Colormap*), nComponents);
+  Error e = frayNew((void**) &xP->cmPF, sizeof(Colormap*), nComponents);
   if (!e) {
-    e = frayNew((void**) &xRenderP->cpPF, sizeof(ColorPalette*), nComponents);
+    e = frayNew((void**) &xP->cpPF, sizeof(ColorPalette*), nComponents);
   }
   if (!e) {
-    e = frayNew((void**) &xRenderP->entityF, sizeof(Entity), nComponents);
+    e = frayNew((void**) &xP->entityF, sizeof(Entity), nComponents);
   }
   return e;
 }
@@ -308,7 +280,7 @@ Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void
   ColorPalette *cpP;
   Colormap *cmP;
 
-  XRender *xRenderP = (XRender*) sP;
+  XRender *xP = (XRender*) sP;
   Error e = SUCCESS;
 
   // If it's a color palette, increment the system's atlas palette offset.
@@ -319,7 +291,7 @@ Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void
       cmP = (Colormap*) dataP;
       if (!(cmP->state & INITIALIZED)) {
         cmP->state |= INITIALIZED;
-        e = frayAdd(xRenderP->cmPF, (void*) &cmP, NULL);
+        e = frayAdd(xP->cmPF, (void*) &cmP, NULL);
       }
       break;
     case COLOR_PALETTE:
@@ -327,9 +299,9 @@ Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void
       // Prevent copies of sub-palettes in texture atlas palette by marking them as initialized.
       if (!(cpP->state & INITIALIZED)) {
         cpP->state |= INITIALIZED;
-        cpP->atlasPaletteOffset = xRenderP->atlasPaletteOffset;
-        xRenderP->atlasPaletteOffset += cpP->nColors;
-        e = frayAdd(xRenderP->cpPF, (void*) &cpP, NULL);
+        cpP->atlasPaletteOffset = xP->atlasPaletteOffset;
+        xP->atlasPaletteOffset += cpP->nColors;
+        e = frayAdd(xP->cpPF, (void*) &cpP, NULL);
       }
       break;
     case TILEMAP:   // this is for backgrounds
@@ -340,10 +312,7 @@ Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void
   }
   // Only track entity for the first subcomponent. 0x40 is the lowest of the upper two bits.
   if (!e && subtype == 0x40) {
-    e = frayAdd(xRenderP->entityF, (void*) &entity, NULL);
-    if (!e) {
-      printf("[render] added entity %3d!\n", entity);
-    }
+    e = frayAdd(xP->entityF, (void*) &entity, NULL);
   }
 return e;
 }
@@ -357,28 +326,27 @@ Error xRenderProcessMessage(System *sP, Message *msgP) {
 
 // None of the render system's specials should be cleared as the main system owns them.
 XClrFuncDef_(Render) {
-  printf("\n\nrunning render clr\n\n\n");
-  XRender *xRenderP = (XRender*) sP;
-  frayDel((void**) &xRenderP->cmPF);
-  frayDel((void**) &xRenderP->cpPF);
-  frayDel((void**) &xRenderP->entityF);
-  textureDel(&xRenderP->atlasTextureP);
+  XRender *xP = (XRender*) sP;
+  frayDel((void**) &xP->cmPF);
+  frayDel((void**) &xP->cpPF);
+  frayDel((void**) &xP->entityF);
+  textureDel(&xP->atlasTextureP);
   if (sP->flags & RENDER_SYS_OWNS_SRC_AND_OFFSET) {
-    mapDel(&xRenderP->srcRectMP);
-    mapDel(&xRenderP->offsetRectMP);
+    mapDel(&xP->srcRectMP);
+    mapDel(&xP->offsetRectMP);
   }
   return SUCCESS;
 }
 
 // Texture atlas array
-static Error _assembleTextureAtlas(XRender *xRenderP, Atlas *atlasP, U8 **atlasPixelAP) {
+static Error _assembleTextureAtlas(XRender *xP, Atlas *atlasP, U8 **atlasPixelAP) {
   U32 nStripsPerRow;
   StripmapElem *smElemP, *smElemEndP;
   U8 *dstP;
   U32 srcIdx;
   U32 nUnitsPerStrip;
   const U32 ATLAS_WIDTH = atlasP->btP[0].remW;
-  const Colormap **cmPF = (const Colormap**) xRenderP->cmPF;
+  const Colormap **cmPF = (const Colormap**) xP->cmPF;
   Error e = arrayNew((void**) atlasPixelAP, sizeof(U8), atlasP->btP[0].remW * atlasP->btP[0].remH);
   if (!e) {
     U8 *atlasPixelA = *atlasPixelAP;
@@ -420,25 +388,25 @@ static Error _assembleTextureAtlas(XRender *xRenderP, Atlas *atlasP, U8 **atlasP
 // xAnimaiton gets messages and updates all its animation rectangles
 // (?) How does it know if a deall is anim'd?
 // Then it gets shared map of source rectangles and updates the rect there.
-static Error _updateSrcRects(XRender *xRenderP, Atlas *atlasP) {
+static Error _updateSrcRects(XRender *xP, Atlas *atlasP) {
   // Get all the animation rectangles we need to update when building our texture atlas.
   // First count all the rectangles we're going to need.
   Error e = SUCCESS;
 
   XRenderComp c;
 
-  SubcompOwner *scoP = xRenderP->system.subcompOwnerMP->mapA;
-  SubcompOwner *scoEndP = scoP + xRenderP->system.subcompOwnerMP->population;
+  SubcompOwner *scoP = xP->system.subcompOwnerMP->mapA;
+  SubcompOwner *scoEndP = scoP + xP->system.subcompOwnerMP->population;
 
   RectOffset rectOffset = {0};
   Colormap  *cmP;
   // If we own the src rect map, we better populate its flags before we access it.
     // Give everybody an empty rectangle for now.
-  if (xRenderP->system.flags & RENDER_SYS_OWNS_SRC_AND_OFFSET) {
+  if (xP->system.flags & RENDER_SYS_OWNS_SRC_AND_OFFSET) {
     // Copy the flags from one map to another. It's a cheat code.
-    e = mapCopyKeys(xRenderP->srcRectMP, xRenderP->dstRectMP);
-    assert(xRenderP->srcRectMP->population == xRenderP->dstRectMP->population); 
-    assert(arrayGetElemSz(xRenderP->srcRectMP->mapA) == arrayGetElemSz(xRenderP->dstRectMP->mapA)); 
+    e = mapCopyKeys(xP->srcRectMP, xP->dstRectMP);
+    assert(xP->srcRectMP->population == xP->dstRectMP->population); 
+    assert(arrayGetElemSz(xP->srcRectMP->mapA) == arrayGetElemSz(xP->dstRectMP->mapA)); 
   }
   // Update all source rectangles' XY coordinates to their global positions in texture atlas.
   // For each entity...
@@ -449,10 +417,10 @@ static Error _updateSrcRects(XRender *xRenderP, Atlas *atlasP) {
       // Source rectangle initialization (set flag first because implicit share maps don't know 
       // which entities they should be mapped to ahead of time... would be nice if I found a way
       // to use mapCopyKeys() for all systems prior to this function)
-      if (!(xRenderP->system.flags & RENDER_SYS_OWNS_SRC_AND_OFFSET)) {
-        mapSetFlag(xRenderP->srcRectMP, scoP->owner);
+      if (!(xP->system.flags & RENDER_SYS_OWNS_SRC_AND_OFFSET)) {
+        mapSetFlag(xP->srcRectMP, scoP->owner);
       }
-      c.srcRectP = (Rect_*) mapGet(xRenderP->srcRectMP, scoP->owner);
+      c.srcRectP = (Rect_*) mapGet(xP->srcRectMP, scoP->owner);
       if (!c.srcRectP) {
         return E_BAD_KEY;
       }
@@ -461,18 +429,16 @@ static Error _updateSrcRects(XRender *xRenderP, Atlas *atlasP) {
       c.srcRectP->w = atlasP->btP[cmP->sortedRectIdx].rect.w;
       c.srcRectP->h = atlasP->btP[cmP->sortedRectIdx].rect.h;
       // Add component to system
-      e = xAddComp(&xRenderP->system, scoP->owner, &c);
+      e = xAddComp(&xP->system, scoP->owner, &c);
       // If there's an animation system (which tells master that rect offsets are implied),
       // tell the animation system to update its frame rectangles' XY coordinates to their places
       // in the texture atlas.
-      if (!e && xRenderP->offsetRectMP) {
+      if (!e && xP->offsetRectMP) {
         rectOffset.x = c.srcRectP->x;
         rectOffset.y = c.srcRectP->y;
-        printf("Entity %3d is putting {%3d, %3d} in the offset bank.\n", 
-            scoP->owner, c.srcRectP->x, c.srcRectP->y);
-        e = mapSet(xRenderP->offsetRectMP, scoP->owner, &rectOffset);
+        e = mapSet(xP->offsetRectMP, scoP->owner, &rectOffset);
         if (!e) {
-          e = mailboxWrite(xRenderP->system.mailboxF, ANIMATION, scoP->owner, UPDATE_RECT, 0);
+          e = mailboxWrite(xP->system.mailboxF, ANIMATION, scoP->owner, UPDATE_RECT, 0);
         }
       }
     }
@@ -492,23 +458,23 @@ static void _updateCmSrcRectIndices(Colormap **cmPF, Atlas *atlasP) {
 // Post-processing of components is done AFTER media genes are inflated and unpacked.
 // Rendering media genes are flagged to skip the strip-assembling stage; that's done here.
 XPostprocessCompsDef_(Render) {
-  XRender *xRenderP = (XRender*) sP;
+  XRender *xP = (XRender*) sP;
 
   Atlas *atlasP = NULL;
   U8 *atlasPixelA = NULL;
   Surface_ *atlasSurfaceP;
 
   // Texture atlas
-  Error e = atlasNew(&atlasP, xRenderP->cmPF);
+  Error e = atlasNew(&atlasP, xP->cmPF);
   if (!e) {
     e = atlasPlanPlacements(atlasP);
   }
   if (!e) {
-    e = _assembleTextureAtlas(xRenderP, atlasP, &atlasPixelA);
+    e = _assembleTextureAtlas(xP, atlasP, &atlasPixelA);
   }
   // Let colormaps track where their rectangles are sorted.
   if (!e) {
-    _updateCmSrcRectIndices(xRenderP->cmPF, atlasP);
+    _updateCmSrcRectIndices(xP->cmPF, atlasP);
   }
   // Texture surface
   if (!e) {
@@ -517,8 +483,8 @@ XPostprocessCompsDef_(Render) {
   // Texture surface palette
 #if 1
   if (!e) {
-    ColorPalette **cpPP = xRenderP->cpPF;
-    ColorPalette **cpEndPP = cpPP + *_frayGetFirstEmptyIdxP(xRenderP->cpPF);
+    ColorPalette **cpPP = xP->cpPF;
+    ColorPalette **cpEndPP = cpPP + *_frayGetFirstEmptyIdxP(xP->cpPF);
     for (; cpPP < cpEndPP; ++cpPP) {
       appendAtlasPalette(atlasSurfaceP, *cpPP);
     }
@@ -543,7 +509,7 @@ XPostprocessCompsDef_(Render) {
 #endif
   // Texture
   if (!e) {
-    e = textureNew(&xRenderP->atlasTextureP, xRenderP->rendererP, atlasSurfaceP);
+    e = textureNew(&xP->atlasTextureP, xP->guiP->rendererP, atlasSurfaceP);
   }
   /* "Pixel data is not managed automatically with SDL_CreateRGBSurfaceWithFormatFrom().
       You must free the surface before you free the pixel data." */
@@ -552,18 +518,18 @@ XPostprocessCompsDef_(Render) {
 
   // Update source rectangles. That way animation system knows where its frames are in texture atlas.
   if (!e) {
-    e = _updateSrcRects(xRenderP, atlasP);
+    e = _updateSrcRects(xP, atlasP);
   }
   // TODO use subcomp map below
   // Dest rect pointers
   if (!e) {
-    Entity *entityP = xRenderP->entityF;
-    Entity *entityEndP = entityP + arrayGetNElems(xRenderP->entityF);
+    Entity *entityP = xP->entityF;
+    Entity *entityEndP = entityP + arrayGetNElems(xP->entityF);
     XRenderComp *cP = NULL;
     for (; !e && entityP < entityEndP; ++entityP) {
       cP = (XRenderComp*) xGetCompPByEntity(sP, *entityP);
       if (cP) {
-        cP->dstRectP = (Rect_*) mapGet(xRenderP->dstRectMP, *entityP);
+        cP->dstRectP = (Rect_*) mapGet(xP->dstRectMP, *entityP);
         if (!cP->dstRectP) {
           e = E_BAD_KEY;
         }
@@ -577,58 +543,53 @@ XPostprocessCompsDef_(Render) {
 
   // TODO remove this when you're ready to try out XGo-based initialization.
   if (!e) {
-    frayActivateAll(sP->cF);
-    printf("[render] activated all\n");
+    _frayActivateAll(sP->cF);
   }
 
   // Clean up.
   atlasDel(&atlasP);
-  frayDel((void**) &xRenderP->cmPF);
-  frayDel((void**) &xRenderP->cpPF);
-  frayDel((void**) &xRenderP->entityF);
+  frayDel((void**) &xP->cmPF);
+  frayDel((void**) &xP->cpPF);
+  frayDel((void**) &xP->entityF);
 
   return e;
 }
 
 // Only get the render and window. Components' src & dst rects come from SCENE_START stimulus to XGo.
 XGetShareFuncDef_(Render) {
-  XRender *xRenderP = (XRender*) sP;
+  XRender *xP = (XRender*) sP;
   // Get renderer
-  Error e = mapGetNestedMapPElem(shareMMP, RENDERER_GENE_TYPE, RENDERER_KEY_, NONMAP_POINTER, (void**) &xRenderP->rendererP);
+  Error e = mapGetNestedMapPElem(shareMMP, GUI_GENE_TYPE, GUI_KEY_, NONMAP_POINTER, (void**) &xP->guiP);
   // Get window
   if (!e) {
-    e = mapGetNestedMapPElem(shareMMP, WINDOW_GENE_TYPE, WINDOW_KEY_, NONMAP_POINTER, (void**) &xRenderP->windowP);
-  }
-  // Get dest rect map (implied by render component)
-  if (!e) {
-    e = mapGetNestedMapP(shareMMP, DST_RECT, &xRenderP->dstRectMP);  
+    e = mapGetNestedMapP(shareMMP, DST_RECT, &xP->dstRectMP);  
   }
   // Get source rect and rect offset maps. Give both a chance to run if we enter this block.
   if (!e) {
-    e = mapGetNestedMapP(shareMMP, SRC_RECT, &xRenderP->srcRectMP);  
+    e = mapGetNestedMapP(shareMMP, SRC_RECT, &xP->srcRectMP);  
   }
     // If there's no animation system, there won't be a source rect shared map in master.
   if (!e || e == E_BAD_KEY) {
-    e = mapGetNestedMapP(shareMMP, RECT_OFFSET, &xRenderP->offsetRectMP);  
+    e = mapGetNestedMapP(shareMMP, RECT_OFFSET, &xP->offsetRectMP);  
   }
   // We need to tolerate an animation system not existing.
   // SRC_RECT and RECT_OFFSET share maps don't exist without an animation system.
   // Therefore, if they both don't exist, cool, just make your own src rect map. 
   // But if only one doesn't, bomb out.
-  if (e && !xRenderP->srcRectMP && !xRenderP->offsetRectMP && 
-            xRenderP->rendererP && xRenderP->windowP) {
-    xRenderP->system.flags |= RENDER_SYS_OWNS_SRC_AND_OFFSET;
+  if (e && !xP->srcRectMP && !xP->offsetRectMP && 
+            xP->guiP && xP->guiP->rendererP && xP->guiP->windowP) {
+    xP->system.flags |= RENDER_SYS_OWNS_SRC_AND_OFFSET;
     // Make new maps
-    e = mapNew(&xRenderP->srcRectMP, RAW_DATA, sizeof(Rect_), xGetNComps(sP));
+    e = mapNew(&xP->srcRectMP, RAW_DATA, sizeof(Rect_), xGetNComps(sP));
     if (!e) {
-      e = mapNew(&xRenderP->offsetRectMP, RAW_DATA, sizeof(RectOffset), xGetNComps(sP));
+      e = mapNew(&xP->offsetRectMP, RAW_DATA, sizeof(RectOffset), xGetNComps(sP));
     }
     // Copy dst rect map's keys to them
     if (!e) {
-      e = mapCopyKeys(xRenderP->srcRectMP, xRenderP->dstRectMP);
+      e = mapCopyKeys(xP->srcRectMP, xP->dstRectMP);
     }
     if (!e) {
-      e = mapCopyKeys(xRenderP->offsetRectMP, xRenderP->dstRectMP);
+      e = mapCopyKeys(xP->offsetRectMP, xP->dstRectMP);
     }
   }
   return e;
@@ -641,19 +602,26 @@ static U32 i = 0;
 Error xRenderRun(System *sP) {
 	Error e = SUCCESS;
 
-  XRender *xRenderP = (XRender*) sP;
+  XRender *xP = (XRender*) sP;
 
 	XRenderComp *cP = (XRenderComp*) sP->cF;
 	XRenderComp *cEndP = cP + *_frayGetFirstInactiveIdxP(sP->cF);
 
-	clearScreen(xRenderP->rendererP);
+	clearScreen(xP->guiP->rendererP);
+  Renderer_ *rendererP = xP->guiP->rendererP;
 	for (; !e && cP < cEndP; cP++) {
-		e = copy_(xRenderP->rendererP, xRenderP->atlasTextureP, cP->srcRectP, cP->dstRectP);
-    if (i > 0 && (i % 100) == 0) {
-      e = mailboxWrite(sP->mailboxF, ANIMATION, xGetEntityByVoidComponentPtr(sP, cP), ANIMATE, WALK_UP);
-      if (!e) {
-        printf("[render] system %d is sends message to system %d to make entity %d animate!\n", sP->id, ANIMATION, xGetEntityByVoidComponentPtr(sP, cP));
-      }
+		e = copy_(rendererP, xP->atlasTextureP, cP->srcRectP, cP->dstRectP);
+    if (i > 0 && (i % 200) == 0) {
+      e = mailboxWrite(sP->mailboxF, ANIMATION, 1, ANIMATE, WALK_UP);
+    }
+    else if (i > 0 && (i % 100) == 0) {
+      e = mailboxWrite(sP->mailboxF, ANIMATION, 1, ANIMATE, WALK_DOWN);
+    }
+    if (i > 0 && (i % 140) == 0) {
+      e = mailboxWrite(sP->mailboxF, ANIMATION, 2, ANIMATE, WALK_DOWN);
+    }
+    else if (i > 0 && (i % 70) == 0) {
+      e = mailboxWrite(sP->mailboxF, ANIMATION, 2, ANIMATE, WALK_RIGHT);
     }
 
   if (++i == 1000) {
@@ -661,7 +629,7 @@ Error xRenderRun(System *sP) {
   }
   }
 	if (!e) {
-		present_(xRenderP->rendererP);
+		present_(xP->guiP->rendererP);
   }
 
 

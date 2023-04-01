@@ -11,6 +11,7 @@ CP_INC_DIR = ${COLOR_PALETTE_DIR}/include
 CP_OBJ_DIR = ${COLOR_PALETTE_DIR}/obj
 
 JB_DIR = ${HOME}/hack/jollybean/
+KR_DIR = ${HOME}/jb/src/Keyring
 
 #~/jb/build/Seed/Genome/Gene/Body/Graybody/Colormap/src/I
 ./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./main.o ${JB_DIR}build/xRender.o ${JB_DIR}build/x.o ${JB_DIR}build/data.o ${JB_DIR}build/interface.o ${JB_DIR}utils/body/build/previewImg.o
@@ -18,15 +19,15 @@ JB_DIR = ${HOME}/hack/jollybean/
 	touch $@
 
 ./main.o: ./main.c
-	gcc -g -c main.c -I${JB_DIR}src/include/ -I${JB_DIR}utils/body/src/include -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags) -o $@
+	gcc -g -c main.c -I${KR_DIR} -I${JB_DIR}src/include/ -I${JB_DIR}utils/body/src/include -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags) -o $@
 	touch $@
 
 ${CM_OBJ_DIR}/%Colormap.o: ${CM_SRC_DIR}/%Colormap.c
-	gcc -g -I${JB_DIR}src/include -c ${CM_SRC_DIR}/$*Colormap.c $(shell sdl2-config --cflags) -o $@
+	gcc -g -I${KR_DIR} -I${JB_DIR}src/include -c ${CM_SRC_DIR}/$*Colormap.c $(shell sdl2-config --cflags) -o $@
 	touch $@
 
 ${CP_OBJ_DIR}/%ColorPalette.o: ${CP_SRC_DIR}/%ColorPalette.c
-	gcc -g -I${JB_DIR}src/include -c $< $(shell sdl2-config --cflags) -o $@
+	gcc -g -I${KR_DIR} -I${JB_DIR}src/include -c $< $(shell sdl2-config --cflags) -o $@
 	touch $@
 
 ${CP_SRC_DIR}/%ColorPalette.c:

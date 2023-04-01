@@ -202,6 +202,8 @@ int main(int argc, char **argv) {
   // Clean up
   // ====================================================
   arrayDel((void**) &sdPA);
+  arrayDel((void**) &texturePA);
+  arrayDel((void**) &surfPA);
   for (U32 i = 0; i < arrayGetNElems(genePA); ++i) {
     jbFree((void**) &genePA[i]);
   }

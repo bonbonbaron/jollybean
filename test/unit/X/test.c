@@ -5,8 +5,8 @@
 #include "x.h"
 #include "xA.h"
 
-static void _printElem(U32 idx, Entity entity, XAComp *elem) {
-  printf("Entity %d's component cF[%d] = {%3d, %3d, %3d}\n", entity, idx, elem->a, elem->b, elem->c);
+static void _printFrayElem(U32 idx, Entity entity, XAComp *elem) {
+  printf("\tEntity %d's component cF[%d] = {%3d, %3d, %3d}\n", entity, idx, elem->a, elem->b, elem->c);
 }
 
 static Error reportAndRun(char *prelude, U32 nComps, System *sP) {
@@ -15,21 +15,33 @@ static Error reportAndRun(char *prelude, U32 nComps, System *sP) {
   U32 i = 0;
   Entity entity;
   if (!e) {
-    printf("SYSTEM COMPONENT FRAY LAYOUT:\n");
-    printf("----- active section -----\n");
+    printf("\tSYSTEM COMPONENT FRAY LAYOUT:\n");
+    printf("\t----- active section -----\n");
     for (; i < _frayGetFirstPausedIdx(sP->cF); ++i) {
       entity = xGetEntityByCompIdx(sP, i);
-      _printElem(i, entity, &((XAComp*) sP->cF)[i]);
+      _printFrayElem(i, entity, &((XAComp*) sP->cF)[i]);
     }
-    printf("----- paused section -----\n");
+    printf("\t----- paused section -----\n");
     for (; i < *_frayGetFirstInactiveIdxP(sP->cF); ++i) {
       entity = xGetEntityByCompIdx(sP, i);
-      _printElem(i, entity, &((XAComp*) sP->cF)[i]);
+      _printFrayElem(i, entity, &((XAComp*) sP->cF)[i]);
     }
-    printf("----- inactive section -----\n");
+    printf("\t----- inactive section -----\n");
     for (; i < *_frayGetFirstEmptyIdxP(sP->cF); ++i) {
       entity = xGetEntityByCompIdx(sP, i);
-      _printElem(i, entity, &((XAComp*) sP->cF)[i]);
+      _printFrayElem(i, entity, &((XAComp*) sP->cF)[i]);
+    }
+    printf("\n\n");
+    printf("\tSYSTEM INDEX-TO-ENTITY ARRAY LAYOUT:\n");
+    for (i = 0; i < arrayGetNElems(sP->cIdx2eA); ++i) {
+      entity = sP->cIdx2eA[i];
+      printf("\tsP->cIdx2eA[%d] = %d\n", i, sP->cIdx2eA[i]);
+    }
+    printf("\n\n");
+    printf("\tSYSTEM ENTITY-TO_INDEX ARRAY LAYOUT:\n");
+    for (Entity entity = 1; entity <= nComps; ++entity) {
+      Key *idx = (Key*) mapGet(sP->e2cIdxMP, entity);
+      printf("\tsP->e2cIdxMP[Entity = %d] = %d\n", entity, *idx);
     }
     printf("\n\n");
   }
@@ -53,13 +65,17 @@ int main(int argc, char **argv) {
 
   // Activate two arbitrary components.
   if (!e) {
-    xActivateComponentByEntity(sAP, 2);
-    xActivateComponentByEntity(sAP, 4);
+    e = xActivateComponentByEntity(sAP, 2);
   }
-
-  // Run system
+  if (!e) {
+    e = xActivateComponentByEntity(sAP, 4);
+  }
   if (!e) {
     e = reportAndRun("After activating 2 and 4", N_COMPS, sAP);
+  }
+  if (!e) {
+    assert(xGetEntityByCompIdx(sAP, 0) == 2);
+    assert(xGetEntityByCompIdx(sAP, 1) == 4);
   }
 
   // Pause entity 4.
@@ -68,6 +84,10 @@ int main(int argc, char **argv) {
   }
   if (!e) {
     e = reportAndRun("After pausing entity 4", N_COMPS, sAP);
+  }
+  if (!e) {
+    assert(xGetEntityByCompIdx(sAP, 0) == 2);
+    assert(xGetEntityByCompIdx(sAP, 1) == 4);
   }
 
   // Activate 5.

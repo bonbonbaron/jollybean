@@ -43,34 +43,65 @@ int main(int argc, char **argv) {
   }
   // Check on it.
   _reportFray("initialized", aF);
-  // Test an activation.
+  // Activate.
   frayActivate(aF, 2);
   frayActivate(aF, 5);
   frayActivate(aF, 7);
   _reportFray("After activating 2, 5, and 7", aF);
-  // Test a pause.
+  assert(aF[0] == 2);
+  assert(aF[1] == 5);
+  assert(aF[2] == 7);
+  // Pause.
   frayPause(aF, 1);
   _reportFray("After pausing 5", aF);
-  // Test a deactivation.
+  assert(aF[2] == 5);
+  // Activate across a pause.
+  frayActivate(aF, 9);
+  _reportFray("After activating 9 across a pause", aF);
+  assert(aF[2] == 9);
+  // Deactivate across a pause.
+  frayDeactivate(aF, 2);
   frayDeactivate(aF, 0);
-  _reportFray("After deactivating 2", aF);
+  _reportFray("After deactivating 2 and 9 across a pause", aF);
+  assert(aF[2] == 2);
+  assert(aF[3] == 9);
   assert(_frayElemIsActive(aF, 0));
   assert(_frayElemIsPaused(aF, 1));
   assert(!_frayElemIsActive(aF, 2));
   assert(aF[0] == 7);
   assert(aF[1] == 5);
   assert(aF[2] == 2);
-  // Test an unpause.
+  // Unpause.
   frayUnpause(aF, 1);
   assert(!_frayElemIsPaused(aF, 1));
   _reportFray("After unpausing 5", aF);
-  // Test an activate-all.
-  frayActivateAll(aF);
+  // Pause multiple.
+  frayPause(aF, 5);
+  frayPause(aF, 6);
+  frayPause(aF, 7);
+  _reportFray("Pausing 1, 6, and 0", aF);
+  assert(aF[2] == 1);
+  assert(aF[3] == 6);
+  assert(aF[4] == 0);
+  // Unpause all.
+  _frayUnpauseAll(aF);
+  _reportFray("Unpausing all", aF);
+  assert(_frayGetFirstPausedIdx(aF) == _frayGetFirstInactiveIdx(aF));
+  // Pause all before activate-all.
+  _frayPauseAll(aF);
+  _reportFray("Pausing all", aF);
+  assert(_frayGetFirstPausedIdx(aF) == 0);
+  // Activate all.
+  _frayActivateAll(aF);
+  _reportFray("After activating all", aF);
   assert(_frayElemIsActive(aF, 0));
   assert(_frayElemIsActive(aF, N_ELEMS - 1));
-  _reportFray("After activating all", aF);
-  // Test a deactivate-all.
-  frayDeactivateAll(aF);
+  // Pause all again before deactivate-all.
+  _frayPauseAll(aF);
+  _reportFray("Pausing all", aF);
+  assert(_frayGetFirstPausedIdx(aF) == 0);
+  // Deactivate all after pausing multiple.
+  _frayDeactivateAll(aF);
   assert(!_frayElemIsActive(aF, 0));
   assert(!_frayElemIsActive(aF, N_ELEMS - 1));
   _reportFray("After deactivating all", aF);

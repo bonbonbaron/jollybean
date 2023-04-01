@@ -63,7 +63,8 @@ typedef enum Error {
   E_MAILBOX_BAD_ATTN,
   E_BB_GENES_DONT_DO_INITIALIZATION,
   E_NULL_GENE_DATA,
-  E_INVALID_GENE_CLASS
+  E_INVALID_GENE_CLASS,
+  E_QUIT
 } Error;
 
 // Basic utils 
@@ -219,6 +220,7 @@ U32   frayPause(const void *frayP, U32 idx);
 U32   frayUnpause(const void *frayP, U32 idx);
 U8    frayElemIsActive(const void *frayP, U32 idx);
 void  frayActivateAll(const void *frayP);
+void  frayUnpauseAll(const void *frayP);
 void  frayDeactivateAll(const void *frayP);
 
 // Pointers beat values. We usually inc/decrement it after using it. Avoids double-queries.
@@ -263,6 +265,28 @@ inline U8 _frayHasRoom(const void *frayP) {
   return (*_frayGetFirstEmptyIdxP(frayP) < frayGetNElems_(frayP));
 }
 
+inline void _frayPauseAll(const void *frayP) {
+  *_frayGetNPausedP(frayP) = _frayGetFirstInactiveIdx(frayP);
+}
+
+inline void _frayUnpauseAll(const void *frayP) {
+  *_frayGetNPausedP(frayP) = 0;
+}
+
+inline void _frayActivateAll(const void *frayP) {
+  U32 *firstInactiveIdxP = _frayGetFirstInactiveIdxP(frayP);
+  if (*_frayGetNPausedP(frayP)) {
+    _frayUnpauseAll(frayP);
+  }
+  *firstInactiveIdxP = *_frayGetFirstEmptyIdxP(frayP);
+}
+
+inline void _frayDeactivateAll(const void *frayP) {
+  if (*_frayGetNPausedP(frayP)) {
+    _frayUnpauseAll(frayP);
+  }
+  *_frayGetFirstInactiveIdxP(frayP) = 0;
+}
 
 // Mailboxes
 typedef struct {

@@ -1,6 +1,11 @@
 BODY_DIR = ${HOME}/jb/build/Seed/Genome/Gene/Body
 
-JB = ${HOME}/hack/jollybean
+JB  = ${HOME}/hack/jollybean
+SRC = ${JB}/src
+INC = ${SRC}/include
+BLD = ${JB}/build
+UTL = ${JB}/utils
+PRI = ${UTL}/body/build
 
 COLORMAP_DIR = ${BODY_DIR}/Graybody/Colormap
 CM_SRC_DIR = ${COLORMAP_DIR}/src
@@ -13,7 +18,6 @@ CP_INC_DIR = ${COLOR_PALETTE_DIR}/include
 CP_OBJ_DIR = ${COLOR_PALETTE_DIR}/obj
 
 KR_DIR = ${HOME}/jb/src/Keyring
-
 ./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./render.o ${JB}/build/xRender.o ${JB}/build/x.o ${JB}/build/data.o ${JB}/build/interface.o ${JB}/utils/body/build/previewImg.o 
 	gcc ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./render.o ${JB}/utils/body/build/previewImg.o ${JB}/build/interface.o $(shell sdl2-config --libs) ${JB}/build/xRender.o ${JB}/build/x.o ${JB}/build/data.o -lpthread -o $@
 	touch $@
@@ -30,10 +34,6 @@ ${CP_OBJ_DIR}/%ColorPalette.o: ${CP_SRC_DIR}/%ColorPalette.c
 	gcc -g -I${KR_DIR} -I${JB}/src/include -c $< $(shell sdl2-config --cflags) -o $@
 	touch $@
 
-${JB}/build/%.o: ${JB}/src/%.c
-	make -C ${JB}/
-	touch $@
-
 ${CP_SRC_DIR}/%ColorPalette.c:
 	${JB}/utils/body/bin/body $*
 	touch $@
@@ -41,6 +41,16 @@ ${CP_SRC_DIR}/%ColorPalette.c:
 ${CM_SRC_DIR}/%Colormap.c:
 	${JB}/utils/body/bin/body $*
 	touch $@
+
+${PRI}/previewImg.o: ${UTL}/body/src/previewImg.c ${BLD}/data.o ${BLD}/interface.o ${BLD}/x.o ${BLD}/xRender.o 
+	make -C ${UTL}/body
+	make -C ${JB}
+	touch $@
+
+${BLD}/%.o: ${SRC}/%.c ${INC}/%.h
+	make -C ${JB}
+	touch $@
+
 
 .PHONY: clean
 clean:

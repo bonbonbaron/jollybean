@@ -155,8 +155,7 @@ typedef struct {
 	System system;
 	Map *sharedMPMP;         // map of maps of shared "components"
 	Biome *biomeP;
-	Window_ *windowP;
-	Renderer_ *rendererP;
+  Gui   *guiP;
 } XMaster;
 
 extern XMaster xMaster;

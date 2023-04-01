@@ -1,48 +1,73 @@
 #include "interface.h"
+#include "SDL_events.h"
 
 /**********************
  * Rendering
  *********************/
 
-Error guiNew(Window_ **windowPP, Renderer_ **rendererPP) {
+int _eventFilter(void *userDataP, SDL_Event *eventP) {
+  switch (eventP->type) {
+    case SDL_MOUSEWHEEL:
+    case SDL_MOUSEMOTION:
+    case SDL_MOUSEBUTTONUP:
+    case SDL_MOUSEBUTTONDOWN:
+    case 0x7f00:  // IDK what this is
+    case SDL_WINDOWEVENT_MOVED:
+      return 0;  // Return 1 to ignore the event. (Thanks ChatGPT!)
+    default:
+      return 1;
+  }
+}
+
+Error guiNew(Gui **guiPP) {
   //TODO add an #if that only uses this code when interfacing SDL
-	if (!windowPP || !rendererPP) {
+	if (!guiPP) {
 		return E_BAD_ARGS;
   }
 	// Init SDL
 	if (SDL_Init(SDL_INIT_VIDEO) != SUCCESS) {
-    //printf("[guiNew] SDL error: %s\n", SDL_GetError());
 		return EXIT_FAILURE;
   }
+  Error e = jbAlloc((void**) guiPP, sizeof(Gui), 1);
+  if (!e) {
 	// Init window
-	//*windowPP = SDL_CreateWindow("Hello world!", 0, 0, 0, 0, SDL_WINDOW_FULLSCREEN);
-	*windowPP = SDL_CreateWindow("Hello world!", 100, 100, 400, 300, 0);
-	if (!*windowPP) {
+	  (*guiPP)->windowP = SDL_CreateWindow("Hello world!", 100, 100, 400, 300, 0);
+  }
+	if (!(*guiPP)->windowP) {
+    guiDel(guiPP);
 		return EXIT_FAILURE;
   }
 	// Init renderer
-	*rendererPP = SDL_CreateRenderer(*windowPP, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-	if (!*rendererPP) {
-    //printf("%s\n", SDL_GetError());
-		SDL_DestroyWindow(*windowPP);
-		SDL_Quit();
+  if (!e) {
+    (*guiPP)->rendererP = SDL_CreateRenderer(
+        (*guiPP)->windowP,
+        -1, 
+        SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+  }
+	if (!(*guiPP)->rendererP) {
+    guiDel(guiPP);
 		return EXIT_FAILURE;
 	}
-	return SUCCESS;
+  // Events
+  (*guiPP)->buttonsPressed = 0;
+  SDL_SetEventFilter(_eventFilter, NULL);
+	return e;
 }
 
-void guiDel(Window_ **windowPP, Renderer_ **rendererPP) {
-  if (rendererPP && *rendererPP) {
-    SDL_DestroyRenderer(*rendererPP);
-    *rendererPP = NULL;
-  }
-  if (windowPP && *windowPP) {
-    SDL_DestroyWindow(*windowPP);
-    *windowPP = NULL;
+void guiDel(Gui **guiPP) {
+  if (guiPP && *guiPP) {
+    if ((*guiPP)->rendererP) {
+      SDL_DestroyRenderer((*guiPP)->rendererP);
+      (*guiPP)->rendererP = NULL;
+    }
+    if ((*guiPP)->windowP) {
+      SDL_DestroyWindow((*guiPP)->windowP);
+      (*guiPP)->windowP = NULL;
+    }
+    jbFree((void**) guiPP);
   }
   SDL_Quit();
 }
-
 
 // Makes palette without setting its colors.
 Error surfaceNew(Surface_ **surfacePP, void *pixelDataA, U32 w, U32 h) {
@@ -88,8 +113,10 @@ Error textureNew(Texture_ **texturePP, Renderer_ *rendererP, Surface_ *surfaceP)
 }
 
 void textureDel(Texture_ **texturePP) {
-	SDL_DestroyTexture(*texturePP);
-	*texturePP = NULL;
+  if (texturePP && *texturePP) {
+    SDL_DestroyTexture(*texturePP);
+    *texturePP = NULL;
+  }
 }
 
 Error textureSetAlpha(Texture_ *textureP) {
@@ -167,5 +194,95 @@ Error multiThread( CriticalFunc funcP, void *_array) {
   arrayDel((void**) &thArgA);
 
   return e;
+}
+
+Error guiProcessEvents(Gui *guiP) {
+	Event_ event;
+	while (pollEvent_(&event)) {
+		if (event.type == EVENT_QUIT_) {
+      return E_QUIT;
+		}
+		else if (event.type == EVENT_KEYUP_ && event.key.repeat == 0) {
+			switch(event.key.keysym.sym) {
+      case KEY_a_:      guiP->buttonsPressed &= ~BTN_PRESSED_a; break;
+      case KEY_b_:      guiP->buttonsPressed &= ~BTN_PRESSED_b; break;
+      case KEY_c_:      guiP->buttonsPressed &= ~BTN_PRESSED_c; break;
+      case KEY_d_:      guiP->buttonsPressed &= ~BTN_PRESSED_d; break;
+      case KEY_e_:      guiP->buttonsPressed &= ~BTN_PRESSED_e; break;
+      case KEY_f_:      guiP->buttonsPressed &= ~BTN_PRESSED_f; break;
+      case KEY_g_:      guiP->buttonsPressed &= ~BTN_PRESSED_g; break;
+      case KEY_h_:      guiP->buttonsPressed &= ~BTN_PRESSED_h; break;
+      case KEY_i_:      guiP->buttonsPressed &= ~BTN_PRESSED_i; break;
+      case KEY_j_:      guiP->buttonsPressed &= ~BTN_PRESSED_j; break;
+      case KEY_k_:      guiP->buttonsPressed &= ~BTN_PRESSED_k; break;
+      case KEY_l_:      guiP->buttonsPressed &= ~BTN_PRESSED_l; break;
+      case KEY_m_:      guiP->buttonsPressed &= ~BTN_PRESSED_m; break;
+      case KEY_n_:      guiP->buttonsPressed &= ~BTN_PRESSED_n; break;
+      case KEY_o_:      guiP->buttonsPressed &= ~BTN_PRESSED_o; break;
+      case KEY_p_:      guiP->buttonsPressed &= ~BTN_PRESSED_p; break;
+      case KEY_q_:      guiP->buttonsPressed &= ~BTN_PRESSED_q; break;
+      case KEY_r_:      guiP->buttonsPressed &= ~BTN_PRESSED_r; break;
+      case KEY_s_:      guiP->buttonsPressed &= ~BTN_PRESSED_s; break;
+      case KEY_t_:      guiP->buttonsPressed &= ~BTN_PRESSED_t; break;
+      case KEY_u_:      guiP->buttonsPressed &= ~BTN_PRESSED_u; break;
+      case KEY_v_:      guiP->buttonsPressed &= ~BTN_PRESSED_v; break;
+      case KEY_w_:      guiP->buttonsPressed &= ~BTN_PRESSED_w; break;
+      case KEY_x_:      guiP->buttonsPressed &= ~BTN_PRESSED_x; break;
+      case KEY_y_:      guiP->buttonsPressed &= ~BTN_PRESSED_y; break;
+      case KEY_z_:      guiP->buttonsPressed &= ~BTN_PRESSED_z; break;
+      case KEY_SPACE_:  guiP->buttonsPressed &= ~BTN_PRESSED_SPACE; break;
+      case KEY_LSHIFT_: guiP->buttonsPressed &= ~BTN_PRESSED_LSHIFT; break;
+      case KEY_ESCAPE_: guiP->buttonsPressed &= ~BTN_PRESSED_ESCAPE; break;
+      default:
+        break;
+			}
+		}
+		else if (event.type == EVENT_KEYDOWN_ && event.key.repeat == 0) {
+			switch(event.key.keysym.sym) {
+      case KEY_a_:      guiP->buttonsPressed |=  BTN_PRESSED_a; break;
+      case KEY_b_:      guiP->buttonsPressed |=  BTN_PRESSED_b; break;
+      case KEY_c_:      guiP->buttonsPressed |=  BTN_PRESSED_c; break;
+      case KEY_d_:      guiP->buttonsPressed |=  BTN_PRESSED_d; break;
+      case KEY_e_:      guiP->buttonsPressed |=  BTN_PRESSED_e; break;
+      case KEY_f_:      guiP->buttonsPressed |=  BTN_PRESSED_f; break;
+      case KEY_g_:      guiP->buttonsPressed |=  BTN_PRESSED_g; break;
+      case KEY_h_:      guiP->buttonsPressed |=  BTN_PRESSED_h; break;
+      case KEY_i_:      guiP->buttonsPressed |=  BTN_PRESSED_i; break;
+      case KEY_j_:      guiP->buttonsPressed |=  BTN_PRESSED_j; break;
+      case KEY_k_:      guiP->buttonsPressed |=  BTN_PRESSED_k; break;
+      case KEY_l_:      guiP->buttonsPressed |=  BTN_PRESSED_l; break;
+      case KEY_m_:      guiP->buttonsPressed |=  BTN_PRESSED_m; break;
+      case KEY_n_:      guiP->buttonsPressed |=  BTN_PRESSED_n; break;
+      case KEY_o_:      guiP->buttonsPressed |=  BTN_PRESSED_o; break;
+      case KEY_p_:      guiP->buttonsPressed |=  BTN_PRESSED_p; break;
+      case KEY_q_:      guiP->buttonsPressed |=  BTN_PRESSED_q; break;
+      case KEY_r_:      guiP->buttonsPressed |=  BTN_PRESSED_r; break;
+      case KEY_s_:      guiP->buttonsPressed |=  BTN_PRESSED_s; break;
+      case KEY_t_:      guiP->buttonsPressed |=  BTN_PRESSED_t; break;
+      case KEY_u_:      guiP->buttonsPressed |=  BTN_PRESSED_u; break;
+      case KEY_v_:      guiP->buttonsPressed |=  BTN_PRESSED_v; break;
+      case KEY_w_:      guiP->buttonsPressed |=  BTN_PRESSED_w; break;
+      case KEY_x_:      guiP->buttonsPressed |=  BTN_PRESSED_x; break;
+      case KEY_y_:      guiP->buttonsPressed |=  BTN_PRESSED_y; break;
+      case KEY_z_:      guiP->buttonsPressed |=  BTN_PRESSED_z; break;
+      case KEY_SPACE_:  guiP->buttonsPressed |=  BTN_PRESSED_SPACE; break;
+      case KEY_LSHIFT_: guiP->buttonsPressed |=  BTN_PRESSED_LSHIFT; break;
+      case KEY_ESCAPE_: guiP->buttonsPressed |=  BTN_PRESSED_ESCAPE; break;
+      }
+		}
+    /* TODO add logic for the following window events:
+     *
+     */
+    /* TODO add logic for the following display events:
+            MOVE
+            SHOWN
+            HIDDEN
+             
+     */
+	}
+  if (guiP->buttonsPressed & BTN_PRESSED_ESCAPE) {
+    return E_QUIT;
+  }
+  return SUCCESS;
 }
 #endif

@@ -1,6 +1,6 @@
 #ifndef INTERFACE_H
 #define INTERFACE_H
-#include "data.h"
+#include "x.h"
 
 #define MULTITHREADED 1
 #define USE_PTHREAD_ 1
@@ -71,6 +71,38 @@
 #define EVENT_QUIT_ SDL_QUIT
 #endif  // #ifdef USE_SDL_
 
+typedef enum {
+  BTN_PRESSED_a      = 0x00000001,
+  BTN_PRESSED_b      = 0x00000002,
+  BTN_PRESSED_c      = 0x00000004,
+  BTN_PRESSED_d      = 0x00000008,
+  BTN_PRESSED_e      = 0x00000010,
+  BTN_PRESSED_f      = 0x00000020,
+  BTN_PRESSED_g      = 0x00000040,
+  BTN_PRESSED_h      = 0x00000080,
+  BTN_PRESSED_i      = 0x00000100,
+  BTN_PRESSED_j      = 0x00000200,
+  BTN_PRESSED_k      = 0x00000400,
+  BTN_PRESSED_l      = 0x00000800,
+  BTN_PRESSED_m      = 0x00001000,
+  BTN_PRESSED_n      = 0x00002000,
+  BTN_PRESSED_o      = 0x00004000,
+  BTN_PRESSED_p      = 0x00008000,
+  BTN_PRESSED_q      = 0x00010000,
+  BTN_PRESSED_r      = 0x00020000,
+  BTN_PRESSED_s      = 0x00040000,
+  BTN_PRESSED_t      = 0x00080000,
+  BTN_PRESSED_u      = 0x00100000,
+  BTN_PRESSED_v      = 0x00200000,
+  BTN_PRESSED_w      = 0x00400000,
+  BTN_PRESSED_x      = 0x00800000,
+  BTN_PRESSED_y      = 0x01000000,
+  BTN_PRESSED_z      = 0x02000000,
+  BTN_PRESSED_SPACE  = 0x04000000,
+  BTN_PRESSED_LSHIFT = 0x08000000,
+  BTN_PRESSED_ESCAPE = 0x10000000,
+} ButtonPressed;
+
 typedef U8 ColormapIdx;
 #define N_COLORS_SUPPORTED_MAX_ (16)
 typedef struct {
@@ -88,16 +120,33 @@ typedef struct {
   Color_ *colorA;
 } ColorPalette;
 
+// GUI
+typedef struct {
+  Renderer_ *rendererP;
+  Window_   *windowP;
+  U32        buttonsPressed;
+  Rect_     *cameraRectP;
+  Entity     cameraEntity;
+} Gui;
+
+Error guiNew(Gui **guiPP);
+void guiDel(Gui **guiPP);
+Error guiProcessEvents(Gui *guiP);
+
+// Surface
 Error surfaceNew(Surface_ **surfacePP, void *pixelDataA, U32 w, U32 h);
 void surfaceDel(Surface_ **surfacePP);
+
+// Atlas Palette
 void appendAtlasPalette(Surface_ *atlasSurfaceP, ColorPalette *srcPaletteP);
-Error guiNew(Window_ **windowPP, Renderer_ **rendererPP);
-void guiDel(Window_ **windowPP, Renderer_ **rendererPP);
+
+// Texture
 Error textureNew(Texture_ **texturePP, Renderer_ *rendererP, Surface_ *surfaceP);
 void textureDel(Texture_ **texturePP);
 Error textureSetAlpha(Texture_ *textureP);
-void clearScreen(Renderer_ *rendererP);
 
+// Screen
+void clearScreen(Renderer_ *rendererP);
 
 // ==============
 // Multithreading

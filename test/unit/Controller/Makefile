@@ -3,12 +3,12 @@ SRC = ${JB}/src
 INC = ${SRC}/include
 BLD = ${JB}/build
 
-./o: ./test.o ${BLD}/data.o 
-	${CC} ./test.o ${BLD}/data.o -o $@ 
+./o: ./test.o ${BLD}/interface.o ${BLD}/data.o ${BLD}/x.o
+	${CC}  ./test.o $(shell sdl2-config --libs) ${BLD}/interface.o -lpthread ${BLD}/x.o ${BLD}/data.o -o $@ 
 	touch $@
 
 ./%.o: %.c 
-	${CC} -g -I${INC} -c $*.c -o $@
+	${CC} -g -I${INC} -c $*.c $(shell sdl2-config --cflags) -o $@
 	touch $@
 
 ${BLD}/%.o: ${SRC}/%.c ${INC}/%.h

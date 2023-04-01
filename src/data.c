@@ -1163,23 +1163,6 @@ U32 frayUnpause(const void *frayP, U32 idx) {
   return idx;
 }
 
-void frayPauseAll(const void *frayP) {
-  *_frayGetNPausedP(frayP) = _frayGetFirstInactiveIdx(frayP);
-}
-
-void frayUnpauseAll(const void *frayP) {
-  *_frayGetNPausedP(frayP) = 0;
-}
-
-void frayActivateAll(const void *frayP) {
-  U32 *firstInactiveIdxP = _frayGetFirstInactiveIdxP(frayP);
-  *firstInactiveIdxP = *_frayGetFirstEmptyIdxP(frayP);
-}
-
-void frayDeactivateAll(const void *frayP) {
-  *_frayGetFirstInactiveIdxP(frayP) = 0;
-}
-
 
 // Returns new index of activated element 
 U32 frayActivate(const void *frayP, U32 idx) {

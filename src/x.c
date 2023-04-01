@@ -29,6 +29,9 @@ static Error _xSwap(System *sP, Key *origIdxP, Key newIdx) {
   if (!sP || !origIdxP) {
     return E_BAD_ARGS;
   }
+  if (*origIdxP == newIdx) {
+    return SUCCESS;  // _swap() zeros out identical operands
+  }
   Entity entity = _getEntityByCompIdx(sP, newIdx);
   if (!entity) {
     return E_ENTITY_NOT_IN_SYSTEM;
@@ -102,7 +105,8 @@ Error xPauseComponentByEntity(System *sP, Entity entity) {
   if (!compOrigIdxP) {
     return E_ENTITY_NOT_IN_SYSTEM;
   }
-  return _xSwap(sP, compOrigIdxP, frayPause(sP->cF, *compOrigIdxP));
+  Key newIdx = frayPause(sP->cF, *compOrigIdxP);
+  return _xSwap(sP, compOrigIdxP, newIdx);
 }
 
 Error xUnpauseComponentByEntity(System *sP, Entity entity) {
@@ -260,7 +264,8 @@ void xClr(System *sP) {
   if (!sP) {
     return;
   }
-  sP->clr(sP);  // This MUST run first as it may rely on things we're about to erase, frayDel((void**) &sP->cF);         // ... like maps of switches with cleanup cases.
+  sP->clr(sP);  // This MUST run first as it may rely on things we're about to erase
+  frayDel((void**) &sP->cF);
   frayDel((void**) &sP->mailboxF);
   frayDel((void**) &sP->deactivateQueueF);
   frayDel((void**) &sP->pauseQueueF);

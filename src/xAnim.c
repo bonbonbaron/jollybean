@@ -84,12 +84,14 @@ XClrFuncDef_(Anim) {
   }
   XAnim *xP = (XAnim*) sP;
   mapDel(&xP->animMPMP);  // Don't delete inner maps; those are singletons properly deleted below.
-  Animation **animPP = (Animation**) xP->animSingletonF;
-  Animation **animEndPP = animPP + *_frayGetFirstEmptyIdxP(xP->animSingletonF);
-  for (; animPP < animEndPP; ++animPP) {
-    mapDel(&(*animPP)->animMP);
+  if (xP->animSingletonF) {
+    Animation **animPP = (Animation**) xP->animSingletonF;
+    Animation **animEndPP = animPP + *_frayGetFirstEmptyIdxP(xP->animSingletonF);
+    for (; animPP < animEndPP; ++animPP) {
+      mapDel(&(*animPP)->animMP);
+    }
+    frayDel((void**) &xP->animSingletonF);
   }
-  frayDel((void**) &xP->animSingletonF);
   return SUCCESS;
 }
 
@@ -137,7 +139,7 @@ XPostprocessCompsDef_(Anim) {
 
   // TODO get rid of this after you implement action system
   if (!e) {
-    frayActivateAll(sP->cF);
+    _frayActivateAll(sP->cF);
   }
 
   return SUCCESS;

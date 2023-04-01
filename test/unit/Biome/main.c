@@ -14,6 +14,5 @@ int main(int argc, char **argv) {
 		e = xRun(&xMaster.system);
   }
   xClr(&xMaster.system);
-
-  return e;
+  return (e == E_QUIT) ? SUCCESS : e;
 }
