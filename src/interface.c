@@ -252,7 +252,6 @@ Error guiProcessEvents(Gui *guiP) {
       } // if key-up event
       // Keyboard button-press events
       else if (event.type == EVENT_KEYDOWN_ && event.key.repeat == 0) {
-        printf("pressed %d\n", event.key.keysym.sym);
         switch(event.key.keysym.sym) {
         case KEY_a_:      guiP->buttonsPressed |=  BTN_PRESSED_a; break;
         case KEY_b_:      guiP->buttonsPressed |=  BTN_PRESSED_b; break;

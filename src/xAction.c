@@ -1,21 +1,21 @@
-#include "xGo.h"
+#include "xAction.h"
 
 
 //#define XIniSysFuncDef_(name_) Error x##name_##IniSys(System *sP, void *sParamsP)
-XIniSysFuncDef_(Go) {
+XIniSysFuncDef_(Action) {
   unused_(sParamsP);
-  XGo *xGoP = (XGo*) sP;
-  xGoP->nDistinctHivemindTriggers = 0;
-  Error e = frayNew((void**) &xGoP->entityPersonalityPairF, sizeof(U32), xGetNComps(sP));
+  XAction *xActionP = (XAction*) sP;
+  xActionP->nDistinctHivemindTriggers = 0;
+  Error e = frayNew((void**) &xActionP->entityPersonalityPairF, sizeof(U32), xGetNComps(sP));
   if (!e) {
-    e = histoNew(&xGoP->histoHivemindTriggerA, KEY_MAX);
+    e = histoNew(&xActionP->histoHivemindTriggerA, KEY_MAX);
   }
   return e;
 }
 //#define XIniSubcompFuncDef_(name_)  Error x##name_##IniSubcomp(System *sP, const Entity entity, const Key subtype, void *dataP)
-XIniSubcompFuncDef_(Go) {
+XIniSubcompFuncDef_(Action) {
   if (subtype == PERSONALITY) {
-    XGo *xGoP = (XGo*) sP;
+    XAction *xActionP = (XAction*) sP;
     Personality *personalityP = (Personality*) dataP;
     Quirk **quirkPP = personalityP->quirkPA;
     Quirk **quirkEndPP = quirkPP + personalityP->nQuirks;
@@ -23,41 +23,41 @@ XIniSubcompFuncDef_(Go) {
       .entity = entity,
       .personalityP = personalityP
     };
-    Error e = frayAdd(xGoP->entityPersonalityPairF, &epPair, NULL);
+    Error e = frayAdd(xActionP->entityPersonalityPairF, &epPair, NULL);
     if (!e) {
       for (; quirkPP < quirkEndPP; ++quirkPP) {
-        xGoP->nDistinctHivemindTriggers += (!(xGoP->histoHivemindTriggerA[(*quirkPP)->trigger]++));
+        xActionP->nDistinctHivemindTriggers += (!(xActionP->histoHivemindTriggerA[(*quirkPP)->trigger]++));
       }
     }
   }
   return SUCCESS;
 }
 
-XClrFuncDef_(Go) {
-  XGo *xGoP = (XGo*) sP;
-  hivemindDel(&xGoP->hivemindMP);
-  histoDel(&xGoP->histoHivemindTriggerA);
+XClrFuncDef_(Action) {
+  XAction *xActionP = (XAction*) sP;
+  hivemindDel(&xActionP->hivemindMP);
+  histoDel(&xActionP->histoHivemindTriggerA);
   return SUCCESS;
 }
 
-static Error _distributeHiveminds(XGo *xGoP) {
+static Error _distributeHiveminds(XAction *xActionP) {
   // Histo the number of trees existing for each trigger.
-  if (!xGoP || !xGoP->histoHivemindTriggerA) {
+  if (!xActionP || !xActionP->histoHivemindTriggerA) {
     return E_BAD_ARGS;
   }
   Entity **hivemindEntitiesAP = NULL;
   // Allocate hivemind map
-  Error e = mapNew(&xGoP->hivemindMP, ARRAY, sizeof(Entity*), xGoP->nDistinctHivemindTriggers);
+  Error e = mapNew(&xActionP->hivemindMP, ARRAY, sizeof(Entity*), xActionP->nDistinctHivemindTriggers);
   // Allocate empty hiveminds.
   if (!e) {
-    U32 nElems = arrayGetNElems(xGoP->histoHivemindTriggerA);
+    U32 nElems = arrayGetNElems(xActionP->histoHivemindTriggerA);
     for (U32 trigger = 0; !e && trigger < nElems; ++trigger) {
-      if (xGoP->histoHivemindTriggerA[trigger]) {
+      if (xActionP->histoHivemindTriggerA[trigger]) {
         Entity *entityA = NULL;
-        e = arrayNew((void**) &entityA, sizeof(Entity), xGoP->histoHivemindTriggerA[trigger]);
+        e = arrayNew((void**) &entityA, sizeof(Entity), xActionP->histoHivemindTriggerA[trigger]);
         if (!e) {
           // Put the array of entities subscribed to trigger "trigger" in the hivemind map.
-          hivemindEntitiesAP = (Entity**) mapGet(xGoP->hivemindMP, trigger);
+          hivemindEntitiesAP = (Entity**) mapGet(xActionP->hivemindMP, trigger);
           if (hivemindEntitiesAP) {
             *hivemindEntitiesAP = entityA;
           }
@@ -67,29 +67,29 @@ static Error _distributeHiveminds(XGo *xGoP) {
   }
   // Fill the hiveminds.
   if (!e) {
-    EntityPersonalityPair *epP = xGoP->entityPersonalityPairF;
+    EntityPersonalityPair *epP = xActionP->entityPersonalityPairF;
     EntityPersonalityPair *epEndP = epP + arrayGetNElems(epP);
     for (; epP < epEndP; ++epP) {
       Quirk **quirkPP = epP->personalityP->quirkPA; 
       Quirk **quirkEndPP = quirkPP + epP->personalityP->nQuirks;
       for (; quirkPP < quirkEndPP; ++quirkPP) {
         // Get pointer to array of entities out of hivemind map.
-        hivemindEntitiesAP = (Entity**) mapGet(xGoP->hivemindMP, (*quirkPP)->trigger);
+        hivemindEntitiesAP = (Entity**) mapGet(xActionP->hivemindMP, (*quirkPP)->trigger);
         // This is how we fill arrays without storing current index of each one's next empty slot.
         if (hivemindEntitiesAP) {
-          (*hivemindEntitiesAP)[--xGoP->histoHivemindTriggerA[(*quirkPP)->trigger]] = epP->entity;
+          (*hivemindEntitiesAP)[--xActionP->histoHivemindTriggerA[(*quirkPP)->trigger]] = epP->entity;
         }
       }
     }
   }
 
-  histoDel(&xGoP->histoHivemindTriggerA);
+  histoDel(&xActionP->histoHivemindTriggerA);
 
   return e;
 }
 
-XPostprocessCompsDef_(Go) {
-  return _distributeHiveminds((XGo*) sP);
+XPostprocessCompsDef_(Action) {
+  return _distributeHiveminds((XAction*) sP);
 }
 
 void hivemindDel(Map **hivemindMPP) {
@@ -110,10 +110,10 @@ inline static U8 _isHigherPriority(U8 newPriority, U8 existingPriority) {
   return newPriority > existingPriority;
 }
 
-static Error _triggerIndividual(XGo *xGoSysP, Message *msgP) {
-  System *sP = &xGoSysP->system;
-  // Get entity's Go system component.
-  XGoComp *cP = xGetCompPByEntity(sP, msgP->attn);
+static Error _triggerIndividual(XAction *xActionSysP, Message *msgP) {
+  System *sP = &xActionSysP->system;
+  // Get entity's Action system component.
+  XActionComp *cP = xGetCompPByEntity(sP, msgP->attn);
   if (!cP) {
     return E_BAD_KEY;
   }
@@ -123,7 +123,7 @@ static Error _triggerIndividual(XGo *xGoSysP, Message *msgP) {
     return E_BAD_KEY;
   }
   // Get the tree that *would* be triggered if the entity is inactive or doing something less important. 
-  XGoComp *cNewP = (XGoComp*) mapGet(*activityMPP, msgP->arg);
+  XActionComp *cNewP = (XActionComp*) mapGet(*activityMPP, msgP->arg);
 
   if (cNewP) {
     // Queue new action if it's higher priority than old or entity's inactive.
@@ -138,11 +138,11 @@ static Error _triggerIndividual(XGo *xGoSysP, Message *msgP) {
   return SUCCESS;
 }
 
-static Error _triggerHivemind(XGo *xGoSysP, Message *msgP) {
+static Error _triggerHivemind(XAction *xActionSysP, Message *msgP) {
   assert(msgP);
   Error e = SUCCESS;
-  // Get the Go system's hivemind array for the given stimulus.
-  Entity *eA = (Entity*) mapGet(xGoSysP->hivemindMP, msgP->arg);
+  // Get the Action system's hivemind array for the given stimulus.
+  Entity *eA = (Entity*) mapGet(xActionSysP->hivemindMP, msgP->arg);
   if (!eA) {
     return E_BAD_KEY;
   }
@@ -153,29 +153,29 @@ static Error _triggerHivemind(XGo *xGoSysP, Message *msgP) {
   // Forward the message to each individual in the hivemind.
   for (; !e && eP < eEndP; eP++) {
     msgP->attn = *eP;
-    e = _triggerIndividual(xGoSysP, msgP);
+    e = _triggerIndividual(xActionSysP, msgP);
   }
   return e;
 }
 
-XGetShareFuncDefUnused_(Go);
+XGetShareFuncDefUnused_(Action);
 
 // Entity acts on message if it's more urgent than its current activity.
-XProcMsgFuncDef_(Go) {
+XProcMsgFuncDef_(Action) {
   Error e;
-  XGo *xGoSysP = (XGo*) sP;
+  XAction *xActionSysP = (XAction*) sP;
   if (msgP->attn) {
-    e = _triggerIndividual(xGoSysP, msgP);
+    e = _triggerIndividual(xActionSysP, msgP);
   }
   else {
-    e = _triggerHivemind(xGoSysP, msgP);
+    e = _triggerHivemind(xActionSysP, msgP);
   }
   return e;
 }
 
-Error xGoRun(System *sP) {
-  XGoComp *cP = sP->cF;
-  XGoComp *cEndP = cP + _frayGetFirstInactiveIdx(sP->cF);
+Error xActionRun(System *sP) {
+  XActionComp *cP = sP->cF;
+  XActionComp *cEndP = cP + _frayGetFirstInactiveIdx(sP->cF);
   Error e = SUCCESS;
   for (; !e && cP < cEndP; cP++) {
     e = cP->quirkP->actionU(cP->entity, cP->bbMP);
@@ -183,4 +183,4 @@ Error xGoRun(System *sP) {
   return e;
 }
 
-X_(Go, 2, FLG_NO_CF_SRC_A_);
+X_(Action, 2, FLG_NO_CF_SRC_A_);

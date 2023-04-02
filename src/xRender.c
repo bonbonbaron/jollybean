@@ -375,7 +375,7 @@ static Error _assembleTextureAtlas(XRender *xP, Atlas *atlasP, U8 **atlasPixelAP
 
 // Update src (usually animation) rectangles to reflect their global positions in the texture atlas.
 // Prior to updating, they only reflect their local offsets.
-// Good news is, entities don't need to know where their source rectangle maps are; 
+// Actionod news is, entities don't need to know where their source rectangle maps are; 
 // entities with common maps share a common pointer, so only one needs to update it.
 #define COLORMAP_SUBCOMP_IDX getSubcompIdx_(COLORMAP)
 #define TILEMAP_SUBCOMP_IDX getSubcompIdx_(TILEMAP)
@@ -541,7 +541,7 @@ XPostprocessCompsDef_(Render) {
     }
   }
 
-  // TODO remove this when you're ready to try out XGo-based initialization.
+  // TODO remove this when you're ready to try out XAction-based initialization.
   if (!e) {
     _frayActivateAll(sP->cF);
   }
@@ -555,7 +555,7 @@ XPostprocessCompsDef_(Render) {
   return e;
 }
 
-// Only get the render and window. Components' src & dst rects come from SCENE_START stimulus to XGo.
+// Only get the render and window. Components' src & dst rects come from SCENE_START stimulus to XAction.
 XGetShareFuncDef_(Render) {
   XRender *xP = (XRender*) sP;
   // Get renderer

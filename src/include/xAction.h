@@ -33,7 +33,7 @@ typedef struct {
   Map         *bbMP;           // blackboard
 } Activity;  
 
-typedef Activity XGoComp;
+typedef Activity XActionComp;
 
 typedef struct {
 	System                 system;
@@ -41,10 +41,10 @@ typedef struct {
   Key                    nDistinctHivemindTriggers;
   U32                   *histoHivemindTriggerA;
   EntityPersonalityPair *entityPersonalityPairF;
-} XGo;
-XClrFuncDef_(Go);
-XIniSubcompFuncDef_(Go);
-XPostprocessCompsDef_(Go);
+} XAction;
+XClrFuncDef_(Action);
+XIniSubcompFuncDef_(Action);
+XPostprocessCompsDef_(Action);
 
-extern System *sGoP;
+extern System *sActionP;
 #endif
