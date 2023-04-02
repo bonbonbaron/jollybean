@@ -64,6 +64,8 @@ typedef enum Error {
   E_BB_GENES_DONT_DO_INITIALIZATION,
   E_NULL_GENE_DATA,
   E_INVALID_GENE_CLASS,
+  E_PAUSE,
+  E_UNPAUSE,
   E_QUIT
 } Error;
 

@@ -212,100 +212,98 @@ Error guiProcessEvents(Gui *guiP) {
 		if (event.type == EVENT_QUIT_) {
       return E_QUIT;
 		}
-    // Keyboard button-release events (only process this if engine is unpaused)
-    // NOTE: You can implement a partial pause with any one of the other keys.
-    if (guiP->state == UNPAUSED) {
-      if (event.type == EVENT_KEYUP_ && event.key.repeat == 0) {
-        switch(event.key.keysym.sym) {
-        case KEY_a_:      guiP->buttonsPressed &= ~BTN_PRESSED_a; break;
-        case KEY_b_:      guiP->buttonsPressed &= ~BTN_PRESSED_b; break;
-        case KEY_c_:      guiP->buttonsPressed &= ~BTN_PRESSED_c; break;
-        case KEY_d_:      guiP->buttonsPressed &= ~BTN_PRESSED_d; break;
-        case KEY_e_:      guiP->buttonsPressed &= ~BTN_PRESSED_e; break;
-        case KEY_f_:      guiP->buttonsPressed &= ~BTN_PRESSED_f; break;
-        case KEY_g_:      guiP->buttonsPressed &= ~BTN_PRESSED_g; break;
-        case KEY_h_:      guiP->buttonsPressed &= ~BTN_PRESSED_h; break;
-        case KEY_i_:      guiP->buttonsPressed &= ~BTN_PRESSED_i; break;
-        case KEY_j_:      guiP->buttonsPressed &= ~BTN_PRESSED_j; break;
-        case KEY_k_:      guiP->buttonsPressed &= ~BTN_PRESSED_k; break;
-        case KEY_l_:      guiP->buttonsPressed &= ~BTN_PRESSED_l; break;
-        case KEY_m_:      guiP->buttonsPressed &= ~BTN_PRESSED_m; break;
-        case KEY_n_:      guiP->buttonsPressed &= ~BTN_PRESSED_n; break;
-        case KEY_o_:      guiP->buttonsPressed &= ~BTN_PRESSED_o; break;
-        case KEY_p_:      guiP->buttonsPressed &= ~BTN_PRESSED_p; break;
-        case KEY_q_:      guiP->buttonsPressed &= ~BTN_PRESSED_q; break;
-        case KEY_r_:      guiP->buttonsPressed &= ~BTN_PRESSED_r; break;
-        case KEY_s_:      guiP->buttonsPressed &= ~BTN_PRESSED_s; break;
-        case KEY_t_:      guiP->buttonsPressed &= ~BTN_PRESSED_t; break;
-        case KEY_u_:      guiP->buttonsPressed &= ~BTN_PRESSED_u; break;
-        case KEY_v_:      guiP->buttonsPressed &= ~BTN_PRESSED_v; break;
-        case KEY_w_:      guiP->buttonsPressed &= ~BTN_PRESSED_w; break;
-        case KEY_x_:      guiP->buttonsPressed &= ~BTN_PRESSED_x; break;
-        case KEY_y_:      guiP->buttonsPressed &= ~BTN_PRESSED_y; break;
-        case KEY_z_:      guiP->buttonsPressed &= ~BTN_PRESSED_z; break;
-        case KEY_SPACE_:  guiP->buttonsPressed &= ~BTN_PRESSED_SPACE; break;
-        case KEY_LSHIFT_: guiP->buttonsPressed &= ~BTN_PRESSED_LSHIFT; break;
-        case KEY_ESCAPE_: return E_QUIT;
-        default:
-          break;
-        }  // switch-case for keys released
-      } // if key-up event
-      // Keyboard button-press events
-      else if (event.type == EVENT_KEYDOWN_ && event.key.repeat == 0) {
-        printf("pressed %d\n", event.key.keysym.sym);
-        switch(event.key.keysym.sym) {
-        case KEY_a_:      guiP->buttonsPressed |=  BTN_PRESSED_a; break;
-        case KEY_b_:      guiP->buttonsPressed |=  BTN_PRESSED_b; break;
-        case KEY_c_:      guiP->buttonsPressed |=  BTN_PRESSED_c; break;
-        case KEY_d_:      guiP->buttonsPressed |=  BTN_PRESSED_d; break;
-        case KEY_e_:      guiP->buttonsPressed |=  BTN_PRESSED_e; break;
-        case KEY_f_:      guiP->buttonsPressed |=  BTN_PRESSED_f; break;
-        case KEY_g_:      guiP->buttonsPressed |=  BTN_PRESSED_g; break;
-        case KEY_h_:      guiP->buttonsPressed |=  BTN_PRESSED_h; break;
-        case KEY_i_:      guiP->buttonsPressed |=  BTN_PRESSED_i; break;
-        case KEY_j_:      guiP->buttonsPressed |=  BTN_PRESSED_j; break;
-        case KEY_k_:      guiP->buttonsPressed |=  BTN_PRESSED_k; break;
-        case KEY_l_:      guiP->buttonsPressed |=  BTN_PRESSED_l; break;
-        case KEY_m_:      guiP->buttonsPressed |=  BTN_PRESSED_m; break;
-        case KEY_n_:      guiP->buttonsPressed |=  BTN_PRESSED_n; break;
-        case KEY_o_:      guiP->buttonsPressed |=  BTN_PRESSED_o; break;
-        case KEY_p_:      guiP->buttonsPressed |=  BTN_PRESSED_p; break;
-        case KEY_q_:      guiP->buttonsPressed |=  BTN_PRESSED_q; break;
-        case KEY_r_:      guiP->buttonsPressed |=  BTN_PRESSED_r; break;
-        case KEY_s_:      guiP->buttonsPressed |=  BTN_PRESSED_s; break;
-        case KEY_t_:      guiP->buttonsPressed |=  BTN_PRESSED_t; break;
-        case KEY_u_:      guiP->buttonsPressed |=  BTN_PRESSED_u; break;
-        case KEY_v_:      guiP->buttonsPressed |=  BTN_PRESSED_v; break;
-        case KEY_w_:      guiP->buttonsPressed |=  BTN_PRESSED_w; break;
-        case KEY_x_:      guiP->buttonsPressed |=  BTN_PRESSED_x; break;
-        case KEY_y_:      guiP->buttonsPressed |=  BTN_PRESSED_y; break;
-        case KEY_z_:      guiP->buttonsPressed |=  BTN_PRESSED_z; break;
-        case KEY_SPACE_:  guiP->buttonsPressed |=  BTN_PRESSED_SPACE; break;
-        case KEY_LSHIFT_: guiP->buttonsPressed |=  BTN_PRESSED_LSHIFT; break;
-        case KEY_ESCAPE_: return E_QUIT;
-        }  // switch-case for keys pressed
-      }  // if key-down event
-		}  // if unpaused
+    // Keyboard button-release events
+		else if (event.type == EVENT_KEYUP_ && event.key.repeat == 0) {
+			switch(event.key.keysym.sym) {
+      case KEY_a_:      guiP->buttonsPressed &= ~BTN_PRESSED_a; break;
+      case KEY_b_:      guiP->buttonsPressed &= ~BTN_PRESSED_b; break;
+      case KEY_c_:      guiP->buttonsPressed &= ~BTN_PRESSED_c; break;
+      case KEY_d_:      guiP->buttonsPressed &= ~BTN_PRESSED_d; break;
+      case KEY_e_:      guiP->buttonsPressed &= ~BTN_PRESSED_e; break;
+      case KEY_f_:      guiP->buttonsPressed &= ~BTN_PRESSED_f; break;
+      case KEY_g_:      guiP->buttonsPressed &= ~BTN_PRESSED_g; break;
+      case KEY_h_:      guiP->buttonsPressed &= ~BTN_PRESSED_h; break;
+      case KEY_i_:      guiP->buttonsPressed &= ~BTN_PRESSED_i; break;
+      case KEY_j_:      guiP->buttonsPressed &= ~BTN_PRESSED_j; break;
+      case KEY_k_:      guiP->buttonsPressed &= ~BTN_PRESSED_k; break;
+      case KEY_l_:      guiP->buttonsPressed &= ~BTN_PRESSED_l; break;
+      case KEY_m_:      guiP->buttonsPressed &= ~BTN_PRESSED_m; break;
+      case KEY_n_:      guiP->buttonsPressed &= ~BTN_PRESSED_n; break;
+      case KEY_o_:      guiP->buttonsPressed &= ~BTN_PRESSED_o; break;
+      case KEY_p_:      guiP->buttonsPressed &= ~BTN_PRESSED_p; break;
+      case KEY_q_:      guiP->buttonsPressed &= ~BTN_PRESSED_q; break;
+      case KEY_r_:      guiP->buttonsPressed &= ~BTN_PRESSED_r; break;
+      case KEY_s_:      guiP->buttonsPressed &= ~BTN_PRESSED_s; break;
+      case KEY_t_:      guiP->buttonsPressed &= ~BTN_PRESSED_t; break;
+      case KEY_u_:      guiP->buttonsPressed &= ~BTN_PRESSED_u; break;
+      case KEY_v_:      guiP->buttonsPressed &= ~BTN_PRESSED_v; break;
+      case KEY_w_:      guiP->buttonsPressed &= ~BTN_PRESSED_w; break;
+      case KEY_x_:      guiP->buttonsPressed &= ~BTN_PRESSED_x; break;
+      case KEY_y_:      guiP->buttonsPressed &= ~BTN_PRESSED_y; break;
+      case KEY_z_:      guiP->buttonsPressed &= ~BTN_PRESSED_z; break;
+      case KEY_SPACE_:  guiP->buttonsPressed &= ~BTN_PRESSED_SPACE; break;
+      case KEY_LSHIFT_: guiP->buttonsPressed &= ~BTN_PRESSED_LSHIFT; break;
+      case KEY_ESCAPE_: return E_QUIT;
+      default:
+        break;
+			}
+		}
+    // Keyboard button-press events
+		else if (event.type == EVENT_KEYDOWN_ && event.key.repeat == 0) {
+			switch(event.key.keysym.sym) {
+      case KEY_a_:      guiP->buttonsPressed |=  BTN_PRESSED_a; break;
+      case KEY_b_:      guiP->buttonsPressed |=  BTN_PRESSED_b; break;
+      case KEY_c_:      guiP->buttonsPressed |=  BTN_PRESSED_c; break;
+      case KEY_d_:      guiP->buttonsPressed |=  BTN_PRESSED_d; break;
+      case KEY_e_:      guiP->buttonsPressed |=  BTN_PRESSED_e; break;
+      case KEY_f_:      guiP->buttonsPressed |=  BTN_PRESSED_f; break;
+      case KEY_g_:      guiP->buttonsPressed |=  BTN_PRESSED_g; break;
+      case KEY_h_:      guiP->buttonsPressed |=  BTN_PRESSED_h; break;
+      case KEY_i_:      guiP->buttonsPressed |=  BTN_PRESSED_i; break;
+      case KEY_j_:      guiP->buttonsPressed |=  BTN_PRESSED_j; break;
+      case KEY_k_:      guiP->buttonsPressed |=  BTN_PRESSED_k; break;
+      case KEY_l_:      guiP->buttonsPressed |=  BTN_PRESSED_l; break;
+      case KEY_m_:      guiP->buttonsPressed |=  BTN_PRESSED_m; break;
+      case KEY_n_:      guiP->buttonsPressed |=  BTN_PRESSED_n; break;
+      case KEY_o_:      guiP->buttonsPressed |=  BTN_PRESSED_o; break;
+      case KEY_p_:      guiP->buttonsPressed |=  BTN_PRESSED_p; break;
+      case KEY_q_:      guiP->buttonsPressed |=  BTN_PRESSED_q; break;
+      case KEY_r_:      guiP->buttonsPressed |=  BTN_PRESSED_r; break;
+      case KEY_s_:      guiP->buttonsPressed |=  BTN_PRESSED_s; break;
+      case KEY_t_:      guiP->buttonsPressed |=  BTN_PRESSED_t; break;
+      case KEY_u_:      guiP->buttonsPressed |=  BTN_PRESSED_u; break;
+      case KEY_v_:      guiP->buttonsPressed |=  BTN_PRESSED_v; break;
+      case KEY_w_:      guiP->buttonsPressed |=  BTN_PRESSED_w; break;
+      case KEY_x_:      guiP->buttonsPressed |=  BTN_PRESSED_x; break;
+      case KEY_y_:      guiP->buttonsPressed |=  BTN_PRESSED_y; break;
+      case KEY_z_:      guiP->buttonsPressed |=  BTN_PRESSED_z; break;
+      case KEY_SPACE_:  guiP->buttonsPressed |=  BTN_PRESSED_SPACE; break;
+      case KEY_LSHIFT_: guiP->buttonsPressed |=  BTN_PRESSED_LSHIFT; break;
+      case KEY_ESCAPE_: return E_QUIT;
+      }
+		}
     // Window events
-    if (event.type == SDL_WINDOWEVENT) {
-      switch (event.window.event) {
-      case SDL_WINDOWEVENT_RESIZED:        
-      case SDL_WINDOWEVENT_HIDDEN:         
-        break;
-      case SDL_WINDOWEVENT_SHOWN:          
-      case SDL_WINDOWEVENT_EXPOSED:        
-      case SDL_WINDOWEVENT_MAXIMIZED:      
-      case SDL_WINDOWEVENT_RESTORED:       
-        present_(guiP->rendererP);
-        break;
-      case SDL_WINDOWEVENT_FOCUS_GAINED:   
-        return E_UNPAUSE;
-      case SDL_WINDOWEVENT_FOCUS_LOST:     
-        return E_PAUSE;
-      case SDL_WINDOWEVENT_CLOSE:          
-        return E_QUIT;
-      default: 
-        break;
+    else {
+      if (event.type == SDL_WINDOWEVENT) {
+        switch (event.window.event) {
+        case SDL_WINDOWEVENT_RESIZED:        
+        case SDL_WINDOWEVENT_HIDDEN:         
+          break;
+        case SDL_WINDOWEVENT_SHOWN:          
+        case SDL_WINDOWEVENT_EXPOSED:        
+        case SDL_WINDOWEVENT_MAXIMIZED:      
+        case SDL_WINDOWEVENT_RESTORED:       
+          present_(guiP->rendererP);
+          break;
+        case SDL_WINDOWEVENT_FOCUS_GAINED:   
+          return E_UNPAUSE;
+        case SDL_WINDOWEVENT_FOCUS_LOST:     
+          return E_PAUSE;
+        case SDL_WINDOWEVENT_CLOSE:          
+          return E_QUIT;
+        default: 
+          break;
+        }
       }
     }
 	}

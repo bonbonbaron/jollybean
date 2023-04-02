@@ -722,20 +722,27 @@ Error xMasterIni(XMaster *xMasterSysP, System **sPA, U16 nXSystems, Key nXSystem
 }
 
 Error xMasterRun(System *sP) {
-  Error e = SUCCESS;
-
   XMaster *xP = (XMaster*) sP;
 
-  XMasterComp *cP = sP->cF;
-  XMasterComp *cEndP = cP + _frayGetFirstInactiveIdx(sP->cF);
+  Error e = guiProcessEvents(xP->guiP);
+  if (e == E_PAUSE) {
+    _frayPauseAll(sP->cF);  // pause all systems
+    return SUCCESS;
+  }
+  else if (e == E_UNPAUSE) {
+    _frayUnpauseAll(sP->cF);
+  }
+  else if (e == E_QUIT) {
+    return E_QUIT;
+  }
 
+  e = SUCCESS;
+  XMasterComp *cP = sP->cF;
+  XMasterComp *cEndP = cP + _frayGetFirstPausedIdx(sP->cF);
   for (; !e && cP < cEndP; ++cP) {
-    e = guiProcessEvents(xP->guiP);
-    if (e != E_QUIT) {
-      e = xRun(*cP);  // cP is a pointer to XMasterComp, which itself is also a pointer.
-      if (*_frayGetFirstEmptyIdxP((*cP)->mailboxF)) {
-        e = _xMasterForwardMail(xP, *cP);
-      }
+    e = xRun(*cP);  // cP is a pointer to XMasterComp, which itself is also a pointer.
+    if (*_frayGetFirstEmptyIdxP((*cP)->mailboxF)) {
+      e = _xMasterForwardMail(xP, *cP);
     }
   }
   return e;

@@ -11,10 +11,6 @@ XIniSysFuncDef_(Anim) {
   return e;
 }
 
-static void reportAnim(char *prepend, Entity entity, Map *mapP) {
-  printf("%s: entity %3d's map address:0x%08x\n", prepend, entity, (U32) mapP);
-}
-
 // sP, entity, subtype, dataP
 XIniSubcompFuncDef_(Anim) {
   XAnim* xP = (XAnim*) sP;
@@ -25,8 +21,6 @@ XIniSubcompFuncDef_(Anim) {
   Error e = SUCCESS;
 
   Animation *animP = (Animation*) dataP;
-
-  reportAnim("1", entity, animP->animMP);
 
   // Make a SINGLETON map of animation strips for everybody who uses this particular one.
   if (!animP->animMP) {
@@ -44,20 +38,14 @@ XIniSubcompFuncDef_(Anim) {
       e = frayAdd(xP->animSingletonF, &animP, NULL);
     }
   }
-  reportAnim("2", entity, animP->animMP);
-
 
   // Map from entity to the above animation map in the system's map of animation maps
   if (!e) {
     e = mapSet(xP->animMPMP, entity, &animP->animMP);
   }
-  reportAnim("3", entity, animP->animMP);
   if (!e) {
     Map *testMP = NULL;
     e = mapGetNestedMapP(xP->animMPMP, entity, &testMP);
-    if (!e) {
-      reportAnim("test get", entity, testMP);
-    }
   }
 
 
@@ -73,7 +61,6 @@ XIniSubcompFuncDef_(Anim) {
     };
     e = xAddComp(sP, entity, &c);
   }
-  reportAnim("4", entity, animP->animMP);
 
   return e;
 }
@@ -127,7 +114,6 @@ XPostprocessCompsDef_(Anim) {
         e = mapGetNestedMapP(xP->animMPMP, entity, &animMP);
       }
       if (!e && animMP) {
-        reportAnim("5", entity, animMP);
         AnimStrip *stripP = animMP->mapA;
         if (stripP) {
           cP->srcRectP->w = cP->dstRectP->w = stripP->frameA[0].rect.w;
@@ -153,7 +139,6 @@ Error xAnimProcessMessage(System *sP, Message *msgP) {
      right place in the atlas. */
   // Put the most commonly used logic first.
   if (msgP->cmd == ANIMATE) {
-    printf("animation got ANIMATE command\n");
     AnimStrip *animStripP = NULL;
     XAnimComp *cP = NULL;
     e = mapGetNestedMapPElem(xP->animMPMP, msgP->attn, msgP->arg, RAW_DATA, (void**) &animStripP);
@@ -193,18 +178,10 @@ Error xAnimProcessMessage(System *sP, Message *msgP) {
         for (; animStripP < animStripEndP; ++animStripP) {
           frameP = animStripP->frameA;
           frameEndP = frameP + animStripP->nFrames;
-          printf("Entity %3d:\n", msgP->attn);
           for (; frameP < frameEndP; ++frameP) {
-            printf("\tframe %d (before): {%3d, %3d}\n", frameP - animStripP->frameA, 
-                frameP->rect.x, frameP->rect.y);
             frameP->rect.x += offsetP->x;
             frameP->rect.y += offsetP->y;
-            printf("\tframe %d (after ): {%3d, %3d}\n", frameP - animStripP->frameA, 
-                frameP->rect.x, frameP->rect.y);
           }
-          // TODO remove
-          animStripP->repeat = 0;
-          animStripP->pingPong = 1;
         }
       }
     }

@@ -101,6 +101,7 @@ typedef enum {
   BTN_PRESSED_SPACE  = 0x04000000,
   BTN_PRESSED_LSHIFT = 0x08000000,
   BTN_PRESSED_ESCAPE = 0x10000000,
+  // TODO decide what the last three bits should be. Include Tab and Enter,, perhaps?
 } ButtonPressed;
 
 typedef U8 ColormapIdx;
@@ -121,17 +122,24 @@ typedef struct {
 } ColorPalette;
 
 // GUI
+typedef enum {
+  UNPAUSED,
+  PAUSED
+} GuiState;
+  
 typedef struct {
   Renderer_ *rendererP;
   Window_   *windowP;
   Entity     context;   // this is what input events affect, e.g. main character, menu, text, etc.
+  U8         buttonChanged;
+  GuiState   state;
   U32        buttonsPressed;
   Rect_     *cameraRectP;
   Entity     cameraEntity;
 } Gui;
 
 Error guiNew(Gui **guiPP);
-void guiDel(Gui **guiPP);
+void  guiDel(Gui **guiPP);
 Error guiProcessEvents(Gui *guiP);
 
 // Surface

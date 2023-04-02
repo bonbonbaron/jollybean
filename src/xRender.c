@@ -611,10 +611,11 @@ Error xRenderRun(System *sP) {
   Renderer_ *rendererP = xP->guiP->rendererP;
 	for (; !e && cP < cEndP; cP++) {
 		e = copy_(rendererP, xP->atlasTextureP, cP->srcRectP, cP->dstRectP);
-    if (i > 0 && (i % 200) == 0) {
+    // TODO delete this after you've got actions figured out
+    if (i > 0 && (i % 400) == 0) {
       e = mailboxWrite(sP->mailboxF, ANIMATION, 1, ANIMATE, WALK_UP);
     }
-    else if (i > 0 && (i % 100) == 0) {
+    else if (i > 0 && (i % 200) == 0) {
       e = mailboxWrite(sP->mailboxF, ANIMATION, 1, ANIMATE, WALK_DOWN);
     }
     if (i > 0 && (i % 140) == 0) {
@@ -623,10 +624,9 @@ Error xRenderRun(System *sP) {
     else if (i > 0 && (i % 70) == 0) {
       e = mailboxWrite(sP->mailboxF, ANIMATION, 2, ANIMATE, WALK_RIGHT);
     }
-
-  if (++i == 1000) {
-    return E_BAD_ARGS;
-  }
+    if (++i == 1000) {
+      return E_BAD_ARGS;
+    }
   }
 	if (!e) {
 		present_(xP->guiP->rendererP);
