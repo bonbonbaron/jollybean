@@ -127,7 +127,7 @@ static Error _triggerIndividual(XAction *xActionSysP, Message *msgP) {
 
   if (cNewP) {
     // Queue new action if it's higher priority than old or entity's inactive.
-    if (!frayElemIsActive(sP->cF, msgP->attn) || 
+    if (!_frayElemIsActive(sP->cF, msgP->attn) || 
         _isHigherPriority(cNewP->quirkP->priority, cP->quirkP->priority)) {
       *cP = *cNewP;
     }

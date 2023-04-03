@@ -359,15 +359,6 @@ static void _mutationMapArrayDel(Biome *biomeP) {
   Spawn *spawnP = biomeP->spawnA;
   Spawn *spawnEndP = spawnP + biomeP->nSpawns;
   for (; spawnP < spawnEndP; ++spawnP) {
-#if 0  // I think we want to leave this out; systems consume map pointers.
-    if (spawnP->geneMutationMPA) {
-      Map **mapPP = spawnP->geneMutationMPA;
-      Map **mapEndPP = mapPP + arrayGetNElems(spawnP->geneMutationMPA);
-      for (; mapPP < mapEndPP; ++mapPP) {
-        mapDel(mapPP);
-      }
-    }
-#endif
     arrayDel((void**) &spawnP->geneMutationMPA);
   }
 }
@@ -481,8 +472,6 @@ static Error _distributeGene(
     case EXCLUSIVE_GENE:
       childSysPP = (XMasterComp*) xGetCompPByEntity(masterSysP, gene.u.unitary.type & MASK_COMPONENT_TYPE);
       if (childSysPP) {
-        // histo's 1D array represents a 2D array: columns are spawn #s, rows are system #s.
-        // So we have to index it awkwardly as hell. :)
         e = xAddEntityData(*childSysPP, entity, gene.u.unitary.type, gene.u.unitary.dataP);
         if (!e) {
           e = xAddMutationMap(*childSysPP, entity, spawnP->geneMutationMPA[gene.u.unitary.type & MASK_COMPONENT_TYPE]);

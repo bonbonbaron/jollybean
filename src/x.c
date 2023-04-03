@@ -141,6 +141,7 @@ U32 xGetNComps(System *sP) {
 	return arrayGetNElems(sP->cF);
 }
 
+// Insert inner mutation map (mutatio key -> new component value) into outer mutation map (key=entity)
 Error xAddMutationMap(System *sP, Entity entity, Map *mutationMP) {
   if (!entity || !sP) { // null mutation map is okay
     return E_BAD_ARGS;
@@ -155,7 +156,7 @@ Error xAddMutationMap(System *sP, Entity entity, Map *mutationMP) {
 }
 
 
-Error xAddComp(System *sP, Entity entity, void *compDataP) {
+static Error _xAddComp(System *sP, Entity entity, void *compDataP) {
   if (!sP || !entity || !compDataP) {
     return E_BAD_ARGS;
   }
@@ -215,9 +216,9 @@ Error xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP)
     }
     return e;
   }
-  // If it's the main component, feed it straight in.
+  // Else it's the main component; feed it straight in baby.
   else if (!(sP->flags & FLG_DONT_ADD_COMP)) {
-    e = xAddComp(sP, entity, entityDataP);
+    e = _xAddComp(sP, entity, entityDataP);
   }
   return e;
 }
@@ -271,14 +272,7 @@ void xClr(System *sP) {
   frayDel((void**) &sP->pauseQueueF);
   mapDel(&sP->subcompOwnerMP);
   mapDel(&sP->e2cIdxMP);
-  if (sP->mutationMPMP) {
-    Map **mapPP = sP->mutationMPMP->mapA;
-    Map **mapEndPP = sP->mutationMPMP->mapA + sP->mutationMPMP->population;
-    for (; mapPP < mapEndPP; ++mapPP) {
-      mapDel(mapPP);
-    }
-  }
-  mapDel(&sP->mutationMPMP);
+  mapOfNestedMapsDel(&sP->mutationMPMP);
   arrayDel((void**) &sP->cIdx2eA);
 }
 
