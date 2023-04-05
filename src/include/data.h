@@ -345,4 +345,8 @@ Error sdUnpack(StripDataS *sdP);
 Error sdAssemble(StripDataS *sdP);
 Error stripIni(StripDataS *sdP);
 
+// Stitching
+#define structMemberOffset_(structType_, memberName_) (U32) &(((structType_*) NULL)->memberName_)
+#define structMemberSizeof_(structType_, memberName_) sizeof(((structType_*) NULL)->memberName_)
+
 #endif  // #ifndef DATA_H

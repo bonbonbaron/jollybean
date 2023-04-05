@@ -128,6 +128,7 @@ typedef struct _System {
   Key           id;                  // ID of system 
   Key           compSz;              // components are the same size in all of this system's activities 
   U8            flags;               // System flags. Use this however you want.
+  U8            mutDstOffset;        // position in destination component struct to copy mutation to
   void         *cF;                  // component fray 
   Entity       *pauseQueueF;         // queue for pausing
   Entity       *deactivateQueueF;    // queue for pausing

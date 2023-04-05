@@ -55,12 +55,16 @@ int main(int argc, char **argv) {
   Error e = xIniSys(sAP, N_COMPS, NULL);
   // Populate system's components.
   if (!e) {
-    for (U32 i = 1; !e && i <= N_COMPS; ++i) {
-      aComp.a *= i;
-      aComp.b *= i;
-      aComp.c *= i;
-      e = xAddComp(sAP, i, &aComp);
+    for (Entity entity = 1; !e && entity <= N_COMPS; ++entity) {
+      aComp.a *= entity;
+      aComp.b *= entity;
+      aComp.c *= entity;
+      e =  xAddEntityData(sAP, entity, sAP->id, (void*) &aComp);
+      //e = xAddComp(sAP, i, &aComp);
     }
+  }
+  if (!e) {
+    e = reportAndRun("Initial state", N_COMPS, sAP);
   }
 
   // Activate two arbitrary components.
@@ -97,6 +101,8 @@ int main(int argc, char **argv) {
   if (!e) {
     e = reportAndRun("After activating entity 5", N_COMPS, sAP);
   }
+
+  xClr(sAP);
 
   return e;
 }

@@ -120,11 +120,6 @@ static Error _histoGene(
         }
       }
       break;
-    case BB_GENE:
-      for (Entity entityEnd = *entityP + spawnP->nEntitiesToSpawn; *entityP < entityEnd; ++*entityP){
-        ++(geneHistoP->histoBbElemA[*entityP]);
-      }
-      break;
     case MEDIA_GENE:
       sdP = *((StripDataS**) gene.u.unitary.dataP);
       if (!(sdP->flags & SD_IS_COUNTED_)) {
@@ -489,17 +484,6 @@ static Error _distributeGene(
       if (!e) {
         for (Entity entityEnd = entity + spawnP->nEntitiesToSpawn; entity < entityEnd; ++entity) {
           e = mapSet(innerMapP, entity, (const void*) &gene);  
-        }
-      }
-      break;
-    case BB_GENE:
-      if (!e && !gene.u.unitary.dataP) {
-        e = E_NULL_GENE_DATA;
-      }
-      // Fill up the blackboard with the gene pointers
-      if (!e) {
-        for (Entity entityEnd = entity + spawnP->nEntitiesToSpawn; entity < entityEnd; ++entity) {
-          e = mapSet(bbMP, gene.u.unitary.type, &gene.u.unitary.dataP);
         }
       }
       break;
