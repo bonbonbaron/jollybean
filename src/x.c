@@ -290,7 +290,7 @@ Error xMutateComponent(System *sP, Entity entity, Key newCompKey) {
     if (cP) {
       void **tmpP = mapGet(mutationMP, newCompKey);
       if (tmpP) {
-        memcpy((U8*) cP + sP->mutationOffset, *tmpP, arrayGetElemSz(sP->mutationMPMP->mapA));
+        memcpy((U8*) cP + sP->mutationOffset, *tmpP, arrayGetElemSz(mutationMP->mapA));
         return sP->postMutate(sP, cP);
       }
     }
