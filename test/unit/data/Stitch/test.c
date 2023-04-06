@@ -75,10 +75,15 @@ int main(int argc, char **argv) {
     .a = {0},
     .c = 2
   };
+  A *aP =  &a;
+
+  printf("sizeof(*aP) == %d\n", sizeof(*aP));
+  printf("sizeof(*(&(a))) == %d\n", sizeof(*(&(a))));
   B bOrig = b;
   reportDataFacts();
   reportValues("Initialization:", &a, &b);
-  memcpy((U8*) &b + structMemberOffset_(B, a), &a, sizeof(A));
+  //stitch_(&b, B, a, &a);
+  memcpy_(&b.a, &a);
   reportValues("Stitching a into b", &a, &b);
 
   // Assert b's non-a components are unchanged.

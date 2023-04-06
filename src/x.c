@@ -238,8 +238,8 @@ Error xIniSys(System *sP, U32 nComps, void *miscP) {
   if (!e) {
     e = mapNew(&sP->e2cIdxMP, RAW_DATA, sizeof(Key), nComps);
   }
-  if (!e && !(sP->flags & FLG_NO_SWITCHES_)) {
-    e = mapNew(&sP->mutationMPMP, FUNCTION_POINTER, sizeof(XSwitchCompU), nComps);
+  if (!e && !(sP->flags & FLG_NO_MUTATIONS_)) {
+    e = mapNew(&sP->mutationMPMP, FUNCTION_POINTER, sizeof(XMutateCompU), nComps);
   }
 	// Only allocate one mailbox; it serves as input and output.
 	if (!e) {
@@ -276,24 +276,26 @@ void xClr(System *sP) {
   arrayDel((void**) &sP->cIdx2eA);
 }
 
-Error xSwitchComponent(System *sP, Entity entity, Key newCompKey) {
+Error xMutateComponent(System *sP, Entity entity, Key newCompKey) {
   if (!sP || !entity || !newCompKey) {
     return E_BAD_ARGS;
   }
-  Map **mutationMPP = (Map**) mapGet(sP->mutationMPMP, entity);
-  if (mutationMPP) {
-    Map *mutationMP = *mutationMPP;
-    if (mutationMP) {
-      void* activeCompP = xGetCompPByEntity(sP, entity);
-      if (activeCompP) {
-        void **tmpP = mapGet(mutationMP, newCompKey);
-        if (tmpP) {
-          memcpy(activeCompP, *tmpP, sP->compSz);
-        }
+  if (sP->flags & FLG_NO_MUTATIONS_) {
+    return SUCCESS;
+  }
+  Map *mutationMP = NULL;
+  Error e = mapGetNestedMapP(sP->mutationMPMP, entity, &mutationMP);
+  if (!e) {
+    void* cP = xGetCompPByEntity(sP, entity);
+    if (cP) {
+      void **tmpP = mapGet(mutationMP, newCompKey);
+      if (tmpP) {
+        memcpy((U8*) cP + sP->mutationOffset, *tmpP, arrayGetElemSz(sP->mutationMPMP->mapA));
+        return sP->postMutate(sP, cP);
       }
     }
   }
-  return SUCCESS;
+  return e;
 }
 
 static Error _xReadInbox(System *sP) {
@@ -305,15 +307,15 @@ static Error _xReadInbox(System *sP) {
   Message *msgEndP = msgP + *_frayGetFirstEmptyIdxP(sP->mailboxF);
   for (; !e && msgP < msgEndP; msgP++) {
     switch(msgP->cmd) {
-      case SWITCH_AND_ACTIVATE: 
-        e = xSwitchComponent(sP, msgP->attn, msgP->arg);
+      case MUTATE_AND_ACTIVATE: 
+        e = xMutateComponent(sP, msgP->attn, msgP->arg);
       case ACTIVATE:
         if (!e) {
           xActivateComponentByEntity(sP, msgP->attn);
         }
         break;
-      case SWITCH_AND_DEACTIVATE: 
-        e = xSwitchComponent(sP, msgP->attn, msgP->arg);
+      case MUTATE_AND_DEACTIVATE: 
+        e = xMutateComponent(sP, msgP->attn, msgP->arg);
       case DEACTIVATE:
         if (!e) {
           e = xDeactivateComponentByEntity(sP, msgP->attn);
@@ -325,8 +327,8 @@ static Error _xReadInbox(System *sP) {
       case UNPAUSE:
         e = xUnpauseComponentByEntity(sP, msgP->attn);
         break;
-      case SWITCH:
-        e = xSwitchComponent(sP, msgP->attn, msgP->arg);
+      case MUTATE:
+        e = xMutateComponent(sP, msgP->attn, msgP->arg);
         break;
       default:
         e = sP->processMessage(sP, msgP);  // some systems require more specific treatment

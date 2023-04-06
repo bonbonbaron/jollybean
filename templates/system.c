@@ -1,4 +1,5 @@
 #include "data.h"
+#include "x.h"
 #include "xREPLACEME.h"
 
 // TODO make this file as helpful as possible.
@@ -20,9 +21,10 @@
 #if 0
 XIniSysFuncDefUnused_(REPLACEME);
 #else
-Error xREPLACEMEIniSys(System *sP, void *sParamsP) {
+XIniSysFuncDef_(REPLACEME) {
 	unused_(sParamsP);
   unused_(sP);
+  // TODO put good code here
   return SUCCESS;
 }
 #endif
@@ -30,14 +32,14 @@ Error xREPLACEMEIniSys(System *sP, void *sParamsP) {
 #if 0
 XIniSubcompFuncDefUnused_(REPLACEME);
 #else
-Error xREPLACEMEIniSubcomp(System *sP, void *compDataP, void *compDataSrcP) {
-	if (!sP || !compDataP || !compDataSrcP)
+XIniSubcompFuncDef_(REPLACEME) {
+	if (!sP || !entity || !subtype || !dataP) {
 		return E_BAD_ARGS;
+  }
 
   Error e = SUCCESS;
 	XREPLACEME *xREPLACEMESysP = (XREPLACEME*) sP;
-	XREPLACEMEComp *cP = (XREPLACEMEComp*) compDataP;
-  XREPLACEMECompSrc *imgP = (XREPLACEMECompSrc*) compDataSrcP;
+  // TODO put good code here
 
 	return e;
 }
@@ -47,27 +49,40 @@ Error xREPLACEMEIniSubcomp(System *sP, void *compDataP, void *compDataSrcP) {
 XGetShareFuncDefUnused_(REPLACEME);
 #else
 XGetShareFuncDef_(REPLACEME) {
-  XREPLACEME *xREPLACEMESysP = (XREPLACEME*) sP;
+  XREPLACEME *xP = (XREPLACEME*) sP;
   Error e = SUCCESS;
+  // TODO put good code here
   return e;
-}
-#endif
-
-#if 0
-XProcMsgFuncDefUnused_(REPLACEME);
-#else
-Error xREPLACEMEProcessMessage(System *sP, Message *msgP) {
-	unused_(sP);
-	unused_(msgP);
-	return SUCCESS;
 }
 #endif
 
 #if 0
 XPostprocessCompsDefUnused_(REPLACEME);
 #else
-Error XPostprocessComps(REPLACEME) {
+XPostprocessCompsDef_(REPLACEME) {
+  // TODO put good code here
   unused_(sP);
+  return SUCCESS;
+}
+#endif
+
+#if 0
+XPostMutateFuncDefUnused_(REPLACEME);
+#else
+XPostMutateFuncDef_(REPLACEME) {
+  unused_(sP);
+  unused_(cP);
+  return SUCCESS;
+}
+#endif
+
+#if 0
+XProcMsgFuncDefUnused_(REPLACEME);
+#else
+XProcMsgFuncDef_(REPLACEME) {
+	unused_(sP);
+	unused_(msgP);
+	return SUCCESS;
 }
 #endif
 
@@ -76,6 +91,7 @@ Error XPostprocessComps(REPLACEME) {
 //======================================================
 Error xREPLACEMERun(System *sP) {
 	Error e = SUCCESS;
+  // TODO put better code here
 
 	XREPLACEMEComp *cP = (XREPLACEMEComp*) sP->cF;
 	XREPLACEMEComp *cEndP = cP + _frayGetFirstPausedIdx(sP->cF);
@@ -92,6 +108,7 @@ XClrFuncDefUnused_(REPLACEME);
 #else
 XClrFuncDef_(REPLACEME) {
   unused_(sP);
+  // TODO put good code here
   return SUCCESS;
 }
 #endif
@@ -100,4 +117,4 @@ XClrFuncDef_(REPLACEME) {
 // System definition
 //======================================================
 #define FLAGS_HERE (0)
-X_(REPLACEME, 1, FLAGS_HERE);
+X_(REPLACEME, 1, 0, FLAGS_HERE);

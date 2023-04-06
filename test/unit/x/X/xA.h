@@ -3,12 +3,21 @@
 #include "x.h"
 
 typedef struct {
-  int a, b, c;
+  char a;
+  double b;
+  short c;
+  int d;
 } XAComp;
 
 // Images
-Error xAIniS(System *sP, void *sParamsP);
-Error xAProcessMessage(System *sP, Message *msgP);
+XIniSysFuncDef_(A);
+XGetShareFuncDef_(A);
+XIniSubcompFuncDef_(A);
+XPostprocessCompsDef_(A);
+XProcMsgFuncDef_(A);
+XRunFuncDef_(A);
+XClrFuncDef_(A);
+XPostMutateFuncDef_(REPLACME);
 
 typedef struct {
   System system;

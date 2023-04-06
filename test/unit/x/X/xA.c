@@ -1,5 +1,6 @@
-#include "xA.h"
 #include "data.h"
+#include "x.h"
+#include "xA.h"
 
 // TODO make this file as helpful as possible.
 // TODO add xP casting in each USED function.
@@ -17,57 +18,71 @@
 //======================================================
 // Initialize A's system.
 //======================================================
-#if 1
+#if 0
 XIniSysFuncDefUnused_(A);
 #else
-Error xAIniSys(System *sP, void *sParamsP) {
+XIniSysFuncDef_(A) {
 	unused_(sParamsP);
   unused_(sP);
+  // TODO put good code here
   return SUCCESS;
 }
 #endif
 
-#if 1
+#if 0
 XIniSubcompFuncDefUnused_(A);
 #else
-Error xAIniSubcomp(System *sP, void *compDataP, void *compDataSrcP) {
-	if (!sP || !compDataP || !compDataSrcP)
+XIniSubcompFuncDef_(A) {
+	if (!sP || !entity || !subtype || !dataP) {
 		return E_BAD_ARGS;
+  }
 
   Error e = SUCCESS;
 	XA *xASysP = (XA*) sP;
-	XAComp *cP = (XAComp*) compDataP;
-  XACompSrc *imgP = (XACompSrc*) compDataSrcP;
+  // TODO put good code here
 
 	return e;
 }
 #endif
 
-#if 1
+#if 0
 XGetShareFuncDefUnused_(A);
 #else
 XGetShareFuncDef_(A) {
-  XA *xASysP = (XA*) sP;
+  XA *xP = (XA*) sP;
   Error e = SUCCESS;
+  // TODO put good code here
   return e;
 }
 #endif
 
-#if 1
-XProcMsgFuncDefUnused_(A);
+#if 0
+XPostprocessCompsDefUnused_(A);
 #else
-Error xAProcessMessage(System *sP, Message *msgP) {
-	unused_(sP);
-	unused_(msgP);
-	return SUCCESS;
+XPostprocessCompsDef_(A) {
+  // TODO put good code here
+  unused_(sP);
+  return SUCCESS;
 }
 #endif
 
-#if 1
-XPostprocessCompsDefUnused_(A);
+#if 0
+XPostMutateFuncDefUnused_(A);
 #else
-Error XPostprocessComps(A) {
+XPostMutateFuncDef_(A) {
   unused_(sP);
+  unused_(cP);
+  return SUCCESS;
+}
+#endif
+
+#if 0
+XProcMsgFuncDefUnused_(A);
+#else
+XProcMsgFuncDef_(A) {
+	unused_(sP);
+	unused_(msgP);
+	return SUCCESS;
 }
 #endif
 
@@ -76,22 +91,24 @@ Error XPostprocessComps(A) {
 //======================================================
 Error xARun(System *sP) {
 	Error e = SUCCESS;
+  // TODO put better code here
 
 	XAComp *cP = (XAComp*) sP->cF;
 	XAComp *cEndP = cP + _frayGetFirstPausedIdx(sP->cF);
 
   for (; cP < cEndP; cP++) {
-    printf("A: Entity %d's component cF[%d] = {a = %d, b = %d, c = %d}\n", xGetEntityByVoidComponentPtr(sP, cP), cP - (XAComp*) sP->cF, cP->a, cP->b, cP->c);
+    // do something on each element here
   }
 
 	return e;
 }
 
-#if 1
+#if 0
 XClrFuncDefUnused_(A);
 #else
 XClrFuncDef_(A) {
   unused_(sP);
+  // TODO put good code here
   return SUCCESS;
 }
 #endif
@@ -100,4 +117,4 @@ XClrFuncDef_(A) {
 // System definition
 //======================================================
 #define FLAGS_HERE (0)
-X_(A, 1, FLAGS_HERE);
+X_(A, 1, b, FLAGS_HERE);

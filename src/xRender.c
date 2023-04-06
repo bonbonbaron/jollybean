@@ -639,4 +639,4 @@ Error xRenderRun(System *sP) {
 //======================================================
 // System definition
 //======================================================
-X_(Render, RENDER, FLG_NO_SWITCHES_);
+X_(Render, RENDER, FLG_NO_MUTATIONS_);

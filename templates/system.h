@@ -6,8 +6,14 @@ typedef struct {
 } XREPLACEMEComp;
 
 // Images
-Error xREPLACEMEIniS(System *sP, void *sParamsP);
-Error xREPLACEMEProcessMessage(System *sP, Message *msgP);
+XIniSysFuncDef_(REPLACEME);
+XGetShareFuncDef_(REPLACEME);
+XIniSubcompFuncDef_(REPLACEME);
+XPostprocessCompsDef_(REPLACEME);
+XProcMsgFuncDef_(REPLACEME);
+XRunFuncDef_(REPLACEME);
+XClrFuncDef_(REPLACEME);
+XPostMutateFuncDef_(REPLACME);
 
 typedef struct {
   System system;

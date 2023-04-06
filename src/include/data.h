@@ -348,5 +348,15 @@ Error stripIni(StripDataS *sdP);
 // Stitching
 #define structMemberOffset_(structType_, memberName_) (U32) &(((structType_*) NULL)->memberName_)
 #define structMemberSizeof_(structType_, memberName_) sizeof(((structType_*) NULL)->memberName_)
+#define stitch_(dstP_, dstType_, dstMemberName_, srcP_) \
+  /* Throw a compile-time error if stitching mismatches destination. */\
+  static_assert(structMemberSizeof_(dstType_, dstMemberName_) == sizeof(*srcP_), \
+      "Memcpy'ing data to a differently sized destination.");\
+  memcpy((U8*) dstP_ + structMemberOffset_(dstType_, dstMemberName_), srcP_, sizeof(*srcP_))
+#define memcpy_(dstP_, srcP_) \
+  /* Throw a compile-time error if stitching mismatches destination. */\
+  static_assert(sizeof(*(dstP_)) == sizeof(*(srcP_)), \
+      "Memcpy'ing data to a differently sized destination.");\
+  memcpy(dstP_, srcP_, sizeof(*(srcP_)))
 
 #endif  // #ifndef DATA_H
