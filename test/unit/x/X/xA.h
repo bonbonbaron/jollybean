@@ -4,10 +4,14 @@
 
 typedef struct {
   char a;
-  double b;
+  int b;
   short c;
-  int d;
+  double d;
 } XAComp;
+
+typedef struct {
+  short cMutation;
+} XAMutation;
 
 // Images
 XIniSysFuncDef_(A);

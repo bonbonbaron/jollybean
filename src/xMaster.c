@@ -384,7 +384,7 @@ static Error _makeMutationMapArrays(Biome *biomeP, GeneHisto *geneHistoP, Key nS
       if (nMutationsForCurrGene) {
         e = mapNew(&spawnP->geneMutationMPA[systemId], 
                    RAW_DATA,
-                   geneHistoP->histoXElemA[systemId].size,
+                   geneHistoP->histoXElemA[systemId].size,  // TODO replace this with mutation size
                    nMutationsForCurrGene);
       }
     }

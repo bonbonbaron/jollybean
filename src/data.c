@@ -1135,77 +1135,71 @@ static void _fraySwap(const void *frayP, U32 oldIdx, U32 newIdx) {
 
 // Pausing *active* elements moves them to the first paused position.
 // Pausing *inactive* elements moves them to the last paused position.
-U32 frayPause(const void *frayP, U32 idx) {
+void frayPause(const void *frayP, FrayChanges *changesP) {
   U32 *nPausedP = _frayGetNPausedP(frayP);
-  if (!_frayElemIsPaused(frayP, idx) && *nPausedP < arrayGetNElems(frayP)) {
+  if (!_frayElemIsPaused(frayP, changesP->origIdx) && *nPausedP < arrayGetNElems(frayP)) {
     U32 *firstInactiveIdxP = _frayGetFirstInactiveIdxP(frayP);
     ++(*nPausedP);
-    U32 newIdx;
-    if (idx < *firstInactiveIdxP) 
-      newIdx = *firstInactiveIdxP - *nPausedP;
-    else 
-      newIdx = (*firstInactiveIdxP)++;
-    _fraySwap(frayP, idx, newIdx);
-    return newIdx;
+    if (changesP->origIdx < *firstInactiveIdxP) {
+      changesP->newIdx = *firstInactiveIdxP - *nPausedP;
+    }
+    else {
+      changesP->newIdx = (*firstInactiveIdxP)++;
+    }
+    _fraySwap(frayP, changesP->origIdx, changesP->newIdx);
   }
-  return idx;
 }
 
 // Unlike pausing, unpausing can only send elements in one direction: leftward.
-U32 frayUnpause(const void *frayP, U32 idx) {
+void frayUnpause(const void *frayP, FrayChanges *changesP) {
   register U32  *nPausedP = _frayGetNPausedP(frayP);
   U32 firstInactiveIdx =  _frayGetFirstInactiveIdx(frayP);
-  if (_frayElemIsPaused(frayP, idx) && *nPausedP < firstInactiveIdx) {
-    U32 newIdx = firstInactiveIdx - (*nPausedP)--;
-    _fraySwap(frayP, idx, newIdx);
-    return newIdx;
+  if (_frayElemIsPaused(frayP, changesP->origIdx) && *nPausedP < firstInactiveIdx) {
+    changesP->newIdx = firstInactiveIdx - (*nPausedP)--;
+    _fraySwap(frayP, changesP->origIdx, changesP->newIdx);
   }
-  return idx;
 }
 
-
 // Returns new index of activated element 
-U32 frayActivate(const void *frayP, U32 idx) {
-  if (!_frayElemIsActive(frayP, idx)) {
+void frayActivate(const void *frayP, FrayChanges *changesP) {
+  if (!_frayElemIsActive(frayP, changesP->origIdx)) {
+    if (_frayElemIsPaused(frayP, changesP->origIdx)) {
+      frayUnpause(frayP, changesP);
+      return;
+    }
     U32 *firstInactiveIdxP = _frayGetFirstInactiveIdxP(frayP);
-    U32 newIdx;
     U32 nPaused = *_frayGetNPausedP(frayP);
     if (!nPaused) {  // With no paused elements, we can blissfully single-swap.
-      newIdx = (*firstInactiveIdxP)++;            // swap with first inactive (from left side)
+      changesP->newIdx = (*firstInactiveIdxP)++;  // swap with first inactive (from left side)
+      _fraySwap(frayP, changesP->origIdx, changesP->newIdx);
     }
     else {  // Otherwise, we must double-swap to preserve intermediate paused elems' contiguity.
-      newIdx = *firstInactiveIdxP;                // swap with first inactive (from right side)
-      _fraySwap(frayP, idx, newIdx);
-      idx = newIdx;                  
-      newIdx = (*firstInactiveIdxP)++ - nPaused;  // swap 1st deact. elem with 1st paused
+      changesP->intermediateIdx = *firstInactiveIdxP;  // swap with first inactive (from right side)
+      _fraySwap(frayP, changesP->origIdx, changesP->intermediateIdx);
+      changesP->newIdx = (*firstInactiveIdxP)++ - nPaused;  // swap 1st deact. elem with 1st paused
+      _fraySwap(frayP, changesP->intermediateIdx, changesP->newIdx);
     }
-    _fraySwap(frayP, idx, newIdx);
     // Return index of activated element's new position.
-    return newIdx;
   }
-  return idx;
 }
 
 // Returns new index of deactivated element 
-U32 frayDeactivate(const void *frayP, U32 idx) {
-  if (_frayElemIsActive(frayP, idx)) {
+void frayDeactivate(const void *frayP, FrayChanges *changesP) {
+  if (_frayElemIsActive(frayP, changesP->origIdx)) {
     U32 *firstInactiveIdxP = _frayGetFirstInactiveIdxP(frayP);
-    U32 newIdx;
     U32 nPaused = *_frayGetNPausedP(frayP);
     if (!nPaused) { // With no paused elements, we can blissfully single-swap.
-      newIdx = --(*firstInactiveIdxP);            // swap with last active 
+      changesP->newIdx = --(*firstInactiveIdxP);            // swap with last active 
+      _fraySwap(frayP, changesP->origIdx, changesP->newIdx);
     }
     else {  // Otherwise, we must double-swap to preserve intermediate paused elems' contiguity.
-      newIdx = *firstInactiveIdxP - nPaused - 1;  // swap with last active
-      _fraySwap(frayP, idx, newIdx);
-      idx = newIdx;                  
-      newIdx = --(*firstInactiveIdxP);  // swap last active with last paused
+      changesP->intermediateIdx = *firstInactiveIdxP - nPaused - 1;  // swap with last active
+      _fraySwap(frayP, changesP->origIdx, changesP->intermediateIdx);
+      changesP->newIdx = --(*firstInactiveIdxP);  // swap last active with last paused
+      _fraySwap(frayP, changesP->intermediateIdx, changesP->newIdx);
     }
-    _fraySwap(frayP, idx, newIdx);
     // Return index of activated element's new position.
-    return newIdx;
   }
-  return idx;
 }
 
 // Messaging

@@ -29,7 +29,7 @@ XIniSysFuncDef_(A) {
 }
 #endif
 
-#if 0
+#if 1
 XIniSubcompFuncDefUnused_(A);
 #else
 XIniSubcompFuncDef_(A) {
@@ -45,7 +45,7 @@ XIniSubcompFuncDef_(A) {
 }
 #endif
 
-#if 0
+#if 1
 XGetShareFuncDefUnused_(A);
 #else
 XGetShareFuncDef_(A) {
@@ -56,7 +56,7 @@ XGetShareFuncDef_(A) {
 }
 #endif
 
-#if 0
+#if 1
 XPostprocessCompsDefUnused_(A);
 #else
 XPostprocessCompsDef_(A) {
@@ -70,8 +70,10 @@ XPostprocessCompsDef_(A) {
 XPostMutateFuncDefUnused_(A);
 #else
 XPostMutateFuncDef_(A) {
-  unused_(sP);
-  unused_(cP);
+  XAComp* _cP = cP;
+  _cP->a = _cP->c & 0xff;
+  _cP->b = _cP->c * 2;
+  _cP->d = (double) _cP->c;
   return SUCCESS;
 }
 #endif
@@ -117,4 +119,5 @@ XClrFuncDef_(A) {
 // System definition
 //======================================================
 #define FLAGS_HERE (0)
-X_(A, 1, b, FLAGS_HERE);
+#define CHANGE_THIS (0)
+X_(A, 1, c, FLAGS_HERE);

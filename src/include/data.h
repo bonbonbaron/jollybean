@@ -213,13 +213,24 @@ void inflatableClr(Inflatable *inflatableP);
 #define frayGetElemSz_ arrayGetElemSz
 #define frayGetElemByIdx_ _fast_arrayGetElemByIdx
 
+typedef struct {
+  S32 origIdx;
+  S32 intermediateIdx;
+  S32 newIdx;
+} FrayChanges;
+
+#define frayChangesIni_(fc_, origIdx_) \
+  fc_.origIdx = origIdx_;\
+  fc_.intermediateIdx = -1;\
+  fc_.newIdx = -1;
+
 Error frayNew(void **fPP, U32 elemSz, U32 nElems);
 void  frayDel(void **frayPP);
 Error frayAdd(const void *frayP, void *elemP, U32 *elemNewIdxP);
-U32   frayActivate(const void *frayP, U32 idx);
-U32   frayDeactivate(const void *frayP, U32 idx);
-U32   frayPause(const void *frayP, U32 idx);
-U32   frayUnpause(const void *frayP, U32 idx);
+void  frayActivate(const void *frayP, FrayChanges *changesP);
+void  frayDeactivate(const void *frayP, FrayChanges *changesP);
+void  frayPause(const void *frayP, FrayChanges *changesP);
+void  frayUnpause(const void *frayP, FrayChanges *changesP);
 U8    frayElemIsActive(const void *frayP, U32 idx);
 void  frayActivateAll(const void *frayP);
 void  frayUnpauseAll(const void *frayP);
@@ -260,7 +271,7 @@ inline U8 _frayElemIsActive(const void *frayP, U32 idx) {
 }
 
 inline U8 _frayElemIsPaused(const void *frayP, U32 idx) {
-  return idx >= _frayGetFirstPausedIdx(frayP) && idx < _frayGetFirstInactiveIdx(frayP);
+  return (*_frayGetNPausedP(frayP) > 0) && idx >= _frayGetFirstPausedIdx(frayP) && idx <  _frayGetFirstInactiveIdx(frayP);
 }
 
 inline U8 _frayHasRoom(const void *frayP) {

@@ -5,6 +5,9 @@
 typedef struct {
 } XREPLACEMEComp;
 
+typedef struct {
+} XREPLACEMEMutation;
+
 // Images
 XIniSysFuncDef_(REPLACEME);
 XGetShareFuncDef_(REPLACEME);

@@ -37,6 +37,7 @@ typedef enum { INITIALIZED = 1 } SubcomponentState;
   {\
     .id                = id_,\
     .compSz            = sizeof(X##name_##Comp),\
+    .mutationSz        = sizeof(X##name_##Mutation),\
     .mutationOffset    = structMemberOffset_(X##name_##Comp, fieldToMutate_),\
     .flags             = flags_,\
     .cF                = NULL,\
@@ -67,7 +68,6 @@ typedef Error (*XClrU)(struct _System *sP);
 typedef Error (*XProcMsgU)(struct _System *sP, Message *messageP);
 typedef Error (*XGetShareU)(struct _System *sP, Map *shareMMP);
 typedef Error (*XPostprocessCompsU)(struct _System *sP);
-typedef void* (*XMutateCompU)(Key key);  // used to switch between a multi-form component, like rect's position.
 typedef Error (*XPostMutateU)(struct _System *sP, void *cP);  // changes immutables alogn with mutables
 #define XPostprocessCompsDefUnused_(name_) XPostprocessCompsDef_(name_) {\
   unused_(sP);\
@@ -141,9 +141,10 @@ typedef enum {
 
 typedef struct _System {
   Key           id;                  // ID of system 
-  Key           compSz;              // components are the same size in all of this system's activities 
-  U8            flags;               // System flags. Use this however you want.
+  U8            compSz;              // components are the same size in all of this system's activities 
+  U8            mutationSz;               // System flags. Use this however you want.
   U8            mutationOffset;      // position in destination component struct to copy mutation to
+  U32           flags;               // System flags. Use this however you want.
   void         *cF;                  // component fray 
   Entity       *pauseQueueF;         // queue for pausing
   Entity       *deactivateQueueF;    // queue for pausing
@@ -179,7 +180,6 @@ Error    xActivateComponentByEntity(System *sP, Entity e1);
 Error    xDeactivateComponentByEntity(System *sP, Entity e1);
 Error    xPauseComponentByEntity(System *sP, Entity entity);
 Error    xUnpauseComponentByEntity(System *sP, Entity entity);
-Error    xMutateComponent(System *sP, Entity entity, Key newCompKey);
 Error    xActivateComponentByIdx(System *sP, Key compOrigIdx);
 Error    xDeactivateComponentByIdx(System *sP, Key compOrigIdx);
 Error    xQueuePause(System *sP, void *componentP);

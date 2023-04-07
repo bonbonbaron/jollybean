@@ -15,7 +15,7 @@ JOLLBEAN_INCLUDES = $(shell find -name "*.h")
 TGTINCLUDDIR = /usr/local/include/jollybean/
 IFLAGS=-I./src/include/ -I/home/bonbonbaron/jb/src/Keyring/
 
-CFLAGS_COMMON  = -Wall -lpthread $(IFLAGS) #-ffunction-sections \
+CFLAGS_COMMON  = -g -Wall -lpthread $(IFLAGS) #-ffunction-sections \
 							 	 -fdata-sections -s -fno-ident -fmerge-all-constants \
 							 	 -fomit-frame-pointer -fno-stack-protector -O0
 							 	 #-fomit-frame-pointer -fno-stack-protector -O3  #-mfpu=neon -O3

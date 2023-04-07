@@ -25,24 +25,44 @@ Entity xGetEntityByCompIdx(System *sP, Key compIdx) {
   return _getEntityByCompIdx(sP, compIdx);
 }
 
-static Error _xSwap(System *sP, Key *origIdxP, Key newIdx) {
-  if (!sP || !origIdxP) {
+static Error __xSwap(System *sP, S32 origIdx, S32 newIdx) {
+  if (!sP || newIdx < 0) {
     return E_BAD_ARGS;
   }
-  if (*origIdxP == newIdx) {
+  if (origIdx == newIdx) {
     return SUCCESS;  // _swap() zeros out identical operands
   }
-  Entity entity = _getEntityByCompIdx(sP, newIdx);
-  if (!entity) {
+  Entity entity1 = _getEntityByCompIdx(sP, origIdx);
+  Entity entity2 = _getEntityByCompIdx(sP, newIdx);
+  Key *origIdxP  = (Key*) mapGet(sP->e2cIdxMP, entity1);
+  Key *newIdxP   = (Key*) mapGet(sP->e2cIdxMP, entity2);
+  if (!origIdxP || !newIdxP) {
     return E_ENTITY_NOT_IN_SYSTEM;
-  }
-  Key *newIdxP  = mapGet(sP->e2cIdxMP, entity);
-  if (!newIdxP) {
-    return E_BAD_KEY;
   }
   swap_(sP->cIdx2eA[newIdx], sP->cIdx2eA[*origIdxP]);
   swap_(*origIdxP, *newIdxP);
   return SUCCESS;
+}
+
+static Error _xSwap(System *sP, FrayChanges *changesP) {
+  // If nothing changed, just return success; e.g. activating an element already in index 0
+  if (changesP->newIdx == changesP->origIdx) {
+    return SUCCESS;
+  }
+  Error e = SUCCESS;
+  // Existence of paused elements requires an additional, intermediate swap.
+  if (changesP->newIdx > 0) {
+    if (changesP->intermediateIdx < 0) {
+      e = __xSwap(sP, changesP->origIdx, changesP->newIdx);
+    }
+    else {
+      e = __xSwap(sP, changesP->origIdx, changesP->intermediateIdx);
+      if (!e) {
+        e = __xSwap(sP, changesP->intermediateIdx, changesP->newIdx);
+      }
+    }
+  }
+  return e;
 }
 
 Error xActivateComponentByEntity(System *sP, Entity entity) {
@@ -54,19 +74,10 @@ Error xActivateComponentByEntity(System *sP, Entity entity) {
   if (!compOrigIdxP) {
     return E_ENTITY_NOT_IN_SYSTEM;
   }
-  Key  compNewIdx   = frayActivate(sP->cF, *compOrigIdxP);
-  if (compNewIdx != *compOrigIdxP) {
-    // Existence of paused elements requires an additional, intermediate swap.
-    if (!*_frayGetNPausedP(sP->cF)) {
-      _xSwap(sP, compOrigIdxP, compNewIdx);
-    }
-    else {
-      Key intermediateIdx = *_frayGetFirstInactiveIdxP(sP->cF) - 1;
-      _xSwap(sP, compOrigIdxP, intermediateIdx);
-      _xSwap(sP, &intermediateIdx, compNewIdx);
-    }
-  }
-  return SUCCESS;
+  FrayChanges changes;
+  frayChangesIni_(changes, *compOrigIdxP);
+  frayActivate(sP->cF, &changes);
+  return _xSwap(sP, &changes);
 }
 
 Error xDeactivateComponentByEntity(System *sP, Entity entity) {
@@ -77,24 +88,10 @@ Error xDeactivateComponentByEntity(System *sP, Entity entity) {
   if (!compOrigIdxP) {
     return E_ENTITY_NOT_IN_SYSTEM;
   }
-  Error e = SUCCESS;
-  Key  compNewIdx   = frayDeactivate(sP->cF, *compOrigIdxP);
-  if (compNewIdx != *compOrigIdxP) {
-    // Existence of paused elements requires an additional, intermediate swap.
-    Key nPaused = *_frayGetNPausedP(sP->cF);
-    if (nPaused) 
-      e = _xSwap(sP, compOrigIdxP, compNewIdx);
-    else {
-      Key intermediateIdx = *_frayGetFirstInactiveIdxP(sP->cF) - nPaused;
-      if (!e) {
-        e = _xSwap(sP, compOrigIdxP, intermediateIdx);
-      }
-      if (!e) {
-        e = _xSwap(sP, &intermediateIdx, compNewIdx);
-      }
-    }
-  }
-  return e;
+  FrayChanges changes;
+  frayChangesIni_(changes, *compOrigIdxP);
+  frayDeactivate(sP->cF, &changes);
+  return _xSwap(sP, &changes);
 }
 
 Error xPauseComponentByEntity(System *sP, Entity entity) {
@@ -105,8 +102,10 @@ Error xPauseComponentByEntity(System *sP, Entity entity) {
   if (!compOrigIdxP) {
     return E_ENTITY_NOT_IN_SYSTEM;
   }
-  Key newIdx = frayPause(sP->cF, *compOrigIdxP);
-  return _xSwap(sP, compOrigIdxP, newIdx);
+  FrayChanges changes;
+  frayChangesIni_(changes, *compOrigIdxP);
+  frayPause(sP->cF, &changes);
+  return _xSwap(sP, &changes);
 }
 
 Error xUnpauseComponentByEntity(System *sP, Entity entity) {
@@ -117,7 +116,10 @@ Error xUnpauseComponentByEntity(System *sP, Entity entity) {
   if (!compOrigIdxP) {
     return E_ENTITY_NOT_IN_SYSTEM;
   }
-  return _xSwap(sP, compOrigIdxP, frayUnpause(sP->cF, *compOrigIdxP));
+  FrayChanges changes;
+  frayChangesIni_(changes, *compOrigIdxP);
+  frayUnpause(sP->cF, &changes);
+  return _xSwap(sP, &changes);
 }
 
 Error xActivateComponentByIdx(System *sP, Key compOrigIdx) {
@@ -141,7 +143,7 @@ U32 xGetNComps(System *sP) {
 	return arrayGetNElems(sP->cF);
 }
 
-// Insert inner mutation map (mutatio key -> new component value) into outer mutation map (key=entity)
+// Insert inner mutation map (maps trigger to mutation) into outer mutation map (maps Entity to Map*)
 Error xAddMutationMap(System *sP, Entity entity, Map *mutationMP) {
   if (!entity || !sP) { // null mutation map is okay
     return E_BAD_ARGS;
@@ -149,6 +151,7 @@ Error xAddMutationMap(System *sP, Entity entity, Map *mutationMP) {
   // If the component is immutable, that's fine, don't worry about it. 
   // If the user intended to mutate the gene, ensure we have both pieces of data.
   if (mutationMP && sP->mutationMPMP) {
+    assert(arrayGetElemSz(mutationMP->mapA) == sP->mutationSz);
     return mapSet(sP->mutationMPMP, entity, &mutationMP);
   }
   // Otherwise bomb out.
@@ -238,8 +241,8 @@ Error xIniSys(System *sP, U32 nComps, void *miscP) {
   if (!e) {
     e = mapNew(&sP->e2cIdxMP, RAW_DATA, sizeof(Key), nComps);
   }
-  if (!e && !(sP->flags & FLG_NO_MUTATIONS_)) {
-    e = mapNew(&sP->mutationMPMP, FUNCTION_POINTER, sizeof(XMutateCompU), nComps);
+  if (!e && !(sP->flags & FLG_NO_MUTATIONS_) && sP->mutationSz) {
+    e = mapNew(&sP->mutationMPMP, MAP_POINTER, sizeof(Map*), nComps);
   }
 	// Only allocate one mailbox; it serves as input and output.
 	if (!e) {
@@ -272,7 +275,9 @@ void xClr(System *sP) {
   frayDel((void**) &sP->pauseQueueF);
   mapDel(&sP->subcompOwnerMP);
   mapDel(&sP->e2cIdxMP);
-  mapOfNestedMapsDel(&sP->mutationMPMP);
+  // DOn't delete inner maps as there may be multiple copies pointing at the same thing.
+  //mapOfNestedMapsDel(&sP->mutationMPMP);
+  mapDel(&sP->mutationMPMP);
   arrayDel((void**) &sP->cIdx2eA);
 }
 
@@ -286,11 +291,12 @@ Error xMutateComponent(System *sP, Entity entity, Key newCompKey) {
   Map *mutationMP = NULL;
   Error e = mapGetNestedMapP(sP->mutationMPMP, entity, &mutationMP);
   if (!e) {
+    assert(mutationMP->elemType == RAW_DATA);
     void* cP = xGetCompPByEntity(sP, entity);
     if (cP) {
-      void **tmpP = mapGet(mutationMP, newCompKey);
+      void *tmpP = mapGet(mutationMP, newCompKey);
       if (tmpP) {
-        memcpy((U8*) cP + sP->mutationOffset, *tmpP, arrayGetElemSz(mutationMP->mapA));
+        memcpy((U8*) cP + sP->mutationOffset, tmpP, arrayGetElemSz(mutationMP->mapA));
         return sP->postMutate(sP, cP);
       }
     }

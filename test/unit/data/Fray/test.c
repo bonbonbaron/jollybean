@@ -28,6 +28,8 @@ static void _reportFray(char *prelude, U32 *frayP) {
 
 int main(int argc, char **argv) {
   U32 *aF;
+  FrayChanges changes;
+  frayChangesIni_(changes, -1);
   static const U32 N_ELEMS = 10;
   // Make fray.
   Error e = frayNew((void**) &aF, sizeof(U32), N_ELEMS);
@@ -44,24 +46,31 @@ int main(int argc, char **argv) {
   // Check on it.
   _reportFray("initialized", aF);
   // Activate.
-  frayActivate(aF, 2);
-  frayActivate(aF, 5);
-  frayActivate(aF, 7);
+  frayChangesIni_(changes, 2);
+  frayActivate(aF, &changes);
+  frayChangesIni_(changes, 5);
+  frayActivate(aF, &changes);
+  frayChangesIni_(changes, 7);
+  frayActivate(aF, &changes);
   _reportFray("After activating 2, 5, and 7", aF);
   assert(aF[0] == 2);
   assert(aF[1] == 5);
   assert(aF[2] == 7);
   // Pause.
-  frayPause(aF, 1);
+  frayChangesIni_(changes, 1);
+  frayPause(aF, &changes);
   _reportFray("After pausing 5", aF);
   assert(aF[2] == 5);
   // Activate across a pause.
-  frayActivate(aF, 9);
+  frayChangesIni_(changes, 9);
+  frayActivate(aF, &changes);
   _reportFray("After activating 9 across a pause", aF);
   assert(aF[2] == 9);
   // Deactivate across a pause.
-  frayDeactivate(aF, 2);
-  frayDeactivate(aF, 0);
+  frayChangesIni_(changes, 2);
+  frayDeactivate(aF, &changes);
+  frayChangesIni_(changes, 0);
+  frayDeactivate(aF, &changes);
   _reportFray("After deactivating 2 and 9 across a pause", aF);
   assert(aF[2] == 2);
   assert(aF[3] == 9);
@@ -72,13 +81,17 @@ int main(int argc, char **argv) {
   assert(aF[1] == 5);
   assert(aF[2] == 2);
   // Unpause.
-  frayUnpause(aF, 1);
+  frayChangesIni_(changes, 1);
+  frayUnpause(aF, &changes);
   assert(!_frayElemIsPaused(aF, 1));
   _reportFray("After unpausing 5", aF);
   // Pause multiple.
-  frayPause(aF, 5);
-  frayPause(aF, 6);
-  frayPause(aF, 7);
+  frayChangesIni_(changes, 5);
+  frayPause(aF, &changes);
+  frayChangesIni_(changes, 6);
+  frayPause(aF, &changes);
+  frayChangesIni_(changes, 7);
+  frayPause(aF, &changes);
   _reportFray("Pausing 1, 6, and 0", aF);
   assert(aF[2] == 1);
   assert(aF[3] == 6);

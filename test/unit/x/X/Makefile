@@ -4,7 +4,7 @@ INC = ${SRC}/include
 BLD = ${JB}/build
 
 ./o: ./test.o ${BLD}/data.o ${BLD}/x.o ./xA.o
-	${CC} ./test.o ./xA.o ${BLD}/x.o ${BLD}/data.o -o $@ 
+	${CC} -lm ./test.o ./xA.o ${BLD}/x.o ${BLD}/data.o -o $@ 
 	touch $@
 
 ./%.o: %.c 
@@ -12,7 +12,7 @@ BLD = ${JB}/build
 	touch $@
 
 ${BLD}/%.o: ${SRC}/%.c ${INC}/%.h
-	gcc -c $< -I${INC} -o $@
+	gcc -g -c $< -I${INC} -o $@
 	touch $@
 
 .PHONY: clean
