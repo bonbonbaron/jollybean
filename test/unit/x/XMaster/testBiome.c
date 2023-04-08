@@ -6,6 +6,7 @@
 #include "redColormap.h"
 #include "redColorPalette.h"
 #include "redAnim.h"
+#include "animKeyring.h"
 
 PositionNode spawn1PosNodeA[] = {
   {
@@ -26,7 +27,10 @@ PositionNode spawn1PosNodeA[] = {
 
 UnitaryGene_(redColormap,     MEDIA_GENE,     RENDER | COLORMAP,              0, Colormap);
 UnitaryGene_(redColorPalette, EXCLUSIVE_GENE, RENDER | COLOR_PALETTE,         0, ColorPalette);
-UnitaryGene_(redAnimation,    EXCLUSIVE_GENE, ANIMATION | ANIMATION_SUBTYPE,  0, AnimStrip);
+UnitaryGene_(redAnimStrip_WALK_DOWN, EXCLUSIVE_GENE, ANIMATION | ANIMATION_SUBTYPE,  WALK_DOWN, AnimStrip);
+UnitaryGene_(redAnimStrip_WALK_UP, EXCLUSIVE_GENE, ANIMATION | ANIMATION_SUBTYPE, WALK_UP, AnimStrip);
+UnitaryGene_(redAnimStrip_WALK_RIGHT, EXCLUSIVE_GENE, ANIMATION | ANIMATION_SUBTYPE,  WALK_RIGHT, AnimStrip);
+CompositeGene_(redAnimation, &geneName_(redAnimStrip_WALK_UP), &geneName_(redAnimStrip_WALK_DOWN), &geneName_(redAnimStrip_WALK_RIGHT));
 CompositeGene_(redGraybody, 
     &geneName_(redColormap), 
     &geneName_(redAnimation)

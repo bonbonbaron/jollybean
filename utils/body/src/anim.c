@@ -337,23 +337,6 @@ Error writeAnimJsonData(char *entityName, AnimJsonData *animP, U8 verbose) {
     fprintf(fP, "};\n\n");
     ++nKeyValPairs;
   }
-#if 1
-  // Key-animation pair array
-  fprintf(fP, "KeyAnimStripPair %sKasPairA[] = {\n", entityName);
-  for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
-    fprintf(fP, "\t{\n");
-    fprintf(fP, "\t\t.key  = %s,\n", tagP->name);
-    fprintf(fP, "\t\t.animStripP = &%sAnimStrip_%s\n", entityName, tagP->name);
-    fprintf(fP, "\t},\n");
-  }
-  fprintf(fP, "};\n\n");  
-  // Animation 
-  fprintf(fP, "Animation %sAnimation = {\n", entityName);
-  fprintf(fP, "\t.nPairs = %d,\n", nKeyValPairs);
-  fprintf(fP, "\t.kasPairA = %sKasPairA,\n", entityName);
-  fprintf(fP, "\t.animMP = NULL\n", entityName);  // animation map starts out uninitialized
-  fprintf(fP, "};\n");  
-#endif
   fclose(fP);
 
   return SUCCESS;
@@ -365,7 +348,9 @@ Error writeAnimHeader(char *entityName, AnimJsonData *animP, U8 verbose) {
     return E_FILE_IO;
   }
   fprintf(fP, "#include \"xAnim.h\"\n");
-  fprintf(fP, "extern Animation %sAnimation;\n", entityName);
+  for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
+    fprintf(fP, "extern AnimStrip %sAnimStrip_%s;\n", entityName, tagP->name);
+  }
   fclose(fP);
 
   return SUCCESS;

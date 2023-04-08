@@ -1,1 +1,1 @@
-mapSet() is uncharacteristically unstable when master creates shared's inner maps. 
+See if making animation a composite gene is what's causing master not to populate shared map of source rectangles.

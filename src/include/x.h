@@ -193,6 +193,7 @@ typedef struct _System {
 } System;
 
 Error    xAddComp(System *sP, Entity entity, void *compDataP);
+Error    xMutateComponent(System *sP, Entity entity, Key newCompKey);
 Error    xIniSys(System *sP, U32 nComps, void *miscP);
 Error    xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP);
 Error    xIniSubcomp(System *sP, const Entity entity, const void *cmpP);

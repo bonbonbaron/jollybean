@@ -227,6 +227,7 @@ typedef struct {
 Error frayNew(void **fPP, U32 elemSz, U32 nElems);
 void  frayDel(void **frayPP);
 Error frayAdd(const void *frayP, void *elemP, U32 *elemNewIdxP);
+Error frayAddEmpty(const void *frayP, U32 *elemNewIdxP);
 void  frayActivate(const void *frayP, FrayChanges *changesP);
 void  frayDeactivate(const void *frayP, FrayChanges *changesP);
 void  frayPause(const void *frayP, FrayChanges *changesP);

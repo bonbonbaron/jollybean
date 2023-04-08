@@ -1106,19 +1106,33 @@ void frayDel(void **frayPP) {
 	}
 }
 
-/* Checks if the component, wherever it is in the jagged array, is before the function's stopping point in its array. */
-// Returns index of added element
-Error frayAdd(const void *frayP, void *elemP, U32 *elemNewIdxP) {
+// Common functionality to both frayAdd() and frayAddEmpty()
+static Error _frayAdd(const void *frayP, void **dstPP, U32 *elemNewIdxP) {
   if (!_frayHasRoom(frayP)) {
     return E_FRAY_FULL;
   }
   U32 *firstEmptyIdxP = _frayGetFirstEmptyIdxP(frayP);
-  void *dstP = frayGetElemByIdx_(frayP, (*firstEmptyIdxP)++);
-  memcpy(dstP, elemP, arrayGetElemSz(frayP));
   if (elemNewIdxP) {
-    *elemNewIdxP = *firstEmptyIdxP - 1;
+    *elemNewIdxP = *firstEmptyIdxP;
   }
+  *dstPP = frayGetElemByIdx_(frayP, (*firstEmptyIdxP)++);
   return SUCCESS;
+}
+
+/* Checks if the component, wherever it is in the jagged array, is before the function's stopping point in its array. */
+// Returns index of added element
+Error frayAdd(const void *frayP, void *elemP, U32 *elemNewIdxP) {
+  void *dstP;
+  Error e = _frayAdd(frayP, &dstP, elemNewIdxP);
+  memcpy(dstP, elemP, arrayGetElemSz(frayP));
+  return e;
+}
+
+Error frayAddEmpty(const void *frayP, U32 *elemNewIdxP) {
+  void *dstP;
+  Error e = _frayAdd(frayP, &dstP, elemNewIdxP);
+  memset(dstP, 0, frayGetElemSz_(frayP));
+  return e;
 }
 
 static void _fraySwap(const void *frayP, U32 oldIdx, U32 newIdx) {

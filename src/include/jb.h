@@ -19,7 +19,6 @@
 #endif
 
 // Keys  (hopefully obsolete later)
-// MASTER is 1, GO is 2
 typedef enum {UPDATE_RECT = N_XMAIL_BUILTIN_CMDS, ANIMATE} MessageCommand;
 typedef enum {MASTER = 1, ACTION, RENDER, ANIMATION, TIMER, COLLISION, N_SYSTEM_TYPES} SystemType; 
 // Make sure you don't get rid of the 3! 2 belongs to Master.

@@ -160,7 +160,7 @@ Error xAddMutationMap(System *sP, Entity entity, Map *mutationMP) {
 
 
 Error xAddComp(System *sP, Entity entity, void *compDataP) {
-  if (!sP || !entity || !compDataP) {
+  if (!sP || !entity) {
     return E_BAD_ARGS;
   }
   // Skip entities who already have a component in this system.
@@ -169,7 +169,13 @@ Error xAddComp(System *sP, Entity entity, void *compDataP) {
   }
   // Put component in first empty slot. (Will be garbage if this is a map. That's okay.)
   U32 cIdx; 
-  Error e = frayAdd(sP->cF, compDataP, &cIdx); 
+  Error e = SUCCESS;
+  if (compDataP) {
+    e = frayAdd(sP->cF, compDataP, &cIdx); 
+  }
+  else {
+    e = frayAddEmpty(sP->cF, &cIdx);
+  }
   // Add lookups from C -> E and E -> C.
   if (!e) {
     e = mapSet(sP->e2cIdxMP, entity, &cIdx);
@@ -218,6 +224,12 @@ Error xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP)
     if (!e) {
       e = sP->iniSubcomp(sP, entity, compType & MASK_COMPONENT_SUBTYPE, entityDataP);
     }
+    /* Let's take the burden of adding components off our individual systems 
+     * (unless they insist otherwise with their flags) so they only have to 
+     * worry about mutations. Some systems will want to do so in postProcess(). */
+    if (!e) {
+      e = xAddComp(sP, entity, NULL);
+    } 
     return e;
   }
   // Else it's the main component; feed it straight in baby.

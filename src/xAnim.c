@@ -1,136 +1,12 @@
 #include "xAnim.h"
 
 // Unused X functions
-XIniSysFuncDef_(Anim) {
-  XAnim *xP = (XAnim*) sP;
-  Error e = mapNew(&xP->animMPMP, MAP_POINTER, sizeof(Map*), xGetNComps(sP));
-  if (!e) {
-    e = frayNew((void**) &xP->animSingletonF, sizeof(Animation*), xGetNComps(sP));
-  }
-  return e;
-}
+XIniSysFuncDefUnused_(Anim);
+XClrFuncDefUnused_(Anim);
+XIniSubcompFuncDefUnused_(Anim);
+XPostprocessCompsDefUnused_(Anim);
 
-// sP, entity, subtype, dataP
-XIniSubcompFuncDef_(Anim) {
-  XAnim* xP = (XAnim*) sP;
-  if (!sP || !entity || subtype != ANIMATION_SUBTYPE || !dataP || !xP->animMPMP) {
-    return E_BAD_ARGS;
-  }
-
-  Error e = SUCCESS;
-
-  Animation *animP = (Animation*) dataP;
-
-  // Make a SINGLETON map of animation strips for everybody who uses this particular one.
-  if (!animP->animMP) {
-    e = mapNew(&animP->animMP, RAW_DATA, sizeof(AnimStrip), animP->nPairs);
-    if (!e) {
-      KeyAnimStripPair *kasPairP = animP->kasPairA;
-      KeyAnimStripPair *kasPairEndP = kasPairP + animP->nPairs;
-      // Map each animation key to an animation strip for this entity.
-      for (; !e && kasPairP < kasPairEndP; ++kasPairP) {
-        e = mapSet(animP->animMP, kasPairP->key, kasPairP->animStripP);
-      }
-    }
-    // Add the animation to a fray of singletons so we can delete them later.
-    if (!e) {
-      e = frayAdd(xP->animSingletonF, &animP, NULL);
-    }
-  }
-
-  // Map from entity to the above animation map in the system's map of animation maps
-  if (!e) {
-    e = mapSet(xP->animMPMP, entity, &animP->animMP);
-  }
-  if (!e) {
-    Map *testMP = NULL;
-    e = mapGetNestedMapP(xP->animMPMP, entity, &testMP);
-  }
-
-
-  // Add entity's component to system as first available animation strip.
-  if (!e) {
-    AnimStrip *stripP = (AnimStrip*) animP->animMP->mapA;
-    XAnimComp c = {
-      .currFrameIdx = 0,
-      .currStripP = stripP,  // point at first anim strip for now
-      .incrDecrement = 1,
-      .srcRectP = NULL,  // we'll set this in post-process function
-      .timeLeft = stripP->frameA[0].duration
-    };
-    e = xAddComp(sP, entity, &c);
-  }
-
-  return e;
-}
-
-XClrFuncDef_(Anim) {
-  if (!sP) {
-    return E_BAD_ARGS;
-  }
-  XAnim *xP = (XAnim*) sP;
-  mapDel(&xP->animMPMP);  // Don't delete inner maps; those are singletons properly deleted below.
-  if (xP->animSingletonF) {
-    Animation **animPP = (Animation**) xP->animSingletonF;
-    Animation **animEndPP = animPP + *_frayGetFirstEmptyIdxP(xP->animSingletonF);
-    for (; animPP < animEndPP; ++animPP) {
-      mapDel(&(*animPP)->animMP);
-    }
-    frayDel((void**) &xP->animSingletonF);
-  }
-  return SUCCESS;
-}
-
-// You only need to give every component its source rect once.
-XPostprocessCompsDef_(Anim) {
-  XAnimComp *cP = (XAnimComp*) sP->cF;
-  XAnimComp *cEndP = cP + *_frayGetFirstEmptyIdxP(sP->cF);
-  Entity entity;
-  Error e = SUCCESS;
-  XAnim *xP = (XAnim*) sP;
-
-  // Give each component its source rectangle.
-  for (; !e && cP < cEndP; ++cP) {
-    entity = xGetEntityByVoidComponentPtr(sP, (void*) cP);
-    if (!entity) {
-      e = E_NULL_VAR;
-    }
-    // Give each entity its source and destination rectangle pointers.
-    if (!e) {
-      cP->srcRectP = (Rect_*) mapGet(xP->srcRectMP, entity);
-      if (!cP->srcRectP) {
-        e = E_BAD_KEY;
-      }
-      if (!e) {
-        cP->dstRectP = (Rect_*) mapGet(xP->dstRectMP, entity);
-        if (!cP->dstRectP) {
-          e = E_BAD_KEY;
-        }
-      }
-      // Now change the W and H since originals reflect entire animation strip's dimensions.
-      Map *animMP;
-      if (!e) { 
-        e = mapGetNestedMapP(xP->animMPMP, entity, &animMP);
-      }
-      if (!e && animMP) {
-        AnimStrip *stripP = animMP->mapA;
-        if (stripP) {
-          cP->srcRectP->w = cP->dstRectP->w = stripP->frameA[0].rect.w;
-          cP->srcRectP->h = cP->dstRectP->h = stripP->frameA[0].rect.h;
-        }
-      }
-    }
-  }
-
-  // TODO get rid of this after you implement action system
-  if (!e) {
-    _frayActivateAll(sP->cF);
-  }
-
-  return SUCCESS;
-}
-
-Error xAnimProcessMessage(System *sP, Message *msgP) {
+XProcMsgFuncDef_(Anim) {
   Error e = SUCCESS;
   XAnim *xP = (XAnim*) sP;
   /* When the render system makes a texture atlas, the animation frames' rectangles no longer
@@ -138,34 +14,20 @@ Error xAnimProcessMessage(System *sP, Message *msgP) {
      right place in the atlas. */
   // Put the most commonly used logic first.
   if (msgP->cmd == ANIMATE) {
-    AnimStrip *animStripP = NULL;
-    XAnimComp *cP = NULL;
-    e = mapGetNestedMapPElem(xP->animMPMP, msgP->attn, msgP->arg, RAW_DATA, (void**) &animStripP);
-    if (!e) {
-      cP = (XAnimComp*) xGetCompPByEntity(sP, msgP->attn);
-      e = cP ? SUCCESS : E_NULL_VAR;
-    }
-    if (!e) {
-      cP->currStripP = animStripP;
-      cP->currFrameIdx = 0;
-      cP->incrDecrement = 1;
-      xActivateComponentByEntity(sP, msgP->attn);
-    }
+    e = xMutateComponent(sP, msgP->attn, msgP->arg);
   }
   else if (msgP->cmd == UPDATE_RECT) {
     AnimStrip *animStripP, *animStripEndP;
     AnimFrame *frameP, *frameEndP;
     Map *animMP = NULL;
     RectOffset *offsetP = NULL;
-
     // Get animation subcomponent and offset to apply to all its frames.
     if (!e) {
-      e = mapGetNestedMapP(xP->animMPMP, msgP->attn, &animMP);
+      e = mapGetNestedMapP(xP->system.mutationMPMP, msgP->attn, &animMP);
     }
     if (!e && animMP) {
       offsetP = (RectOffset*) mapGet(xP->offsetMP, msgP->attn);
     }
-
     // Update all of this entity's animation frames' XY coordinates by the offset.
     if (!e && animMP && offsetP) {
       animStripP = (AnimStrip*) animMP->mapA;
@@ -188,8 +50,6 @@ Error xAnimProcessMessage(System *sP, Message *msgP) {
   else {
     e = E_MAILBOX_BAD_RECIPIENT;
   }
-
-
 	return e;
 }
 
@@ -206,12 +66,40 @@ XGetShareFuncDef_(Anim) {
   if (!e) {
     mapGetNestedMapP(shareMMP, DST_RECT, &xP->dstRectMP);
   }
+  // Give each entity its source and dest rectangles.
+  XAnimComp *cP = (XAnimComp*) sP->cF;
+  XAnimComp *cEndP = cP + *_frayGetFirstEmptyIdxP(sP->cF);
+  for (Entity entity; !e && cP < cEndP; ++cP) {
+    entity = xGetEntityByVoidComponentPtr(sP, (void*) cP);
+    if (!entity) {
+      e = E_NULL_VAR;
+    }
+    if (!e) {
+      printf("population of src rect map: %d\n", xP->srcRectMP->population);
+      cP->srcRectP = (Rect_*) mapGet(xP->srcRectMP, entity);
+      if (!cP->srcRectP) {
+        e = E_BAD_KEY;
+      }
+      printf("population of dst rect map: %d\n", xP->dstRectMP->population);
+      if (!e) {
+        cP->dstRectP = (Rect_*) mapGet(xP->dstRectMP, entity);
+        if (!cP->dstRectP) {
+          e = E_BAD_KEY;
+        }
+      }
+    }
+  }
   return e;
 }
 
 XPostMutateFuncDef_(Anim) {
-  unused_(sP);
-  unused_(cP);
+  assert(sP && cP);
+  XAnimComp *_cP = (XAnimComp*) cP;
+  _cP->currFrameIdx   = 0;
+  _cP->incrDecrement  = 1;
+  _cP->srcRectP->w    = _cP->dstRectP->w = _cP->currStrip.frameA[0].rect.w;
+  _cP->srcRectP->h    = _cP->dstRectP->h = _cP->currStrip.frameA[0].rect.h;
+  _cP->timeLeft       = _cP->currStrip.frameA[0].duration;
   return SUCCESS;
 }
 
@@ -228,13 +116,13 @@ Error xAnimRun(System *sP) {
   for (; cP < cEndP; ++cP) {
     if ((cP->timeLeft -= 9) <= 0) {  // TODO figure out time decrement
       // If we've reached the last frame, ask if this is a pingpong or repeating animation strip.
-      if (cP->currFrameIdx == (cP->currStripP->nFrames - 1)) {
+      if (cP->currFrameIdx == (cP->currStrip.nFrames - 1)) {
         // If this is a repeating animation strip, reset index, time left, and srcRectP.
-        if (cP->currStripP->pingPong) {
+        if (cP->currStrip.pingPong) {
           cP->incrDecrement *= -1;
           cP->currFrameIdx -= 1;
         }
-        else if (cP->currStripP->repeat) {
+        else if (cP->currStrip.repeat) {
           cP->currFrameIdx = 0;
         } 
         // Deactivate if not repeating or reversing order for pingpong.
@@ -245,11 +133,11 @@ Error xAnimRun(System *sP) {
       }
       // Otherwise, if this is a ping pong strip returning to the first frame, reverse directions.
       else if (cP->currFrameIdx == 0) {
-        if (cP->currStripP->pingPong) {
+        if (cP->currStrip.pingPong) {
           // If we just finished going backwards in a pingpong
           if (cP->incrDecrement < 0) {
             // Start over if we're repeating
-            if (cP->currStripP->repeat) {
+            if (cP->currStrip.repeat) {
               cP->incrDecrement = 1;
               cP->currFrameIdx  = 1;
             }
@@ -271,8 +159,8 @@ Error xAnimRun(System *sP) {
         cP->currFrameIdx += cP->incrDecrement;
       }
       // Advance the animation frame in whatever direction we're going.
-      cP->timeLeft = cP->currStripP->frameA[cP->currFrameIdx].duration;
-      *cP->srcRectP = cP->currStripP->frameA[cP->currFrameIdx].rect;
+      cP->timeLeft = cP->currStrip.frameA[cP->currFrameIdx].duration;
+      *cP->srcRectP = cP->currStrip.frameA[cP->currFrameIdx].rect;
       cP->dstRectP->w = cP->srcRectP->w;
       cP->dstRectP->h = cP->srcRectP->h;
     }
@@ -284,4 +172,4 @@ Error xAnimRun(System *sP) {
 //======================================================
 // System definition
 //======================================================
-X_(Anim, ANIMATION, incrDecrement, FLG_DONT_ADD_COMP);
+X_(Anim, ANIMATION, currStrip, 0);

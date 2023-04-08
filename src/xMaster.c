@@ -606,7 +606,8 @@ static Error _distributeGenes(XMaster *xP, Key nSystemsMax) {
   }
   // Clean up your strip data
   if (sdPF) {
-    e = multithread_(stripClr, (void*) sdPF);
+    // Ignore return error here to avoid changing outer return. We want to clean up no matter what.
+    multithread_(stripClr, (void*) sdPF);
     frayDel((void**) &sdPF);
   }
 
