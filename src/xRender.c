@@ -42,6 +42,12 @@ static inline Error __atlasLinkNodes(
   if (childIdx >= arrayGetNElems(atlasP->btP)) {
     return E_SEGFAULT;
   }
+  // Somehow this line must've gotten deleted... I don't see it in my git log though. Weird.
+  // But why else would I be passing in x, y, remW, and remH?
+  atlasP->btP[childIdx].rect.x = x;
+  atlasP->btP[childIdx].rect.y = y;
+  atlasP->btP[childIdx].remW = remW;
+  atlasP->btP[childIdx].remH = remH;
   btLinkNodes_(atlasP->btP, &atlasP->btP[parentIdx], &atlasP->btP[childIdx], child);
   return SUCCESS;
 }
@@ -196,10 +202,11 @@ Error atlasPlanPlacements(Atlas *atlasP) {
     // Back out of dead ends
     backOut:  // moves only up and left till an unexplored downward direction or root is found
     while (parentIdx) {
-      parentIdx = btP[parentIdx].header.parent;
       // Avoid re-entering a path you just exited by only going up and left.
       cameFromRight = parentIdx == btP[parentIdx].header.childA[RIGHT_RECT];
-      // If you came from the right and see an unexplored path below, go down.
+      // Go to parent node.
+      parentIdx = btP[parentIdx].header.parent;
+      // If you moved left to get to parent node and see an unexplored path below, go down.
       if (cameFromRight && _rectFitsBelow(&orphanP->rect, &btP[parentIdx])) {
         parentIdx = btP[parentIdx].header.childA[LOWER_RECT];
         goto searchForward;
@@ -595,6 +602,12 @@ XGetShareFuncDef_(Render) {
   return e;
 }
 
+XPostMutateFuncDef_(Render) {
+  unused_(sP);
+  unused_(cP);
+  return SUCCESS;
+}
+
 //======================================================
 // Render activity
 //======================================================
@@ -607,8 +620,8 @@ Error xRenderRun(System *sP) {
 	XRenderComp *cP = (XRenderComp*) sP->cF;
 	XRenderComp *cEndP = cP + *_frayGetFirstInactiveIdxP(sP->cF);
 
-	clearScreen(xP->guiP->rendererP);
   Renderer_ *rendererP = xP->guiP->rendererP;
+	clearScreen(rendererP);
 	for (; !e && cP < cEndP; cP++) {
 		e = copy_(rendererP, xP->atlasTextureP, cP->srcRectP, cP->dstRectP);
     // TODO delete this after you've got actions figured out
@@ -629,7 +642,7 @@ Error xRenderRun(System *sP) {
     }
   }
 	if (!e) {
-		present_(xP->guiP->rendererP);
+		present_(rendererP);
   }
 
 
@@ -639,4 +652,4 @@ Error xRenderRun(System *sP) {
 //======================================================
 // System definition
 //======================================================
-X_(Render, RENDER, FLG_NO_MUTATIONS_);
+X_(Render, RENDER, srcRectP, FLG_NO_MUTATIONS_);

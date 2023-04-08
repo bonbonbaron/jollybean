@@ -159,7 +159,7 @@ Error xAddMutationMap(System *sP, Entity entity, Map *mutationMP) {
 }
 
 
-static Error _xAddComp(System *sP, Entity entity, void *compDataP) {
+Error xAddComp(System *sP, Entity entity, void *compDataP) {
   if (!sP || !entity || !compDataP) {
     return E_BAD_ARGS;
   }
@@ -198,6 +198,7 @@ Error xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP)
   }
   // Make sure the component belongs to this system. This is only checked at load-time.
   if ((compType & MASK_COMPONENT_TYPE) != sP->id) {
+    printf("system id %d doesnt' matchh with compType %d\n", sP->id, compType & MASK_COMPONENT_TYPE);
     return E_SYS_CMP_MISMATCH;
   }
   Error e = SUCCESS;
@@ -221,7 +222,7 @@ Error xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP)
   }
   // Else it's the main component; feed it straight in baby.
   else if (!(sP->flags & FLG_DONT_ADD_COMP)) {
-    e = _xAddComp(sP, entity, entityDataP);
+    e = xAddComp(sP, entity, entityDataP);
   }
   return e;
 }

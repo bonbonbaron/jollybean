@@ -33,6 +33,7 @@ igList_(animation,
 ImplicitGenesList* iglA[] = {
   NULL,             // empty (first system ID is 1)
   NULL,             // MASTER
+  NULL,             // ACTION
   igl_(renderer),   // RENDERER
   igl_(animation),  // ANIMATION
   NULL,             // TIMER

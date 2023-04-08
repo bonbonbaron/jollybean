@@ -158,6 +158,8 @@ typedef struct {
   Gui   *guiP;
 } XMaster;
 
+typedef struct {} XMasterMutation;
+
 extern XMaster xMaster;
 extern System *sMasterP;
 
@@ -165,6 +167,7 @@ extern System *sMasterP;
 Error xMasterPostprocessComps(System *sP);  // If components are composites, piece them together here.
 Error xIni(System **sPA, U16 nSystems, U8 nSystemsMax, Biome *biomeP);
 Error xMasterIniSys(System *sP, void *sParamsP);
+Error xMasterPostMutate(System *sP, void *cP);
 XIniSubcompFuncDef_(Master);
 Error xMasterIni(XMaster *xMasterSysP, System **sPA, U16 nXSystems, Key nXSystemsMax, Biome *biomeP);
 Error xMasterGetShare(System *sP, Map *shareMMP);

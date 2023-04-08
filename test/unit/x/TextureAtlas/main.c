@@ -80,6 +80,7 @@ int main(int argc, char **argv) {
   if (!e) {
     e = atlasNew(&atlasP, cmPF);
   }
+#if 0
   for (int i = 0 ; i < N_SAMPLES; i++) {
     printf("BEFORE planning placements:\n{%d, %d, %d, %d}, {%d, %d}, srcIdx = %d\n", 
         atlasP->btP[i].rect.x,
@@ -91,10 +92,12 @@ int main(int argc, char **argv) {
         atlasP->btP[i].srcIdx
         );
   }
+#endif
   // Texture atlas
   if (!e) {
     e = atlasPlanPlacements(atlasP);
   }
+#if 0
   for (int i = 0 ; i < N_SAMPLES; i++) {
     printf("AFTER planning placements:\n{%d, %d, %d, %d}, {%d, %d}, srcIdx = %d\n", 
         atlasP->btP[i].rect.x,
@@ -106,6 +109,7 @@ int main(int argc, char **argv) {
         atlasP->btP[i].srcIdx
         );
   }
+#endif
   // Texture atlas array
   U8 *atlasPixelA = NULL;
   Surface_ *textureSurfaceP = NULL;
@@ -121,11 +125,13 @@ int main(int argc, char **argv) {
     U32 srcIdx;
     // For each sample...
     for (int i = 0; i < N_SAMPLES; ++i) {
+#if 0
       printf("drawing to {%d, %d, %d, %d}...\n", 
           atlasP->btP[i].rect.x,
           atlasP->btP[i].rect.y,
           atlasP->btP[i].rect.w,
           atlasP->btP[i].rect.h);
+#endif
       srcIdx = atlasP->btP[i].srcIdx;
       nUnitsPerStrip = cmPF[srcIdx]->sdP->ss.nUnitsPerStrip;
       nStripsPerRow = cmPF[srcIdx]->w / nUnitsPerStrip;
@@ -161,22 +167,21 @@ int main(int argc, char **argv) {
   }
   // Sanity check
   // Window and renderer 
-  Renderer_ *rendererP = NULL;
-  Window_ *windowP = NULL;
+  Gui *guiP = NULL;
   if (!e) {
-    e = guiNew(&windowP, &rendererP);
+    e = guiNew(&guiP);
   }
   // Texture
   Texture_ *textureP = NULL;
   if (!e) {
-    e = textureNew(&textureP, rendererP, textureSurfaceP);
+    e = textureNew(&textureP, guiP->rendererP, textureSurfaceP);
   }
   // Render it
   if (!e) {
-    clearScreen(rendererP);
-    copy_(rendererP, textureP, NULL, NULL);
+    clearScreen(guiP->rendererP);
+    copy_(guiP->rendererP, textureP, NULL, NULL);
     // Show it
-    present_(rendererP);
+    present_(guiP->rendererP);
     SDL_Delay(2000);
   }
 #endif
@@ -201,7 +206,6 @@ int main(int argc, char **argv) {
   SDL_FreeSurface(textureSurfaceP);
   arrayDel((void**) &atlasPixelA);
   SDL_DestroyTexture(textureP);
-  SDL_DestroyRenderer(rendererP);
-  SDL_Quit();
+  guiDel(&guiP);
   return e;
 }

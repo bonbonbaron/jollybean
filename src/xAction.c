@@ -160,6 +160,8 @@ static Error _triggerHivemind(XAction *xActionSysP, Message *msgP) {
 
 XGetShareFuncDefUnused_(Action);
 
+XPostMutateFuncDef_(Action);
+
 // Entity acts on message if it's more urgent than its current activity.
 XProcMsgFuncDef_(Action) {
   Error e;
@@ -178,9 +180,9 @@ Error xActionRun(System *sP) {
   XActionComp *cEndP = cP + _frayGetFirstInactiveIdx(sP->cF);
   Error e = SUCCESS;
   for (; !e && cP < cEndP; cP++) {
-    e = cP->quirkP->actionU(cP->entity, cP->bbMP);
+    e = cP->quirkP->actionU(cP->bbP);
   }
   return e;
 }
 
-X_(Action, 2, FLG_NO_CF_SRC_A_);
+X_(Action, 2, quirkP, FLG_NO_CF_SRC_A_);

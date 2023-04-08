@@ -17,7 +17,7 @@ ANIM_SRC_DIR = ${ANIM_DIR}/src
 ANIM_INC_DIR = ${ANIM_DIR}/include
 ANIM_OBJ_DIR = ${ANIM_DIR}/obj
 
-JB_DIR=../../../
+JB_DIR=../../../../
 
 #~/jb/build/Seed/Genome/Gene/Body/Graybody/Colormap/src/I
 # Lesson learned: Linker searches from left to right for unresolved dependencies.

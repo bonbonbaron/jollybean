@@ -56,6 +56,8 @@ typedef struct {
   Rect_ *dstRectP;
 } XRenderComp;
 
+typedef struct {} XRenderMutation;
+
 // Images
 Error cmGen(Colormap *imgP);
 void  cmClr(Colormap *imgP);

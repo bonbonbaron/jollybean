@@ -3,7 +3,7 @@
 #include "jb.h"
 #include "x.h"
 
-X_(Master, 1, FLG_NO_CF_SRC_A_); 
+X_no_mutations_(Master, 1, FLG_NO_CF_SRC_A_); 
 
 // Unused functions
 XProcMsgFuncDefUnused_(Master);
@@ -619,6 +619,8 @@ static Error _distributeGenes(XMaster *xP, Key nSystemsMax) {
   _geneHistoClr(&geneHisto);
   return e;
 }
+
+XPostMutateFuncDefUnused_(Master);
 
 // =====================================================================
 // Initialize the Master system.

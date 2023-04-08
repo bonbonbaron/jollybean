@@ -12,7 +12,7 @@ BLD = ${JB}/build
 	touch $@
 
 ${BLD}/%.o: ${SRC}/%.c ${INC}/%.h
-	gcc -c $< -o -I${INC} $@
+	gcc -c $< -I${INC} -o $@
 	touch $@
 
 .PHONY: clean

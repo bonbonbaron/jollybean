@@ -31,6 +31,7 @@ Error guiNew(Gui **guiPP) {
   }
   Error e = jbAlloc((void**) guiPP, sizeof(Gui), 1);
   if (!e) {
+    memset(*guiPP, 0, sizeof(Gui));
 	// Init window
 	  (*guiPP)->windowP = SDL_CreateWindow("Hello world!", 100, 100, 512, 448, 
         SDL_WINDOW_BORDERLESS | 
@@ -59,7 +60,6 @@ Error guiNew(Gui **guiPP) {
     e = SDL_RenderSetLogicalSize((*guiPP)->rendererP, 256, 224);
   }
   // Events
-  (*guiPP)->buttonsPressed = 0;
   SDL_SetEventFilter(_eventFilter, NULL);
 	return e;
 }

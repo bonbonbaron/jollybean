@@ -1,5 +1,4 @@
 #include "xAnim.h"
-#include "data.h"
 
 // Unused X functions
 XIniSysFuncDef_(Anim) {
@@ -210,6 +209,12 @@ XGetShareFuncDef_(Anim) {
   return e;
 }
 
+XPostMutateFuncDef_(Anim) {
+  unused_(sP);
+  unused_(cP);
+  return SUCCESS;
+}
+
 //======================================================
 // Anim activity
 //======================================================
@@ -279,4 +284,4 @@ Error xAnimRun(System *sP) {
 //======================================================
 // System definition
 //======================================================
-X_(Anim, ANIMATION, FLG_DONT_ADD_COMP);
+X_(Anim, ANIMATION, incrDecrement, FLG_DONT_ADD_COMP);

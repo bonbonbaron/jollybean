@@ -17,6 +17,9 @@ typedef struct {
   AnimFrame *frameA;
 } AnimStrip;
 
+typedef struct {
+} XAnimMutation;
+
 // TODO make this obsolete with new mutation paradigm.
 typedef struct {
   Key key;

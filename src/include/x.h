@@ -24,7 +24,10 @@ typedef enum { INITIALIZED = 1 } SubcomponentState;
 #define X_(name_, id_, fieldToMutate_, flags_) \
   X##name_ x##name_ = { .system = System_(name_, id_, fieldToMutate_, flags_)};\
   System *s##name_##P = &x##name_.system
-  
+
+#define X_no_mutations_(name_, id_, flags_) \
+  X##name_ x##name_ = { .system = System_no_mutations_(name_, id_, flags_)};\
+  System *s##name_##P = &x##name_.system
 
 /* name_:          name of system
  * id_             id of system
@@ -39,6 +42,31 @@ typedef enum { INITIALIZED = 1 } SubcomponentState;
     .compSz            = sizeof(X##name_##Comp),\
     .mutationSz        = sizeof(X##name_##Mutation),\
     .mutationOffset    = structMemberOffset_(X##name_##Comp, fieldToMutate_),\
+    .flags             = flags_,\
+    .cF                = NULL,\
+    .cIdx2eA           = NULL,\
+    .e2cIdxMP          = NULL,\
+    .mutationMPMP      = NULL,\
+    .mailboxF          = NULL,\
+    .deactivateQueueF  = NULL,\
+    .pauseQueueF       = NULL,\
+    .subcompOwnerMP    = NULL,\
+    .iniSys            = x##name_##IniSys,\
+    .iniSubcomp        = x##name_##IniSubcomp,\
+    .postprocessComps  = x##name_##PostprocessComps,\
+    .postMutate        = x##name_##PostMutate,\
+    .clr               = x##name_##Clr,\
+    .getShare          = x##name_##GetShare,\
+    .processMessage    = x##name_##ProcessMessage,\
+    .run               = x##name_##Run, \
+  }
+
+#define System_no_mutations_(name_, id_, flags_) \
+  {\
+    .id                = id_,\
+    .compSz            = sizeof(X##name_##Comp),\
+    .mutationSz        = 0,\
+    .mutationOffset    = 0,\
     .flags             = flags_,\
     .cF                = NULL,\
     .cIdx2eA           = NULL,\

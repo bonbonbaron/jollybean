@@ -8,7 +8,7 @@
 void hivemindDel(Map **hivemindMPP);
 void activityMPMPDel(Map **activityMPMPP);
 
-typedef Error (*Action)(Entity entity, Map *bbMP);
+typedef Error (*Action)(void *bbP);
 
 typedef struct {
   Key    trigger;
@@ -26,11 +26,13 @@ typedef struct {
   Personality *personalityP;
 } EntityPersonalityPair;
 
+typedef struct {
+} XActionMutation;
+
 // Union of quirk, blackboard, and tree status.
 typedef struct {
-  Entity       entity;
-  Quirk       *quirkP;         // action 
-  Map         *bbMP;           // blackboard
+  Quirk       *quirkP;        // trigger-action pair
+  void        *bbP;           // blackboard (stitched-together struct)
 } Activity;  
 
 typedef Activity XActionComp;
