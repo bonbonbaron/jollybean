@@ -19,7 +19,7 @@ KR_DIR = ${HOME}/jb/src/Keyring
 	touch $@
 
 ./main.o: ./main.c
-	gcc -g -c main.c -I${JB_DIR}/src/include/ -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags --cflags) -lpthread -o $@
+	gcc -g -c main.c -I${KR_DIR} -I${JB_DIR}/src/include/ -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags --cflags) -lpthread -o $@
 	touch $@
 
 ${CM_OBJ_DIR}/%Colormap.o: ${CM_SRC_DIR}/%Colormap.c
