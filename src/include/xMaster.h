@@ -49,14 +49,13 @@
 }
 
 // Media genes are inflated, unpacked, and assembled into original data.
-typedef enum {EXCLUSIVE_GENE, MEDIA_GENE, SHARED_GENE, BB_GENE, COMPOSITE_GENE, IMPLICIT_GENE} GeneClass;
 typedef enum {SCENE_START, SCENE_CHANGE, SCENE_STOP} SceneAction;
 
 typedef struct {
   Key size;      // size of system's component
   Key count;     // number of such components in said system
   Key geneType;  // target system gene will flow into
-  Key geneClass; // whether this gene s
+  Key geneClass; // gene's class lol 
 } XHistoElem;
 
 typedef U32 BbGeneHistoElem;
@@ -79,6 +78,7 @@ struct _Gene;
 
 typedef struct {
   U8 nGenes;
+  U8 type;
 	struct _Gene **genePA;   // pointers prevent multiple entities with same genes from reinitializing them
 } Genome;
 

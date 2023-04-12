@@ -70,7 +70,15 @@ static void _countEntitiesToSpawn(Biome *biomeP) {
 // Because 0x40 is the first bit of the upper two, meaning the first ingredient.
 inline static U8 _incrementXHistoElem(XHistoElem *xheP, Gene *geneP, Key incrementBy) {
   // This combines a subtype needing to be 0x40 or being a full-component gene into one comparison.
-  if ((geneP->u.unitary.type & MASK_COMPONENT_SUBTYPE) <= 0x40) {
+  if (geneP->geneClass == COMPOSITE_GENE) {
+    xheP->count    += incrementBy;
+    xheP->size      = geneP->u.unitary.size;
+    xheP->geneClass = geneP->geneClass;
+    xheP->geneType  = geneP->u.unitary.type & MASK_COMPONENT_TYPE;  // used to find system
+    return 1;  // 1 means "Yes, increment the entity number.
+  }
+  // else if ((geneP->u.unitary.type & MASK_COMPONENT_SUBTYPE) <= 0x40) {  (the below is equivalent)
+  else if (geneP->u.unitary.type < 0x80) {
     xheP->count += incrementBy;
     xheP->size = geneP->u.unitary.size;
     xheP->geneClass = geneP->geneClass;
@@ -189,16 +197,16 @@ static Error _subsystemsIni(System *masterSysP, GeneHisto *geneHistoP) {
   return e;
 }
 
-static Error _addSharedSubmap(Map *outerShareMP, MapElemType elemType, Key type, U8 size, Key num) {
+static Error _addSharedSubmap(Map *outerShareMP, MapElemType mapElemClass, SharedGeneType sharedObjType, U8 innerMapElemSz, Key nInnerMapElems) {
   Map *innerShareMP = NULL;
-  Error e = mapNew(&innerShareMP, elemType, size, num);
+  Error e = mapNew(&innerShareMP, mapElemClass, innerMapElemSz, nInnerMapElems);
   if (!e) {
-    e = mapSet(outerShareMP, type, (void**) &innerShareMP);
+    e = mapSet(outerShareMP, sharedObjType, (void**) &innerShareMP);
   }
   return e;
 }
 
-Error xMasterNewShareMap(Map **sharedGenesMPP, GeneHisto *geneHistoP) {
+Error _makeSharedGeneMap(Map **sharedGenesMPP, GeneHisto *geneHistoP) {
   // Create all the inner maps according to the histo'd number of elements they hold.
   // Add RENDERER_GENE_TYPE (= 2) to total number for window and renderer shares.
   Error e = mapNew(sharedGenesMPP, MAP_POINTER, sizeof(Map*), geneHistoP->nDistinctShareds + GUI_GENE_TYPE);  
@@ -551,7 +559,7 @@ static Error _distributeGenes(XMaster *xP, Key nSystemsMax) {
     e = _subsystemsIni(&xP->system, &geneHisto);
   }
   if (!e) {
-    e = xMasterNewShareMap(&xP->sharedMPMP, &geneHisto);
+    e = _makeSharedGeneMap(&xP->sharedMPMP, &geneHisto);
   }
   if (!e) {
     e = _addSpecialSharedGene(xP->sharedMPMP, xP->guiP, GUI_GENE_TYPE);

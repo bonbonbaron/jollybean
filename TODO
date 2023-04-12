@@ -1,1 +1,6 @@
 See if making animation a composite gene is what's causing master not to populate shared map of source rectangles.
+
+Partial answer: Turns out anim strips are incrementing the src rect count to 6 instead of 2 (we want 2 for 2 entities). We need to let composite genes increment this count as well, which has to do with 
+              geneHistoP->histoXElemA[i].count);
+
+Figure out how to make a composite gene, now called "Animation", contribute to the number of source rectangles and components in the Animation system. Then figure out how to make the shared gene called "Animation Strip" contribute to the number of mutations. Figure out how to generalize this.
