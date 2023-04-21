@@ -30,5 +30,5 @@ int main(int argc, char **argv) {
     }
   }
   guiDel(&guiP);
-  return e;
+  return (e == E_QUIT ? SUCCESS : e);
 }
