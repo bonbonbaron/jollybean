@@ -5,6 +5,10 @@
 
 X_no_mutations_(Master, 1, FLG_NO_CF_SRC_A_); 
 
+// TODO the main PROBLEM I remember was shares creeping into X territory. Given that can overflow past the max number of systems, that can segfault our histo.
+//
+// So the GOAL is to make a separate histo for each gene type.
+
 // Unused functions
 XProcMsgFuncDefUnused_(Master);
 XIniSubcompFuncDefUnused_(Master);
@@ -68,14 +72,20 @@ static void _countEntitiesToSpawn(Biome *biomeP) {
 //
 // Subtype 0 means this is a component, not sub-component.
 // Because 0x40 is the first bit of the upper two, meaning the first ingredient.
-inline static U8 _incrementXHistoElem(XHistoElem *xheP, Gene *geneP, Key incrementBy) {
+
+// All gene histo-incrementing functions are inlined. 
+// Their purpose is to enforce their corresponding enums.
+
+inline static exclusiveHistoIncrement(
+typedef enum {DONT_INCREMENT_NUM_OF_ENTITIES, DO_INCREMENT_NUM_OF_ENTITIES} IncrementEntity;
+inline static IncrementEntity _incrementXHistoElem(XHistoElem *xheP, Gene *geneP, Key incrementBy) {
   // This combines a subtype needing to be 0x40 or being a full-component gene into one comparison.
   if (geneP->geneClass == COMPOSITE_GENE) {
     xheP->count    += incrementBy;
     xheP->size      = geneP->u.unitary.size;
     xheP->geneClass = geneP->geneClass;
     xheP->geneType  = geneP->u.unitary.type & MASK_COMPONENT_TYPE;  // used to find system
-    return 1;  // 1 means "Yes, increment the entity number.
+    return DO_INCREMENT_NUM_OF_ENTITIES;
   }
   // else if ((geneP->u.unitary.type & MASK_COMPONENT_SUBTYPE) <= 0x40) {  (the below is equivalent)
   else if (geneP->u.unitary.type < 0x80) {
@@ -83,9 +93,9 @@ inline static U8 _incrementXHistoElem(XHistoElem *xheP, Gene *geneP, Key increme
     xheP->size = geneP->u.unitary.size;
     xheP->geneClass = geneP->geneClass;
     xheP->geneType = geneP->u.unitary.type & MASK_COMPONENT_TYPE;  // used to find system
-    return 1;
+    return DO_INCREMENT_NUM_OF_ENTITIES;
   }
-  return 0;
+  return DONT_INCREMENT_NUM_OF_ENTITIES;
 }
 
 static Error _histoGene(
@@ -98,9 +108,9 @@ static Error _histoGene(
 
   Error e = SUCCESS;
 
-  XHistoElem *histoA = geneHistoP->histoXElemA;
+  XHistoElem *histoA = geneHistoP->nExclusivesA;
   XHistoElem *xHistoElemP = NULL;
-  Key *spawnMutationHistoA = geneHistoP->histoSpawnMutations;
+  Key *spawnMutationHistoA = geneHistoP->nMutationsPerSpawnAA;
   Key mutationHistoElemIdx;
 
   StripDataS *sdP;
@@ -115,25 +125,27 @@ static Error _histoGene(
       }
       break;
     case SHARED_GENE:
-      geneHistoP->nDistinctShareds += !xHistoElemP->count;
-      // Don't break; the logic in exclusive gene case applies too.
+      geneHistoP->nSharedGeneMaps += !xHistoElemP->count;
+      // Fall through; the logic in exclusive gene case applies too.  TODO <-- but why??
     case EXCLUSIVE_GENE:
       if (_incrementXHistoElem(xHistoElemP, &gene, spawnP->nEntitiesToSpawn)) {
         *entityP += spawnP->nEntitiesToSpawn;
         if (gene.u.unitary.key) {
-          // The mutation histo is 2D: dim 0: system ID, dim 1: entity.
+          // The mutation histo is 2D: X dimension: system ID, Y dimension: entity.
           // So you track how many mutations each entity has in each system.
           mutationHistoElemIdx = (spawnP - biomeP->spawnA) * nSystemsMax + (gene.u.unitary.type & MASK_COMPONENT_TYPE);
           ++spawnMutationHistoA[mutationHistoElemIdx];
         }
       }
       break;
-    case MEDIA_GENE:
+    // Media genes can be system sub-components too, hence its call to _incrementXHistoElem().
+    case MEDIA_GENE:  
       sdP = *((StripDataS**) gene.u.unitary.dataP);
       if (!(sdP->flags & SD_IS_COUNTED_)) {
         sdP->flags |= SD_IS_COUNTED_;
         ++geneHistoP->nDistinctMedia;
       }
+      // Media genes do NOT increment the number of entities.
       _incrementXHistoElem(xHistoElemP, &gene, spawnP->nEntitiesToSpawn);
       break;
     default:
@@ -145,7 +157,7 @@ static Error _histoGene(
 
 static Error _histoGenes(GeneHisto *geneHistoP, const Biome *biomeP, const U32 nSystemsMax) {
   Error e = SUCCESS;
-  if (!geneHistoP || !geneHistoP->histoXElemA || !biomeP) {
+  if (!geneHistoP || !geneHistoP->nExclusivesA || !biomeP) {
     return E_BAD_ARGS;
   }
 
@@ -163,10 +175,18 @@ static Error _histoGenes(GeneHisto *geneHistoP, const Biome *biomeP, const U32 n
     }
   }
   // Loop through implicit genes.
-  for (Key i = 0, iEnd = arrayGetNElems(geneHistoP->histoXElemA); 
-       i < iEnd; ++i) {
-    if (geneHistoP->histoXElemA[i].count && iglA[i]) {
-      geneHistoP->nDistinctShareds += iglA[i]->nGenes;  // each imp only goes to one exclusive
+  for (Key i = 0, iEnd = arrayGetNElems(geneHistoP->nExclusivesA); i < iEnd; ++i) {
+    if (geneHistoP->nExclusivesA[i].count && iglA[i]) {
+      /*
+       * The reason I add to distinct shared genes without checking "if counted already" here,
+       * unlike in _histoGene()'s SHARED_GENE case, is because implicit genes are mutually 
+       * exclusive; they only belong to one explicit gene type.
+       *
+       * Since we're looping through the explicit gene types, if we have any, we just add the
+       * number of implicit genes attached to them here. 
+       *
+       */
+      geneHistoP->nSharedGeneMaps += iglA[i]->nGenes;  
     }
   }
   return SUCCESS;
@@ -180,12 +200,13 @@ static Error _histoGenes(GeneHisto *geneHistoP, const Biome *biomeP, const U32 n
 static Error _subsystemsIni(System *masterSysP, GeneHisto *geneHistoP) {
   Error e = SUCCESS;
   XHistoElem *histoElemP, *histoElemEndP;
-  histoElemP = &geneHistoP->histoXElemA[0];
-  histoElemEndP = histoElemP + arrayGetNElems(geneHistoP->histoXElemA);
+  histoElemP = &geneHistoP->nExclusivesA[0];
+  histoElemEndP = histoElemP + arrayGetNElems(geneHistoP->nExclusivesA);
   for (; !e && histoElemP < histoElemEndP; histoElemP++) {
     /* "<= MEDIA_GENE" includes MEDIA_GENE and EXCLUSIVE_GENE, 
        both of which can go into systems. */
-    if (histoElemP->geneClass <= MEDIA_GENE && histoElemP->count)  {  // i.e. if any entities exist having components for this system...
+    // This is asking "if any entities have components for this system..."
+    if (histoElemP->geneClass <= MEDIA_GENE && histoElemP->count)  {  
       XMasterComp *cP = (XMasterComp*) xGetCompPByEntity(masterSysP, histoElemP->geneType & MASK_COMPONENT_TYPE);
       if (cP) {
         // Assume no subsystems need extra parameters.
@@ -209,32 +230,32 @@ static Error _addSharedSubmap(Map *outerShareMP, MapElemType mapElemClass, Share
 Error _makeSharedGeneMap(Map **sharedGenesMPP, GeneHisto *geneHistoP) {
   // Create all the inner maps according to the histo'd number of elements they hold.
   // Add RENDERER_GENE_TYPE (= 2) to total number for window and renderer shares.
-  Error e = mapNew(sharedGenesMPP, MAP_POINTER, sizeof(Map*), geneHistoP->nDistinctShareds + GUI_GENE_TYPE);  
+  Error e = mapNew(sharedGenesMPP, MAP_POINTER, sizeof(Map*), geneHistoP->nSharedGeneMaps + GUI_GENE_TYPE);  
   if (!e) {
     Map *sharedGenesMP = *sharedGenesMPP;
-    XHistoElem *xHistoElemP    = &geneHistoP->histoXElemA[0];
-    XHistoElem *xHistoElemEndP = xHistoElemP + arrayGetNElems(geneHistoP->histoXElemA);
+    XHistoElem *xHistoElemP    = &geneHistoP->nExclusivesA[0];
+    XHistoElem *xHistoElemEndP = xHistoElemP + arrayGetNElems(geneHistoP->nExclusivesA);
     // Loop through explicit shared genes.
     for (; !e && xHistoElemP < xHistoElemEndP; xHistoElemP++) {
       if (xHistoElemP->geneClass == SHARED_GENE && xHistoElemP->count) {
         e = _addSharedSubmap(
             sharedGenesMP, 
             RAW_DATA,  // TODO if this ever fails, add an element type field to implicit genes.
-            xHistoElemP->geneType & MASK_COMPONENT_TYPE,
-            xHistoElemP->size,
-            xHistoElemP->count);
+            xHistoElemP->geneType & MASK_COMPONENT_TYPE,  // outer map's key to inner map
+            xHistoElemP->size,  // size of elems in inner map
+            xHistoElemP->count);  // number of elems in inner map
       }
     }
     // Loop through implicit shared genes.
-    for (Key i = 0, iEnd = arrayGetNElems(geneHistoP->histoXElemA); !e && i < iEnd; ++i) {
-      if (geneHistoP->histoXElemA[i].count && iglA[i]) {
+    for (Key i = 0, iEnd = arrayGetNElems(geneHistoP->nExclusivesA); !e && i < iEnd; ++i) {
+      if (geneHistoP->nExclusivesA[i].count && iglA[i]) {
         for (Key j = 0, jEnd = iglA[i]->nGenes; !e && j < jEnd; ++j) {
           e = _addSharedSubmap(
               sharedGenesMP, 
               RAW_DATA,
-              iglA[i]->listA[j].type,
-              iglA[i]->listA[j].size,
-              geneHistoP->histoXElemA[i].count);
+              iglA[i]->listA[j].type,  // outer map's key to inner map
+              iglA[i]->listA[j].size,  // size of elems in inner map 
+              geneHistoP->nExclusivesA[i].count);  // number of elems in inner map
         }
       }
     }
@@ -264,16 +285,13 @@ void xMasterDelShareMap(Map **sharedMPMPP) {
 
 static Error _geneHistoIni(GeneHisto *geneHistoP, Entity nEntities, Entity nSystemsMax) {
   geneHistoP->nDistinctMedia   = 0;
-  geneHistoP->nDistinctShareds = 0;
-  Error e = arrayNew((void**) &geneHistoP->histoSpawnMutations, sizeof(Key), nSystemsMax * nEntities);
+  geneHistoP->nSharedGeneMaps = 0;
+  Error e = arrayNew((void**) &geneHistoP->nMutationsPerSpawnAA, sizeof(Key), nSystemsMax * nEntities);
   if (!e) {
-    e = arrayNew((void**) &geneHistoP->histoXElemA, sizeof(XHistoElem), nSystemsMax);
+    e = arrayNew((void**) &geneHistoP->nExclusivesA, sizeof(XHistoElem), nSystemsMax);
   }
   if (!e) {
-    e = arrayNew((void**) &geneHistoP->histoBbElemA, sizeof(BbGeneHistoElem), KEY_MAX);
-  }
-  if (!e) {
-    e = arrayNew((void**) &geneHistoP->histoCompositeElemA, sizeof(CompositeGeneHistoElem), KEY_MAX);
+    e = arrayNew((void**) &geneHistoP->nCompositesA, sizeof(CompositeGeneHistoElem), KEY_MAX);
   }
   return e;
 }
@@ -281,12 +299,10 @@ static Error _geneHistoIni(GeneHisto *geneHistoP, Entity nEntities, Entity nSyst
 static void _geneHistoClr(GeneHisto *geneHistoP) {
   if (geneHistoP) {
     geneHistoP->nDistinctMedia   = 0;
-    geneHistoP->nDistinctShareds = 0;
-    arrayDel((void**) &geneHistoP->histoSpawnMutations);
-    arrayDel((void**) &geneHistoP->histoBbElemA);
-    arrayDel((void**) &geneHistoP->histoXElemA);
-    arrayDel((void**) &geneHistoP->histoCompositeElemA);
-
+    geneHistoP->nSharedGeneMaps = 0;
+    arrayDel((void**) &geneHistoP->nMutationsPerSpawnAA);
+    arrayDel((void**) &geneHistoP->nExclusivesA);
+    arrayDel((void**) &geneHistoP->nCompositesA);
   }
 }
 
@@ -380,19 +396,19 @@ static Error _makeMutationMapArrays(Biome *biomeP, GeneHisto *geneHistoP, Key nS
 
   /* For each spawn, we have an array of mutation maps: one for each system.
    * Each mutation map has any number of mutations for the entity's component in that system.
-   * First we allocate all the maps. 
+   * First we allocate all the non-empty maps. 
    * Then we populate each map one gene at a time.
    */
   for (; !e && spawnP < spawnEndP; ++spawnP) {
     e = arrayNew((void**) &spawnP->geneMutationMPA, sizeof(Map*), nSystemsMax);
     // Allocate a map for each mutable gene for this spawn.
     for (Key systemId = 1; !e && systemId < nSystemsMax; ++systemId) {
-      // Indexing a 2D array (dim 1: # of systems; dim 2: # of entities)
-      nMutationsForCurrGene = geneHistoP->histoSpawnMutations[(spawnP - biomeP->spawnA) * nSystemsMax + systemId];
+      // Indexing a 2D array (x dimension: # of systems; y dimension: # of entities)
+      nMutationsForCurrGene = geneHistoP->nMutationsPerSpawnAA[(spawnP - biomeP->spawnA) * nSystemsMax + systemId];
       if (nMutationsForCurrGene) {
         e = mapNew(&spawnP->geneMutationMPA[systemId], 
                    RAW_DATA,
-                   geneHistoP->histoXElemA[systemId].size,  // TODO replace this with mutation size
+                   geneHistoP->nExclusivesA[systemId].size,  // TODO replace this with mutation size
                    nMutationsForCurrGene);
       }
     }
@@ -580,9 +596,6 @@ static Error _distributeGenes(XMaster *xP, Key nSystemsMax) {
     for (Entity entityEnd = entity + spawnP->nEntitiesToSpawn; entity < entityEnd; ++entity) {
       // Make a blackboard map for this entity if it has any genes to put in it.
       bbMP = NULL;
-      if (geneHisto.histoBbElemA[entity]) {
-        e = mapNew(&bbMP, NONMAP_POINTER, sizeof(void*), geneHisto.histoBbElemA[entity]);
-      }
       genomeP = spawnP->genomeP;
       genePP = spawnP->genomeP->genePA;
       geneEndPP = genePP + genomeP->nGenes;

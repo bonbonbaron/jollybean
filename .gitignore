@@ -11,3 +11,7 @@ tags
 gmon.out
 *.out
 *.idx
+**/*.gcov
+**/*.gcno
+**/*.gcda
+**/coverage/

@@ -51,24 +51,16 @@
 // Media genes are inflated, unpacked, and assembled into original data.
 typedef enum {SCENE_START, SCENE_CHANGE, SCENE_STOP} SceneAction;
 
-typedef struct {
-  Key size;      // size of system's component
-  Key count;     // number of such components in said system
-  Key geneType;  // target system gene will flow into
-  Key geneClass; // gene's class lol 
-} XHistoElem;
-
-typedef U32 BbGeneHistoElem;
 typedef U32 MediaGeneHistoElem;
-typedef U32 CompositeGeneHistoElem;
 
 typedef struct {
-  Key *histoSpawnMutations;  // first dimension: entity #s. second dimension: system #s.
-  XHistoElem *histoXElemA;  // determines each subsystem's number of components and share-maps' # of elements
-  BbGeneHistoElem *histoBbElemA;  // determines each entity's number of blackboard elements
-  CompositeGeneHistoElem *histoCompositeElemA;
-  U32 nDistinctMedia;   // determines number of strip data to inflate, unpack, and assemble into media
-  U32 nDistinctShareds;  // determines number of maps of shared elements
+  U32 *nMutationsPerSpawnAA;  // X dimension: entity #s. Y dimension: system #s.
+  // TODO finish designing so we know what to do about  mutable and immutable exclusives.
+  U32 *nExclusivesA;          // determines each subsystem's number of components 
+  U32 *nSharesA;              // determines share-maps' # of elements
+  U32  nDistinctShareTypes;   // determines number of maps of shared elements
+  U32 *nCompositesA;          // determines number of composites in case we need to know
+  U32  nDistinctMedia;        // determines # of strip data to inflate/unpack/assemble
 } GeneHisto;
 
 /**************************/
