@@ -21,8 +21,6 @@ $(LIB_DIR)/libjb:
 
 .PHONY: clean
 clean:
-	rm -rf build/*
-	rm -rf build/.[a-z]*
-	rm -f *.o 2>/dev/null
-	rm -f ${TGT}
-	rm -f ${OBJS}
+	rm -rf o 2>/dev/null
+	rm -rf coverage 2>/dev/null
+	rm -f ${OBJS} 2>/dev/null

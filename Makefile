@@ -38,15 +38,15 @@ $(TGT): $(OBJS)
 
 $(BLD_DIR)/interface/%.o: ${SRC_DIR}/interface/%.c 
 $(BLD_DIR)/interface/%.o: ${SRC_DIR}/interface/%.c $(DEP_DIR)/interface/%.d | ${BLD_SEN} ${DEP_SEN}
-	$(CC) -g $(SDLFLGS) $(DEPFLGS) $(INCS) -c $< -o $@
+	$(CC) --coverage -g $(SDLFLGS) $(DEPFLGS) $(INCS) -c $< -o $@
 
 $(BLD_DIR)/x/%.o: ${SRC_DIR}/x/%.c
 $(BLD_DIR)/x/%.o: ${SRC_DIR}/x/%.c $(DEP_DIR)/x/%.d | ${BLD_SEN} ${DEP_SEN}
-	$(CC) -g $(SDLFLGS) $(DEPFLGS) $(INCS) -c $< -o $@
+	$(CC) --coverage -g $(SDLFLGS) $(DEPFLGS) $(INCS) -c $< -o $@
 
 $(BLD_DIR)/data/%.o: ${SRC_DIR}/data/%.c
 $(BLD_DIR)/data/%.o: ${SRC_DIR}/data/%.c $(DEP_DIR)/data/%.d | ${BLD_SEN} ${DEP_SEN}
-	$(CC) -g $(DEPFLGS) $(INCS) -c $< -o $@
+	$(CC) --coverage -g $(DEPFLGS) $(INCS) -c $< -o $@
 
 # Mention each dependency as a target so Make doesn't fail above if it doesn't exist.
 $(DEPS):

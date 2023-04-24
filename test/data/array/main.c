@@ -2,27 +2,50 @@
 #include <assert.h>
 
 Error test_arrayNew() {
-	assert(TRUE);
+  U32 *aP = NULL;
+  Error e = arrayNew((void**) &aP, sizeof(U32), 5);
+  assert(!e);
+  arrayDel((void**) &aP);
 	return SUCCESS;
 }
 
 Error test_arrayDel() {
-	assert(TRUE);
+  U32 *aP = NULL;
+  Error e = arrayNew((void**) &aP, sizeof(U32), 5);
+  assert(!e && aP);
+  arrayDel((void**) &aP);
+  assert(aP == NULL);
 	return SUCCESS;
 }
 
 Error test_arrayGetNElems() {
-	assert(TRUE);
+  U32 *aP = NULL;
+  Error e = arrayNew((void**) &aP, sizeof(U32), 5);
+  assert(!e && aP);
+  assert(arrayGetNElems(aP) == 5);
+  arrayDel((void**) &aP);
+  assert(aP == NULL);
 	return SUCCESS;
 }
 
 Error test_arrayGetElemSz() {
-	assert(TRUE);
+  U32 *aP = NULL;
+  Error e = arrayNew((void**) &aP, sizeof(U32), 5);
+  assert(!e && aP);
+  assert(arrayGetElemSz(aP) == sizeof(U32));
+  arrayDel((void**) &aP);
+  assert(aP == NULL);
 	return SUCCESS;
 }
 
 Error test_arrayGetVoidElemPtr() {
 	assert(TRUE);
+  void** aP;
+  Error e = arrayNew((void**) &aP, sizeof(void*), 5);
+  assert(!e && aP);
+  void **elemP = arrayGetVoidElemPtr(aP, 3);
+  assert(elemP && ((elemP - aP) == 3));
+  arrayDel((void**) &aP);
 	return SUCCESS;
 }
 
