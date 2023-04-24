@@ -1,6 +1,5 @@
 #include "xAction.h"
 
-
 //#define XIniSysFuncDef_(name_) Error x##name_##IniSys(System *sP, void *sParamsP)
 XIniSysFuncDef_(Action) {
   unused_(sParamsP);
@@ -160,7 +159,7 @@ static Error _triggerHivemind(XAction *xActionSysP, Message *msgP) {
 
 XGetShareFuncDefUnused_(Action);
 
-XPostMutateFuncDef_(Action);
+XPostMutateFuncDefUnused_(Action);
 
 // Entity acts on message if it's more urgent than its current activity.
 XProcMsgFuncDef_(Action) {
@@ -185,4 +184,4 @@ Error xActionRun(System *sP) {
   return e;
 }
 
-X_(Action, 2, quirkP, FLG_NO_CF_SRC_A_);
+X_no_mutations_(Action, 2, FLG_NO_CF_SRC_A_);

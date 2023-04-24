@@ -1,2 +1,0 @@
-map.o: src/data/map.c src/data/include/map.h src/data/include/array.h \
- src/data/include/mem.h src/data/include/common.h

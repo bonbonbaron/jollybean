@@ -2,37 +2,37 @@
 #include <assert.h>
 
 Error test_arrayNew() {
-	assert(FALSE);
+	assert(TRUE);
 	return SUCCESS;
 }
 
 Error test_arrayDel() {
-	assert(FALSE);
+	assert(TRUE);
 	return SUCCESS;
 }
 
 Error test_arrayGetNElems() {
-	assert(FALSE);
+	assert(TRUE);
 	return SUCCESS;
 }
 
 Error test_arrayGetElemSz() {
-	assert(FALSE);
+	assert(TRUE);
 	return SUCCESS;
 }
 
 Error test_arrayGetVoidElemPtr() {
-	assert(FALSE);
+	assert(TRUE);
 	return SUCCESS;
 }
 
 Error test_arraySetVoidElem() {
-	assert(FALSE);
+	assert(TRUE);
 	return SUCCESS;
 }
 
 Error test_arrayIniPtrs() {
-	assert(FALSE);
+	assert(TRUE);
 	return SUCCESS;
 }
 

@@ -5,10 +5,12 @@ SRC_DIR := $(RPO_DIR)/src
 BLD_DIR := $(RPO_DIR)/build/src
 DEP_DIR := $(BLD_DIR)/.deps
 
-D_SRCS := $(shell find $(SRC_DIR)/data -type f -name "*.c")
-IX_SRCS  := $(shell find $(SRC_DIR)/x $(SRC_DIR)/interface -type f -name "*.c")  # separate due to sdl cflags
+D_SRCS  := $(SRC_DIR)/data/strip.c $(SRC_DIR)/data/inflatable.c $(SRC_DIR)/data/bt.c $(SRC_DIR)/data/map.c $(SRC_DIR)/data/mail.c $(SRC_DIR)/data/fray.c $(SRC_DIR)/data/array.c  $(SRC_DIR)/data/mem.c
 
-SRCS    := $(IX_SRCS) $(D_SRCS) 
+# Implemented systems must come before their dependency, x.c.
+XI_SRCS := $(shell find $(SRC_DIR)/x -type f -name "x[^.]*.c") $(shell find $(SRC_DIR)/x -type f -name "x.c") $(shell find $(SRC_DIR)/interface -type f -name "*.c")
+
+SRCS    := $(XI_SRCS) $(D_SRCS) 
 #SRCS    := $(DX_SRCS) 
 OBJS    := $(SRCS:$(SRC_DIR)/%.c=$(BLD_DIR)/%.o)
 
@@ -25,23 +27,22 @@ BLD_SEN := $(BLD_SUB:%=%.sentinel.bldsnl)
 DEP_SUB := $(BLD_SUB:$(BLD_DIR)%=$(DEP_DIR)%)
 DEP_SEN := $(DEP_SUB:%=%.sentinel.depsnl)
 
-TGT=libjb
+SDLFLGS := $(shell sdl2-config --cflags)
+TGT=${RPO_DIR}/lib/libjb.so
 
 #all: ; echo ${OBJS}
 all: $(TGT)
 
 $(TGT): $(OBJS)
-	ar rcs $(TGT) ${OBJS}
+	ar rcs $(TGT) $(OBJS) 
 
-# Get rid of default implicit recipe for object files.
-# Force directories to exist before doing this.
-$(BLD_DIR)/interface/%.o: ${SRC_DIR}/interface/%.c
+$(BLD_DIR)/interface/%.o: ${SRC_DIR}/interface/%.c 
 $(BLD_DIR)/interface/%.o: ${SRC_DIR}/interface/%.c $(DEP_DIR)/interface/%.d | ${BLD_SEN} ${DEP_SEN}
-	$(CC) -g $(shell sdl2-config --cflags) $(DEPFLGS) $(INCS) -c $< -o $@
+	$(CC) -g $(SDLFLGS) $(DEPFLGS) $(INCS) -c $< -o $@
 
 $(BLD_DIR)/x/%.o: ${SRC_DIR}/x/%.c
 $(BLD_DIR)/x/%.o: ${SRC_DIR}/x/%.c $(DEP_DIR)/x/%.d | ${BLD_SEN} ${DEP_SEN}
-	$(CC) -g $(shell sdl2-config --cflags) $(DEPFLGS) $(INCS) -c $< -o $@
+	$(CC) -g $(SDLFLGS) $(DEPFLGS) $(INCS) -c $< -o $@
 
 $(BLD_DIR)/data/%.o: ${SRC_DIR}/data/%.c
 $(BLD_DIR)/data/%.o: ${SRC_DIR}/data/%.c $(DEP_DIR)/data/%.d | ${BLD_SEN} ${DEP_SEN}
@@ -53,12 +54,12 @@ $(DEPS):
 include $(wildcard $(DEPS))
 
 %.bldsnl:
-	mkdir -p $(BLD_SUB)
-	touch $(BLD_SEN)
+	mkdir -p $(dir $@)
+	touch $@
 
 %.depsnl:
-	mkdir -p $(DEP_SUB)
-	touch $(DEP_SEN)
+	mkdir -p $(dir $@)
+	touch $@
 
 .PHONY: clean
 clean:

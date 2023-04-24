@@ -1,0 +1,1 @@
+valgrind --errors-for-leak-kinds=definite,possible,indirect --leak-check=full ./o

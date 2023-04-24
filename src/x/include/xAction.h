@@ -8,6 +8,7 @@
 
 void hivemindDel(Map **hivemindMPP);
 void activityMPMPDel(Map **activityMPMPP);
+XPostMutateFuncDef_(Action);
 
 typedef Error (*Action)(void *bbP);
 
