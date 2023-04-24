@@ -1,61 +1,69 @@
-##############################
-# Variables
-##############################
-CC             = cc
-SRCDIR         = ./src
-BUILDDIR       = ./build
-LIBDIR         = ./lib
-INCLUDEDIR     = ./src/include
-INSTALLDIR     = /usr/local/lib
-LIBJOLLBEAN       = ./lib/libjollybean.a
-JOLLBEANSRC      = $(shell find ./src -name "*.c") 
-#$(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(SOURCES:.$(SRCEXT)=.$(OBJEXT)))
-JOLLBEAN_OBJS     = $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(JOLLBEANSRC:.c=.o))
-JOLLBEAN_INCLUDES = $(shell find -name "*.h")
-TGTINCLUDDIR = /usr/local/include/jollybean/
-IFLAGS=-I./src/include/ -I/home/bonbonbaron/jb/src/Keyring/
+CC=gcc
 
-CFLAGS_COMMON  = -g -Wall -lpthread $(IFLAGS) #-ffunction-sections \
-							 	 -fdata-sections -s -fno-ident -fmerge-all-constants \
-							 	 -fomit-frame-pointer -fno-stack-protector -O0
-							 	 #-fomit-frame-pointer -fno-stack-protector -O3  #-mfpu=neon -O3
-CFLAGS_TINY    = $(CFLAGS_COMMON) #-Os    #TODO: uncomment when ready for relase
-CFLAGS_FAST    = $(CFLAGS_COMMON) #-Ofast    #TODO: uncomment when ready for relase
-SDL_CFLAGS     = $(shell sdl2-config --cflags)
-SDL_LFLAGS     = $(shell sdl2-config --libs)
-LFLAGS         = -Wl,--gc-sections -Wl,-z,norelro
+RPO_DIR := $(shell git rev-parse --show-toplevel)
+SRC_DIR := $(RPO_DIR)/src
+BLD_DIR := $(RPO_DIR)/build/src
+DEP_DIR := $(BLD_DIR)/.deps
 
-MAIN_SRC = $(BUILDDIR)/main.c
-MAIN_OUT = ./game
+D_SRCS := $(shell find $(SRC_DIR)/data -type f -name "*.c")
+IX_SRCS  := $(shell find $(SRC_DIR)/x $(SRC_DIR)/interface -type f -name "*.c")  # separate due to sdl cflags
 
-##############################
-# Archiver
-##############################
-$(LIBJOLLBEAN): $(BUILDDIR) $(LIBDIR) $(JOLLBEAN_OBJS) ${JOLLBEANSRC} $(JOLLBEAN_INCLUDES)
-	ar rcs $(LIBJOLLBEAN) $(JOLLBEAN_OBJS)
-	touch $@
+SRCS    := $(IX_SRCS) $(D_SRCS) 
+#SRCS    := $(DX_SRCS) 
+OBJS    := $(SRCS:$(SRC_DIR)/%.c=$(BLD_DIR)/%.o)
 
-##############################
-# Compiler
-##############################
-$(BUILDDIR)/%.o: $(SRCDIR)/%.c $(JOLLBEAN_INCLUDES)
-	$(CC) $(SDL_CFLAGS) $(CFLAGS_FAST) -g -c $< -o $@
-	touch $@
+_INCS   := $(shell find ${SRC_DIR} -type d -name include)
+INCS    := $(_INCS:%=-I%)
 
-$(BUILDDIR):
-	mkdir -p $(BUILDDIR)
+DEPFLGS  = -MT $@ -MMD -MP -MF $(DEP_DIR)/$*.d
+DEPS    := $(SRCS:$(SRC_DIR)/%.c=$(DEP_DIR)/%.d)
 
-$(LIBDIR):
-	mkdir -p $(LIBDIR)
-#############################
+# Sentinel files that ensure the required subdirectories exist in build.
+BLD_SUB := $(dir $(OBJS))
+BLD_SEN := $(BLD_SUB:%=%.sentinel.bldsnl)
 
-.PHONY: install
-install:
-	mkdir -p $(TGTINCLUDDIR)
-	cp $(JOLLBEAN_INCLUDES) $(TGTINCLUDDIR)
-	cp $(LIBJOLLBEAN) $(INSTALLDIR)
+DEP_SUB := $(BLD_SUB:$(BLD_DIR)%=$(DEP_DIR)%)
+DEP_SEN := $(DEP_SUB:%=%.sentinel.depsnl)
+
+TGT=libjb
+
+#all: ; echo ${OBJS}
+all: $(TGT)
+
+$(TGT): $(OBJS)
+	ar rcs $(TGT) ${OBJS}
+
+# Get rid of default implicit recipe for object files.
+# Force directories to exist before doing this.
+$(BLD_DIR)/interface/%.o: ${SRC_DIR}/interface/%.c
+$(BLD_DIR)/interface/%.o: ${SRC_DIR}/interface/%.c $(DEP_DIR)/interface/%.d | ${BLD_SEN} ${DEP_SEN}
+	$(CC) -g $(shell sdl2-config --cflags) $(DEPFLGS) $(INCS) -c $< -o $@
+
+$(BLD_DIR)/x/%.o: ${SRC_DIR}/x/%.c
+$(BLD_DIR)/x/%.o: ${SRC_DIR}/x/%.c $(DEP_DIR)/x/%.d | ${BLD_SEN} ${DEP_SEN}
+	$(CC) -g $(shell sdl2-config --cflags) $(DEPFLGS) $(INCS) -c $< -o $@
+
+$(BLD_DIR)/data/%.o: ${SRC_DIR}/data/%.c
+$(BLD_DIR)/data/%.o: ${SRC_DIR}/data/%.c $(DEP_DIR)/data/%.d | ${BLD_SEN} ${DEP_SEN}
+	$(CC) -g $(DEPFLGS) $(INCS) -c $< -o $@
+
+# Mention each dependency as a target so Make doesn't fail above if it doesn't exist.
+$(DEPS):
+# Include each dependency Makefile (named *.d). Wildcard prevents failing on nonexistent files.
+include $(wildcard $(DEPS))
+
+%.bldsnl:
+	mkdir -p $(BLD_SUB)
+	touch $(BLD_SEN)
+
+%.depsnl:
+	mkdir -p $(DEP_SUB)
+	touch $(DEP_SEN)
 
 .PHONY: clean
 clean:
-	rm -f $(JOLLBEAN_OBJS)
-	rm -f $(LIBJOLLBEAN)
+	rm -rf build/*
+	rm -rf build/.[a-z]*
+	rm -f *.o 2>/dev/null
+	rm -f ${TGT}
+	rm -f ${OBJS}

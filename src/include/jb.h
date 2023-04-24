@@ -1,16 +1,7 @@
-#ifndef JB_
-#define JB_
+#ifndef JB_H
+#define JB_H
 
-// Core
-#include "data.h"
 #include "x.h"
-#include "animKeyring.h"
-// Core jb objects
-#include "interface.h"
-// Child systems
-#include "xMaster.h"
-#include "xRender.h"
-#include "xAnim.h"
 
 // Keys  (hopefully obsolete later)
 typedef enum {UPDATE_RECT = N_XMAIL_BUILTIN_CMDS, ANIMATE} MessageCommand;

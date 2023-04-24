@@ -1,0 +1,41 @@
+#!/bin/bash
+
+REPO_DIR=$(git rev-parse --show-toplevel)
+BLD_DIR=${REPO_DIR}/build
+
+TEST_FILE=
+if [ $# -gt 0 ]; then
+  TEST_FILE=$(basename $1 .c)
+else
+  echo "requires an arg"
+  exit 1
+fi
+
+# Ensure obj dump dir exists and clear it out if so.
+OBJDUMP_DIR="${BLD_DIR}/.objdumps"
+mkdir -p "$OBJDUMP_DIR"
+rm -f $(find ${OBJDUMP_DIR} -type f) 
+
+# Objdump all *.o files only once to make this more efficient.
+for f in $(find ${BLD_DIR} -type f -name "*.o"); do 
+  objdump -t $f > "${OBJDUMP_DIR}/$(basename $f .o).f";   # "f" for function table file
+done
+
+# Get the functions the file we're testing depends on.
+deps=($(find ${BLD_DIR} -type f -name "${TEST_FILE}.f" -exec grep '\*UND\*' {} \; | grep -o -E -h '[^ ]+$'))
+
+# Get the file each function lives in.
+DEPS_FILE=${OBJDUMP_DIR}/.deps
+rm -rf $DEPS_FILE
+# Find the file that this extern function is defined in.
+for d in ${deps[*]}; do
+  fileThatDefinesFunction=$(grep -El "^[0-9a-fA-F]+\s+g.*F.*\..*\<$d\>" ${OBJDUMP_DIR}/*)
+  if [ ! -z $fileThatDefinesFunction ]; then
+    echo $fileThatDefinesFunction >> $DEPS_FILE
+  fi
+done
+
+# Unique-ify it.
+objDependencies=()
+for fn in $(cat $DEPS_FILE | sort | uniq); do objDependencies+=($(basename $fn .f).o); done
+echo ${objDependencies[*]}
