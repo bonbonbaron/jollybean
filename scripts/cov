@@ -127,11 +127,10 @@ while [ $lineNumber -lt ${#filenames[*]} ]; do
   else
     COLOR=$RED_BG
   fi
-  echo pctg is $percentage, total bars is $TOTAL_N_BARS, barlen $barLen, math = $((TOTAL_N_BARS - barLen +1))
   if [ $barLen -gt 0 ]; then
     printf "%-30s: [${COLOR}%${barLen}s${WHITE_FG}%$((TOTAL_N_BARS - barLen + 1))s] (%3.0f%%)\n" $(basename $filename) ' ' ' ' $percentage
   else
-    printf "${RED_FG}%-30s${WHITE_FG}: [%$((TOTAL_N_BARS + 1))s] (%3.0f%%)\n" $(basename $filename) ' ' ' ' $percentage
+    printf "${RED_FG}%-30s${WHITE_FG}: [%$((TOTAL_N_BARS + 1))s] (%3.0f%%)\n" $(basename $filename) ' ' $percentage
   fi
   #Iterate to the next filename-percentage pair.
   ((++lineNumber))
