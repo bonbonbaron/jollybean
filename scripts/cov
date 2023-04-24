@@ -1,0 +1,138 @@
+#!/bin/bash
+
+# Make sure this is in your ~/.bashrc:
+
+: '
+function setCovAutocomplete {
+  REPO_DIR=$(git rev-parse --show-toplevel)
+  if [ $? -ne 0 ]; then
+    echo "you are not in a repo"
+    return 1
+  fi
+
+  if [ $# -gt 1 ]; then
+    COMPREPLY+=($(find . ${REPO_DIR}/build -name "${2}*.gcno" -exec basename {} .gcno \;))
+  else
+    COMPREPLY+=($(find . ${REPO_DIR}/build -name "*.gcno" -exec basename {} .gcno \;))
+  fi
+}
+
+complete -r cov 2>/dev/null
+complete -F setCovAutocomplete cov
+'
+
+# Stores returned value of test so we can tell whether it fails.
+STATUS=0
+
+function runUnitTest {
+  eval $TEST_NAME
+  STATUS=$?
+}
+
+# Store repo directory. It'll be useful when pruning coverage files we don't want to see.
+REPO_DIR=$(git rev-parse --show-toplevel 2>/dev/null)
+if [ $? -ne 0 ]; then
+  echo "You are not inside a git repo. Exiting..."
+  exit 1
+fi
+
+# Make coverage directory if it doesn't exist yet.
+COVERAGE_DIR="$(pwd)/coverage"
+if [ ! -d COVERAGE_DIR ]; then
+  mkdir -p ${COVERAGE_DIR}
+fi
+
+# We assume the build system has coverage enabled, so we don't check for that here.
+VIEW_FILE=
+if [ $# -gt 0 ]; then
+  VIEW_FILE=$1
+fi
+
+# Show code coverage for a single file if an argument is given.
+if [ $? -eq 0 -a ! -z "$VIEW_FILE" ]; then
+  # if you haven't run the unit test yet, then the *.gcov file you're looking for won't exist yet.
+  if [ ! -f ${COVERAGE_DIR}/${VIEW_FILE}.gcov -a ! -f ${REPO_DIR}/build/${VIEW_FILE}.gcov ]; then
+    runUnitTest
+  fi
+  # Only view gcov file if unit test passes (if we even needed to run it, that is).
+  echo "view file is $VIEW_FILE"
+  if [ $STATUS -eq 0 ]; then
+    if [ -f ${COVERAGE_DIR}/${VIEW_FILE}.gcov ]; then
+      less -R ${COVERAGE_DIR}/${VIEW_FILE}.gcov
+    elif [ -f ${REPO_DIR}/build/${VIEW_FILE}.gcov ]; then
+      less -R ${REPO_DIR}/build/${VIEW_FILE}.gcov
+    fi
+  fi
+  exit
+fi
+
+# Get the test executableand run it.
+TEST_NAME=$(find -maxdepth 1 -type f -executable)
+TEST_DIR=$(pwd)
+runUnitTest
+
+# If the test failed, don't bother continuing on.
+if [ $STATUS -ne 0 ]; then
+  echo "Unit test failed; no use in printing out coverage information. Exiting..."
+  exit
+fi
+
+# Gather code coverage results into coverage folder. Also generate a file with coverage percentages.
+rm ${COVERAGE_DIR}/percentages 2>/dev/null
+# Gcov
+gcov -km $(find ${REPO_DIR}/build -name "*.gcno") | grep -A2 $(basename $(git config --get remote.origin.url) .git) >> ${COVERAGE_DIR}/percentages
+gcov -km $(find . -name "*.gcno") | grep -A2 "File '" >> ${COVERAGE_DIR}/percentages
+#gcov -km ./*.gcno | sed -n ' >> ${COVERAGE_DIR}/percentages
+mv *gcov* ${COVERAGE_DIR}
+
+# Remove system-based files we don't care about.
+rm $(grep -L ${REPO_DIR} ${COVERAGE_DIR}/*)
+
+filenames=($(sed -E -n "s/^File '(.*)'$/\1/p" ${COVERAGE_DIR}/percentages))
+percentages=($(sed -E -n 's/.*[^0-9\.]([0-9\.]+)%.*/\1/gp; s/No executable lines/0/gp' ${COVERAGE_DIR}/percentages))
+
+# Ensure the number of files matches the number of percentages.
+if [ ${#filenames[*]} -ne ${#percentages[*]} ]; then
+  echo "The number of gcov files doesn't match the number of percentages. Something's wrong with the output ${COVERAGE_DIR}/percentages file. Exiting..."
+  exit 1
+fi
+
+#Variables for drawing colorful bar graphs
+TOTAL_N_BARS=30
+
+BAD_COV_THRESH=0
+MED_COV_THRESH=$(( TOTAL_N_BARS / 3 ))
+GUD_COV_THRESH=$(( 2 * TOTAL_N_BARS / 3 ))  # lol
+
+COLOR=
+RED_BG='\033[0;41m'
+YELLOW_BG='\033[0;43m'
+GREEN_BG='\033[0;42m'
+WHITE_FG='\033[0;0m'
+RED_FG='\033[0;31m'
+
+# This loop iterates over all the pairs of filenames and their code coverage percentages.
+# It prints out a filename, a colored bar indicating coverage, and an equivalent percentage.
+lineNumber=0
+while [ $lineNumber -lt ${#filenames[*]} ]; do
+  percentage=${percentages[$lineNumber]}
+  filename=${filenames[$lineNumber]}
+  # Compute the bar length.
+  barLen=$(bc <<< "(${TOTAL_N_BARS} * $percentage / 100) / 1") # bc's required for floating point math
+  # Select bar's color.
+  if [ $barLen -ge $GUD_COV_THRESH ]; then
+    COLOR=$GREEN_BG
+  elif [ $barLen -ge $MED_COV_THRESH ]; then
+    COLOR=$YELLOW_BG
+  else
+    COLOR=$RED_BG
+  fi
+  echo pctg is $percentage, total bars is $TOTAL_N_BARS, barlen $barLen, math = $((TOTAL_N_BARS - barLen +1))
+  if [ $barLen -gt 0 ]; then
+    printf "%-30s: [${COLOR}%${barLen}s${WHITE_FG}%$((TOTAL_N_BARS - barLen + 1))s] (%3.0f%%)\n" $(basename $filename) ' ' ' ' $percentage
+  else
+    printf "${RED_FG}%-30s${WHITE_FG}: [%$((TOTAL_N_BARS + 1))s] (%3.0f%%)\n" $(basename $filename) ' ' ' ' $percentage
+  fi
+  #Iterate to the next filename-percentage pair.
+  ((++lineNumber))
+done
