@@ -144,7 +144,7 @@ void clearScreen(Renderer_ *rendererP) {
 #ifdef MULTITHREADED_
 
 // =======================================
-// Multithreaded strip data reconstruction
+// Multithreading
 // =======================================
 static void _threadFuncArgArrayIni(CriticalFunc funcP, ThreadFuncArg *argA, U32 *nThreadsNeededP, void *_array) {
   if (argA && _array) {

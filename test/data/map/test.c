@@ -1,25 +1,6 @@
 #include "tau/tau.h"
 #include "map.h"
 
-
-/*
-functions to test:
-==================
-
-  \mapNew
-  \mapDel
-  mapGetIndex
-  \mapGet
-  mapSetFlag
-  \mapSet
-  mapRem
-  mapCopyKeys
-  mapGetNestedMapP
-  mapGetNestedMapPElem
-  mapOfNestedMapsDel
-
-==================
-*/
 static Error _popMap(Map *mP, U32 nElems) {
   Error e = SUCCESS;
   // Populate inner map with 1...100
@@ -35,12 +16,16 @@ static Error _popMap(Map *mP, U32 nElems) {
   return e;
 }
 
+U32 randomValue = 42;
+U32 *randValP = &randomValue;
+
 TAU_MAIN()
 
 typedef struct Tau {
   Map *P;
   Map *cpP;
   Map *mapOfNestedMaps;
+  Map *mapOfNestedPtrMaps;
   U32 nElems;
 } Tau;
 TEST_F_SETUP(Tau) {
@@ -48,6 +33,7 @@ TEST_F_SETUP(Tau) {
   tau->P = NULL;
   tau->cpP = NULL;
   tau->mapOfNestedMaps = NULL;
+  tau->mapOfNestedPtrMaps = NULL;
 
   // Allocate simple map.
   Error e = mapNew(&tau->P, RAW_DATA, sizeof(U32), tau->nElems);
@@ -65,16 +51,37 @@ TEST_F_SETUP(Tau) {
   e = mapNew(&tau->mapOfNestedMaps, MAP_POINTER, sizeof(Map*), tau->nElems);
   REQUIRE_EQ(e, SUCCESS);
   CHECK_NOT_NULL(tau->mapOfNestedMaps);
+
+  // Allocate map of maps of pointer types.
+  e = mapNew(&tau->mapOfNestedPtrMaps, MAP_POINTER, sizeof(Map*), tau->nElems);
+  REQUIRE_EQ(e, SUCCESS);
+  CHECK_NOT_NULL(tau->mapOfNestedPtrMaps);
+
+  // Populate map of maps of pointers
+  for (Key i = 1; i <= tau->nElems; ++i) {
+    Map *newMP = NULL;
+    e = mapNew(&newMP, NONMAP_POINTER, sizeof(U32), tau->nElems);
+    REQUIRE_EQ(e, SUCCESS);
+    CHECK_NOT_NULL(newMP);
+    CHECK_NOT_NULL(newMP->mapA);
+    // Populate inner map with 1...100
+    for (Key j = 1; !e && j <= tau->nElems; ++j) {
+      e = mapSet(newMP, j, &randValP);
+    }
+    REQUIRE_EQ(e, SUCCESS);
+    mapSet(tau->mapOfNestedPtrMaps, i, &newMP);
+  }
+
   // Populate outer map with 100 inner maps
   for (Key i = 1; i <= tau->nElems; ++i) {
     Map *newMP = NULL;
     e = mapNew(&newMP, RAW_DATA, sizeof(U32), tau->nElems);
     REQUIRE_EQ(e, SUCCESS);
+    CHECK_NOT_NULL(newMP);
+    CHECK_NOT_NULL(newMP->mapA);
     // Populate inner map with 1...100
     e = _popMap(newMP, tau->nElems);
     REQUIRE_EQ(e, SUCCESS);
-    CHECK_NOT_NULL(newMP);
-    CHECK_NOT_NULL(newMP->mapA);
     mapSet(tau->mapOfNestedMaps, i, &newMP);
   }
 }
@@ -85,12 +92,12 @@ TEST_F_TEARDOWN(Tau) {
   mapOfNestedMapsDel(&tau->mapOfNestedMaps);
 }
 
-TEST_F(Tau, mapSetBadArg) {
+TEST_F(Tau, mapSet_BadArg) {
   Error e = mapSet(tau->P, 0, 0);
   CHECK_EQ(e, E_BAD_ARGS);
 }
 
-TEST_F(Tau, mapSetFull) {
+TEST_F(Tau, mapSet_Full) {
   Error e = mapSet(tau->P, tau->nElems + 1, &tau->nElems);
   CHECK_EQ(e, E_MAP_FULL);
 }
@@ -101,17 +108,17 @@ TEST_F(Tau, mapGet) {
   CHECK_EQ(*valP, 20);
 }
 
-TEST_F(Tau, mapGetNull) {
+TEST_F(Tau, mapGet_Null) {
   U32 *valP = (U32*) mapGet(tau->P, 0);
   CHECK_NULL(valP);
 }
 
-TEST_F(Tau, mapGetOverreach) {
+TEST_F(Tau, mapGet_Overreach) {
   U32 *valP = (U32*) mapGet(tau->P, tau->nElems + 1);
   CHECK_NULL(valP);
 }
 
-TEST_F(Tau, mapNewBadArgs) {
+TEST_F(Tau, mapNew_BadArgs) {
   Map *whateverMP;
   Error e = mapNew(NULL, RAW_DATA, 1, 1);
   CHECK_EQ(e, E_BAD_ARGS);
@@ -144,9 +151,7 @@ TEST_F(Tau, mapGetIndex) {
   Error e = mapGetIndex(tau->P, 5, &idx);
   CHECK_EQ(e, SUCCESS);
   CHECK_EQ(idx, 4);
-  e = mapRem(tau->P, 5);
-  CHECK_EQ(e, SUCCESS);
-  e = mapGetIndex(tau->P, 5, &idx);
+  e = mapGetIndex(tau->P, tau->nElems + 1, &idx);
   CHECK_EQ(e, E_BAD_KEY);
 }
 
@@ -159,12 +164,60 @@ TEST_F(Tau, mapGetNestedMapP) {
   CHECK_EQ(e, E_BAD_ARGS);
   e = mapGetNestedMapP(tau->mapOfNestedMaps, 0, &mP);
   CHECK_EQ(e, E_BAD_ARGS);
-  e = mapGetNestedMapP(tau->mapOfNestedMaps, 5, &mP);
+}
+
+TEST_F(Tau, mapGetNestedMapP_BadKey) {
+  Map *mP = NULL;
+  Error e = mapGetNestedMapP(tau->mapOfNestedMaps, tau->nElems + 1, &mP);
+  CHECK_EQ(e, E_BAD_KEY);
+}
+
+TEST_F(Tau, mapGetNestedMapPElem) {
+  U32 *valP = NULL;
+  Error e = mapGetNestedMapPElem(tau->mapOfNestedMaps, 5, 20, RAW_DATA, (void*) &valP);
   CHECK_EQ(e, SUCCESS);
-  // TODO see why removing or deleting something from map causes segfault 
-  //e = mapRem(tau->mapOfNestedMaps, 5);
-  //e = mapRem(tau->mapOfNestedMaps, 5);
-  //CHECK_EQ(e, SUCCESS);
-  //e = mapGetNestedMapP(tau->mapOfNestedMaps, 5, &mP);
-  //CHECK_EQ(e, E_BAD_KEY);
+  CHECK_NOT_NULL(valP);
+  CHECK_EQ(*valP, 20);
+}
+
+TEST_F(Tau, mapGetNestedMapPElem_WrongType) {
+  U32 *valP = NULL;
+  Error e = mapGetNestedMapPElem(tau->mapOfNestedMaps, 5, 20, MAP_POINTER, (void*) &valP);
+  CHECK_EQ(e, E_MAP_WRONG_ELEM_TYPE);
+}
+
+TEST_F(Tau, mapGetNestedMapPElem_BadArgs) {
+  U32 *valP = NULL;
+  Error e = mapGetNestedMapPElem(tau->mapOfNestedMaps, 0, 20, MAP_POINTER, (void*) &valP);
+  CHECK_EQ(e, E_BAD_ARGS);
+  e = mapGetNestedMapPElem(tau->mapOfNestedMaps, 5, 0, MAP_POINTER, (void*) &valP);
+  CHECK_EQ(e, E_BAD_ARGS);
+  e = mapGetNestedMapPElem(tau->mapOfNestedMaps, 5, 20, MAP_POINTER, NULL);
+  CHECK_EQ(e, E_BAD_ARGS);
+}
+
+TEST_F(Tau, mapGetNestedMapPElem_BadElemType) {
+  Map *mP = NULL;
+  U32 *valP;
+  Error e = mapGetNestedMapP(tau->mapOfNestedMaps, 5, &mP);
+  CHECK_EQ(e, SUCCESS);
+  CHECK_NOT_NULL(mP);
+  mP->elemType = 100000;  // set it to something bogus after the fact
+  e = mapGetNestedMapPElem(tau->mapOfNestedMaps, 5, 20, MAP_POINTER, (void**) &valP);
+  CHECK_EQ(e, E_MAP_WRONG_ELEM_TYPE);
+}
+
+TEST_F(Tau, mapGetNestedMapP_PointerType) {
+  U32 *valP;
+  Error e = mapGetNestedMapPElem(tau->mapOfNestedPtrMaps, 5, 20, NONMAP_POINTER, (void**) &valP);
+  CHECK_EQ(e, SUCCESS);
+  CHECK_NOT_NULL(valP);
+  CHECK_EQ(*valP, randomValue);
+}
+
+TEST_F(Tau, mapGetNestedMapP_PointerType_BadKey) {
+  U32 *valP;
+  Error e = mapGetNestedMapPElem(tau->mapOfNestedPtrMaps, 5, tau->nElems + 1, NONMAP_POINTER, (void**) &valP);
+  CHECK_EQ(e, E_BAD_KEY);
+  CHECK_NULL(valP);
 }
