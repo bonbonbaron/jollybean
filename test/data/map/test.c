@@ -103,9 +103,11 @@ TEST_F(Tau, mapSet_Full) {
 }
 
 TEST_F(Tau, mapGet) {
-  U32 *valP = (U32*) mapGet(tau->P, 20);
-  CHECK_NOT_NULL(valP);
-  CHECK_EQ(*valP, 20);
+  for (Key key = 1; key <= tau->nElems; ++key) {
+    U32 *valP = (U32*) mapGet(tau->P, key);
+    CHECK_NOT_NULL(valP);
+    CHECK_EQ(*valP, key);
+  }
 }
 
 TEST_F(Tau, mapGet_Null) {

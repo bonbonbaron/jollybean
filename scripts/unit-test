@@ -48,12 +48,7 @@ if [ ! -z "${SRC_PATH}" -a ! -z "${SRC_BASENAME}" ]; then
     echo -e "#include \"tau/tau.h\"\n#include \"${SRC_BASENAME}.h\"\n" >> ${OUTPUT_FILE}
 
     # Make main function to call all of the above functions.
-    echo -e "\n/*\nfunctions to test:\n==================\n" >> ${OUTPUT_FILE}
-    for f in ${functionsToTest[*]}; do
-      echo -e "  $f" >> ${OUTPUT_FILE}
-    done
-    echo -e "\n==================\n*/\n" >> ${OUTPUT_FILE}
-    echo "
+    echo -e "
 TAU_MAIN()
 
 typedef struct Tau {
@@ -67,11 +62,15 @@ TEST_F_SETUP(Tau) {
 TEST_F_TEARDOWN(Tau) {
   // Free stuff in the tau struct here.
 }
+" >> ${OUTPUT_FILE}
 
-TEST_F(Tau, firstTest) {
+for f in ${functionsToTest[*]}; do
+  echo -e "
+TEST_F(Tau, $f) {
   REQUIRE_TRUE(1);
 }
 " >> $OUTPUT_FILE
+done
 
     cat $OUTPUT_FILE
     

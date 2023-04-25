@@ -11,9 +11,9 @@ Error btNew(void **btAP, U32 elemSz, U32 nElems) {
   // This pre-configures the headers in each element to indicate orphan-hood till tree node is linked.
   // We trust the user to re-assign the non-header values in the struct.
   if (!e) {
-    memset(*btAP, ORPHAN_BYTE_, elemSz * nElems);
+    memset(*btAP, ORPHAN_BYTE, elemSz * nElems);
     BtElHeader *firstHeaderP = *btAP;
-    btEraseHeader_(firstHeaderP);
+    _btHeaderClr(firstHeaderP);
   }
 
   return e;

@@ -48,7 +48,7 @@ static inline Error __atlasLinkNodes(
   atlasP->btP[childIdx].rect.y = y;
   atlasP->btP[childIdx].remW = remW;
   atlasP->btP[childIdx].remH = remH;
-  btLinkNodes_(atlasP->btP, &atlasP->btP[parentIdx], &atlasP->btP[childIdx], child);
+  _btLinkNodes(&atlasP->btP[parentIdx].header, &atlasP->btP[childIdx].header, parentIdx, childIdx, child);
   return SUCCESS;
 }
 
@@ -145,7 +145,7 @@ Error atlasNew(Atlas **atlasPP, Colormap **cmPF) {
 
 void atlasDel(Atlas **atlasPP) {
   if (atlasPP) {
-    btDel_((void**) &(*atlasPP)->btP);
+    _btDel((BtElHeader**) &(*atlasPP)->btP);
     jbFree((void**) atlasPP);
   }
 }
@@ -153,7 +153,7 @@ void atlasDel(Atlas **atlasPP) {
 // Texture atlas
 Error atlasPlanPlacements(Atlas *atlasP) {
   // We never search for rect space in orphan nodes, so we must only check the root for orphan-hood.
-  if (!atlasP || btIsAnOrphan_(atlasP->btP, 0)) {
+  if (!atlasP || !atlasP->btP || _btIsAnOrphan(&atlasP->btP[0].header)) {
     return E_BAD_ARGS;
   }
   // For each sorted rectangle...
@@ -227,7 +227,6 @@ Error atlasPlanPlacements(Atlas *atlasP) {
       default:
         if (!e) {
           btP[0].remW += orphanP->rect.w;
-          //btP[atlasP->extremityA[RIGHT_RECT]].remW = orphanP->rect.w;
           e = _atlasLinkNodes(atlasP, atlasP->extremityA[RIGHT_RECT], orphanP - btP, RIGHT_RECT);
           if (!e) {
             atlasP->extremityA[RIGHT_RECT] = 
@@ -245,7 +244,6 @@ Error atlasPlanPlacements(Atlas *atlasP) {
             // Update the lowest extremity.
             atlasP->extremityA[LOWER_RECT] = 
               btP[atlasP->extremityA[LOWER_RECT]].header.childA[LOWER_RECT];
-            //btP[atlasP->extremityA[LOWER_RECT]].remH = orphanP->rect.h;
           }
         }
         break;

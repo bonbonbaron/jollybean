@@ -13,32 +13,44 @@
  *
  */
 
-typedef enum { LEFT_CHILD, RIGHT_CHILD } Child;
-
-// Orphan-hood (having neither parents nor children) 
-//   is determined when both children are identical non-zeros. 
-// The rest is just because I'm a dork.
-#define ORPHAN_BYTE_ (0x33)
-#define ORPHAN_ (\
-    /* ORPHAN_BYTE_ << 24 | */ \
-    ORPHAN_BYTE_ << 16 | \
-    ORPHAN_BYTE_ <<  8 | \
-    ORPHAN_BYTE_)
-#define btIsAnOrphan_(btP_, idx_) ((*((U32*) &btP_[(idx_)].header) & 0x00ffffff) == ORPHAN_)
-#define btHasChild_(btElHeaderP_, child_) btElHeaderP_->childA[child_]  /* if nonzero, non-orphan has childn*/
-#define btEraseHeader_(btElHeaderP_) memset(btElHeaderP_, 0, sizeof(BtElHeader))
-#define btLinkNodes_(btP_, parentP_, childP_, child_) \
-  (parentP_)->header.childA[child_] = (childP_) - btP_;\
-  btEraseHeader_(&(childP_)->header);\
-  (childP_)->header.parent = (parentP_) - btP_;
-
 typedef struct {
   Key            /* these all need to be the same type */
     childA[2],   // children of this element
     parent;      // parent of this element
 } BtElHeader;
 
+typedef enum { LEFT_CHILD, RIGHT_CHILD } Child;
+
+// Orphan-hood (having neither parents nor children) 
+//   is determined when both children are identical non-zeros. 
+// The rest is just because I'm a dork.
+#define ORPHAN_BYTE (0x33)
+// TODO adjust for endianness at some point
+#define ORPHAN ((ORPHAN_BYTE) << 16 | (ORPHAN_BYTE) << 8 | (ORPHAN_BYTE))
+
+inline U8 _btIsAnOrphan(BtElHeader *btHeaderP) {
+  return ((*((U32*) btHeaderP) & 0x00ffffff) == ORPHAN);
+}
+
+inline U8 _btHasChild(BtElHeader *btElHeaderP, U32 child_) {
+  return btElHeaderP->childA[child_];  /* if nonzero, non-orphan has childn*/
+}
+
+inline void _btHeaderClr(BtElHeader *btElHeaderP) {
+  memset(btElHeaderP, 0, sizeof(BtElHeader));
+}
+
+// For both indices, just pass in the difference between the full element and the array address.
+inline void _btLinkNodes(BtElHeader *parentHdrP, BtElHeader *childHdrP, Key parentIdx, Key childIdx, Key child) {
+  parentHdrP->childA[child] = childIdx;
+  _btHeaderClr(childHdrP);
+  childHdrP->parent = parentIdx;
+}
+
 Error btNew(void **btAP, U32 elemSz, U32 nElems);
-#define btDel_ arrayDel
+
+inline void _btDel(BtElHeader **btPP) {
+  arrayDel((void**) btPP);
+}
 
 #endif  // #ifndef BT_H

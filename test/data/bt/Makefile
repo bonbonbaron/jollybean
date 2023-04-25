@@ -1,53 +1,26 @@
-BODY_DIR = ${HOME}/jb/build/Seed/Genome/Gene/Body
+CC=gcc
 
-COLORMAP_DIR = ${BODY_DIR}/Graybody/Colormap
-CM_SRC_DIR = ${COLORMAP_DIR}/src
-CM_INC_DIR = ${COLORMAP_DIR}/include
-CM_OBJ_DIR = ${COLORMAP_DIR}/obj
+RPO_DIR := $(shell git rev-parse --show-toplevel)
+LIB_DIR := $(RPO_DIR)/lib
+_INCS   := $(shell find ${RPO_DIR}/src -type d -name 'include')
+INCS    := -I. $(_INCS:%=-I%)
 
-COLOR_PALETTE_DIR = ${BODY_DIR}/Palette/Color
-CP_SRC_DIR = ${COLOR_PALETTE_DIR}/src
-CP_INC_DIR = ${COLOR_PALETTE_DIR}/include
-CP_OBJ_DIR = ${COLOR_PALETTE_DIR}/obj
+SRCS=$(shell find . -type f -name "*.c")
+OBJS=$(SRCS:%.c=%.o)
 
-JB_DIR = $(shell git rev-parse --show-toplevel)
+all: o
 
-#~/jb/build/Seed/Genome/Gene/Body/Graybody/Colormap/src/I
-./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./main.o ${JB_DIR}/build/data.o 
-	gcc -g ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./main.o ${JB_DIR}/build/data.o -o $@
-	touch $@
+o: ${OBJS} 
+	$(CC) --coverage -g ${OBJS} -L${LIB_DIR} -ljb -o $@
 
-./main.o: ./main.c
-	gcc -g -c main.c -I${JB_DIR}/src/include/ -I${JB_DIR}/utils/body/src/include -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags --cflags) -o $@
-	touch $@
+%.o: %.c
+	$(CC) --coverage -g $(INCS) -c $< -o $@
 
-${CM_OBJ_DIR}/%Colormap.o: ${CM_SRC_DIR}/%Colormap.c
-	gcc -g -I${JB_DIR}/src/include -c ${CM_SRC_DIR}/$*Colormap.c $(shell sdl2-config --cflags) -o $@
-	touch $@
-
-${CP_OBJ_DIR}/%ColorPalette.o: ${CP_SRC_DIR}/%ColorPalette.c
-	gcc -g -I${JB_DIR}/src/include -c $< $(shell sdl2-config --cflags) -o $@
-	touch $@
-
-${CP_SRC_DIR}/%ColorPalette.c:
-	${JB_DIR}/utils/body/bin/body $*
-	touch $@
-
-${CM_SRC_DIR}/%Colormap.c:
-	${JB_DIR}/utils/body/bin/body $*
-	touch $@
-
-${JB_DIR}/build/data.o: ${JB_DIR}/src/data.c
-	gcc -g -c ${JB_DIR}/src/data.c -I${JB_DIR}/src/include -o $@
-	touch $@
+$(LIB_DIR)/libjb:
+	make -C ${RPO_DIR}
 
 .PHONY: clean
 clean:
-	rm -f ./o 2>/dev/null
-	rm -f ./render.o 2>/dev/null
-	rm -f ${CP_INC_DIR}/*.h 2>/dev/null
-	rm -f ${CP_OBJ_DIR}/*.o 2>/dev/null
-	rm -f ${CP_SRC_DIR}/*.c 2>/dev/null
-	rm -f ${CM_INC_DIR}/*.h 2>/dev/null
-	rm -f ${CM_OBJ_DIR}/*.o 2>/dev/null
-	rm -f ${CM_SRC_DIR}/*.c 2>/dev/null
+	rm -rf o 2>/dev/null
+	rm -rf coverage 2>/dev/null
+	rm -f ${OBJS} 2>/dev/null
