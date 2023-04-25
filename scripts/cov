@@ -66,10 +66,14 @@ if [ $? -eq 0 -a ! -z "$VIEW_FILE" ]; then
   exit
 fi
 
-# Get the test executableand run it.
+# Get the test executableand run it if it hasn't been run for cov yet.
 TEST_NAME=$(find -maxdepth 1 -type f -executable)
 TEST_DIR=$(pwd)
-runUnitTest
+SENTINEL=${COVERAGE_DIR}/.sentinel
+if [ ! -f $SENTINEL -o $TEST_NAME -nt $SENTINEL ]; then
+  touch $SENTINEL
+  runUnitTest
+fi
 
 # If the test failed, don't bother continuing on.
 if [ $STATUS -ne 0 ]; then
@@ -80,7 +84,7 @@ fi
 # Gather code coverage results into coverage folder. Also generate a file with coverage percentages.
 rm ${COVERAGE_DIR}/percentages 2>/dev/null
 # Gcov
-gcov -km $(find ${REPO_DIR}/build -name "*.gcno") | grep -A2 $(basename $(git config --get remote.origin.url) .git) >> ${COVERAGE_DIR}/percentages
+gcov -km $(find ${REPO_DIR}/build -name "*.gcno") 2>/dev/null | grep -A2 $(basename $(git config --get remote.origin.url) .git) >> ${COVERAGE_DIR}/percentages
 gcov -km $(find . -name "*.gcno") | grep -A2 "File '" >> ${COVERAGE_DIR}/percentages
 #gcov -km ./*.gcno | sed -n ' >> ${COVERAGE_DIR}/percentages
 mv *gcov* ${COVERAGE_DIR}

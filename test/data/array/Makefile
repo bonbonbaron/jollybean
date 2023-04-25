@@ -5,16 +5,16 @@ LIB_DIR := $(RPO_DIR)/lib
 _INCS   := $(shell find ${RPO_DIR}/src -type d -name 'include')
 INCS    := -I. $(_INCS:%=-I%)
 
-SRCS=$(shell find . -maxdepth 1 -type f -name "*.c")
+SRCS=$(shell find . -type f -name "*.c")
 OBJS=$(SRCS:%.c=%.o)
 
 all: o
 
 o: ${OBJS} 
-	$(CC) -std=c11 --coverage -g ${OBJS} -L${LIB_DIR} -ljb -o $@
+	$(CC) --coverage -g ${OBJS} -L${LIB_DIR} -ljb -o $@
 
 %.o: %.c
-	$(CC) -std=c11 --coverage -g $(INCS) -c $< -o $@
+	$(CC) --coverage -g $(INCS) -c $< -o $@
 
 $(LIB_DIR)/libjb:
 	make -C ${RPO_DIR}

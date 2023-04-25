@@ -4,7 +4,7 @@
 #include "mem.h"
 
 // Inflatables 
-typedef struct {
+typedef struct Inflatable {
 	U32 compressedLen;
 	U32 inflatedLen;
 	void *inflatedDataP;

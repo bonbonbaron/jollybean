@@ -11,8 +11,8 @@ INSTALLDIR     = /usr/local/lib
 ##############################
 # Compiler
 ##############################
-inflatable.o: ./src/inflatable.c ./src/include/inflatable.h ${BUILDDIR}
-	$(CC) -g -I../../src/include -L../../lib -ljollybean $(sdl2-config --cflags) $(pkg-config --cflags zlib) -lz -c ./src/inflatable.c -o $@
+infUtil.o: ./src/infUtil.c ./src/include/infUtil.h ${BUILDDIR}
+	$(CC) -g -I../../src/data/include -L../../lib -ljollybean $(sdl2-config --cflags) $(pkg-config --cflags zlib) -lz -c ./src/infUtil.c -o $@
 	mv $@ build/
 	touch build/$@
 

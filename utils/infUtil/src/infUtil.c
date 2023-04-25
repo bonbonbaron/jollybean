@@ -1,7 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <zlib.h>
-#include "data.h"
+#include "inflatable.h"
+#include "array.h"
 
 Error inflatableNew(void *voidA, Inflatable **inflatablePP) {
   if (!voidA || !inflatablePP)

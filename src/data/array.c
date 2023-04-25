@@ -3,11 +3,8 @@
 Error arrayNew(void **arryPP, U32 elemSz, U32 nElems) {
   Error e = SUCCESS;
   U32 *ptr;
-	if (elemSz <= 0 || nElems < 0 || arryPP == NULL) {
-		return E_BAD_ARGS;  /* TODO: replace with reasonable error type */
-  }
-	if (nElems == 0) {
-		*arryPP = NULL;
+	if (elemSz <= 0 || nElems <= 0 || arryPP == NULL) {
+		return E_BAD_ARGS;  
   }
 	else {
 		e = jbAlloc((void**) &ptr, (elemSz * nElems) + (2 * sizeof(U32)), 1);
@@ -65,14 +62,16 @@ void* arrayGetVoidElemPtr(const void *arryP, S32 idx) {
 }
 
 Error arraySetVoidElem(void *arrayP, U32 idx, const void *elemSrcompP) {
-	if (!arrayP)
+	if (!arrayP || idx >= arrayGetNElems(arrayP) || !elemSrcompP) {
 		return E_BAD_ARGS;
+  }
 	U32 elemSz = arrayGetElemSz((const void*) arrayP);
 	void *dstP = (U8*) arrayP + (idx * elemSz);
 	memcpy(dstP, elemSrcompP, elemSz);
 	return SUCCESS;
 }
 
+// If endIdx is illegal, endP's being NULL should be okay since it stops loops.
 void arrayIniPtrs(const void *arryP, void **startP, void **endP, S32 endIdx) {
 	*startP = (void*) arryP;
 	*endP = _arrayGetElemByIdx(arryP, endIdx);

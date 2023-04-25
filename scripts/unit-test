@@ -45,17 +45,30 @@ if [ ! -z "${SRC_PATH}" -a ! -z "${SRC_BASENAME}" ]; then
     rm -f ${OUTPUT_FILE} 2>/dev/null
 
     # Make functions wrapping the ones being tested.
-    echo -e "#include \"${SRC_BASENAME}.h\"\n#include <assert.h>\n" >> ${OUTPUT_FILE}
-    for f in ${functionsToTest[*]}; do
-      echo -e "Error test_$f() {\n\tassert(FALSE);\n\treturn SUCCESS;\n}\n" >> ${OUTPUT_FILE}
-    done
+    echo -e "#include \"${SRC_BASENAME}.h\"\n#include \"tau/tau.h\"\n" >> ${OUTPUT_FILE}
 
     # Make main function to call all of the above functions.
-    echo "int main(int argc, char **argv) {" >> ${OUTPUT_FILE}
+    echo -e "\n/*\nfunctions to test:\n==================\n" >> ${OUTPUT_FILE}
     for f in ${functionsToTest[*]}; do
-      echo -e "\tassert(test_${f}() == SUCCESS);" >> ${OUTPUT_FILE}
+      echo -e "  $f" >> ${OUTPUT_FILE}
     done
-    echo -e "\n\treturn 0;\n}\n" >> $OUTPUT_FILE
+    echo -e "\n==================\n*/\n" >> ${OUTPUT_FILE}
+    echo "
+TAU_MAIN()
+
+TEST_F_SETUP(ABC) {
+  // tau is a pointer to an ABC-type struct.
+}
+
+TEST_F_TEARDOWN(ABC) {
+  // tau is a pointer to an ABC-type struct.
+}
+
+TEST_F(ABC, firstTest) {
+  REQUIRE_EQ(exampleVar, 1);
+}
+" >> $OUTPUT_FILE
+
     cat $OUTPUT_FILE
     
     # Makefile

@@ -883,38 +883,41 @@ static void tauPrintHexBufCmp(const void* const buff, const void* const ref, con
 #define TEST_F_TEARDOWN(FIXTURE)                                               \
     static void __TAU_TEST_FIXTURE_TEARDOWN_##FIXTURE(struct FIXTURE* const tau)
 
-#define TEST_F(FIXTURE, NAME)                                                                            \
-    TAU_EXTERN tauTestStateStruct tauTestContext;                                                        \
-    static void __TAU_TEST_FIXTURE_SETUP_##FIXTURE(struct FIXTURE* const);                               \
-    static void __TAU_TEST_FIXTURE_TEARDOWN_##FIXTURE(struct FIXTURE* const);                            \
-    static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const);                        \
-                                                                                                         \
-    static void __TAU_TEST_FIXTURE_##FIXTURE##_##NAME() {                                                \
-        struct FIXTURE fixture;                                                                          \
-        memset(&fixture, 0, sizeof(fixture));                                                            \
-        __TAU_TEST_FIXTURE_SETUP_##FIXTURE(&fixture);                                                    \
-        if(hasCurrentTestFailed == 1) {                                                                  \
-            return;                                                                                      \
-        }                                                                                                \
-                                                                                                         \
-        __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(&fixture);                                             \
-        __TAU_TEST_FIXTURE_TEARDOWN_##FIXTURE(&fixture);                                                 \
-    }                                                                                                    \
-                                                                                                         \
-    TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                              \
-        const tau_ull index = tauTestContext.numTestSuites++;                                            \
-        const char* const namePart = #FIXTURE "." #NAME;                                                 \
-        const tau_ull nameSize = strlen(namePart) + 1;                                                   \
-        char* name = TAU_PTRCAST(char* , malloc(nameSize));                                              \
-        tauTestContext.tests = TAU_PTRCAST(                                                              \
-                                    tauTestSuiteStruct*,                                                 \
-                                    tau_realloc(TAU_PTRCAST(void*, tauTestContext.tests),                \
-                                                                sizeof(tauTestSuiteStruct) *             \
-                                                                        tauTestContext.numTestSuites));  \
-        tauTestContext.tests[index].func = &__TAU_TEST_FIXTURE_##FIXTURE##_##NAME;                       \
-        tauTestContext.tests[index].name = name;                                                         \
-        TAU_SNPRINTF(name, nameSize, "%s", namePart);                                                    \
-    }                                                                                                    \
+#define TEST_F(FIXTURE, NAME) \
+    /* Declare that a tau test context exists. */\
+    tauTestStateStruct tauTestContext;                                                        \
+    /* Declare that setup, teardown, and run functions exist. */\
+    static void __TAU_TEST_FIXTURE_SETUP_##FIXTURE(struct FIXTURE* const);                    \
+    static void __TAU_TEST_FIXTURE_TEARDOWN_##FIXTURE(struct FIXTURE* const);                 \
+    static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const);             \
+                                                                                              \
+    /* Declare that . */\
+    static void __TAU_TEST_FIXTURE_##FIXTURE##_##NAME() {                                     \
+        struct FIXTURE fixture;                                                               \
+        memset(&fixture, 0, sizeof(fixture));                                                 \
+        __TAU_TEST_FIXTURE_SETUP_##FIXTURE(&fixture);                                         \
+        if(hasCurrentTestFailed == 1) {                                                       \
+            return;                                                                           \
+        }                                                                                     \
+                                                                                              \
+        __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(&fixture);                                  \
+        __TAU_TEST_FIXTURE_TEARDOWN_##FIXTURE(&fixture);                                      \
+    }                                                                                         \
+                                                                                              \
+    TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+        const tau_ull index = tauTestContext.numTestSuites++;                                 \
+        const char* const namePart = #FIXTURE "." #NAME;                                      \
+        const tau_ull nameSize = strlen(namePart) + 1;                                        \
+        char* name = TAU_PTRCAST(char* , malloc(nameSize));                                   \
+        tauTestContext.tests = TAU_PTRCAST(                                                   \
+                                    tauTestSuiteStruct*,                                      \
+                                    tau_realloc(TAU_PTRCAST(void*, tauTestContext.tests),     \
+                                                            sizeof(tauTestSuiteStruct) *      \
+                                                            tauTestContext.numTestSuites));   \
+        tauTestContext.tests[index].func = &__TAU_TEST_FIXTURE_##FIXTURE##_##NAME;            \
+        tauTestContext.tests[index].name = name;                                              \
+        TAU_SNPRINTF(name, nameSize, "%s", namePart);                                         \
+    }                                                                                         \
     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const tau)
 
 
