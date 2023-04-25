@@ -48,6 +48,7 @@ Error mapNew(Map **mapPP, MapElemType elemType, const U8 elemSz, const Key nElem
 void  mapDel(Map **mapPP);
 Error mapSet(Map *mapP, const U8 key, const void *valP);
 void* mapGet(const Map *mapP, const U8 key);
+Error mapRem(Map *mapP, const Key key);
 Error mapGetIndex(const Map *mapP, const Key key, Key *idxP);
 void  mapSetFlag(Map *mapP, const Key key);
 Error mapCopyKeys(Map *dstMP, Map *srcMP);

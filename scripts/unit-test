@@ -45,7 +45,7 @@ if [ ! -z "${SRC_PATH}" -a ! -z "${SRC_BASENAME}" ]; then
     rm -f ${OUTPUT_FILE} 2>/dev/null
 
     # Make functions wrapping the ones being tested.
-    echo -e "#include \"${SRC_BASENAME}.h\"\n#include \"tau/tau.h\"\n" >> ${OUTPUT_FILE}
+    echo -e "#include \"tau/tau.h\"\n#include \"${SRC_BASENAME}.h\"\n" >> ${OUTPUT_FILE}
 
     # Make main function to call all of the above functions.
     echo -e "\n/*\nfunctions to test:\n==================\n" >> ${OUTPUT_FILE}
@@ -56,16 +56,20 @@ if [ ! -z "${SRC_PATH}" -a ! -z "${SRC_BASENAME}" ]; then
     echo "
 TAU_MAIN()
 
-TEST_F_SETUP(ABC) {
-  // tau is a pointer to an ABC-type struct.
+typedef struct Tau {
+  // Put stuff to instantiate here. 
+  // This is a particularly good place for pointers since double-poitners are needed to allocate them.
+} Tau;
+TEST_F_SETUP(Tau) {
+  // Instantiate stuff in the Tau struct here.
 }
 
-TEST_F_TEARDOWN(ABC) {
-  // tau is a pointer to an ABC-type struct.
+TEST_F_TEARDOWN(Tau) {
+  // Free stuff in the tau struct here.
 }
 
-TEST_F(ABC, firstTest) {
-  REQUIRE_EQ(exampleVar, 1);
+TEST_F(Tau, firstTest) {
+  REQUIRE_TRUE(1);
 }
 " >> $OUTPUT_FILE
 

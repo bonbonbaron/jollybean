@@ -1,7 +1,7 @@
 #include "map.h"
 
 Error mapNew(Map **mapPP, MapElemType elemType, const U8 elemSz, const Key nElems) {
-	if (elemSz == 0 || nElems == 0) {
+	if (!mapPP || elemSz == 0 || nElems == 0) {
     return E_BAD_ARGS;
   }
   Error e = jbAlloc((void**) mapPP, sizeof(Map), 1);
@@ -73,7 +73,7 @@ Error mapGetIndex(const Map *mapP, const Key key, Key *idxP) {
 	if (f.flags & bitFlag) {
     *idxP = _getElemIdx(f, key);
     return SUCCESS;
- }
+  }
   return E_BAD_KEY;
 }
 
@@ -176,6 +176,9 @@ Error mapSet(Map *mapP, const Key key, const void *valP) {
 }
 
 Error mapRem(Map *mapP, const Key key) {
+  if (!mapP || !key) {
+    return E_BAD_ARGS;
+  }
 	void *elemP, *nextElemP;
   U32 nBytesToMove;
   Error e = preMapSet(mapP, key, &elemP, &nextElemP, &nBytesToMove);
@@ -271,7 +274,9 @@ void mapOfNestedMapsDel(Map **outerMapPP) {
     Map **mapPP = (Map**) (*outerMapPP)->mapA;
     Map **mapEndPP = mapPP + (*outerMapPP)->population;
     for (; mapPP < mapEndPP; ++mapPP) {
-      mapDel(mapPP);
+      if (*mapPP) {
+        mapDel(mapPP);
+      }
     }
     mapDel(outerMapPP);
   }
