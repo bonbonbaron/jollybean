@@ -1,133 +1,240 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "data.h"
-#include <assert.h>
+#include "tau/tau.h"
+#include "fray.h"
 
-static void _printElem(U32 idx, U32 elem) {
-  printf("aF[%2d] = %2d\n", idx, elem);
+
+TAU_MAIN()
+
+typedef struct Tau {
+  Error e;
+  U32 *uF;
+  U32 nElems;
+  U32 elemSz;
+  U32 iniPop;
+  U32 newIdx;
+  U32 newVal;
+  U32 iniActive;
+  FrayChanges frayChange;
+} Tau;
+
+TEST_F_SETUP(Tau) {
+  memset(tau, 0, sizeof(Tau));
+  tau->nElems = 50;
+  tau->elemSz = sizeof(U32);
+  tau->newVal = 500;
+  tau->iniPop = 20;
+  tau->iniActive = 5;
+
+  tau->e = frayNew((void**) &tau->uF, tau->elemSz, tau->nElems);
+
+  REQUIRE_EQ(tau->e, SUCCESS);
+  REQUIRE_EQ(frayGetElemSz_(tau->uF), tau->elemSz);
+  REQUIRE_EQ(frayGetNElems_(tau->uF), tau->nElems);
+  REQUIRE_EQ(_frayGetFirstPausedIdx(tau->uF), 0);
+  REQUIRE_EQ(_frayGetFirstInactiveIdx(tau->uF), 0);
+  REQUIRE_EQ(*_frayGetNPausedP(tau->uF), 0);
+  REQUIRE_EQ(*_frayGetFirstEmptyIdxP(tau->uF), 0);
+  REQUIRE_EQ(*_frayGetFirstInactiveIdxP(tau->uF), 0);
+
+  for (U32 i = 0, j; !tau->e && i < tau->iniPop; ++i) {
+    tau->e = frayAdd((void*) tau->uF, (void*) &i, &j);
+    REQUIRE_EQ(j, i);
+  }
+  REQUIRE_EQ(tau->e, SUCCESS);
+  REQUIRE_EQ(*_frayGetFirstEmptyIdxP(tau->uF), tau->iniPop);
+
+  // Activate 5 of 20 populated (of 50 capacity) elems by default.
+  for (U32 i = 0; !tau->e && i < tau->iniActive; ++i) {
+    tau->e = frayActivate(tau->uF, i * 2, NULL);
+  }
+  REQUIRE_EQ(tau->e, SUCCESS);
+  REQUIRE_EQ(_frayGetFirstPausedIdx((void*) tau->uF), tau->iniActive);
 }
 
-static void _reportFray(char *prelude, U32 *frayP) {
-  printf("%s:\n", prelude);
-  U32 i = 0;
-  printf("----- active section -----\n");
-  for (; i < _frayGetFirstPausedIdx(frayP); ++i) {
-    _printElem(i, frayP[i]);
-  }
-  printf("----- paused section -----\n");
-  for (; i < *_frayGetFirstInactiveIdxP(frayP); ++i) {
-    _printElem(i, frayP[i]);
-  }
-  printf("----- inactive section -----\n");
-  for (; i < *_frayGetFirstEmptyIdxP(frayP); ++i) {
-    _printElem(i, frayP[i]);
-  }
-  printf("\n\n");
+TEST_F_TEARDOWN(Tau) {
+  frayDel((void**) &tau->uF);
+  REQUIRE_TRUE(tau->uF == NULL);
 }
 
-int main(int argc, char **argv) {
-  U32 *aF;
-  FrayChanges changes;
-  frayChangesIni_(changes, -1);
-  static const U32 N_ELEMS = 10;
-  // Make fray.
-  Error e = frayNew((void**) &aF, sizeof(U32), N_ELEMS);
-  // Populate fray.
-  if (!e) {
-    for (U32 i = 0; !e && i < frayGetNElems_(aF); ++i) {
-      e = frayAdd(aF, &i, NULL);
+// Unit tests
+
+TEST_F(Tau, frayNew_BadArgs) {
+  frayDel((void**) &tau->uF);
+  CHECK_TRUE(tau->uF == NULL);
+  tau->e = frayNew((void**) &tau->uF, 0, 1);
+  CHECK_EQ(tau->e, E_BAD_ARGS);
+  CHECK_TRUE(tau->uF == NULL);
+  tau->e = frayNew((void**) &tau->uF, 0, 1);
+  CHECK_EQ(tau->e, E_BAD_ARGS);
+  CHECK_TRUE(tau->uF == NULL);
+}
+
+TEST_F(Tau, frayAdd) {
+  for (; !tau->e; ++tau->newVal) {
+    tau->e = frayAdd((void*) tau->uF, (void*) &tau->newVal, &tau->newIdx);
+    CHECK_EQ(tau->uF[tau->newIdx], tau->newVal);
+  }
+  CHECK_EQ(tau->e, E_FRAY_FULL);
+  CHECK_EQ(tau->newIdx, tau->nElems - 1);
+  CHECK_EQ(*_frayGetFirstEmptyIdxP(tau->uF), tau->nElems);
+}
+
+TEST_F(Tau, frayAddEmpty) {
+  for (; !tau->e; ++tau->newVal) {
+    tau->e = frayAddEmpty((void*) tau->uF, &tau->newIdx);
+    CHECK_EQ(tau->uF[tau->newIdx], 0);
+  }
+  CHECK_EQ(tau->e, E_FRAY_FULL);
+  CHECK_EQ(*_frayGetFirstEmptyIdxP(tau->uF), frayGetNElems_(tau->uF));
+}
+
+TEST_F(Tau, frayPause_ActiveElems) {
+  // Pause every third active element.
+  for (U32 i = 0, nPaused = 1; !tau->e && i < tau->iniActive; i += 3, ++nPaused) {
+    // Ini vars.
+    U32 srcVal = tau->uF[i];
+    U32 dstVal = tau->uF[--tau->iniActive];
+    // Do the pause.
+    frayPause(tau->uF, i, &tau->frayChange);
+    if (!tau->e) {
+      // Check indices of moved data.
+      CHECK_EQ(tau->frayChange.origIdx, i);
+      CHECK_EQ(tau->frayChange.intermediateIdx, 0);
+      CHECK_EQ(tau->frayChange.newIdx, tau->iniActive);
+      // Check values of moved data.
+      CHECK_EQ(tau->uF[tau->frayChange.origIdx], dstVal);
+      CHECK_EQ(tau->uF[tau->frayChange.newIdx], srcVal);
+      CHECK_EQ(*_frayGetNPausedP(tau->uF), nPaused);
     }
   }
-  if (e) {
-    frayDel((void**) aF);
-    return e;
+}
+
+TEST_F(Tau, frayPause_InactiveElems) {
+  // Pause every third inactive element, starting from the end.
+  for (U32 i = *_frayGetFirstEmptyIdxP(tau->uF) - 1, nPaused = 1; !tau->e && i > tau->iniActive; i -= 3, ++nPaused) {
+    // Ini vars.
+    U32 srcVal = tau->uF[i];
+    U32 dstVal = tau->uF[tau->iniActive];
+    // Do the pause.
+    tau->e = frayPause(tau->uF, i, &tau->frayChange);
+    if (!tau->e) {
+      // Check indices of moved data.
+      CHECK_EQ(tau->frayChange.origIdx, i);
+      CHECK_EQ(tau->frayChange.intermediateIdx, 0);
+      CHECK_EQ(tau->frayChange.newIdx, tau->iniActive++);
+      // Check values of moved data.
+      CHECK_EQ(tau->uF[tau->frayChange.origIdx], dstVal);
+      CHECK_EQ(tau->uF[tau->frayChange.newIdx], srcVal);
+      CHECK_EQ(*_frayGetNPausedP(tau->uF), nPaused);
+    }
   }
-  // Check on it.
-  _reportFray("initialized", aF);
-  // Activate.
-  frayChangesIni_(changes, 2);
-  frayActivate(aF, &changes);
-  frayChangesIni_(changes, 5);
-  frayActivate(aF, &changes);
-  frayChangesIni_(changes, 7);
-  frayActivate(aF, &changes);
-  _reportFray("After activating 2, 5, and 7", aF);
-  assert(aF[0] == 2);
-  assert(aF[1] == 5);
-  assert(aF[2] == 7);
-  // Pause.
-  frayChangesIni_(changes, 1);
-  frayPause(aF, &changes);
-  _reportFray("After pausing 5", aF);
-  assert(aF[2] == 5);
-  // Activate across a pause.
-  frayChangesIni_(changes, 9);
-  frayActivate(aF, &changes);
-  _reportFray("After activating 9 across a pause", aF);
-  assert(aF[2] == 9);
-  // Deactivate across a pause.
-  frayChangesIni_(changes, 2);
-  frayDeactivate(aF, &changes);
-  frayChangesIni_(changes, 0);
-  frayDeactivate(aF, &changes);
-  _reportFray("After deactivating 2 and 9 across a pause", aF);
-  assert(aF[2] == 2);
-  assert(aF[3] == 9);
-  assert(_frayElemIsActive(aF, 0));
-  assert(_frayElemIsPaused(aF, 1));
-  assert(!_frayElemIsActive(aF, 2));
-  assert(aF[0] == 7);
-  assert(aF[1] == 5);
-  assert(aF[2] == 2);
-  // Unpause.
-  frayChangesIni_(changes, 1);
-  frayUnpause(aF, &changes);
-  assert(!_frayElemIsPaused(aF, 1));
-  _reportFray("After unpausing 5", aF);
-  // Pause multiple.
-  frayChangesIni_(changes, 5);
-  frayPause(aF, &changes);
-  frayChangesIni_(changes, 6);
-  frayPause(aF, &changes);
-  frayChangesIni_(changes, 7);
-  frayPause(aF, &changes);
-  _reportFray("Pausing 1, 6, and 0", aF);
-  assert(aF[2] == 1);
-  assert(aF[3] == 6);
-  assert(aF[4] == 0);
-  // Unpause all.
-  _frayUnpauseAll(aF);
-  _reportFray("Unpausing all", aF);
-  assert(_frayGetFirstPausedIdx(aF) == _frayGetFirstInactiveIdx(aF));
-  // Pause all before activate-all.
-  _frayPauseAll(aF);
-  _reportFray("Pausing all", aF);
-  assert(_frayGetFirstPausedIdx(aF) == 0);
-  // Activate all.
-  _frayActivateAll(aF);
-  _reportFray("After activating all", aF);
-  assert(_frayElemIsActive(aF, 0));
-  assert(_frayElemIsActive(aF, N_ELEMS - 1));
-  // Pause all again before deactivate-all.
-  _frayPauseAll(aF);
-  _reportFray("Pausing all", aF);
-  assert(_frayGetFirstPausedIdx(aF) == 0);
-  // Deactivate all after pausing multiple.
-  _frayDeactivateAll(aF);
-  assert(!_frayElemIsActive(aF, 0));
-  assert(!_frayElemIsActive(aF, N_ELEMS - 1));
-  _reportFray("After deactivating all", aF);
-  // Test a clear.
-  _frayClr(aF);
-  assert(*_frayGetFirstEmptyIdxP(aF) == 0);
-  assert(*_frayGetNPausedP(aF) == 0);
-  assert(*_frayGetFirstInactiveIdxP(aF) == 0);
-  assert(frayGetNElems_(aF) == N_ELEMS);
-  assert(frayGetElemSz_(aF) == sizeof(U32));
+  CHECK_EQ(tau->e, SUCCESS);
+}
 
+TEST_F(Tau, frayPause_AlreadyPausedElems) {
+  U32 idx = _frayGetFirstInactiveIdx(tau->uF);
+  U32 val = tau->uF[idx];
+  // Pause something
+  tau->e = frayPause(tau->uF, idx, &tau->frayChange);
+  CHECK_EQ(tau->e, SUCCESS);
+  CHECK_EQ(*_frayGetNPausedP(tau->uF), 1);
+  CHECK_EQ(tau->uF[idx], val);
+  // Pause the same element again
+  memset(&tau->frayChange, 0, sizeof(FrayChanges));
+  tau->e = frayPause(tau->uF, idx, &tau->frayChange);
+  CHECK_EQ(tau->e, SUCCESS);
+  CHECK_EQ(*_frayGetNPausedP(tau->uF), 1);
+  CHECK_EQ(tau->uF[idx], val);
+  CHECK_EQ(tau->frayChange.origIdx, tau->frayChange.newIdx);
+}
 
-  frayDel((void**) &aF);
-  
-  return e;
+TEST_F(Tau, frayPause_Segfault) {
+  tau->e = frayPause(tau->uF, tau->nElems, NULL);
+  CHECK_EQ(tau->e, E_FRAY_SEGFAULT);
+}
+
+TEST_F(Tau, frayUnpause) {
+  tau->e = frayPause(tau->uF, tau->iniActive, &tau->frayChange);
+  CHECK_EQ(tau->e, SUCCESS);
+  CHECK_EQ(*_frayGetNPausedP(tau->uF), 1);
+  CHECK_EQ(tau->frayChange.origIdx, tau->frayChange.newIdx);
+  if (!tau->e) {
+    tau->e = frayUnpause(tau->uF, tau->frayChange.newIdx, &tau->frayChange);
+    CHECK_EQ(tau->e, SUCCESS);
+    CHECK_EQ(*_frayGetNPausedP(tau->uF), 0);
+    CHECK_EQ(tau->frayChange.origIdx, tau->frayChange.newIdx);
+  }
+}
+
+TEST_F(Tau, frayUnpause_Active) {
+  tau->e = frayUnpause(tau->uF, 0, &tau->frayChange);
+  CHECK_EQ(tau->e, SUCCESS);
+  CHECK_EQ(tau->frayChange.origIdx, tau->frayChange.newIdx);
+  CHECK_EQ(*_frayGetNPausedP(tau->uF), 0);
+}
+
+TEST_F(Tau, frayUnpause_Inactive) {
+  tau->e = frayUnpause(tau->uF, tau->iniPop - 1, &tau->frayChange);
+  CHECK_EQ(tau->e, SUCCESS);
+  // Changes are all zeros when nothing happens.
+  CHECK_EQ(tau->frayChange.origIdx, 0);
+  CHECK_EQ(tau->frayChange.intermediateIdx, 0);
+  CHECK_EQ(tau->frayChange.newIdx, 0);
+  CHECK_EQ(*_frayGetNPausedP(tau->uF), 0);
+}
+
+TEST_F(Tau, frayUnpause_Segfault) {
+  tau->e = frayUnpause(tau->uF, tau->nElems, NULL);
+  CHECK_EQ(tau->e, E_FRAY_SEGFAULT);
+}
+
+TEST_F(Tau, frayActivate_StoreChanges) {
+  tau->e = frayActivate(tau->uF, tau->iniActive + 2, &tau->frayChange);
+  CHECK_EQ(e, SUCCESS);
+  CHECK_EQ(_frayGetFirstPausedIdx(tau->uF), tau->iniActive);
+  CHECK_EQ
+}
+
+TEST_F(Tau, frayActivate_DontStoreChanges) {
+  tau->e = frayActivate(tau->uF, tau->iniActive + 2, &tau->frayChange);
+}
+
+TEST_F(Tau, frayActivate_Segfault) {
+  tau->e = frayActivate(tau->uF, tau->nElems, NULL);
+  CHECK_EQ(tau->e, E_FRAY_SEGFAULT);
+}
+
+TEST_F(Tau, frayActivate_PausedElement) {
+  REQUIRE_TRUE(1);
+}
+
+TEST_F(Tau, frayActivate_AcrossPause) {
+  REQUIRE_TRUE(1);
+}
+
+TEST_F(Tau, frayActivateAll) {
+  REQUIRE_TRUE(1);
+}
+
+TEST_F(Tau, frayActivateAll_WithPauses) {
+  REQUIRE_TRUE(1);
+}
+
+TEST_F(Tau, frayDeactivate) {
+  REQUIRE_TRUE(1);
+}
+
+TEST_F(Tau, frayActivate_PausedElement) {
+  REQUIRE_TRUE(1);
+}
+
+TEST_F(Tau, frayDeactivate_AcrossPause) {
+  REQUIRE_TRUE(1);
+}
+
+TEST_F(Tau, frayDeactivateAll) {
+  REQUIRE_TRUE(1);
+}
+
+TEST_F(Tau, frayDeactivateAll_WithPauses) {
+  REQUIRE_TRUE(1);
 }

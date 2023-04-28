@@ -1,22 +1,26 @@
-JB  = ${HOME}/hack/jollybean
-SRC = ${JB}/src
-INC = ${SRC}/include
-BLD = ${JB}/build
+CC=gcc
 
-./o: ./test.o ${BLD}/data.o 
-	${CC} ./test.o ${BLD}/data.o -o $@ 
-	touch $@
+RPO_DIR := $(shell git rev-parse --show-toplevel)
+LIB_DIR := $(RPO_DIR)/lib
+_INCS   := $(shell find ${RPO_DIR}/src -type d -name 'include')
+INCS    := -I. $(_INCS:%=-I%)
 
-./%.o: %.c 
-	${CC} -g -I${INC} -c $*.c -o $@
-	touch $@
+SRCS=$(shell find . -type f -name "*.c")
+OBJS=$(SRCS:%.c=%.o)
 
-${BLD}/%.o: ${SRC}/%.c ${INC}/%.h
-	gcc -c $< -I${INC} -o $@
-	touch $@
+all: o
+
+o: ${OBJS} 
+	$(CC) --coverage -g ${OBJS} -L${LIB_DIR} -ljb -o $@
+
+%.o: %.c
+	$(CC) --coverage -g $(INCS) -c $< -o $@
+
+$(LIB_DIR)/libjb:
+	make -C ${RPO_DIR}
 
 .PHONY: clean
 clean:
-	rm -f ./o 2>/dev/null
-	rm -f ./*.o 2>/dev/null
-	rm -f ${BLD}/*.o 2>/dev/null
+	rm -rf o 2>/dev/null
+	rm -rf coverage 2>/dev/null
+	rm -f ${OBJS} 2>/dev/null

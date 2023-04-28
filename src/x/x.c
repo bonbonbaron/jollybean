@@ -69,13 +69,13 @@ Error xActivateComponentByEntity(System *sP, Entity entity) {
     return E_BAD_ARGS;
   }
   // We use a pointer instead of a new one to swap its actual location later.
+  FrayChanges changes;
   Key *compOrigIdxP = _getCompIdxPByEntity(sP, entity);
   if (!compOrigIdxP) {
     return E_ENTITY_NOT_IN_SYSTEM;
   }
-  FrayChanges changes;
-  frayChangesIni_(changes, *compOrigIdxP);
-  frayActivate(sP->cF, &changes);
+  //frayChangesIni_(changes, *compOrigIdxP);
+  frayActivate(sP->cF, *compOrigIdxP, &changes);
   return _xSwap(sP, &changes);
 }
 
@@ -83,13 +83,13 @@ Error xDeactivateComponentByEntity(System *sP, Entity entity) {
   if (!sP || !entity) {
     return E_BAD_ARGS;
   }
+  FrayChanges changes;
   Key *compOrigIdxP = _getCompIdxPByEntity(sP, entity);
   if (!compOrigIdxP) {
     return E_ENTITY_NOT_IN_SYSTEM;
   }
-  FrayChanges changes;
-  frayChangesIni_(changes, *compOrigIdxP);
-  frayDeactivate(sP->cF, &changes);
+  //frayChangesIni_(changes, *compOrigIdxP);
+  frayDeactivate(sP->cF, *compOrigIdxP, &changes);
   return _xSwap(sP, &changes);
 }
 
@@ -97,13 +97,13 @@ Error xPauseComponentByEntity(System *sP, Entity entity) {
   if (!sP || !entity) {
     return E_BAD_ARGS;
   }
+  FrayChanges changes;
   Key *compOrigIdxP = _getCompIdxPByEntity(sP, entity);
   if (!compOrigIdxP) {
     return E_ENTITY_NOT_IN_SYSTEM;
   }
-  FrayChanges changes;
-  frayChangesIni_(changes, *compOrigIdxP);
-  frayPause(sP->cF, &changes);
+  //frayChangesIni_(changes, *compOrigIdxP);
+  frayPause(sP->cF, *compOrigIdxP, &changes);
   return _xSwap(sP, &changes);
 }
 
@@ -111,13 +111,13 @@ Error xUnpauseComponentByEntity(System *sP, Entity entity) {
   if (!sP || !entity) {
     return E_BAD_ARGS;
   }
+  FrayChanges changes;
   Key *compOrigIdxP = _getCompIdxPByEntity(sP, entity);
   if (!compOrigIdxP) {
     return E_ENTITY_NOT_IN_SYSTEM;
   }
-  FrayChanges changes;
-  frayChangesIni_(changes, *compOrigIdxP);
-  frayUnpause(sP->cF, &changes);
+  //frayChangesIni_(changes, *compOrigIdxP);
+  frayUnpause(sP->cF, *compOrigIdxP, &changes);
   return _xSwap(sP, &changes);
 }
 

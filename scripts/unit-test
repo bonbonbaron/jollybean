@@ -55,6 +55,7 @@ typedef struct Tau {
   // Put stuff to instantiate here. 
   // This is a particularly good place for pointers since double-poitners are needed to allocate them.
 } Tau;
+
 TEST_F_SETUP(Tau) {
   // Instantiate stuff in the Tau struct here.
 }
@@ -68,8 +69,7 @@ for f in ${functionsToTest[*]}; do
   echo -e "
 TEST_F(Tau, $f) {
   REQUIRE_TRUE(1);
-}
-" >> $OUTPUT_FILE
+}" >> $OUTPUT_FILE
 done
 
     cat $OUTPUT_FILE
