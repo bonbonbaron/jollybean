@@ -548,7 +548,7 @@ XPostprocessCompsDef_(Render) {
 
   // TODO remove this when you're ready to try out XAction-based initialization.
   if (!e) {
-    _frayActivateAll(sP->cF);
+    frayActivateAll(sP->cF);
   }
 
   // Clean up.

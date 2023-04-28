@@ -1,7 +1,7 @@
 #include "mem.h"
 
 Error jbAlloc(void **voidPP, U32 elemSz, U32 nElems) {
-	if (voidPP == NULL) {
+	if (voidPP == NULL || !elemSz || !nElems) {
 		return E_BAD_ARGS;
   }
 	*voidPP = malloc(nElems * elemSz);

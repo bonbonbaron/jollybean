@@ -9,16 +9,15 @@ Error frayNew(void **fPP, U32 elemSz, U32 nElems) {
 	else {
     // Add 1 more element for swaps. 
 		e = jbAlloc((void**) &ptr, (elemSz * (nElems + 1)) + ((N_PREFRAY_ELEMS) * sizeof(U32)), 1);
-		if (ptr == NULL) {
-			return E_NO_MEMORY;
+    if (!e) {
+      ptr[N_PREFRAY_ELEMS - OFFSET_1ST_INACTIVE]   = 0;       
+      ptr[N_PREFRAY_ELEMS - OFFSET_N_PAUSED]   = 0;  
+      ptr[N_PREFRAY_ELEMS - OFFSET_1ST_EMPTY]  = 0;       
+      ptr[N_PREFRAY_ELEMS - OFFSET_ELEM_SZ]    = elemSz;
+      ptr[N_PREFRAY_ELEMS - OFFSET_N_ELEMS]    = nElems;
+      *fPP = (ptr + N_PREFRAY_ELEMS);
+      memset(*fPP, 0, elemSz * nElems);
     }
-		ptr[N_PREFRAY_ELEMS - OFFSET_INACTIVE]   = 0;       
-		ptr[N_PREFRAY_ELEMS - OFFSET_N_PAUSED]   = 0;  
-		ptr[N_PREFRAY_ELEMS - OFFSET_1ST_EMPTY]  = 0;       
-		ptr[N_PREFRAY_ELEMS - OFFSET_ELEM_SZ]    = elemSz;
-		ptr[N_PREFRAY_ELEMS - OFFSET_N_ELEMS]    = nElems;
-		*fPP = (ptr + N_PREFRAY_ELEMS);
-		memset(*fPP, 0, elemSz * nElems);
   }
   return e;
 }
@@ -157,17 +156,20 @@ Error frayDeactivate(const void *frayP, U32 idx, FrayChanges *changesP) {
   if (idx >= *_frayGetFirstEmptyIdxP(frayP)) {
     return E_FRAY_SEGFAULT;
   }
-  if (_frayElemIsActive(frayP, changesP->origIdx)) {
+  if (!_frayElemIsInactive(frayP, idx)) {
     U32 *firstInactiveIdxP = _frayGetFirstInactiveIdxP(frayP);
-    U32 nPaused = *_frayGetNPausedP(frayP);
+    U32 *nPausedP = _frayGetNPausedP(frayP);
     U32 newIdx;
     U32 intermediateIdx = 0;
-    if (!nPaused) { // With no paused elements, we can blissfully single-swap.
+    if (!(*nPausedP)) { // With no paused elements, we can blissfully single-swap.
       newIdx = --(*firstInactiveIdxP);            // swap with last active 
       _fraySwap(frayP, idx, newIdx);
     }
     else {  // Otherwise, we must double-swap to preserve intermediate paused elems' contiguity.
-      intermediateIdx = *firstInactiveIdxP - nPaused - 1;  // swap with last active
+      intermediateIdx = *firstInactiveIdxP - *nPausedP - 1;  // swap with last active
+      if (_frayElemIsPaused(frayP, idx)) {
+        --(*nPausedP);
+      }
       _fraySwap(frayP, idx, intermediateIdx);
       newIdx = --(*firstInactiveIdxP);  // swap last active with last paused
       _fraySwap(frayP, intermediateIdx, newIdx);
@@ -180,4 +182,19 @@ Error frayDeactivate(const void *frayP, U32 idx, FrayChanges *changesP) {
     }
   }
   return SUCCESS;
+}
+
+void frayActivateAll(const void *frayP) {
+  U32 *firstInactiveIdxP = _frayGetFirstInactiveIdxP(frayP);
+  if (*_frayGetNPausedP(frayP)) {
+    _frayUnpauseAll(frayP);
+  }
+  *firstInactiveIdxP = *_frayGetFirstEmptyIdxP(frayP);
+}
+
+void frayDeactivateAll(const void *frayP) {
+  if (*_frayGetNPausedP(frayP)) {
+    _frayUnpauseAll(frayP);
+  }
+  *_frayGetFirstInactiveIdxP(frayP) = 0;
 }

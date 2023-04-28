@@ -13,7 +13,7 @@ typedef struct Tau {
   U32 newIdx;
   U32 newVal;
   U32 iniActive;
-  FrayChanges frayChange;
+  FrayChanges fc;
 } Tau;
 
 TEST_F_SETUP(Tau) {
@@ -94,15 +94,15 @@ TEST_F(Tau, frayPause_ActiveElems) {
     U32 srcVal = tau->uF[i];
     U32 dstVal = tau->uF[--tau->iniActive];
     // Do the pause.
-    frayPause(tau->uF, i, &tau->frayChange);
+    frayPause(tau->uF, i, &tau->fc);
     if (!tau->e) {
       // Check indices of moved data.
-      CHECK_EQ(tau->frayChange.origIdx, i);
-      CHECK_EQ(tau->frayChange.intermediateIdx, 0);
-      CHECK_EQ(tau->frayChange.newIdx, tau->iniActive);
+      CHECK_EQ(tau->fc.origIdx, i);
+      CHECK_EQ(tau->fc.intermediateIdx, 0);
+      CHECK_EQ(tau->fc.newIdx, tau->iniActive);
       // Check values of moved data.
-      CHECK_EQ(tau->uF[tau->frayChange.origIdx], dstVal);
-      CHECK_EQ(tau->uF[tau->frayChange.newIdx], srcVal);
+      CHECK_EQ(tau->uF[tau->fc.origIdx], dstVal);
+      CHECK_EQ(tau->uF[tau->fc.newIdx], srcVal);
       CHECK_EQ(*_frayGetNPausedP(tau->uF), nPaused);
     }
   }
@@ -115,15 +115,15 @@ TEST_F(Tau, frayPause_InactiveElems) {
     U32 srcVal = tau->uF[i];
     U32 dstVal = tau->uF[tau->iniActive];
     // Do the pause.
-    tau->e = frayPause(tau->uF, i, &tau->frayChange);
+    tau->e = frayPause(tau->uF, i, &tau->fc);
     if (!tau->e) {
       // Check indices of moved data.
-      CHECK_EQ(tau->frayChange.origIdx, i);
-      CHECK_EQ(tau->frayChange.intermediateIdx, 0);
-      CHECK_EQ(tau->frayChange.newIdx, tau->iniActive++);
+      CHECK_EQ(tau->fc.origIdx, i);
+      CHECK_EQ(tau->fc.intermediateIdx, 0);
+      CHECK_EQ(tau->fc.newIdx, tau->iniActive++);
       // Check values of moved data.
-      CHECK_EQ(tau->uF[tau->frayChange.origIdx], dstVal);
-      CHECK_EQ(tau->uF[tau->frayChange.newIdx], srcVal);
+      CHECK_EQ(tau->uF[tau->fc.origIdx], dstVal);
+      CHECK_EQ(tau->uF[tau->fc.newIdx], srcVal);
       CHECK_EQ(*_frayGetNPausedP(tau->uF), nPaused);
     }
   }
@@ -134,17 +134,17 @@ TEST_F(Tau, frayPause_AlreadyPausedElems) {
   U32 idx = _frayGetFirstInactiveIdx(tau->uF);
   U32 val = tau->uF[idx];
   // Pause something
-  tau->e = frayPause(tau->uF, idx, &tau->frayChange);
+  tau->e = frayPause(tau->uF, idx, &tau->fc);
   CHECK_EQ(tau->e, SUCCESS);
   CHECK_EQ(*_frayGetNPausedP(tau->uF), 1);
   CHECK_EQ(tau->uF[idx], val);
   // Pause the same element again
-  memset(&tau->frayChange, 0, sizeof(FrayChanges));
-  tau->e = frayPause(tau->uF, idx, &tau->frayChange);
+  memset(&tau->fc, 0, sizeof(FrayChanges));
+  tau->e = frayPause(tau->uF, idx, &tau->fc);
   CHECK_EQ(tau->e, SUCCESS);
   CHECK_EQ(*_frayGetNPausedP(tau->uF), 1);
   CHECK_EQ(tau->uF[idx], val);
-  CHECK_EQ(tau->frayChange.origIdx, tau->frayChange.newIdx);
+  CHECK_EQ(tau->fc.origIdx, tau->fc.newIdx);
 }
 
 TEST_F(Tau, frayPause_Segfault) {
@@ -152,34 +152,55 @@ TEST_F(Tau, frayPause_Segfault) {
   CHECK_EQ(tau->e, E_FRAY_SEGFAULT);
 }
 
+TEST_F(Tau, frayPauseAll) {
+  _frayPauseAll(tau->uF);
+  CHECK_EQ(*_frayGetNPausedP(tau->uF), tau->iniActive);
+  CHECK_TRUE(_frayElemIsPaused(tau->uF, 0));
+}
+
 TEST_F(Tau, frayUnpause) {
-  tau->e = frayPause(tau->uF, tau->iniActive, &tau->frayChange);
+  tau->e = frayPause(tau->uF, tau->iniActive, &tau->fc);
   CHECK_EQ(tau->e, SUCCESS);
   CHECK_EQ(*_frayGetNPausedP(tau->uF), 1);
-  CHECK_EQ(tau->frayChange.origIdx, tau->frayChange.newIdx);
+  CHECK_EQ(tau->fc.origIdx, tau->fc.newIdx);
   if (!tau->e) {
-    tau->e = frayUnpause(tau->uF, tau->frayChange.newIdx, &tau->frayChange);
+    tau->e = frayUnpause(tau->uF, tau->fc.newIdx, &tau->fc);
     CHECK_EQ(tau->e, SUCCESS);
     CHECK_EQ(*_frayGetNPausedP(tau->uF), 0);
-    CHECK_EQ(tau->frayChange.origIdx, tau->frayChange.newIdx);
+    CHECK_EQ(tau->fc.origIdx, tau->fc.newIdx);
   }
 }
 
 TEST_F(Tau, frayUnpause_Active) {
-  tau->e = frayUnpause(tau->uF, 0, &tau->frayChange);
+  tau->e = frayUnpause(tau->uF, 0, &tau->fc);
   CHECK_EQ(tau->e, SUCCESS);
-  CHECK_EQ(tau->frayChange.origIdx, tau->frayChange.newIdx);
+  CHECK_EQ(tau->fc.origIdx, tau->fc.newIdx);
   CHECK_EQ(*_frayGetNPausedP(tau->uF), 0);
 }
 
 TEST_F(Tau, frayUnpause_Inactive) {
-  tau->e = frayUnpause(tau->uF, tau->iniPop - 1, &tau->frayChange);
+  tau->e = frayUnpause(tau->uF, tau->iniPop - 1, &tau->fc);
   CHECK_EQ(tau->e, SUCCESS);
   // Changes are all zeros when nothing happens.
-  CHECK_EQ(tau->frayChange.origIdx, 0);
-  CHECK_EQ(tau->frayChange.intermediateIdx, 0);
-  CHECK_EQ(tau->frayChange.newIdx, 0);
+  CHECK_EQ(tau->fc.origIdx, 0);
+  CHECK_EQ(tau->fc.intermediateIdx, 0);
+  CHECK_EQ(tau->fc.newIdx, 0);
   CHECK_EQ(*_frayGetNPausedP(tau->uF), 0);
+  CHECK_EQ(_frayGetNActive(tau->uF), tau->iniActive);
+}
+
+TEST_F(Tau, frayUnpauseAll) {
+  // Pause first 3 elements.
+  for (U32 i = 0; !tau->e && i < 3; ++i) {
+    tau->e = frayPause(tau->uF, i, NULL);
+  }
+  CHECK_EQ(tau->e, SUCCESS);
+  CHECK_EQ(*_frayGetNPausedP(tau->uF), 3);
+  CHECK_EQ(_frayGetNActive(tau->uF), tau->iniActive - 3);
+  // Unpause all of them.
+  _frayUnpauseAll(tau->uF);
+  CHECK_TRUE(!_frayElemIsPaused(tau->uF, 0));
+  CHECK_EQ(_frayGetNActive(tau->uF), tau->iniActive);
 }
 
 TEST_F(Tau, frayUnpause_Segfault) {
@@ -188,14 +209,24 @@ TEST_F(Tau, frayUnpause_Segfault) {
 }
 
 TEST_F(Tau, frayActivate_StoreChanges) {
-  tau->e = frayActivate(tau->uF, tau->iniActive + 2, &tau->frayChange);
-  CHECK_EQ(e, SUCCESS);
-  CHECK_EQ(_frayGetFirstPausedIdx(tau->uF), tau->iniActive);
-  CHECK_EQ
+  U32 origIdx = tau->iniActive + 2;
+  U32 newIdx  = tau->iniActive;
+  tau->e = frayActivate(tau->uF, origIdx, &tau->fc);
+  CHECK_EQ(tau->e, SUCCESS);
+  CHECK_EQ(_frayGetFirstPausedIdx(tau->uF), tau->iniActive + 1);
+  CHECK_EQ(_frayGetNActive(tau->uF), tau->iniActive + 1);
+  CHECK_TRUE(tau->fc.origIdx == origIdx);
+  CHECK_TRUE(tau->fc.intermediateIdx == 0);
+  CHECK_TRUE(tau->fc.newIdx== newIdx);
 }
 
 TEST_F(Tau, frayActivate_DontStoreChanges) {
-  tau->e = frayActivate(tau->uF, tau->iniActive + 2, &tau->frayChange);
+  tau->e = frayActivate(tau->uF, tau->iniActive + 2, NULL);
+  CHECK_EQ(tau->e, SUCCESS);
+  CHECK_EQ(_frayGetFirstPausedIdx(tau->uF), tau->iniActive + 1);
+  CHECK_TRUE(tau->fc.origIdx == 
+             tau->fc.intermediateIdx == 
+             tau->fc.newIdx== 0);
 }
 
 TEST_F(Tau, frayActivate_Segfault) {
@@ -204,37 +235,129 @@ TEST_F(Tau, frayActivate_Segfault) {
 }
 
 TEST_F(Tau, frayActivate_PausedElement) {
-  REQUIRE_TRUE(1);
+  // First pause an element.
+  tau->e = frayPause(tau->uF, tau->iniActive, &tau->fc);
+  CHECK_EQ(tau->e, SUCCESS);
+  CHECK_EQ(*_frayGetNPausedP(tau->uF), 1);
+  CHECK_EQ(_frayGetNActive(tau->uF), tau->iniActive);
+  CHECK_EQ(tau->fc.origIdx, tau->fc.newIdx);
+  // Then activate it.
+  tau->e = frayActivate(tau->uF, tau->fc.newIdx, &tau->fc);
+  CHECK_EQ(tau->e, SUCCESS);
+  CHECK_EQ(_frayGetNActive(tau->uF), tau->iniActive + 1);
+  CHECK_EQ(*_frayGetNPausedP(tau->uF), 0);
+  CHECK_EQ(tau->fc.origIdx, tau->fc.newIdx);
 }
 
 TEST_F(Tau, frayActivate_AcrossPause) {
-  REQUIRE_TRUE(1);
+  // First pause an element.
+  tau->e = frayPause(tau->uF, tau->iniActive, &tau->fc);
+  CHECK_EQ(tau->e, SUCCESS);
+  CHECK_TRUE(_frayElemIsPaused(tau->uF, tau->fc.newIdx));
+  CHECK_EQ(*_frayGetNPausedP(tau->uF), 1);
+  CHECK_EQ(_frayGetNActive(tau->uF), tau->iniActive);
+  CHECK_EQ(tau->fc.origIdx, tau->fc.newIdx);
+  // Then activate an inactive one beyond it.
+  U32 origVal = tau->uF[tau->iniPop - 1];
+  tau->e = frayActivate(tau->uF, tau->iniPop - 1, &tau->fc);
+  CHECK_EQ(tau->e, SUCCESS);
+  CHECK_EQ(*_frayGetNPausedP(tau->uF), 1);
+  CHECK_EQ(_frayGetNActive(tau->uF), tau->iniActive + 1);
+  CHECK_EQ(tau->uF[tau->fc.newIdx], origVal);
+  CHECK_TRUE(_frayElemIsActive(tau->uF, tau->fc.newIdx));
+  CHECK_TRUE(!_frayElemIsActive(tau->uF, tau->fc.origIdx));
 }
 
 TEST_F(Tau, frayActivateAll) {
-  REQUIRE_TRUE(1);
+  frayActivateAll(tau->uF);
+  CHECK_EQ(_frayGetNActive(tau->uF), tau->iniPop);
+  CHECK_EQ(*_frayGetNPausedP(tau->uF), 0);
+  CHECK_EQ(_frayGetFirstPausedIdx(tau->uF), tau->iniPop);
+  CHECK_EQ(_frayGetFirstInactiveIdx(tau->uF), tau->iniPop);
+  CHECK_EQ(*_frayGetFirstInactiveIdxP(tau->uF), tau->iniPop);
 }
 
 TEST_F(Tau, frayActivateAll_WithPauses) {
+  tau->e = frayPause(tau->uF, tau->iniPop - 1, &tau->fc);
+  CHECK_EQ(tau->e, SUCCESS);
+  CHECK_TRUE(_frayElemIsPaused(tau->uF, tau->fc.newIdx));
+  CHECK_EQ(*_frayGetNPausedP(tau->uF), 1);
+  frayActivateAll(tau->uF);
+  CHECK_EQ(_frayGetNActive(tau->uF), tau->iniPop);
+  CHECK_EQ(*_frayGetNPausedP(tau->uF), 0);
+  CHECK_EQ(_frayGetFirstPausedIdx(tau->uF), tau->iniPop);
+  CHECK_EQ(_frayGetFirstInactiveIdx(tau->uF), tau->iniPop);
+  CHECK_EQ(*_frayGetFirstInactiveIdxP(tau->uF), tau->iniPop);
   REQUIRE_TRUE(1);
 }
 
 TEST_F(Tau, frayDeactivate) {
-  REQUIRE_TRUE(1);
+  U32 origVal = tau->uF[0];
+  tau->e = frayDeactivate(tau->uF, 0, &tau->fc);
+  CHECK_EQ(tau->e, SUCCESS);
+  CHECK_EQ(_frayGetNActive(tau->uF), tau->iniActive - 1);
+  CHECK_EQ(tau->uF[tau->fc.newIdx], origVal);
 }
 
-TEST_F(Tau, frayActivate_PausedElement) {
-  REQUIRE_TRUE(1);
+TEST_F(Tau, frayDeactivate_Segfault) {
+  tau->e = frayDeactivate(tau->uF, tau->iniPop, &tau->fc);
+  CHECK_EQ(tau->e, E_FRAY_SEGFAULT);
+}
+
+TEST_F(Tau, frayDeactivate_PausedElement) {
+  // Pause last inactive element.
+  tau->e = frayPause(tau->uF, tau->iniPop - 1, &tau->fc);
+  CHECK_EQ(tau->e, SUCCESS);
+  CHECK_TRUE(_frayElemIsPaused(tau->uF, tau->fc.newIdx));
+  CHECK_EQ(*_frayGetNPausedP(tau->uF), 1);
+  // Deactivate paused element.
+  tau->e = frayDeactivate(tau->uF, tau->fc.newIdx, &tau->fc);
+  CHECK_EQ(tau->e, SUCCESS);
+  CHECK_EQ(_frayGetNActive(tau->uF), tau->iniActive);  // exp 5, actual 4
+  CHECK_EQ(*_frayGetNPausedP(tau->uF), 0);
 }
 
 TEST_F(Tau, frayDeactivate_AcrossPause) {
-  REQUIRE_TRUE(1);
+  // Pause last element.
+  tau->e = frayPause(tau->uF, tau->iniPop - 1, &tau->fc);
+  CHECK_EQ(tau->e, SUCCESS);
+  CHECK_TRUE(_frayElemIsPaused(tau->uF, tau->fc.newIdx));
+  CHECK_EQ(*_frayGetNPausedP(tau->uF), 1);
+  // Deactivate first element.
+  tau->e = frayDeactivate(tau->uF, 0, &tau->fc);
+  CHECK_EQ(tau->e, SUCCESS);
+  CHECK_EQ(_frayGetNActive(tau->uF), tau->iniActive - 1);
+  CHECK_EQ(*_frayGetNPausedP(tau->uF), 1);
 }
 
 TEST_F(Tau, frayDeactivateAll) {
-  REQUIRE_TRUE(1);
+  frayDeactivateAll(tau->uF);
+  CHECK_EQ(_frayGetNActive(tau->uF), 0);
+  CHECK_EQ(*_frayGetNPausedP(tau->uF), 0);
+  CHECK_EQ(*_frayGetFirstEmptyIdxP(tau->uF), tau->iniPop);
+  CHECK_EQ(_frayGetFirstPausedIdx(tau->uF), 0);
+  CHECK_EQ(_frayGetFirstInactiveIdx(tau->uF), 0);
+  CHECK_EQ(*_frayGetFirstInactiveIdxP(tau->uF), 0);
 }
 
 TEST_F(Tau, frayDeactivateAll_WithPauses) {
-  REQUIRE_TRUE(1);
+  // Pause last element.
+  tau->e = frayPause(tau->uF, tau->iniPop - 1, &tau->fc);
+  CHECK_EQ(tau->e, SUCCESS);
+  CHECK_TRUE(_frayElemIsPaused(tau->uF, tau->fc.newIdx));
+  CHECK_EQ(*_frayGetNPausedP(tau->uF), 1);
+  // Deactivate all.
+  frayDeactivateAll(tau->uF);
+  CHECK_EQ(_frayGetNActive(tau->uF), 0);
+  CHECK_EQ(*_frayGetNPausedP(tau->uF), 0);
+  CHECK_EQ(*_frayGetFirstEmptyIdxP(tau->uF), tau->iniPop);
+  CHECK_EQ(_frayGetFirstPausedIdx(tau->uF), 0);
+  CHECK_EQ(_frayGetFirstInactiveIdx(tau->uF), 0);
+  CHECK_EQ(*_frayGetFirstInactiveIdxP(tau->uF), 0);
+}
+
+TEST_F(Tau, frayClr) {
+  _frayClr(tau->uF);
+  CHECK_EQ(*_frayGetFirstEmptyIdxP(tau->uF), 0);
+  CHECK_EQ(_frayGetFirstPausedIdx(tau->uF), 0);
 }

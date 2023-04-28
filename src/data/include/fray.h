@@ -5,7 +5,7 @@
 
 // Efficient Arrays (frays)
 #define N_PREFRAY_ELEMS (5)
-#define OFFSET_INACTIVE     (5)  /* ptr[0] */
+#define OFFSET_1ST_INACTIVE (5)  /* ptr[0] */
 #define OFFSET_N_PAUSED     (4)  /* ptr[1] */
 #define OFFSET_1ST_EMPTY    (3)  /* ptr[2] */
 #define OFFSET_ELEM_SZ      (2)  /* ptr[3] */
@@ -35,20 +35,23 @@ Error frayPause(const void *frayP, U32 idx, FrayChanges *changesP);
 Error frayUnpause(const void *frayP, U32 idx, FrayChanges *changesP);
 U8    frayElemIsActive(const void *frayP, U32 idx);
 void  frayActivateAll(const void *frayP);
-void  frayUnpauseAll(const void *frayP);
 void  frayDeactivateAll(const void *frayP);
 
 // Pointers beat values. We usually inc/decrement it after using it. Avoids double-queries.
 inline U32 _frayGetFirstInactiveIdx(const void *frayP) {
-  return *(((U32*) frayP - OFFSET_INACTIVE));
+  return *(((U32*) frayP - OFFSET_1ST_INACTIVE));
 }
 
 inline U32* _frayGetFirstInactiveIdxP(const void *frayP) {
-  return ((U32*) frayP - OFFSET_INACTIVE);
+  return ((U32*) frayP - OFFSET_1ST_INACTIVE);
 }
 
 inline U32* _frayGetNPausedP(const void *frayP) {
   return ((U32*) frayP - OFFSET_N_PAUSED);
+}
+
+inline U32 _frayGetNActive(const void *frayP) {
+  return _frayGetFirstInactiveIdx(frayP) - *_frayGetNPausedP(frayP);
 }
 
 inline U32 _frayGetFirstPausedIdx(const void *frayP) {
@@ -72,12 +75,12 @@ inline U8 _frayElemIsActive(const void *frayP, U32 idx) {
   return idx < _frayGetFirstPausedIdx(frayP);
 }
 
-inline U8 _frayElemIsPaused(const void *frayP, U32 idx) {
-  return (*_frayGetNPausedP(frayP) > 0) && idx >= _frayGetFirstPausedIdx(frayP) && idx <  _frayGetFirstInactiveIdx(frayP);
+inline U8 _frayElemIsInactive(const void *frayP, U32 idx) {
+  return idx >= _frayGetFirstInactiveIdx(frayP);
 }
 
-inline U8 _frayHasRoom(const void *frayP) {
-  return (*_frayGetFirstEmptyIdxP(frayP) < frayGetNElems_(frayP));
+inline U8 _frayElemIsPaused(const void *frayP, U32 idx) {
+  return (*_frayGetNPausedP(frayP) > 0) && idx >= _frayGetFirstPausedIdx(frayP) && idx <  _frayGetFirstInactiveIdx(frayP);
 }
 
 inline void _frayPauseAll(const void *frayP) {
@@ -88,19 +91,7 @@ inline void _frayUnpauseAll(const void *frayP) {
   *_frayGetNPausedP(frayP) = 0;
 }
 
-inline void _frayActivateAll(const void *frayP) {
-  U32 *firstInactiveIdxP = _frayGetFirstInactiveIdxP(frayP);
-  if (*_frayGetNPausedP(frayP)) {
-    _frayUnpauseAll(frayP);
-  }
-  *firstInactiveIdxP = *_frayGetFirstEmptyIdxP(frayP);
+inline U8 _frayHasRoom(const void *frayP) {
+  return (*_frayGetFirstEmptyIdxP(frayP) < frayGetNElems_(frayP));
 }
-
-inline void _frayDeactivateAll(const void *frayP) {
-  if (*_frayGetNPausedP(frayP)) {
-    _frayUnpauseAll(frayP);
-  }
-  *_frayGetFirstInactiveIdxP(frayP) = 0;
-}
-
 #endif  // #ifndef FRAY_H

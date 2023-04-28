@@ -12,6 +12,8 @@ typedef struct {
 	Key arg;       // e.g. change component value to MOVE_UP
 } Message;  
 
+Error mailboxNew(Message **mailboxPP, U32 maxNMsgs);
+void  mailboxDel(Message **mailboxPP);
 Error mailboxWrite(Message *mailboxF, Key address, Key attn, Key cmd, Key arg);
 Error mailboxForward(Message *mailboxF, Message *msgP);
 typedef Error (*inboxRead)(Message *mailboxF);
