@@ -1,6 +1,6 @@
 #ifndef INFLATABLE_H
 #define INFLATABLE_H
-#include "data.h"
+#include "common.h"
 
 Error inflatableNew(void *voidA, Inflatable **inflatablePP);
 void inflatableDel(Inflatable **inflatablePP);

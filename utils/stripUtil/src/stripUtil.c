@@ -1,4 +1,4 @@
-#include "strip.h"
+#include "stripUtil.h"
 #define DEBUG_ 0
 
 // These three arrays describe where each consecutive unit
@@ -475,11 +475,21 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
   }
   arrayDel((void**) &smDataA);
   arrayDel((void**) &ssUnpackedA);
+  arrayDel((void**) &ssPackedA);
   if (e) {
     jbFree((void**) sdPP);
   }
   return e;
 }  // stripNew()
+
+void stripDel(StripDataS **sdPP) {
+  if (sdPP && *sdPP) {
+    stripClr(*sdPP);
+    inflatableDel(&(*sdPP)->ss.infP);
+    inflatableDel(&(*sdPP)->sm.infP);
+    jbFree((void**) sdPP);
+  }
+}
 
 Error writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripDataS *sdP) {
   if (!fP || !sdP) {

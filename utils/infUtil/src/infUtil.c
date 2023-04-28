@@ -27,8 +27,9 @@ Error inflatableNew(void *voidA, Inflatable **inflatablePP) {
       break;
   }
 
-  if (!e) 
+  if (!e) {
     e = jbAlloc((void**) inflatablePP, sizeof(Inflatable), 1);
+  }
   if (!e) {
     (*inflatablePP)->compressedLen   = szDataCompressed;
     (*inflatablePP)->inflatedLen     = szDataOrig;
@@ -50,8 +51,7 @@ void inflatableDel(Inflatable **inflatablePP) {
       free((*inflatablePP)->inflatedDataP);
       (*inflatablePP)->inflatedDataP = NULL;
     }
-    free(*inflatablePP);
-    *inflatablePP = NULL;
+    jbFree((void**) inflatablePP);
   }
 }
 

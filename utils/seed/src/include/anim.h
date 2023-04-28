@@ -4,7 +4,7 @@
 #include <png.h>
 #include <assert.h>
 #include <string.h>
-#include "data.h"
+#include "common.h"
 #include "json.h"
 #include "fileUtils.h"
 #include "xAnim.h"

@@ -3,7 +3,8 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include "data.h"
+#include "common.h"
+#include "mem.h"
 
 #ifdef WINDOWS_
 #define SEP "\\"

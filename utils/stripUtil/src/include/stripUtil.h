@@ -5,10 +5,12 @@
 #include <ctype.h>
 #include <assert.h>
 #include <string.h>
-#include "inflatable.h"
-#include "fileUtils.h"
 #include <stdlib.h>
-#include "data.h"
+#include "common.h"
+#include "inflatable.h"
+#include "infUtil.h"
+#include "strip.h"
+#include "fileUtils.h"
 
 Error stripNew(U8 *srcA, const const U32 nUsedBytesPerUnpackedStrip, const U8 bitsPerPackedByte, StripDataS **sdPP, U32 flags, U8 verbose);
 void stripDel(StripDataS **sdPP);

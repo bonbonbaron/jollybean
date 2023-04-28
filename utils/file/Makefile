@@ -1,6 +1,11 @@
 # Target: fileUtils
-./build/fileUtils.o: ./src/fileUtils.c ./src/include/fileUtils.h ./build
-	gcc -g -lfastjson -I/usr/include/libfastjson -I./src/include -I../../src/include ./src/fileUtils.c -c -o $@
+RPODIR := $(shell git rev-parse --show-toplevel)
+SRCDIR := ${RPODIR}/src/data
+INCDIR := ${SRCDIR}/include
+BLDDIR := ${RPODIR}/build
+INCS   := ${INCDIR}/common.h ${INCDIR}/mem.h
+./build/fileUtils.o: ./src/fileUtils.c ./src/include/fileUtils.h ${INCS} ./build
+	gcc -g -lfastjson -I/usr/include/libfastjson -I${INCDIR} -I./src/include ./src/fileUtils.c -c -o $@
 
 # Build directory (dependency)
 ./build:
