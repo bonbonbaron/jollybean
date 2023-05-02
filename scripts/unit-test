@@ -7,7 +7,7 @@ TEST_BASE_DIR=${REPO_DIR}/test
 
 # Path to source file we want to test
 SRC_BASENAME=$(basename $1 .c)
-SRC_PATH=$(find ${SRC_DIR} -name "${SRC_BASENAME}*.c")
+SRC_PATH=$(find ${SRC_DIR} -name "${SRC_BASENAME}.c")
 OBJ_PATH=$(find ${REPO_DIR}/build -name ${SRC_BASENAME}.o)
 
 if [ ! -f ${OBJ_PATH} ]; then
@@ -16,6 +16,7 @@ if [ ! -f ${OBJ_PATH} ]; then
 fi
 
 echo src basename is ${SRC_BASENAME}
+echo src path is ${SRC_PATH}
 echo obj path is $OBJ_PATH
 if [ ! -f ${SRC_PATH} ]; then
   echo "source file $SRC_PATH doesn't exist. Exiting..."

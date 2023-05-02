@@ -172,13 +172,13 @@ typedef enum {
 typedef struct _System {
   Key           id;                  // ID of system 
   U8            compSz;              // components are the same size in all of this system's activities 
-  U8            mutationSz;               // System flags. Use this however you want.
+  U8            mutationSz;          // System flags. Use this however you want.
   U8            mutationOffset;      // position in destination component struct to copy mutation to
   U32           flags;               // System flags. Use this however you want.
   void         *cF;                  // component fray 
   Entity       *pauseQueueF;         // queue for pausing
   Entity       *deactivateQueueF;    // queue for pausing
-  Map          *subcompOwnerMP;       // keeps track of subcomponents' owners since cF isn't pop'd then
+  Map          *subcompOwnerMP;      // keeps track of subcomponents' owners since cF isn't pop'd then
   Key          *cIdx2eA;             // insert component index to get entity 
   Map          *e2cIdxMP;            // insert entity to get component index 
   Map          *mutationMPMP;        // key = Entity, val = maps to void pointers (triple pointer EW)

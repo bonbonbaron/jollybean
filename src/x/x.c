@@ -166,7 +166,7 @@ Error xAddComp(System *sP, Entity entity, void *compDataP) {
   if (mapGet(sP->e2cIdxMP, entity)) {
     return SUCCESS;
   }
-  // Put component in first empty slot. (Will be garbage if this is a map. That's okay.)
+  // Put component in first empty slot. (Will be zeros if this is a map. That's okay.)
   U32 cIdx; 
   Error e = SUCCESS;
   if (compDataP) {

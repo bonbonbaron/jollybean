@@ -16,10 +16,10 @@ XPostprocessCompsDef_(REPLACEME);
 XProcMsgFuncDef_(REPLACEME);
 XRunFuncDef_(REPLACEME);
 XClrFuncDef_(REPLACEME);
-XPostMutateFuncDef_(REPLACME);
+XPostMutateFuncDef_(REPLACEME);
 
 typedef struct {
-  System system;
+  System system;  // This MUST stay the first element in the struct!!
 } XREPLACEME;
 
 extern System *sREPLACEMEP;
