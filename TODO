@@ -1,3 +1,7 @@
+NEWER:
+just remembering my old (admittedly error-prone) design. (Note: loop macros, like entities and maps, would be helpful.) For starters, write the logic for populating each component's full data with the subcomponent pointers once they're all populated. Do this in xAPostProcessComps.
+
+OLDER:
 See if making animation a composite gene is what's causing master not to populate shared map of source rectangles.
 
 Partial answer: Turns out anim strips are incrementing the src rect count to 6 instead of 2 (we want 2 for 2 entities). We need to let composite genes increment this count as well, which has to do with 

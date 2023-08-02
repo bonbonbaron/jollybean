@@ -2,6 +2,8 @@
 #define SYS_A
 #include "x.h"
 
+#define XA_TYPE (1)
+
 typedef struct {
   int a;
   short b;
