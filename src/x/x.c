@@ -226,9 +226,10 @@ Error xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP)
     /* Let's take the burden of adding components off our individual systems 
      * (unless they insist otherwise with their flags) so they only have to 
      * worry about mutations. Some systems will want to do so in postProcess(). */
-    if (!e) {
-      e = xAddComp(sP, entity, NULL);
-    } 
+    // TODO was this a mistake?
+    //if (!e && ) {
+      //e = xAddComp(sP, entity, NULL);
+    //} 
     return e;
   }
   // Else it's the main component; feed it straight in baby.

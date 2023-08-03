@@ -1,0 +1,909 @@
+gcc --coverage -g -I. -I/home/bonbonbaron/hack/jollybean/src/data/include -I/home/bonbonbaron/hack/jollybean/src/include -I/home/bonbonbaron/hack/jollybean/src/interface/include -I/home/bonbonbaron/hack/jollybean/src/x/include -c test.c -o test.o
+test.c: In function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetCompPByEntity’:
+test.c:113:3: error: expected expression before ‘}’ token
+   }
+   ^
+test.c:113:3: error: expected ‘,’ or ‘;’ before ‘}’ token
+In file included from test.c:1:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:890:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_SETUP_Tau’
+     static void __TAU_TEST_FIXTURE_SETUP_##FIXTURE(struct FIXTURE* const);                    \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:116:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetEntityByCompIdx) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:891:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_TEARDOWN_Tau’
+     static void __TAU_TEST_FIXTURE_TEARDOWN_##FIXTURE(struct FIXTURE* const);                 \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:116:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetEntityByCompIdx) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:892:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetEntityByCompIdx’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const);             \
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:116:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetEntityByCompIdx) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:895:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_Tau_xGetEntityByCompIdx’
+     static void __TAU_TEST_FIXTURE_##FIXTURE##_##NAME() {                                     \
+                 ^~~~~~~~~~~~~~~~~~~
+test.c:116:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetEntityByCompIdx) {
+ ^~~~~~
+test.c: In function ‘__TAU_TEST_FIXTURE_Tau_xGetEntityByCompIdx’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:903:9: warning: implicit declaration of function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetEntityByCompIdx’; did you mean ‘__TAU_TEST_FIXTURE_Tau_xGetEntityByCompIdx’? [-Wimplicit-function-declaration]
+         __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(&fixture);                                  \
+         ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:116:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetEntityByCompIdx) {
+ ^~~~~~
+In file included from test.c:1:
+test.c: In function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetCompPByEntity’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xGetEntityByCompIdx’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:312:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)     __attribute__((constructor));   \
+                     ^
+test.c:116:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetEntityByCompIdx) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xGetEntityByCompIdx’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:313:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)
+                     ^
+test.c:116:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetEntityByCompIdx) {
+ ^~~~~~
+In file included from test.c:1:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:921:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetEntityByCompIdx’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const tau)
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:116:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetEntityByCompIdx) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: error: redeclaration of ‘tauTestContext’ with no linkage
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:120:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xActivateComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: note: previous declaration of ‘tauTestContext’ was here
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:116:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetEntityByCompIdx) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:890:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_SETUP_Tau’
+     static void __TAU_TEST_FIXTURE_SETUP_##FIXTURE(struct FIXTURE* const);                    \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:120:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xActivateComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:891:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_TEARDOWN_Tau’
+     static void __TAU_TEST_FIXTURE_TEARDOWN_##FIXTURE(struct FIXTURE* const);                 \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:120:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xActivateComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:892:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xActivateComponentByEntity’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const);             \
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:120:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xActivateComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:895:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_Tau_xActivateComponentByEntity’
+     static void __TAU_TEST_FIXTURE_##FIXTURE##_##NAME() {                                     \
+                 ^~~~~~~~~~~~~~~~~~~
+test.c:120:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xActivateComponentByEntity) {
+ ^~~~~~
+test.c: In function ‘__TAU_TEST_FIXTURE_Tau_xActivateComponentByEntity’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:903:9: warning: implicit declaration of function ‘__TAU_TEST_FIXTURE_RUN_Tau_xActivateComponentByEntity’; did you mean ‘__TAU_TEST_FIXTURE_Tau_xActivateComponentByEntity’? [-Wimplicit-function-declaration]
+         __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(&fixture);                                  \
+         ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:120:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xActivateComponentByEntity) {
+ ^~~~~~
+In file included from test.c:1:
+test.c: In function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetCompPByEntity’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xActivateComponentByEntity’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:312:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)     __attribute__((constructor));   \
+                     ^
+test.c:120:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xActivateComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xActivateComponentByEntity’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:313:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)
+                     ^
+test.c:120:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xActivateComponentByEntity) {
+ ^~~~~~
+In file included from test.c:1:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:921:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xActivateComponentByEntity’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const tau)
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:120:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xActivateComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: error: redeclaration of ‘tauTestContext’ with no linkage
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:124:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xDeactivateComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: note: previous declaration of ‘tauTestContext’ was here
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:120:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xActivateComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:890:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_SETUP_Tau’
+     static void __TAU_TEST_FIXTURE_SETUP_##FIXTURE(struct FIXTURE* const);                    \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:124:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xDeactivateComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:891:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_TEARDOWN_Tau’
+     static void __TAU_TEST_FIXTURE_TEARDOWN_##FIXTURE(struct FIXTURE* const);                 \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:124:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xDeactivateComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:892:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xDeactivateComponentByEntity’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const);             \
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:124:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xDeactivateComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:895:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_Tau_xDeactivateComponentByEntity’
+     static void __TAU_TEST_FIXTURE_##FIXTURE##_##NAME() {                                     \
+                 ^~~~~~~~~~~~~~~~~~~
+test.c:124:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xDeactivateComponentByEntity) {
+ ^~~~~~
+test.c: In function ‘__TAU_TEST_FIXTURE_Tau_xDeactivateComponentByEntity’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:903:9: warning: implicit declaration of function ‘__TAU_TEST_FIXTURE_RUN_Tau_xDeactivateComponentByEntity’; did you mean ‘__TAU_TEST_FIXTURE_RUN_Tau_xActivateComponentByEntity’? [-Wimplicit-function-declaration]
+         __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(&fixture);                                  \
+         ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:124:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xDeactivateComponentByEntity) {
+ ^~~~~~
+In file included from test.c:1:
+test.c: In function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetCompPByEntity’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xDeactivateComponentByEntity’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:312:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)     __attribute__((constructor));   \
+                     ^
+test.c:124:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xDeactivateComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xDeactivateComponentByEntity’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:313:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)
+                     ^
+test.c:124:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xDeactivateComponentByEntity) {
+ ^~~~~~
+In file included from test.c:1:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:921:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xDeactivateComponentByEntity’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const tau)
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:124:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xDeactivateComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: error: redeclaration of ‘tauTestContext’ with no linkage
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:128:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xPauseComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: note: previous declaration of ‘tauTestContext’ was here
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:124:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xDeactivateComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:890:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_SETUP_Tau’
+     static void __TAU_TEST_FIXTURE_SETUP_##FIXTURE(struct FIXTURE* const);                    \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:128:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xPauseComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:891:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_TEARDOWN_Tau’
+     static void __TAU_TEST_FIXTURE_TEARDOWN_##FIXTURE(struct FIXTURE* const);                 \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:128:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xPauseComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:892:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xPauseComponentByEntity’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const);             \
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:128:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xPauseComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:895:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_Tau_xPauseComponentByEntity’
+     static void __TAU_TEST_FIXTURE_##FIXTURE##_##NAME() {                                     \
+                 ^~~~~~~~~~~~~~~~~~~
+test.c:128:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xPauseComponentByEntity) {
+ ^~~~~~
+test.c: In function ‘__TAU_TEST_FIXTURE_Tau_xPauseComponentByEntity’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:903:9: warning: implicit declaration of function ‘__TAU_TEST_FIXTURE_RUN_Tau_xPauseComponentByEntity’; did you mean ‘__TAU_TEST_FIXTURE_Tau_xPauseComponentByEntity’? [-Wimplicit-function-declaration]
+         __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(&fixture);                                  \
+         ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:128:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xPauseComponentByEntity) {
+ ^~~~~~
+In file included from test.c:1:
+test.c: In function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetCompPByEntity’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xPauseComponentByEntity’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:312:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)     __attribute__((constructor));   \
+                     ^
+test.c:128:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xPauseComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xPauseComponentByEntity’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:313:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)
+                     ^
+test.c:128:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xPauseComponentByEntity) {
+ ^~~~~~
+In file included from test.c:1:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:921:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xPauseComponentByEntity’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const tau)
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:128:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xPauseComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: error: redeclaration of ‘tauTestContext’ with no linkage
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:132:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xUnpauseComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: note: previous declaration of ‘tauTestContext’ was here
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:128:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xPauseComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:890:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_SETUP_Tau’
+     static void __TAU_TEST_FIXTURE_SETUP_##FIXTURE(struct FIXTURE* const);                    \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:132:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xUnpauseComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:891:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_TEARDOWN_Tau’
+     static void __TAU_TEST_FIXTURE_TEARDOWN_##FIXTURE(struct FIXTURE* const);                 \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:132:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xUnpauseComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:892:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xUnpauseComponentByEntity’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const);             \
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:132:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xUnpauseComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:895:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_Tau_xUnpauseComponentByEntity’
+     static void __TAU_TEST_FIXTURE_##FIXTURE##_##NAME() {                                     \
+                 ^~~~~~~~~~~~~~~~~~~
+test.c:132:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xUnpauseComponentByEntity) {
+ ^~~~~~
+test.c: In function ‘__TAU_TEST_FIXTURE_Tau_xUnpauseComponentByEntity’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:903:9: warning: implicit declaration of function ‘__TAU_TEST_FIXTURE_RUN_Tau_xUnpauseComponentByEntity’; did you mean ‘__TAU_TEST_FIXTURE_RUN_Tau_xPauseComponentByEntity’? [-Wimplicit-function-declaration]
+         __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(&fixture);                                  \
+         ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:132:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xUnpauseComponentByEntity) {
+ ^~~~~~
+In file included from test.c:1:
+test.c: In function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetCompPByEntity’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xUnpauseComponentByEntity’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:312:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)     __attribute__((constructor));   \
+                     ^
+test.c:132:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xUnpauseComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xUnpauseComponentByEntity’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:313:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)
+                     ^
+test.c:132:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xUnpauseComponentByEntity) {
+ ^~~~~~
+In file included from test.c:1:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:921:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xUnpauseComponentByEntity’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const tau)
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:132:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xUnpauseComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: error: redeclaration of ‘tauTestContext’ with no linkage
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:136:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xActivateComponentByIdx) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: note: previous declaration of ‘tauTestContext’ was here
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:132:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xUnpauseComponentByEntity) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:890:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_SETUP_Tau’
+     static void __TAU_TEST_FIXTURE_SETUP_##FIXTURE(struct FIXTURE* const);                    \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:136:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xActivateComponentByIdx) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:891:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_TEARDOWN_Tau’
+     static void __TAU_TEST_FIXTURE_TEARDOWN_##FIXTURE(struct FIXTURE* const);                 \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:136:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xActivateComponentByIdx) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:892:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xActivateComponentByIdx’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const);             \
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:136:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xActivateComponentByIdx) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:895:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_Tau_xActivateComponentByIdx’
+     static void __TAU_TEST_FIXTURE_##FIXTURE##_##NAME() {                                     \
+                 ^~~~~~~~~~~~~~~~~~~
+test.c:136:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xActivateComponentByIdx) {
+ ^~~~~~
+test.c: In function ‘__TAU_TEST_FIXTURE_Tau_xActivateComponentByIdx’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:903:9: warning: implicit declaration of function ‘__TAU_TEST_FIXTURE_RUN_Tau_xActivateComponentByIdx’; did you mean ‘__TAU_TEST_FIXTURE_Tau_xActivateComponentByIdx’? [-Wimplicit-function-declaration]
+         __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(&fixture);                                  \
+         ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:136:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xActivateComponentByIdx) {
+ ^~~~~~
+In file included from test.c:1:
+test.c: In function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetCompPByEntity’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xActivateComponentByIdx’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:312:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)     __attribute__((constructor));   \
+                     ^
+test.c:136:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xActivateComponentByIdx) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xActivateComponentByIdx’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:313:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)
+                     ^
+test.c:136:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xActivateComponentByIdx) {
+ ^~~~~~
+In file included from test.c:1:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:921:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xActivateComponentByIdx’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const tau)
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:136:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xActivateComponentByIdx) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: error: redeclaration of ‘tauTestContext’ with no linkage
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:140:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xDeactivateComponentByIdx) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: note: previous declaration of ‘tauTestContext’ was here
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:136:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xActivateComponentByIdx) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:890:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_SETUP_Tau’
+     static void __TAU_TEST_FIXTURE_SETUP_##FIXTURE(struct FIXTURE* const);                    \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:140:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xDeactivateComponentByIdx) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:891:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_TEARDOWN_Tau’
+     static void __TAU_TEST_FIXTURE_TEARDOWN_##FIXTURE(struct FIXTURE* const);                 \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:140:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xDeactivateComponentByIdx) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:892:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xDeactivateComponentByIdx’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const);             \
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:140:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xDeactivateComponentByIdx) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:895:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_Tau_xDeactivateComponentByIdx’
+     static void __TAU_TEST_FIXTURE_##FIXTURE##_##NAME() {                                     \
+                 ^~~~~~~~~~~~~~~~~~~
+test.c:140:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xDeactivateComponentByIdx) {
+ ^~~~~~
+test.c: In function ‘__TAU_TEST_FIXTURE_Tau_xDeactivateComponentByIdx’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:903:9: warning: implicit declaration of function ‘__TAU_TEST_FIXTURE_RUN_Tau_xDeactivateComponentByIdx’; did you mean ‘__TAU_TEST_FIXTURE_RUN_Tau_xActivateComponentByIdx’? [-Wimplicit-function-declaration]
+         __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(&fixture);                                  \
+         ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:140:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xDeactivateComponentByIdx) {
+ ^~~~~~
+In file included from test.c:1:
+test.c: In function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetCompPByEntity’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xDeactivateComponentByIdx’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:312:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)     __attribute__((constructor));   \
+                     ^
+test.c:140:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xDeactivateComponentByIdx) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xDeactivateComponentByIdx’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:313:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)
+                     ^
+test.c:140:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xDeactivateComponentByIdx) {
+ ^~~~~~
+In file included from test.c:1:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:921:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xDeactivateComponentByIdx’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const tau)
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:140:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xDeactivateComponentByIdx) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: error: redeclaration of ‘tauTestContext’ with no linkage
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:144:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetNComps) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: note: previous declaration of ‘tauTestContext’ was here
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:140:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xDeactivateComponentByIdx) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:890:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_SETUP_Tau’
+     static void __TAU_TEST_FIXTURE_SETUP_##FIXTURE(struct FIXTURE* const);                    \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:144:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetNComps) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:891:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_TEARDOWN_Tau’
+     static void __TAU_TEST_FIXTURE_TEARDOWN_##FIXTURE(struct FIXTURE* const);                 \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:144:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetNComps) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:892:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetNComps’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const);             \
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:144:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetNComps) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:895:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_Tau_xGetNComps’
+     static void __TAU_TEST_FIXTURE_##FIXTURE##_##NAME() {                                     \
+                 ^~~~~~~~~~~~~~~~~~~
+test.c:144:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetNComps) {
+ ^~~~~~
+test.c: In function ‘__TAU_TEST_FIXTURE_Tau_xGetNComps’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:903:9: warning: implicit declaration of function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetNComps’; did you mean ‘__TAU_TEST_FIXTURE_Tau_xGetNComps’? [-Wimplicit-function-declaration]
+         __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(&fixture);                                  \
+         ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:144:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetNComps) {
+ ^~~~~~
+In file included from test.c:1:
+test.c: In function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetCompPByEntity’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xGetNComps’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:312:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)     __attribute__((constructor));   \
+                     ^
+test.c:144:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetNComps) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xGetNComps’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:313:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)
+                     ^
+test.c:144:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetNComps) {
+ ^~~~~~
+In file included from test.c:1:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:921:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetNComps’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const tau)
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:144:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetNComps) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: error: redeclaration of ‘tauTestContext’ with no linkage
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:148:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xMutateComponent) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: note: previous declaration of ‘tauTestContext’ was here
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:144:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetNComps) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:890:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_SETUP_Tau’
+     static void __TAU_TEST_FIXTURE_SETUP_##FIXTURE(struct FIXTURE* const);                    \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:148:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xMutateComponent) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:891:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_TEARDOWN_Tau’
+     static void __TAU_TEST_FIXTURE_TEARDOWN_##FIXTURE(struct FIXTURE* const);                 \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:148:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xMutateComponent) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:892:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xMutateComponent’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const);             \
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:148:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xMutateComponent) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:895:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_Tau_xMutateComponent’
+     static void __TAU_TEST_FIXTURE_##FIXTURE##_##NAME() {                                     \
+                 ^~~~~~~~~~~~~~~~~~~
+test.c:148:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xMutateComponent) {
+ ^~~~~~
+test.c: In function ‘__TAU_TEST_FIXTURE_Tau_xMutateComponent’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:903:9: warning: implicit declaration of function ‘__TAU_TEST_FIXTURE_RUN_Tau_xMutateComponent’; did you mean ‘__TAU_TEST_FIXTURE_Tau_xMutateComponent’? [-Wimplicit-function-declaration]
+         __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(&fixture);                                  \
+         ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:148:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xMutateComponent) {
+ ^~~~~~
+In file included from test.c:1:
+test.c: In function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetCompPByEntity’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xMutateComponent’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:312:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)     __attribute__((constructor));   \
+                     ^
+test.c:148:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xMutateComponent) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xMutateComponent’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:313:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)
+                     ^
+test.c:148:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xMutateComponent) {
+ ^~~~~~
+In file included from test.c:1:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:921:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xMutateComponent’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const tau)
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:148:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xMutateComponent) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: error: redeclaration of ‘tauTestContext’ with no linkage
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:152:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetEntityByVoidComponentPtr) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: note: previous declaration of ‘tauTestContext’ was here
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:148:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xMutateComponent) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:890:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_SETUP_Tau’
+     static void __TAU_TEST_FIXTURE_SETUP_##FIXTURE(struct FIXTURE* const);                    \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:152:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetEntityByVoidComponentPtr) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:891:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_TEARDOWN_Tau’
+     static void __TAU_TEST_FIXTURE_TEARDOWN_##FIXTURE(struct FIXTURE* const);                 \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:152:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetEntityByVoidComponentPtr) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:892:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetEntityByVoidComponentPtr’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const);             \
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:152:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetEntityByVoidComponentPtr) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:895:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_Tau_xGetEntityByVoidComponentPtr’
+     static void __TAU_TEST_FIXTURE_##FIXTURE##_##NAME() {                                     \
+                 ^~~~~~~~~~~~~~~~~~~
+test.c:152:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetEntityByVoidComponentPtr) {
+ ^~~~~~
+test.c: In function ‘__TAU_TEST_FIXTURE_Tau_xGetEntityByVoidComponentPtr’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:903:9: warning: implicit declaration of function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetEntityByVoidComponentPtr’; did you mean ‘__TAU_TEST_FIXTURE_Tau_xGetEntityByVoidComponentPtr’? [-Wimplicit-function-declaration]
+         __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(&fixture);                                  \
+         ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:152:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetEntityByVoidComponentPtr) {
+ ^~~~~~
+In file included from test.c:1:
+test.c: In function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetCompPByEntity’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xGetEntityByVoidComponentPtr’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:312:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)     __attribute__((constructor));   \
+                     ^
+test.c:152:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetEntityByVoidComponentPtr) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xGetEntityByVoidComponentPtr’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:313:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)
+                     ^
+test.c:152:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetEntityByVoidComponentPtr) {
+ ^~~~~~
+In file included from test.c:1:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:921:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetEntityByVoidComponentPtr’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const tau)
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:152:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetEntityByVoidComponentPtr) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: error: redeclaration of ‘tauTestContext’ with no linkage
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:156:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xQueuePause) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: note: previous declaration of ‘tauTestContext’ was here
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:152:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xGetEntityByVoidComponentPtr) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:890:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_SETUP_Tau’
+     static void __TAU_TEST_FIXTURE_SETUP_##FIXTURE(struct FIXTURE* const);                    \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:156:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xQueuePause) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:891:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_TEARDOWN_Tau’
+     static void __TAU_TEST_FIXTURE_TEARDOWN_##FIXTURE(struct FIXTURE* const);                 \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:156:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xQueuePause) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:892:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xQueuePause’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const);             \
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:156:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xQueuePause) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:895:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_Tau_xQueuePause’
+     static void __TAU_TEST_FIXTURE_##FIXTURE##_##NAME() {                                     \
+                 ^~~~~~~~~~~~~~~~~~~
+test.c:156:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xQueuePause) {
+ ^~~~~~
+test.c: In function ‘__TAU_TEST_FIXTURE_Tau_xQueuePause’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:903:9: warning: implicit declaration of function ‘__TAU_TEST_FIXTURE_RUN_Tau_xQueuePause’; did you mean ‘__TAU_TEST_FIXTURE_Tau_xQueuePause’? [-Wimplicit-function-declaration]
+         __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(&fixture);                                  \
+         ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:156:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xQueuePause) {
+ ^~~~~~
+In file included from test.c:1:
+test.c: In function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetCompPByEntity’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xQueuePause’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:312:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)     __attribute__((constructor));   \
+                     ^
+test.c:156:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xQueuePause) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xQueuePause’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:313:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)
+                     ^
+test.c:156:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xQueuePause) {
+ ^~~~~~
+In file included from test.c:1:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:921:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xQueuePause’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const tau)
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:156:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xQueuePause) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: error: redeclaration of ‘tauTestContext’ with no linkage
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:160:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xQueueDeactivate) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: note: previous declaration of ‘tauTestContext’ was here
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:156:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xQueuePause) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:890:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_SETUP_Tau’
+     static void __TAU_TEST_FIXTURE_SETUP_##FIXTURE(struct FIXTURE* const);                    \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:160:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xQueueDeactivate) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:891:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_TEARDOWN_Tau’
+     static void __TAU_TEST_FIXTURE_TEARDOWN_##FIXTURE(struct FIXTURE* const);                 \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:160:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xQueueDeactivate) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:892:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xQueueDeactivate’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const);             \
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:160:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xQueueDeactivate) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:895:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_Tau_xQueueDeactivate’
+     static void __TAU_TEST_FIXTURE_##FIXTURE##_##NAME() {                                     \
+                 ^~~~~~~~~~~~~~~~~~~
+test.c:160:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xQueueDeactivate) {
+ ^~~~~~
+test.c: In function ‘__TAU_TEST_FIXTURE_Tau_xQueueDeactivate’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:903:9: warning: implicit declaration of function ‘__TAU_TEST_FIXTURE_RUN_Tau_xQueueDeactivate’; did you mean ‘__TAU_TEST_FIXTURE_Tau_xQueueDeactivate’? [-Wimplicit-function-declaration]
+         __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(&fixture);                                  \
+         ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:160:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xQueueDeactivate) {
+ ^~~~~~
+In file included from test.c:1:
+test.c: In function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetCompPByEntity’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xQueueDeactivate’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:312:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)     __attribute__((constructor));   \
+                     ^
+test.c:160:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xQueueDeactivate) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xQueueDeactivate’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:313:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)
+                     ^
+test.c:160:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xQueueDeactivate) {
+ ^~~~~~
+In file included from test.c:1:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:921:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xQueueDeactivate’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const tau)
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:160:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xQueueDeactivate) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: error: redeclaration of ‘tauTestContext’ with no linkage
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:164:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xRun) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:888:24: note: previous declaration of ‘tauTestContext’ was here
+     tauTestStateStruct tauTestContext;                                                        \
+                        ^~~~~~~~~~~~~~
+test.c:160:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xQueueDeactivate) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:890:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_SETUP_Tau’
+     static void __TAU_TEST_FIXTURE_SETUP_##FIXTURE(struct FIXTURE* const);                    \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:164:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xRun) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:891:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_TEARDOWN_Tau’
+     static void __TAU_TEST_FIXTURE_TEARDOWN_##FIXTURE(struct FIXTURE* const);                 \
+                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+test.c:164:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xRun) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:892:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xRun’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const);             \
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:164:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xRun) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:895:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_Tau_xRun’
+     static void __TAU_TEST_FIXTURE_##FIXTURE##_##NAME() {                                     \
+                 ^~~~~~~~~~~~~~~~~~~
+test.c:164:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xRun) {
+ ^~~~~~
+test.c: In function ‘__TAU_TEST_FIXTURE_Tau_xRun’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:903:9: warning: implicit declaration of function ‘__TAU_TEST_FIXTURE_RUN_Tau_xRun’; did you mean ‘__TAU_TEST_FIXTURE_Tau_xRun’? [-Wimplicit-function-declaration]
+         __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(&fixture);                                  \
+         ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:164:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xRun) {
+ ^~~~~~
+In file included from test.c:1:
+test.c: In function ‘__TAU_TEST_FIXTURE_RUN_Tau_xGetCompPByEntity’:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xRun’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:312:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)     __attribute__((constructor));   \
+                     ^
+test.c:164:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xRun) {
+ ^~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:907:26: error: invalid storage class for function ‘tau_register_Tau_xRun’
+     TAU_TEST_INITIALIZER(tau_register_##FIXTURE##_##NAME) {                                   \
+                          ^~~~~~~~~~~~~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:313:21: note: in definition of macro ‘TAU_TEST_INITIALIZER’
+         static void f(void)
+                     ^
+test.c:164:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xRun) {
+ ^~~~~~
+In file included from test.c:1:
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:921:17: error: invalid storage class for function ‘__TAU_TEST_FIXTURE_RUN_Tau_xRun’
+     static void __TAU_TEST_FIXTURE_RUN_##FIXTURE##_##NAME(struct FIXTURE* const tau)
+                 ^~~~~~~~~~~~~~~~~~~~~~~
+test.c:164:1: note: in expansion of macro ‘TEST_F’
+ TEST_F(Tau, xRun) {
+ ^~~~~~
+test.c:166:1: error: expected declaration or statement at end of input
+ }
+ ^
+make: *** [Makefile:17: test.o] Error 1

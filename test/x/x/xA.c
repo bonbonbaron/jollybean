@@ -77,7 +77,9 @@ XIniSubcompFuncDef_(A) {
 
   // Add entity to entity array for post-processing.
   if (!e) {
-    e = frayAdd(xP->entityF, (void*) &entity, NULL);
+    if (xP->entityF[entity - 1] != entity) {
+      e = frayAdd(xP->entityF, (void*) &entity, NULL);
+    }
   }
 
 	return e;
@@ -131,6 +133,7 @@ XPostprocessCompsDef_(A) {
       .intP = NULL  // this is from an external share map
     };
     // Now the component's populated. Add it to the system.
+    //printf("adding component with a = %d and d = %f to entity %d\n", *aP, *dP, *entityP);
     e = xAddComp(sP, *entityP, &component);
   }
 
