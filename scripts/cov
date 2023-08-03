@@ -76,10 +76,10 @@ if [ ! -f $SENTINEL -o $TEST_NAME -nt $SENTINEL ]; then
 fi
 
 # If the test failed, don't bother continuing on.
-if [ $STATUS -ne 0 ]; then
-  echo "Unit test failed; no use in printing out coverage information. Exiting..."
-  exit
-fi
+#if [ $STATUS -ne 0 ]; then
+  #echo "Unit test failed; no use in printing out coverage information. Exiting..."
+  #exit
+#fi
 
 # Gather code coverage results into coverage folder. Also generate a file with coverage percentages.
 rm ${COVERAGE_DIR}/percentages 2>/dev/null

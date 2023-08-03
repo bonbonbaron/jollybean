@@ -69,10 +69,10 @@ XClrFuncDef_(Collision) {
 XGetShareFuncDef_(Collision) {
   XCollision *xCollisionSysP = (XCollision*) sP;
   // Get system the rectangle array from master.
-  Map *rectMP = (Map*) mapGet(shareMMP, RECT);
+  Map *rectMP = (Map*) mapGet(shareMPMP, RECT);
   if (!rectMP)
     return E_BAD_KEY;
-  Map *layerMP = (Map*) mapGet(shareMMP, LAYER);
+  Map *layerMP = (Map*) mapGet(shareMPMP, LAYER);
   if (!layerMP)
     return E_BAD_KEY;
   xCollisionSysP->rectA = rectMP->mapA;

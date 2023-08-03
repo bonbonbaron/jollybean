@@ -96,7 +96,7 @@ typedef Error (*XIniSubcompU)(struct _System *sP, const Entity entity, const Key
 typedef Error (*XRunU)(struct _System *sP);
 typedef Error (*XClrU)(struct _System *sP);
 typedef Error (*XProcMsgU)(struct _System *sP, Message *messageP);
-typedef Error (*XGetShareU)(struct _System *sP, Map *shareMMP);
+typedef Error (*XGetShareU)(struct _System *sP, Map *shareMPMP);
 typedef Error (*XPostprocessCompsU)(struct _System *sP);
 typedef Error (*XPostMutateU)(struct _System *sP, void *cP);  // changes immutables alogn with mutables
 #define XPostprocessCompsDefUnused_(name_) XPostprocessCompsDef_(name_) {\
@@ -135,12 +135,12 @@ typedef Error (*XPostMutateU)(struct _System *sP, void *cP);  // changes immutab
 }
 #define XProcMsgFuncDef_(name_)  Error x##name_##ProcessMessage(System *sP, Message *msgP)
 
-#define XGetShareFuncDefUnused_(name_) Error x##name_##GetShare(System *sP, Map *shareMMP) {\
+#define XGetShareFuncDefUnused_(name_) Error x##name_##GetShare(System *sP, Map *shareMPMP) {\
   unused_(sP); \
-  unused_(shareMMP); \
+  unused_(shareMPMP); \
   return SUCCESS; \
 }
-#define XGetShareFuncDef_(name_) Error x##name_##GetShare(System *sP, Map *shareMMP)
+#define XGetShareFuncDef_(name_) Error x##name_##GetShare(System *sP, Map *shareMPMP)
 
 #define XRunFuncDef_(name_) Error x##name_##Run(System *sP)
 

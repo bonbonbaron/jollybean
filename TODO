@@ -1,5 +1,5 @@
 NEWER:
-just remembering my old (admittedly error-prone) design. (Note: loop macros, like entities and maps, would be helpful.) For starters, write the logic for populating each component's full data with the subcomponent pointers once they're all populated. Do this in xAPostProcessComps.
+got the test passing before changing "for (int i...)" to "for (Key i...)". It's bombing on asserting success at line 89 for one of the later entities. See if it's wrapping around to 0 or something.
 
 OLDER:
 See if making animation a composite gene is what's causing master not to populate shared map of source rectangles.

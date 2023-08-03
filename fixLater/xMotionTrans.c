@@ -53,7 +53,7 @@ XClrFuncDef_(MotionTrans) {
 #define RECT 1  // TODO
 XGetShareFuncDef_(MotionTrans) {
   XMotionTrans *xMotionSysP = (XMotionTrans*) sP;
-  Map *rectMP = (Map*) mapGet(shareMMP, RECT);
+  Map *rectMP = (Map*) mapGet(shareMPMP, RECT);
   if (!rectMP)
     return E_BAD_KEY;
   xMotionSysP->rectA = rectMP->mapA;

@@ -1,0 +1,13 @@
+echo -e "\e[0;33m#!/bin/bash
+for i in {1..10}
+do
+ echo \"$i\"
+done\e[0m"
+#!/bin/bash
+for i in {1..10}
+do
+ echo \"$i\"
+done
+if [ $? -ne 0 ]; then
+  exit 1;
+fi

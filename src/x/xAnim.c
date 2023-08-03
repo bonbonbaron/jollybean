@@ -59,12 +59,12 @@ XGetShareFuncDef_(Anim) {
   }
   // Get shared inner maps of resources we need (offsets and source rects)
   XAnim *xP = (XAnim*) sP;
-  Error e = mapGetNestedMapP(shareMMP, RECT_OFFSET, &xP->offsetMP);
+  Error e = mapGetNestedMapP(shareMPMP, RECT_OFFSET, &xP->offsetMP);
   if (!e) {
-    mapGetNestedMapP(shareMMP, SRC_RECT, &xP->srcRectMP);
+    mapGetNestedMapP(shareMPMP, SRC_RECT, &xP->srcRectMP);
   }
   if (!e) {
-    mapGetNestedMapP(shareMMP, DST_RECT, &xP->dstRectMP);
+    mapGetNestedMapP(shareMPMP, DST_RECT, &xP->dstRectMP);
   }
   // Give each entity its source and dest rectangles.
   XAnimComp *cP = (XAnimComp*) sP->cF;

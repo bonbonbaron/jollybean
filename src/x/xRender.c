@@ -564,18 +564,18 @@ XPostprocessCompsDef_(Render) {
 XGetShareFuncDef_(Render) {
   XRender *xP = (XRender*) sP;
   // Get renderer
-  Error e = mapGetNestedMapPElem(shareMMP, GUI_GENE_TYPE, GUI_KEY_, NONMAP_POINTER, (void**) &xP->guiP);
+  Error e = mapGetNestedMapPElem(shareMPMP, GUI_GENE_TYPE, GUI_KEY_, NONMAP_POINTER, (void**) &xP->guiP);
   // Get window
   if (!e) {
-    e = mapGetNestedMapP(shareMMP, DST_RECT, &xP->dstRectMP);  
+    e = mapGetNestedMapP(shareMPMP, DST_RECT, &xP->dstRectMP);  
   }
   // Get source rect and rect offset maps. Give both a chance to run if we enter this block.
   if (!e) {
-    e = mapGetNestedMapP(shareMMP, SRC_RECT, &xP->srcRectMP);  
+    e = mapGetNestedMapP(shareMPMP, SRC_RECT, &xP->srcRectMP);  
   }
     // If there's no animation system, there won't be a source rect shared map in master.
   if (!e || e == E_BAD_KEY) {
-    e = mapGetNestedMapP(shareMMP, RECT_OFFSET, &xP->offsetRectMP);  
+    e = mapGetNestedMapP(shareMPMP, RECT_OFFSET, &xP->offsetRectMP);  
   }
   // We need to tolerate an animation system not existing.
   // SRC_RECT and RECT_OFFSET share maps don't exist without an animation system.

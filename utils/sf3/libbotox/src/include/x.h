@@ -46,19 +46,19 @@ typedef Error (*XIniSubcompU)(struct _System *sP, void *dataP, void *dataSrcP);
 typedef Error (*XRunU)(struct _System *sP);
 typedef Error (*XClrU)(struct _System *sP);
 typedef Error (*XProcMsgU)(struct _System *sP, Message *messageP);
-typedef Error (*XGetShareU)(struct _System *sP, Map *shareMMP);
+typedef Error (*XGetShareU)(struct _System *sP, Map *shareMPMP);
 typedef void* (*XSwitchCompU)(Key key);
 
 #define XIniSysFuncDef_(name_)   Error x##name_##IniSys(System *sP, void *sParamsP)
 #define XIniSubcompFuncDef_(name_)  Error x##name_##IniSubcomp(System *sP, void *dataP, void *dataSrcP)
 #define XClrFuncDef_(name_)      Error x##name_##Clr(System *sP)
 #define XProcMsgFuncDef_(name_)  Error x##name_##ProcessMessage(System *sP, Message *msgP)
-#define XGetShareFuncDefUnused_(name_) Error x##name_##GetShare(System *sP, Map *shareMMP) {\
+#define XGetShareFuncDefUnused_(name_) Error x##name_##GetShare(System *sP, Map *shareMPMP) {\
   unused_(sP); \
-  unused_(shareMMP); \
+  unused_(shareMPMP); \
   return SUCCESS; \
 }
-#define XGetShareFuncDef_(name_) Error x##name_##GetShare(System *sP, Map *shareMMP)
+#define XGetShareFuncDef_(name_) Error x##name_##GetShare(System *sP, Map *shareMPMP)
 
 // Checks 
 // ======

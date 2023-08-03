@@ -41,7 +41,7 @@ XClrFuncDef_(Timer) {
 
 XGetShareFuncDef_(Timer) {
   unused_(sP);
-  unused_(shareMMP);
+  unused_(shareMPMP);
   return SUCCESS;
 }
 

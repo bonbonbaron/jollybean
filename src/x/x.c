@@ -287,27 +287,35 @@ void xClr(System *sP) {
   frayDel((void**) &sP->pauseQueueF);
   mapDel(&sP->subcompOwnerMP);
   mapDel(&sP->e2cIdxMP);
-  // DOn't delete inner maps as there may be multiple copies pointing at the same thing.
-  //mapOfNestedMapsDel(&sP->mutationMPMP);
+  // Don't delete inner maps as there may be multiple copies pointing at the same thing.
+  // You're required to have deleted or acquired a pointer to the mutation map's inner maps by this point.
+  //mapOfNestedMapsDel(&sP->mutationMPMP);  <-- don't do this.
   mapDel(&sP->mutationMPMP);
   arrayDel((void**) &sP->cIdx2eA);
 }
 
 Error xMutateComponent(System *sP, Entity entity, Key newCompKey) {
+  // Make sure entity, system, and the key to the new component are all valid parameters.
   if (!sP || !entity || !newCompKey) {
     return E_BAD_ARGS;
   }
+  // Make sure the system was set up for mutations in the first place.
   if (sP->flags & FLG_NO_MUTATIONS_) {
     return SUCCESS;
   }
+  // Get the nested map of mutations for this particular entity.
   Map *mutationMP = NULL;
   Error e = mapGetNestedMapP(sP->mutationMPMP, entity, &mutationMP);
+  // Ensure the nested map has raw data-- nothing funky like pointers or (more) inner maps.
   if (!e) {
     assert(mutationMP->elemType == RAW_DATA);
+    // Get a pointer to the entity's component.
     void* cP = xGetCompPByEntity(sP, entity);
     if (cP) {
+      // Get a pointer to the mutation.
       void *tmpP = mapGet(mutationMP, newCompKey);
       if (tmpP) {
+        // Mutate the only part of the component that should change.
         memcpy((U8*) cP + sP->mutationOffset, tmpP, arrayGetElemSz(mutationMP->mapA));
         return sP->postMutate(sP, cP);
       }

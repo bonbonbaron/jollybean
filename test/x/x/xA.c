@@ -1,5 +1,18 @@
 #include "xA.h"
 
+/* STRUCTURE OF AN XA COMPONENT:
+ *
+ * The component has four subcomponents.
+ *   A and D are immutable subcomponents;
+ *   B and C are mutable.
+ *
+ * Therefore, we'll store a one-to-one mapping from each entity to its A and D subcomponents,
+ * and then we'll store a one-to-many mapping from each entity to its B and C subcomponents.
+ *
+ * B and C will also undergo postmutations to fully test that feature of X.
+ *
+ */
+
 /* HOW THIS FILE IS LAID OUT:
  *
  *  The functions below are ordered by xMaster's calls to them.
@@ -63,7 +76,7 @@ XIniSubcompFuncDef_(A) {
   }
 
   // Add entity to entity array for post-processing.
-  if (!e && entity) {
+  if (!e) {
     e = frayAdd(xP->entityF, (void*) &entity, NULL);
   }
 
@@ -71,14 +84,16 @@ XIniSubcompFuncDef_(A) {
 }
 #endif
 
+// We'll populate the component's intP member with this.
 #if 0
 XGetShareFuncDefUnused_(A);
 #else
 XGetShareFuncDef_(A) {
   XA *xP = (XA*) sP;
   Error e = SUCCESS;
-  if (sP && shareMMP) {
-    e = mapGetNestedMapP(shareMMP, 1, &xP->sharedIntMP);
+  int *intP;
+  if (sP && shareMPMP) {
+    e = mapGetNestedMapP(shareMPMP, 1, &xP->sharedIntMP);
   }
   return e;
 }
@@ -91,31 +106,32 @@ XPostprocessCompsDefUnused_(A);
 XPostprocessCompsDef_(A) {
   XA *xP = (XA*) sP;
   Error e = SUCCESS;
-  Entity *eP = xP->entityF;
-  Entity *eEndP = eP + *_frayGetFirstEmptyIdxP(xP->entityF);
+  Entity *entityP = xP->entityF;
+  Entity *entityEndP = entityP + *_frayGetFirstEmptyIdxP(xP->entityF);
   // For each entity...
-  for (; !e && eP < eEndP; ++eP) {
-    int *aP = (int*) mapGet(xP->aMP, *eP);
+  for (; !e && entityP < entityEndP; ++entityP) {
+    int *aP = (int*) mapGet(xP->aMP, *entityP);
     // Get current entity's a.
     if (!aP) {
       e = E_BAD_KEY;
       break;
     }
     // Get current entity's d.
-    double *dP = (double*) mapGet(xP->dMP, *eP);
+    double *dP = (double*) mapGet(xP->dMP, *entityP);
     if (!dP) {
       e = E_BAD_KEY;
       break;
     }
     // Turn it into a full-fledged component.
-    XAComp c = {
-      .a = *aP,
-      .b = 0,
-      .c = 0,
-      .d = *dP
+    XAComp component = {
+      .a = *aP,     // this is a pre-populated, immutable subcomponent
+      .b = 0,       // this is a share; you don't need to populate it yet. It'll be filled at runtime.
+      .c = 0,       // this is a share; you don't need to populate it yet. It'll be filled at runtime.
+      .d = *dP,     // this is a pre-populated, immutable subcomponent
+      .intP = NULL  // this is from an external share map
     };
-
-    e = xAddComp(sP, *eP, &c);
+    // Now the component's populated. Add it to the system.
+    e = xAddComp(sP, *entityP, &component);
   }
 
   return e;
