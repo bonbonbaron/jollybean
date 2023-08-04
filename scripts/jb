@@ -22,7 +22,7 @@ if [ $# -gt 0 ]; then
   mainArg=$(lower $1)
   case $mainArg in  
     game) gameExe ${*:2};;
-    sys)  sysExe ${*};;
+    sys)  sysExe ${*:2};;
     image|img) imgExe ${*:2};;
     gene) echo "what the del";;
     build) buildExe ${*:2};;

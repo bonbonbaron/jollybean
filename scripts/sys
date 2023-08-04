@@ -3,12 +3,13 @@ ALREADY_EXISTS="already exists! Skipping its creation..."
 DOESNT_EXIST="doesn't exists! Skipping its removal..."
 #defaults
 JB_DIR=${HOME}/hack/jollybean
-TGT_SRC_DIR="$JB_DIR/src"
+TGT_SRC_DIR="$JB_DIR/src/x/"
 TGT_INC_DIR="$JB_DIR/src/include"
 TEMPLATE_DIR=$JB_DIR/templates
 VERBOSE=0
 
 function sysNew {
+  echo "sysNew sees $@"
   while getopts "vd:" arg; do
     case $arg in 
     d)
@@ -26,9 +27,8 @@ function sysNew {
     *) echo "invalid option: $OPT";;
     esac
   done
-  shift
-  ALREADY_EXISTS="already exists! Skipping..."
-  if [ $1 ]; then
+  # TODO make sure the shifting's right
+  if [ ! -z "$1" ]; then
     for i in ${*:1}; do
       C_FILE=${TGT_SRC_DIR}/x${i}.c
       H_FILE=${TGT_INC_DIR}/x${i}.h
@@ -66,7 +66,7 @@ function sysDel {
     *) echo "invalid option: $OPT";;
     esac
   done
-  shift
+  # shift  TODO make sure it's okay to comment this out
   if [ $1 ]; then
     for i in ${*:1}; do
       C_FILE=${TGT_SRC_DIR}/x${i}.c
@@ -88,15 +88,16 @@ function sysDel {
 }
 
 function sysLs {
+  echo "Target src dir is $TGT_SRC_DIR"
   declare -a a=$(ls ${TGT_SRC_DIR}/x[A-Z]*.c)
   echo "Available systems:"
   for aa in $a; do echo $(basename $aa .c) | sed -E 's/x([A-Z].*)/\t\1/'; done;
 }
 
 function sysExe {
-  case $2 in
-    new)    sysNew ${*:3};;
-    del|rm) sysDel ${*:3};;
+  case $1 in
+    new)    sysNew ${*:2};;
+    del|rm) sysDel ${*:2};;
     ls)     sysLs;;
     cat)    sysCat;;
       *) echo "sys has no command \"$2\".";;

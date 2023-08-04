@@ -23,23 +23,27 @@ Error xMotionTransProcessMessage(System *sP, Message *msgP) {
   Error e = SUCCESS;
   // Get entity's map of switchable components.
   Map **mutationMPP = (Map**) mapGet(sP->mutationMPMP, msgP->attn);
-  if (!mutationMPP)
+  if (!mutationMPP) {
     e = E_BAD_KEY;
+  }
   Map *mutationMP;
   if (!e) {
     mutationMP = *mutationMPP;
-    if (!mutationMP) 
+    if (!mutationMP) {
       e = E_BAD_KEY;
+    }
   }
   if (!e) {
     // Get entity's map of components to switch to.
     void *compP = xGetCompPByEntity(sP, msgP->attn);
     if (compP) {
       void *tmpP = mapGet(mutationMP, msgP->arg);
-      if (tmpP)
+      if (tmpP) {
         memcpy(compP, tmpP, sP->compSz - sizeof(Rect_*));  // don't copy over source rect pointer!
-      else
+      }
+      else {
         e = E_BAD_ARGS;
+      }
     }
   }
 	return e;
@@ -54,8 +58,9 @@ XClrFuncDef_(MotionTrans) {
 XGetShareFuncDef_(MotionTrans) {
   XMotionTrans *xMotionSysP = (XMotionTrans*) sP;
   Map *rectMP = (Map*) mapGet(shareMPMP, RECT);
-  if (!rectMP)
+  if (!rectMP) {
     return E_BAD_KEY;
+  }
   xMotionSysP->rectA = rectMP->mapA;
   return SUCCESS;
 }
@@ -66,13 +71,13 @@ XGetShareFuncDef_(MotionTrans) {
 Error xMotionTransRun(System *sP) {
   XMotionTrans *xMotionSysP = (XMotionTrans*) sP;
 	XMotionTransComp *cP = (XMotionTransComp*) sP->cF;
-	XMotionTransComp *cEndP = cP + frayGetFirstInactiveIdx(sP->cF);
+	XMotionTransComp *cEndP = cP + _frayGetFirstInactiveIdx(sP->cF);
   Rect_ *rectA = xMotionSysP->rectA;
 
   for (; cP < cEndP; cP++) {
     Rect_ *rectP = &rectA[cP->rectIdx];
-    rectP->x += cP->x;
-    rectP->y += cP->y;
+    rectP->x += cP->velocity.x;
+    rectP->y += cP->velocity.y;
   }
 
 	return SUCCESS;
@@ -81,5 +86,4 @@ Error xMotionTransRun(System *sP) {
 //======================================================
 // System definition
 //======================================================
-#define FLAGS_HERE (0)
-X_(MotionTrans, MOTION_TRAN, FLAGS_HERE);
+X_(MotionTrans, MOTION_TRAN, velocity, 0);

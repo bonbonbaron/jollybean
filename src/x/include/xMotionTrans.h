@@ -8,6 +8,12 @@
 typedef struct {
   S8 x;
   S8 y;
+} Velocity;
+
+typedef Velocity XMotionTransMutation;
+
+typedef struct {
+  Velocity velocity;
   Key rectIdx;
 } XMotionTransComp;  
 
