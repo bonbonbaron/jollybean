@@ -121,20 +121,6 @@ Error xUnpauseComponentByEntity(System *sP, Entity entity) {
   return _xSwap(sP, &changes);
 }
 
-Error xActivateComponentByIdx(System *sP, Key compOrigIdx) {
-  if (!sP) {
-    return E_BAD_ARGS;
-  }
-  return xActivateComponentByEntity(sP, sP->cIdx2eA[compOrigIdx]);
-}
-
-Error xDeactivateComponentByIdx(System *sP, Key compOrigIdx) {
-  if (!sP) {
-    return E_BAD_ARGS;
-  }
-  return xDeactivateComponentByEntity(sP, sP->cIdx2eA[compOrigIdx]);
-}
-
 U32 xGetNComps(System *sP) {
   if (!sP || !sP->cF) {
     return E_BAD_ARGS;
@@ -333,6 +319,9 @@ static Error _xReadInbox(System *sP) {
   Message *msgP = sP->mailboxF;
   Message *msgEndP = msgP + *_frayGetFirstEmptyIdxP(sP->mailboxF);
   for (; !e && msgP < msgEndP; msgP++) {
+    if (msgP->address != sP->id) {
+      return E_MAILBOX_BAD_ADDRESS;
+    }
     switch(msgP->cmd) {
       case MUTATE_AND_ACTIVATE: 
         e = xMutateComponent(sP, msgP->attn, msgP->arg);

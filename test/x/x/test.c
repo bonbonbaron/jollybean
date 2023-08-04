@@ -27,6 +27,19 @@ typedef struct Tau {
   System *sP;
 } Tau;
 
+static Error _validateEntityPosition(Tau *tau, Entity entity, Key expectedIdx) {
+  Key *idxP = mapGet(tau->sP->e2cIdxMP, entity);
+  if (*idxP != expectedIdx) {
+    printf("error: entity %d is in index %d, expected to be at %d.\n", entity, *idxP, expectedIdx);
+    return 1;
+  }
+  if (tau->sP->cIdx2eA[*idxP] != entity) {
+    printf("error: index %d has entity %d, expected entity to be %d\n", *idxP, tau->sP->cIdx2eA[*idxP], entity);
+    return 1;
+  }
+  return 0;
+}
+
 // We have to make these constants so the compiler doesn't cry about the array initializers not having constant sizes.
 #define N_ENTITIES (100)
 #define N_MUTATIONS_PER_ENTITY (5)
@@ -58,8 +71,8 @@ TEST_F_SETUP(Tau) {
     // Pre-populate the mutation maps with arbitrary values.
     for (Key i = 1; !tau->e && i <= tau->nMutationsPerEntity; ++i) {
       XAMutation currMutation = {
-        .bb = i * 2,
-        .cc = i * 3
+        .bb = i * 2,  // mutation key times 2
+        .cc = i * 3   // mutation key times 3
       };
       tau->e = mapSet(currEntitysMutationMP, i, &currMutation);
       requireSuccess_;
@@ -107,6 +120,7 @@ TEST_F_TEARDOWN(Tau) {
 //--------------------------------------------
 
 TEST_F(Tau, xGetCompPByEntity) {
+  // Make sure you can get every component properly by its entity ID.
   forEachEntity_(tau->nEntities) {
     XAComp *cP = (XAComp*) xGetCompPByEntity(tau->sP, entity);
     CHECK_EQ(cP->a, entity * 1);
@@ -117,6 +131,7 @@ TEST_F(Tau, xGetCompPByEntity) {
 }
 
 TEST_F(Tau, xGetEntityByCompIdx) {
+  // Make sure you can get every entity properly by its component index.
   forEachEntity_(tau->nEntities) {
     Entity _entity = xGetEntityByCompIdx(tau->sP, entity - 1);
     CHECK_EQ(_entity, entity);
@@ -194,6 +209,45 @@ TEST_F( Tau, mutateAndActivate) {
     }
   }
 }
+
+TEST_F( Tau, mutateAndDeactivate) {
+  // Write a couple activation messages to the system.
+  tau->e = mailboxWrite(tau->sP->mailboxF, 1, 10, MUTATE_AND_DEACTIVATE, 1);
+  requireSuccess_;
+  tau->e = mailboxWrite(tau->sP->mailboxF, 1, 50, MUTATE_AND_DEACTIVATE, 1);
+  requireSuccess_;
+
+  // Run the system so it reads its inbox letters from the above.
+  tau->e = xRun(tau->sP);
+  requireSuccess_;
+
+  XAComp *cP = tau->sP->cF; 
+  XAComp *cEndP = cP + *_frayGetFirstEmptyIdxP(tau->sP->cF);
+  for (; cP < cEndP; ++cP) {
+    U32 componentIdx = cP - (XAComp*) tau->sP->cF;
+    // Make sure the two activated components are moved to the front of the fray AND marked as active.
+    switch (componentIdx) {
+      case 0:
+        CHECK_EQ(cP->a, 9);
+        CHECK_EQ(cP->b, 9);
+        CHECK_EQ(cP->c, 9);
+        CHECK_EQ(cP->d, 10.0);
+        CHECK_TRUE(_frayElemIsActive(tau->sP->cF, componentIdx));
+        break;
+      case 1:
+        CHECK_EQ(cP->a, 49);
+        CHECK_EQ(cP->b, 9);
+        CHECK_EQ(cP->c, 9);
+        CHECK_EQ(cP->d, 50.0);
+        CHECK_TRUE(_frayElemIsActive(tau->sP->cF, componentIdx));
+        break;
+      // Make sure all the rest are inactive.
+      default:
+        CHECK_FALSE(_frayElemIsActive(tau->sP->cF, componentIdx));
+    }
+  }
+}
+
 TEST_F(Tau, xDeactivateComponentByEntity) {
   FrayChanges fc = {0};
   // make sure first elem ain't active
@@ -221,86 +275,143 @@ TEST_F(Tau, xDeactivateComponentByEntity) {
 TEST_F(Tau, xPauseComponentByEntity) {
   // Activate the first 3 entities
   for (Entity entity = 1; entity <= 3; ++entity) {
-    tau->e = xActivateComponentByEntity(tau->sP, entity);
+    tau->e = mailboxWrite(tau->sP->mailboxF, 1, entity, ACTIVATE, 0);
     requireSuccess_;
   }
   // Pause the middle one
-  tau->e = xPauseComponentByEntity(tau->sP, 2);
+  tau->e = mailboxWrite(tau->sP->mailboxF, 1, 2, PAUSE, 0);
+  requireSuccess_;
+  tau->e = xRun(tau->sP);
   requireSuccess_;
   // Make sure the ordering is correct in the entity-to-component array.
-  // Entity 1's still in index 0
-  Key *idxP = mapGet(tau->sP->e2cIdxMP, 1);
-  CHECK_EQ(*idxP, 0);
-  CHECK_EQ(tau->sP->cIdx2eA[*idxP], 1);
-  // Entity 2's now in index 2
-  idxP = mapGet(tau->sP->e2cIdxMP, 2);
-  CHECK_EQ(*idxP, 2);
-  CHECK_EQ(tau->sP->cIdx2eA[*idxP], 2);
-  // Entity 3's now in index 1
-  idxP = mapGet(tau->sP->e2cIdxMP, 3);
-  CHECK_EQ(*idxP, 1); 
-  CHECK_EQ(tau->sP->cIdx2eA[*idxP], 3);
+  CHECK_EQ(_validateEntityPosition(tau, 1, 0), SUCCESS);
+  CHECK_EQ(_validateEntityPosition(tau, 2, 2), SUCCESS);
+  CHECK_EQ(_validateEntityPosition(tau, 3, 1), SUCCESS);
 }
 
 TEST_F(Tau, xUnpauseComponentByEntity) {
   // Repeat the same test as the above so we can unpause the paused element.
   // Activate the first 3 entities
   for (Entity entity = 1; entity <= 3; ++entity) {
-    tau->e = xActivateComponentByEntity(tau->sP, entity);
+    tau->e = mailboxWrite(tau->sP->mailboxF, 1, entity, ACTIVATE, 0);
     requireSuccess_;
   }
   // Pause the middle one
-  tau->e = xPauseComponentByEntity(tau->sP, 2);
+  tau->e = mailboxWrite(tau->sP->mailboxF, 1, 2, PAUSE, 0);
+  tau->e = xRun(tau->sP);
   requireSuccess_;
   // Make sure the ordering is correct in the entity-to-component array.
   // Entity 1's still in index 0
-  Key *idxP = mapGet(tau->sP->e2cIdxMP, 1);
-  CHECK_EQ(*idxP, 0);
-  CHECK_EQ(tau->sP->cIdx2eA[*idxP], 1);
-  // Entity 2's now in index 2
-  idxP = mapGet(tau->sP->e2cIdxMP, 2);
-  CHECK_EQ(*idxP, 2);
-  CHECK_EQ(tau->sP->cIdx2eA[*idxP], 2);
-  // Entity 3's now in index 1
-  idxP = mapGet(tau->sP->e2cIdxMP, 3);
-  CHECK_EQ(*idxP, 1); 
-  CHECK_EQ(tau->sP->cIdx2eA[*idxP], 3);
-  // Unpause
-  
-}
-
-TEST_F(Tau, xActivateComponentByIdx) {
-  // Unlike previous tests, let's see what happens if we pause an element first.
-  tau->e = xPauseComponentByEntity(tau->sP, 5);
+  CHECK_EQ(_validateEntityPosition(tau, 1, 0), SUCCESS);
+  CHECK_EQ(_validateEntityPosition(tau, 2, 2), SUCCESS);
+  CHECK_EQ(_validateEntityPosition(tau, 3, 1), SUCCESS);
+  // Unpause entity 2
+  tau->e = mailboxWrite(tau->sP->mailboxF, 1, 2, UNPAUSE, 0);
+  tau->e = xRun(tau->sP);
   requireSuccess_;
-}
-
-TEST_F(Tau, xDeactivateComponentByIdx) {
-  REQUIRE_TRUE(1);
+  // Entity 2's still in index 2
+  CHECK_EQ(_validateEntityPosition(tau, 2, 2), SUCCESS);
 }
 
 TEST_F(Tau, xGetNComps) {
-  REQUIRE_TRUE(1);
+  CHECK_EQ(xGetNComps(tau->sP), tau->nEntities);
 }
 
 TEST_F(Tau, xMutateComponent) {
-  REQUIRE_TRUE(1);
+  // Request mutation.
+  tau->e = mailboxWrite(tau->sP->mailboxF, 1, 5, MUTATE, 7);
+  requireSuccess_;
+  XAComp *cP = (XAComp*) xGetCompPByEntity(tau->sP, 5);
+  CHECK_EQ(cP->a, 7);
+  CHECK_EQ(cP->b, 0);
+  CHECK_EQ(cP->c, 0);
+  CHECK_EQ(cP->d, 28.0);
+  // Mutate it.
+  tau->e = xRun(tau->sP);
+  requireSuccess_;
+  cP = (XAComp*) xGetCompPByEntity(tau->sP, 5);
+  CHECK_EQ(cP->a, 14 * 8);
+  CHECK_EQ(cP->b, 14);
+  CHECK_EQ(cP->c, 28);
+  CHECK_EQ(cP->d, 28.0);
 }
 
 TEST_F(Tau, xGetEntityByVoidComponentPtr) {
-  REQUIRE_TRUE(1);
+  Entity entity = xGetEntityByVoidComponentPtr(tau->sP, (void*) &((XAComp*) tau->sP->cF)[8]);  // Talk about ugly.
+  CHECK_EQ(entity, 9);
 }
 
 TEST_F(Tau, xQueuePause) {
-  REQUIRE_TRUE(1);
+  // Queue entities 11, 21, and 31 for pausing.
+  for (int i = 1; i <= 3; ++i) {
+    void *voidCP = (void*) &((XAComp*) tau->sP->cF)[i * 10];
+    tau->e = xQueuePause(tau->sP, voidCP);
+    requireSuccess_;
+  }
+  // Pause them.
+  tau->e = xRun(tau->sP);
+  // Check that they're paused.
+  for (int i = 1; i <= 3; ++i) {
+    CHECK_EQ(_validateEntityPosition(tau, i * 10 + 1, i - 1), SUCCESS);
+    // Make sure it's paused in the fray.
+    CHECK_TRUE(_frayElemIsPaused(tau->sP->cF, i - 1));
+  }
 }
 
 TEST_F(Tau, xQueueDeactivate) {
-  REQUIRE_TRUE(1);
+  // Queue entities 11, 21, and 31 for deactivating.
+  for (int i = 1; i <= 3; ++i) {
+    void *voidCP = (void*) &((XAComp*) tau->sP->cF)[i * 10];
+    tau->e = xQueueDeactivate(tau->sP, voidCP);
+    requireSuccess_;
+  }
+  // Deactivate them.
+  tau->e = xRun(tau->sP);
+  // Check that they're deactivated.
+  for (int i = 1; i <= 3; ++i) {
+    CHECK_EQ(_validateEntityPosition(tau, i * 10 + 1, i * 10), SUCCESS);
+    // Make sure it's deactivated in the fray.
+    CHECK_TRUE(!_frayElemIsActive(tau->sP->cF, i * 10));
+  }
 }
 
-// TODO make tests that perform the above in the inbox
-
-TEST_F(Tau, xRun) {
-  REQUIRE_TRUE(1);
+TEST_F(Tau, ActivateAcrossPause) {
+  // First let's set up a 3-activated and 3-paused situation before we run our test.
+  // Activate 3.
+  for (Entity entity = 1; entity <= 3; ++entity) {
+    tau->e = mailboxWrite(tau->sP->mailboxF, 1, entity, ACTIVATE, 0);
+    requireSuccess_;
+  }
+  // Pause 3.
+  for (Entity entity = 4; entity <= 6; ++entity) {
+    tau->e = mailboxWrite(tau->sP->mailboxF, 1, entity, PAUSE, 0);
+    requireSuccess_;
+  }
+  // Process requests.
+  tau->e = xRun(tau->sP);
+  requireSuccess_;
+  // Now activate 2 more across the pauses.
+  for (Entity entity = 7; entity <= 8; ++entity) {
+    tau->e = mailboxWrite(tau->sP->mailboxF, 1, entity, ACTIVATE, 0);
+    requireSuccess_;
+  }
+  // Process requests.
+  tau->e = xRun(tau->sP);
+  requireSuccess_;
+  CHECK_EQ(xGetEntityByCompIdx(tau->sP, 0), 1);
+  CHECK_EQ(xGetEntityByCompIdx(tau->sP, 1), 2);
+  CHECK_EQ(xGetEntityByCompIdx(tau->sP, 2), 3);
+  CHECK_EQ(xGetEntityByCompIdx(tau->sP, 3), 7);
+  CHECK_EQ(xGetEntityByCompIdx(tau->sP, 4), 8);
+  CHECK_EQ(xGetEntityByCompIdx(tau->sP, 5), 6);
+  CHECK_EQ(xGetEntityByCompIdx(tau->sP, 6), 4);
+  CHECK_EQ(xGetEntityByCompIdx(tau->sP, 7), 5);
 }
+
+TEST_F(Tau, miscProcesMessage) {
+  tau->e = mailboxWrite(tau->sP->mailboxF, 1, 1, 20, 0);  // 20 is the command to make our default procMsg() run.
+  requireSuccess_;
+  tau->e = xRun(tau->sP);
+  requireSuccess_;
+}
+
