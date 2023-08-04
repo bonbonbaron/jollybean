@@ -4,12 +4,11 @@ DOESNT_EXIST="doesn't exists! Skipping its removal..."
 #defaults
 JB_DIR=${HOME}/hack/jollybean
 TGT_SRC_DIR="$JB_DIR/src/x/"
-TGT_INC_DIR="$JB_DIR/src/include"
+TGT_INC_DIR="$JB_DIR/src/x/include"
 TEMPLATE_DIR=$JB_DIR/templates
 VERBOSE=0
 
 function sysNew {
-  echo "sysNew sees $@"
   while getopts "vd:" arg; do
     case $arg in 
     d)

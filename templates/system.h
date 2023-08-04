@@ -1,6 +1,7 @@
 #ifndef SYS_REPLACEME
 #define SYS_REPLACEME
 #include "x.h"
+#include "jb.h"
 
 typedef struct {
 } XREPLACEMEComp;

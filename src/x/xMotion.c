@@ -1,4 +1,4 @@
-#include "xREPLACEME.h"
+#include "xMotion.h"
 
 // TODO add map-getting wherever relevant.
 // TODO add nested map-getting wherever relevant.
@@ -9,16 +9,16 @@
  *  That's so you can keep track of what will already have been done by each function call.
  */
 //======================================================
-// Initialize REPLACEME's system.
+// Initialize Motion's system.
 //======================================================
 #if 0
-XIniSysFuncDefUnused_(REPLACEME);
+XIniSysFuncDefUnused_(Motion);
 #else
-XIniSysFuncDef_(REPLACEME) {
+XIniSysFuncDef_(Motion) {
   if (!sP || !sParamsP) {
     return E_BAD_ARGS;
   }
-  XREPLACEME *xP = (XREPLACEME*) sP;
+  XMotion *xP = (XMotion*) sP;
   U32 nComponents = xGetNComps(sP);
   // You may want to initialize whatever specialized maps, arrays, etc. the system owns here.
   // Hint: You most likely need nComponents to allocate them.
@@ -27,16 +27,16 @@ XIniSysFuncDef_(REPLACEME) {
 #endif
 
 #if 0
-XIniSubcompFuncDefUnused_(REPLACEME);
+XIniSubcompFuncDefUnused_(Motion);
 #else
-XIniSubcompFuncDef_(REPLACEME) {
+XIniSubcompFuncDef_(Motion) {
 	if (!sP || !entity || !subtype || !dataP) {
 		return E_BAD_ARGS;
   }
 
   Error e = SUCCESS;
-  XREPLACEME *xP = (XREPLACEME*) sP;
-  // template for subtype switch structure. You probably need to store these in maps for access in xREPLACEMEPostprocessComps().
+  XMotion *xP = (XMotion*) sP;
+  // template for subtype switch structure. You probably need to store these in maps for access in xMotionPostprocessComps().
   switch (subtype) {
     default:
       break;
@@ -53,13 +53,13 @@ XIniSubcompFuncDef_(REPLACEME) {
 #endif
 
 #if 0
-XGetShareFuncDefUnused_(REPLACEME);
+XGetShareFuncDefUnused_(Motion);
 #else
-XGetShareFuncDef_(REPLACEME) {
+XGetShareFuncDef_(Motion) {
   if (!sP || !shareMPMP) {
     return E_BAD_ARGS;
   }
-  XREPLACEME *xP = (XREPLACEME*) sP;
+  XMotion *xP = (XMotion*) sP;
   Error e = SUCCESS;
   // Example code in getting, say, a destination rectangle from the share map of maps
   /*
@@ -72,13 +72,13 @@ XGetShareFuncDef_(REPLACEME) {
 #endif
 
 #if 0
-XPostprocessCompsDefUnused_(REPLACEME);
+XPostprocessCompsDefUnused_(Motion);
 #else
-XPostprocessCompsDef_(REPLACEME) {
+XPostprocessCompsDef_(Motion) {
   if (!sP) {
     return E_BAD_ARGS;
   }
-  XREPLACEME *xP = (XREPLACEME*) sP;
+  XMotion *xP = (XMotion*) sP;
   // You'll put whatever logic depends on subcomponents and/or shared subcomponents here.
   // For example, using the colormap and color pallete subcomponents to piece together the texture atlas,
   // and then populating the shared source rectangles.
@@ -87,16 +87,16 @@ XPostprocessCompsDef_(REPLACEME) {
 #endif
 
 #if 0
-XPostMutateFuncDefUnused_(REPLACEME);
+XPostMutateFuncDefUnused_(Motion);
 #else
-XPostMutateFuncDef_(REPLACEME) {
+XPostMutateFuncDef_(Motion) {
   if (!sP || !cP) {
     return E_BAD_ARGS;
   }
 
-  XREPLACEME *xP = (XREPLACEME*) sP;
+  XMotion *xP = (XMotion*) sP;
 
-  XREPLACEMEComp *_cP = (XREPLACEMEComp*) cP;
+  XMotionComp *_cP = (XMotionComp*) cP;
   
   // Operate on _cP here.
 
@@ -105,13 +105,13 @@ XPostMutateFuncDef_(REPLACEME) {
 #endif
 
 #if 0
-XProcMsgFuncDefUnused_(REPLACEME);
+XProcMsgFuncDefUnused_(Motion);
 #else
-XProcMsgFuncDef_(REPLACEME) {
+XProcMsgFuncDef_(Motion) {
   if (!sP || !msgP) {
     return E_BAD_ARGS;
   }
-  XREPLACEME *xP = (XREPLACEME*) sP;
+  XMotion *xP = (XMotion*) sP;
 
   /* Example code:
   if (msgP->cmd == ANIMATE) {
@@ -126,18 +126,18 @@ XProcMsgFuncDef_(REPLACEME) {
 #endif
 
 //======================================================
-// REPLACEME run function
+// Motion run function
 //======================================================
-Error xREPLACEMERun(System *sP) {
+Error xMotionRun(System *sP) {
   if (!sP) {
     return E_BAD_ARGS;
   }
 
 	Error e = SUCCESS;
-  XREPLACEME *xP = (XREPLACEME*) sP;
+  XMotion *xP = (XMotion*) sP;
 
-	XREPLACEMEComp *cP = (XREPLACEMEComp*) sP->cF;
-	XREPLACEMEComp *cEndP = cP + _frayGetFirstPausedIdx(sP->cF);
+	XMotionComp *cP = (XMotionComp*) sP->cF;
+	XMotionComp *cEndP = cP + _frayGetFirstPausedIdx(sP->cF);
 
   // Operate on all the active elements.
   for (; cP < cEndP; cP++) {
@@ -148,13 +148,13 @@ Error xREPLACEMERun(System *sP) {
 }
 
 #if 0
-XClrFuncDefUnused_(REPLACEME);
+XClrFuncDefUnused_(Motion);
 #else
-XClrFuncDef_(REPLACEME) {
+XClrFuncDef_(Motion) {
   if (!sP) {
     return E_BAD_ARGS;
   }
-  XREPLACEME *xP = (XREPLACEME*) sP;
+  XMotion *xP = (XMotion*) sP;
   // TODO put good code here
   return SUCCESS;
 }
@@ -164,4 +164,4 @@ XClrFuncDef_(REPLACEME) {
 // System definition
 //======================================================
 #define FLAGS_HERE (0)
-X_(REPLACEME, 1, 0, FLAGS_HERE);
+X_(Motion, 1, velocity, FLAGS_HERE);
