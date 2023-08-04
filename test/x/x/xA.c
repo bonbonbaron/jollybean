@@ -148,8 +148,12 @@ XPostMutateFuncDef_(A) {
   unused_(sP);
   if (cP) {
     XAComp *xcP = (XAComp*) cP;
+    printf("%d * (%d + 1) = ", xcP->a, xcP->b);
     xcP->a *= xcP->b + 1;
+    printf("%d\n", xcP->a);
+    printf("%5.1f * (%d - 2) = ", xcP->d, xcP->c);
     xcP->d *= xcP->c - 2;
+    printf("%5.1f\n", xcP->d);
   }
   return SUCCESS;
 }
@@ -181,7 +185,7 @@ Error xARun(System *sP) {
     --cP->a;
     ++cP->b;
     --cP->c;
-    cP->d = cP->a * cP->a + 2 * cP->b - 5 * cP->c;
+    cP->d = cP->a + 1;
   }
 
 	return SUCCESS;

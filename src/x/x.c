@@ -50,8 +50,8 @@ static Error _xSwap(System *sP, FrayChanges *changesP) {
   }
   Error e = SUCCESS;
   // Existence of paused elements requires an additional, intermediate swap.
-  if (changesP->newIdx > 0) {
-    if (changesP->intermediateIdx < 0) {
+  if (changesP->newIdx >= 0) {
+    if (changesP->intermediateIdx == 0) {
       e = __xSwap(sP, changesP->origIdx, changesP->newIdx);
     }
     else {

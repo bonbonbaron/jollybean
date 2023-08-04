@@ -124,9 +124,14 @@ TEST_F(Tau, xGetEntityByCompIdx) {
 }
 
 TEST_F(Tau, xActivateComponentByEntity) {
-  tau->e = xActivateComponentByEntity(tau->sP, 10);
+  // Write a couple activation messages to the system.
+  tau->e = mailboxWrite(tau->sP->mailboxF, 1, 10, ACTIVATE, 0);
   requireSuccess_;
-  tau->e = xActivateComponentByEntity(tau->sP, 50);
+  tau->e = mailboxWrite(tau->sP->mailboxF, 1, 50, ACTIVATE, 0);
+  requireSuccess_;
+
+  // Run the system so it reads its inbox letters from the above.
+  tau->e = xRun(tau->sP);
   requireSuccess_;
 
   XAComp *cP = tau->sP->cF; 
@@ -136,13 +141,13 @@ TEST_F(Tau, xActivateComponentByEntity) {
     // Make sure the two activated components are moved to the front of the fray AND marked as active.
     switch (componentIdx) {
       case 0:
-        CHECK_EQ(cP->a, 10);
-        CHECK_EQ(cP->d, 40.0);
+        CHECK_EQ(cP->a, 9);
+        CHECK_EQ(cP->d, 10.0);
         CHECK_TRUE(_frayElemIsActive(tau->sP->cF, componentIdx));
         break;
       case 1:
-        CHECK_EQ(cP->a, 50);
-        CHECK_EQ(cP->d, 200.0);
+        CHECK_EQ(cP->a, 49);
+        CHECK_EQ(cP->d, 50.0);
         CHECK_TRUE(_frayElemIsActive(tau->sP->cF, componentIdx));
         break;
       // Make sure all the rest are inactive.
@@ -152,41 +157,122 @@ TEST_F(Tau, xActivateComponentByEntity) {
   }
 }
 
+TEST_F( Tau, mutateAndActivate) {
+  // Write a couple activation messages to the system.
+  tau->e = mailboxWrite(tau->sP->mailboxF, 1, 10, MUTATE_AND_ACTIVATE, 1);
+  requireSuccess_;
+  tau->e = mailboxWrite(tau->sP->mailboxF, 1, 50, MUTATE_AND_ACTIVATE, 1);
+  requireSuccess_;
+
+  // Run the system so it reads its inbox letters from the above.
+  tau->e = xRun(tau->sP);
+  requireSuccess_;
+
+  XAComp *cP = tau->sP->cF; 
+  XAComp *cEndP = cP + *_frayGetFirstEmptyIdxP(tau->sP->cF);
+  for (; cP < cEndP; ++cP) {
+    U32 componentIdx = cP - (XAComp*) tau->sP->cF;
+    // Make sure the two activated components are moved to the front of the fray AND marked as active.
+    switch (componentIdx) {
+      case 0:
+        CHECK_EQ(cP->a, 9);
+        CHECK_EQ(cP->b, 9);
+        CHECK_EQ(cP->c, 9);
+        CHECK_EQ(cP->d, 10.0);
+        CHECK_TRUE(_frayElemIsActive(tau->sP->cF, componentIdx));
+        break;
+      case 1:
+        CHECK_EQ(cP->a, 49);
+        CHECK_EQ(cP->b, 9);
+        CHECK_EQ(cP->c, 9);
+        CHECK_EQ(cP->d, 50.0);
+        CHECK_TRUE(_frayElemIsActive(tau->sP->cF, componentIdx));
+        break;
+      // Make sure all the rest are inactive.
+      default:
+        CHECK_FALSE(_frayElemIsActive(tau->sP->cF, componentIdx));
+    }
+  }
+}
 TEST_F(Tau, xDeactivateComponentByEntity) {
-  CHECK_FALSE(_frayElemIsActive(tau->sP->cF, 0));
-  tau->e = xActivateComponentByEntity(tau->sP, 10);
   FrayChanges fc = {0};
-  printf("first inactive idx: %d\n", _frayGetFirstInactiveIdx(tau->sP->cF));
-  printf("num paused: %d\n", *_frayGetNPausedP(tau->sP->cF));
-  printf("num active: %d\n", _frayGetNActive(tau->sP->cF));
-  printf("first paused idx: %d\n", _frayGetFirstPausedIdx(tau->sP->cF));
-  printf("first empty idx: %d\n", *_frayGetFirstEmptyIdxP(tau->sP->cF));
-  printf("deactivation: orig = %d, int = %d, new = %d\n", fc.origIdx, fc.intermediateIdx, fc.newIdx);
+  // make sure first elem ain't active
+  CHECK_FALSE(_frayElemIsActive(tau->sP->cF, 0));
+  // activate entity 10
+  tau->e = mailboxWrite(tau->sP->mailboxF, 1, 10, ACTIVATE, 0);
   requireSuccess_;
-  tau->e = xDeactivateComponentByEntity(tau->sP, 10);
-  printf("first inactive idx: %d\n", _frayGetFirstInactiveIdx(tau->sP->cF));
-  printf("num paused: %d\n", *_frayGetNPausedP(tau->sP->cF));
-  printf("num active: %d\n", _frayGetNActive(tau->sP->cF));
-  printf("first paused idx: %d\n", _frayGetFirstPausedIdx(tau->sP->cF));
-  printf("first empty idx: %d\n", *_frayGetFirstEmptyIdxP(tau->sP->cF));
-  printf("deactivation: orig = %d, int = %d, new = %d\n", fc.origIdx, fc.intermediateIdx, fc.newIdx);
+  // deactivate entity 10
+  tau->e = mailboxWrite(tau->sP->mailboxF, 1, 10, DEACTIVATE, 0);
   requireSuccess_;
+
+  // RUn it.
+  tau->e = xRun(tau->sP);
+  requireSuccess_;
+
+  // make sure teh first element is the one we moved there
+  // BEcause we deactivated it rihgt after activation, it didn't have a chance to run.
   XAComp *cP = (XAComp*) tau->sP->cF;
   CHECK_EQ(cP->a, 10);
   CHECK_EQ(cP->d, 40.0);
+  // make sure it's also inactive
   CHECK_FALSE(_frayElemIsActive(tau->sP->cF, 0));
 }
 
 TEST_F(Tau, xPauseComponentByEntity) {
-  REQUIRE_TRUE(1);
+  // Activate the first 3 entities
+  for (Entity entity = 1; entity <= 3; ++entity) {
+    tau->e = xActivateComponentByEntity(tau->sP, entity);
+    requireSuccess_;
+  }
+  // Pause the middle one
+  tau->e = xPauseComponentByEntity(tau->sP, 2);
+  requireSuccess_;
+  // Make sure the ordering is correct in the entity-to-component array.
+  // Entity 1's still in index 0
+  Key *idxP = mapGet(tau->sP->e2cIdxMP, 1);
+  CHECK_EQ(*idxP, 0);
+  CHECK_EQ(tau->sP->cIdx2eA[*idxP], 1);
+  // Entity 2's now in index 2
+  idxP = mapGet(tau->sP->e2cIdxMP, 2);
+  CHECK_EQ(*idxP, 2);
+  CHECK_EQ(tau->sP->cIdx2eA[*idxP], 2);
+  // Entity 3's now in index 1
+  idxP = mapGet(tau->sP->e2cIdxMP, 3);
+  CHECK_EQ(*idxP, 1); 
+  CHECK_EQ(tau->sP->cIdx2eA[*idxP], 3);
 }
 
 TEST_F(Tau, xUnpauseComponentByEntity) {
-  REQUIRE_TRUE(1);
+  // Repeat the same test as the above so we can unpause the paused element.
+  // Activate the first 3 entities
+  for (Entity entity = 1; entity <= 3; ++entity) {
+    tau->e = xActivateComponentByEntity(tau->sP, entity);
+    requireSuccess_;
+  }
+  // Pause the middle one
+  tau->e = xPauseComponentByEntity(tau->sP, 2);
+  requireSuccess_;
+  // Make sure the ordering is correct in the entity-to-component array.
+  // Entity 1's still in index 0
+  Key *idxP = mapGet(tau->sP->e2cIdxMP, 1);
+  CHECK_EQ(*idxP, 0);
+  CHECK_EQ(tau->sP->cIdx2eA[*idxP], 1);
+  // Entity 2's now in index 2
+  idxP = mapGet(tau->sP->e2cIdxMP, 2);
+  CHECK_EQ(*idxP, 2);
+  CHECK_EQ(tau->sP->cIdx2eA[*idxP], 2);
+  // Entity 3's now in index 1
+  idxP = mapGet(tau->sP->e2cIdxMP, 3);
+  CHECK_EQ(*idxP, 1); 
+  CHECK_EQ(tau->sP->cIdx2eA[*idxP], 3);
+  // Unpause
+  
 }
 
 TEST_F(Tau, xActivateComponentByIdx) {
-  REQUIRE_TRUE(1);
+  // Unlike previous tests, let's see what happens if we pause an element first.
+  tau->e = xPauseComponentByEntity(tau->sP, 5);
+  requireSuccess_;
 }
 
 TEST_F(Tau, xDeactivateComponentByIdx) {
@@ -212,6 +298,8 @@ TEST_F(Tau, xQueuePause) {
 TEST_F(Tau, xQueueDeactivate) {
   REQUIRE_TRUE(1);
 }
+
+// TODO make tests that perform the above in the inbox
 
 TEST_F(Tau, xRun) {
   REQUIRE_TRUE(1);

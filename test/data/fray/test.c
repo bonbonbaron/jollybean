@@ -363,32 +363,20 @@ TEST_F(Tau, frayClr) {
   CHECK_EQ(_frayGetFirstPausedIdx(tau->uF), 0);
 }
 
-TEST_F(Tau, frayActivateThenDeactivateSameElement) {
-  CHECK_FALSE(_frayElemIsActive(tau->uF, 5));
-  for (int i = 0; i < 10; ++i) {
-    printf("tau->uF[%d] = %d\n", i, tau->uF[i]);
-  }
-  tau->e = frayActivate(tau->uF, 9, &tau->fc);
-  CHECK_EQ(tau->uF[5], 9); // this is failing
-  printf("first inactive idx: %d\n", _frayGetFirstInactiveIdx(tau->uF));
-  printf("num paused: %d\n", *_frayGetNPausedP(tau->uF));
-  printf("num active: %d\n", _frayGetNActive(tau->uF));
-  printf("first paused idx: %d\n", _frayGetFirstPausedIdx(tau->uF));
-  printf("first empty idx: %d\n", *_frayGetFirstEmptyIdxP(tau->uF));
-
-  // changesP->origIdx = idx;
-  // changesP->intermediateIdx = intermediateIdx;
-  // changesP->newIdx = newIdx;
-  printf("activation: orig = %d, int = %d, new = %d\n", tau->fc.origIdx, tau->fc.intermediateIdx, tau->fc.newIdx);
+TEST_F(Tau, frayActivateThenDeactivateFirstElement) {
+  // Deactvate everything
+  frayDeactivateAll(tau->uF);
+  CHECK_FALSE(_frayElemIsActive(tau->uF, 0));
+  // Activate
+  tau->e = frayActivate(tau->uF, 0, &tau->fc);
   REQUIRE_EQ(tau->e, SUCCESS);
-  CHECK_TRUE(_frayElemIsActive(tau->uF, 5));
-  tau->e = frayDeactivate(tau->uF, 5, &tau->fc);
-  printf("first inactive idx: %d\n", _frayGetFirstInactiveIdx(tau->uF));
-  printf("num paused: %d\n", *_frayGetNPausedP(tau->uF));
-  printf("num active: %d\n", _frayGetNActive(tau->uF));
-  printf("first paused idx: %d\n", _frayGetFirstPausedIdx(tau->uF));
-  printf("first empty idx: %d\n", *_frayGetFirstEmptyIdxP(tau->uF));
-  printf("deactivation: orig = %d, int = %d, new = %d\n", tau->fc.origIdx, tau->fc.intermediateIdx, tau->fc.newIdx);
+  // Make sure it's active
+  CHECK_EQ(tau->uF[0], 0); // this is failing
+  CHECK_TRUE(_frayElemIsActive(tau->uF, 0));
+  // Deactivate
+  tau->e = frayDeactivate(tau->uF, 0, &tau->fc);
   REQUIRE_EQ(tau->e, SUCCESS);
-  CHECK_FALSE(_frayElemIsActive(tau->uF, 5)); // this is failing
+  // Make sure it's inactive
+  CHECK_FALSE(_frayElemIsActive(tau->uF, 0)); // this is failing
+  CHECK_EQ(tau->uF[0], 0); // this is failing
 }
