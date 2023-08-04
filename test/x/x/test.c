@@ -153,9 +153,23 @@ TEST_F(Tau, xActivateComponentByEntity) {
 }
 
 TEST_F(Tau, xDeactivateComponentByEntity) {
+  CHECK_FALSE(_frayElemIsActive(tau->sP->cF, 0));
   tau->e = xActivateComponentByEntity(tau->sP, 10);
+  FrayChanges fc = {0};
+  printf("first inactive idx: %d\n", _frayGetFirstInactiveIdx(tau->sP->cF));
+  printf("num paused: %d\n", *_frayGetNPausedP(tau->sP->cF));
+  printf("num active: %d\n", _frayGetNActive(tau->sP->cF));
+  printf("first paused idx: %d\n", _frayGetFirstPausedIdx(tau->sP->cF));
+  printf("first empty idx: %d\n", *_frayGetFirstEmptyIdxP(tau->sP->cF));
+  printf("deactivation: orig = %d, int = %d, new = %d\n", fc.origIdx, fc.intermediateIdx, fc.newIdx);
   requireSuccess_;
   tau->e = xDeactivateComponentByEntity(tau->sP, 10);
+  printf("first inactive idx: %d\n", _frayGetFirstInactiveIdx(tau->sP->cF));
+  printf("num paused: %d\n", *_frayGetNPausedP(tau->sP->cF));
+  printf("num active: %d\n", _frayGetNActive(tau->sP->cF));
+  printf("first paused idx: %d\n", _frayGetFirstPausedIdx(tau->sP->cF));
+  printf("first empty idx: %d\n", *_frayGetFirstEmptyIdxP(tau->sP->cF));
+  printf("deactivation: orig = %d, int = %d, new = %d\n", fc.origIdx, fc.intermediateIdx, fc.newIdx);
   requireSuccess_;
   XAComp *cP = (XAComp*) tau->sP->cF;
   CHECK_EQ(cP->a, 10);

@@ -35,6 +35,7 @@ TEST_F_SETUP(Tau) {
   REQUIRE_EQ(*_frayGetFirstEmptyIdxP(tau->uF), 0);
   REQUIRE_EQ(*_frayGetFirstInactiveIdxP(tau->uF), 0);
 
+  // Populate the fray. Check that the returned index is as expected (equal to the element itself).
   for (U32 i = 0, j; !tau->e && i < tau->iniPop; ++i) {
     tau->e = frayAdd((void*) tau->uF, (void*) &i, &j);
     REQUIRE_EQ(j, i);
@@ -44,7 +45,7 @@ TEST_F_SETUP(Tau) {
 
   // Activate 5 of 20 populated (of 50 capacity) elems by default.
   for (U32 i = 0; !tau->e && i < tau->iniActive; ++i) {
-    tau->e = frayActivate(tau->uF, i * 2, NULL);
+    tau->e = frayActivate(tau->uF, i * 2, NULL);  // going from 0 - 8 by even numbers.
   }
   REQUIRE_EQ(tau->e, SUCCESS);
   REQUIRE_EQ(_frayGetFirstPausedIdx((void*) tau->uF), tau->iniActive);
@@ -360,4 +361,34 @@ TEST_F(Tau, frayClr) {
   _frayClr(tau->uF);
   CHECK_EQ(*_frayGetFirstEmptyIdxP(tau->uF), 0);
   CHECK_EQ(_frayGetFirstPausedIdx(tau->uF), 0);
+}
+
+TEST_F(Tau, frayActivateThenDeactivateSameElement) {
+  CHECK_FALSE(_frayElemIsActive(tau->uF, 5));
+  for (int i = 0; i < 10; ++i) {
+    printf("tau->uF[%d] = %d\n", i, tau->uF[i]);
+  }
+  tau->e = frayActivate(tau->uF, 9, &tau->fc);
+  CHECK_EQ(tau->uF[5], 9); // this is failing
+  printf("first inactive idx: %d\n", _frayGetFirstInactiveIdx(tau->uF));
+  printf("num paused: %d\n", *_frayGetNPausedP(tau->uF));
+  printf("num active: %d\n", _frayGetNActive(tau->uF));
+  printf("first paused idx: %d\n", _frayGetFirstPausedIdx(tau->uF));
+  printf("first empty idx: %d\n", *_frayGetFirstEmptyIdxP(tau->uF));
+
+  // changesP->origIdx = idx;
+  // changesP->intermediateIdx = intermediateIdx;
+  // changesP->newIdx = newIdx;
+  printf("activation: orig = %d, int = %d, new = %d\n", tau->fc.origIdx, tau->fc.intermediateIdx, tau->fc.newIdx);
+  REQUIRE_EQ(tau->e, SUCCESS);
+  CHECK_TRUE(_frayElemIsActive(tau->uF, 5));
+  tau->e = frayDeactivate(tau->uF, 5, &tau->fc);
+  printf("first inactive idx: %d\n", _frayGetFirstInactiveIdx(tau->uF));
+  printf("num paused: %d\n", *_frayGetNPausedP(tau->uF));
+  printf("num active: %d\n", _frayGetNActive(tau->uF));
+  printf("first paused idx: %d\n", _frayGetFirstPausedIdx(tau->uF));
+  printf("first empty idx: %d\n", *_frayGetFirstEmptyIdxP(tau->uF));
+  printf("deactivation: orig = %d, int = %d, new = %d\n", tau->fc.origIdx, tau->fc.intermediateIdx, tau->fc.newIdx);
+  REQUIRE_EQ(tau->e, SUCCESS);
+  CHECK_FALSE(_frayElemIsActive(tau->uF, 5)); // this is failing
 }

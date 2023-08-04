@@ -1,5 +1,14 @@
 NEWER:
+It looks like it works fine from the fray end, so its' more likely that x isn't handling the change appropriately when it's the same index.
 might've found a bug: activated then deactivated the same entity. It's saying it's still active. WHy?
+
+xDeactivateComponentByEntity (sP=0x407f8 <xA>, entity=10 '\n') at /home/bonbonbaron/hack/jollybean/src/x/x.c:83
+83        if (!sP || !entity) {
+(gdb) n
+87        Key *compOrigIdxP = _getCompIdxPByEntity(sP, entity);
+(gdb) s
+_getCompIdxPByEntity (entity=10 '\n', sP=0x407f8 <xA>) at /home/bonbonbaron/hack/jollybean/src/x/x.c:5
+5         return (Key*) mapGet(sP->e2cIdxMP, entity);
 
 OLDER:
 See if making animation a composite gene is what's causing master not to populate shared map of source rectangles.
