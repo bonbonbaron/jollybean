@@ -1,17 +1,15 @@
 #include "xMotion.h"
 
-// TODO add map-getting wherever relevant.
-// TODO add nested map-getting wherever relevant.
-
-/* HOW THIS FILE IS LAID OUT:
+/* REQUIREMENTS
  *
- *  The functions below are ordered by xMaster's calls to them.
- *  That's so you can keep track of what will already have been done by each function call.
+ *  Mutations for different directions' velocities
+ *  Shared destination rectangle for each entity
  */
+
 //======================================================
 // Initialize Motion's system.
 //======================================================
-#if 0
+#if 1
 XIniSysFuncDefUnused_(Motion);
 #else
 XIniSysFuncDef_(Motion) {
@@ -26,7 +24,7 @@ XIniSysFuncDef_(Motion) {
 }
 #endif
 
-#if 0
+#if 1
 XIniSubcompFuncDefUnused_(Motion);
 #else
 XIniSubcompFuncDef_(Motion) {
@@ -59,15 +57,7 @@ XGetShareFuncDef_(Motion) {
   if (!sP || !shareMPMP) {
     return E_BAD_ARGS;
   }
-  XMotion *xP = (XMotion*) sP;
-  Error e = SUCCESS;
-  // Example code in getting, say, a destination rectangle from the share map of maps
-  /*
-  if (!e) {
-    e = mapGetNestedMapP(shareMPMP, DST_RECT, &xP->dstRectMP);  
-  }
-  */
-  return e;
+  return mapGetNestedMapP(shareMPMP, DST_RECT, &(((XMotion*) sP)->dstRectMP));
 }
 #endif
 
@@ -79,10 +69,24 @@ XPostprocessCompsDef_(Motion) {
     return E_BAD_ARGS;
   }
   XMotion *xP = (XMotion*) sP;
-  // You'll put whatever logic depends on subcomponents and/or shared subcomponents here.
-  // For example, using the colormap and color pallete subcomponents to piece together the texture atlas,
-  // and then populating the shared source rectangles.
-  return SUCCESS;
+  
+  Error e = SUCCESS;
+  
+  Entity *entityP = sP->cIdx2eA;
+  Entity *entityEndP = entityP + arrayGetNElems(sP->cIdx2eA);
+
+  // Populate each motion system component. Start out with zero velocity and let action system mutate it later.
+  for (XMotionComp component; !e && entityP < entityEndP; ++entityP) {
+    component.velocity.x = 0;
+    component.velocity.y = 0;
+    component.dstRectP = mapGet(xP->dstRectMP, *entityP);
+    if (!component.dstRectP) {
+      return E_BAD_ARGS;
+    }
+    e = xAddComp(sP, *entityP, &component);
+  }
+
+  return e;
 }
 #endif
 
@@ -141,13 +145,14 @@ Error xMotionRun(System *sP) {
 
   // Operate on all the active elements.
   for (; cP < cEndP; cP++) {
-    // do something on each element here
+    cP->dstRectP->x += cP->velocity.x;
+    cP->dstRectP->y += cP->velocity.y;
   }
 
 	return e;
 }
 
-#if 0
+#if 1
 XClrFuncDefUnused_(Motion);
 #else
 XClrFuncDef_(Motion) {
@@ -163,5 +168,4 @@ XClrFuncDef_(Motion) {
 //======================================================
 // System definition
 //======================================================
-#define FLAGS_HERE (0)
-X_(Motion, 1, velocity, FLAGS_HERE);
+X_(Motion, 1, velocity, 0);

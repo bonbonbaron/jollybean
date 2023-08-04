@@ -139,7 +139,7 @@ Error xAddMutationMap(System *sP, Entity entity, Map *mutationMP) {
     assert(arrayGetElemSz(mutationMP->mapA) == sP->mutationSz);
     return mapSet(sP->mutationMPMP, entity, &mutationMP);
   }
-  // Otherwise bomb out.
+  // Otherwise just return success, assuming they never intended to mutate this entity's component in the first place.
   return SUCCESS;
 }
 
