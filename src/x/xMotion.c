@@ -76,21 +76,21 @@ XPostprocessCompsDef_(Motion) {
   Entity *entityEndP = entityP + arrayGetNElems(sP->cIdx2eA);
 
   // Populate each motion system component. Start out with zero velocity and let action system mutate it later.
-  for (XMotionComp component; !e && entityP < entityEndP; ++entityP) {
-    component.velocity.x = 0;
-    component.velocity.y = 0;
-    component.dstRectP = mapGet(xP->dstRectMP, *entityP);
-    if (!component.dstRectP) {
+  for (XMotionComp *cP; !e && entityP < entityEndP; ++entityP) {
+    cP = (XMotionComp*) xGetCompPByEntity(sP, *entityP);
+    if (cP) {
+      cP->dstRectP = (Rect_*) mapGet(xP->dstRectMP, *entityP);
+    }
+    if (!cP->dstRectP) {
       return E_BAD_ARGS;
     }
-    e = xAddComp(sP, *entityP, &component);
   }
 
   return e;
 }
 #endif
 
-#if 0
+#if 1
 XPostMutateFuncDefUnused_(Motion);
 #else
 XPostMutateFuncDef_(Motion) {
@@ -108,7 +108,7 @@ XPostMutateFuncDef_(Motion) {
 }
 #endif
 
-#if 0
+#if 1
 XProcMsgFuncDefUnused_(Motion);
 #else
 XProcMsgFuncDef_(Motion) {
@@ -145,6 +145,7 @@ Error xMotionRun(System *sP) {
 
   // Operate on all the active elements.
   for (; cP < cEndP; cP++) {
+    printf("{%d, %d, %d, %d}\n", cP->dstRectP->x, cP->dstRectP->y, cP->velocity.x, cP->velocity.y);
     cP->dstRectP->x += cP->velocity.x;
     cP->dstRectP->y += cP->velocity.y;
   }
@@ -168,4 +169,4 @@ XClrFuncDef_(Motion) {
 //======================================================
 // System definition
 //======================================================
-X_(Motion, 1, velocity, 0);
+X_(Motion, MOTION, velocity, 0);

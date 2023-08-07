@@ -519,7 +519,7 @@ static inline int tauShouldDecomposeMacro(const char* const actual, const char* 
     #define TAU_OVERLOAD_PRINTER(val)                         \
         tauPrintf(                                            \
             _Generic((val),                                   \
-                        char : "'%c'",                        \
+                        signed char : "'%c'",                        \
                         char* : "%s",                         \
                         unsigned char : "%hhu",               \
                         short : "%hd",                        \

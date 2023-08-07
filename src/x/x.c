@@ -184,7 +184,7 @@ inline static Error _iniSubcompOwner(System *sP, Entity entity, Key subcompType,
 
 
 Error xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP) {
-  if (!sP || !entity || !compType | !entityDataP) {
+  if (!sP || !entity || !compType) {  // entityDataP is allowed to be null so xAddComp() can call frayAddEmpty() in such a case.
     return E_BAD_ARGS;
   }
   // Make sure the component belongs to this system. This is only checked at load-time.

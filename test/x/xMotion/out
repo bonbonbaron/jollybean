@@ -1,0 +1,24 @@
+gcc --coverage -g -I. -I/home/bonbonbaron/hack/jollybean/src/data/include -I/home/bonbonbaron/hack/jollybean/src/include -I/home/bonbonbaron/hack/jollybean/src/interface/include -I/home/bonbonbaron/hack/jollybean/src/x/include -I/usr/local/include/SDL2 -D_REENTRANT -c test.c -o test.o
+test.c: In function ‘__TAU_TEST_FIXTURE_SETUP_Tau’:
+test.c:28:20: error: ‘sAP’ undeclared (first use in this function)
+   tau->e = xIniSys(sAP, tau->nEntities, NULL);
+                    ^~~
+test.c:28:20: note: each undeclared identifier is reported only once for each function it appears in
+In file included from test.c:1:
+test.c:31:25: error: ‘sP’ undeclared (first use in this function)
+   REQUIRE_EQ(xGetNComps(sP), tau->nEntities);
+                         ^~
+/home/bonbonbaron/hack/jollybean/src/include/tau/tau.h:559:19: note: in definition of macro ‘__TAUCMP__’
+             if(!((actual)cond(expected))) {                                                    \
+                   ^~~~~~
+test.c:31:3: note: in expansion of macro ‘REQUIRE_EQ’
+   REQUIRE_EQ(xGetNComps(sP), tau->nEntities);
+   ^~~~~~~~~~
+test.c:46:50: error: ‘currMutation’ undeclared (first use in this function)
+       tau->e = mapSet(currEntitysMutationMP, i, &currMutation);
+                                                  ^~~~~~~~~~~~
+test.c:69:55: error: ‘MOTION’ undeclared (first use in this function); did you mean ‘ACTION’?
+     tau->e = xAddEntityData(&tau->xP->system, entity, MOTION, NULL);
+                                                       ^~~~~~
+                                                       ACTION
+make: *** [Makefile:17: test.o] Error 1
