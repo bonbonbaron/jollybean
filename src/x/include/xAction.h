@@ -1,7 +1,6 @@
 #ifndef X_GO
 #define X_GO
 #include "x.h"
-#include "fray.h"
 
 #define GO_ (2)
 #define PERSONALITY (0x40)

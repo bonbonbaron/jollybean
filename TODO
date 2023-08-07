@@ -1,3 +1,37 @@
+MVP
+~~~
+\x
+\motion
+animation
+rendering
+collision
+action
+timer
+sound
+
+level pipeline
+behavior pipeline
+sound pipeline
+midi pipeline
+
+NTH
+~~~
+animated bg tiles
+camera
+lerping motion
+accelerating motion
+mirroring
+planar rendering
+scaling (applies to planes)
+parallax
+z-ordering
+shaking
+orbiting
+rotating
+text
+menus
+build system
+
 
 OLDER:
 See if making animation a composite gene is what's causing master not to populate shared map of source rectangles.
