@@ -145,7 +145,6 @@ Error xMotionRun(System *sP) {
 
   // Operate on all the active elements.
   for (; cP < cEndP; cP++) {
-    printf("{%d, %d, %d, %d}\n", cP->dstRectP->x, cP->dstRectP->y, cP->velocity.x, cP->velocity.y);
     cP->dstRectP->x += cP->velocity.x;
     cP->dstRectP->y += cP->velocity.y;
   }

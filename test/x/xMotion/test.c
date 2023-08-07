@@ -104,7 +104,11 @@ TEST_F(Tau, xMotionRun) {
   // Make sure entity 5's velocity is right.
   CHECK_EQ(tau->motionCompF[0].velocity.x,  1);
   CHECK_EQ(tau->motionCompF[0].velocity.y, -2);
+  CHECK_EQ(tau->motionCompF[0].dstRectP->x, 6);
+  CHECK_EQ(tau->motionCompF[0].dstRectP->y, 4);
   // Make sure entity 6's velocity is right.
   CHECK_EQ(tau->motionCompF[1].velocity.x,  2);
   CHECK_EQ(tau->motionCompF[1].velocity.y, -4);
+  CHECK_EQ(tau->motionCompF[1].dstRectP->x, 8);
+  CHECK_EQ(tau->motionCompF[1].dstRectP->y, 3);
 }
