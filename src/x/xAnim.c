@@ -75,12 +75,12 @@ XGetShareFuncDef_(Anim) {
       e = E_NULL_VAR;
     }
     if (!e) {
-      printf("population of src rect map: %d\n", xP->srcRectMP->population);
+      //printf("population of src rect map: %d\n", xP->srcRectMP->population);
       cP->srcRectP = (Rect_*) mapGet(xP->srcRectMP, entity);
       if (!cP->srcRectP) {
         e = E_BAD_KEY;
       }
-      printf("population of dst rect map: %d\n", xP->dstRectMP->population);
+      //printf("population of dst rect map: %d\n", xP->dstRectMP->population);
       if (!e) {
         cP->dstRectP = (Rect_*) mapGet(xP->dstRectMP, entity);
         if (!cP->dstRectP) {
