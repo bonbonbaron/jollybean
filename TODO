@@ -33,13 +33,21 @@ menus
 build system
 
 NEWER:
-  the GPU doesn't appear to support colormap-based rendering, so you may need to render the colors directly to teh texture atlas yourself (if you haven't already).
-  you need to change all possible error checks to asserts. That way you can turn them off by defining NDEBUG before including assert.h in your baseline header file. 
+======
+  * the GPU doesn't appear to support colormap-based rendering, so you may need to render the colors directly to teh texture atlas yourself (if you haven't already).
+    you need to change all possible error checks to asserts. That way you can turn them off by defining NDEBUG before including assert.h in your baseline header file. 
+
+  * Now that you know how naive your compression approach was, do away with stripdata and just use pure zlib instead. 
+
+  * Replace errors with assertions. Have a sleek engine with zero impurities.
 
 OLDER:
+======
 See if making animation a composite gene is what's causing master not to populate shared map of source rectangles.
 
 Partial answer: Turns out anim strips are incrementing the src rect count to 6 instead of 2 (we want 2 for 2 entities). We need to let composite genes increment this count as well, which has to do with 
               geneHistoP->histoXElemA[i].count);
 
 Figure out how to make a composite gene, now called "Animation", contribute to the number of source rectangles and components in the Animation system. Then figure out how to make the shared gene called "Animation Strip" contribute to the number of mutations. Figure out how to generalize this.
+
+

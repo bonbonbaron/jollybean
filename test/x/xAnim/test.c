@@ -61,7 +61,7 @@ TEST_F_SETUP(Tau) {
       AnimStrip currAnimStrip = {
         .nFrames = tau->nFramesPerEntity,
         .flags = 0,
-        .repeat = ((i & 3) == 3),
+        .repeat = 1, // ((i & 7) >= 4),
         .pingPong = i & 1, 
         .frameA = currAnimFrameA
       };
@@ -136,15 +136,29 @@ TEST_F_TEARDOWN(Tau) {
 
 #if 1
 TEST_F(Tau, xAnimRun) {
-  // Request system to set entity 5's velocity to the one mapped to arbitrary key, 1.
+  // Request system to set entity 5's animation to the one mapped to arbitrary key, 1.
   tau->e = mailboxWrite(tau->sP->mailboxF, ANIMATION, 5, MUTATE_AND_ACTIVATE, 1);
   CHECK_EQ(tau->e, SUCCESS);
-  // Request system to set entity 6's velocity to the one mapped to arbitrary key, 2.
-  tau->e = mailboxWrite(tau->sP->mailboxF, ANIMATION, 6, MUTATE_AND_ACTIVATE, 2);
+  // Request system to set entity 6's animation to the one mapped to arbitrary key, 2.
+  // tau->e = mailboxWrite(tau->sP->mailboxF, ANIMATION, 6, MUTATE, 2);
+  // CHECK_EQ(tau->e, SUCCESS);
+  // Arbitrarily animate strip 2 for entity 6.
+
   CHECK_EQ(tau->e, SUCCESS);
-  // Have key mutate and activate those dudes' motion components and then run.
+  // Have key mutate and activate those dudes' animation components and then run.
   tau->e = xRun(tau->sP);
-  requireSuccess_;
+  CHECK_EQ(tau->e, SUCCESS);
+  tau->e = mailboxWrite(tau->sP->mailboxF, ANIMATION, 6, UPDATE_RECT, 2);
+  CHECK_EQ(tau->e, SUCCESS);
+  // Tell everybody to animate.
+  for (int i = 1; !tau->e && i < tau->nEntities; ++i) {
+    tau->e = mailboxWrite(tau->sP->mailboxF, ANIMATION, i, ANIMATE, (i & 1) + 1);
+  }
+  // Run the system and give them plenty of time to repeat.
+  for (int i = 0; i < 1000; ++i) {
+    tau->e = xRun(tau->sP);
+    requireSuccess_;
+  }
   // Make sure entity 5's velocity is right.
   //CHECK_EQ(tau->animCompF[0].velocity.x,  1);
   //CHECK_EQ(tau->animCompF[0].velocity.y, -2);
