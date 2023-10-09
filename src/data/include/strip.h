@@ -45,6 +45,5 @@ Error stripIni(StripDataS *sdP);
 Error sdInflate(StripDataS *sdP);
 Error sdUnpack(StripDataS *sdP);
 Error sdAssemble(StripDataS *sdP);
-Error stripIni(StripDataS *sdP);
 
 #endif  // #ifndef STRIP_H

@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include "db.h"
+#include "array.h"
 
 typedef enum {TEXT_FILE, DIR_FILE} ListType;
 

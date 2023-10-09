@@ -14,20 +14,20 @@ INC = ${SRC}/include
 KR  = ${HOME}/jb/src/Keyring
 
 # Linker
-${BINDIR}/body: ../file/build/fileUtils.o ../genie/build/genie.o ../strip/build/strip.o ../db/build/db.o ../inflatable/build/inflatable.o ${BUILDDIR}/body.o ${BUILDDIR}/img.o ${BUILDDIR}/anim.o ${BUILDDIR}/coll.o ${BUILDDIR}/previewImg.o ${BLD}/interface.o ${BLD}/data.o
-	$(CC) -g ../file/build/fileUtils.o ../genie/build/genie.o ../db/build/db.o ../strip/build/strip.o ../inflatable/build/inflatable.o ${BUILDDIR}/img.o ${BUILDDIR}/anim.o ${BUILDDIR}/coll.o ${BUILDDIR}/previewImg.o ${BUILDDIR}/body.o -L${JB}/lib/ -ljollybean -lfastjson -lpthread $(shell pkg-config --libs zlib) $(shell sdl2-config --libs) $(shell libpng-config --libs) -o $@
+${BINDIR}/body: ../file/build/fileUtils.o ../genie/build/genie.o ../stripUtil/build/stripUtil.o ../db/build/db.o ../inflatable/build/inflatable.o ${BUILDDIR}/body.o ${BUILDDIR}/img.o ${BUILDDIR}/anim.o ${BUILDDIR}/coll.o ${BUILDDIR}/previewImg.o ${BLD}/interface.o ${BLD}/data.o
+	$(CC) -g ../file/build/fileUtils.o ../genie/build/genie.o ../db/build/db.o ../stripUtil/build/stripUtil.o ../inflatable/build/inflatable.o ${BUILDDIR}/img.o ${BUILDDIR}/anim.o ${BUILDDIR}/coll.o ${BUILDDIR}/previewImg.o ${BUILDDIR}/body.o -L${JB}/lib/ -ljollybean -lfastjson -lpthread $(shell pkg-config --libs zlib) $(shell sdl2-config --libs) $(shell libpng-config --libs) -o $@
 	touch $@
 
 # Compiler
 ${BUILDDIR}/%.o: ./src/%.c ./src/include/%.h 
-	$(CC) -g $(shell sdl2-config --cflags) $(shell pkg-config --cflags zlib) $(shell libpng-config --cflags) -I../strip/src/include -I./src/include -I../inflatable/src/include -I${INC} -I${KR} -I../file/src/include/ -I../db/src/include -I../genie/src/include -I/usr/include/libfastjson -O0 -c $< -o $@
+	$(CC) -g $(shell sdl2-config --cflags) $(shell pkg-config --cflags zlib) $(shell libpng-config --cflags) -I../stripUtil/src/include -I./src/include -I../inflatable/src/include -I${INC} -I${KR} -I../file/src/include/ -I../db/src/include -I../genie/src/include -I/usr/include/libfastjson -O0 -c $< -o $@
 	touch $@
 
 ../file/build/fileUtils.o: ../file/src/fileUtils.c ../file/src/include/fileUtils.h
 	make -C ../file
 
-../strip/build/strip.o: ../strip/src/strip.c ../strip/src/include/strip.h
-	make -C ../strip
+../stripUtil/build/stripUtil.o: ../stripUtil/src/stripUtil.c ../stripUtil/src/include/stripUtil.h
+	make -C ../stripUtil
 
 ../inflatable/build/inflatable.o: ../inflatable/src/inflatable.c ../inflatable/src/include/inflatable.h
 	make -C ../inflatable

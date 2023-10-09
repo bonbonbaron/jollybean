@@ -13,7 +13,11 @@ Error inflatableNew(void *voidA, Inflatable **inflatablePP) {
   unsigned long szDataCompressed  = (szDataOrig * 1.1) + 12;
   U8 *dataOrigP = (U8*) voidA;
   U8 *dataCompressed = (U8*)malloc( szDataCompressed );
+#if 1
   int z_result = compress(dataCompressed, &szDataCompressed, dataOrigP, szDataOrig);    
+#else
+  int z_result = compress2(dataCompressed, &szDataCompressed, dataOrigP, szDataOrig, 6);    
+#endif
 
   switch(z_result) {
     case Z_OK:

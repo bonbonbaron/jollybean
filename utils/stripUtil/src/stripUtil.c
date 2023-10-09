@@ -328,13 +328,30 @@ static Error _validateUnstrippedData(StripDataS *sdP, U8 *srcA) {
 #endif
 
 Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPackedByte, StripDataS **sdPP, U32 flags, U8 verbose) {
-  if (!srcA 
-      || !sdPP 
-      || !nBytesPerUnpackedStrip
-      || !bitsPerPackedByte 
-      || bitsPerPackedByte > 8
-      || ((arrayGetNElems(srcA) * arrayGetElemSz(srcA)) % nBytesPerUnpackedStrip) != 0)
+  if (!srcA) {
+    printf( "[stripNew] Source array is null.\n" );
     return E_BAD_ARGS;
+  }
+  if (!sdPP ) {
+    printf( "[stripNew] StripData** is null.\n" );
+    return E_BAD_ARGS;
+  }
+  if (!nBytesPerUnpackedStrip) {
+    printf( "[stripNew] No bytes per unpacked strip.\n" );
+    return E_BAD_ARGS;
+  }
+  if ( !bitsPerPackedByte ) {
+    printf( "[stripNew] No bits per packed byte.\n" );
+    return E_BAD_ARGS;
+  }
+  if (bitsPerPackedByte > 8) {
+    printf( "[stripNew] Too many bits per packed byte.\n" );
+    return E_BAD_ARGS;
+  }
+  if (((arrayGetNElems(srcA) * arrayGetElemSz(srcA)) % nBytesPerUnpackedStrip) != 0) {
+    printf( "[stripNew] There should be no remainder units; %d bytes isn't cleanly divided by %d.\n",  (arrayGetNElems(srcA) * arrayGetElemSz(srcA)), nBytesPerUnpackedStrip);
+    return E_BAD_ARGS;
+  }
   /* Number of strips needed:
    *              unit          strip      8 bits
    * X units    ----------  * -------  *  -----   = 0 strips
@@ -436,6 +453,48 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
     }
 #endif
 
+    // One last thing: Pack the raw, non-stripped data to see if it can contend with the strip/zips.
+    U8 *packedRawA = NULL;
+    if (!e) {
+      // Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPackedByte, StripDataS **sdPP, U32 flags, U8 verbose) {
+      e = _packBits( &packedRawA, srcA, nUnitsInStripset, verbose );
+    }
+    // Oh, and also compress the raw as well so we can compare that too.
+    Inflatable *rawInfP = NULL;
+    if (!e) {
+// Error inflatableNew(void *voidA, Inflatable **inflatablePP) {
+      e = inflatableNew( srcA, &rawInfP );
+    }
+    // OH YEAH, annnnd compress the *packed* raw too.
+    Inflatable *packedInfP = NULL;
+    if (!e) {
+      e = inflatableNew( packedRawA, &packedInfP );
+    }
+    // First, figure out what the best compression method to use is based on our results.
+    /*
+     * 5 contenders;
+     * =============
+     *   packed
+     *   zipped
+     *   packed + zipped
+     *   packed + stripped
+     *   packed + stripped + zipped
+     *
+     * Since all three de-compression methods are so fast, I vote we just go for the smallest one no matter what. 
+     * Nothng fancy. */
+
+    // Figure out the smallest compression.
+    if (!e && rawInfP ) {
+      U32 packedSz = arrayGetElemSz(packedRawA) * arrayGetNElems(packedRawA);
+      U32 zippedSz = rawInfP->compressedLen + sizeof(Inflatable);
+      U32 pakZipSz = packedInfP->compressedLen + sizeof(Inflatable);
+      U32 pkStrpSz = (*sdPP)->ss.infP->inflatedLen;
+      U32 pkSpZpSz = (*sdPP)->ss.infP->compressedLen;
+    }
+
+    // TODO free everything allocated in the new lines.
+    // Add up all different memories
+    U32 packedSz = ssPack
     // Fill in empty information.
     // Stripset
     if (!e) {
@@ -444,29 +503,39 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
       (*sdPP)->ss.bpu = bitsPerPackedByte;
       e = inflatableNew((void*) ssPackedA, &(*sdPP)->ss.infP);
     }
+    if (!e && verbose) {
+      printf("[stripNew] SS Compressed size: %d bytes\n", 
+        (*sdPP)->ss.infP->compressedLen);
+    }
     // Stripmap
     if (!e) {
       (*sdPP)->sm.nIndices = nStripsInOrigData;
        e = inflatableNew((void*) smDataA, &(*sdPP)->sm.infP);
     }
     if (!e && verbose) {
-      printf("[stripNew] Compressed size: %d bytes\n", 
+      printf("[stripNew] SM Compressed size: %d bytes\n", 
+        (*sdPP)->sm.infP->compressedLen);
+    }
+    if (!e && verbose) {
+      printf("[stripNew] Total Compressed size: %d bytes\n", 
           (sizeof(Inflatable) * 2)
         + (*sdPP)->ss.infP->compressedLen
         + (*sdPP)->sm.infP->compressedLen);
     }
+#if 0
 #if DEBUG_
     if (!e && verbose) {
       e = _validateInflatables(*sdPP, smDataA, ssPackedA);
     }
 #endif
     if (!e) {
-      e =  stripIni(*sdPP);
+      e =  stripIni(*sdPP);  // it was bombing out here originally.
     }
 #if DEBUG_
     if (!e) {
       e = _validateUnstrippedData(*sdPP, srcA);
     }
+#endif
 #endif
   }
   else {

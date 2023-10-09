@@ -63,11 +63,6 @@ enum
 //  The caller must free() the returned block when it's no longer needed.
 //Error tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_len, void *pDst_buf, size_t *pOut_len);
 
-// tinfl_decompress_mem_to_mem() decompresses a block in memory to another block in memory.
-// Returns TINFL_DECOMPRESS_MEM_TO_MEM_FAILED on failure, or the number of bytes written on success.
-#define TINFL_DECOMPRESS_MEM_TO_MEM_FAILED ((size_t)(-1))
-static size_t tinfl_decompress_mem_to_mem(void *pOut_buf, size_t out_buf_len, const void *pSrc_buf, size_t src_buf_len, int flags);
-
 // tinfl_decompress_mem_to_callback() decompresses a block in memory to an internal 32KB buffer, and a user provided callback function will be called to flush the buffer.
 // Returns 1 on success or 0 on failure.
 

@@ -1,5 +1,4 @@
 #include "genie.h"
-#include "data.h"
 
 
 inline static char _upperChar(char c) {

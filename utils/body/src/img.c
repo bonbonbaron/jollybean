@@ -406,8 +406,8 @@ Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *an
       e = E_UNSUPPORTED_PIXEL_FORMAT;
     }
   }
-  // Colormap's stripset & stripmap
 
+  // Colormap's stripset & stripmap
   if (!e) {
     // If image is animated, strip length should be the width of an animation frame.
     // Otherwise, it should be the image width.
@@ -417,7 +417,7 @@ Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *an
     }
     e = stripNew(colormapA, stripLen, cmP->bpp, &cmP->sdP, SD_SKIP_ASSEMBLY_, verbose);
     //if (!e) {
-      //e = stripIni(cmP->sdP);
+    //  e = stripIni(cmP->sdP);  // Ah-HAH.... This is something I had a problem with before too. Looks like commenting it out here solved my problem then too.
     //}
     if (!e) {
       // We're gonna cheat and preview the ground truth image here. 
@@ -484,9 +484,9 @@ static Error _validateWholeInput(Colormap *cmP, ColorPalette *cpP) {
 #if 1
   // Verify array lengths match.
   printf("orig cm has %d elems; new cm has %d\n", 
-       arrayGetNElems(cmOrigP), arrayGetNElems(cmP->sdP->assembledDataA));
+      arrayGetNElems(cmOrigP), arrayGetNElems(cmP->sdP->assembledDataA));
   printf("orig cm elem size is %d; new cm elem size is %d\n", 
-       arrayGetElemSz(cmOrigP), arrayGetElemSz(cmP->sdP->assembledDataA));
+      arrayGetElemSz(cmOrigP), arrayGetElemSz(cmP->sdP->assembledDataA));
   if (!e && (arrayGetNElems(cmP->sdP->assembledDataA) != arrayGetNElems(cmOrigP))) {
     e = E_BAD_ARGS;
   }
@@ -510,9 +510,9 @@ static Error _validateWholeInput(Colormap *cmP, ColorPalette *cpP) {
     printf("\n\n\n");
 #endif
     if ((theyMatch = !memcmp(cmP->sdP->assembledDataA, 
-                           cmOrigP, 
-                           arrayGetElemSz(cmP->sdP->assembledDataA) 
-                           * arrayGetNElems(cmP->sdP->assembledDataA)))) {
+            cmOrigP, 
+            arrayGetElemSz(cmP->sdP->assembledDataA) 
+            * arrayGetNElems(cmP->sdP->assembledDataA)))) {
       printf("\n\nthey match!\n");
     }
     else {

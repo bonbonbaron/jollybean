@@ -6,7 +6,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include "common.h"
+#include "mem.h"
 
 extern const char LOCAL_TROVE_BOOKKEEPING_DIR[];
 
