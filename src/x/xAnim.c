@@ -96,7 +96,10 @@ XPostMutateFuncDef_(Anim) {
   assert(sP && cP);
   XAnimComp *_cP = (XAnimComp*) cP;
   _cP->currFrameIdx   = 0;
-  _cP->incrDecrement  = 1;
+  _cP->incrDecrement  = 1;  // assume we're going to start off animating forward
+  // TODO take advantage of the anim's flag to decide whether to anchor the changed image to a side, corner, or center.
+  _cP->srcRectP->x    = _cP->currStrip.frameA[0].rect.x;  // mailbox should get "offset" changes to this beforehand
+  _cP->srcRectP->y    = _cP->currStrip.frameA[0].rect.y;  // mailbox should get "offset" changes to this beforehand
   _cP->srcRectP->w    = _cP->dstRectP->w = _cP->currStrip.frameA[0].rect.w;
   _cP->srcRectP->h    = _cP->dstRectP->h = _cP->currStrip.frameA[0].rect.h;
   _cP->timeLeft       = _cP->currStrip.frameA[0].duration;
@@ -114,7 +117,7 @@ Error xAnimRun(System *sP) {
 
   // Animation
   for (; cP < cEndP; ++cP) {
-    if ((cP->timeLeft -= 9) <= 0) {  // TODO figure out time decrement
+    if ((cP->timeLeft -= 1) <= 0) {  // TODO figure out time decrement
       // If we've reached the last frame, ask if this is a pingpong or repeating animation strip.
       if (cP->currFrameIdx == (cP->currStrip.nFrames - 1)) {
         // If this is a repeating animation strip, reset index, time left, and srcRectP.

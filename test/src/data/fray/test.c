@@ -72,7 +72,9 @@ TEST_F(Tau, frayNew_BadArgs) {
 TEST_F(Tau, frayAdd) {
   for (; !tau->e; ++tau->newVal) {
     tau->e = frayAdd((void*) tau->uF, (void*) &tau->newVal, &tau->newIdx);
-    CHECK_EQ(tau->uF[tau->newIdx], tau->newVal);
+    if ( tau->e == SUCCESS ) {
+      CHECK_EQ(tau->uF[tau->newIdx], tau->newVal);  // go till we get the overflow
+    }
   }
   CHECK_EQ(tau->e, E_FRAY_FULL);
   CHECK_EQ(tau->newIdx, tau->nElems - 1);

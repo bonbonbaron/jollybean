@@ -3,12 +3,12 @@
 Error frayNew(void **fPP, U32 elemSz, U32 nElems) {
   Error e = SUCCESS;
   U32 *ptr;
-	if (elemSz <= 0 || nElems <= 0 || fPP == NULL) {
-		return E_BAD_ARGS;  
+  if (elemSz <= 0 || nElems <= 0 || fPP == NULL) {
+    return E_BAD_ARGS;  
   }
-	else {
+  else {
     // Add 1 more element for swaps. 
-		e = jbAlloc((void**) &ptr, (elemSz * (nElems + 1)) + ((N_PREFRAY_ELEMS) * sizeof(U32)), 1);
+    e = jbAlloc((void**) &ptr, (elemSz * (nElems + 1)) + ((N_PREFRAY_ELEMS) * sizeof(U32)), 1);
     if (!e) {
       ptr[N_PREFRAY_ELEMS - OFFSET_1ST_INACTIVE]   = 0;       
       ptr[N_PREFRAY_ELEMS - OFFSET_N_PAUSED]   = 0;  
@@ -23,11 +23,11 @@ Error frayNew(void **fPP, U32 elemSz, U32 nElems) {
 }
 
 void frayDel(void **frayPP) {
-	if (frayPP != NULL && *frayPP != NULL) {
-		U32 *ptr = *frayPP;
-		free((ptr) - N_PREFRAY_ELEMS);
-		*frayPP = NULL;
-	}
+  if (frayPP != NULL && *frayPP != NULL) {
+    U32 *ptr = *frayPP;
+    free((ptr) - N_PREFRAY_ELEMS);
+    *frayPP = NULL;
+  }
 }
 
 // Common functionality to both frayAdd() and frayAddEmpty()
@@ -48,14 +48,18 @@ static Error _frayAdd(const void *frayP, void **dstPP, U32 *elemNewIdxP) {
 Error frayAdd(const void *frayP, void *elemP, U32 *elemNewIdxP) {
   void *dstP;
   Error e = _frayAdd(frayP, &dstP, elemNewIdxP);
-  memcpy(dstP, elemP, arrayGetElemSz(frayP));
+  if (!e) {
+    memcpy(dstP, elemP, arrayGetElemSz(frayP));
+  }
   return e;
 }
 
 Error frayAddEmpty(const void *frayP, U32 *elemNewIdxP) {
   void *dstP;
   Error e = _frayAdd(frayP, &dstP, elemNewIdxP);
-  memset(dstP, 0, frayGetElemSz_(frayP));
+  if (e) {
+    memset(dstP, 0, frayGetElemSz_(frayP));
+  }
   return e;
 }
 

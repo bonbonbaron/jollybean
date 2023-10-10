@@ -4,8 +4,28 @@
 // We have to make these constants so the compiler doesn't cry about the array initializers not having constant sizes.
 #define N_ENTITIES (100)
 #define N_MUTATIONS_PER_ENTITY (5)
+#define N_FRAMES_PER_STRIP (5)
 #define requireSuccess_ REQUIRE_EQ(tau->e, SUCCESS)
 #define forEachEntity_(nEntities_) for (Entity entity = 1; entity <= nEntities_; ++entity)
+
+#define RECT_X_COEFF (10)
+#define RECT_Y_COEFF (20)
+#define RECT_W_COEFF (30)
+#define RECT_H_COEFF (40)
+#define SRC_RECT_X (1)
+#define SRC_RECT_Y (2)
+#define SRC_RECT_W (3)
+#define SRC_RECT_H (4)
+#define DST_RECT_X (5)
+#define DST_RECT_Y (6)
+#define DST_RECT_W (7)
+#define DST_RECT_H (8)
+#define OFFSET_X (5)
+#define OFFSET_Y (10)
+
+#define REPEAT_FLAG  (0x01)
+#define PINGPONG_LIM (0x03)
+#define DURATION (10)
 
 TAU_MAIN()
 
@@ -13,7 +33,7 @@ typedef struct Tau {
   Error e;
   XAnim *xP;
   U32 nEntities;
-  U32 nFramesPerEntity;
+  U32 nFramesPerStrip;
   U32 nMutationsPerEntity;
   Map *shareMPMP;
   System *sP;
@@ -26,7 +46,7 @@ TEST_F_SETUP(Tau) {
   tau->sP = &tau->xP->system;
   tau->nEntities = N_ENTITIES;
   tau->nMutationsPerEntity = N_MUTATIONS_PER_ENTITY;
-  tau->nFramesPerEntity = 5;
+  tau->nFramesPerStrip = N_FRAMES_PER_STRIP;
   tau->e = xIniSys(tau->sP, tau->nEntities, NULL);
   tau->animCompF = tau->sP->cF;
   requireSuccess_;
@@ -43,27 +63,26 @@ TEST_F_SETUP(Tau) {
     // Pre-populate the mutation maps with arbitrary values.
     for (Key i = 1; !tau->e && i <= tau->nMutationsPerEntity; ++i) {
       AnimFrame *currAnimFrameA;
-      tau->e = arrayNew((void**) &currAnimFrameA, sizeof(AnimFrame), tau->nFramesPerEntity);
+      tau->e = arrayNew((void**) &currAnimFrameA, sizeof(AnimFrame), tau->nFramesPerStrip);
       // populate the animation frames for this strip
-      for (int j = 0; j < tau->nFramesPerEntity; ++j) {
+      for (int j = 0; j < tau->nFramesPerStrip; ++j) {
         AnimFrame currFrame = {
-          // TODO organize the four cases neatly into quadrants ( rpt, no rpt, pong, pong + rpt )
-          .rect = {  // TODO make rectangles easier to predict
-            .x = (entity + j) * 123 & 0x1fff,
-            .y = (entity + j) * 234 & 0xf2ff,
-            .w = (entity + j) * 345 & 0xff4f,
-            .h = (entity + j) * 456 & 0xfff8
+          .rect = {  
+            .x = j * RECT_X_COEFF,  // 10  ( 0 for first frame )
+            .y = j * RECT_Y_COEFF,  // 20  ( 0 for first frame )
+            .w = entity * RECT_W_COEFF,  // 30 
+            .h = entity * RECT_H_COEFF   // 40 
           },
-          . duration = (j * 2)  // TODO make durations easier to predict
+          . duration = DURATION  
         };
         currAnimFrameA[j] = currFrame;
       }
       requireSuccess_;
       AnimStrip currAnimStrip = {
-        .nFrames = tau->nFramesPerEntity,
-        .flags = 0,
-        .repeat = 1, // TODO make repeats easier to predict
-        .pingPong = i & 1,   // TODO make pingpongs easier to predict
+        .nFrames = tau->nFramesPerStrip,  // fixed number of frames
+        .flags = 0,   // flags are only used to tell when the rect's been offset already
+        .repeat = i & REPEAT_FLAG,  // odd-numbered 
+        .pingPong = i < PINGPONG_LIM,   // pingpong for the first two strips
         .frameA = currAnimFrameA
       };
       tau->e = mapSet(currEntitysMutationMP, i, &currAnimStrip);
@@ -88,26 +107,17 @@ TEST_F_SETUP(Tau) {
     tau->e = mapNew(&sharedOffsetMP, RAW_DATA, sizeof(RectOffset), tau->nEntities);
     requireSuccess_;
     // Now populate the entities' shared rectangles.
+    // TODO I don't think this code is well-founded. You don't know what your source rect is until you mutate.
     forEachEntity_(tau->nEntities) {
-      Rect_ currSrcRect = {
-        .x = entity + 0,
-        .y = entity + 1,
-        .w = entity + 2,
-        .h = entity + 3
-      };
+      Rect_ currSrcRect = { 0 };  // the post-mutate function will change this value before animating
       tau->e = mapSet(sharedSrcRectMP, entity, &currSrcRect);
       requireSuccess_;
-      Rect_ currDstRect = {
-        .x = entity + 0,
-        .y = entity + 1,
-        .w = entity + 2,
-        .h = entity + 3
-      };
+      Rect_ currDstRect = { 0 };  // the post-mutate function will change this value before animating
       tau->e = mapSet(sharedDstRectMP, entity, &currDstRect);
       requireSuccess_;
       RectOffset currRectOffset = {
-        .x = 5,
-        .y = 10
+        .x = OFFSET_X,  //  5
+        .y = OFFSET_Y   // 10
       };
       tau->e = mapSet(sharedOffsetMP, entity, &currRectOffset);
       requireSuccess_;
@@ -127,6 +137,11 @@ TEST_F_SETUP(Tau) {
     // We're passing in NULL as the component data so the system adds empty components.
     // The postprocess function call hereafter will take care of the mutable velocities and shared rect pointers.
     tau->e = xAddEntityData(&tau->xP->system, entity, ANIMATION, NULL);
+    // Finally, tell the animation system to update all its rects with their offsets.
+    for ( Entity entity = 1; entity < tau->nEntities; ++entity ) {
+      tau->e = mailboxWrite( tau->sP->mailboxF, ANIMATION, entity, UPDATE_RECT, 0 );
+      requireSuccess_;
+    }
     requireSuccess_;
   }
 }
@@ -135,45 +150,61 @@ TEST_F_TEARDOWN(Tau) {
   xClr(&tau->xP->system);
 }
 
-#if 1
-TEST_F(Tau, xAnimRun) {
-  // Request system to set entity 5's animation to the one mapped to arbitrary key, 1.
-  tau->e = mailboxWrite(tau->sP->mailboxF, ANIMATION, 5, MUTATE_AND_ACTIVATE, 1);
-  CHECK_EQ(tau->e, SUCCESS);
-  // Request system to set entity 6's animation to the one mapped to arbitrary key, 2.
-  // tau->e = mailboxWrite(tau->sP->mailboxF, ANIMATION, 6, MUTATE, 2);
-  // CHECK_EQ(tau->e, SUCCESS);
-  // Arbitrarily animate strip 2 for entity 6.
-  CHECK_EQ(tau->e, SUCCESS);
-  // Have key mutate and activate those dudes' animation components and then run.
-  tau->e = xRun(tau->sP);
-  CHECK_EQ(tau->e, SUCCESS);
-  tau->e = mailboxWrite(tau->sP->mailboxF, ANIMATION, 6, UPDATE_RECT, 2);
-  CHECK_EQ(tau->e, SUCCESS);
-  // Tell everybody to animate.
-  for (int i = 1; !tau->e && i < tau->nEntities; ++i) {
-    // TODO call each of the four quadrants of animation possibilities
-    tau->e = mailboxWrite(tau->sP->mailboxF, ANIMATION, i, ANIMATE, (i & 1) + 1);
+void checkAnimComp( Tau *tau, Entity entity, U32 currDuration, U32 currFrameIdx, Bln isOffset, Bln isGoingBackwards ) {
+  XAnimComp* cP = (XAnimComp*) xGetCompPByEntity(tau->sP, entity);
+  // If source rect is all zeros, we haven't begun any animation for this entity yet.
+  if ( cP->srcRectP->w == 0 ) {
+    printf("checking fresh stuff\n");
+    CHECK_EQ( cP->srcRectP->x, 0);
+    CHECK_EQ( cP->srcRectP->y, 0);
+    CHECK_EQ( cP->srcRectP->w, 0);
+    CHECK_EQ( cP->srcRectP->h, 0);
+    CHECK_EQ( cP->dstRectP->x, 0);
+    CHECK_EQ( cP->dstRectP->y, 0);
+    CHECK_EQ( cP->dstRectP->w, 0);
+    CHECK_EQ( cP->dstRectP->h, 0);
+    // Check non-rect stuff too.
+    CHECK_EQ( cP->incrDecrement, 0);
+    CHECK_EQ( cP->currFrameIdx, 0);
+    CHECK_EQ( cP->incrDecrement, 0);
+    CHECK_EQ( cP->timeLeft, 0);
+    CHECK_EQ( cP->currStrip.nFrames, 0 );
   }
-  // Run the system and give them plenty of time to repeat.
-  // TODO make multiple loops that end where you expect the frames to change, so you can stop and check
-  //      the frame and duration and stuff
-  for (int i = 0; i < 1000; ++i) {
+  // Otherwise, if we've started animating for this entity, we expect a post-mutation of the src/dstRect.
+  else {
+    printf("checking changed stuff\n");
+    CHECK_EQ( cP->srcRectP->x, RECT_X_COEFF * ( cP->currFrameIdx ) + OFFSET_X );
+    CHECK_EQ( cP->srcRectP->y, RECT_Y_COEFF * ( cP->currFrameIdx ) + OFFSET_Y );
+    CHECK_EQ( cP->srcRectP->w, entity * RECT_W_COEFF );
+    CHECK_EQ( cP->srcRectP->h, entity * RECT_H_COEFF );
+    CHECK_EQ( cP->dstRectP->x, entity + DST_RECT_X);
+    CHECK_EQ( cP->dstRectP->y, entity + DST_RECT_Y);
+    CHECK_EQ( cP->dstRectP->w, entity * RECT_W_COEFF );
+    CHECK_EQ( cP->dstRectP->h, entity * RECT_H_COEFF );
+    // Check non-rect stuff too.
+    CHECK_EQ( cP->incrDecrement, isGoingBackwards ? -1 : 1 );
+    CHECK_EQ( cP->currFrameIdx, currFrameIdx);
+    CHECK_EQ( cP->timeLeft, currDuration );
+    CHECK_EQ( cP->currStrip.nFrames, tau->nFramesPerStrip );
+  }
+}
+
+void advanceOneFrame( Tau* tau ) {
+  for (int i = 0; i < tau->nFramesPerStrip; ++i) {
     tau->e = xRun(tau->sP);
     requireSuccess_;
   }
-
-  // TODO test untested xAnimRun code
-  // TODO make sure the animation frames are actually what we expect them to be at certain times
-  // Make sure entity 5's velocity is right.
-  //CHECK_EQ(tau->animCompF[0].velocity.x,  1);
-  //CHECK_EQ(tau->animCompF[0].velocity.y, -2);
-  //CHECK_EQ(tau->animCompF[0].dstRectP->x, 6);
-  //CHECK_EQ(tau->animCompF[0].dstRectP->y, 4);
-  //// Make sure entity 6's velocity is right.
-  //CHECK_EQ(tau->animCompF[1].velocity.x,  2);
-  //CHECK_EQ(tau->animCompF[1].velocity.y, -4);
-  //CHECK_EQ(tau->animCompF[1].dstRectP->x, 8);
-  //CHECK_EQ(tau->animCompF[1].dstRectP->y, 3);
 }
-#endif
+
+TEST_F(Tau, xAnimMutate) {
+  // First, make sure entity 6's component still has its original values.
+  checkAnimComp( tau, 6, 0, 0, FALSE, FALSE );
+  // Request system to set entity 5's animation to the one mapped to arbitrary key, 1.
+  tau->e = mailboxWrite(tau->sP->mailboxF, ANIMATION, 6, MUTATE_AND_ACTIVATE, 1);
+  // TODO this may be a bug: I don't see the offset happening in the test results.
+  CHECK_EQ(tau->e, SUCCESS);
+  tau->e = xRun(tau->sP);
+  CHECK_EQ(tau->e, SUCCESS);
+  checkAnimComp( tau, 6, DURATION - 1, 1, TRUE, FALSE );
+}
+
