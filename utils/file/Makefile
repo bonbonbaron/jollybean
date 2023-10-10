@@ -3,7 +3,7 @@ RPODIR := $(shell git rev-parse --show-toplevel)
 SRCDIR := ${RPODIR}/src/data
 INCDIR := ${SRCDIR}/include
 BLDDIR := ${RPODIR}/build
-INCS   := ${INCDIR}/common.h ${INCDIR}/mem.h
+INCS   := ${INCDIR}/mem.h ${INCDIR}/common.h 
 ./build/fileUtils.o: ./src/fileUtils.c ./src/include/fileUtils.h ${INCS} ./build
 	gcc -g -lfastjson -I/usr/include/libfastjson -I${INCDIR} -I./src/include ./src/fileUtils.c -c -o $@
 

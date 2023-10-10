@@ -327,7 +327,7 @@ static Error _validateUnstrippedData(StripDataS *sdP, U8 *srcA) {
 
 #endif
 
-Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPackedByte, StripDataS **sdPP, U32 flags, U8 verbose) {
+Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bpu, StripDataS **sdPP, U32 flags, U8 verbose) {
   if (!srcA) {
     printf( "[stripNew] Source array is null.\n" );
     return E_BAD_ARGS;
@@ -340,11 +340,11 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
     printf( "[stripNew] No bytes per unpacked strip.\n" );
     return E_BAD_ARGS;
   }
-  if ( !bitsPerPackedByte ) {
+  if ( !bpu ) {
     printf( "[stripNew] No bits per packed byte.\n" );
     return E_BAD_ARGS;
   }
-  if (bitsPerPackedByte > 8) {
+  if (bpu > 8) {
     printf( "[stripNew] Too many bits per packed byte.\n" );
     return E_BAD_ARGS;
   }
@@ -439,36 +439,52 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
     e = _validateStripmapping(ssUnpackedA, nBytesPerUnpackedStrip, smDataA, srcA);
   }
 #endif
-  // Slight compression isn't worth the trouble to inflate; keep as is.
   if (!e) {
     U32 nUnitsInStripset = stripLabel * nBytesPerUnpackedStrip;
     // If it's worth doing, store compressed stuff into colormap profile.
     // Compress data into an inflatable.
     if (!e) {
-      e = _packBits(&ssPackedA, ssUnpackedA, nUnitsInStripset, bitsPerPackedByte, verbose);
+      e = _packBits(&ssPackedA, ssUnpackedA, nUnitsInStripset, bpu, verbose);
     }
 #if DEBUG_
     if (!e) {
-      e = _validateBitPacking(ssPackedA, ssUnpackedA, nUnitsInStripset, bitsPerPackedByte);
+      e = _validateBitPacking(ssPackedA, ssUnpackedA, nUnitsInStripset, bpu);
     }
 #endif
 
     // One last thing: Pack the raw, non-stripped data to see if it can contend with the strip/zips.
     U8 *packedRawA = NULL;
     if (!e) {
-      // Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPackedByte, StripDataS **sdPP, U32 flags, U8 verbose) {
-      e = _packBits( &packedRawA, srcA, nUnitsInStripset, verbose );
+      e = _packBits( &packedRawA, srcA, arrayGetNElems(srcA), bpu, verbose );
     }
     // Oh, and also compress the raw as well so we can compare that too.
     Inflatable *rawInfP = NULL;
     if (!e) {
-// Error inflatableNew(void *voidA, Inflatable **inflatablePP) {
+      // Error inflatableNew(void *voidA, Inflatable **inflatablePP) {
       e = inflatableNew( srcA, &rawInfP );
     }
     // OH YEAH, annnnd compress the *packed* raw too.
     Inflatable *packedInfP = NULL;
     if (!e) {
       e = inflatableNew( packedRawA, &packedInfP );
+    }
+    // Go ahead and act like you're going to use stripset and stripmap for now.
+    // We'll see if we really want them after we compare their sizes to the other compresion methods.
+    // Stripset
+    if (!e) {
+      (*sdPP)->ss.nUnits = nUnitsInStripset;
+      (*sdPP)->ss.nUnitsPerStrip = nBytesPerUnpackedStrip;
+      (*sdPP)->ss.bpu = bpu;
+      e = inflatableNew((void*) ssPackedA, &(*sdPP)->ss.infP);
+    }
+    if (!e && verbose) {
+      printf("[stripNew] SS Compressed size: %d bytes\n", 
+          (*sdPP)->ss.infP->compressedLen);
+    }
+    // Stripmap
+    if (!e) {
+      (*sdPP)->sm.nIndices = nStripsInOrigData;
+      e = inflatableNew((void*) smDataA, &(*sdPP)->sm.infP);
     }
     // First, figure out what the best compression method to use is based on our results.
     /*
@@ -488,40 +504,88 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
       U32 packedSz = arrayGetElemSz(packedRawA) * arrayGetNElems(packedRawA);
       U32 zippedSz = rawInfP->compressedLen + sizeof(Inflatable);
       U32 pakZipSz = packedInfP->compressedLen + sizeof(Inflatable);
-      U32 pkStrpSz = (*sdPP)->ss.infP->inflatedLen;
-      U32 pkSpZpSz = (*sdPP)->ss.infP->compressedLen;
-    }
+      U32 pkStrpSz = (*sdPP)->ss.infP->inflatedLen   + (*sdPP)->sm.infP->inflatedLen   + 2 * sizeof(Inflatable);
+      U32 pkSpZpSz = (*sdPP)->ss.infP->compressedLen + (*sdPP)->sm.infP->compressedLen + 2 * sizeof(Inflatable);
 
+      U32 smallestSz = ( packedSz < zippedSz ) ? packedSz : zippedSz;
+      if ( smallestSz > pakZipSz ) smallestSz = pakZipSz;
+      if ( smallestSz > pkStrpSz ) smallestSz = pkStrpSz;
+      if ( smallestSz > pkSpZpSz ) smallestSz = pkSpZpSz;
+
+      // if using only packed data...
+      if ( smallestSz == packedSz ) {
+        assert( (*sdPP)->ss.infP != NULL );
+        inflatableClr( (*sdPP)->ss.infP );
+        e = jbAlloc( (void**) &(*sdPP)->ss.infP->compressedDataA, arrayGetElemSz( packedRawA ), arrayGetNElems( packedRawA ) );
+        if ( !e ) {
+          memcpy( (*sdPP)->ss.infP->compressedDataA, packedRawA, arrayGetElemSz( packedRawA ) * arrayGetNElems( packedRawA ) );
+        }
+        // Flags
+        (*sdPP)->flags = SD_SKIP_INFLATION_ | SD_SKIP_ASSEMBLY_;
+      }
+      // if using only zipped raw data...
+      else if ( smallestSz == zippedSz ) {
+        stripClr( *sdPP );  // don't need any data in it
+                           // Stripset
+        (*sdPP)->ss.bpu = bpu;
+        (*sdPP)->ss.nUnits = arrayGetElemSz( srcA );
+        (*sdPP)->ss.infP = rawInfP;
+        rawInfP = NULL;
+        // Stripmap
+        memset( &(*sdPP)->sm, 0, sizeof( Stripmap ) );
+        // Flags
+        (*sdPP)->flags = SD_SKIP_UNPACKING_ | SD_SKIP_ASSEMBLY_;
+      }
+      // if using zipped-up packed data...
+      else if ( smallestSz == pakZipSz ) {
+        // Stripset
+        (*sdPP)->ss.bpu = bpu;
+        (*sdPP)->ss.nUnits = arrayGetElemSz( srcA );
+        (*sdPP)->ss.infP = packedInfP;
+        packedInfP = NULL;
+        // Stripmap
+        memset( &(*sdPP)->sm, 0, sizeof( Stripmap ) );
+        // Flags
+        (*sdPP)->flags = SD_SKIP_ASSEMBLY_;
+      }
+      // if using stripped packed data...
+      else if ( smallestSz == pkStrpSz ) {
+        // Get rid of inflatables
+        inflatableClr( (*sdPP)->ss.infP ) ;
+        inflatableClr( (*sdPP)->sm.infP );
+        // Populate uncompressed (yet packed) stripset.
+        // Allocate stripset.
+        if (!e) {
+          e = jbAlloc( (void**) &(*sdPP)->ss.infP->compressedDataA, arrayGetElemSz( ssPackedA ), arrayGetNElems( ssPackedA ) );
+        }
+        // Allocate stripmap.
+        if (!e) {
+          e = jbAlloc( (void**) &(*sdPP)->sm.infP->compressedDataA, sizeof(StripmapElem), (*sdPP)->sm.nIndices);
+        }
+        // Copy into stripset.
+        if ( !e ) {
+          memcpy( (*sdPP)->ss.infP->compressedDataA, ssPackedA, arrayGetElemSz( ssPackedA ) * arrayGetNElems( ssPackedA ) );
+        }
+        // Copy into stripmap.
+        if ( !e ) {
+          memcpy( (*sdPP)->sm.infP->compressedDataA, smDataA, arrayGetElemSz( smDataA ) * arrayGetNElems( smDataA ) );
+        }
+        // Keep the rest of the data as-is.
+        // Flags
+        (*sdPP)->flags = SD_SKIP_INFLATION_;
+      }
+      // if using zipped-up stripped & packed data...
+      else if ( smallestSz == zippedSz ) {
+        (*sdPP)->flags = 0;
+      }
+    }
     // TODO free everything allocated in the new lines.
-    // Add up all different memories
-    U32 packedSz = ssPack
-    // Fill in empty information.
-    // Stripset
-    if (!e) {
-      (*sdPP)->ss.nUnits = nUnitsInStripset;
-      (*sdPP)->ss.nUnitsPerStrip = nBytesPerUnpackedStrip;
-      (*sdPP)->ss.bpu = bitsPerPackedByte;
-      e = inflatableNew((void*) ssPackedA, &(*sdPP)->ss.infP);
-    }
-    if (!e && verbose) {
-      printf("[stripNew] SS Compressed size: %d bytes\n", 
-        (*sdPP)->ss.infP->compressedLen);
-    }
-    // Stripmap
-    if (!e) {
-      (*sdPP)->sm.nIndices = nStripsInOrigData;
-       e = inflatableNew((void*) smDataA, &(*sdPP)->sm.infP);
-    }
-    if (!e && verbose) {
-      printf("[stripNew] SM Compressed size: %d bytes\n", 
-        (*sdPP)->sm.infP->compressedLen);
-    }
-    if (!e && verbose) {
-      printf("[stripNew] Total Compressed size: %d bytes\n", 
-          (sizeof(Inflatable) * 2)
-        + (*sdPP)->ss.infP->compressedLen
-        + (*sdPP)->sm.infP->compressedLen);
-    }
+    // ssPackedA
+    arrayDel( (void**) &ssPackedA );
+    // packedRawA
+    arrayDel( (void**) &packedRawA );
+    // packedInfP
+    inflatableDel( &packedInfP );  // TODO why doesn't the compiler see this?
 #if 0
 #if DEBUG_
     if (!e && verbose) {
@@ -554,8 +618,13 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bitsPerPacke
 void stripDel(StripDataS **sdPP) {
   if (sdPP && *sdPP) {
     stripClr(*sdPP);
+    // if ( ! ( (*sdPP)->flags & SD_SKIP_INFLATION_ ) ) {
     inflatableDel(&(*sdPP)->ss.infP);
+    // }
+    // if ( ! ( (*sdPP)->flags & SD_SKIP_ASSEMBLY_ ) ) {
     inflatableDel(&(*sdPP)->sm.infP);
+    // }
+
     jbFree((void**) sdPP);
   }
 }

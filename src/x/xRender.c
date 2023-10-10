@@ -345,6 +345,7 @@ XClrFuncDef_(Render) {
 
 // Texture atlas array
 static Error _assembleTextureAtlas(XRender *xP, Atlas *atlasP, U8 **atlasPixelAP) {
+  // Declare locals
   U32 nStripsPerRow;
   StripmapElem *smElemP, *smElemEndP;
   U8 *dstP;
@@ -352,21 +353,25 @@ static Error _assembleTextureAtlas(XRender *xP, Atlas *atlasP, U8 **atlasPixelAP
   U32 nUnitsPerStrip;
   const U32 ATLAS_WIDTH = atlasP->btP[0].remW;
   const Colormap **cmPF = (const Colormap**) xP->cmPF;
+  // Make output atlas image
   Error e = arrayNew((void**) atlasPixelAP, sizeof(U8), atlasP->btP[0].remW * atlasP->btP[0].remH);
   if (!e) {
+    // This'll refer to the atlas' array of pixels 
     U8 *atlasPixelA = *atlasPixelAP;
+    // Number of rect nodes is the  number of elements in the rectangle binary tree.
     U32 iEnd = arrayGetNElems(atlasP->btP);
-    // For each sample...
+    // TODO why are you using stripmap elements here? Isn't your data already assembled by this point?
+    // For each source rectangle...
     for (U32 i = 0; i < iEnd; ++i) {
       srcIdx = atlasP->btP[i].srcIdx;
       nUnitsPerStrip = cmPF[srcIdx]->sdP->ss.nUnitsPerStrip;
       nStripsPerRow  = cmPF[srcIdx]->w / nUnitsPerStrip;
       smElemP        = (StripmapElem*) cmPF[srcIdx]->sdP->sm.infP->inflatedDataP;
-      // For each row of this sample's atlas rectangle...
+      // For each row of this source rectangle...
       for (U32 j = 0, h = atlasP->btP[i].rect.h; j < h; ++j) {
         smElemEndP = smElemP + nStripsPerRow;
         dstP       = atlasPixelA + atlasP->btP[i].rect.x + (j + atlasP->btP[i].rect.y) * ATLAS_WIDTH;
-        // Paste rectangle row
+        // Paste the source row into the atlas's destination rectangle row.
         for (; smElemP < smElemEndP; ++smElemP, dstP += nUnitsPerStrip) {
           memcpy(dstP, 
                  cmPF[srcIdx]->sdP->ss.unpackedDataP + (*smElemP * nUnitsPerStrip), 

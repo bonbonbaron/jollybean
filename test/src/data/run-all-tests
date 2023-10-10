@@ -1,0 +1,16 @@
+#!/bin/bash
+
+echo "cur dir is $(pwd)"
+find . -maxdepth 1 -type d;
+for d in $(find . -maxdepth 1 -type d -exec readlink -f {} \;); do 
+  # Ignore the current directory.
+  if [ "$(pwd)" = "$(readlink -f $d )" ]; then
+    continue
+  fi
+  echo $d
+  cd $d
+  make && ./o
+  if [ ! $? -eq 0 ]; then 
+    break; 
+  fi
+done

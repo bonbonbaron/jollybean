@@ -1,5 +1,5 @@
-#ifndef INFLATABLE_H
-#define INFLATABLE_H
+#ifndef INFLATABLE_UTIL_H
+#define INFLATABLE_UTIL_H
 #include "inflatable.h"
 
 Error inflatableNew(void *voidA, Inflatable **inflatablePP);

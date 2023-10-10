@@ -31,7 +31,7 @@ typedef struct {
  * straight into its texture instead. */
 #define SD_SKIP_INFLATION_    (0x00000004)
 #define SD_SKIP_UNPACKING_    (0x00000008)
-#define SD_SKIP_ASSEMBLY_     (0x000000f0)
+#define SD_SKIP_ASSEMBLY_     (0x00000010)
 
 typedef struct {
   U32 flags;     // used to indicate distinct histo inclusion, flags to skip inflation steps, etc.

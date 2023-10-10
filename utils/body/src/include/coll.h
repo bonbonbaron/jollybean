@@ -10,6 +10,8 @@
 #include "json.h"
 #include "anim.h"
 #include "fileUtils.h"
+#include "infUtil.h"
+#include "stripUtil.h"
 #include "xCollision.h"
 
 #define TEST_ 1

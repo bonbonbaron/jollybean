@@ -45,7 +45,8 @@ Error sdInflate(StripDataS *sdP) {
     return SUCCESS;
   }
   Error e = inflatableIni(sdP->ss.infP);
-  if (!e) {
+  // Skipping assembly means no map is used.
+  if (!e && !(sdP->flags & SD_SKIP_ASSEMBLY_) )  {
     e = inflatableIni(sdP->sm.infP);
   }
   return e;
@@ -53,12 +54,12 @@ Error sdInflate(StripDataS *sdP) {
 
 // Unpack bits to reconstruct original data (uesd for debugging img.c)
 Error sdUnpack(StripDataS *sdP) {
-  if (!sdP || (sdP->ss.infP && !sdP->ss.infP->compressedDataA)) {
-    return E_BAD_ARGS;
+  if (sdP && sdP->flags & SD_SKIP_UNPACKING_) {
+    return SUCCESS;
   }
 
-  if (sdP->flags & SD_SKIP_UNPACKING_) {
-    return SUCCESS;
+  if (!sdP || (sdP->ss.infP && !sdP->ss.infP->compressedDataA)) {
+    return E_BAD_ARGS;
   }
 
   Stripset *ssP = &sdP->ss;
@@ -93,7 +94,15 @@ Error sdUnpack(StripDataS *sdP) {
                      (sdP->ss.offset <<  8) |
                      (sdP->ss.offset      );
 
-  U32 *packedWordP    = (U32*) ssP->infP->inflatedDataP;
+  U32 *packedWordP;
+  // If the data was never compressed, then we're going to pull it from the "compressed" field.
+  // It's just a safe place to put data that otherwise would get deleted by stripClr().
+  if ( sdP->flags & SD_SKIP_INFLATION_ ) {
+    packedWordP = (U32*) ssP->infP->compressedDataA;  // storing here is a trick to avoid new data fields
+  }
+  else {  // But if it really IS inflated, pull the inflated data.
+    packedWordP = (U32*) ssP->infP->inflatedDataP;
+  }
   U32 *packedWordEndP = (U32*) ((U8*) ssP->infP->inflatedDataP + (ssP->infP->inflatedLen))
                              - (nUnitsInExtraPackedWord > 0);  // stop short of partially packed word
   U32 *dstUnpackedWordP    = (U32*) ssP->unpackedDataP;
@@ -122,24 +131,34 @@ Error sdUnpack(StripDataS *sdP) {
 }
 
 Error sdAssemble(StripDataS *sdP) {
+  if ( sdP && sdP->flags & SD_SKIP_ASSEMBLY_) {
+    return SUCCESS;
+  }
+
   if (!sdP || !sdP->ss.unpackedDataP || !sdP->sm.infP->inflatedDataP || sdP->assembledDataA
       || sdP->ss.nUnitsPerStrip == 0) {
     return E_BAD_ARGS;
   } 
 
-  if (sdP->flags & SD_SKIP_ASSEMBLY_) {
-    return SUCCESS;
-  }
-
   Error e = arrayNew((void**) &sdP->assembledDataA, sizeof(U8), sdP->sm.nIndices * sdP->ss.nUnitsPerStrip);
   
   // Piece together strips
   if (!e) {
+    // If the data was never compressed, then we're going to pull it from the "compressed" field.
+    // It's just a safe place to put data that otherwise would get deleted by stripClr().
+#if 0
+    if ( sdP->flags & SD_SKIP_INFLATION_ ) {
+      packedWordP = (U32*) ssP->infP->compressedDataA;  // storing here is a trick to avoid new data fields
+    }
+    else {  // But if it really IS inflated, pull the inflated data.
+      packedWordP = (U32*) ssP->infP->inflatedDataP;
+    }
+#endif
     StripmapElem *smElemP = sdP->sm.infP->inflatedDataP;
     StripmapElem *smElemEndP = smElemP + sdP->sm.nIndices;
-    U8 *unstrippedDataP = sdP->assembledDataA;
-    for (; smElemP < smElemEndP; ++smElemP, unstrippedDataP += sdP->ss.nUnitsPerStrip) {
-      memcpy(unstrippedDataP,
+    U8 *assembledDataP = sdP->assembledDataA;
+    for (; smElemP < smElemEndP; ++smElemP, assembledDataP += sdP->ss.nUnitsPerStrip) {
+      memcpy(assembledDataP,
              sdP->ss.unpackedDataP + (*smElemP * sdP->ss.nUnitsPerStrip),
              sdP->ss.nUnitsPerStrip);
     }

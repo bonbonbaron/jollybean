@@ -7,20 +7,23 @@ BUILDDIR       = ./build
 BINDIR         = ./bin
 INSTALLDIR     = /usr/local/lib
 
-JB = ${HOME}/hack/jollybean
-BLD = ${JB}/build
-SRC = ${JB}/src
-INC = ${SRC}/include
+JB = $(shell git rev-parse --show-toplevel)
+BLD = $(JB)/build/src
+SRC = $(JB)/src
 KR  = ${HOME}/jb/src/Keyring
 
+OBJS := ../file/build/fileUtils.o ../genie/build/genie.o ../stripUtil/build/stripUtil.o ../db/build/db.o ../infUtil/build/infUtil.o ${BUILDDIR}/body.o ${BUILDDIR}/img.o ${BUILDDIR}/anim.o ${BUILDDIR}/coll.o ${BUILDDIR}/previewImg.o ${BLD}/interface/interface.o 
+
+INCS := -I../stripUtil/src/include -I./src/include -I../infUtil/src/include -I$(SRC)/data/include -I$(SRC)/x/include -I$(SRC)/interface/include -I$(SRC)/include -I$(KR) -I../file/src/include/ -I../db/src/include -I../genie/src/include -I/usr/include/libfastjson 
+
 # Linker
-${BINDIR}/body: ../file/build/fileUtils.o ../genie/build/genie.o ../stripUtil/build/stripUtil.o ../db/build/db.o ../inflatable/build/inflatable.o ${BUILDDIR}/body.o ${BUILDDIR}/img.o ${BUILDDIR}/anim.o ${BUILDDIR}/coll.o ${BUILDDIR}/previewImg.o ${BLD}/interface.o ${BLD}/data.o
-	$(CC) -g ../file/build/fileUtils.o ../genie/build/genie.o ../db/build/db.o ../stripUtil/build/stripUtil.o ../inflatable/build/inflatable.o ${BUILDDIR}/img.o ${BUILDDIR}/anim.o ${BUILDDIR}/coll.o ${BUILDDIR}/previewImg.o ${BUILDDIR}/body.o -L${JB}/lib/ -ljollybean -lfastjson -lpthread $(shell pkg-config --libs zlib) $(shell sdl2-config --libs) $(shell libpng-config --libs) -o $@
+${BINDIR}/body: $(OBJS)
+	$(CC) --coverage -g $(OBJS) -L${JB}/lib/ -ljb -lfastjson -lpthread $(shell pkg-config --libs zlib) $(shell sdl2-config --libs) $(shell libpng-config --libs) -o $@
 	touch $@
 
 # Compiler
 ${BUILDDIR}/%.o: ./src/%.c ./src/include/%.h 
-	$(CC) -g $(shell sdl2-config --cflags) $(shell pkg-config --cflags zlib) $(shell libpng-config --cflags) -I../stripUtil/src/include -I./src/include -I../inflatable/src/include -I${INC} -I${KR} -I../file/src/include/ -I../db/src/include -I../genie/src/include -I/usr/include/libfastjson -O0 -c $< -o $@
+	$(CC) --coverage -g $(INCS) $(shell sdl2-config --cflags) $(shell pkg-config --cflags zlib) $(shell libpng-config --cflags) -O0 -c $< -o $@
 	touch $@
 
 ../file/build/fileUtils.o: ../file/src/fileUtils.c ../file/src/include/fileUtils.h
@@ -29,8 +32,8 @@ ${BUILDDIR}/%.o: ./src/%.c ./src/include/%.h
 ../stripUtil/build/stripUtil.o: ../stripUtil/src/stripUtil.c ../stripUtil/src/include/stripUtil.h
 	make -C ../stripUtil
 
-../inflatable/build/inflatable.o: ../inflatable/src/inflatable.c ../inflatable/src/include/inflatable.h
-	make -C ../inflatable
+../infUtil/build/infUtil.o: ../infUtil/src/infUtil.c ../infUtil/src/include/infUtil.h
+	make -C ../infUtil
 
 ../db/build/db.o: ../db/src/db.c ../db/src/include/db.h
 	make -C ../db
@@ -38,8 +41,14 @@ ${BUILDDIR}/%.o: ./src/%.c ./src/include/%.h
 ../genie/build/genie.o: ../genie/src/genie.c ../genie/src/include/genie.h
 	make -C ../genie
 
-${BLD}/%.o: ${SRC}/%.c
-	make -C ${JB}
+$(BLD)/data/%.o: $(SRC)/data/%.c
+	make -C $(JB)
+
+$(BLD)/x/%.o: $(SRC)/x/%.c
+	make -C $(JB)
+
+$(BLD)/interface/%.o: $(SRC)/interface/%.c
+	make -C $(JB)
 
 # Build dbectory (dependency)
 ${BUILDDIR}:

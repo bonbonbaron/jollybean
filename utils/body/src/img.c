@@ -418,7 +418,7 @@ Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *an
     e = stripNew(colormapA, stripLen, cmP->bpp, &cmP->sdP, SD_SKIP_ASSEMBLY_, verbose);
     //if (!e) {
     //  e = stripIni(cmP->sdP);  // Ah-HAH.... This is something I had a problem with before too. Looks like commenting it out here solved my problem then too.
-    //}
+    //}                          // Did it have to do with the SD_SKIP_ASSEMBLY_ above, perhaps?
     if (!e) {
       // We're gonna cheat and preview the ground truth image here. 
       // We'll test stripIni properly in _validateWholeInput().

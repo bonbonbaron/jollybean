@@ -8,8 +8,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include "xRender.h"
+#include "infUtil.h"
 #include "inflatable.h"
 #include "fileUtils.h"
+#include "stripUtil.h"
 #include "strip.h"
 #include "db.h"
 #include "genie.h"
