@@ -10,13 +10,13 @@ OBJS=$(SRCS:%.c=%.o)
 
 all: o
 
-o: ${OBJS} 
+o: ${OBJS} ${LIB_DIR}/libjb.a
 	$(CC) --coverage -g $(shell sdl2-config --libs) ${OBJS} -L${LIB_DIR} -ljb -o $@
 
 %.o: %.c
 	$(CC) --coverage -g $(shell sdl2-config --cflags) $(INCS) -c $< -o $@
 
-$(LIB_DIR)/libjb:
+$(LIB_DIR)/libjb.a:
 	make -C ${RPO_DIR}
 
 .PHONY: clean

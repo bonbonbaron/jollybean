@@ -75,12 +75,10 @@ XGetShareFuncDef_(Anim) {
       e = E_NULL_VAR;
     }
     if (!e) {
-      //printf("population of src rect map: %d\n", xP->srcRectMP->population);
       cP->srcRectP = (Rect_*) mapGet(xP->srcRectMP, entity);
       if (!cP->srcRectP) {
         e = E_BAD_KEY;
       }
-      //printf("population of dst rect map: %d\n", xP->dstRectMP->population);
       if (!e) {
         cP->dstRectP = (Rect_*) mapGet(xP->dstRectMP, entity);
         if (!cP->dstRectP) {
@@ -98,6 +96,7 @@ XPostMutateFuncDef_(Anim) {
   _cP->currFrameIdx   = 0;
   _cP->incrDecrement  = 1;  // assume we're going to start off animating forward
   // TODO take advantage of the anim's flag to decide whether to anchor the changed image to a side, corner, or center.
+  assert( _cP->srcRectP != NULL );  // Make sure components can see the shared source rectangles.
   _cP->srcRectP->x    = _cP->currStrip.frameA[0].rect.x;  // mailbox should get "offset" changes to this beforehand
   _cP->srcRectP->y    = _cP->currStrip.frameA[0].rect.y;  // mailbox should get "offset" changes to this beforehand
   _cP->srcRectP->w    = _cP->dstRectP->w = _cP->currStrip.frameA[0].rect.w;
@@ -140,8 +139,8 @@ Error xAnimRun(System *sP) {
           // If we just finished going backwards in a pingpong
           if (cP->incrDecrement < 0) {
             // Start over if we're repeating
+            cP->incrDecrement = 1;
             if (cP->currStrip.repeat) {
-              cP->incrDecrement = 1;
               cP->currFrameIdx  = 1;
             }
             // Deactivate if not repeating pingpong.

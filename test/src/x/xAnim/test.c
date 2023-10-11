@@ -27,6 +27,10 @@
 #define PINGPONG_LIM (0x03)
 #define DURATION (10)
 
+#define GOING_FORWARD FALSE
+#define GOING_BACKWARD TRUE
+#define IS_ANIMATED TRUE
+#define NOT_ANIMATED FALSE
 TAU_MAIN()
 
 typedef struct Tau {
@@ -54,7 +58,7 @@ TEST_F_SETUP(Tau) {
   REQUIRE_EQ(xGetNComps(tau->sP), tau->nEntities);
 
   // Populate all the entities' subcomponents.
-  for (Entity entity = 1; entity <= tau->nEntities; ++entity) {
+  forEachEntity_( tau->nEntities ) {
     // ************ MUTATIONS **************
     // Make a mutation map for the current entity.
     Map *currEntitysMutationMP = NULL;
@@ -64,6 +68,7 @@ TEST_F_SETUP(Tau) {
     for (Key i = 1; !tau->e && i <= tau->nMutationsPerEntity; ++i) {
       AnimFrame *currAnimFrameA;
       tau->e = arrayNew((void**) &currAnimFrameA, sizeof(AnimFrame), tau->nFramesPerStrip);
+      requireSuccess_;
       // populate the animation frames for this strip
       for (int j = 0; j < tau->nFramesPerStrip; ++j) {
         AnimFrame currFrame = {
@@ -77,93 +82,120 @@ TEST_F_SETUP(Tau) {
         };
         currAnimFrameA[j] = currFrame;
       }
-      requireSuccess_;
       AnimStrip currAnimStrip = {
         .nFrames = tau->nFramesPerStrip,  // fixed number of frames
         .flags = 0,   // flags are only used to tell when the rect's been offset already
-        .repeat = i & REPEAT_FLAG,  // odd-numbered 
-        .pingPong = i < PINGPONG_LIM,   // pingpong for the first two strips
+        .repeat = i & REPEAT_FLAG,  // odd-numbered strips do repeats
+        .pingPong = i < PINGPONG_LIM,   // strips numbered less than 3 do pingpong
         .frameA = currAnimFrameA
       };
+      // Stick the animation strip into the current entity's map of animation strips.
       tau->e = mapSet(currEntitysMutationMP, i, &currAnimStrip);
       requireSuccess_;
     }
     // Now that you've populated this entity's mutation map, add it to the system.
     tau->e = xAddMutationMap(&tau->xP->system, entity, currEntitysMutationMP);
     requireSuccess_;
+  }
 
-    // ************ SHARES **************
-    // TODO make a share map for *intP here.  // What was this for?
-    tau->e = mapNew(&tau->shareMPMP, MAP_POINTER, sizeof(Map*), 3);
+  // ************ SHARES **************
+  // TODO make a share map for *intP here.  // What was this for?
+  tau->e = mapNew(&tau->shareMPMP, MAP_POINTER, sizeof(Map*), 3);
+  requireSuccess_;
+  // Make the share inner map. This maps entities to actual, raw data.
+  Map *sharedSrcRectMP = NULL;  // Make the share inner map. Maps entities to shared rectangles.
+  Map *sharedDstRectMP = NULL;  // Make the share inner map. Maps entities to shared rectangles.
+  Map *sharedOffsetMP = NULL;  // Make the share inner map. Maps entities to shared rectangles.
+  tau->e = mapNew(&sharedSrcRectMP, RAW_DATA, sizeof(Rect_), tau->nEntities);
+  requireSuccess_;
+  tau->e = mapNew(&sharedDstRectMP, RAW_DATA, sizeof(Rect_), tau->nEntities);
+  requireSuccess_;
+  tau->e = mapNew(&sharedOffsetMP, RAW_DATA, sizeof(RectOffset), tau->nEntities);
+  requireSuccess_;
+  // Now populate the entities' shared rectangles.
+  // TODO I don't think this code is well-founded. You don't know what your source rect is until you mutate.
+  forEachEntity_( tau->nEntities ) {
+    Rect_ currSrcRect = { 0 };  // the post-mutate function will change this value before animating
+    tau->e = mapSet(sharedSrcRectMP, entity, &currSrcRect);
     requireSuccess_;
-    // Make the share inner map. This maps entities to actual, raw data.
-    Map *sharedSrcRectMP = NULL;  // Make the share inner map. Maps entities to shared rectangles.
-    Map *sharedDstRectMP = NULL;  // Make the share inner map. Maps entities to shared rectangles.
-    Map *sharedOffsetMP = NULL;  // Make the share inner map. Maps entities to shared rectangles.
-    tau->e = mapNew(&sharedSrcRectMP, RAW_DATA, sizeof(Rect_), tau->nEntities);
+    Rect_ currDstRect = { 0 };  // the post-mutate function will change this value before animating
+    tau->e = mapSet(sharedDstRectMP, entity, &currDstRect);
     requireSuccess_;
-    tau->e = mapNew(&sharedDstRectMP, RAW_DATA, sizeof(Rect_), tau->nEntities);
-    requireSuccess_;
-    tau->e = mapNew(&sharedOffsetMP, RAW_DATA, sizeof(RectOffset), tau->nEntities);
-    requireSuccess_;
-    // Now populate the entities' shared rectangles.
-    // TODO I don't think this code is well-founded. You don't know what your source rect is until you mutate.
-    forEachEntity_(tau->nEntities) {
-      Rect_ currSrcRect = { 0 };  // the post-mutate function will change this value before animating
-      tau->e = mapSet(sharedSrcRectMP, entity, &currSrcRect);
-      requireSuccess_;
-      Rect_ currDstRect = { 0 };  // the post-mutate function will change this value before animating
-      tau->e = mapSet(sharedDstRectMP, entity, &currDstRect);
-      requireSuccess_;
-      RectOffset currRectOffset = {
-        .x = OFFSET_X,  //  5
-        .y = OFFSET_Y   // 10
-      };
-      tau->e = mapSet(sharedOffsetMP, entity, &currRectOffset);
-      requireSuccess_;
-    }
-    // Map the inner share map to key value "0" in the outer shared map.
-    tau->e = mapSet(tau->shareMPMP, SRC_RECT, &sharedSrcRectMP);
-    requireSuccess_;
-    tau->e = mapSet(tau->shareMPMP, DST_RECT, &sharedDstRectMP);
-    requireSuccess_;
-    tau->e = mapSet(tau->shareMPMP, RECT_OFFSET, &sharedOffsetMP);
-    requireSuccess_;
-    // Give the shared map to the system. (This particular system wants a pointer to the inner shared map.)
-    tau->e = tau->xP->system.getShare(&tau->xP->system, tau->shareMPMP);
-    requireSuccess_;
-
-    // Make arrays of the immutable subcomponents. 
-    // We're passing in NULL as the component data so the system adds empty components.
-    // The postprocess function call hereafter will take care of the mutable velocities and shared rect pointers.
-    tau->e = xAddEntityData(&tau->xP->system, entity, ANIMATION, NULL);
-    // Finally, tell the animation system to update all its rects with their offsets.
-    for ( Entity entity = 1; entity < tau->nEntities; ++entity ) {
-      tau->e = mailboxWrite( tau->sP->mailboxF, ANIMATION, entity, UPDATE_RECT, 0 );
-      requireSuccess_;
-    }
+    RectOffset currRectOffset = {
+      .x = OFFSET_X,  //  5
+      .y = OFFSET_Y   // 10
+    };
+    tau->e = mapSet(sharedOffsetMP, entity, &currRectOffset);
     requireSuccess_;
   }
+  // If ordering is sacred, then we need fixed functions that'll encapsulate this sacred ordering for us.
+  // Now add the entity to the actual system itself.
+  forEachEntity_( tau->nEntities ) {
+    tau->e = xAddEntityData(&tau->xP->system, entity, ANIMATION, NULL);
+    requireSuccess_;
+  }
+  // Map the inner share map to key value "0" in the outer shared map.
+  tau->e = mapSet(tau->shareMPMP, SRC_RECT, &sharedSrcRectMP);
+  requireSuccess_;
+  tau->e = mapSet(tau->shareMPMP, DST_RECT, &sharedDstRectMP);
+  requireSuccess_;
+  tau->e = mapSet(tau->shareMPMP, RECT_OFFSET, &sharedOffsetMP);
+  requireSuccess_;
+  // Give the shared map to the system. (This particular system wants a pointer to the inner shared map.)
+  tau->e = tau->xP->system.getShare(&tau->xP->system, tau->shareMPMP);
+  requireSuccess_;
+  // Make arrays of the immutable subcomponents. 
+  // We're passing in NULL as the component data so the system adds empty components.
+  // The postprocess function call hereafter will take care of the mutable velocities and shared rect pointers.
+  // Finally, tell the animation system to update all its rects with their offsets.
+  forEachEntity_( tau->nEntities ) {
+    tau->e = mailboxWrite( tau->sP->mailboxF, ANIMATION, entity, UPDATE_RECT, 0 );
+    requireSuccess_;
+  }
+  // Go ahead and run the system to flush out the rectangle-update messages. 
+  // We need to leave room for the test cases' mailbox writes.
+  tau->e = xRun( tau->sP );
+  requireSuccess_;
+  
+
+  // PREPARE TEST SAMPLES
+  // *********************************
+  // Entity 6 strip 1: repeat + pingpong
+#define ENTITY_WITH_PINGPONG_REPEAT (6)
+  tau->e = mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_PINGPONG_REPEAT, MUTATE_AND_ACTIVATE, 1);
+  requireSuccess_;
+  // *********************************
+  // Entity 1 strip 2: pingpong only
+#define ENTITY_WITH_PINGPONG (1)
+  tau->e = mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_PINGPONG, MUTATE_AND_ACTIVATE, 2);
+  requireSuccess_;
+  // *********************************
+  // Entity 88 strip 3: repeat only
+#define ENTITY_WITH_REPEAT (88)  // TODO change back to 88 after you find and fix bug
+  tau->e = mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_REPEAT, MUTATE_AND_ACTIVATE, 3);
+  requireSuccess_;
+  // *********************************
+  // Entity 30 strip 4: neither repeat nor pingpong
+#define ENTITY_WITH_NOTHING (30)
+  tau->e = mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_NOTHING, MUTATE_AND_ACTIVATE, 4);
+  requireSuccess_;
+
+  // Don't run system here. Instead, let each test case decide whether to advance by timestep, frame, or full strip.
 }
 
 TEST_F_TEARDOWN(Tau) {
   xClr(&tau->xP->system);
 }
 
-void checkAnimComp( Tau *tau, Entity entity, U32 currDuration, U32 currFrameIdx, Bln isOffset, Bln isGoingBackwards ) {
+void checkAnimComp( Tau *tau, Entity entity, U32 currDuration, U32 expCurrFrameIdx, Bln isGoingBackwards ) {
   XAnimComp* cP = (XAnimComp*) xGetCompPByEntity(tau->sP, entity);
+  if ( !cP ) {
+    REQUIRE_EQ( 1, 0 );  // This means the entity doesn't have a component in this system.
+  }
   // If source rect is all zeros, we haven't begun any animation for this entity yet.
-  if ( cP->srcRectP->w == 0 ) {
-    printf("checking fresh stuff\n");
-    CHECK_EQ( cP->srcRectP->x, 0);
-    CHECK_EQ( cP->srcRectP->y, 0);
-    CHECK_EQ( cP->srcRectP->w, 0);
-    CHECK_EQ( cP->srcRectP->h, 0);
-    CHECK_EQ( cP->dstRectP->x, 0);
-    CHECK_EQ( cP->dstRectP->y, 0);
-    CHECK_EQ( cP->dstRectP->w, 0);
-    CHECK_EQ( cP->dstRectP->h, 0);
-    // Check non-rect stuff too.
+  if ( cP->incrDecrement == 0) {  // if this is 0, that implies we haven't mutated the anim comp to anything yet.
+    CHECK_TRUE( cP->srcRectP != NULL );  // despite no mutation, getShare() should've populated shared rect pointers
+    CHECK_TRUE( cP->dstRectP != NULL );  // despite no mutation, getShare() should've populated shared rect pointers
     CHECK_EQ( cP->incrDecrement, 0);
     CHECK_EQ( cP->currFrameIdx, 0);
     CHECK_EQ( cP->incrDecrement, 0);
@@ -172,39 +204,152 @@ void checkAnimComp( Tau *tau, Entity entity, U32 currDuration, U32 currFrameIdx,
   }
   // Otherwise, if we've started animating for this entity, we expect a post-mutation of the src/dstRect.
   else {
-    printf("checking changed stuff\n");
+    REQUIRE_TRUE( cP != NULL );
+    REQUIRE_TRUE( cP->srcRectP != NULL );
+    REQUIRE_TRUE( cP->dstRectP != NULL );
     CHECK_EQ( cP->srcRectP->x, RECT_X_COEFF * ( cP->currFrameIdx ) + OFFSET_X );
     CHECK_EQ( cP->srcRectP->y, RECT_Y_COEFF * ( cP->currFrameIdx ) + OFFSET_Y );
     CHECK_EQ( cP->srcRectP->w, entity * RECT_W_COEFF );
     CHECK_EQ( cP->srcRectP->h, entity * RECT_H_COEFF );
-    CHECK_EQ( cP->dstRectP->x, entity + DST_RECT_X);
-    CHECK_EQ( cP->dstRectP->y, entity + DST_RECT_Y);
-    CHECK_EQ( cP->dstRectP->w, entity * RECT_W_COEFF );
-    CHECK_EQ( cP->dstRectP->h, entity * RECT_H_COEFF );
+    CHECK_EQ( cP->dstRectP->x, 0 );
+    CHECK_EQ( cP->dstRectP->y, 0 );
+    CHECK_EQ( cP->dstRectP->w, cP->srcRectP->w );
+    CHECK_EQ( cP->dstRectP->h, cP->srcRectP->h );
     // Check non-rect stuff too.
     CHECK_EQ( cP->incrDecrement, isGoingBackwards ? -1 : 1 );
-    CHECK_EQ( cP->currFrameIdx, currFrameIdx);
+    CHECK_EQ( cP->currFrameIdx, expCurrFrameIdx);
     CHECK_EQ( cP->timeLeft, currDuration );
     CHECK_EQ( cP->currStrip.nFrames, tau->nFramesPerStrip );
   }
 }
 
+void advanceOneTimestep( Tau* tau ) {
+  tau->e = xRun(tau->sP);
+  CHECK_EQ( tau->e, SUCCESS );
+}
+
 void advanceOneFrame( Tau* tau ) {
-  for (int i = 0; i < tau->nFramesPerStrip; ++i) {
-    tau->e = xRun(tau->sP);
-    requireSuccess_;
+  for (int i = 0; i < DURATION; ++i) {
+    advanceOneTimestep( tau );
   }
 }
 
-TEST_F(Tau, xAnimMutate) {
-  // First, make sure entity 6's component still has its original values.
-  checkAnimComp( tau, 6, 0, 0, FALSE, FALSE );
-  // Request system to set entity 5's animation to the one mapped to arbitrary key, 1.
-  tau->e = mailboxWrite(tau->sP->mailboxF, ANIMATION, 6, MUTATE_AND_ACTIVATE, 1);
-  // TODO this may be a bug: I don't see the offset happening in the test results.
+void advanceOneStrip( Tau* tau ) {
+  for (int i = 0; i < tau->nFramesPerStrip; ++i) {
+    advanceOneFrame( tau );
+  }
+}
+
+void checkIfEntityIsAnimated( Tau* tau, Entity entity, Bln expectAnimated ) {
+  REQUIRE_TRUE ( tau->sP != NULL );
+  XAnimComp* cP = (XAnimComp*) xGetCompPByEntity( tau->sP, entity );
+  REQUIRE_TRUE ( cP != NULL );
+  U32 compIdx = cP - (XAnimComp*) tau->sP->cF;
+  CHECK_EQ( _frayElemIsActive(tau->sP->cF, compIdx ), expectAnimated );
+}
+
+// Test cases for repeating ping pong
+TEST_F(Tau, xAnim_repeatingPingpongStrip_incrementOneTimestep) {
+  advanceOneTimestep( tau );
+  checkAnimComp( tau, ENTITY_WITH_PINGPONG_REPEAT, DURATION - 1, 0, GOING_FORWARD );
+}
+
+TEST_F(Tau, xAnim_repeatingPingpongStrip_incrementOneFullFrame) {
+  advanceOneFrame( tau );
+  checkAnimComp( tau, ENTITY_WITH_PINGPONG_REPEAT, DURATION, 1, GOING_FORWARD );
+}
+
+TEST_F(Tau, xAnim_repeatingPingpongStrip_incrementOneFullStrip) {
+  advanceOneStrip( tau );
+  checkAnimComp( tau, ENTITY_WITH_PINGPONG_REPEAT, DURATION, 3, GOING_BACKWARD );
+}
+
+TEST_F(Tau, xAnim_repeatingPingpongStrip_fullPingPong) {
+  advanceOneStrip( tau );
+  checkIfEntityIsAnimated( tau, ENTITY_WITH_PINGPONG_REPEAT, IS_ANIMATED );
+  checkAnimComp( tau, ENTITY_WITH_PINGPONG_REPEAT, DURATION, 3, GOING_BACKWARD );
+  advanceOneStrip( tau );
+  checkAnimComp( tau, ENTITY_WITH_PINGPONG_REPEAT, DURATION, 2, GOING_FORWARD );
+}
+
+// Test cases for pingpong
+TEST_F(Tau, xAnim_pingPongStrip_incrementOneTimestep) {
+  advanceOneTimestep( tau );
+  checkAnimComp( tau, ENTITY_WITH_PINGPONG, DURATION - 1, 0, GOING_FORWARD );
+}
+
+TEST_F(Tau, xAnim_pingPongStrip_incrementOneFullFrame) {
+  checkAnimComp( tau, ENTITY_WITH_PINGPONG, 0, 0, GOING_FORWARD );
+  tau->e = mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_PINGPONG, MUTATE_AND_ACTIVATE, 1);
   CHECK_EQ(tau->e, SUCCESS);
-  tau->e = xRun(tau->sP);
+  advanceOneFrame( tau );
   CHECK_EQ(tau->e, SUCCESS);
-  checkAnimComp( tau, 6, DURATION - 1, 1, TRUE, FALSE );
+  checkAnimComp( tau, ENTITY_WITH_PINGPONG, DURATION, 1, GOING_FORWARD );
+}
+
+TEST_F(Tau, xAnim_pingPongStrip_incrementOneFullStrip) {
+  advanceOneStrip( tau );
+  checkIfEntityIsAnimated( tau, ENTITY_WITH_PINGPONG, IS_ANIMATED );
+  checkAnimComp( tau, ENTITY_WITH_PINGPONG, DURATION, 3, GOING_BACKWARD );
+}
+
+TEST_F(Tau, xAnim_pingPongStrip_fullPingPong) {
+  advanceOneStrip( tau );
+  checkIfEntityIsAnimated( tau, ENTITY_WITH_PINGPONG, IS_ANIMATED );
+  checkAnimComp( tau, ENTITY_WITH_PINGPONG, DURATION, 3, GOING_BACKWARD );
+  advanceOneStrip( tau );
+  checkAnimComp( tau, ENTITY_WITH_PINGPONG, 0, 0, GOING_FORWARD );
+}
+
+// Test cases for repeating
+TEST_F(Tau, xAnim_repeatingStrip_incrementOneTimestep) {
+  advanceOneTimestep( tau );
+  checkAnimComp( tau, ENTITY_WITH_REPEAT, DURATION - 1, 0, GOING_FORWARD );
+}
+
+TEST_F(Tau, xAnim_repeatingStrip_incrementOneFullFrame) {
+  advanceOneFrame( tau );
+  checkAnimComp( tau, ENTITY_WITH_REPEAT, DURATION, 1, GOING_FORWARD );
+}
+
+TEST_F(Tau, xAnim_repeatingStrip_incrementOneFullStrip) {
+  advanceOneStrip( tau );
+  checkIfEntityIsAnimated( tau, ENTITY_WITH_REPEAT, IS_ANIMATED );
+  checkAnimComp( tau, ENTITY_WITH_REPEAT, DURATION, 0, GOING_FORWARD );
+}
+
+TEST_F(Tau, xAnim_repeatingStrip_fullPingPong) {
+  advanceOneStrip( tau );
+  checkIfEntityIsAnimated( tau, ENTITY_WITH_REPEAT, IS_ANIMATED );
+  checkAnimComp( tau, ENTITY_WITH_REPEAT, DURATION, 0, GOING_FORWARD );
+  advanceOneStrip( tau );
+  checkIfEntityIsAnimated( tau, ENTITY_WITH_REPEAT, IS_ANIMATED );
+  checkAnimComp( tau, ENTITY_WITH_REPEAT, DURATION, 0, GOING_FORWARD );
+}
+
+// Test cases for neither pingpong nor repeating
+TEST_F(Tau, xAnim_vanillaStrip_incrementOneTimestep) {
+  advanceOneTimestep( tau );
+  checkAnimComp( tau, ENTITY_WITH_NOTHING, DURATION - 1, 0, GOING_FORWARD );
+}
+
+TEST_F(Tau, xAnim_vanillaStrip_incrementOneFullFrame) {
+  advanceOneFrame( tau );
+  checkAnimComp( tau, ENTITY_WITH_NOTHING, DURATION, 1, GOING_FORWARD );
+}
+
+TEST_F(Tau, xAnim_vanillaStrip_incrementOneFullStrip) {
+  advanceOneStrip( tau );
+  checkIfEntityIsAnimated( tau, ENTITY_WITH_NOTHING, NOT_ANIMATED );
+  checkAnimComp( tau, ENTITY_WITH_NOTHING, 0, tau->nFramesPerStrip - 1, GOING_FORWARD );
+}
+
+TEST_F(Tau, xAnim_vanillaStrip_fullPingPong) {
+  advanceOneStrip( tau );
+  checkIfEntityIsAnimated( tau, ENTITY_WITH_NOTHING, NOT_ANIMATED );
+  checkAnimComp( tau, ENTITY_WITH_NOTHING, 0, tau->nFramesPerStrip - 1, GOING_FORWARD );
+  advanceOneStrip( tau );
+  checkIfEntityIsAnimated( tau, ENTITY_WITH_NOTHING, NOT_ANIMATED );
+  checkAnimComp( tau, ENTITY_WITH_NOTHING, 0, tau->nFramesPerStrip - 1, GOING_FORWARD );
 }
 

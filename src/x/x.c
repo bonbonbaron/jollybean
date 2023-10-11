@@ -74,7 +74,7 @@ Error xActivateComponentByEntity(System *sP, Entity entity) {
   if (!compOrigIdxP) {
     return E_ENTITY_NOT_IN_SYSTEM;
   }
-  //frayChangesIni_(changes, *compOrigIdxP);
+  frayChangesIni_(changes, *compOrigIdxP);
   frayActivate(sP->cF, *compOrigIdxP, &changes);
   return _xSwap(sP, &changes);
 }
@@ -88,7 +88,7 @@ Error xDeactivateComponentByEntity(System *sP, Entity entity) {
   if (!compOrigIdxP) {
     return E_ENTITY_NOT_IN_SYSTEM;
   }
-  //frayChangesIni_(changes, *compOrigIdxP);
+  frayChangesIni_(changes, *compOrigIdxP);
   frayDeactivate(sP->cF, *compOrigIdxP, &changes);
   return _xSwap(sP, &changes);
 }
@@ -102,7 +102,7 @@ Error xPauseComponentByEntity(System *sP, Entity entity) {
   if (!compOrigIdxP) {
     return E_ENTITY_NOT_IN_SYSTEM;
   }
-  //frayChangesIni_(changes, *compOrigIdxP);
+  frayChangesIni_(changes, *compOrigIdxP);
   frayPause(sP->cF, *compOrigIdxP, &changes);
   return _xSwap(sP, &changes);
 }
@@ -116,7 +116,7 @@ Error xUnpauseComponentByEntity(System *sP, Entity entity) {
   if (!compOrigIdxP) {
     return E_ENTITY_NOT_IN_SYSTEM;
   }
-  //frayChangesIni_(changes, *compOrigIdxP);
+  frayChangesIni_(changes, *compOrigIdxP);
   frayUnpause(sP->cF, *compOrigIdxP, &changes);
   return _xSwap(sP, &changes);
 }
@@ -244,8 +244,10 @@ Error xIniSys(System *sP, U32 nComps, void *miscP) {
     e = mapNew(&sP->mutationMPMP, MAP_POINTER, sizeof(Map*), nComps);
   }
 	// Only allocate one mailbox; it serves as input and output.
+  // Also, give it ample room to handle multiple messages per entity.
+#define MAILBOX_MULTIPLY_NUM_SLOTS (3)
 	if (!e) {
-		e = frayNew((void**) &sP->mailboxF, sizeof(Message), nComps);
+		e = frayNew((void**) &sP->mailboxF, sizeof(Message), nComps * MAILBOX_MULTIPLY_NUM_SLOTS );
   }
   if (!e) {
     e = mapNew(&sP->subcompOwnerMP, RAW_DATA, sizeof(SubcompOwner), nComps);
@@ -416,7 +418,7 @@ Error xQueueDeactivate(System *sP, void *componentP) {
 
 /* This is how the entire ECS framework works. */
 Error xRun(System *sP) {
-  Error e =_xReadInbox(sP);
+  Error e = _xReadInbox(sP);
   if (!e) {
     e = sP->run(sP);
   }

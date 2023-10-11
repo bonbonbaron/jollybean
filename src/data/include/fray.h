@@ -68,6 +68,8 @@ inline void _frayClr(void *fP) {
       *_frayGetFirstEmptyIdxP(fP) = 0;
       *_frayGetNPausedP(fP) = 0;
       *_frayGetFirstInactiveIdxP(fP) = 0;
+
+      This is faster than zeroing out the whole fray.
   */
 }
 
