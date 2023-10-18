@@ -64,8 +64,8 @@ typedef struct {} XRenderMutation;
 Error cmGen(Colormap *imgP);
 void  cmClr(Colormap *imgP);
 Error atlasNew(Atlas **atlasPP, Colormap **cmPF);
-Error atlasPlanPlacements(Atlas *atlasP);
 void atlasDel(Atlas **atlasPP);
+Error atlasPlanPlacements(Atlas *atlasP);
 Error xRenderIniS(System *sP, void *sParamsP);
 Error xRenderProcessMessage(System *sP, Message *msgP);
 typedef void (*XRenderPresentU)(Renderer_ *rendererP);  // TODO uh.. what was this for again?

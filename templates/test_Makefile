@@ -11,10 +11,10 @@ OBJS=$(SRCS:%.c=%.o)
 all: o
 
 o: ${OBJS} 
-	$(CC) --coverage -g ${OBJS} -L${LIB_DIR} -ljb -o $@
+	$(CC) --coverage -g ${OBJS} -L${LIB_DIR} $(shell sdl2-config --libs) -ljb -o $@
 
 %.o: %.c
-	$(CC) --coverage -g $(INCS) -c $< -o $@
+	$(CC) --coverage -g $(INCS) $(shell sdl2-config --cflags) -c $< -o $@
 
 $(LIB_DIR)/libjb:
 	make -C ${RPO_DIR}

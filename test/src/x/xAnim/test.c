@@ -113,7 +113,7 @@ TEST_F_SETUP(Tau) {
   tau->e = mapNew(&sharedOffsetMP, RAW_DATA, sizeof(RectOffset), tau->nEntities);
   requireSuccess_;
   // Now populate the entities' shared rectangles.
-  // TODO I don't think this code is well-founded. You don't know what your source rect is until you mutate.
+  // You don't know what your source rect is until you mutate.
   forEachEntity_( tau->nEntities ) {
     Rect_ currSrcRect = { 0 };  // the post-mutate function will change this value before animating
     tau->e = mapSet(sharedSrcRectMP, entity, &currSrcRect);

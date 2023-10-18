@@ -501,6 +501,7 @@ XPostprocessCompsDef_(Render) {
   }
   // Zero the alpha out on black pixels since that's our invisible pixel.
   if (!e) {
+    // This local black pixel makes it easy to look for black pixels with memcmp.
     Color_ BLACK_PIXEL = {
       .r = 0,
       .g = 0,

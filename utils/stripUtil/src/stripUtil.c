@@ -575,7 +575,10 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bpu, StripDa
         (*sdPP)->flags = SD_SKIP_INFLATION_;
       }
       // if using zipped-up stripped & packed data...
-      else if ( smallestSz == zippedSz ) {
+      else if ( smallestSz == pkSpZpSz ) {
+        // No need to do anything. We have the inflatables already here.
+        // Keep the rest of the data as-is.
+        // Flags
         (*sdPP)->flags = 0;
       }
     }
@@ -645,10 +648,19 @@ Error writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripDataS *sdP
   strcat(ssInfName, "Stripset");
   strcat(ssInfName, "Inf");
 
+    // TODO: figure out all the cases things will vary by in here.
+    //       -- NO STRIPMAPS --
+    //       SD_SKIP_INFLATION_ | SD_SKIP_ASSEMBLY_  -> ss.infP->compressedDataA  ( packing only )
+    //       SD_SKIP_UNPACKING_ | SD_SKIP_ASSEMBLY_  -> ss.infP  ( zipping only )
+    //       SD_SKIP_ASSEMBLY_ -> ss.infP ( packing + zipping )
+    //
+    //       -- WITH STRIPMAPS --
+    //       
+    //       
 
   // Stripset inflatable
   Error e = inflatableAppend(sdP->ss.infP, fP, ssInfName);
-  if (!e) {
+  if (!e && !( sdP->flags & SD_SKIP_ASSEMBLY_ ) ) {
     // Stripmap inflatable
     e = inflatableAppend(sdP->sm.infP, fP, smInfName);
   }
@@ -659,7 +671,12 @@ Error writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripDataS *sdP
     // Stripmap
     fprintf(fP, "\t.sm = {\n");
     fprintf(fP, "\t\t.nIndices = %d,\n", sdP->sm.nIndices);
-    fprintf(fP, "\t\t.infP = &%s\n", smInfName);
+    if (!e && !( sdP->flags & SD_SKIP_ASSEMBLY_ ) ) {
+      fprintf(fP, "\t\t.infP = &%s\n", smInfName);
+    }
+    else {
+      fprintf(fP, "\t\t.infP = NULL\n", smInfName);
+    }
     fprintf(fP, "\t},\n");
     // Stripset
     fprintf(fP, "\t.ss = {\n");

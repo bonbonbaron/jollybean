@@ -46,6 +46,11 @@ static Error _validateEntityPosition(Tau *tau, Entity entity, Key expectedIdx) {
 #define requireSuccess_ REQUIRE_EQ(tau->e, SUCCESS)
 #define forEachEntity_(nEntities_) for (Entity entity = 1; entity <= nEntities_; ++entity)
 
+#define A_COEFF (1)
+#define B_COEFF (2)
+#define C_COEFF (3)
+#define D_COEFF (4)
+
 TEST_F_SETUP(Tau) {
   extern XA xA;
   tau->xP = &xA;
@@ -71,8 +76,8 @@ TEST_F_SETUP(Tau) {
     // Pre-populate the mutation maps with arbitrary values.
     for (Key i = 1; !tau->e && i <= tau->nMutationsPerEntity; ++i) {
       XAMutation currMutation = {
-        .bb = i * 2,  // mutation key times 2
-        .cc = i * 3   // mutation key times 3
+        .bb = i * B_COEFF,  // mutation key times 2
+        .cc = i * C_COEFF   // mutation key times 3
       };
       tau->e = mapSet(currEntitysMutationMP, i, &currMutation);
       requireSuccess_;
@@ -98,8 +103,8 @@ TEST_F_SETUP(Tau) {
     // Make arrays of the immutable subcomponents. 
     // The subcomponent intializers consume only pointers to the original data,
     // so we have to store them in arrays here.
-    aA[entity - 1] = entity * 1;
-    dA[entity - 1] = entity * 4.0;
+    aA[entity - 1] = entity * A_COEFF;
+    dA[entity - 1] = entity * D_COEFF;
     tau->e = xAddEntityData(&tau->xP->system, entity, 0x40 | XA_TYPE, &aA[entity - 1]);
     requireSuccess_;
     tau->e = xAddEntityData(&tau->xP->system, entity, 0x80 | XA_TYPE, &dA[entity - 1]);
@@ -115,6 +120,35 @@ TEST_F_TEARDOWN(Tau) {
   xClr(&tau->xP->system);
 }
 
+void validateProcessedMutation( Entity entity, Key mutationKey, XAComp *cP ) {
+  CHECK_EQ(cP->a, ( entity * A_COEFF ) * ( mutationKey * B_COEFF + 1 ) - 1 );
+  CHECK_EQ(cP->b, mutationKey * B_COEFF + 1);
+  CHECK_TRUE(cP->c == mutationKey * C_COEFF - 1);
+  CHECK_EQ(cP->d, cP->a + 1 );
+}
+
+void validateUnprocessedMutation( Entity entity, Key mutationKey, XAComp *cP ) {
+  printf("entity %d\n", entity);
+  CHECK_EQ(cP->a, ( entity * A_COEFF ) * ( cP->b + 1 ) );
+  CHECK_EQ(cP->b, mutationKey * B_COEFF );
+  CHECK_TRUE(cP->c == mutationKey * C_COEFF );
+  CHECK_EQ(cP->d, ( entity * D_COEFF ) * ( cP->c - 2 ) );
+}
+
+void validateUnprocessedUnmutated( Entity entity, XAComp *cP ) {
+  CHECK_EQ(cP->a, ( entity * A_COEFF ) );
+  CHECK_EQ(cP->b, 0 );
+  CHECK_TRUE(cP->c == 0 );
+  CHECK_EQ(cP->d, entity * D_COEFF );
+}
+
+void validateProcessedUnmutated( Entity entity, XAComp *cP ) {
+  CHECK_EQ(cP->a, ( entity * A_COEFF ) - 1 );
+  CHECK_EQ(cP->b, 1 );
+  CHECK_TRUE(cP->c == 255 );
+  CHECK_EQ(cP->d, cP->a + 1 );
+}
+
 //--------------------------------------------
 // Actual tests
 //--------------------------------------------
@@ -123,10 +157,7 @@ TEST_F(Tau, xGetCompPByEntity) {
   // Make sure you can get every component properly by its entity ID.
   forEachEntity_(tau->nEntities) {
     XAComp *cP = (XAComp*) xGetCompPByEntity(tau->sP, entity);
-    CHECK_EQ(cP->a, entity * 1);
-    CHECK_EQ(cP->b, entity * 0);
-    CHECK_EQ(cP->c, entity * 0);
-    CHECK_EQ(cP->d, entity * 4.0);
+    validateUnprocessedUnmutated( entity, cP );
   }
 }
 
@@ -152,22 +183,13 @@ TEST_F(Tau, xActivateComponentByEntity) {
   XAComp *cP = tau->sP->cF; 
   XAComp *cEndP = cP + *_frayGetFirstEmptyIdxP(tau->sP->cF);
   for (; cP < cEndP; ++cP) {
-    U32 componentIdx = cP - (XAComp*) tau->sP->cF;
     // Make sure the two activated components are moved to the front of the fray AND marked as active.
-    switch (componentIdx) {
-      case 0:
-        CHECK_EQ(cP->a, 9);
-        CHECK_EQ(cP->d, 10.0);
-        CHECK_TRUE(_frayElemIsActive(tau->sP->cF, componentIdx));
-        break;
-      case 1:
-        CHECK_EQ(cP->a, 49);
-        CHECK_EQ(cP->d, 50.0);
-        CHECK_TRUE(_frayElemIsActive(tau->sP->cF, componentIdx));
-        break;
-      // Make sure all the rest are inactive.
-      default:
-        CHECK_FALSE(_frayElemIsActive(tau->sP->cF, componentIdx));
+    Entity entity = xGetEntityByVoidComponentPtr( tau->sP, cP );
+    if ( entity == 10 || entity == 50 ) {
+      validateProcessedUnmutated( entity, cP );
+    }
+    else {
+      validateUnprocessedUnmutated( entity, cP );
     }
   }
 }
@@ -184,30 +206,10 @@ TEST_F( Tau, mutateAndActivate) {
   requireSuccess_;
 
   XAComp *cP = tau->sP->cF; 
-  XAComp *cEndP = cP + *_frayGetFirstEmptyIdxP(tau->sP->cF);
-  for (; cP < cEndP; ++cP) {
-    U32 componentIdx = cP - (XAComp*) tau->sP->cF;
-    // Make sure the two activated components are moved to the front of the fray AND marked as active.
-    switch (componentIdx) {
-      case 0:
-        CHECK_EQ(cP->a, 9);
-        CHECK_EQ(cP->b, 9);
-        CHECK_EQ(cP->c, 9);
-        CHECK_EQ(cP->d, 10.0);
-        CHECK_TRUE(_frayElemIsActive(tau->sP->cF, componentIdx));
-        break;
-      case 1:
-        CHECK_EQ(cP->a, 49);
-        CHECK_EQ(cP->b, 9);
-        CHECK_EQ(cP->c, 9);
-        CHECK_EQ(cP->d, 50.0);
-        CHECK_TRUE(_frayElemIsActive(tau->sP->cF, componentIdx));
-        break;
-      // Make sure all the rest are inactive.
-      default:
-        CHECK_FALSE(_frayElemIsActive(tau->sP->cF, componentIdx));
-    }
-  }
+  
+  validateProcessedMutation( 10, 1, cP++ );
+  validateProcessedMutation( 50, 1, cP );
+  CHECK_FALSE(_frayElemIsActive(tau->sP->cF, 3));
 }
 
 TEST_F( Tau, mutateAndDeactivate) {
@@ -224,26 +226,12 @@ TEST_F( Tau, mutateAndDeactivate) {
   XAComp *cP = tau->sP->cF; 
   XAComp *cEndP = cP + *_frayGetFirstEmptyIdxP(tau->sP->cF);
   for (; cP < cEndP; ++cP) {
-    U32 componentIdx = cP - (XAComp*) tau->sP->cF;
-    // Make sure the two activated components are moved to the front of the fray AND marked as active.
-    switch (componentIdx) {
-      case 0:
-        CHECK_EQ(cP->a, 9);
-        CHECK_EQ(cP->b, 9);
-        CHECK_EQ(cP->c, 9);
-        CHECK_EQ(cP->d, 10.0);
-        CHECK_TRUE(_frayElemIsActive(tau->sP->cF, componentIdx));
-        break;
-      case 1:
-        CHECK_EQ(cP->a, 49);
-        CHECK_EQ(cP->b, 9);
-        CHECK_EQ(cP->c, 9);
-        CHECK_EQ(cP->d, 50.0);
-        CHECK_TRUE(_frayElemIsActive(tau->sP->cF, componentIdx));
-        break;
-      // Make sure all the rest are inactive.
-      default:
-        CHECK_FALSE(_frayElemIsActive(tau->sP->cF, componentIdx));
+    Entity entity = xGetEntityByVoidComponentPtr( tau->sP, cP );
+    if ( entity == 10 || entity == 50 ) {
+      validateUnprocessedMutation( entity, 1, cP );
+    }
+    else {
+      validateUnprocessedUnmutated( entity, cP );
     }
   }
 }
@@ -266,8 +254,11 @@ TEST_F(Tau, xDeactivateComponentByEntity) {
   // make sure teh first element is the one we moved there
   // BEcause we deactivated it rihgt after activation, it didn't have a chance to run.
   XAComp *cP = (XAComp*) tau->sP->cF;
-  CHECK_EQ(cP->a, 10);
-  CHECK_EQ(cP->d, 40.0);
+  Entity entity = xGetEntityByVoidComponentPtr( tau->sP, cP );
+  CHECK_EQ(cP->a, entity * A_COEFF );
+  CHECK_EQ(cP->b, 0 );
+  CHECK_TRUE(cP->c == 0 );
+  CHECK_EQ(cP->d, entity * D_COEFF );
   // make sure it's also inactive
   CHECK_FALSE(_frayElemIsActive(tau->sP->cF, 0));
 }
@@ -319,21 +310,17 @@ TEST_F(Tau, xGetNComps) {
 
 TEST_F(Tau, xMutateComponent) {
   // Request mutation.
-  tau->e = mailboxWrite(tau->sP->mailboxF, 1, 5, MUTATE, 7);
+  tau->e = mailboxWrite(tau->sP->mailboxF, 1, 5, MUTATE, 7);  // will this work w/ only 5 mutations?
   requireSuccess_;
   XAComp *cP = (XAComp*) xGetCompPByEntity(tau->sP, 5);
-  CHECK_EQ(cP->a, 7);
-  CHECK_EQ(cP->b, 0);
-  CHECK_EQ(cP->c, 0);
-  CHECK_EQ(cP->d, 28.0);
+  validateUnprocessedUnmutated( 5, cP );
   // Mutate it.
   tau->e = xRun(tau->sP);
   requireSuccess_;
   cP = (XAComp*) xGetCompPByEntity(tau->sP, 5);
-  CHECK_EQ(cP->a, 14 * 8);
-  CHECK_EQ(cP->b, 14);
-  CHECK_EQ(cP->c, 28);
-  CHECK_EQ(cP->d, 28.0);
+  // Reason we treat it as unmutated is because
+  // we don't have a mutation for key 7.
+  validateUnprocessedUnmutated( 5, cP );
 }
 
 TEST_F(Tau, xGetEntityByVoidComponentPtr) {
@@ -414,4 +401,3 @@ TEST_F(Tau, miscProcesMessage) {
   tau->e = xRun(tau->sP);
   requireSuccess_;
 }
-

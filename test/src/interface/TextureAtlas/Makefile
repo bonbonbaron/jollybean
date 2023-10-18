@@ -12,21 +12,26 @@ CP_OBJ_DIR = ${COLOR_PALETTE_DIR}/obj
 
 JB_DIR = $(shell git rev-parse --show-toplevel)
 KR_DIR = ${HOME}/jb/src/Keyring
-#~/jb/build/Seed/Genome/Gene/Body/Graybody/Colormap/src/I
-./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./main.o ${JB_DIR}/build/xRender.o ${JB_DIR}/build/x.o ${JB_DIR}/build/data.o ${JB_DIR}/build/interface.o ${JB_DIR}/utils/body/build/previewImg.o
-	gcc --coverage ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ${JB_DIR}/utils/body/build/previewImg.o ./main.o ${JB_DIR}/build/interface.o $(shell sdl2-config --libs) ${JB_DIR}/build/xRender.o ${JB_DIR}/build/x.o ${JB_DIR}/build/data.o -lpthread -o $@
+LIB_DIR := $(JB_DIR)/lib
+
+
+_INCS   := $(shell find ${JB_DIR}/src -type d -name include) ${CM_INC_DIR} ${CP_INC_DIR} $(shell find ${JB_DIR}/utils/ -type d -name include)
+INCS    := $(_INCS:%=-I%)
+
+./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./main.o ${LIB_DIR}/libjb.a ${JB_DIR}/utils/body/build/previewImg.o
+	gcc --coverage ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ${JB_DIR}/utils/body/build/previewImg.o ./main.o $(shell sdl2-config --libs) -L${LIB_DIR} -ljb -lpthread -o $@
 	touch $@
 
 ./main.o: ./main.c
-	gcc --coverage -g -c main.c -I${KR_DIR} -I${JB_DIR}/src/include/ -I${JB_DIR}/utils/body/src/include -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags --cflags) -o $@
+	gcc --coverage -g -c main.c ${INCS} $(shell sdl2-config --cflags --cflags) -o $@
 	touch $@
 
 ${CM_OBJ_DIR}/%Colormap.o: ${CM_SRC_DIR}/%Colormap.c
-	gcc --coverage -g -I${KR_DIR} -I${JB_DIR}/src/include -c ${CM_SRC_DIR}/$*Colormap.c $(shell sdl2-config --cflags) -o $@
+	gcc --coverage -g ${INCS} -c ${CM_SRC_DIR}/$*Colormap.c $(shell sdl2-config --cflags) -o $@
 	touch $@
 
 ${CP_OBJ_DIR}/%ColorPalette.o: ${CP_SRC_DIR}/%ColorPalette.c
-	gcc --coverage -g -I${KR_DIR} -I${JB_DIR}/src/include -c $< $(shell sdl2-config --cflags) -o $@
+	gcc --coverage -g ${INCS} -c $< $(shell sdl2-config --cflags) -o $@
 	touch $@
 
 ${CP_SRC_DIR}/%ColorPalette.c:
@@ -37,14 +42,16 @@ ${CM_SRC_DIR}/%Colormap.c:
 	${JB_DIR}/utils/body/bin/body $*
 	touch $@
 
-./%.o: %.c 
-	${CC} --coverage -g -I${INC} -c $*.c -o $@
+./%.o: %.c ${_INCS}
+	${CC} --coverage -g ${INCS} -c $*.c -o $@
 	touch $@
 
-${BLD}/%.o: ${SRC}/%.c ${INC}/%.h
-	gcc --coverage -g -c $< -I${INC} -o $@
+${BLD}/%.o: ${SRC}/%.c ${_INCS}
+	gcc --coverage -g -c $< ${INCS} -o $@
 	touch $@
 
+$(LIB_DIR)/libjb.a:
+	make -C ${JB_DIR}
 
 .PHONY: clean
 clean:

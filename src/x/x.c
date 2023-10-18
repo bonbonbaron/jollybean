@@ -308,6 +308,7 @@ Error xMutateComponent(System *sP, Entity entity, Key newCompKey) {
         memcpy((U8*) cP + sP->mutationOffset, tmpP, arrayGetElemSz(mutationMP->mapA));
         return sP->postMutate(sP, cP);
       }
+      // It's a design decision to not error out when mutation doesn't exist. 
     }
   }
   return e;

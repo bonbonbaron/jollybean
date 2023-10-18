@@ -1,5 +1,4 @@
 #include "interface.h"
-#include "data.h"
 #include "blehColormap.h"
 #include "blehColorPalette.h"
 #include "heckColormap.h"

@@ -1,8 +1,25 @@
 #!/bin/bash
 
+# Put this in /etc/bash_completion.d/
+: '
+# Define function to find sources in a "src" folder.
+function getSrcs() {
+	REPO_DIR=$(git rev-parse --show-toplevel)
+	# Make sure user is in a repo.
+	if [ -z "$REPO_DIR" ]; then
+	  echo "You are not in a repo. Exiting..."
+	  return 1
+	fi
+	# Populate completion array.
+	COMPREPLY+=($(find $REPO_DIR/src -type f -name "${2}*.c" -exec basename {} .c \;))
+}
+
+complete -F getSrcs unit-test
+'
+
 #Directories 
 REPO_DIR=$(git rev-parse --show-toplevel)
-SRC_DIR=${REPO_DIR}/src
+SRC_DIR=${REPO_DIR}
 TEST_BASE_DIR=${REPO_DIR}/test
 
 # Path to source file we want to test
@@ -15,6 +32,7 @@ if [ ! -f ${OBJ_PATH} ]; then
   exit 1
 fi
 
+echo src dir is $SRC_DIR
 echo src basename is ${SRC_BASENAME}
 echo src path is ${SRC_PATH}
 echo obj path is $OBJ_PATH
@@ -26,7 +44,10 @@ fi
 # Make the test directory if it doesn't already exist
 if [ ! -z "${SRC_PATH}" -a ! -z "${SRC_BASENAME}" ]; then
   # Cut the jollybean repo's src directory out of the destination subdirectory path.
+  echo dirname of src path is $(dirname "${SRC_PATH}") 
+  echo trying to sed "s,${SRC_DIR}/(.*),\1/${SRC_BASENAME},gp"
   TRIM_TEST_DIR=$(echo $(dirname "${SRC_PATH}") | sed -n -E "s,${SRC_DIR}/(.*),\1/${SRC_BASENAME},gp")
+  echo trim dir is $TRIM_TEST_DIR
   if [ ! -z ${TRIM_TEST_DIR} ]; then
     # Prepend jollybean's test directory to the above result.
     TEST_DIR=${TEST_BASE_DIR}/${TRIM_TEST_DIR}
@@ -50,7 +71,7 @@ if [ ! -z "${SRC_PATH}" -a ! -z "${SRC_BASENAME}" ]; then
 
     # Make main function to call all of the above functions.
     echo -e "
-TAU_MAIN()
+TAU_MAIN();
 
 typedef struct Tau {
   // Put stuff to instantiate here. 
@@ -67,18 +88,21 @@ TEST_F_TEARDOWN(Tau) {
 " >> ${OUTPUT_FILE}
 
 for f in ${functionsToTest[*]}; do
-  echo -e "
+echo -e "
 TEST_F(Tau, $f) {
   REQUIRE_TRUE(1);
 }" >> $OUTPUT_FILE
 done
 
-    cat $OUTPUT_FILE
-    
+cat $OUTPUT_FILE
+
     # Makefile
     if [ ! -z ${TEST_DIR} ]; then
       # Don't clobber existing Makefiles.
       cp -n ${REPO_DIR}/templates/test_Makefile ${TEST_DIR}/Makefile
     fi
+  else
+    echo "\$TRIM_TEST_DIR doesn't exist."
+    exit 1
   fi
 fi
