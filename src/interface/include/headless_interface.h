@@ -58,8 +58,6 @@ void present ( Renderer* rendererP );
 #define copy_ copy
 #define present_ present
 // Control
-defineDumb_( Event_ );
-#define QUIT_ 123
 #define KEY_a_ KEY_A
 #define KEY_b_ KEY_B
 #define KEY_c_ KEY_C
