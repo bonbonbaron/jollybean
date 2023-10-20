@@ -69,7 +69,6 @@ Error atlasPlanPlacements(Atlas *atlasP);
 Error xRenderIniS(System *sP, void *sParamsP);
 Error xRenderProcessMessage(System *sP, Message *msgP);
 typedef void (*XRenderPresentU)(Renderer_ *rendererP);  // TODO uh.. what was this for again?
-extern XRenderPresentU present;
 extern XPostprocessCompsDef_(Render);
 
 typedef struct {

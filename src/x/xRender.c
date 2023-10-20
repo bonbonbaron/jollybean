@@ -304,7 +304,7 @@ Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void
       // Prevent copies of sub-palettes in texture atlas palette by marking them as initialized.
       if (!(cpP->state & INITIALIZED)) {
         cpP->state |= INITIALIZED;
-        cpP->atlasPaletteOffset = xP->atlasPaletteOffset;
+        cpP->atlasPaletteOffset = xP->atlasPaletteOffset;  // TODO delete this
         xP->atlasPaletteOffset += cpP->nColors;
         e = frayAdd(xP->cpPF, (void*) &cpP, NULL);
       }
@@ -492,6 +492,7 @@ XPostprocessCompsDef_(Render) {
   }
   // Texture surface palette
 #if 1
+  // Combine all the input images' color palettes into an overall atlas color palette.
   if (!e) {
     ColorPalette **cpPP = xP->cpPF;
     ColorPalette **cpEndPP = cpPP + *_frayGetFirstEmptyIdxP(xP->cpPF);
@@ -499,7 +500,7 @@ XPostprocessCompsDef_(Render) {
       appendAtlasPalette(atlasSurfaceP, *cpPP);
     }
   }
-  // Zero the alpha out on black pixels since that's our invisible pixel.
+  // Zero the atlas palette's alpha channels out on black pixels since that's our invisible pixel.
   if (!e) {
     // This local black pixel makes it easy to look for black pixels with memcmp.
     Color_ BLACK_PIXEL = {
@@ -509,8 +510,8 @@ XPostprocessCompsDef_(Render) {
       .a = 255
     };
     Color_ INVISIBLE_PIXEL = {0};
-    Color_ *colorP = atlasSurfaceP->format->palette->colors;
-    Color_ *colorEndP = colorP + atlasSurfaceP->format->palette->ncolors;
+    Color_ *colorP = getColorPalette( atlasSurfaceP );
+    Color_ *colorEndP = colorP + getNColors( atlasSurfaceP );
     for (; colorP < colorEndP; ++colorP) {
       if (!memcmp(colorP, &BLACK_PIXEL, sizeof(Color_))) {
         *colorP = INVISIBLE_PIXEL;
