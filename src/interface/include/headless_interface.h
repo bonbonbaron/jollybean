@@ -60,35 +60,35 @@ void present ( Renderer* rendererP );
 // Control
 defineDumb_( Event_ );
 #define QUIT_ 123
-#define KEY_a_ 'a'
-#define KEY_b_ 'b'
-#define KEY_c_ 'c'
-#define KEY_d_ 'd'
-#define KEY_e_ 'e'
-#define KEY_f_ 'f'
-#define KEY_g_ 'g'
-#define KEY_h_ 'h'
-#define KEY_i_ 'i'
-#define KEY_j_ 'j'
-#define KEY_k_ 'k'
-#define KEY_l_ 'l'
-#define KEY_m_ 'm'
-#define KEY_n_ 'n'
-#define KEY_o_ 'o'
-#define KEY_p_ 'p'
-#define KEY_q_ 'q'
-#define KEY_r_ 'r'
-#define KEY_s_ 's'
-#define KEY_t_ 't'
-#define KEY_u_ 'u'
-#define KEY_v_ 'v'
-#define KEY_w_ 'w'
-#define KEY_x_ 'x'
-#define KEY_y_ 'y'
-#define KEY_z_ 'z'
-#define KEY_SPACE_ ' '
-#define KEY_LSHIFT_  154124 // undefined for our purposes
-#define KEY_ESCAPE_  27  // code for Esc
+#define KEY_a_ KEY_A
+#define KEY_b_ KEY_B
+#define KEY_c_ KEY_C
+#define KEY_d_ KEY_D
+#define KEY_e_ KEY_E
+#define KEY_f_ KEY_F
+#define KEY_g_ KEY_G
+#define KEY_h_ KEY_H
+#define KEY_i_ KEY_I
+#define KEY_j_ KEY_J
+#define KEY_k_ KEY_K
+#define KEY_l_ KEY_L
+#define KEY_m_ KEY_M
+#define KEY_n_ KEY_N
+#define KEY_o_ KEY_O
+#define KEY_p_ KEY_P
+#define KEY_q_ KEY_Q
+#define KEY_r_ KEY_R
+#define KEY_s_ KEY_S
+#define KEY_t_ KEY_T
+#define KEY_u_ KEY_U
+#define KEY_v_ KEY_V
+#define KEY_w_ KEY_W
+#define KEY_x_ KEY_X
+#define KEY_y_ KEY_Y
+#define KEY_z_ KEY_Z
+#define KEY_SPACE_ KEY_SPACE
+#define KEY_LSHIFT_  KEY_LEFTSHIFT // undefined for our purposes
+#define KEY_ESCAPE_  KEY_ESC  // code for Esc
 
 #endif  // #ifndef HEADLESS_INTERFACE_H
 

@@ -1,12 +1,28 @@
 #include "interface.h"
 #include <assert.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <linux/input.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <termios.h>
+
+
+#define KEYFILE "/dev/input/event0" // Use your keyboard's event file
+#define VAL_KEY_UP (0)
+#define VAL_KEY_DOWN (1)
+#define VAL_KEY_REPEAT (2)
 
 // TODO abstract away all SDL-specific stuff to an SDL-based interface header, 
 //      which in turn will be selected in interface.h.
 /**********************
  * Rendering
  *********************/
+static struct termios tty_attr;
+static FILE *file = NULL;
 
 Error guiNew(Gui **guiPP) {
 	if (!guiPP) {
@@ -40,6 +56,21 @@ Error guiNew(Gui **guiPP) {
     guiDel(guiPP);
 		return EXIT_FAILURE;
 	}
+  
+  if ( !e ) {
+    if ((file = fopen(KEYFILE, "rb")) == NULL)
+    {
+      perror("Could not open specified path");
+      exit(1);
+    }
+
+    // Set terminal settings: 
+    struct termios new_tty_attr = tty_attr;
+    new_tty_attr.c_lflag &= ~(ICANON | ECHO); // turn off canonic mode and echo
+
+    // Apply new terminal settings
+    tcsetattr(STDIN_FILENO, TCSANOW, &new_tty_attr);
+  }
 
 	return e;
 }
@@ -245,84 +276,99 @@ Error multiThread( CriticalFunc funcP, void *_array) {
 }
 
 Error guiProcessEvents(Gui *guiP) {
-	while (pollEvent_(&event)) {
-		if (event.type == EVENT_QUIT_) {
-      return E_QUIT;
-		}
-    // Keyboard button-release events (only process this if engine is unpaused)
-    // NOTE: You can implement a partial pause with any one of the other keys.
-    if (guiP->state == UNPAUSED) {
-      if (event.type == EVENT_KEYUP_ && event.key.repeat == 0) {
-        switch(event.key.keysym.sym) {
-        case KEY_a_:      guiP->buttonsPressed &= ~BTN_PRESSED_a; break;
-        case KEY_b_:      guiP->buttonsPressed &= ~BTN_PRESSED_b; break;
-        case KEY_c_:      guiP->buttonsPressed &= ~BTN_PRESSED_c; break;
-        case KEY_d_:      guiP->buttonsPressed &= ~BTN_PRESSED_d; break;
-        case KEY_e_:      guiP->buttonsPressed &= ~BTN_PRESSED_e; break;
-        case KEY_f_:      guiP->buttonsPressed &= ~BTN_PRESSED_f; break;
-        case KEY_g_:      guiP->buttonsPressed &= ~BTN_PRESSED_g; break;
-        case KEY_h_:      guiP->buttonsPressed &= ~BTN_PRESSED_h; break;
-        case KEY_i_:      guiP->buttonsPressed &= ~BTN_PRESSED_i; break;
-        case KEY_j_:      guiP->buttonsPressed &= ~BTN_PRESSED_j; break;
-        case KEY_k_:      guiP->buttonsPressed &= ~BTN_PRESSED_k; break;
-        case KEY_l_:      guiP->buttonsPressed &= ~BTN_PRESSED_l; break;
-        case KEY_m_:      guiP->buttonsPressed &= ~BTN_PRESSED_m; break;
-        case KEY_n_:      guiP->buttonsPressed &= ~BTN_PRESSED_n; break;
-        case KEY_o_:      guiP->buttonsPressed &= ~BTN_PRESSED_o; break;
-        case KEY_p_:      guiP->buttonsPressed &= ~BTN_PRESSED_p; break;
-        case KEY_q_:      guiP->buttonsPressed &= ~BTN_PRESSED_q; break;
-        case KEY_r_:      guiP->buttonsPressed &= ~BTN_PRESSED_r; break;
-        case KEY_s_:      guiP->buttonsPressed &= ~BTN_PRESSED_s; break;
-        case KEY_t_:      guiP->buttonsPressed &= ~BTN_PRESSED_t; break;
-        case KEY_u_:      guiP->buttonsPressed &= ~BTN_PRESSED_u; break;
-        case KEY_v_:      guiP->buttonsPressed &= ~BTN_PRESSED_v; break;
-        case KEY_w_:      guiP->buttonsPressed &= ~BTN_PRESSED_w; break;
-        case KEY_x_:      guiP->buttonsPressed &= ~BTN_PRESSED_x; break;
-        case KEY_y_:      guiP->buttonsPressed &= ~BTN_PRESSED_y; break;
-        case KEY_z_:      guiP->buttonsPressed &= ~BTN_PRESSED_z; break;
-        case KEY_SPACE_:  guiP->buttonsPressed &= ~BTN_PRESSED_SPACE; break;
-        case KEY_LSHIFT_: guiP->buttonsPressed &= ~BTN_PRESSED_LSHIFT; break;
-        case KEY_ESCAPE_: return E_QUIT;
-        default:
-          break;
+
+  // ******************************************  Move things above this comment to guiNew
+  // ******************************************  Move things above this comment to guiNew
+  // ******************************************  Move things above this comment to guiNew
+  // ******************************************  Move things above this comment to guiNew
+  // Restore old terminal settings before exiting
+  tcsetattr(STDIN_FILENO, TCSANOW, &tty_attr);
+  // Move things above this comment to guiDel
+  // ******************************************  Move things above this comment to guiNew
+  // ******************************************  Move things above this comment to guiNew
+  // ******************************************  Move things above this comment to guiNew
+  // ******************************************  Move things above this comment to guiNew
+
+  // Keyboard button-release events (only process this if engine is unpaused)
+  // NOTE: You can implement a partial pause with any one of the other keys.
+  // Grab each key press event
+  struct input_event ev;
+  while ( fread((void *)&ev, sizeof(ev), 1, file) != 0 ) {
+
+    if ((ev.type == EV_KEY) && (ev.value != VAL_KEY_REPEAT))
+    {
+      printf("type: %d, val: %d, code: %d\n", ev.type, ev.value, ev.code); // EV_KEY corresponds to key press events
+      if ( ev.value == VAL_KEY_UP ) {
+        switch( ev.code ) {
+          case KEY_a_:      guiP->buttonsPressed &= ~BTN_PRESSED_a; break;
+          case KEY_b_:      guiP->buttonsPressed &= ~BTN_PRESSED_b; break;
+          case KEY_c_:      guiP->buttonsPressed &= ~BTN_PRESSED_c; break;
+          case KEY_d_:      guiP->buttonsPressed &= ~BTN_PRESSED_d; break;
+          case KEY_e_:      guiP->buttonsPressed &= ~BTN_PRESSED_e; break;
+          case KEY_f_:      guiP->buttonsPressed &= ~BTN_PRESSED_f; break;
+          case KEY_g_:      guiP->buttonsPressed &= ~BTN_PRESSED_g; break;
+          case KEY_h_:      guiP->buttonsPressed &= ~BTN_PRESSED_h; break;
+          case KEY_i_:      guiP->buttonsPressed &= ~BTN_PRESSED_i; break;
+          case KEY_j_:      guiP->buttonsPressed &= ~BTN_PRESSED_j; break;
+          case KEY_k_:      guiP->buttonsPressed &= ~BTN_PRESSED_k; break;
+          case KEY_l_:      guiP->buttonsPressed &= ~BTN_PRESSED_l; break;
+          case KEY_m_:      guiP->buttonsPressed &= ~BTN_PRESSED_m; break;
+          case KEY_n_:      guiP->buttonsPressed &= ~BTN_PRESSED_n; break;
+          case KEY_o_:      guiP->buttonsPressed &= ~BTN_PRESSED_o; break;
+          case KEY_p_:      guiP->buttonsPressed &= ~BTN_PRESSED_p; break;
+          case KEY_q_:      guiP->buttonsPressed &= ~BTN_PRESSED_q; break;
+          case KEY_r_:      guiP->buttonsPressed &= ~BTN_PRESSED_r; break;
+          case KEY_s_:      guiP->buttonsPressed &= ~BTN_PRESSED_s; break;
+          case KEY_t_:      guiP->buttonsPressed &= ~BTN_PRESSED_t; break;
+          case KEY_u_:      guiP->buttonsPressed &= ~BTN_PRESSED_u; break;
+          case KEY_v_:      guiP->buttonsPressed &= ~BTN_PRESSED_v; break;
+          case KEY_w_:      guiP->buttonsPressed &= ~BTN_PRESSED_w; break;
+          case KEY_x_:      guiP->buttonsPressed &= ~BTN_PRESSED_x; break;
+          case KEY_y_:      guiP->buttonsPressed &= ~BTN_PRESSED_y; break;
+          case KEY_z_:      guiP->buttonsPressed &= ~BTN_PRESSED_z; break;
+          case KEY_SPACE_:  guiP->buttonsPressed &= ~BTN_PRESSED_SPACE; break;
+          case KEY_LSHIFT_: guiP->buttonsPressed &= ~BTN_PRESSED_LSHIFT; break;
+          default: break;
         }  // switch-case for keys released
       } // if key-up event
-      // Keyboard button-press events
-      else if (event.type == EVENT_KEYDOWN_ && event.key.repeat == 0) {
-        switch(event.key.keysym.sym) {
-        case KEY_a_:      guiP->buttonsPressed |=  BTN_PRESSED_a; break;
-        case KEY_b_:      guiP->buttonsPressed |=  BTN_PRESSED_b; break;
-        case KEY_c_:      guiP->buttonsPressed |=  BTN_PRESSED_c; break;
-        case KEY_d_:      guiP->buttonsPressed |=  BTN_PRESSED_d; break;
-        case KEY_e_:      guiP->buttonsPressed |=  BTN_PRESSED_e; break;
-        case KEY_f_:      guiP->buttonsPressed |=  BTN_PRESSED_f; break;
-        case KEY_g_:      guiP->buttonsPressed |=  BTN_PRESSED_g; break;
-        case KEY_h_:      guiP->buttonsPressed |=  BTN_PRESSED_h; break;
-        case KEY_i_:      guiP->buttonsPressed |=  BTN_PRESSED_i; break;
-        case KEY_j_:      guiP->buttonsPressed |=  BTN_PRESSED_j; break;
-        case KEY_k_:      guiP->buttonsPressed |=  BTN_PRESSED_k; break;
-        case KEY_l_:      guiP->buttonsPressed |=  BTN_PRESSED_l; break;
-        case KEY_m_:      guiP->buttonsPressed |=  BTN_PRESSED_m; break;
-        case KEY_n_:      guiP->buttonsPressed |=  BTN_PRESSED_n; break;
-        case KEY_o_:      guiP->buttonsPressed |=  BTN_PRESSED_o; break;
-        case KEY_p_:      guiP->buttonsPressed |=  BTN_PRESSED_p; break;
-        case KEY_q_:      guiP->buttonsPressed |=  BTN_PRESSED_q; break;
-        case KEY_r_:      guiP->buttonsPressed |=  BTN_PRESSED_r; break;
-        case KEY_s_:      guiP->buttonsPressed |=  BTN_PRESSED_s; break;
-        case KEY_t_:      guiP->buttonsPressed |=  BTN_PRESSED_t; break;
-        case KEY_u_:      guiP->buttonsPressed |=  BTN_PRESSED_u; break;
-        case KEY_v_:      guiP->buttonsPressed |=  BTN_PRESSED_v; break;
-        case KEY_w_:      guiP->buttonsPressed |=  BTN_PRESSED_w; break;
-        case KEY_x_:      guiP->buttonsPressed |=  BTN_PRESSED_x; break;
-        case KEY_y_:      guiP->buttonsPressed |=  BTN_PRESSED_y; break;
-        case KEY_z_:      guiP->buttonsPressed |=  BTN_PRESSED_z; break;
-        case KEY_SPACE_:  guiP->buttonsPressed |=  BTN_PRESSED_SPACE; break;
-        case KEY_LSHIFT_: guiP->buttonsPressed |=  BTN_PRESSED_LSHIFT; break;
-        case KEY_ESCAPE_: return E_QUIT;
+        // Keyboard button-press events
+      else if ( ev.value == VAL_KEY_DOWN ) {
+        switch( ev.code ) {
+          case KEY_a_:      guiP->buttonsPressed |=  BTN_PRESSED_a; break;
+          case KEY_b_:      guiP->buttonsPressed |=  BTN_PRESSED_b; break;
+          case KEY_c_:      guiP->buttonsPressed |=  BTN_PRESSED_c; break;
+          case KEY_d_:      guiP->buttonsPressed |=  BTN_PRESSED_d; break;
+          case KEY_e_:      guiP->buttonsPressed |=  BTN_PRESSED_e; break;
+          case KEY_f_:      guiP->buttonsPressed |=  BTN_PRESSED_f; break;
+          case KEY_g_:      guiP->buttonsPressed |=  BTN_PRESSED_g; break;
+          case KEY_h_:      guiP->buttonsPressed |=  BTN_PRESSED_h; break;
+          case KEY_i_:      guiP->buttonsPressed |=  BTN_PRESSED_i; break;
+          case KEY_j_:      guiP->buttonsPressed |=  BTN_PRESSED_j; break;
+          case KEY_k_:      guiP->buttonsPressed |=  BTN_PRESSED_k; break;
+          case KEY_l_:      guiP->buttonsPressed |=  BTN_PRESSED_l; break;
+          case KEY_m_:      guiP->buttonsPressed |=  BTN_PRESSED_m; break;
+          case KEY_n_:      guiP->buttonsPressed |=  BTN_PRESSED_n; break;
+          case KEY_o_:      guiP->buttonsPressed |=  BTN_PRESSED_o; break;
+          case KEY_p_:      guiP->buttonsPressed |=  BTN_PRESSED_p; break;
+          case KEY_q_:      guiP->buttonsPressed |=  BTN_PRESSED_q; break;
+          case KEY_r_:      guiP->buttonsPressed |=  BTN_PRESSED_r; break;
+          case KEY_s_:      guiP->buttonsPressed |=  BTN_PRESSED_s; break;
+          case KEY_t_:      guiP->buttonsPressed |=  BTN_PRESSED_t; break;
+          case KEY_u_:      guiP->buttonsPressed |=  BTN_PRESSED_u; break;
+          case KEY_v_:      guiP->buttonsPressed |=  BTN_PRESSED_v; break;
+          case KEY_w_:      guiP->buttonsPressed |=  BTN_PRESSED_w; break;
+          case KEY_x_:      guiP->buttonsPressed |=  BTN_PRESSED_x; break;
+          case KEY_y_:      guiP->buttonsPressed |=  BTN_PRESSED_y; break;
+          case KEY_z_:      guiP->buttonsPressed |=  BTN_PRESSED_z; break;
+          case KEY_SPACE_:  guiP->buttonsPressed |=  BTN_PRESSED_SPACE; break;
+          case KEY_LSHIFT_: guiP->buttonsPressed |=  BTN_PRESSED_LSHIFT; break;
         }  // switch-case for keys pressed
       }  // if key-down event
-		}  // if unpaused
-	}
+    }
+    if (ev.code ==1 ) {
+      return E_QUIT;
+    }
+  }
   return SUCCESS;
 }
 
