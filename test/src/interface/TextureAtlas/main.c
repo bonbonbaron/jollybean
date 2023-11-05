@@ -1,3 +1,4 @@
+#define USE_HEADLESS_INTERFACE
 #include "interface.h"
 #include "blehColormap.h"
 #include "blehColorPalette.h"

@@ -109,12 +109,12 @@ void appendAtlasPalette(Surface_ *atlasSurfaceP, ColorPalette *srcPaletteP) {
       srcPaletteP->colorA, srcPaletteP->atlasPaletteOffset, srcPaletteP->nColors);
 }
 
-Color_* getColorPalette( Surface *surfaceP ) {
-  return atlasSurfaceP->format->palette->colors;
+Color_* getColorPalette( Surface_ *surfaceP ) {
+  return surfaceP->format->palette->colors;
 }
 
-U32 getNColors( Surface *surfaceP ) {
-  return atlasSurfaceP->format->palette->ncolors;
+U32 getNColors( Surface_ *surfaceP ) {
+  return surfaceP->format->palette->ncolors;
 }
 
 Error textureNew(Texture_ **texturePP, Renderer_ *rendererP, Surface_ *surfaceP) {

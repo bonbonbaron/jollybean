@@ -4,7 +4,9 @@
 #include "strip.h"
 
 // Choose your interface!!
-#define USE_HEADLESS_INTERFACE  // for now, do this.
+#ifndef USE_HEADLESS_INTERFACE
+#define USE_SDL_INTERFACE  // default to this when we're not specifying headless for now
+#endif
 #ifdef USE_SDL_INTERFACE
 #include "SDL_interface.h"
 #else
@@ -110,8 +112,8 @@ void surfaceDel(Surface_ **surfacePP);
 
 // Atlas Palette
 void appendAtlasPalette(Surface_ *atlasSurfaceP, ColorPalette *srcPaletteP);
-Color_* getColorPalette( Surface *surfaceP );
-U32 getNColors( Surface *surfaceP );
+Color_* getColorPalette( Surface_ *surfaceP );
+U32 getNColors( Surface_ *surfaceP );
 
 // Texture
 Error textureNew(Texture_ **texturePP, Renderer_ *rendererP, Surface_ *surfaceP);

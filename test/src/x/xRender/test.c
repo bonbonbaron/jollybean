@@ -1,5 +1,13 @@
 #include "tau/tau.h"
+#define USE_HEADLESS_INTERFACE
 #include "xRender.h"
+// Images we're testing xRender with
+#include "blehColormap.h"
+#include "blehColorPalette.h"
+#include "heckColormap.h"
+#include "heckColorPalette.h"
+#include "redColormap.h"
+#include "redColorPalette.h"
 
 
 // We have to make these constants so the compiler doesn't cry about the array initializers not having constant sizes.
@@ -44,16 +52,24 @@ TEST_F_SETUP(Tau) {
   extern XRender xRender;
   tau->xP = &xRender;
   tau->sP = &tau->xP->system;
+  // Make a new GUI.
+  tau->e = guiNew( &tau->xP->guiP );
+  requireSuccess_;
+  // Initialize the system basics.
   tau->nEntities = N_ENTITIES;
   tau->nMutationsPerEntity = N_MUTATIONS_PER_ENTITY;
   tau->e = xIniSys(tau->sP, tau->nEntities, NULL);
   tau->renderCompF = tau->sP->cF;
-  requireSuccess_;
   REQUIRE_EQ(tau->sP->compSz, sizeof(XRenderComp));
   REQUIRE_EQ(xGetNComps(tau->sP), tau->nEntities);
 
+  // FIRST: Gather a list of requirements you need so you don't need to sit here scratching your head too much.
+  // 1) source rects
+  // 2) dest rects 
+  // 3) colormaps
+  // 4) color palettes
+  // 5) body'ing the three test images you have in Makefile (steal from 
   // ************ SHARES **************
-  // TODO make a share map for *intP here.  // What was this for?
   tau->e = mapNew(&tau->shareMPMP, MAP_POINTER, sizeof(Map*), 3);
   requireSuccess_;
   // Make the share inner map. This maps entities to actual, raw data.
@@ -128,9 +144,71 @@ TEST_F_SETUP(Tau) {
 }
 
 TEST_F_TEARDOWN(Tau) {
-  // Free stuff in the tau struct here.
+  guiDel( &tau->xP->guiP );
+  xClr( &tau->xP->system );
 }
 
 TEST_F(Tau, xRenderRun) {
   REQUIRE_TRUE(1);
+}
+#define USE_HEADLESS_INTERFACE
+#include "previewImg.h"
+
+int main(int argc, char **argv) {
+  // ====================================================
+  // Repeat things done in multithreadingg test for setup
+  // ====================================================
+  Colormap **cmPF = NULL;
+
+  Colormap *cmPA[] = {
+    &blehColormap,
+    &redColormap,
+    &heckColormap
+  };
+
+  ColorPalette *cpPA[] = {
+    &blehColorPalette,
+    &redColorPalette,
+    &heckColorPalette
+  };
+
+  // Why're we putting it in a fray?
+  Error e = frayNew((void**) &cmPF, sizeof(Colormap*), 3);
+  for (U32 i = 0; !e && i < 3; ++i) {
+    e = frayAdd(cmPF, &cmPA[i], NULL);
+  }
+
+  U32 N_SAMPLES = *_frayGetFirstEmptyIdxP(cmPF);
+
+  // Offset color palette and colormap indices to match future texture atlas destinations
+  U8 atlasOffset = 0;
+  for (int i = 0; !e && i < N_SAMPLES; ++i) {
+    cpPA[i]->atlasPaletteOffset = cmPF[i]->sdP->ss.offset = atlasOffset;
+    atlasOffset += cpPA[i]->nColors;
+  }
+
+  // Extract stripdatas into an array so we can multithread process them all.
+  StripDataS **sdPA = NULL;
+  if (!e) {
+    e = arrayNew((void**) &sdPA, sizeof(StripDataS*), N_SAMPLES);
+  }
+
+  if (!e) {
+    for (U32 i = 0, iEnd = arrayGetNElems(sdPA); i < iEnd; ++i) {
+      sdPA[i] = cmPF[i]->sdP;
+    }
+  }
+
+  // Inflate colormap inflatables
+  for (int i = 0; !tau->e && i < N_SAMPLES; ++i) {
+    tau->e = stripIni(sdPA[i]);
+  }
+
+  // ====================================================
+  // Clean up
+  // ====================================================
+  arrayDel((void**) &sdPA);
+  frayDel((void**) &cmPF);
+  arrayDel((void**) &atlasPixelA);
+  return e;
 }

@@ -1,3 +1,4 @@
+#define USE_HEADLESS_INTERFACE
 #include "interface.h"
 #include <assert.h>
 #include <math.h>
@@ -47,7 +48,7 @@ Error guiNew(Gui **guiPP) {
   if (!e) {
     e = jbAlloc( (void**) &(*guiPP)->rendererP, sizeof(Window), 1 );
     if ( !e ) {
-      e = arrayNew( (void**) &(*guiPP)->rendererP->dstTextureP, sizeof(Texture), 1 );
+      e = arrayNew( (void**) &(*guiPP)->rendererP->dstTextureP, sizeof(Texture_), 1 );
     }
 
   }
@@ -81,16 +82,19 @@ void guiDel(Gui **guiPP) {
     jbFree((void**) &(*guiPP)->windowP);
     jbFree((void**) guiPP);
   }
+  if (file) {
+    fclose(file);
+  }
 }
 
-static Color_* _getPixelP( Texture *textureP, U32 x, U32 y ) {
+static Color_* _getPixelP( Texture_ *textureP, U32 x, U32 y ) {
   assert( textureP && textureP->pixelA &&
       ( textureP->pixelA + ( textureP->w * textureP->h ) + x ) < ( textureP->pixelA + ( arrayGetNElems( textureP->pixelA ) ) ) );
   return textureP->pixelA + ( textureP->w * textureP->h ) + x;
 }
 
 // Since the headless renderer isn't actually going to display anything, we don't care about scaling.
-Error copy ( Renderer* rendererP, Texture* srcTextureP, Rect* srcRectP, Rect* dstRectP ) {
+Error copy ( Renderer* rendererP, Texture_* srcTextureP, Rect_* srcRectP, Rect_* dstRectP ) {
   if ( !rendererP || !srcTextureP || !srcRectP || !dstRectP ) {
     return E_BAD_ARGS;
   }
@@ -134,7 +138,7 @@ Error copy ( Renderer* rendererP, Texture* srcTextureP, Rect* srcRectP, Rect* ds
   U32 dstEndX = ( ( dstRectP->x + dstRectP->w ) >= rendererP->dstTextureP->w ) ? rendererP->dstTextureP->w : dstRectP->x;
   U32 dstEndY = ( ( dstRectP->y + dstRectP->h ) >= rendererP->dstTextureP->h ) ? rendererP->dstTextureP->h : dstRectP->y;
 
-  Texture* dstTextureP = rendererP->dstTextureP;
+  Texture_* dstTextureP = rendererP->dstTextureP;
   S32 dstW = ( dstEndX - dstStartX ) * sizeof( Color_ );  // We'll clip it if necessary.
 
   Color_* srcStartPixelP;
@@ -186,7 +190,7 @@ Error textureNew(Texture_ **texturePP, Renderer_ *rendererP, Surface_ *surfaceP)
 	if ( !texturePP || !rendererP || !surfaceP ) {
     return E_BAD_ARGS;
   }
-  Error e = jbAlloc( (void**) texturePP, sizeof( Texture ), 1 );
+  Error e = jbAlloc( (void**) texturePP, sizeof( Texture_ ), 1 );
   if (!e ) {
     e = arrayNew( (void**) &(*texturePP)->pixelA, sizeof( Color_ ), surfaceP->w * surfaceP->h );
     if ( e ) {
