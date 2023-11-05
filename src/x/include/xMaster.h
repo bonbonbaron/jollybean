@@ -85,6 +85,7 @@ typedef struct _Gene {
       U8 type;         // lower 6 bits hold system this belongs to, upper 2 is component subtype
       U8 size;         // sizeof destination component type (so we can memcpy the right size into the ECS target system/sharedPool/BB)
       Key key;         // key that lets you mutate a seed's gene to this one; 0 for immutable
+      U8 isIngredient; // tells master whether to feed this into a system
       void *dataP;     // the location of the gene's actual data
     } unitary;
     Composite composite;

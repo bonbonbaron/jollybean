@@ -183,7 +183,6 @@ int main(int argc, char **argv) {
   // Offset color palette and colormap indices to match future texture atlas destinations
   U8 atlasOffset = 0;
   for (int i = 0; !e && i < N_SAMPLES; ++i) {
-    cpPA[i]->atlasPaletteOffset = cmPF[i]->sdP->ss.offset = atlasOffset;
     atlasOffset += cpPA[i]->nColors;
   }
 

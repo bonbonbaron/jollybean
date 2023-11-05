@@ -103,12 +103,6 @@ void surfaceDel(Surface_ **surfacePP) {
   }
 }
 
-// TODO delete this function
-void appendAtlasPalette(Surface_ *atlasSurfaceP, ColorPalette *srcPaletteP) {
-  SDL_SetPaletteColors(atlasSurfaceP->format->palette, 
-      srcPaletteP->colorA, srcPaletteP->atlasPaletteOffset, srcPaletteP->nColors);
-}
-
 Color_* getColorPalette( Surface_ *surfaceP ) {
   return surfaceP->format->palette->colors;
 }

@@ -481,12 +481,17 @@ static Error _distributeGene(
       if (!((*((StripDataS**) gene.u.unitary.dataP))->flags & SD_SET_FOR_INFLATION_)) {
         (*((StripDataS**) gene.u.unitary.dataP))->flags |= SD_SET_FOR_INFLATION_;
         e = frayAdd(sdPF, gene.u.unitary.dataP, NULL);
+        // If we DON'T want to feed this bad boy into a system, then let's not do that.
+        // Sometimes genes need to point to things out in space. 
+        if ( !gene.u.unitary.isIngredient ) {
+          break;
+        }
+        // Fall through to next case to distribute media gene to the system.
+        // These media are still compressed at this point, but it'll be inflated after distributing to systems.
       }
       if (e) {
         break;
       }
-    // Fall through to next case to distribute media gene to the system.
-    // These media are still compressed at this point, but it'll be inflated after distro'ing.
     case EXCLUSIVE_GENE:
       childSysPP = (XMasterComp*) xGetCompPByEntity(masterSysP, gene.u.unitary.type & MASK_COMPONENT_TYPE);
       if (childSysPP) {

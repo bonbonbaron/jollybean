@@ -1,35 +1,5 @@
 #include "xRender.h"
 
-// =========================================
-// Clear color map and all its related data.
-// =========================================
-void cmClr(Colormap *cmP) {
-	if (cmP != NULL && cmP->sdP != NULL) {
-    stripClr(cmP->sdP);
-	}
-}
-
-// =====================================================================
-// Build color map by inflating, unpacking, and piecing together strips.
-// =====================================================================
-Error cmGen(Colormap *cmP) {
-	Error e;
-
-	if (cmP != NULL && cmP->sdP != NULL) {
-		// Check if the image has already been reconstructed. If so, get out.
-		if (cmP->sdP->assembledDataA != NULL) {   // Colormap has already been reconstructed.
-			return SUCCESS;  
-    }
-		// If not reconstructed yet, inflate strip set if it's still compressed (inflate() checks internally).
-    e = stripIni(cmP->sdP);
-	}
-	else {
-		e = E_BAD_ARGS;
-  }
-
-	return e;
-}
-
 static inline Error __atlasLinkNodes(
     Atlas *atlasP,
     Key parentIdx, 
@@ -100,13 +70,13 @@ inline static void _setRectData(AtlasElem *elP, U32 _max, S32 w, S32 h, Key srcI
 }
 
 // Sort colormaps by largest dimension
-// TODO treat cmPA as a fray, not an array. There needs to be something to guard against this.
-Error atlasNew(Atlas **atlasPP, Colormap **cmPF) {
-  if (!atlasPP || !cmPF) {
+// Because the atlas grows in two different dimensions as we figure out the best placement of images into it, we don't allocate its texture here yet.
+Error atlasNew(Atlas **atlasPP, Image** imgPF) {
+  if (!atlasPP || !imgPF) {
     return E_BAD_ARGS;
   }
 
-  U32 N_ATLAS_ELEMS = *_frayGetFirstEmptyIdxP(cmPF);
+  const U32 N_ATLAS_ELEMS = *_frayGetFirstEmptyIdxP(imgPF);
 
   Error e = jbAlloc((void**) atlasPP, sizeof(Atlas), 1);
   if (!e) {
@@ -116,26 +86,26 @@ Error atlasNew(Atlas **atlasPP, Colormap **cmPF) {
   if (!e) {
     AtlasElem *atlasA = (*atlasPP)->btP;
     // Populate first element so the next one has something to sort against.
-    _setRectData(&atlasA[0], cmPF[0]->w > cmPF[0]->h ?  cmPF[0]->w : cmPF[0]->h,
-                 cmPF[0]->w, cmPF[0]->h, 0);
+    _setRectData(&atlasA[0], imgPF[0]->cmP->w > imgPF[0]->cmP->h ?  imgPF[0]->cmP->w : imgPF[0]->cmP->h,
+                 imgPF[0]->cmP->w, imgPF[0]->cmP->h, 0);
 
     (*atlasPP)->extremityA[0] = 0;
     (*atlasPP)->extremityA[1] = 0;
 
     // Loop through the unsorted rectangles
     for (U32 i = 1; i < N_ATLAS_ELEMS; ++i) {
-      U32 currRectMaxDim = cmPF[i]->w > cmPF[i]->h ?
-                           cmPF[i]->w : cmPF[i]->h;
+      U32 currRectMaxDim = imgPF[i]->cmP->w > imgPF[i]->cmP->h ?
+                           imgPF[i]->cmP->w : imgPF[i]->cmP->h;
       // Loop through sorted rectangles to see where the current unsorted one should go.
       for (U32 j = 0; j < i; ++j) {
         if (currRectMaxDim > atlasA[j].maxDim) {
           memmove(&atlasA[j + 1], &atlasA[j], sizeof(AtlasElem) * (i - j));
-          _setRectData(&atlasA[j], currRectMaxDim, cmPF[i]->w, cmPF[i]->h, i);
+          _setRectData(&atlasA[j], currRectMaxDim, imgPF[i]->cmP->w, imgPF[i]->cmP->h, i);
           goto nextUnsortedRect;
         }
       }
       // If loop ended without placing rect anywhere, it belongs in last element.
-      _setRectData(&atlasA[i], currRectMaxDim, cmPF[i]->w, cmPF[i]->h, i);
+      _setRectData(&atlasA[i], currRectMaxDim, imgPF[i]->cmP->w, imgPF[i]->cmP->h, i);
       nextUnsortedRect:
       continue;
     }
@@ -264,10 +234,7 @@ Error xRenderIniSys(System *sP, void *sParamsP) {
   XRender *xP = (XRender*) sP;
   // Components array should have already been allocated by this point, so it's safe to get its size.
   U32 nComponents = xGetNComps(sP);
-  Error e = frayNew((void**) &xP->cmPF, sizeof(Colormap*), nComponents);
-  if (!e) {
-    e = frayNew((void**) &xP->cpPF, sizeof(ColorPalette*), nComponents);
-  }
+  Error e = frayNew((void**) &xP->imgPF, sizeof(Image*), nComponents);
   if (!e) {
     e = frayNew((void**) &xP->entityF, sizeof(Entity), nComponents);
   }
@@ -278,39 +245,26 @@ Error xRenderIniSys(System *sP, void *sParamsP) {
 // Initialize xRender's components' elements (Colormaps and Color Palettes)
 //=========================================================================
 Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void *dataP) {
-	if (!sP || !entity || !dataP || !subtype) {
-		return E_BAD_ARGS;
+  if (!sP || !entity || !dataP || !subtype) {
+    return E_BAD_ARGS;
   }
 
-  ColorPalette *cpP;
-  Colormap *cmP;
+  Image* imgP;
 
   XRender *xP = (XRender*) sP;
   Error e = SUCCESS;
 
-  // If it's a color palette, increment the system's atlas palette offset.
-  // We use type to determine system.
-  // Then we use subtype to determine what it does with it. 
+  // Images will prevent duplicate colormap-palette pairs.
   switch (subtype) {
-    case COLORMAP:
-      cmP = (Colormap*) dataP;
-      if (!(cmP->state & INITIALIZED)) {
-        cmP->state |= INITIALIZED;
-        e = frayAdd(xP->cmPF, (void*) &cmP, NULL);
-      }
-      break;
-    case COLOR_PALETTE:
-      cpP = (ColorPalette*) dataP;
-      // Prevent copies of sub-palettes in texture atlas palette by marking them as initialized.
-      if (!(cpP->state & INITIALIZED)) {
-        cpP->state |= INITIALIZED;
-        cpP->atlasPaletteOffset = xP->atlasPaletteOffset;  // TODO delete this
-        xP->atlasPaletteOffset += cpP->nColors;
-        e = frayAdd(xP->cpPF, (void*) &cpP, NULL);
+    case IMAGE:
+      imgP = (Image*) dataP;
+      if (!(imgP->state & INITIALIZED)) {
+        imgP->state |= INITIALIZED;
+        e = frayAdd(xP->imgPF, (void*) &imgP, NULL);
       }
       break;
     case TILEMAP:   // this is for backgrounds
-      // TODO 
+                    // TODO 
       break;
     default:
       break;
@@ -319,7 +273,7 @@ Error xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void
   if (!e && subtype == 0x40) {
     e = frayAdd(xP->entityF, (void*) &entity, NULL);
   }
-return e;
+  return e;
 }
 
 Error xRenderProcessMessage(System *sP, Message *msgP) {
@@ -332,8 +286,7 @@ Error xRenderProcessMessage(System *sP, Message *msgP) {
 // None of the render system's specials should be cleared as the main system owns them.
 XClrFuncDef_(Render) {
   XRender *xP = (XRender*) sP;
-  frayDel((void**) &xP->cmPF);
-  frayDel((void**) &xP->cpPF);
+  frayDel((void**) &xP->imgPF);
   frayDel((void**) &xP->entityF);
   textureDel(&xP->atlasTextureP);
   if (sP->flags & RENDER_SYS_OWNS_SRC_AND_OFFSET) {
@@ -344,6 +297,11 @@ XClrFuncDef_(Render) {
 }
 
 // Texture atlas array
+// TODO this wasn't designed to take color palettes into consideration at all, trusting runtime to do that every frame. Screw that. 
+//      We need to ensure it copies them into the final picture now.
+//      1) Stretch allocated texture atlas memory out by a factor of 4.
+//      2) Figure out a way to include color palette in args.
+//      3) index every individual colormap's color palette. Multiple CMs can have different CPs. 
 static Error _assembleTextureAtlas(XRender *xP, Atlas *atlasP, U8 **atlasPixelAP) {
   // Declare locals
   U32 nStripsPerRow;
@@ -352,7 +310,7 @@ static Error _assembleTextureAtlas(XRender *xP, Atlas *atlasP, U8 **atlasPixelAP
   U32 srcIdx;
   U32 nUnitsPerStrip;
   const U32 ATLAS_WIDTH = atlasP->btP[0].remW;
-  const Colormap **cmPF = (const Colormap**) xP->cmPF;
+  const Image **imgPF = (const Image**) xP->imgPF;
   // Make output atlas image
   Error e = arrayNew((void**) atlasPixelAP, sizeof(U8), atlasP->btP[0].remW * atlasP->btP[0].remH);
   if (!e) {
@@ -364,17 +322,25 @@ static Error _assembleTextureAtlas(XRender *xP, Atlas *atlasP, U8 **atlasPixelAP
     // For each source rectangle...
     for (U32 i = 0; i < iEnd; ++i) {
       srcIdx = atlasP->btP[i].srcIdx;
-      nUnitsPerStrip = cmPF[srcIdx]->sdP->ss.nUnitsPerStrip;
-      nStripsPerRow  = cmPF[srcIdx]->w / nUnitsPerStrip;
-      smElemP        = (StripmapElem*) cmPF[srcIdx]->sdP->sm.infP->inflatedDataP;
+      nUnitsPerStrip = imgPF[srcIdx]->cmP->sdP->ss.nUnitsPerStrip;
+      nStripsPerRow  = imgPF[srcIdx]->cmP->w / nUnitsPerStrip;
+      smElemP        = (StripmapElem*) imgPF[srcIdx]->cmP->sdP->sm.infP->inflatedDataP;
       // For each row of this source rectangle...
       for (U32 j = 0, h = atlasP->btP[i].rect.h; j < h; ++j) {
         smElemEndP = smElemP + nStripsPerRow;
         dstP       = atlasPixelA + atlasP->btP[i].rect.x + (j + atlasP->btP[i].rect.y) * ATLAS_WIDTH;
         // Paste the source row into the atlas's destination rectangle row.
+        // TODO change this to copy colors, not indices, into texture atlas.
+        //      You know, it seems like the fastest way to go about this is to only copy colors into a stripmap
+        //      Oh shit... I'm assuming stripmaps here when that won't always be the case.
+        //      That means I'm going to have to restructure at least this portion of the code.
+        //      How many places use stripmaps in this file?
+        //      GOOD! only this part!
+        //      So I need an if-statement to take care of two different copying mechanisms for me.
+        //      TODO first, focus as you were, top-down. Check onn the atals allocation
         for (; smElemP < smElemEndP; ++smElemP, dstP += nUnitsPerStrip) {
           memcpy(dstP, 
-                 cmPF[srcIdx]->sdP->ss.unpackedDataP + (*smElemP * nUnitsPerStrip), 
+                 imgPF[srcIdx]->cmP->sdP->ss.unpackedDataP + (*smElemP * nUnitsPerStrip), 
                  nUnitsPerStrip);
         }
       }
@@ -387,9 +353,8 @@ static Error _assembleTextureAtlas(XRender *xP, Atlas *atlasP, U8 **atlasPixelAP
 // Prior to updating, they only reflect their local offsets.
 // Actionod news is, entities don't need to know where their source rectangle maps are; 
 // entities with common maps share a common pointer, so only one needs to update it.
-#define COLORMAP_SUBCOMP_IDX getSubcompIdx_(COLORMAP)
+#define IMG_SUBCOMP_IDX getSubcompIdx_(IMAGE)
 #define TILEMAP_SUBCOMP_IDX getSubcompIdx_(TILEMAP)
-#define COLOR_PALETTE_SUBCOMP_IDX getSubcompIdx_(COLOR_PALETTE)
 // Here's the way this is going to work:
 //
 // xRender gets shared offset FRAY
@@ -409,7 +374,7 @@ static Error _updateSrcRects(XRender *xP, Atlas *atlasP) {
   SubcompOwner *scoEndP = scoP + xP->system.subcompOwnerMP->population;
 
   RectOffset rectOffset = {0};
-  Colormap  *cmP;
+  Image *imgP;
   // If we own the src rect map, we better populate its flags before we access it.
     // Give everybody an empty rectangle for now.
   if (xP->system.flags & RENDER_SYS_OWNS_SRC_AND_OFFSET) {
@@ -421,7 +386,7 @@ static Error _updateSrcRects(XRender *xP, Atlas *atlasP) {
   // Update all source rectangles' XY coordinates to their global positions in texture atlas.
   // For each entity...
   for (; !e && scoP < scoEndP; ++scoP) {
-    cmP = (Colormap*) scoP->subcompA[COLORMAP_SUBCOMP_IDX];
+    imgP = (Image*) scoP->subcompA[IMG_SUBCOMP_IDX];
     e = scoP->owner ? SUCCESS : E_NULL_VAR;  // Having a colormap is mandatory for xRender components.
     if (!e) {
       // Source rectangle initialization (set flag first because implicit share maps don't know 
@@ -434,10 +399,10 @@ static Error _updateSrcRects(XRender *xP, Atlas *atlasP) {
       if (!c.srcRectP) {
         return E_BAD_KEY;
       }
-      c.srcRectP->x = atlasP->btP[cmP->sortedRectIdx].rect.x;
-      c.srcRectP->y = atlasP->btP[cmP->sortedRectIdx].rect.y;
-      c.srcRectP->w = atlasP->btP[cmP->sortedRectIdx].rect.w;
-      c.srcRectP->h = atlasP->btP[cmP->sortedRectIdx].rect.h;
+      c.srcRectP->x = atlasP->btP[imgP->sortedRectIdx].rect.x;
+      c.srcRectP->y = atlasP->btP[imgP->sortedRectIdx].rect.y;
+      c.srcRectP->w = atlasP->btP[imgP->sortedRectIdx].rect.w;
+      c.srcRectP->h = atlasP->btP[imgP->sortedRectIdx].rect.h;
       // Add component to system
       e = xAddComp(&xP->system, scoP->owner, &c);
       // If there's an animation system (which tells master that rect offsets are implied),
@@ -457,11 +422,11 @@ static Error _updateSrcRects(XRender *xP, Atlas *atlasP) {
 }
 
 // Updates colormaps' indices to sorted rects so we can track their atlas XY offsets
-static void _updateCmSrcRectIndices(Colormap **cmPF, Atlas *atlasP) {
+static void _updateCmSrcRectIndices(Image **imgPF, Atlas *atlasP) {
   AtlasElem *aeP = atlasP->btP;
   AtlasElem *aeEndP = aeP + arrayGetNElems(atlasP->btP);
   for (; aeP < aeEndP; ++aeP) {
-    cmPF[aeP->srcIdx]->sortedRectIdx = aeP - atlasP->btP;
+    imgPF[aeP->srcIdx]->sortedRectIdx = aeP - atlasP->btP;
   }
 }
 
@@ -475,7 +440,7 @@ XPostprocessCompsDef_(Render) {
   Surface_ *atlasSurfaceP;
 
   // Texture atlas
-  Error e = atlasNew(&atlasP, xP->cmPF);
+  Error e = atlasNew(&atlasP, xP->imgPF);
   if (!e) {
     e = atlasPlanPlacements(atlasP);
   }
@@ -484,41 +449,13 @@ XPostprocessCompsDef_(Render) {
   }
   // Let colormaps track where their rectangles are sorted.
   if (!e) {
-    _updateCmSrcRectIndices(xP->cmPF, atlasP);
+    _updateCmSrcRectIndices(xP->imgPF, atlasP);
   }
   // Texture surface
   if (!e) {
     e = surfaceNew(&atlasSurfaceP, (void*) atlasPixelA, atlasP->btP[0].remW, atlasP->btP[0].remH);
   }
-  // Texture surface palette
-#if 1
-  // Combine all the input images' color palettes into an overall atlas color palette.
-  if (!e) {
-    ColorPalette **cpPP = xP->cpPF;
-    ColorPalette **cpEndPP = cpPP + *_frayGetFirstEmptyIdxP(xP->cpPF);
-    for (; cpPP < cpEndPP; ++cpPP) {
-      appendAtlasPalette(atlasSurfaceP, *cpPP);
-    }
-  }
-  // Zero the atlas palette's alpha channels out on black pixels since that's our invisible pixel.
-  if (!e) {
-    // This local black pixel makes it easy to look for black pixels with memcmp.
-    Color_ BLACK_PIXEL = {
-      .r = 0,
-      .g = 0,
-      .b = 0,
-      .a = 255
-    };
-    Color_ INVISIBLE_PIXEL = {0};
-    Color_ *colorP = getColorPalette( atlasSurfaceP );
-    Color_ *colorEndP = colorP + getNColors( atlasSurfaceP );
-    for (; colorP < colorEndP; ++colorP) {
-      if (!memcmp(colorP, &BLACK_PIXEL, sizeof(Color_))) {
-        *colorP = INVISIBLE_PIXEL;
-      }
-    }
-  }
-#endif
+  // NOTE: I got rid of the color palette appending loop. So this means every palette needs to be stored with its colormap in order to compose full texture atlas.
   // Texture
   if (!e) {
     e = textureNew(&xP->atlasTextureP, xP->guiP->rendererP, atlasSurfaceP);
@@ -560,8 +497,7 @@ XPostprocessCompsDef_(Render) {
 
   // Clean up.
   atlasDel(&atlasP);
-  frayDel((void**) &xP->cmPF);
-  frayDel((void**) &xP->cpPF);
+  frayDel((void**) &xP->imgPF);
   frayDel((void**) &xP->entityF);
 
   return e;

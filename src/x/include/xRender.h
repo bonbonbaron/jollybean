@@ -20,9 +20,8 @@
 #define CAN_RIGHT_SHOULD_DOWN (SHOULD_DOWN | CAN_RIGHT)
 #define SHOULD_RIGHT_DOWN  (SHOULD_RIGHT | SHOULD_DOWN)
 
-#define COLORMAP      (0x40)
-#define COLOR_PALETTE (0x80)
-#define TILEMAP       (0xC0)
+#define IMAGE      (0x40)
+#define TILEMAP    (0x80)
 
 #define FRAME_TIME_UP (N_XMAIL_BUILTIN_CMDS + 1)
 
@@ -61,9 +60,7 @@ typedef struct {
 typedef struct {} XRenderMutation;
 
 // Images
-Error cmGen(Colormap *imgP);
-void  cmClr(Colormap *imgP);
-Error atlasNew(Atlas **atlasPP, Colormap **cmPF);
+Error atlasNew(Atlas **atlasPP, Image **imgPF);
 void atlasDel(Atlas **atlasPP);
 Error atlasPlanPlacements(Atlas *atlasP);
 Error xRenderIniS(System *sP, void *sParamsP);
@@ -74,8 +71,7 @@ extern XPostprocessCompsDef_(Render);
 typedef struct {
   System         system;
   U8             atlasPaletteOffset;
-  Colormap     **cmPF;
-  ColorPalette **cpPF;
+  Image        **imgPF;
   Entity        *entityF;  // components aren't added till postProcess(), so track entities here
   Gui           *guiP;   // derived from shared component 
   Texture_      *atlasTextureP;

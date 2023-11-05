@@ -1,0 +1,3 @@
+Binary file x/.xRender.c.swp matches
+x/xRender.c:      if (!(cpP->state & INITIALIZED)) {
+x/xRender.c:        cpP->state |= INITIALIZED;
