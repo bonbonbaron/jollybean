@@ -37,7 +37,7 @@ static void _printColormap(Colormap *cmP) {
 
 Error writeColorPalette(char *imgNameA, ColorPalette *cpP, U8 verbose) {
   // Make target filepath to save this stripmap in.
-  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Palette/Color/src", imgNameA, "ColorPalette.c", verbose);
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Image/ColorPalette/src", imgNameA, "ColorPalette.c", verbose);
   if (fP) {
     // Write header.
     fprintf(fP, "#include \"xRender.h\"\n\n");
@@ -61,7 +61,7 @@ Error writeColorPalette(char *imgNameA, ColorPalette *cpP, U8 verbose) {
 }
 
 Error writeAsepriteColorPalette(char *imgNameA, EntryData *paletteData, U8 verbose) {
-  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Palette/Color/src", imgNameA, "ColorPalette.gpl", verbose);
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Image/ColorPalette/src", imgNameA, "ColorPalette.gpl", verbose);
   // Write file.
   if (!fP) {
     // Write header.
@@ -87,8 +87,8 @@ Error writeAsepriteColorPalette(char *imgNameA, EntryData *paletteData, U8 verbo
   return SUCCESS;
 }
 
-Error writeColormapHeaderFile(char *imgNameA, U8 verbose) {
-  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Graybody/Colormap/include", imgNameA, "Colormap.h", verbose);
+Error writeColormapHeader(char *imgNameA, U8 verbose) {
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Image/Colormap/include", imgNameA, "Colormap.h", verbose);
   if (fP) {
     // Write header.
     fprintf(fP, "#include \"xRender.h\"\n\n");
@@ -105,8 +105,8 @@ Error writeColormapHeaderFile(char *imgNameA, U8 verbose) {
   return SUCCESS;
 }
 
-Error writeColorPaletteHeaderFile(char *imgNameA, U8 verbose) {
-  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Palette/Color/include", imgNameA, "ColorPalette.h", verbose);
+Error writeColorPaletteHeader(char *imgNameA, U8 verbose) {
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Image/ColorPalette/include", imgNameA, "ColorPalette.h", verbose);
   // Write header.
   fprintf(fP, "#include \"xRender.h\"\n\n");
   // Flip set
@@ -120,7 +120,7 @@ Error writeColormap(char *imgNameA, Colormap *cmP, U8 verbose) {
   if (verbose) {
     printf("writing colormap...\n");
   }
-  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Graybody/Colormap/src", imgNameA, "Colormap.c", verbose);
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Image/Colormap/src", imgNameA, "Colormap.c", verbose);
   Error e = SUCCESS;
   if (fP) {
     // Make Title format of image name.
@@ -150,6 +150,63 @@ Error writeColormap(char *imgNameA, Colormap *cmP, U8 verbose) {
   }
   return e;
 }
+
+/*
+ * 
+ * typedef struct {
+ *   U8 state;  // prevents copies of images from being added to texture atlas
+ *   Key sortedRectIdx;  // Index of sorted rectangle so you can adjust src rect's XY offset in atlas
+ *   Colormap* cmP;
+ *   ColorPalette* cpP;
+ * } Image;
+ *
+ */
+
+// TODO implement this
+Error writeImage(char *imgNameA, U8 verbose) {
+  if (verbose) {
+    printf("writing image...\n");
+  }
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Image/src", imgNameA, "Img.c", verbose);
+  Error e = SUCCESS;
+  if (fP) {
+    // Make Title format of image name.
+    fprintf(fP, "#include \"xRender.h\"\n\n");
+    // Write stripmap and stripset data.
+  }
+  else {
+    if (fP) {
+      fclose(fP);
+    }
+    return E_FILE_IO;
+  }
+  if (!e) { 
+    // Write colormap
+    fprintf(fP, "Image %sImg = {\n", imgNameA);
+    fprintf(fP, "\t.state = 0,\n");
+    fprintf(fP, "\t.sortedRectIdx = 0,\n");
+    fprintf(fP, "\t.cmP = &%sColormap,\n", imgNameA);
+    fprintf(fP, "\t.cpP = &%sColorPalette,\n", imgNameA);
+    fprintf(fP, "};\n\n");
+  }
+  // Close file.
+  if (fP) {
+    fclose(fP);
+  }
+  return e;
+}
+
+
+Error writeImageHeader(char *imgNameA, U8 verbose) {
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Image/include", imgNameA, "Img.h", verbose);
+  // Write header.
+  fprintf(fP, "#include \"xRender.h\"\n\n");
+  fprintf(fP, "extern Image %sImg;\n", imgNameA);
+  // Close file.
+  fclose(fP);
+  return SUCCESS;
+}
+
 
 // =========================================================================================
 // When you're building your color palette, this adds colors that don't already exist in it.
@@ -550,26 +607,37 @@ Error img(char *entityNameP, Database *cpDirP, Database *cmDirP, AnimJsonData *a
     _printColormap(&cm);
   }
   // Write output source files 
+
+  // We need to keep track of the following:
+  //    Which colormap we used, by name.
+  //    Which color palette we used, by name.
+  //    Which image we used, by name.
+  //
+  //
   if (!e) {
-    e = writeColormap(entityNameP, &cm, verbose);
+    e = writeColormap(entityNameP, &cm, verbose);  // this doesn't seem right. Lots of people can share a color palette.
   }
   if (!e) {
-    e = writeColormapHeaderFile(entityNameP, verbose);
+    e = writeColormapHeader(entityNameP, verbose);  // this doesn't seem right. Lots of people can share a color palette.
   }
   if (!e) {
-    e = writeColorPaletteHeaderFile(entityNameP, verbose);
+    e = writeColorPalette(entityNameP, &cp, verbose);  // this doesn't seem right. Lots of people can share a color palette.
   }
   if (!e) {
-    e = writeColorPalette(entityNameP, &cp, verbose);
+    e = writeColorPaletteHeader(entityNameP, verbose);  // this doesn't seem right. Lots of people can share a color palette.
+  }
+  if (!e) {
+    e = writeImage(entityNameP, verbose);
+  }
+  if (!e) {
+    e = writeImageHeader(entityNameP, verbose);
   }
   // Verify input independently of how the output treats it
   if (!e && verbose) {
     e = _validateWholeInput(&cm, &cp);
   }
-  if (!e && verbose) {
-    //printStripData(cm.sdP);
-  }
 
+#if 0
   // Update color palette database if necessary
   // TODO remove 0 &&
   if (0 && !e) {
@@ -579,7 +647,7 @@ Error img(char *entityNameP, Database *cpDirP, Database *cmDirP, AnimJsonData *a
     char *existingPaletteName = dbFindNameByValue(cpDirP, &entryDataToFind, verbose);
     if (!existingPaletteName) {
       genieAsk(
-          "This palette is new. What would you like to name it?", 
+          "This palette is new. What would you like to name it?",   // TODO Having to rename the color palette is bullshit.
           DIR_FILE, (List*) cpDirP, verbose);
       // Store our palette only because it doesn't already exist in the directory.
       dbAddEntry(cpDirP, entityNameP, &entryDataToFind, verbose);  
@@ -590,6 +658,7 @@ Error img(char *entityNameP, Database *cpDirP, Database *cmDirP, AnimJsonData *a
       }
     }
   }
+#endif
 
   cmClr(&cm);
   arrayDel((void**) &cp.colorA);

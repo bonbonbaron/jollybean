@@ -4,6 +4,7 @@
 #include "strip.h"
 
 // Choose your interface!!
+#define USE_HEADLESS_INTERFACE
 #ifndef USE_HEADLESS_INTERFACE
 #define USE_SDL_INTERFACE  // default to this when we're not specifying headless for now
 #endif

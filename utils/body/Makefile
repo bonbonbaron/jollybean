@@ -12,7 +12,7 @@ BLD = $(JB)/build/src
 SRC = $(JB)/src
 KR  = ${HOME}/jb/src/Keyring
 
-OBJS := ../file/build/fileUtils.o ../genie/build/genie.o ../stripUtil/build/stripUtil.o ../db/build/db.o ../infUtil/build/infUtil.o ${BUILDDIR}/body.o ${BUILDDIR}/img.o ${BUILDDIR}/anim.o ${BUILDDIR}/coll.o ${BUILDDIR}/previewImg.o ${BLD}/interface/interface.o 
+OBJS := ../file/build/fileUtils.o ../genie/build/genie.o ../stripUtil/build/stripUtil.o ../db/build/db.o ../infUtil/build/infUtil.o ${BUILDDIR}/body.o ${BUILDDIR}/img.o ${BUILDDIR}/anim.o ${BUILDDIR}/coll.o ${BUILDDIR}/previewImg.o 
 
 INCS := -I../stripUtil/src/include -I./src/include -I../infUtil/src/include -I$(SRC)/data/include -I$(SRC)/x/include -I$(SRC)/interface/include -I$(SRC)/include -I$(KR) -I../file/src/include/ -I../db/src/include -I../genie/src/include -I/usr/include/libfastjson 
 

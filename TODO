@@ -47,6 +47,7 @@ index points in array
 
 NTH
 ~~~
+add option to body compressor to force any given type of compression. Developer may want speed over size, or vice versa.
 take advantage of anim strips' flags to decide whether to anchor dest rect to a corner, side, or center.
 animated bg tiles
 camera

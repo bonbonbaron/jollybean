@@ -31,11 +31,6 @@
 #define OFFSET_X (5)
 #define OFFSET_Y (10)
 
-/* 
- * steal from other test that sets up GUI, colormaps, and color palettes
- * come back here later and finish this list after you get that working
- */
-
 TAU_MAIN();
 
 typedef struct Tau {

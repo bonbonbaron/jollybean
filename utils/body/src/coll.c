@@ -112,7 +112,7 @@ static Error findCollisionRects(Colormap *cmP, AnimJsonData *animP, RectNode **r
   RectNode *firstRectNodeP = NULL; 
 
   // Make your pappy proud and go find some rectangles, son.
-// Collision rect coords are offsets from current animation frame's top-left corner.
+  // Collision rect coords are offsets from current animation frame's top-left corner.
   /* if this is an animated collison rectangle... */ 
   if (animP) { 
     /* for each frame... */ 
@@ -209,7 +209,7 @@ static Error findCollisionRects(Colormap *cmP, AnimJsonData *animP, RectNode **r
 
 // Write a collision grid to a C file.
 Error writeCollisionGridMap(char *entityName, Colormap *cmP, U8 verbose) {
-  FILE *fP = getBuildFile("Body/Graybody/Collision/Grid", entityName, "CollGrid.c", verbose);
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Collision/Grid/src", entityName, "CollGrid.c", verbose);
   Error e = !fP ? E_FILE_IO : SUCCESS;
   if (!e) {
     e = writeStripDataInFile(fP, verbose, entityName, cmP->sdP);
@@ -223,7 +223,7 @@ Error writeCollisionGridMap(char *entityName, Colormap *cmP, U8 verbose) {
 // Write a map of rectangle arrays to a C file.
 Error writeCollisionRectMap(char *entityName, AnimJsonData *animP, RectNode *collTreeP, U8 verbose) {
   char *filepath = NULL;
-  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Graybody/Collision/Rect/src", entityName, "ColRect.c", verbose);
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Collision/Rect/src", entityName, "ColRect.c", verbose);
   if (!fP) {
     return E_FILE_IO;
   }

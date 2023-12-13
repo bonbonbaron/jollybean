@@ -298,7 +298,7 @@ FrameNode* getFrameNode(FrameNode *rootP, U32 idx) {
 }
 
 Error writeAnimJsonData(char *entityName, AnimJsonData *animP, U8 verbose) {
-  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Graybody/Animation/src", entityName, "Anim.c", verbose); 
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Animation/src", entityName, "Anim.c", verbose); 
   if (!fP) {
     return E_FILE_IO;
   }
@@ -343,7 +343,7 @@ Error writeAnimJsonData(char *entityName, AnimJsonData *animP, U8 verbose) {
 }
 
 Error writeAnimHeader(char *entityName, AnimJsonData *animP, U8 verbose) {
-  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Graybody/Animation/include", entityName, "Anim.h", verbose); 
+  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Animation/include", entityName, "Anim.h", verbose); 
   if (!fP) {
     return E_FILE_IO;
   }

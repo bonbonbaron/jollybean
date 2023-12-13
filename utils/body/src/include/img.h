@@ -1,5 +1,6 @@
 #ifndef IMG_H_
 #define IMG_H_
+#define USE_HEADLESS_INTERFACE
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -34,6 +35,7 @@ S32 getColormapIdx(U8 *cpColorA, const U8 *colorQueryP, U8 verbose);
 Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *animP, U8 verbose);
 Error getColorPaletteAndColormap(ColorPalette *cpP, Colormap *cmP, png_image *pngImgP, U8 *pixelP, U8 srcPixelSize, U8 verbose);
 void cpClr(ColorPalette *cpP);
+void cmClr(Colormap *cmP);
 Error img(char *entityNameP, Database *cpDirP, Database *cmDirP, AnimJsonData *animP, U8 verbose);
 
 #endif
