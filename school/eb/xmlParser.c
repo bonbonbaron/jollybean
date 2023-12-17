@@ -15,7 +15,7 @@
  */
 
 // This'll also register the namespace.
-xmlXPathContextPtr xmlGetNamespaceContext( xmlDocPtr doc, char* nsAlias ) {
+xmlXPathContextPtr xmlGetNamespaceContext( xmlDocPtr doc, const char* nsAlias ) {
   xmlXPathContextPtr context;
   xmlXPathObjectPtr result;
   context = xmlXPathNewContext ( doc );
@@ -49,7 +49,7 @@ xmlDocPtr xmlParse ( char *docname ) {
 }
 
 // Find everything matching the given xpath for the specified namespace.
-xmlXPathObjectPtr xmlGetNodes ( xmlDocPtr doc, xmlXPathContextPtr context, xmlChar * xpath ) {
+xmlXPathObjectPtr xmlGetNodes ( xmlDocPtr doc, xmlXPathContextPtr context, const xmlChar * xpath ) {
   xmlXPathObjectPtr matchingNodes = xmlXPathEvalExpression ( xpath, context );
   if ( matchingNodes == NULL ) {
     fprintf ( stderr, "Error in xmlXPathEvalExpression\n" );

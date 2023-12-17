@@ -33,8 +33,8 @@ for ( xmlNodePtr id_##ChildNodeP = (*nodePP_)->children; id_##ChildNodeP; id_##C
 
 // These functions are listed in the order you should call them.
 xmlDocPtr          xmlParse ( char *docname );
-xmlXPathContextPtr xmlGetNamespaceContext( xmlDocPtr doc, char* nsAlias );
-xmlXPathObjectPtr  xmlGetNodes ( xmlDocPtr doc, xmlXPathContextPtr context, xmlChar * xpath );
+xmlXPathContextPtr xmlGetNamespaceContext( xmlDocPtr doc, const char* nsAlias );
+xmlXPathObjectPtr  xmlGetNodes ( xmlDocPtr doc, xmlXPathContextPtr context, const xmlChar * xpath );
 
 void               xmlFreeXpathResult( xmlXPathObjectPtr* xpathResultPP );
 void               xmlClean( xmlDocPtr* xmlDocPP, xmlXPathContextPtr* contextPP );
