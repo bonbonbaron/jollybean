@@ -1,0 +1,1 @@
+for ((i = 1; i < 24; ++i)); do for f in verts norms colors texs; do sed -n "${i}p" $f; done; done > out

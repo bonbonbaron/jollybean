@@ -1,0 +1,32 @@
+    "uniform mat4 u_mMatrix;                   \n"
+    "uniform mat4 u_vpMatrix;                   \n"
+    "uniform vec3 u_camNormal;                   \n"
+    "attribute vec3 a_position;                  \n"
+    "attribute vec3 a_color;                  \n"
+    "attribute vec3 a_normal;                  \n"
+    "varying vec3 v_color;                  \n"
+    "varying vec3 v_normal;                  \n"
+    "varying vec3 v_lightToPointDir;                  \n"
+    "varying mat3 rotSubmatrix;                  \n"
+    "attribute vec2 a_texelCoord;                  \n"
+    "varying vec2 v_texelCoord;                  \n"
+    "void main()                                 \n"
+    "{                                           \n"
+    "   gl_Position = u_vpMatrix * u_mMatrix * vec4(a_position, 1.0);  \n"
+    "   if ( a_position[0] > 100000.0 ) {\n"
+    "     gl_Position = u_vpMatrix * u_mMatrix * vec4(a_position, 1.0) * vec4(a_normal, 1.0); \n"
+    "     gl_Position = u_vpMatrix * u_mMatrix * vec4(a_position, 1.0) * vec4(a_normal, 1.0); \n"
+    "     gl_Position.x += u_camNormal.x; \n"
+    "   }\n"
+    "   \n"
+    "   v_texelCoord = a_texelCoord;\n"  // pass texel coordinate along to the fragment shader
+    "   v_normal = a_normal;\n"
+    "   v_color = a_color;\n"
+    "   vec3 lightPos = vec3(0.0, 20.0, -5.0); \n"
+    "   v_lightToPointDir = normalize(lightPos - a_position); \n"  // done backwards to get outward facing unit vector
+    "   rotSubmatrix[0] = u_mMatrix[0].xyz;                  \n"
+    "   rotSubmatrix[1] = u_mMatrix[1].xyz;                  \n"
+    "   rotSubmatrix[2] = u_mMatrix[2].xyz;                  \n"
+    "}                                           \n";
+
+
