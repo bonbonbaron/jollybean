@@ -15,6 +15,32 @@
 // TODO combine geometries with triangles separated for multiple textures
 // TODO handle triangles with varying numbers of attributes
 // NOTE Decompression will put all vertex attributes together into a single array.
+static const char NAMESPACE_ALIAS[] = "mb";
+static const xmlChar* GEOMETRY_DATA_XPATH = ( xmlChar * ) "/mb:COLLADA/mb:library_geometries/mb:geometry";
+static const xmlChar* VERTEX_DATA_XPATH = ( xmlChar * ) "mb:mesh/mb:source";
+static const xmlChar* TRIANGLE_DATA_XPATH = ( xmlChar * ) "mb:mesh/mb:triangles";
+
+typedef struct {
+  int count;         // number of space-delimited elements in this set
+  int stride;
+  char* valString;
+  union {
+    int scalar; 
+    float* scalarA;
+    Vec2* vec2A;
+    Vec3* vec3A;
+  } u;
+  union {
+    float scalar;
+    Vec2 vec2;
+    Vec3 vec3;
+  } min;
+  union {
+    float scalar;
+    Vec2 vec2;
+    Vec3 vec3;
+  } max;
+} XmlResult;
 
 // Inflatables 
 typedef struct Inflatable {
@@ -79,106 +105,85 @@ static int _getNextNumberIdx( char* string, unsigned startIdx, int numToSkip ) {
   return cPtr - string;
 }
 
+void extractVec3Array( XmlResult *resultP ) {
+  assert( resultP );
+  assert( resultP->count );
+  assert( resultP->valString );
 
-void extractVec3Array( Vec3** tgtArray, Vec3* minVecP, Vec3* maxVecP, int count, char* arrayString ) {
-  assert( tgtArray );
-  assert( count );
-  assert( arrayString );
+  resultP->min.vec3.x = FLT_MAX;
+  resultP->min.vec3.y = FLT_MAX;
+  resultP->min.vec3.z = FLT_MAX;
+  resultP->max.vec3.x = FLT_MIN;
+  resultP->max.vec3.y = FLT_MIN;
+  resultP->max.vec3.z = FLT_MIN;
 
-  minVecP->x = FLT_MAX;
-  minVecP->y = FLT_MAX;
-  minVecP->z = FLT_MAX;
-  maxVecP->x = FLT_MIN;
-  maxVecP->y = FLT_MIN;
-  maxVecP->z = FLT_MIN;
-
-  *tgtArray = malloc( sizeof( Vec3 ) * count );
-  assert( *tgtArray );
+  resultP->u.vec3A = malloc( sizeof( Vec3 ) * resultP->count );
+  assert( resultP->u.vec3A );
 
   // Extract string into array here.
-  for (int j = 0, sIdx = 0; sIdx >= 0 && j < count; ++j) {
-    sscanf( &arrayString[sIdx], "%f %f %f", &(*tgtArray)[j].x, &(*tgtArray)[j].y, &(*tgtArray)[j].z );
-    sIdx = _getNextNumberIdx( arrayString, sIdx, 3 );
+  for (int j = 0, sIdx = 0; sIdx >= 0 && j < resultP->count; ++j) {
+    sscanf( &resultP->valString[sIdx], "%f %f %f", &resultP->u.vec3A[j].x, &resultP->u.vec3A[j].y, &resultP->u.vec3A[j].z );
+    sIdx = _getNextNumberIdx( resultP->valString, sIdx, 3 );
 
     // Check min
-    if ( (*tgtArray)[j].x < minVecP->x ) {
-      minVecP->x = (*tgtArray)[j].x;
+    if ( resultP->u.vec3A[j].x < resultP->min.vec3.x ) {
+      resultP->min.vec3.x = resultP->u.vec3A[j].x;
     }
-    if ( (*tgtArray)[j].y < minVecP->y ) {
-      minVecP->y = (*tgtArray)[j].y;
+    if ( resultP->u.vec3A[j].y < resultP->min.vec3.y ) {
+      resultP->min.vec3.y = resultP->u.vec3A[j].y;
     }
-    if ( (*tgtArray)[j].z < minVecP->z ) {
-      minVecP->z = (*tgtArray)[j].z;
+    if ( resultP->u.vec3A[j].z < resultP->min.vec3.z ) {
+      resultP->min.vec3.z = resultP->u.vec3A[j].z;
     }
     // Check max
-    if ( (*tgtArray)[j].x > maxVecP->x ) {
-      maxVecP->x = (*tgtArray)[j].x;
+    if ( resultP->u.vec3A[j].x > resultP->max.vec3.x ) {
+      resultP->max.vec3.x = resultP->u.vec3A[j].x;
     }
-    if ( (*tgtArray)[j].y > maxVecP->y ) {
-      maxVecP->y = (*tgtArray)[j].y;
+    if ( resultP->u.vec3A[j].y > resultP->max.vec3.y ) {
+      resultP->max.vec3.y = resultP->u.vec3A[j].y;
     }
-    if ( (*tgtArray)[j].z > maxVecP->z ) {
-      maxVecP->z = (*tgtArray)[j].z;
+    if ( resultP->u.vec3A[j].z > resultP->max.vec3.z ) {
+      resultP->max.vec3.z = resultP->u.vec3A[j].z;
     }
   }
   // xmlFree( mesh.posResult.valueString );  // TODO be sure to do this later
 }
 
-void extractVec2Array( Vec2** tgtArray, Vec2* minVecP, Vec2* maxVecP, int count, char* arrayString ) {
-  assert( tgtArray );
-  assert( count );
-  assert( arrayString );
+void extractVec2Array( XmlResult *resultP ) {
+  assert( resultP );
+  assert( resultP->count );
+  assert( resultP->valString );
 
-  minVecP->s = FLT_MAX;
-  minVecP->t = FLT_MAX;
-  maxVecP->s = FLT_MIN;
-  maxVecP->t = FLT_MIN;
+  resultP->min.vec2.s = FLT_MAX;
+  resultP->min.vec2.t = FLT_MAX;
+  resultP->max.vec2.s = FLT_MIN;
+  resultP->max.vec2.t = FLT_MIN;
 
-  *tgtArray = malloc( sizeof( Vec2 ) * count );
-  assert( *tgtArray );
+  resultP->u.vec2A = malloc( sizeof( Vec2 ) * resultP->count );
+  assert( resultP->u.vec2A );
 
   // Extract string into array here.
-  for (int j = 0, sIdx = 0; sIdx >= 0 && j < count; ++j) {
-    sscanf( &arrayString[sIdx], "%f %f", &(*tgtArray)[j].s, &(*tgtArray)[j].t );
-    sIdx = _getNextNumberIdx( arrayString, sIdx, 2 );
+  for (int j = 0, sIdx = 0; sIdx >= 0 && j < resultP->count; ++j) {
+    sscanf( &resultP->valString[sIdx], "%f %f", &resultP->u.vec2A[j].s, &resultP->u.vec2A[j].t );
+    sIdx = _getNextNumberIdx( resultP->valString, sIdx, 2 );
 
     // Check min
-    if ( (*tgtArray)[j].s < minVecP->s ) {
-      minVecP->s = (*tgtArray)[j].s;
+    if ( resultP->u.vec2A[j].s < resultP->min.vec2.s ) {
+      resultP->min.vec2.s = resultP->u.vec2A[j].s;
     }
-    if ( (*tgtArray)[j].t < minVecP->t ) {
-      minVecP->t = (*tgtArray)[j].t;
+    if ( resultP->u.vec2A[j].t < resultP->min.vec2.t ) {
+      resultP->min.vec2.t = resultP->u.vec2A[j].t;
     }
     // Check max
-    if ( (*tgtArray)[j].s > maxVecP->s ) {
-      maxVecP->s = (*tgtArray)[j].s;
+    if ( resultP->u.vec2A[j].s > resultP->max.vec2.s ) {
+      resultP->max.vec2.s = resultP->u.vec2A[j].s;
     }
-    if ( (*tgtArray)[j].t > maxVecP->t ) {
-      maxVecP->t = (*tgtArray)[j].t;
+    if ( resultP->u.vec2A[j].t > resultP->max.vec2.t ) {
+      resultP->max.vec2.t = resultP->u.vec2A[j].t;
     }
   }
   // xmlFree( mesh.posResult.valueString );  // TODO be sure to do this later
 }
-
-typedef struct {
-  int count;         // number of space-delimited elements in this set
-  union {
-    int num; 
-    float* floatA;
-    Vec2* vec2A;
-    Vec3* vec3A;
-  } u;
-  union {
-    int color;
-    Vec2 texel;
-    Vec3 position, normal;
-  } min;
-  union {
-    int color;
-    Vec2 texel;
-    Vec3 position, normal;
-  } max;
-} XmlResult;
 
 
 typedef struct {
@@ -190,126 +195,92 @@ typedef struct {
  * Then anybody else can come in and extract an array of something. 
  * It'll return a simple data structure containiing a string and count. */
 
+static int getStride(xmlDocPtr docP, xmlNodePtr nodeP, xmlXPathContextPtr context) {
+  context->node = nodeP->next->next->children->next;  // first next is a newline for some reason
+  //printf("curr node name: %s\n", nodeP->name);
+  //printf("next node name: %s\n", context->node->name);
+  xmlXPathObjectPtr r = xmlGetNodes ( docP, context, (char*) "@stride" );
+  //printf("\n\n\nhey: %s\n\n\n", r->nodesetval->nodeTab[0]->children->content);
+  return atoi( (char*) r->nodesetval->nodeTab[0]->children->content);
+}
+
 /* It also needs to be able to return a node. That way we can extract any
  * node we want and then ask it to return any property from it we want. */
 /* Rather than factoring this code out, we hard-code it to our specific use-case  
    to avoid re-iterating over any linked lists. */
-void getVertexAttributes( Mesh* meshP, xmlXPathObjectPtr xpathResultP ) {
+ 
+void getVertexAttributes( Mesh* meshP, xmlXPathContextPtr xpathContext, xmlXPathObjectPtr xpathResultP, xmlDocPtr docP ) {
   assert( meshP && xpathResultP );
+  // Don't actually change the context. Just copy it.
+  xmlXPathContextPtr context = xpathContext;
   XmlResult* resultP;
-  xmlNodePtr propChildP;
-  char* posArrayString = NULL;
-  char* nmlArrayString = NULL;
-  char* texArrayString = NULL;
-  char* clrArrayString = NULL;
-  int numElemsPerUnit = 1;
+  xmlNodePtr propNodeP;
   forEachNode_( xpathResultP, top ) {
     resultP = NULL;  // reset the result pointer so we don't falsely populate the count later on.
-                     // For each property of this node...
-    forEachProperty_( topNodePP, parent ) {
-      if ( parentPropertyNodeP->type == XML_ATTRIBUTE_NODE ) {
-        // TODO rather than clone strings, just point at their values.
-        //      Then keep the xml objects alive until you're finished compressing each mesh.
-        printf("prop node name: %s\n", parentPropertyNodeP->name);
-        // If this is an identifier node, determine which mesh property it is.
-        if ( !(strcmp( (char*) parentPropertyNodeP->name, "id" ) ) ) {
-          propChildP = parentPropertyNodeP->children;
-          if ( propChildP && propChildP->type == XML_TEXT_NODE ) {
-            // ---------
-            // POSITIONS
-            // ---------
-            if( strstr( (char*) propChildP->content, "positions-array" ) > 0 ) {
-              numElemsPerUnit = 3;
-              resultP = &meshP->posResult;
-              // Extract the positions.
-              forEachChild_( topNodePP, curr ) {
-                if (currChildNodeP->type == XML_TEXT_NODE) {
-                  posArrayString = (char*) currChildNodeP->content;
-                  printf("\tpositions child node val: %s\n\n", currChildNodeP->content );
-                  break;
-                }
-              }
-            }
-            // -------
-            // NORMALS
-            // -------
-            else if( strstr( (char*) propChildP->content, "normals-array" ) > 0 ) {
-              numElemsPerUnit = 3;
-              resultP = &meshP->nmlResult;
-              // Extract the normals.
-              forEachChild_( topNodePP, curr ) {
-                if (currChildNodeP->type == XML_TEXT_NODE) {
-                  nmlArrayString = (char*) currChildNodeP->content;
-                  printf("\tnormals child node val: %s\n\n", currChildNodeP->content );
-                  break;
-                }
-              }
-            }
-            // ======
-            // COLORS
-            // ======
-            // TODO can there be multiple color sources that split up for varying color formats too?
-            // For now, only support one set of colors per geometry.
-            else if( strstr( (char*) propChildP->content, "mesh-colors" ) > 0 ) {
-              numElemsPerUnit = 3;  // TODO programmatically determine number of color channels
-              resultP = &meshP->texResult;
-              // Extract the normals.
-              forEachChild_( topNodePP, curr ) {
-                if (currChildNodeP->type == XML_TEXT_NODE) {
-                  clrArrayString = (char*) currChildNodeP->content;
-                  printf("\ttexels child node val: %s\n\n", currChildNodeP->content );
-                  break;
-                }
-              }
-            }
-            // ======
-            // TEXELS
-            // ======
-            else if( strstr( (char*) propChildP->content, "mesh-map" ) > 0 ) {
-              numElemsPerUnit = 2;
-              resultP = &meshP->texResult;
-              // Extract the normals.
-              forEachChild_( topNodePP, curr ) {
-                if (currChildNodeP->type == XML_TEXT_NODE) {
-                  texArrayString = (char*) currChildNodeP->content;
-                  printf("\ttexels child node val: %s\n\n", currChildNodeP->content );
-                  break;
-                }
-              }
-            }
+    // For each property of this node...
+    forEachChild_( topNodePP, floatArray ) {
+      // Then keep the xml objects alive until you're finished compressing each mesh.
+      // If this is an identifier node, determine which mesh property it is.
+      if ( !(strcmp( (char*) floatArrayChildNodeP->name, "float_array" ) ) ) {
+        // For each property of the current <float_array>...
+        forEachProperty_( &floatArrayChildNodeP, floatArray ) {
+          propNodeP = floatArrayPropertyNodeP->children;
+          // Determine which float array this is.
+          if( strstr( (char*) propNodeP->content, "mesh-positions" ) > 0 ) {
+            resultP = &meshP->posResult;
+          }  
+          else if( strstr( (char*) propNodeP->content, "mesh-normals" ) > 0 ) {
+            resultP = &meshP->nmlResult;
+          } 
+          else if( strstr( (char*) propNodeP->content, "mesh-colors" ) > 0 ) {
+            resultP = &meshP->texResult;
+          }
+          else if( strstr( (char*) propNodeP->content, "mesh-map" ) > 0 ) {
+            resultP = &meshP->texResult;
+          }
+          // Get the count 
+          else if( !strcmp( (char*) floatArrayPropertyNodeP->name, "count" ) ) {
+            resultP->count = atoi( (char*) floatArrayPropertyNodeP->children->content );
+            break;  // no more properties required
           }
         }
-        // Getting the count (number of elements) for the current attribute assumes we got the ID first.
-        else if ( !(strcmp( (char*) parentPropertyNodeP->name, "count") ) ) {
-          propChildP = parentPropertyNodeP->children;
-          if ( propChildP && propChildP->type == XML_TEXT_NODE ) {
-            if ( resultP ) {
-              printf("\tCHILD node val: %s\n\n", propChildP->content );
-              resultP->count = atoi( (char*) propChildP->content ) / numElemsPerUnit;  // e.g. vec3s have 3 elements per vector 
-            }
+        // Extract array.
+        if ( resultP ) {
+          resultP->stride = getStride(docP, floatArrayChildNodeP, context);
+          resultP->valString = (char*) floatArrayChildNodeP->children->content;
+          switch( resultP->stride ) {
+            case 2:
+              extractVec2Array( resultP );
+              break;
+            case 3:
+              extractVec3Array( resultP );
+              break;
+            case 1:   // TODO support if you ever need to with new extractScalarArray() function
+            case 4:   // TODO support if you ever need to with new extractVec4Array() function
+            default:
+              printf("Stride length of %d is unsupported. Stopping now...\n", resultP->stride);
+              exit(1);
+              break;
           }
+          // TODO go ahead and extract the value here.
+          printf("val: %s\n", resultP->valString);
+          goto skipToNextSource;
         }
-      }  // if parent property is an attribute node
-    }  // for each property
+      }
+    }
+skipToNextSource:
+    continue;
+  }  
+}  
 
-    // Extract position array of vectors
-    if ( posArrayString && meshP->posResult.count ) {
-      extractVec3Array( &meshP->posResult.u.vec3A, &meshP->posResult.min.position, &meshP->posResult.max.position, meshP->posResult.count, posArrayString );
-    }
-    // Extract normal array of vectors
-    if ( nmlArrayString && meshP->nmlResult.count ) {
-      extractVec3Array( &meshP->nmlResult.u.vec3A, &meshP->nmlResult.min.normal, &meshP->nmlResult.max.normal, meshP->nmlResult.count, nmlArrayString );
-    }
-    // Extract color array of vectors
-    if ( clrArrayString && meshP->clrResult.count ) {
-      extractVec3Array( &meshP->clrResult.u.vec3A, &meshP->clrResult.min.normal, &meshP->clrResult.max.normal, meshP->clrResult.count, clrArrayString );
-    }
-    // Extract texel array of vectors
-    if ( texArrayString && meshP->texResult.count ) {
-      extractVec2Array( &meshP->texResult.u.vec2A, &meshP->texResult.min.texel, &meshP->texResult.max.texel, meshP->texResult.count, texArrayString );
-    }
-  }
+#if 0
+// ======
+// COLORS
+// ======
+// For now, only support one set of colors per geometry.
 }
+}
+#endif
 
 // =========
 // TRIANGLES
@@ -317,7 +288,7 @@ void getVertexAttributes( Mesh* meshP, xmlXPathObjectPtr xpathResultP ) {
 void getTriangles( Mesh* meshP, xmlXPathObjectPtr xpathResultP ) {
   assert( meshP && xpathResultP );
   char* triArrayString;
-  xmlNodePtr propChildP;
+  xmlNodePtr propNodeP;
   int numElemsPerUnit;  // TODO determine this programmatically
   forEachNode_( xpathResultP, parent ) {
     forEachProperty_( parentNodePP, parent ) {
@@ -327,15 +298,15 @@ void getTriangles( Mesh* meshP, xmlXPathObjectPtr xpathResultP ) {
         printf("prop node name: %s\n", parentPropertyNodeP->name);
         // If this is an identifier node, determine which mesh property it is.
         if ( !(strcmp( (char*) parentPropertyNodeP->name, "id" ) ) ) {
-          propChildP = parentPropertyNodeP->children;
+          propNodeP = parentPropertyNodeP->children;
         }
       }
     }
-    if( strstr( (char*) propChildP->content, "mesh-vertices" ) > 0 ) {
+    if( strstr( (char*) propNodeP->content, "mesh-vertices" ) > 0 ) {
       // These may have anywhere from 2-4 elements per triangle corner.
       // So determine the type of triangle by looking at all the input elements' "semantic" properties.
       numElemsPerUnit = 2;  // TODO determine this programmatically
-      // Extract the triangles.
+                            // Extract the triangles.
       forEachChild_( parentNodePP, curr ) {
         if (currChildNodeP->type == XML_TEXT_NODE) {
           triArrayString = (char*) currChildNodeP->content;
@@ -373,23 +344,6 @@ void pack(U16* array, int bits, U8** result) {
 
 int main ( int argc, char **argv ) {
   Mesh mesh = { 0 };
-  static const char NAMESPACE_ALIAS[] = "mb";
-  // TODO you're going to have to iterate through each <geometry> of <library_geometries>.
-  /* You'll perform relative XPath queries in each <geometry> like this:
-       // Reuse context with the new node.
-       xpathContext->node = parent_node;
-
-       // Perform subsequent xpath query.
-       result = xmlXPathEvalExpression(BAD_CAST "xpath_relative_to_parent", xpathContext);
-       if(result == NULL) {
-         printf("Error: unable to evaluate xpath expression\n");
-         return;
-       }
-  */
-  static const xmlChar* GEOMETRY_DATA_XPATH = ( xmlChar * ) "/mb:COLLADA/mb:library_geometries/mb:geometry";
-  static const xmlChar* VERTEX_DATA_XPATH = ( xmlChar * ) "/mb:mesh/mb:source/mb:float_array";
-  static const xmlChar* TRIANGLE_DATA_XPATH = ( xmlChar * ) "/mb:mesh/mb:triangles";
-
   // Get the document name we want to parse.
   if ( argc <= 1 ) {
     printf ( "Usage: %s docname\n", argv[0] );
@@ -411,29 +365,23 @@ int main ( int argc, char **argv ) {
   // Second, iterate through the geometries to extract their information.
   forEachNode_( geometryXpathResult, geometry ) {
     // Confine the current XPath searches to only the current geometry node.
-    xpathContext->node = geometryXpathResult->nodesetval->nodeTab[0];
+    xpathContext->node = *geometryNodePP;
     xmlXPathObjectPtr vertexXpathResult   = xmlGetNodes ( docP, xpathContext, VERTEX_DATA_XPATH );
     xmlXPathObjectPtr triangleXpathResult = xmlGetNodes ( docP, xpathContext, TRIANGLE_DATA_XPATH );
-
-    if ( !vertexXpathResult || !triangleXpathResult ) {
-      printf( "Incomplete 3D mesh information. Quitting...\n");
-      return 1;
-    }
-
-    getVertexAttributes( &mesh, vertexXpathResult );
+    getVertexAttributes( &mesh, xpathContext, vertexXpathResult, docP );
 
     // Quantize
     U16* qPosA = NULL;
     arrayNew( (void**) &qPosA, sizeof(U16), mesh.posResult.count * 3 );
     assert( qPosA );
     // TODO macro-out 1024 so we tweak the number of bits and all its dependencies with one single parameter.
-    const float convX = 1024.0 / fabs( mesh.posResult.max.position.x - mesh.posResult.min.position.x );
-    const float convY = 1024.0 / fabs( mesh.posResult.max.position.y - mesh.posResult.min.position.y );
-    const float convZ = 1024.0 / fabs( mesh.posResult.max.position.z - mesh.posResult.min.position.z );
+    const float convX = 1024.0 / fabs( mesh.posResult.max.vec3.x - mesh.posResult.min.vec3.x );
+    const float convY = 1024.0 / fabs( mesh.posResult.max.vec3.y - mesh.posResult.min.vec3.y );
+    const float convZ = 1024.0 / fabs( mesh.posResult.max.vec3.z - mesh.posResult.min.vec3.z );
     for (int i = 0; i < mesh.posResult.count; ++i) {
-      qPosA[ 3 * i     ] = (int) ( (mesh.posResult.u.vec3A[i].x - mesh.posResult.min.position.x ) * convX);
-      qPosA[ 3 * i + 1 ] = (int) ( (mesh.posResult.u.vec3A[i].y - mesh.posResult.min.position.y ) * convY);
-      qPosA[ 3 * i + 2 ] = (int) ( (mesh.posResult.u.vec3A[i].z - mesh.posResult.min.position.z ) * convZ);
+      qPosA[ 3 * i     ] = (int) ( (mesh.posResult.u.vec3A[i].x - mesh.posResult.min.vec3.x ) * convX);
+      qPosA[ 3 * i + 1 ] = (int) ( (mesh.posResult.u.vec3A[i].y - mesh.posResult.min.vec3.y ) * convY);
+      qPosA[ 3 * i + 2 ] = (int) ( (mesh.posResult.u.vec3A[i].z - mesh.posResult.min.vec3.z ) * convZ);
     }
     printf( "\n\nQuantized from %dB to %dB.\n", mesh.posResult.count * sizeof(Vec3), arrayGetElemSz( qPosA ) * arrayGetNElems( qPosA ) );
 
