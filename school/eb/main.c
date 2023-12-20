@@ -16,9 +16,9 @@
 // TODO handle triangles with varying numbers of attributes
 // NOTE Decompression will put all vertex attributes together into a single array.
 static const char NAMESPACE_ALIAS[] = "mb";
-static const xmlChar* GEOMETRY_DATA_XPATH = ( xmlChar * ) "/mb:COLLADA/mb:library_geometries/mb:geometry";
-static const xmlChar* VERTEX_DATA_XPATH = ( xmlChar * ) "mb:mesh/mb:source";
-static const xmlChar* TRIANGLE_DATA_XPATH = ( xmlChar * ) "mb:mesh/mb:triangles";
+static const xmlChar* GEOMETRY_DATA_XPATH = ( xmlChar * ) "/mb:COLLADA/mb:library_geometries/mb:geometry";  // gets each individual geometry
+static const xmlChar* VERTEX_DATA_XPATH = ( xmlChar * ) "mb:mesh/mb:source";  // vertex attribute arrays
+static const xmlChar* TRIANGLE_DATA_XPATH = ( xmlChar * ) "mb:mesh/mb:triangles";  // triangle data... duh
 
 typedef struct {
   int count;         // number of space-delimited elements in this set
@@ -29,16 +29,19 @@ typedef struct {
     float* scalarA;
     Vec2* vec2A;
     Vec3* vec3A;
+    Triangle* triA;
   } u;
   union {
     float scalar;
     Vec2 vec2;
     Vec3 vec3;
+    Triangle* triA;
   } min;
   union {
     float scalar;
     Vec2 vec2;
     Vec3 vec3;
+    Triangle* triA;
   } max;
 } XmlResult;
 
@@ -199,7 +202,7 @@ static int getStride(xmlDocPtr docP, xmlNodePtr nodeP, xmlXPathContextPtr contex
   context->node = nodeP->next->next->children->next;  // first next is a newline for some reason
   //printf("curr node name: %s\n", nodeP->name);
   //printf("next node name: %s\n", context->node->name);
-  xmlXPathObjectPtr r = xmlGetNodes ( docP, context, (char*) "@stride" );
+  xmlXPathObjectPtr r = xmlGetNodes ( docP, context, (xmlChar*) "@stride" );
   //printf("\n\n\nhey: %s\n\n\n", r->nodesetval->nodeTab[0]->children->content);
   return atoi( (char*) r->nodesetval->nodeTab[0]->children->content);
 }
@@ -210,7 +213,7 @@ static int getStride(xmlDocPtr docP, xmlNodePtr nodeP, xmlXPathContextPtr contex
    to avoid re-iterating over any linked lists. */
  
 void getVertexAttributes( Mesh* meshP, xmlXPathContextPtr xpathContext, xmlXPathObjectPtr xpathResultP, xmlDocPtr docP ) {
-  assert( meshP && xpathResultP );
+  assert( meshP && xpathResultP && xpathContext && docP );
   // Don't actually change the context. Just copy it.
   xmlXPathContextPtr context = xpathContext;
   XmlResult* resultP;
@@ -262,8 +265,6 @@ void getVertexAttributes( Mesh* meshP, xmlXPathContextPtr xpathContext, xmlXPath
               exit(1);
               break;
           }
-          // TODO go ahead and extract the value here.
-          printf("val: %s\n", resultP->valString);
           goto skipToNextSource;
         }
       }
@@ -273,48 +274,98 @@ skipToNextSource:
   }  
 }  
 
-#if 0
-// ======
-// COLORS
-// ======
-// For now, only support one set of colors per geometry.
-}
-}
-#endif
+// OFF TOPIC.......
+//
+// For residual coding:
+// ====================
+//    During compression (process coordinates separately):
+//    X2 - X1 = X3'
+//    residual = X3' - X3
+//
+//    Then, as each coordinate's residual array, histogram out of 1024 with a grand total.
+//    Then you'll have your probabilties needed for the arithmetic encoding.
+//    But compare this output with dead-simple quantization first before you commit to it.
+//    And compare even that against quantization of differences (how low can they go?).
+//
+//    During inflation:
+//    Arithmetic-decode each array of coordinate residuals
+//    X2 - X1 = X3'
+//    X3 = X3' - residual
+//
+//    
 
 // =========
 // TRIANGLES
 // =========
-void getTriangles( Mesh* meshP, xmlXPathObjectPtr xpathResultP ) {
-  assert( meshP && xpathResultP );
-  char* triArrayString;
+//
+// Here's where I figure out how to store variations of triangles.
+// The variations are different set sof properties: PNCT. P & N are
+// always required, so there are only four possibile variants:
+//
+//  PN
+//  PNC
+//  PNT
+//  PNCT
+//
+//  Good idea to check each coordinate of the traingle vertices individually, to be 100% sure they 
+//  reference the vertex attributes we think they do. 
+//
+//  So what will happen once I obtain one of those values? e.g. "Offset 1 is semantic = NORMAL." So what?
+//  What do I make of that? Do I set a high bit in triangle array wrapper? 
+//
+//  What's the consequence of just having a single triangle struct with all the attributes? What does it matter? It's not like we're storing that as is; we're still going to be entropy coding the components separately. So don't worry about empty spaces in triangles; we're storing them a whole 'nother completely different way.
+
+
+typedef enum { POSITION = 1, NORMAL = 2, COLOR = 4, TEXTURE = 8 } TriElem;
+void getTriangles( Mesh* meshP, xmlXPathContextPtr context, xmlXPathObjectPtr xpathResultP, xmlDocPtr docP ) {
+  assert( meshP && xpathResultP && context && docP );
+  // Don't actually change the context. Just copy it.
+  context->node = xpathResultP->nodesetval->nodeTab[0];
+  xmlNodePtr origTriangleNodeP = context->node;
+  XmlResult* resultP;
   xmlNodePtr propNodeP;
-  int numElemsPerUnit;  // TODO determine this programmatically
-  forEachNode_( xpathResultP, parent ) {
-    forEachProperty_( parentNodePP, parent ) {
-      if ( parentPropertyNodeP->type == XML_ATTRIBUTE_NODE ) {
-        // TODO rather than clone strings, just point at their values.
-        //      Then keep the xml objects alive until you're finished compressing each mesh.
-        printf("prop node name: %s\n", parentPropertyNodeP->name);
-        // If this is an identifier node, determine which mesh property it is.
-        if ( !(strcmp( (char*) parentPropertyNodeP->name, "id" ) ) ) {
-          propNodeP = parentPropertyNodeP->children;
-        }
+  xmlXPathObjectPtr r;
+  int triElemsPresent = 0;
+  // Count total number of triangles. Could be separate triangle sub-arrays for different materials.
+  forEachNode_( xpathResultP, triangle ) {
+    // First we get the number of triangles that use the current material.
+    context->node = *triangleNodePP;
+    r = xmlGetNodes ( docP, context, (xmlChar*) "@count" );
+    meshP->triResult.count += atoi( (char*) r->nodesetval->nodeTab[0]->children[0].content );
+  }
+
+  printf("total number of triangles: %d\n", meshP->triResult.count );
+
+  // Then allocate your triangle array.
+  arrayNew( (void**) &meshP->triResult.u.triA, sizeof(Triangle), meshP->triResult.count );
+  assert( meshP->triResult.u.triA );
+
+  // Next, figure out what kind of triangle data we're dealing with.
+  context->node = origTriangleNodeP;  // reset ourselves back to the first triangle
+  r = xmlGetNodes ( docP, context, (xmlChar*) "./mb:input/@semantic" );
+  if ( r ) {
+    forEachNode_( r, test ) {
+      if (!strcmp( (char*) (*testNodePP)->children->content, "VERTEX" ) ) {
+        triElemsPresent |= POSITION;
+      }
+      else if (!strcmp( (char*) (*testNodePP)->children->content, "NORMAL" ) ) {
+        triElemsPresent |= NORMAL;
+      }
+      else if (!strcmp( (char*) (*testNodePP)->children->content, "COLOR" ) ) {
+        triElemsPresent |= COLOR;
+      }
+      else if (!strcmp( (char*) (*testNodePP)->children->content, "TEXCOORD" ) ) {
+        triElemsPresent |= TEXTURE;
       }
     }
-    if( strstr( (char*) propNodeP->content, "mesh-vertices" ) > 0 ) {
-      // These may have anywhere from 2-4 elements per triangle corner.
-      // So determine the type of triangle by looking at all the input elements' "semantic" properties.
-      numElemsPerUnit = 2;  // TODO determine this programmatically
-                            // Extract the triangles.
-      forEachChild_( parentNodePP, curr ) {
-        if (currChildNodeP->type == XML_TEXT_NODE) {
-          triArrayString = (char*) currChildNodeP->content;
-          printf("\ttexels child node val: %s\n\n", currChildNodeP->content );
-          break;
-        }
-      }
-    }
+  }
+
+  // TODO avoid joining strings together. Instead, for triangles, just append to the Triangle array.
+  // TODO make a "clevoo" function that takes pointers to the three elems of triangle result
+  // Finally, grab all the data.
+  r = xmlGetNodes ( docP, context, (xmlChar*) "./mb:p" );
+  forEachNode_( r, triElem ) {
+     (*triElemNodePP)->children->content );
   }
 }
 
@@ -368,7 +419,12 @@ int main ( int argc, char **argv ) {
     xpathContext->node = *geometryNodePP;
     xmlXPathObjectPtr vertexXpathResult   = xmlGetNodes ( docP, xpathContext, VERTEX_DATA_XPATH );
     xmlXPathObjectPtr triangleXpathResult = xmlGetNodes ( docP, xpathContext, TRIANGLE_DATA_XPATH );
+
+
+    // Extract all data from XML.
     getVertexAttributes( &mesh, xpathContext, vertexXpathResult, docP );
+    getTriangles( &mesh, xpathContext, triangleXpathResult, docP );
+
 
     // Quantize
     U16* qPosA = NULL;
