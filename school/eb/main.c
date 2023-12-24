@@ -9,41 +9,14 @@
 
 // TODO Plan how you're going to refer to the materials associated with each triangle set.
 // TODO Determine an optimal order to store triangles in to cache-boost indexing.
-// TODO handle multiple <geometry> tags, where each is a standalone object in the scene.
 // TODO handle links to other blender files
 // TODO handle textures
-// TODO combine geometries with triangles separated for multiple textures
-// TODO handle triangles with varying numbers of attributes
 // NOTE Decompression will put all vertex attributes together into a single array.
 static const char NAMESPACE_ALIAS[] = "mb";
 static const xmlChar* GEOMETRY_DATA_XPATH = ( xmlChar * ) "/mb:COLLADA/mb:library_geometries/mb:geometry";  // gets each individual geometry
 static const xmlChar* VERTEX_DATA_XPATH = ( xmlChar * ) "mb:mesh/mb:source";  // vertex attribute arrays
 static const xmlChar* TRIANGLE_DATA_XPATH = ( xmlChar * ) "mb:mesh/mb:triangles";  // triangle data... duh
 
-typedef struct {
-  int count;         // number of space-delimited elements in this set
-  int stride;
-  char* valString;
-  union {
-    int scalar; 
-    float* scalarA;
-    Vec2* vec2A;
-    Vec3* vec3A;
-    Triangle* triA;
-  } u;
-  union {
-    float scalar;
-    Vec2 vec2;
-    Vec3 vec3;
-    Triangle* triA;
-  } min;
-  union {
-    float scalar;
-    Vec2 vec2;
-    Vec3 vec3;
-    Triangle* triA;
-  } max;
-} XmlResult;
 
 // Inflatables 
 typedef struct Inflatable {
@@ -84,7 +57,7 @@ void inflatableNew(void *voidA, Inflatable **inflatablePP) {
 }
 
 // This assumes elements are separated by whitespace only.
-static int _getNextNumberIdx( char* string, unsigned startIdx, int numToSkip ) {
+static int _getNextNumberIdx( char* string, int startIdx, int numToSkip ) {
   assert( startIdx >= 0 );
 
   if ( startIdx >= strlen( string ) ) {
@@ -93,7 +66,7 @@ static int _getNextNumberIdx( char* string, unsigned startIdx, int numToSkip ) {
 
   char* cPtr = &string[ startIdx ];
 
-  // Skip past three numbers
+  // Skip past <numToSkip> numbers
   for ( int i = 0; i < numToSkip; ++i ) {
     // Skip past the current number
     while ( *cPtr != ' ' && *cPtr != '\0' ) {
@@ -149,7 +122,7 @@ void extractVec3Array( XmlResult *resultP ) {
       resultP->max.vec3.z = resultP->u.vec3A[j].z;
     }
   }
-  // xmlFree( mesh.posResult.valueString );  // TODO be sure to do this later
+  // xmlFree( mesh.pos.valueString );  // TODO be sure to do this later
 }
 
 void extractVec2Array( XmlResult *resultP ) {
@@ -185,20 +158,14 @@ void extractVec2Array( XmlResult *resultP ) {
       resultP->max.vec2.t = resultP->u.vec2A[j].t;
     }
   }
-  // xmlFree( mesh.posResult.valueString );  // TODO be sure to do this later
+  // xmlFree( mesh.pos.valueString );  // TODO be sure to do this later
 }
-
-
-typedef struct {
-  XmlResult posResult, nmlResult, clrResult, texResult, triResult;
-} Mesh;
-
 
 /* To separate concerns, I'm only going to have this know about XML.
  * Then anybody else can come in and extract an array of something. 
  * It'll return a simple data structure containiing a string and count. */
 
-static int getStride(xmlDocPtr docP, xmlNodePtr nodeP, xmlXPathContextPtr context) {
+inline static int getStride(xmlDocPtr docP, xmlNodePtr nodeP, xmlXPathContextPtr context) {
   context->node = nodeP->next->next->children->next;  // first next is a newline for some reason
   //printf("curr node name: %s\n", nodeP->name);
   //printf("next node name: %s\n", context->node->name);
@@ -230,16 +197,16 @@ void getVertexAttributes( Mesh* meshP, xmlXPathContextPtr xpathContext, xmlXPath
           propNodeP = floatArrayPropertyNodeP->children;
           // Determine which float array this is.
           if( strstr( (char*) propNodeP->content, "mesh-positions" ) > 0 ) {
-            resultP = &meshP->posResult;
+            resultP = &meshP->pos;
           }  
           else if( strstr( (char*) propNodeP->content, "mesh-normals" ) > 0 ) {
-            resultP = &meshP->nmlResult;
+            resultP = &meshP->nml;
           } 
           else if( strstr( (char*) propNodeP->content, "mesh-colors" ) > 0 ) {
-            resultP = &meshP->texResult;
+            resultP = &meshP->clr;
           }
           else if( strstr( (char*) propNodeP->content, "mesh-map" ) > 0 ) {
-            resultP = &meshP->texResult;
+            resultP = &meshP->tex;
           }
           // Get the count 
           else if( !strcmp( (char*) floatArrayPropertyNodeP->name, "count" ) ) {
@@ -317,55 +284,88 @@ skipToNextSource:
 
 
 typedef enum { POSITION = 1, NORMAL = 2, COLOR = 4, TEXTURE = 8 } TriElem;
-void getTriangles( Mesh* meshP, xmlXPathContextPtr context, xmlXPathObjectPtr xpathResultP, xmlDocPtr docP ) {
-  assert( meshP && xpathResultP && context && docP );
+void getTriangles( Mesh* meshP, xmlXPathContextPtr context, xmlXPathObjectPtr triangleXpathResult, xmlDocPtr docP ) {
+  assert( meshP && triangleXpathResult && context && docP );
   // Don't actually change the context. Just copy it.
-  context->node = xpathResultP->nodesetval->nodeTab[0];
+  context->node = triangleXpathResult->nodesetval->nodeTab[0];
   xmlNodePtr origTriangleNodeP = context->node;
   XmlResult* resultP;
   xmlNodePtr propNodeP;
-  xmlXPathObjectPtr r;
-  int triElemsPresent = 0;
+  xmlXPathObjectPtr triCountNodeP, semanticNodesetP, triangleNodeP, vertexArrayNode;
+  int numTrianglesInCurrNode;
+  // TODO get elements needed for CURRENT set of triangles
+  // TODO get number of triangles in CURRENT set of triangles
+  // TODO pray this is only for the current geometry... right??
   // Count total number of triangles. Could be separate triangle sub-arrays for different materials.
-  forEachNode_( xpathResultP, triangle ) {
+  forEachNode_( triangleXpathResult, _triangle ) {
     // First we get the number of triangles that use the current material.
-    context->node = *triangleNodePP;
-    r = xmlGetNodes ( docP, context, (xmlChar*) "@count" );
-    meshP->triResult.count += atoi( (char*) r->nodesetval->nodeTab[0]->children[0].content );
+    context->node = *_triangleNodePP;
+    triCountNodeP = xmlGetNodes ( docP, context, (xmlChar*) "@count" );
+    meshP->tri.count += atoi( (char*) triCountNodeP->nodesetval->nodeTab[0]->children[0].content );
   }
 
-  printf("total number of triangles: %d\n", meshP->triResult.count );
+  // printf("total number of triangles: %d\n", meshP->tri.count );
 
   // Then allocate your triangle array.
-  arrayNew( (void**) &meshP->triResult.u.triA, sizeof(Triangle), meshP->triResult.count );
-  assert( meshP->triResult.u.triA );
+  arrayNew( (void**) &meshP->tri.u.triA, sizeof(Triangle), meshP->tri.count );
+  assert( meshP->tri.u.triA );
 
   // Next, figure out what kind of triangle data we're dealing with.
-  context->node = origTriangleNodeP;  // reset ourselves back to the first triangle
-  r = xmlGetNodes ( docP, context, (xmlChar*) "./mb:input/@semantic" );
-  if ( r ) {
-    forEachNode_( r, test ) {
-      if (!strcmp( (char*) (*testNodePP)->children->content, "VERTEX" ) ) {
-        triElemsPresent |= POSITION;
-      }
-      else if (!strcmp( (char*) (*testNodePP)->children->content, "NORMAL" ) ) {
-        triElemsPresent |= NORMAL;
-      }
-      else if (!strcmp( (char*) (*testNodePP)->children->content, "COLOR" ) ) {
-        triElemsPresent |= COLOR;
-      }
-      else if (!strcmp( (char*) (*testNodePP)->children->content, "TEXCOORD" ) ) {
-        triElemsPresent |= TEXTURE;
+  meshP->triElemsPresent = 0;
+  forEachNode_( triangleXpathResult, triangle ) {
+    context->node = *triangleNodePP;
+
+    // Get number of triangles in current <triangles> node.
+    triCountNodeP = xmlGetNodes ( docP, context, (xmlChar*) "@count" );
+    numTrianglesInCurrNode = atoi( (char*) triCountNodeP->nodesetval->nodeTab[0]->children[0].content );
+    // printf("current number of triangles: %d\n", numTrianglesInCurrNode );
+
+    int dstOffsets[4], numDstOffsets = 0;  // stores where to put each triangle corner element & how many
+    semanticNodesetP = xmlGetNodes ( docP, context, (xmlChar*) "./mb:input/@semantic" );
+    static Triangle dummyTriangle;
+    if ( semanticNodesetP ) {
+      forEachNode_( semanticNodesetP, semantic ) {
+        if (!strcmp( (char*) (*semanticNodePP)->children->content, "VERTEX" ) ) {
+          meshP->triElemsPresent |= POSITION;
+          dstOffsets[numDstOffsets++] = (U8*) &dummyTriangle.v[0].positionIdx - (U8*) &dummyTriangle.v[0];
+        }
+        else if (!strcmp( (char*) (*semanticNodePP)->children->content, "NORMAL" ) ) {
+          meshP->triElemsPresent |= NORMAL;
+          dstOffsets[numDstOffsets++] = (U8*) &dummyTriangle.v[0].normalIdx - (U8*) &dummyTriangle.v[0];
+        }
+        else if (!strcmp( (char*) (*semanticNodePP)->children->content, "COLOR" ) ) {
+          meshP->triElemsPresent |= COLOR;
+          dstOffsets[numDstOffsets++] = (U8*) &dummyTriangle.v[0].colorIdx - (U8*) &dummyTriangle.v[0];
+        }
+        else if (!strcmp( (char*) (*semanticNodePP)->children->content, "TEXCOORD" ) ) {
+          meshP->triElemsPresent |= TEXTURE;
+          dstOffsets[numDstOffsets++] = (U8*) &dummyTriangle.v[0].texelIdx - (U8*) &dummyTriangle.v[0];
+        }
       }
     }
-  }
 
-  // TODO avoid joining strings together. Instead, for triangles, just append to the Triangle array.
-  // TODO make a "clevoo" function that takes pointers to the three elems of triangle result
-  // Finally, grab all the data.
-  r = xmlGetNodes ( docP, context, (xmlChar*) "./mb:p" );
-  forEachNode_( r, triElem ) {
-     (*triElemNodePP)->children->content );
+    // Finally, grab all the data.
+    vertexArrayNode = xmlGetNodes ( docP, context, (xmlChar*) "./mb:p" );
+    int dstTriIdx = 0, offsetIdx, srcIdx, cornerIdx, numTriangles, currInputTriIdx = 0;
+    // For each <p> array in current <triangles> node (there should only be one, but idk what idk)...
+    printf("next triangle <p> node\n");
+    forEachNode_( vertexArrayNode, vertexElem ) {
+      // For all the input triangles in current set of triangles...
+      for (srcIdx = 0; srcIdx >= 0 && currInputTriIdx < numTrianglesInCurrNode; ++dstTriIdx, ++currInputTriIdx ) {  // dstTriIdx is not a typo :)
+                                                     // For each corner of the current triangle...
+        for ( cornerIdx = 0; cornerIdx < 3; ++cornerIdx ) {
+          // For each attribute of each corner (holy nested loops Batman)...
+          for ( offsetIdx = 0; offsetIdx < numDstOffsets; ++offsetIdx ) {
+            sscanf( (char*) &(*vertexElemNodePP)->children->content[srcIdx], "%d", (int*) ((U8*) &meshP->tri.u.triA[ dstTriIdx ].v[ cornerIdx ] + dstOffsets[ offsetIdx ] ) );
+            srcIdx = _getNextNumberIdx( (char*) (*vertexElemNodePP)->children->content, srcIdx, 1 );
+          }
+        }
+        Triangle* triP = &meshP->tri.u.triA[ dstTriIdx ];
+        // for (int i = 0; i < 3; ++i) {
+          // printf("tri.v[%d] is { %d, %d, %d, %d }\n", i, triP->v[i].positionIdx, triP->v[i].normalIdx, triP->v[i].colorIdx, triP->v[i].texelIdx);
+        // }
+      }
+    }
   }
 }
 
@@ -387,7 +387,6 @@ void pack(U16* array, int bits, U8** result) {
     }
   }
 
-  // Any remaining bits.
   if(buffer_bits > 0) {
     (*result)[result_index++] = buffer;
   }
@@ -422,24 +421,28 @@ int main ( int argc, char **argv ) {
 
 
     // Extract all data from XML.
+    printf("getting vertices\n");
     getVertexAttributes( &mesh, xpathContext, vertexXpathResult, docP );
+    printf("getting triangles\n");
     getTriangles( &mesh, xpathContext, triangleXpathResult, docP );
+    printf("blah\n");
+    blah( &mesh );
 
 
     // Quantize
     U16* qPosA = NULL;
-    arrayNew( (void**) &qPosA, sizeof(U16), mesh.posResult.count * 3 );
+    arrayNew( (void**) &qPosA, sizeof(U16), mesh.pos.count * 3 );
     assert( qPosA );
     // TODO macro-out 1024 so we tweak the number of bits and all its dependencies with one single parameter.
-    const float convX = 1024.0 / fabs( mesh.posResult.max.vec3.x - mesh.posResult.min.vec3.x );
-    const float convY = 1024.0 / fabs( mesh.posResult.max.vec3.y - mesh.posResult.min.vec3.y );
-    const float convZ = 1024.0 / fabs( mesh.posResult.max.vec3.z - mesh.posResult.min.vec3.z );
-    for (int i = 0; i < mesh.posResult.count; ++i) {
-      qPosA[ 3 * i     ] = (int) ( (mesh.posResult.u.vec3A[i].x - mesh.posResult.min.vec3.x ) * convX);
-      qPosA[ 3 * i + 1 ] = (int) ( (mesh.posResult.u.vec3A[i].y - mesh.posResult.min.vec3.y ) * convY);
-      qPosA[ 3 * i + 2 ] = (int) ( (mesh.posResult.u.vec3A[i].z - mesh.posResult.min.vec3.z ) * convZ);
+    const float convX = 1024.0 / fabs( mesh.pos.max.vec3.x - mesh.pos.min.vec3.x );
+    const float convY = 1024.0 / fabs( mesh.pos.max.vec3.y - mesh.pos.min.vec3.y );
+    const float convZ = 1024.0 / fabs( mesh.pos.max.vec3.z - mesh.pos.min.vec3.z );
+    for (int i = 0; i < mesh.pos.count; ++i) {
+      qPosA[ 3 * i     ] = (int) ( (mesh.pos.u.vec3A[i].x - mesh.pos.min.vec3.x ) * convX);
+      qPosA[ 3 * i + 1 ] = (int) ( (mesh.pos.u.vec3A[i].y - mesh.pos.min.vec3.y ) * convY);
+      qPosA[ 3 * i + 2 ] = (int) ( (mesh.pos.u.vec3A[i].z - mesh.pos.min.vec3.z ) * convZ);
     }
-    printf( "\n\nQuantized from %dB to %dB.\n", mesh.posResult.count * sizeof(Vec3), arrayGetElemSz( qPosA ) * arrayGetNElems( qPosA ) );
+    printf( "\n\nQuantized from %dB to %dB.\n", mesh.pos.count * sizeof(Vec3), arrayGetElemSz( qPosA ) * arrayGetNElems( qPosA ) );
 
     // Pack quantized bits together
     U8* packedQPosA =  NULL;

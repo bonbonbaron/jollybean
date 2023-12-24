@@ -15,8 +15,14 @@
 #define endForEach_( loopName_ ) }}
 
 // Outputs two arrays: Vertex and Half-Edge.
-void blah( Vec3 *posA, Vec3 *normalA, Triangle *triangleA ) {
-  assert( posA && normalA && triangleA );
+// void blah( Vec3 *posA, Vec3 *normalA, Triangle *triangleA ) {
+void blah( Mesh *meshP ) {
+  assert( meshP && meshP->pos.u.vec3A && meshP->nml.u.vec3A && meshP->tri.u.triA );
+  // Conditional assertions
+  // TODO
+  Vec3* posA = meshP->pos.u.vec3A;
+  Vec3* normalA = meshP->nml.u.vec3A;
+  Triangle* triangleA = meshP->tri.u.triA;
   // Half-edge array
   HalfEdge* heA;
   Error e = arrayNew( (void**) &heA, sizeof(HalfEdge), 6 * arrayGetNElems(triangleA) );
@@ -26,12 +32,12 @@ void blah( Vec3 *posA, Vec3 *normalA, Triangle *triangleA ) {
   hellNew( &hellF, 3 * arrayGetNElems( triangleA ) );
   assert( hellF );
   // Vertex array
-  Vertex *vertexA;
+  Vertex *vertexA;  // TODO whoops, you need to allocate this array
+  e = arrayNew( (void**) &vertexA, sizeof(Vertex), arrayGetNElems(posA) );
+  assert( !e );
   forEachInArray_( Vertex, vertex ) 
     vertexP->heTerminalHead = -1;
   endForEach_(vertex)
-  e = arrayNew( (void**) &vertexA, sizeof(Vertex), arrayGetNElems(posA) );
-  assert( !e );
   // Iterate through triangles
   int nHalfEdges = 0;
   HalfEdge *hcP, *hnP, *hpP;  // current, next, and previous (corresponds to CCW in triangle, starting at gate)
