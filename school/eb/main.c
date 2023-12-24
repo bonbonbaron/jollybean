@@ -6,6 +6,7 @@
 #include <math.h>
 #include <limits.h>
 #include <zlib.h>
+#include <string.h>
 
 // TODO Plan how you're going to refer to the materials associated with each triangle set.
 // TODO Determine an optimal order to store triangles in to cache-boost indexing.
@@ -81,6 +82,34 @@ static int _getNextNumberIdx( char* string, int startIdx, int numToSkip ) {
   return cPtr - string;
 }
 
+static int* getNumIndexArray( const char* string, const int numElems ) {
+  assert( string && numElems > 0 );
+
+  int* offsetA = NULL;
+  arrayNew( (void**) &offsetA, sizeof( int ), numElems );
+  assert(offsetA);
+
+  char* cP = string;
+  const char* stringEndP = cP + (size_t) strlen( string );
+  int* idxPtr = offsetA;  // first elem is rightfully 0
+
+  while ( cP < stringEndP ) {
+    *(idxPtr++) = cP - string;
+    // Skip past the current number
+    while ( *cP != '\0' && *cP != ' ' ) {
+      ++cP;
+    }
+    // Skip past the current space to the next number
+    while ( *cP != '\0' && *cP == ' ' ) {
+      ++cP;
+    }
+    // printf("offsetA[%d / %d] = %d, str len = %d, 0x%08x < 0x%08x\n", idxPtr - offsetA, arrayGetNElems( offsetA ), *(idxPtr - 1), stringEndP - string, (int) cP, (int) stringEndP );
+    // ++idxPtr;
+  }
+
+  return offsetA;
+}
+
 void extractVec3Array( XmlResult *resultP ) {
   assert( resultP );
   assert( resultP->count );
@@ -98,7 +127,11 @@ void extractVec3Array( XmlResult *resultP ) {
 
   // Extract string into array here.
   for (int j = 0, sIdx = 0; sIdx >= 0 && j < resultP->count; ++j) {
+#if 0
     sscanf( &resultP->valString[sIdx], "%f %f %f", &resultP->u.vec3A[j].x, &resultP->u.vec3A[j].y, &resultP->u.vec3A[j].z );
+#else
+    atof( &resultP->valString[sIdx], "%f %f %f", &resultP->u.vec3A[j].x, &resultP->u.vec3A[j].y, &resultP->u.vec3A[j].z );
+#endif
     sIdx = _getNextNumberIdx( resultP->valString, sIdx, 3 );
 
     // Check min
@@ -349,22 +382,44 @@ void getTriangles( Mesh* meshP, xmlXPathContextPtr context, xmlXPathObjectPtr tr
     int dstTriIdx = 0, offsetIdx, srcIdx, cornerIdx, numTriangles, currInputTriIdx = 0;
     // For each <p> array in current <triangles> node (there should only be one, but idk what idk)...
     printf("next triangle <p> node\n");
+
+    // Get all offsets
     forEachNode_( vertexArrayNode, vertexElem ) {
+#if 1
+      meshP->tri.valString = (char*) ((*vertexElemNodePP)->children->content);
+      int* idxA = getNumIndexArray( meshP->tri.valString, meshP->tri.count * 10 );
+      assert( idxA );
+#endif
       // For all the input triangles in current set of triangles...
       for (srcIdx = 0; srcIdx >= 0 && currInputTriIdx < numTrianglesInCurrNode; ++dstTriIdx, ++currInputTriIdx ) {  // dstTriIdx is not a typo :)
-                                                     // For each corner of the current triangle...
+        // For each corner of the current triangle...
         for ( cornerIdx = 0; cornerIdx < 3; ++cornerIdx ) {
           // For each attribute of each corner (holy nested loops Batman)...
-          for ( offsetIdx = 0; offsetIdx < numDstOffsets; ++offsetIdx ) {
+          //for ( offsetIdx = 0; offsetIdx < numDstOffsets; ++offsetIdx ) {
+#if 0
+            sscanf( (char*) &(*vertexElemNodePP)->children->content[srcIdx], 
+                "%d %d %d", 
+                (int*) ((U8*) &meshP->tri.u.triA[ dstTriIdx ].v[ cornerIdx ].positionIdx ),
+                (int*) ((U8*) &meshP->tri.u.triA[ dstTriIdx ].v[ cornerIdx ].normalIdx ),
+                (int*) ((U8*) &meshP->tri.u.triA[ dstTriIdx ].v[ cornerIdx ].texelIdx )
+                );
+            srcIdx = _getNextNumberIdx( (char*) (*vertexElemNodePP)->children->content, srcIdx, 3 );
+#elif 1
+            *((int*) ((U8*) &meshP->tri.u.triA[ dstTriIdx ].v[ cornerIdx ] + dstOffsets[ 0 ] )) = atoi( (char*) &(*vertexElemNodePP)->children->content[idxA[++srcIdx]] );
+            *((int*) ((U8*) &meshP->tri.u.triA[ dstTriIdx ].v[ cornerIdx ] + dstOffsets[ 1 ] )) = atoi( (char*) &(*vertexElemNodePP)->children->content[idxA[++srcIdx]] );
+            *((int*) ((U8*) &meshP->tri.u.triA[ dstTriIdx ].v[ cornerIdx ] + dstOffsets[ 2 ] )) = atoi( (char*) &(*vertexElemNodePP)->children->content[idxA[++srcIdx]] );
+#else
             sscanf( (char*) &(*vertexElemNodePP)->children->content[srcIdx], "%d", (int*) ((U8*) &meshP->tri.u.triA[ dstTriIdx ].v[ cornerIdx ] + dstOffsets[ offsetIdx ] ) );
             srcIdx = _getNextNumberIdx( (char*) (*vertexElemNodePP)->children->content, srcIdx, 1 );
-          }
+#endif
+          //}
         }
         Triangle* triP = &meshP->tri.u.triA[ dstTriIdx ];
         // for (int i = 0; i < 3; ++i) {
           // printf("tri.v[%d] is { %d, %d, %d, %d }\n", i, triP->v[i].positionIdx, triP->v[i].normalIdx, triP->v[i].colorIdx, triP->v[i].texelIdx);
         // }
       }
+      arrayDel( (void**) &idxA );
     }
   }
 }
