@@ -19,20 +19,19 @@
 void blah( Mesh *meshP ) {
   assert( meshP && meshP->pos.u.vec3A && meshP->nml.u.vec3A && meshP->tri.u.triA );
   // Conditional assertions
-  // TODO
   Vec3* posA = meshP->pos.u.vec3A;
   Vec3* normalA = meshP->nml.u.vec3A;
   Triangle* triangleA = meshP->tri.u.triA;
   // Half-edge array
   HalfEdge* heA;
-  Error e = arrayNew( (void**) &heA, sizeof(HalfEdge), 6 * arrayGetNElems(triangleA) );
-  assert( !e );
+  Error e = arrayNew( (void**) &heA, sizeof(HalfEdge), 3 * arrayGetNElems(triangleA) );
+  assert( !e && heA );
   // Half-edge linked list
   HeLinkListNode *hellF = NULL;
   hellNew( &hellF, 3 * arrayGetNElems( triangleA ) );
   assert( hellF );
   // Vertex array
-  Vertex *vertexA;  // TODO whoops, you need to allocate this array
+  Vertex *vertexA;
   e = arrayNew( (void**) &vertexA, sizeof(Vertex), arrayGetNElems(posA) );
   assert( !e );
   forEachInArray_( Vertex, vertex ) 
@@ -70,6 +69,29 @@ void blah( Mesh *meshP ) {
     hnP->s = hpP->v = hcP->e;
     hnP->e = hpP->s = hcP->v;
     hnP->v = hpP->e = hcP->s;
+#if 0
+    printf("tri %d, hcP: s = %d, e = %d, n = %d, p = %d, v = %d\n",
+        triangleP - triangleA,
+        hcP->s,
+        hcP->e,
+        hcP->n,
+        hcP->p,
+        hcP->v );
+    printf("tri %d, hnP: s = %d, e = %d, n = %d, p = %d, v = %d\n",
+        triangleP - triangleA,
+        hnP->s,
+        hnP->e,
+        hnP->n,
+        hnP->p,
+        hnP->v );
+    printf("tri %d, hpP: s = %d, e = %d, n = %d, p = %d, v = %d\n\n",
+        triangleP - triangleA,
+        hpP->s,
+        hpP->e,
+        hpP->n,
+        hpP->p,
+        hpP->v );
+#endif
 
     // Add this triangle's corners' terminating edges to the linked list.
     for ( int i = 0; i < 3; ++i ) {
@@ -86,29 +108,39 @@ void blah( Mesh *meshP ) {
 
     nHalfEdges += 3;
   endForEach_(triangle)
-  
-  
+
+
   // Find each half-edge's opposite.
   HeLinkListNode *nodeP;
   HalfEdge* heOppositeP;
   forEachInArray_( HalfEdge, he ) 
     /* Half-edge STARTing point says, "My goal is to
        find somebody who ENDs on me. */
+    if ( heP->hasOpposite ) {
+      continue;
+    }
     nodeP = &hellF[vertexA[heP->s].heTerminalHead];
     /* Avoid "if this is the first elem" logic below
-       by polevaulting over the incrementer.
-       This is how you avoid doing the increment be-
-       fore the check as traditional loops do. */
+       by polevaulting over the incrementer the first iteration.
+       This is how you avoid doing the increment before 
+       the check as traditional loops do. */
     goto foundOpposite;
     do {
       nodeP = &hellF[nodeP->next];
       foundOpposite:
-      if ( heA[nodeP->heIdx].e == heP->s ) {
+      if ( heA[nodeP->heIdx].e == heP->s && heA[nodeP->heIdx].s == heP->e ) {
         heOppositeP = &heA[nodeP->heIdx];
         heOppositeP->o = heP - heA;
         heOppositeP->hasOpposite = 1;
         heP->o = nodeP->heIdx;
         heP->hasOpposite = 1;
+#if 0
+        printf("Half-edge %d goes < %d, %d >.\nIts opposite, %d, goes < %d, %d >.\n", 
+          heOppositeP->o,
+          heP->s, heP->e,
+          heP->o,
+          heOppositeP->s, heOppositeP->e );
+#endif
         break;
       }
     } while ( nodeP->next != 0 );

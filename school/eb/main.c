@@ -58,57 +58,6 @@ void inflatableNew(void *voidA, Inflatable **inflatablePP) {
 }
 
 // This assumes elements are separated by whitespace only.
-static int _getNextNumberIdx( char* string, int startIdx, int numToSkip ) {
-  assert( startIdx >= 0 );
-
-  if ( startIdx >= strlen( string ) ) {
-    return -1;
-  }
-
-  char* cPtr = &string[ startIdx ];
-
-  // Skip past <numToSkip> numbers
-  for ( int i = 0; i < numToSkip; ++i ) {
-    // Skip past the current number
-    while ( *cPtr != ' ' && *cPtr != '\0' ) {
-      ++cPtr;
-    }
-    // Skip past the current space to the next number
-    while ( *cPtr == ' ' && *cPtr != '\0' ) {
-      ++cPtr;
-    }
-  }
-
-  return cPtr - string;
-}
-
-static int* getNumIndexArray( const char* string, const int numElems ) {
-  assert( string && numElems > 0 );
-
-  int* offsetA = NULL;
-  arrayNew( (void**) &offsetA, sizeof( int ), numElems );
-  assert(offsetA);
-
-  char* cP = string;
-  const char* stringEndP = cP + (size_t) strlen( string );
-  int* idxPtr = offsetA;  // first elem is rightfully 0
-
-  while ( cP < stringEndP ) {
-    *(idxPtr++) = cP - string;
-    // Skip past the current number
-    while ( *cP != '\0' && *cP != ' ' ) {
-      ++cP;
-    }
-    // Skip past the current space to the next number
-    while ( *cP != '\0' && *cP == ' ' ) {
-      ++cP;
-    }
-    // printf("offsetA[%d / %d] = %d, str len = %d, 0x%08x < 0x%08x\n", idxPtr - offsetA, arrayGetNElems( offsetA ), *(idxPtr - 1), stringEndP - string, (int) cP, (int) stringEndP );
-    // ++idxPtr;
-  }
-
-  return offsetA;
-}
 
 void extractVec3Array( XmlResult *resultP ) {
   assert( resultP );
@@ -122,40 +71,73 @@ void extractVec3Array( XmlResult *resultP ) {
   resultP->max.vec3.y = FLT_MIN;
   resultP->max.vec3.z = FLT_MIN;
 
-  resultP->u.vec3A = malloc( sizeof( Vec3 ) * resultP->count );
+  resultP->u.vec3A = malloc( sizeof( Vec3 ) * resultP->count );  // should this be divided by 3?
   assert( resultP->u.vec3A );
 
   // Extract string into array here.
-  for (int j = 0, sIdx = 0; sIdx >= 0 && j < resultP->count; ++j) {
-#if 0
-    sscanf( &resultP->valString[sIdx], "%f %f %f", &resultP->u.vec3A[j].x, &resultP->u.vec3A[j].y, &resultP->u.vec3A[j].z );
-#else
-    atof( &resultP->valString[sIdx], "%f %f %f", &resultP->u.vec3A[j].x, &resultP->u.vec3A[j].y, &resultP->u.vec3A[j].z );
-#endif
-    sIdx = _getNextNumberIdx( resultP->valString, sIdx, 3 );
+  char* cPtr = resultP->valString;
+  char* cEndPtr = cPtr + strlen( resultP->valString );
+  Vec3* vec3P = resultP->u.vec3A;
+  while ( cPtr < cEndPtr ) {
+    /*****/
+    /* X */
+    /*****/
+    vec3P->x = atof( cPtr );
+    // Skip past the current number
+    while ( *cPtr != ' ' && *cPtr != '\0' ) {
+      ++cPtr;
+    }
+    // Skip past the current space to the next number
+    while ( *cPtr == ' ' && *cPtr != '\0' ) {
+      ++cPtr;
+    }
+    /*****/
+    /* Y */
+    /*****/
+    vec3P->y = atof( cPtr );
+    // Skip past the current number
+    while ( *cPtr != ' ' && *cPtr != '\0' ) {
+      ++cPtr;
+    }
+    // Skip past the current space to the next number
+    while ( *cPtr == ' ' && *cPtr != '\0' ) {
+      ++cPtr;
+    }
+    /*****/
+    /* Z */
+    /*****/
+    vec3P->z = atof( cPtr );
+    // Skip past the current number
+    while ( *cPtr != ' ' && *cPtr != '\0' ) {
+      ++cPtr;
+    }
+    // Skip past the current space to the next number
+    while ( *cPtr == ' ' && *cPtr != '\0' ) {
+      ++cPtr;
+    }
 
     // Check min
-    if ( resultP->u.vec3A[j].x < resultP->min.vec3.x ) {
-      resultP->min.vec3.x = resultP->u.vec3A[j].x;
+    if ( vec3P->x < resultP->min.vec3.x ) {
+      resultP->min.vec3.x = vec3P->x;
     }
-    if ( resultP->u.vec3A[j].y < resultP->min.vec3.y ) {
-      resultP->min.vec3.y = resultP->u.vec3A[j].y;
+    if ( vec3P->y < resultP->min.vec3.y ) {
+      resultP->min.vec3.y = vec3P->y;
     }
-    if ( resultP->u.vec3A[j].z < resultP->min.vec3.z ) {
-      resultP->min.vec3.z = resultP->u.vec3A[j].z;
+    if ( vec3P->z < resultP->min.vec3.z ) {
+      resultP->min.vec3.z = vec3P->z;
     }
     // Check max
-    if ( resultP->u.vec3A[j].x > resultP->max.vec3.x ) {
-      resultP->max.vec3.x = resultP->u.vec3A[j].x;
+    if ( vec3P->x > resultP->max.vec3.x ) {
+      resultP->max.vec3.x = vec3P->x;
     }
-    if ( resultP->u.vec3A[j].y > resultP->max.vec3.y ) {
-      resultP->max.vec3.y = resultP->u.vec3A[j].y;
+    if ( vec3P->y > resultP->max.vec3.y ) {
+      resultP->max.vec3.y = vec3P->y;
     }
-    if ( resultP->u.vec3A[j].z > resultP->max.vec3.z ) {
-      resultP->max.vec3.z = resultP->u.vec3A[j].z;
+    if ( vec3P->z > resultP->max.vec3.z ) {
+      resultP->max.vec3.z = vec3P->z;
     }
+    ++vec3P;
   }
-  // xmlFree( mesh.pos.valueString );  // TODO be sure to do this later
 }
 
 void extractVec2Array( XmlResult *resultP ) {
@@ -172,24 +154,50 @@ void extractVec2Array( XmlResult *resultP ) {
   assert( resultP->u.vec2A );
 
   // Extract string into array here.
-  for (int j = 0, sIdx = 0; sIdx >= 0 && j < resultP->count; ++j) {
-    sscanf( &resultP->valString[sIdx], "%f %f", &resultP->u.vec2A[j].s, &resultP->u.vec2A[j].t );
-    sIdx = _getNextNumberIdx( resultP->valString, sIdx, 2 );
+  char* cPtr = resultP->valString;
+  char* cEndPtr = cPtr + strlen( resultP->valString );
+  Vec2* vec2P = resultP->u.vec2A;
+  while ( cPtr < cEndPtr ) {
+    /*****/
+    /* X */
+    /*****/
+    vec2P->s = atof( cPtr );
+    // Skip past the current number
+    while ( *cPtr != ' ' && *cPtr != '\0' ) {
+      ++cPtr;
+    }
+    // Skip past the current space to the next number
+    while ( *cPtr == ' ' && *cPtr != '\0' ) {
+      ++cPtr;
+    }
+    /*****/
+    /* Y */
+    /*****/
+    vec2P->t = atof( cPtr );
+    // Skip past the current number
+    while ( *cPtr != ' ' && *cPtr != '\0' ) {
+      ++cPtr;
+    }
+    // Skip past the current space to the next number
+    while ( *cPtr == ' ' && *cPtr != '\0' ) {
+      ++cPtr;
+    }
 
     // Check min
-    if ( resultP->u.vec2A[j].s < resultP->min.vec2.s ) {
-      resultP->min.vec2.s = resultP->u.vec2A[j].s;
+    if ( vec2P->s < resultP->min.vec2.s ) {
+      resultP->min.vec2.s = vec2P->s;
     }
-    if ( resultP->u.vec2A[j].t < resultP->min.vec2.t ) {
-      resultP->min.vec2.t = resultP->u.vec2A[j].t;
+    if ( vec2P->t < resultP->min.vec2.t ) {
+      resultP->min.vec2.t = vec2P->t;
     }
     // Check max
-    if ( resultP->u.vec2A[j].s > resultP->max.vec2.s ) {
-      resultP->max.vec2.s = resultP->u.vec2A[j].s;
+    if ( vec2P->s > resultP->max.vec2.s ) {
+      resultP->max.vec2.s = vec2P->s;
     }
-    if ( resultP->u.vec2A[j].t > resultP->max.vec2.t ) {
-      resultP->max.vec2.t = resultP->u.vec2A[j].t;
+    if ( vec2P->t > resultP->max.vec2.t ) {
+      resultP->max.vec2.t = vec2P->t;
     }
+    ++vec2P;
   }
   // xmlFree( mesh.pos.valueString );  // TODO be sure to do this later
 }
@@ -274,57 +282,16 @@ skipToNextSource:
   }  
 }  
 
-// OFF TOPIC.......
-//
-// For residual coding:
-// ====================
-//    During compression (process coordinates separately):
-//    X2 - X1 = X3'
-//    residual = X3' - X3
-//
-//    Then, as each coordinate's residual array, histogram out of 1024 with a grand total.
-//    Then you'll have your probabilties needed for the arithmetic encoding.
-//    But compare this output with dead-simple quantization first before you commit to it.
-//    And compare even that against quantization of differences (how low can they go?).
-//
-//    During inflation:
-//    Arithmetic-decode each array of coordinate residuals
-//    X2 - X1 = X3'
-//    X3 = X3' - residual
-//
-//    
-
 // =========
 // TRIANGLES
 // =========
-//
-// Here's where I figure out how to store variations of triangles.
-// The variations are different set sof properties: PNCT. P & N are
-// always required, so there are only four possibile variants:
-//
-//  PN
-//  PNC
-//  PNT
-//  PNCT
-//
-//  Good idea to check each coordinate of the traingle vertices individually, to be 100% sure they 
-//  reference the vertex attributes we think they do. 
-//
-//  So what will happen once I obtain one of those values? e.g. "Offset 1 is semantic = NORMAL." So what?
-//  What do I make of that? Do I set a high bit in triangle array wrapper? 
-//
-//  What's the consequence of just having a single triangle struct with all the attributes? What does it matter? It's not like we're storing that as is; we're still going to be entropy coding the components separately. So don't worry about empty spaces in triangles; we're storing them a whole 'nother completely different way.
-
 
 typedef enum { POSITION = 1, NORMAL = 2, COLOR = 4, TEXTURE = 8 } TriElem;
 void getTriangles( Mesh* meshP, xmlXPathContextPtr context, xmlXPathObjectPtr triangleXpathResult, xmlDocPtr docP ) {
   assert( meshP && triangleXpathResult && context && docP );
   // Don't actually change the context. Just copy it.
   context->node = triangleXpathResult->nodesetval->nodeTab[0];
-  xmlNodePtr origTriangleNodeP = context->node;
-  XmlResult* resultP;
-  xmlNodePtr propNodeP;
-  xmlXPathObjectPtr triCountNodeP, semanticNodesetP, triangleNodeP, vertexArrayNode;
+  xmlXPathObjectPtr triCountNodeP, semanticNodesetP, vertexArrayNode;
   int numTrianglesInCurrNode;
   // TODO get elements needed for CURRENT set of triangles
   // TODO get number of triangles in CURRENT set of triangles
@@ -353,73 +320,65 @@ void getTriangles( Mesh* meshP, xmlXPathContextPtr context, xmlXPathObjectPtr tr
     numTrianglesInCurrNode = atoi( (char*) triCountNodeP->nodesetval->nodeTab[0]->children[0].content );
     // printf("current number of triangles: %d\n", numTrianglesInCurrNode );
 
-    int dstOffsets[4], numDstOffsets = 0;  // stores where to put each triangle corner element & how many
+    int dstOffsets[4], numAttrsPerCorner = 0;  // stores where to put each triangle corner element & how many
     semanticNodesetP = xmlGetNodes ( docP, context, (xmlChar*) "./mb:input/@semantic" );
     static Triangle dummyTriangle;
     if ( semanticNodesetP ) {
       forEachNode_( semanticNodesetP, semantic ) {
         if (!strcmp( (char*) (*semanticNodePP)->children->content, "VERTEX" ) ) {
           meshP->triElemsPresent |= POSITION;
-          dstOffsets[numDstOffsets++] = (U8*) &dummyTriangle.v[0].positionIdx - (U8*) &dummyTriangle.v[0];
+          dstOffsets[numAttrsPerCorner++] = (U8*) &dummyTriangle.v[0].positionIdx - (U8*) &dummyTriangle.v[0];
         }
         else if (!strcmp( (char*) (*semanticNodePP)->children->content, "NORMAL" ) ) {
           meshP->triElemsPresent |= NORMAL;
-          dstOffsets[numDstOffsets++] = (U8*) &dummyTriangle.v[0].normalIdx - (U8*) &dummyTriangle.v[0];
+          dstOffsets[numAttrsPerCorner++] = (U8*) &dummyTriangle.v[0].normalIdx - (U8*) &dummyTriangle.v[0];
         }
         else if (!strcmp( (char*) (*semanticNodePP)->children->content, "COLOR" ) ) {
           meshP->triElemsPresent |= COLOR;
-          dstOffsets[numDstOffsets++] = (U8*) &dummyTriangle.v[0].colorIdx - (U8*) &dummyTriangle.v[0];
+          dstOffsets[numAttrsPerCorner++] = (U8*) &dummyTriangle.v[0].colorIdx - (U8*) &dummyTriangle.v[0];
         }
         else if (!strcmp( (char*) (*semanticNodePP)->children->content, "TEXCOORD" ) ) {
           meshP->triElemsPresent |= TEXTURE;
-          dstOffsets[numDstOffsets++] = (U8*) &dummyTriangle.v[0].texelIdx - (U8*) &dummyTriangle.v[0];
+          dstOffsets[numAttrsPerCorner++] = (U8*) &dummyTriangle.v[0].texelIdx - (U8*) &dummyTriangle.v[0];
         }
       }
     }
 
     // Finally, grab all the data.
     vertexArrayNode = xmlGetNodes ( docP, context, (xmlChar*) "./mb:p" );
-    int dstTriIdx = 0, offsetIdx, srcIdx, cornerIdx, numTriangles, currInputTriIdx = 0;
+    int dstTriIdx = 0, offsetIdx, cornerIdx;
     // For each <p> array in current <triangles> node (there should only be one, but idk what idk)...
-    printf("next triangle <p> node\n");
+    // printf("next triangle <p> node\n");
 
     // Get all offsets
     forEachNode_( vertexArrayNode, vertexElem ) {
-#if 1
       meshP->tri.valString = (char*) ((*vertexElemNodePP)->children->content);
-      int* idxA = getNumIndexArray( meshP->tri.valString, meshP->tri.count * 10 );
-      assert( idxA );
-#endif
+#define NUM_CORNERS_PER_TRIANGLE (3)
       // For all the input triangles in current set of triangles...
-      for (srcIdx = 0; srcIdx >= 0 && currInputTriIdx < numTrianglesInCurrNode; ++dstTriIdx, ++currInputTriIdx ) {  // dstTriIdx is not a typo :)
+      // for (srcIdx = 0; srcIdx >= 0 && currInputTriIdx < numTrianglesInCurrNode; ++dstTriIdx, ++currInputTriIdx ) {  // dstTriIdx is not a typo :)
+      char* cPtr = meshP->tri.valString;
+      char* cEndPtr = cPtr + strlen( meshP->tri.valString );
+      for ( ; cPtr < cEndPtr; ++dstTriIdx ) {
         // For each corner of the current triangle...
         for ( cornerIdx = 0; cornerIdx < 3; ++cornerIdx ) {
           // For each attribute of each corner (holy nested loops Batman)...
-          //for ( offsetIdx = 0; offsetIdx < numDstOffsets; ++offsetIdx ) {
-#if 0
-            sscanf( (char*) &(*vertexElemNodePP)->children->content[srcIdx], 
-                "%d %d %d", 
-                (int*) ((U8*) &meshP->tri.u.triA[ dstTriIdx ].v[ cornerIdx ].positionIdx ),
-                (int*) ((U8*) &meshP->tri.u.triA[ dstTriIdx ].v[ cornerIdx ].normalIdx ),
-                (int*) ((U8*) &meshP->tri.u.triA[ dstTriIdx ].v[ cornerIdx ].texelIdx )
-                );
-            srcIdx = _getNextNumberIdx( (char*) (*vertexElemNodePP)->children->content, srcIdx, 3 );
-#elif 1
-            *((int*) ((U8*) &meshP->tri.u.triA[ dstTriIdx ].v[ cornerIdx ] + dstOffsets[ 0 ] )) = atoi( (char*) &(*vertexElemNodePP)->children->content[idxA[++srcIdx]] );
-            *((int*) ((U8*) &meshP->tri.u.triA[ dstTriIdx ].v[ cornerIdx ] + dstOffsets[ 1 ] )) = atoi( (char*) &(*vertexElemNodePP)->children->content[idxA[++srcIdx]] );
-            *((int*) ((U8*) &meshP->tri.u.triA[ dstTriIdx ].v[ cornerIdx ] + dstOffsets[ 2 ] )) = atoi( (char*) &(*vertexElemNodePP)->children->content[idxA[++srcIdx]] );
-#else
-            sscanf( (char*) &(*vertexElemNodePP)->children->content[srcIdx], "%d", (int*) ((U8*) &meshP->tri.u.triA[ dstTriIdx ].v[ cornerIdx ] + dstOffsets[ offsetIdx ] ) );
-            srcIdx = _getNextNumberIdx( (char*) (*vertexElemNodePP)->children->content, srcIdx, 1 );
-#endif
-          //}
+          for ( offsetIdx = 0; offsetIdx < numAttrsPerCorner; ++offsetIdx ) {
+            *((int*) ((U8*) &meshP->tri.u.triA[ dstTriIdx ].v[ cornerIdx ] + dstOffsets[ offsetIdx ] )) = atoi( cPtr );
+            // Skip past the current number
+            while ( *cPtr != ' ' && *cPtr != '\0' ) {
+              ++cPtr;
+            }
+            // Skip past the current space to the next number
+            while ( *cPtr == ' ' && *cPtr != '\0' ) {
+              ++cPtr;
+            }
+          }
+          // Triangle* triP = &meshP->tri.u.triA[ dstTriIdx ];
+          // for (int i = 0; i < 3; ++i) {
+            // printf("tri.v[%d] is { %d, %d, %d, %d }\n", i, triP->v[i].positionIdx, triP->v[i].normalIdx, triP->v[i].colorIdx, triP->v[i].texelIdx);
+          // }
         }
-        Triangle* triP = &meshP->tri.u.triA[ dstTriIdx ];
-        // for (int i = 0; i < 3; ++i) {
-          // printf("tri.v[%d] is { %d, %d, %d, %d }\n", i, triP->v[i].positionIdx, triP->v[i].normalIdx, triP->v[i].colorIdx, triP->v[i].texelIdx);
-        // }
       }
-      arrayDel( (void**) &idxA );
     }
   }
 }
@@ -474,17 +433,12 @@ int main ( int argc, char **argv ) {
     xmlXPathObjectPtr vertexXpathResult   = xmlGetNodes ( docP, xpathContext, VERTEX_DATA_XPATH );
     xmlXPathObjectPtr triangleXpathResult = xmlGetNodes ( docP, xpathContext, TRIANGLE_DATA_XPATH );
 
-
     // Extract all data from XML.
-    printf("getting vertices\n");
     getVertexAttributes( &mesh, xpathContext, vertexXpathResult, docP );
-    printf("getting triangles\n");
     getTriangles( &mesh, xpathContext, triangleXpathResult, docP );
-    printf("blah\n");
     blah( &mesh );
 
-
-    // Quantize
+    // Raw quantization
     U16* qPosA = NULL;
     arrayNew( (void**) &qPosA, sizeof(U16), mesh.pos.count * 3 );
     assert( qPosA );
@@ -510,6 +464,28 @@ int main ( int argc, char **argv ) {
     inflatableNew( packedQPosA, &infP );
     printf( "Compressed from %dB to %dB.\n", arrayGetNElems( packedQPosA ) * arrayGetElemSz( packedQPosA ), infP->compressedLen );
 
+    // Instead of jumping the gun, I need to learn how to traverse a mesh in spiraling order:
+
+
+    /* Predictive-Delta quantization */
+    //
+    // For residual coding:
+    // ====================
+    //    During compression (process coordinates separately):
+    //    X2 - X1 = X3'
+    //    residual = X3' - X3
+    //
+    //    Then, as each coordinate's residual array, histogram out of 1024 with a grand total.
+    //    Then you'll have your probabilties needed for the arithmetic encoding.
+    //    But compare this output with dead-simple quantization first before you commit to it.
+    //    And compare even that against quantization of differences (how low can they go?).
+    //
+    //    During inflation:
+    //    Arithmetic-decode each array of coordinate residuals
+    //    X2 - X1 = X3'
+    //    X3 = X3' - residual
+    //
+    //    
     // Now I want to try delta. For this I need to first determine the way positions are connected to each other. In order to do that,
 
     // Free everything.
