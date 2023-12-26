@@ -47,11 +47,6 @@ typedef struct {
 } XmlResult;
 
 typedef struct {
-  XmlResult pos, nml, clr, tex, tri;
-  int triElemsPresent;
-} Mesh;
-
-typedef struct {
   int 
     m,  // has been encountered before
     b,  // is a boundary vertex
@@ -61,15 +56,22 @@ typedef struct {
 
 typedef struct {
   int   // pssst, consider making it a short later
-    m, 
-    s, 
-    e, 
-    v, 
-    n, 
-    p, 
+    m,   // whether this half-edge has been met
+    s,   // start vertex of this half-edge
+    e,   // end vertex of this half-edge
+    v,   // opposite vertex from this half-edge
+    n,   // next counter-clockwise half-edge in this triangle
+    p,   // previous counter-clockewise half-edge in this triangle
     o, 
     N, 
     P,
     hasOpposite;
 } HalfEdge;
+
+typedef struct {
+  XmlResult pos, nml, clr, tex, tri;
+  HalfEdge *heA;
+  Vertex *vertexA;
+  int triElemsPresent;
+} Mesh;
 #endif

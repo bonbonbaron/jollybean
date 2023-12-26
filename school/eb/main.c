@@ -292,7 +292,6 @@ void getTriangles( Mesh* meshP, xmlXPathContextPtr context, xmlXPathObjectPtr tr
   // Don't actually change the context. Just copy it.
   context->node = triangleXpathResult->nodesetval->nodeTab[0];
   xmlXPathObjectPtr triCountNodeP, semanticNodesetP, vertexArrayNode;
-  int numTrianglesInCurrNode;
   // TODO get elements needed for CURRENT set of triangles
   // TODO get number of triangles in CURRENT set of triangles
   // TODO pray this is only for the current geometry... right??
@@ -317,8 +316,6 @@ void getTriangles( Mesh* meshP, xmlXPathContextPtr context, xmlXPathObjectPtr tr
 
     // Get number of triangles in current <triangles> node.
     triCountNodeP = xmlGetNodes ( docP, context, (xmlChar*) "@count" );
-    numTrianglesInCurrNode = atoi( (char*) triCountNodeP->nodesetval->nodeTab[0]->children[0].content );
-    // printf("current number of triangles: %d\n", numTrianglesInCurrNode );
 
     int dstOffsets[4], numAttrsPerCorner = 0;  // stores where to put each triangle corner element & how many
     semanticNodesetP = xmlGetNodes ( docP, context, (xmlChar*) "./mb:input/@semantic" );
@@ -355,7 +352,6 @@ void getTriangles( Mesh* meshP, xmlXPathContextPtr context, xmlXPathObjectPtr tr
       meshP->tri.valString = (char*) ((*vertexElemNodePP)->children->content);
 #define NUM_CORNERS_PER_TRIANGLE (3)
       // For all the input triangles in current set of triangles...
-      // for (srcIdx = 0; srcIdx >= 0 && currInputTriIdx < numTrianglesInCurrNode; ++dstTriIdx, ++currInputTriIdx ) {  // dstTriIdx is not a typo :)
       char* cPtr = meshP->tri.valString;
       char* cEndPtr = cPtr + strlen( meshP->tri.valString );
       for ( ; cPtr < cEndPtr; ++dstTriIdx ) {
@@ -465,15 +461,56 @@ int main ( int argc, char **argv ) {
     printf( "Compressed from %dB to %dB.\n", arrayGetNElems( packedQPosA ) * arrayGetElemSz( packedQPosA ), infP->compressedLen );
 
     // Instead of jumping the gun, I need to learn how to traverse a mesh in spiraling order:
-
+    // In fact, I should write a function to store the order of half-edges to visit in an array of indices.
+    // Then I can reuse that array for normals, texels, colors, and connectivity (CLERS).
+    // That way, I can avoid having to reset the "met" flags after the first traversal.
+    /*
+     * Allocate a traversal stack as a fray.
+     * Make a stack pointer point to it for faster than "getLastElement()".
+     *
+     * Allocate an array of traversal order.
+     * Make a pointer to it for speed too.
+     *
+     * Start at the first HE (index 0), then start at its opposite triangle.
+     * while curr index is not zero,
+     *   mark HE as "met"
+     *   if he.v is a STRANGER,
+     *      mark he.v as met.
+     *      go to RIGHT triangle ( he.n.o ).
+     *   elif you've met the RIGHT triangle,
+     *      AND if you've met the LEFT triangle (you've met BOTH neighbors),
+     *          pop (?1) (in recursion, this is simply a return out of this nested call)
+     *      else go to the LEFT triangle
+     *   elif you've met the LEFT triangle,
+     *      go to the RIGHT triangle
+     *   else (you've met NEITHER),
+     *      push the LEFT triangle onto a to-do stack
+     *      go to the RIGHT triangle
+     *      
+     *
+     * AFTER GATHERING THE ORDER OF TRAVERSAL:
+     * =======================================
+     *
+     *  starting with the first HE again, get its position p1.
+     *  For each of x, y, and z, take the differences between p1 and p2. 
+     *
+     *    
+     *
+     * THIS IS OFF SUBJECT FOR NOW, so leave it alone until you've dealt with the positions.
+     * Every corner has multiple normals, so what's your "angle" there?
+     * I'll just process each nromal independently, wrt the neighboring normal on its edge. 
+     */
 
     /* Predictive-Delta quantization */
     //
     // For residual coding:
     // ====================
     //    During compression (process coordinates separately):
-    //    X2 - X1 = X3'
+    //    X3' = X1 + (X2 - X1)
     //    residual = X3' - X3
+    //    (?2) How do I determine the necessary bitlength needed for quantizing?
+    //    Or is VLE really that great?
+    //    qr = quantize( residual, 10 )
     //
     //    Then, as each coordinate's residual array, histogram out of 1024 with a grand total.
     //    Then you'll have your probabilties needed for the arithmetic encoding.
@@ -482,7 +519,7 @@ int main ( int argc, char **argv ) {
     //
     //    During inflation:
     //    Arithmetic-decode each array of coordinate residuals
-    //    X2 - X1 = X3'
+    //    X3' = X1 + (X2 - X1) 
     //    X3 = X3' - residual
     //
     //    
