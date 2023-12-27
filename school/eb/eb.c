@@ -1,5 +1,6 @@
 #include "eb.h"
 
+#define DBG_HALFEDGES (0)
 // Velllcommme.... tooooo HELLLL!!!!!
 void hellNew( HeLinkListNode** hellFP, unsigned int nElems ) {
   assert(hellFP && nElems);
@@ -47,6 +48,7 @@ HeLinkListNode* hellNewHead( HeLinkListNode *hellF, HalfEdge* heP) {
   return hellAdd( hellF, NULL, heP );
 }
 
+#if DBG_HALFEDGES
 void dispList( HeLinkListNode* hellF, unsigned headIdx ) {
   if ( hellF[headIdx].head == &hellF[headIdx] ) {
     HeLinkListNode* currNodeP = &hellF[ headIdx ];
@@ -65,6 +67,7 @@ void dispList( HeLinkListNode* hellF, unsigned headIdx ) {
     printf("\n\n");
   }
 }
+#endif
 
 #define forEachInArray_( type_, pointerPrefix_ ) \
   if (1) {  /* this allows redeclaring the below variables across multiple macro uses */ \
@@ -147,14 +150,16 @@ void getEdges( Mesh *meshP ) {
     nHalfEdges += 3;
   endForEach_(triangle)
 
+#if DBG_HALFEDGES
   int nCorners, nLists;
   for ( int i = 0; i < arrayGetNElems( heA ); ++i ) {
-    //dispList( heA[i].e->listOfHesEndingHere, i );
+    dispList( heA[i].e->listOfHesEndingHere, i );
     nLists += ( heA[i].e->listOfHesEndingHere != NULL );
   }
   nCorners = arrayGetNElems( meshP->pos.u.vec3A );
 
-  // printf( "%d lists, %d corners\n", nLists, nCorners );
+  printf( "%d lists, %d corners\n", nLists, nCorners );
+#endif
 
   // Find each half-edge's opposite.
   HeLinkListNode *nodeP;
@@ -194,7 +199,9 @@ void getEdges( Mesh *meshP ) {
     heP->e->m |= ( !heP->o );  // treat this vertex prematurely as having been "met"
   endForEach_(he)
 
-  // printf("%d twins + %d loners = %d HEs\n", nOpps, nLoners, arrayGetNElems( heA ) );
+#if DBG_HALFEDGES
+  printf("%d twins + %d loners = %d HEs\n", nOpps, nLoners, arrayGetNElems( heA ) );
+#endif
 
   // free hell
   frayDel( (void**) &hellF );
@@ -219,18 +226,31 @@ void getEdges( Mesh *meshP ) {
  *      
  */
 
+// TODO keep track of most common letter
 // Gives you the traversal order for compressing vertex attributes. 
 // It also givecs you the CLERS connectivity compression codes so you only have to figure traversal out once.
 // Then I can reuse this traversal-order array for normals, texels, colors, and connectivity (CLERS).
 // That way, I can avoid having to reset the "met" flags after the first traversal.
 #define hasRightNeighbor heP->n->o && !heP->n->o->t->m
 #define hasLeftNeighbor  heP->p->o && !heP->p->o->t->m
-#define goRight markAllAsSeen; heP = heP->n->o
-#define goLeft markAllAsSeen; heP = heP->p->o
-#define pushLeftNeighborToStack *(stackP++) = heP->p->o
-#define popFromStack if (*stackP) heP = *(--stackP); else heP = NULL
-#define markAllAsSeen markVertexAsSeen(s); markVertexAsSeen(e); markVertexAsSeen(v)
-#define markVertexAsSeen(d) heP->d->m = 1
+#define goRight markAllAsSeen(heP); heP = heP->n->o
+#define goLeft markAllAsSeen(heP); heP = heP->p->o
+#define pushLeftNeighborToStack markAllAsSeen(heP->p->o); heP->p->o->t->onStack = 1; *(++stackP) = heP->p->o
+#define popFromStack \
+  markAllAsSeen(heP); \
+  if ( stackP > traversalStackA ) { \
+    heP = *(stackP--); \
+    heP->t->onStack = 0; \
+  } \
+  else { \
+    heP = NULL; \
+  }
+#define markAllAsSeen(h) \
+  markTriangleAsSeen(h); markVertexAsSeen(h, s); markVertexAsSeen(h, e); markVertexAsSeen(h, v)
+#define markVertexAsSeen(h, d) h->d->m = 1
+#define markTriangleAsSeen(h) h->t->m = 1
+#define DBG_EDGEBREAKER (0)
+// EdgeBreaker: https://faculty.cc.gatech.edu/~jarek/papers/EdgeBreaker.pdf
 void getConnectivity( Mesh *meshP ) {
   assert( meshP && meshP->tri.u.triA && meshP->heA && ( arrayGetNElems( meshP->tri.u.triA ) > 0) );
   // Allocate a traversal stack as a fray.
@@ -244,49 +264,85 @@ void getConnectivity( Mesh *meshP ) {
   e = arrayNew( (void**) &meshP->traversalOrderA, sizeof( TraversalNode ), arrayGetNElems( meshP->tri.u.triA ) );
   assert( !e );
   TraversalNode* travNodeP = meshP->traversalOrderA;
-  // printf("num tris: %d\n", arrayGetNElems( meshP->tri.u.triA ) );
+#if DBG_EDGEBREAKER
+  printf("num tris: %d\n", arrayGetNElems( meshP->tri.u.triA ) );
   int nIters = 0;
+#endif
   for ( HalfEdge *heP, *hP = meshP->heA, *hEndP = hP + arrayGetNElems( meshP->heA ); 
         hP < hEndP; ++hP ) {
     if ( !hP->t->m ) {
       heP = hP;
+      travNodeP->newIsland = 1;
+#if DBG_EDGEBREAKER
+      printf("\nnew island");  // calling inappropriately for hundreds of triangels
+#endif
+      // I was expecting this to plow through all the triangles of a distinct mesh. E wrong?
       while ( heP ) {
-        // printf("\niter # %02d ( @ 0x%08x ) -> ", ++nIters, (unsigned) heP->t );
-        heP->t->m = 1;
+#if DBG_EDGEBREAKER
+        printf("\niter # % 2d ( @ tri %05d ) -> ", ++nIters, heP->t - meshP->tri.u.triA );
+#endif
+        assert( !heP->t->onStack );
         travNodeP->t = heP->t;  
         // If v is not on boundary, we're lucky; it's an easy C.
         if ( !heP->v->m ) {
           travNodeP->clersChar = C;
-          // putchar(travNodeP->clersChar);
           goRight;
         }
         // if opp vertex IS on the boundary or has been met, then we gotta figure out what kind this is.
         else if ( hasRightNeighbor ){
           if ( hasLeftNeighbor ) {
+#if DBG_EDGEBREAKER
+            printf( "\e[1;32mS (pushing %05d) ", heP->p->o->t - meshP->tri.u.triA );
+#endif
             travNodeP->clersChar = S;
-            // putchar(travNodeP->clersChar);
             pushLeftNeighborToStack;
           }
           else {
             travNodeP->clersChar = L;
-            // putchar(travNodeP->clersChar);
           }
           goRight;
         }
         // TODO There's some nuance i'm missing here. Supposed to find E one step sooner.
         else if ( hasLeftNeighbor ) {
           travNodeP->clersChar = R;
-          // putchar(travNodeP->clersChar);
           goLeft;
         }
         else {
+#if DBG_EDGEBREAKER
+          printf( "\e[1;31mE (pulling %05d) ", *stackP ? ( (*stackP)->t - meshP->tri.u.triA ) : 0 );
+#endif
           travNodeP->clersChar = E;
-          // putchar(travNodeP->clersChar);
           popFromStack;
         }
+#if DBG_EDGEBREAKER
+        if ( travNodeP->clersChar != E && travNodeP->clersChar != S ) {
+          putchar(travNodeP->clersChar);
+        }
+        printf( "\e[0m" );
+#endif
         ++travNodeP;  // TODO some allocation bug here, maybe because one too many
       }
     }
   }
+  assert( ( travNodeP - meshP->traversalOrderA ) == arrayGetNElems( meshP->tri.u.triA ) );
   arrayDel( (void**) &traversalStackA );
+}
+
+// Parallelogram Predictor: 
+//   (original) https://www.graphicsinterface.org/wp-content/uploads/gi1998-4.pdf
+//   (improved) https://www.cs.unc.edu/~isenburg/papers/ia-cpmgpp-02.pdf
+//   Touma and Gotsmas apply a crease angle enhancement.
+//    TODO study across- and within- parallelogram predictors (isenburg, p3)
+void compressPositions( Mesh* meshP ) {
+  assert( meshP && meshP->traversalOrderA );
+  assert( meshP->tri.u.triA && ( arrayGetNElems( meshP->tri.u.triA ) > 0 ) );
+  assert( arrayGetNElems( meshP->traversalOrderA ) == arrayGetNElems( meshP->tri.u.triA ) );
+  const int nTriangleCorners = 3 * arrayGetNElems( meshP->tri.u.triA );
+  Error e = arrayNew( (void**) &meshP->pos.delta.pos.xA, sizeof( float ), nTriangleCorners );
+  assert( !e );
+  e = arrayNew( (void**) &meshP->pos.delta.pos.yA, sizeof( float ), nTriangleCorners );
+  assert( !e );
+  e = arrayNew( (void**) &meshP->pos.delta.pos.zA, sizeof( float ), nTriangleCorners );
+  assert( !e );
+  
 }

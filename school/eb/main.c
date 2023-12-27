@@ -75,6 +75,69 @@ void inflatableDel(Inflatable **inflatablePP) {
 
 // This assumes elements are separated by whitespace only.
 
+
+void extractVec2Array( XmlResult *resultP ) {
+  assert( resultP );
+  assert( resultP->count );
+  assert( resultP->valString );
+
+  resultP->min.vec2.s = FLT_MAX;
+  resultP->min.vec2.t = FLT_MAX;
+  resultP->max.vec2.s = FLT_MIN;
+  resultP->max.vec2.t = FLT_MIN;
+
+  arrayNew( (void**) &resultP->u.vec2A, sizeof( Vec2 ), resultP->count );
+  assert( resultP->u.vec2A );
+
+  // Extract string into array here.
+  char* cPtr = resultP->valString;
+  char* cEndPtr = cPtr + strlen( resultP->valString );
+  Vec2* vec2P = resultP->u.vec2A;
+  while ( cPtr < cEndPtr ) {
+    /*****/
+    /* X */
+    /*****/
+    vec2P->s = atof( cPtr );
+    // Skip past the current number
+    while ( *cPtr != ' ' && *cPtr != '\0' ) {
+      ++cPtr;
+    }
+    // Skip past the current space to the next number
+    while ( *cPtr == ' ' && *cPtr != '\0' ) {
+      ++cPtr;
+    }
+    /*****/
+    /* Y */
+    /*****/
+    vec2P->t = atof( cPtr );
+    // Skip past the current number
+    while ( *cPtr != ' ' && *cPtr != '\0' ) {
+      ++cPtr;
+    }
+    // Skip past the current space to the next number
+    while ( *cPtr == ' ' && *cPtr != '\0' ) {
+      ++cPtr;
+    }
+
+    // Check min
+    if ( vec2P->s < resultP->min.vec2.s ) {
+      resultP->min.vec2.s = vec2P->s;
+    }
+    if ( vec2P->t < resultP->min.vec2.t ) {
+      resultP->min.vec2.t = vec2P->t;
+    }
+    // Check max
+    if ( vec2P->s > resultP->max.vec2.s ) {
+      resultP->max.vec2.s = vec2P->s;
+    }
+    if ( vec2P->t > resultP->max.vec2.t ) {
+      resultP->max.vec2.t = vec2P->t;
+    }
+    ++vec2P;
+  }
+  // xmlFree( mesh.pos.valueString );  // TODO be sure to do this later
+}
+
 void extractVec3Array( XmlResult *resultP ) {
   assert( resultP );
   assert( resultP->count );
@@ -156,28 +219,32 @@ void extractVec3Array( XmlResult *resultP ) {
   }
 }
 
-void extractVec2Array( XmlResult *resultP ) {
+void extractVec4Array( XmlResult *resultP ) {
   assert( resultP );
   assert( resultP->count );
   assert( resultP->valString );
 
-  resultP->min.vec2.s = FLT_MAX;
-  resultP->min.vec2.t = FLT_MAX;
-  resultP->max.vec2.s = FLT_MIN;
-  resultP->max.vec2.t = FLT_MIN;
+  resultP->min.vec4.r = FLT_MAX;
+  resultP->min.vec4.g = FLT_MAX;
+  resultP->min.vec4.b = FLT_MAX;
+  resultP->min.vec4.a = FLT_MAX;
+  resultP->max.vec4.r = FLT_MIN;
+  resultP->max.vec4.g = FLT_MIN;
+  resultP->max.vec4.b = FLT_MIN;
+  resultP->max.vec4.a = FLT_MIN;
 
-  arrayNew( (void**) &resultP->u.vec2A, sizeof( Vec2 ), resultP->count );
-  assert( resultP->u.vec2A );
+  arrayNew( (void**) &resultP->u.vec4A, sizeof( Vec4 ), resultP->count );
+  assert( resultP->u.vec4A );
 
-  // Extract string into array here.
+  // Extract string into arrag here.
   char* cPtr = resultP->valString;
   char* cEndPtr = cPtr + strlen( resultP->valString );
-  Vec2* vec2P = resultP->u.vec2A;
+  Vec4* vec4P = resultP->u.vec4A;
   while ( cPtr < cEndPtr ) {
     /*****/
-    /* X */
+    /* R */
     /*****/
-    vec2P->s = atof( cPtr );
+    vec4P->r = atof( cPtr );
     // Skip past the current number
     while ( *cPtr != ' ' && *cPtr != '\0' ) {
       ++cPtr;
@@ -187,9 +254,34 @@ void extractVec2Array( XmlResult *resultP ) {
       ++cPtr;
     }
     /*****/
-    /* Y */
+    /* G */
     /*****/
-    vec2P->t = atof( cPtr );
+    vec4P->g = atof( cPtr );
+    // Skip past the current number
+    while ( *cPtr != ' ' && *cPtr != '\0' ) {
+      ++cPtr;
+    }
+    // Skip past the current space to the next number
+    while ( *cPtr == ' ' && *cPtr != '\0' ) {
+      ++cPtr;
+    }
+    /*****/
+    /* B */
+    /*****/
+    vec4P->b = atof( cPtr );
+    // Skip past the current number
+    while ( *cPtr != ' ' && *cPtr != '\0' ) {
+      ++cPtr;
+    }
+    // Skip past the current space to the next number
+    while ( *cPtr == ' ' && *cPtr != '\0' ) {
+      ++cPtr;
+    }
+
+    /*****/
+    /* A */
+    /*****/
+    vec4P->a = atof( cPtr );
     // Skip past the current number
     while ( *cPtr != ' ' && *cPtr != '\0' ) {
       ++cPtr;
@@ -200,22 +292,33 @@ void extractVec2Array( XmlResult *resultP ) {
     }
 
     // Check min
-    if ( vec2P->s < resultP->min.vec2.s ) {
-      resultP->min.vec2.s = vec2P->s;
+    if ( vec4P->r < resultP->min.vec4.r ) {
+      resultP->min.vec4.r = vec4P->r;
     }
-    if ( vec2P->t < resultP->min.vec2.t ) {
-      resultP->min.vec2.t = vec2P->t;
+    if ( vec4P->g < resultP->min.vec4.g ) {
+      resultP->min.vec4.g = vec4P->g;
+    }
+    if ( vec4P->b < resultP->min.vec4.b ) {
+      resultP->min.vec4.b = vec4P->b;
+    }
+    if ( vec4P->a < resultP->min.vec4.a ) {
+      resultP->min.vec4.a = vec4P->a;
     }
     // Check max
-    if ( vec2P->s > resultP->max.vec2.s ) {
-      resultP->max.vec2.s = vec2P->s;
+    if ( vec4P->r > resultP->max.vec4.r ) {
+      resultP->max.vec4.r = vec4P->r;
     }
-    if ( vec2P->t > resultP->max.vec2.t ) {
-      resultP->max.vec2.t = vec2P->t;
+    if ( vec4P->g > resultP->max.vec4.g ) {
+      resultP->max.vec4.g = vec4P->g;
     }
-    ++vec2P;
+    if ( vec4P->b > resultP->max.vec4.b ) {
+      resultP->max.vec4.b = vec4P->b;
+    }
+    if ( vec4P->a > resultP->max.vec4.a ) {
+      resultP->max.vec4.a = vec4P->a;
+    }
+    ++vec4P;
   }
-  // xmlFree( mesh.pos.valueString );  // TODO be sure to do this later
 }
 
 /* To separate concerns, I'm only going to have this know about XML.
@@ -282,8 +385,10 @@ void getVertexAttributes( Mesh* meshP, xmlXPathContextPtr xpathContext, xmlXPath
             case 3:
               extractVec3Array( resultP );
               break;
+            case 4:
+              extractVec4Array( resultP );
+              break;
             case 1:   // TODO support if you ever need to with new extractScalarArray() function
-            case 4:   // TODO support if you ever need to with new extractVec4Array() function
             default:
               printf("Stride length of %d is unsupported. Stopping now...\n", resultP->stride);
               exit(1);
@@ -354,8 +459,8 @@ void getTriangles( Mesh* meshP, xmlXPathContextPtr context, xmlXPathObjectPtr tr
         }
         else if (!strcmp( (char*) (*semanticNodePP)->children->content, "COLOR" ) ) {
           meshP->triElemsPresent |= COLOR;
-          arrayPtrs[numAttrsPerCorner] = meshP->clr.u.vec3A;
-          elementSzs[numAttrsPerCorner] = sizeof( Vec3 );
+          arrayPtrs[numAttrsPerCorner] = meshP->clr.u.vec4A;
+          elementSzs[numAttrsPerCorner] = sizeof( Vec4 );
           dstOffsets[numAttrsPerCorner++] = (U8*) &dummyTriangle.v[0].clr - (U8*) &dummyTriangle.v[0];
         }
         else if (!strcmp( (char*) (*semanticNodePP)->children->content, "TEXCOORD" ) ) {
@@ -441,7 +546,7 @@ void pack(U16* array, int bits, U8** result) {
 void clrMesh( Mesh* meshP ) {
   arrayDel( (void**) &meshP->pos.u.vec3A );
   arrayDel( (void**) &meshP->nml.u.vec3A );
-  arrayDel( (void**) &meshP->clr.u.vec3A );
+  arrayDel( (void**) &meshP->clr.u.vec4A );
   arrayDel( (void**) &meshP->tex.u.vec2A );
   arrayDel( (void**) &meshP->tri.u.triA );
   arrayDel( (void**) &meshP->heA );

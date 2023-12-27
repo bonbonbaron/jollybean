@@ -3,6 +3,7 @@
 
 #include "vec2.h"
 #include "vec3.h"
+#include "vec4.h"
 #include "fray.h"
 #include <assert.h>
 
@@ -26,7 +27,7 @@ void dispList( HeLinkListNode* hellF, unsigned headIdx );
 typedef struct {
   Vec3* pos;
   Vec3* nml;
-  Vec3* clr;
+  Vec4* clr;  // TODO: suppport a color union later, or maybe decide to only supprt RGBA
   Vec2* tex;
 } Vertex;
 
@@ -37,10 +38,19 @@ typedef struct {
 
 typedef struct {
   int m;
+  int onStack;
   Vertex v[3];  // indices to the vertex array
 } Triangle;
 
 typedef enum { C = 'C', L = 'L', E = 'E', R = 'R', S = 'S' } ClersChar;
+
+typedef union {
+  struct {
+    float* xA;
+    float* yA;
+    float* zA;
+  } pos;
+} Delta;
 
 typedef struct {
   int count;         // number of space-delimited elements in valString
@@ -51,20 +61,24 @@ typedef struct {
     float* scalarA;
     Vec2* vec2A;
     Vec3* vec3A;
+    Vec4* vec4A;
     Triangle* triA;
   } u;
   union {
     float scalar;
     Vec2 vec2;
     Vec3 vec3;
+    Vec4 vec4;
     Triangle* triA;
   } min;
   union {
     float scalar;
     Vec2 vec2;
     Vec3 vec3;
+    Vec4 vec4;
     Triangle* triA;
   } max;
+  Delta delta;
 } XmlResult;
 
 typedef struct HalfEdge {
@@ -81,8 +95,9 @@ typedef struct HalfEdge {
  
 
 typedef struct {
+  int newIsland;
   ClersChar clersChar;
-  Triangle* t;  // TODO consider replacing this with a pointer like you're doing with everything else
+  Triangle* t;  
 } TraversalNode;
 
 typedef struct {
