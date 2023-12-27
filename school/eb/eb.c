@@ -26,23 +26,19 @@ HeLinkListNode* hellAdd( HeLinkListNode* hellF, HeLinkListNode* headP, HalfEdge*
     U32 newHeadIdx;
     e = frayAdd( (void**) hellF, (void*) &heNewNode, &newHeadIdx ); 
     hellF[newHeadIdx].head = &hellF[ newHeadIdx ];
+    hellF[newHeadIdx].tail = &hellF[ newHeadIdx ];
     assert( !e );
     return &hellF[newHeadIdx];
   }
   else {
     // If you're adding to an existing linked list, update the former tail's "next" to point to new tail.
-    HeLinkListNode* prevTail = headP->tail;
-    unsigned currTailIdx;
-    e = frayAdd( (void**) hellF, (void*) &heNewNode, &currTailIdx); 
+    unsigned newTailIdx;
+    HeLinkListNode* origTailP = headP->tail;
+    e = frayAdd( (void**) hellF, (void*) &heNewNode, &newTailIdx); 
     assert( !e );
-    headP->tail = &hellF[currTailIdx];
-    // If the previous node belongs to our current list, append to it. (WHY TF DID I WRITE THIS?)
-    if ( prevTail->head == headP ) {
-      prevTail->next = headP->tail;
-    }
-    else {
-      headP->next = headP->tail;
-    }
+    // Head's tail and orig tail's next are new tail
+    origTailP->next = headP->tail = &hellF[newTailIdx];
+    headP->tail->head = headP;
     return headP;
   }
 }
@@ -52,20 +48,22 @@ HeLinkListNode* hellNewHead( HeLinkListNode *hellF, HalfEdge* heP) {
 }
 
 void dispList( HeLinkListNode* hellF, unsigned headIdx ) {
-  HeLinkListNode* currNodeP = &hellF[ headIdx ];
-  printf("From head %d: ", headIdx);
-  for (;; currNodeP = currNodeP->next ) {
-    if ( currNodeP->head == ( hellF + headIdx ) ) {
-      printf("ll[%d] = 0x%08x, ", currNodeP - hellF, (unsigned int) currNodeP->heP );
-      if (currNodeP->next == NULL) {
+  if ( hellF[headIdx].head == &hellF[headIdx] ) {
+    HeLinkListNode* currNodeP = &hellF[ headIdx ];
+    printf("From head %d: ", headIdx);
+    for (;; currNodeP = currNodeP->next ) {
+      if ( currNodeP->head == ( hellF + headIdx ) ) {
+        printf("ll[%d] = 0x%08x, ", currNodeP - hellF, (unsigned int) currNodeP->heP );
+        if (currNodeP->next == NULL) {
+          break;
+        }
+      }
+      else {
         break;
       }
     }
-    else {
-      break;
-    }
+    printf("\n\n");
   }
-  printf("\n\n");
 }
 
 #define forEachInArray_( type_, pointerPrefix_ ) \
@@ -93,6 +91,9 @@ void getEdges( Mesh *meshP ) {
   Error e = arrayNew( (void**) &meshP->heA, sizeof(HalfEdge), 3 * arrayGetNElems(triangleA) );
   assert( !e && meshP->heA );
   heA = meshP->heA;
+  // Vertex-met array
+  e = arrayNew( (void**) &meshP->vstatA, sizeof(VertexStatus), arrayGetNElems( meshP->pos.u.vec3A ) );
+  assert( !e && meshP->vstatA );
   // Half-edge linked list
   HeLinkListNode *hellF = NULL;
   hellNew( &hellF, 3 * arrayGetNElems( triangleA ) );
@@ -113,15 +114,16 @@ void getEdges( Mesh *meshP ) {
     directionOfEdgeNormal = dot( &edgeNormal, triangleP->v[0].nml );
 
     // Determine relationships of triangle's half-edges to each other.
-    hcP->s = &triangleP->v[0];
+    hcP->s = &meshP->vstatA[ triangleP->v[0].pos - meshP->pos.u.vec3A ];
     if ( directionOfEdgeNormal > 0.0 ) {
-      hcP->e = &triangleP->v[1];
-      hcP->v = &triangleP->v[2];
+      hcP->e = &meshP->vstatA[ triangleP->v[1].pos - meshP->pos.u.vec3A ];
+      hcP->v = &meshP->vstatA[ triangleP->v[2].pos - meshP->pos.u.vec3A ];
     }
     else {
-      hcP->e = &triangleP->v[2];
-      hcP->v = &triangleP->v[1];
+      hcP->e = &meshP->vstatA[ triangleP->v[2].pos - meshP->pos.u.vec3A ];
+      hcP->v = &meshP->vstatA[ triangleP->v[1].pos - meshP->pos.u.vec3A ];
     }
+    // Each position needs a "met" and "HE terminal head"
     hcP->n = hpP->p = hnP;
     hcP->p = hnP->n = hpP;
     hpP->n = hnP->p = hcP;
@@ -129,84 +131,70 @@ void getEdges( Mesh *meshP ) {
     hnP->e = hpP->s = hcP->v;
     hnP->v = hpP->e = hcP->s;
     hcP->t = hnP->t = hpP->t = triangleP;
-#if 0
-    printf("tri %d, hcP: s = %d, e = %d, n = %d, p = %d, v = %d\n",
-        triangleP - triangleA,
-        hcP->s,
-        hcP->e,
-        hcP->n,
-        hcP->p,
-        hcP->v );
-    printf("tri %d, hnP: s = %d, e = %d, n = %d, p = %d, v = %d\n",
-        triangleP - triangleA,
-        hnP->s,
-        hnP->e,
-        hnP->n,
-        hnP->p,
-        hnP->v );
-    printf("tri %d, hpP: s = %d, e = %d, n = %d, p = %d, v = %d\n\n",
-        triangleP - triangleA,
-        hpP->s,
-        hpP->e,
-        hpP->n,
-        hpP->p,
-        hpP->v );
-#endif
 
     // Add this triangle's corners' terminating edges to the linked list.
     for ( int i = 0; i < 3; ++i ) {
       /* Storing the head in here over and over again may be redundant,
          but it's probably faster than asking "Has it been assigned?" 
          over and over again. */
-      hcP[i].e->heTerminalHead = 
+      hcP[i].e->listOfHesEndingHere = 
         hellAdd( 
           hellF,
-          hcP[i].e->heTerminalHead,
+          hcP[i].e->listOfHesEndingHere,
           hcP + i);
     }
 
     nHalfEdges += 3;
   endForEach_(triangle)
 
+  int nCorners, nLists;
+  for ( int i = 0; i < arrayGetNElems( heA ); ++i ) {
+    //dispList( heA[i].e->listOfHesEndingHere, i );
+    nLists += ( heA[i].e->listOfHesEndingHere != NULL );
+  }
+  nCorners = arrayGetNElems( meshP->pos.u.vec3A );
+
+  // printf( "%d lists, %d corners\n", nLists, nCorners );
 
   // Find each half-edge's opposite.
   HeLinkListNode *nodeP;
   HalfEdge* heOppositeP;
+  int nOpps = 0, nLoners = 0;
   forEachInArray_( HalfEdge, he ) 
     /* Half-edge STARTing point says, "My goal is to
        find somebody who ENDs on me. */
     if ( heP->o ) {
       continue;
     }
-    nodeP = heP->s->heTerminalHead;
+    nodeP = heP->s->listOfHesEndingHere;
     /* Avoid "if this is the first elem" logic below
        by polevaulting over the incrementer the first iteration.
        This is how you avoid doing the increment before 
        the check as traditional loops do. */
     goto foundOpposite;
-    do {
+    while ( nodeP->next ) {
       nodeP = nodeP->next;
       foundOpposite:
-      if ( nodeP->heP->e == heP->s && nodeP->heP->s == heP->e ) {
+      // if ( nodeP->heP->e == heP->s && nodeP->heP->s == heP->e ) {
+      if ( nodeP->heP->s == heP->e ) {
+        ++nOpps;
         heOppositeP = nodeP->heP;
         heOppositeP->o = heP;
         heP->o = heOppositeP;
-#if 0
-        printf("Half-edge %d goes < %d, %d >.\nIts opposite, %d, goes < %d, %d >.\n", 
-          heOppositeP->o,
-          heP->s, heP->e,
-          heP->o,
-          heOppositeP->s, heOppositeP->e );
-#endif
         break;
       }
-    } while ( nodeP->next );
+    }
   endForEach_(half-edge)
 
   // Determine whether vertices are on boundary or not.
   forEachInArray_( HalfEdge, he ) 
+    if ( !heP->o ) {
+      ++nLoners;
+    }
     heP->e->m |= ( !heP->o );  // treat this vertex prematurely as having been "met"
   endForEach_(he)
+
+  // printf("%d twins + %d loners = %d HEs\n", nOpps, nLoners, arrayGetNElems( heA ) );
 
   // free hell
   frayDel( (void**) &hellF );
@@ -237,50 +225,68 @@ void getEdges( Mesh *meshP ) {
 // That way, I can avoid having to reset the "met" flags after the first traversal.
 #define hasRightNeighbor heP->n->o && !heP->n->o->t->m
 #define hasLeftNeighbor  heP->p->o && !heP->p->o->t->m
+#define goRight markAllAsSeen; heP = heP->n->o
+#define goLeft markAllAsSeen; heP = heP->p->o
+#define pushLeftNeighborToStack *(stackP++) = heP->p->o
+#define popFromStack if (*stackP) heP = *(--stackP); else heP = NULL
+#define markAllAsSeen markVertexAsSeen(s); markVertexAsSeen(e); markVertexAsSeen(v)
+#define markVertexAsSeen(d) heP->d->m = 1
 void getConnectivity( Mesh *meshP ) {
   assert( meshP && meshP->tri.u.triA && meshP->heA && ( arrayGetNElems( meshP->tri.u.triA ) > 0) );
   // Allocate a traversal stack as a fray.
   // Make a stack pointer point to it for faster than "getLastElement()".
-  int* traversalStackF;
-  Error e = frayNew( (void**) &traversalStackF, sizeof( int ), arrayGetNElems( meshP->tri.u.triA ) );
+  HalfEdge** traversalStackA;
+  Error e = arrayNew( (void**) &traversalStackA, sizeof( HalfEdge* ), arrayGetNElems( meshP->tri.u.triA ) );
   assert( !e );
-  int* traversalStackPointer = traversalStackF;
+  HalfEdge** stackP = traversalStackA;
   // Allocate an array of traversal order.
   // Make a pointer to it for speed too.
   e = arrayNew( (void**) &meshP->traversalOrderA, sizeof( TraversalNode ), arrayGetNElems( meshP->tri.u.triA ) );
   assert( !e );
   TraversalNode* travNodeP = meshP->traversalOrderA;
-  // Convenience pointers
-  HalfEdge* hA = meshP->heA;  // convenience pointer to half-edge array
-  HalfEdge* heP = hA;
-
-  // IMPORTANT NOTE:
-  // ===============
-  // getEdges() doesn't address half-edges having missing neighbors.
-  // It handles that indirectly by only defining half-edges on the basis of triangles in the input DAE file.
-  // We only have as many half-edges as triple the triangle count.
-  // So this problem, instead, will manifest indirectly as a triangle missing at least one neighbor.
-
-  // If the first gate's oppposite vertex is not on a boundary, it's a C.
-  travNodeP->heIdx = heP - hA;
-  
-  // If first v is not on boundary, we're lucky; it's an easy C.
-  if ( !heP->v->m ) {
-    travNodeP->clersChar = C;
+  // printf("num tris: %d\n", arrayGetNElems( meshP->tri.u.triA ) );
+  int nIters = 0;
+  for ( HalfEdge *heP, *hP = meshP->heA, *hEndP = hP + arrayGetNElems( meshP->heA ); 
+        hP < hEndP; ++hP ) {
+    if ( !hP->t->m ) {
+      heP = hP;
+      while ( heP ) {
+        // printf("\niter # %02d ( @ 0x%08x ) -> ", ++nIters, (unsigned) heP->t );
+        heP->t->m = 1;
+        travNodeP->t = heP->t;  
+        // If v is not on boundary, we're lucky; it's an easy C.
+        if ( !heP->v->m ) {
+          travNodeP->clersChar = C;
+          // putchar(travNodeP->clersChar);
+          goRight;
+        }
+        // if opp vertex IS on the boundary or has been met, then we gotta figure out what kind this is.
+        else if ( hasRightNeighbor ){
+          if ( hasLeftNeighbor ) {
+            travNodeP->clersChar = S;
+            // putchar(travNodeP->clersChar);
+            pushLeftNeighborToStack;
+          }
+          else {
+            travNodeP->clersChar = L;
+            // putchar(travNodeP->clersChar);
+          }
+          goRight;
+        }
+        // TODO There's some nuance i'm missing here. Supposed to find E one step sooner.
+        else if ( hasLeftNeighbor ) {
+          travNodeP->clersChar = R;
+          // putchar(travNodeP->clersChar);
+          goLeft;
+        }
+        else {
+          travNodeP->clersChar = E;
+          // putchar(travNodeP->clersChar);
+          popFromStack;
+        }
+        ++travNodeP;  // TODO some allocation bug here, maybe because one too many
+      }
+    }
   }
-  // if opp vertex IS on the boundary or has been met, then we gotta figure out what kind this is.
-  else if ( hasRightNeighbor ){
-  }
-  else if ( hasLeftNeighbor ){
-  }
-  heP->v->m = 1;
-  heP->t->m = 1;
+  arrayDel( (void**) &traversalStackA );
 }
-
-/* QUESTIONS
- *
- * Am I going to store the order of traversal for positions or triangles? 
- * ANd can either of those two things be used for nromals, texels, and colors?
- * The lengths for all the above vectors may differ. So we need to rely on triangle definitions.
- *
- */

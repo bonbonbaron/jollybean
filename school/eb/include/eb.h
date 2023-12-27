@@ -28,9 +28,12 @@ typedef struct {
   Vec3* nml;
   Vec3* clr;
   Vec2* tex;
-  int m;  // has been encountered before
-  HeLinkListNode* heTerminalHead;  // idx to head of linked list of HEs
 } Vertex;
+
+typedef struct {
+  int m;
+  HeLinkListNode* listOfHesEndingHere;
+} VertexStatus;
 
 typedef struct {
   int m;
@@ -64,23 +67,8 @@ typedef struct {
   } max;
 } XmlResult;
 
-#if 0
-typedef struct {
-  int
-    s,   // start vertex of this half-edge
-    e,   // end vertex of this half-edge
-    v,   // opposite vertex from this half-edge
-    n,   // next counter-clockwise half-edge in this triangle
-    p,   // previous counter-clockewise half-edge in this triangle
-    o,   // half-edge coincident this one, but with opposite start and end
-    t,   // index of triangle this half-edge belongs to
-    // N,  // i dont think we need these anymore
-    // P, // i dont think we need these anymore
-    hasOpposite;
-} HalfEdge;
-#else
 typedef struct HalfEdge {
-  Vertex
+  VertexStatus
     *s,
     *e,
     *v;
@@ -90,18 +78,18 @@ typedef struct HalfEdge {
     *p;
   Triangle* t;
 } HalfEdge;
-#endif
-
+ 
 
 typedef struct {
   ClersChar clersChar;
-  int heIdx;  // TODO consider replacing this with a pointer like you're doing with everything else
+  Triangle* t;  // TODO consider replacing this with a pointer like you're doing with everything else
 } TraversalNode;
 
 typedef struct {
   XmlResult pos, nml, clr, tex, tri;
   HalfEdge *heA;
   TraversalNode* traversalOrderA;
+  VertexStatus *vstatA;
   int triElemsPresent;
 } Mesh;
 

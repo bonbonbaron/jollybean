@@ -57,6 +57,22 @@ void inflatableNew(void *voidA, Inflatable **inflatablePP) {
   (*inflatablePP)->compressedDataA = dataCompressed;
 }
 
+// The reason data.c doesn't own this function is because inflatables are permanent in-game.
+void inflatableDel(Inflatable **inflatablePP) {
+  if (inflatablePP && *inflatablePP) {
+    if ((*inflatablePP)->compressedDataA) {
+      free((*inflatablePP)->compressedDataA);
+      (*inflatablePP)->compressedDataA = NULL;
+    }
+    if ((*inflatablePP)->inflatedDataP) {
+      free((*inflatablePP)->inflatedDataP);
+      (*inflatablePP)->inflatedDataP = NULL;
+    }
+    jbFree((void**) inflatablePP);
+  }
+}
+
+
 // This assumes elements are separated by whitespace only.
 
 void extractVec3Array( XmlResult *resultP ) {
@@ -71,7 +87,7 @@ void extractVec3Array( XmlResult *resultP ) {
   resultP->max.vec3.y = FLT_MIN;
   resultP->max.vec3.z = FLT_MIN;
 
-  resultP->u.vec3A = malloc( sizeof( Vec3 ) * resultP->count );  // should this be divided by 3?
+  arrayNew( (void**) &resultP->u.vec3A, sizeof( Vec3 ), resultP->count );
   assert( resultP->u.vec3A );
 
   // Extract string into array here.
@@ -150,7 +166,7 @@ void extractVec2Array( XmlResult *resultP ) {
   resultP->max.vec2.s = FLT_MIN;
   resultP->max.vec2.t = FLT_MIN;
 
-  resultP->u.vec2A = malloc( sizeof( Vec2 ) * resultP->count );
+  arrayNew( (void**) &resultP->u.vec2A, sizeof( Vec2 ), resultP->count );
   assert( resultP->u.vec2A );
 
   // Extract string into array here.
@@ -311,11 +327,9 @@ void getTriangles( Mesh* meshP, xmlXPathContextPtr context, xmlXPathObjectPtr tr
 
   // Next, figure out what kind of triangle data we're dealing with.
   meshP->triElemsPresent = 0;
+  int dstTriIdx = 0;
   forEachNode_( triangleXpathResult, triangle ) {
     context->node = *triangleNodePP;
-
-    // Get number of triangles in current <triangles> node.
-    triCountNodeP = xmlGetNodes ( docP, context, (xmlChar*) "@count" );
 
     void* arrayPtrs[4];
     int 
@@ -355,7 +369,7 @@ void getTriangles( Mesh* meshP, xmlXPathContextPtr context, xmlXPathObjectPtr tr
 
     // Finally, grab all the data.
     vertexArrayNode = xmlGetNodes ( docP, context, (xmlChar*) "./mb:p" );
-    int dstTriIdx = 0, offsetIdx, cornerIdx;
+    int offsetIdx, cornerIdx;
     void** triElemPP;
     // For each <p> array in current <triangles> node (there should only be one, but idk what idk)...
     // Get all offsets
@@ -382,21 +396,23 @@ void getTriangles( Mesh* meshP, xmlXPathContextPtr context, xmlXPathObjectPtr tr
             }
           }  // for each attribute of each corner
         }  // for each corner 
+#if 0
         Triangle* triP = &meshP->tri.u.triA[ dstTriIdx ];
         for (int i = 0; i < 3; ++i) {
-          printf("%04d: tri.v[%d].pos = { %f, %f, %f }\n", i, triP->v[i].pos->x, triP->v[i].pos->y, triP->v[i].pos->z );
-          printf("%04d: tri.v[%d].nml = { %f, %f, %f }\n", i, triP->v[i].nml->x, triP->v[i].nml->y, triP->v[i].nml->z );
+          printf("%04d: tri.v[%d].pos = { %f, %f, %f }\n", dstTriIdx, i, triP->v[i].pos->x, triP->v[i].pos->y, triP->v[i].pos->z );
+          printf("%04d: tri.v[%d].nml = { %f, %f, %f }\n", dstTriIdx, i, triP->v[i].nml->x, triP->v[i].nml->y, triP->v[i].nml->z );
           if ( triP->v[i].clr ) {
-            printf("%04d: tri.v[%d].clr = { %f, %f, %f }\n", i, triP->v[i].clr->x, triP->v[i].clr->y, triP->v[i].clr->z );
+            printf("%04d: tri.v[%d].clr = { %f, %f, %f }\n", dstTriIdx, i, triP->v[i].clr->x, triP->v[i].clr->y, triP->v[i].clr->z );
           }
           if ( triP->v[i].tex ) {
-            printf("%04d: tri.v[%d].tex = { %f, %f }\n", i, triP->v[i].tex->s, triP->v[i].tex->t );
+            printf("%04d: tri.v[%d].tex = { %f, %f }\n", dstTriIdx, i, triP->v[i].tex->s, triP->v[i].tex->t );
           }
         }
+#endif
       }  // while character pointer is still traversing through array string
-    }  // for each group of vertices for this geometry
-  }
-}
+    }  // for each <p> node in current <triangles>
+  }  // for each <triangles> node in this geometry
+}  // getTriangles()
 
 
 void pack(U16* array, int bits, U8** result) {
@@ -420,6 +436,18 @@ void pack(U16* array, int bits, U8** result) {
   if(buffer_bits > 0) {
     (*result)[result_index++] = buffer;
   }
+}
+
+void clrMesh( Mesh* meshP ) {
+  arrayDel( (void**) &meshP->pos.u.vec3A );
+  arrayDel( (void**) &meshP->nml.u.vec3A );
+  arrayDel( (void**) &meshP->clr.u.vec3A );
+  arrayDel( (void**) &meshP->tex.u.vec2A );
+  arrayDel( (void**) &meshP->tri.u.triA );
+  arrayDel( (void**) &meshP->heA );
+  arrayDel( (void**) &meshP->traversalOrderA );
+  arrayDel( (void**) &meshP->vstatA );
+  memset( meshP, 0, sizeof( Mesh ) );
 }
 
 int main ( int argc, char **argv ) {
@@ -453,6 +481,7 @@ int main ( int argc, char **argv ) {
     getVertexAttributes( &mesh, xpathContext, vertexXpathResult, docP );
     getTriangles( &mesh, xpathContext, triangleXpathResult, docP );
     getEdges( &mesh );
+    getConnectivity( &mesh );
 
     // Raw quantization
     U16* qPosA = NULL;
@@ -518,10 +547,13 @@ int main ( int argc, char **argv ) {
     // Now I want to try delta. For this I need to first determine the way positions are connected to each other. In order to do that,
 
     // Free everything.
+    arrayDel( (void**) &qPosA );
+    arrayDel( (void**) &packedQPosA );
+    inflatableDel( &infP );
     xmlFreeXpathResult( &vertexXpathResult );
     xmlFreeXpathResult( &triangleXpathResult );
-
-  }
+    clrMesh( &mesh );
+  }  // for each geometry in this  mesh
   xmlClean( &docP, &xpathContext );
 
   return 0;
