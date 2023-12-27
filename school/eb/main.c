@@ -317,26 +317,38 @@ void getTriangles( Mesh* meshP, xmlXPathContextPtr context, xmlXPathObjectPtr tr
     // Get number of triangles in current <triangles> node.
     triCountNodeP = xmlGetNodes ( docP, context, (xmlChar*) "@count" );
 
-    int dstOffsets[4], numAttrsPerCorner = 0;  // stores where to put each triangle corner element & how many
+    void* arrayPtrs[4];
+    int 
+      elementSzs[4],
+      dstOffsets[4], 
+      numAttrsPerCorner = 0;  // stores where to put each triangle corner element & how many
     semanticNodesetP = xmlGetNodes ( docP, context, (xmlChar*) "./mb:input/@semantic" );
     static Triangle dummyTriangle;
     if ( semanticNodesetP ) {
       forEachNode_( semanticNodesetP, semantic ) {
         if (!strcmp( (char*) (*semanticNodePP)->children->content, "VERTEX" ) ) {
           meshP->triElemsPresent |= POSITION;
-          dstOffsets[numAttrsPerCorner++] = (U8*) &dummyTriangle.v[0].positionIdx - (U8*) &dummyTriangle.v[0];
+          arrayPtrs[numAttrsPerCorner] = meshP->pos.u.vec3A;
+          elementSzs[numAttrsPerCorner] = sizeof( Vec3 );
+          dstOffsets[numAttrsPerCorner++] = (U8*) &dummyTriangle.v[0].pos - (U8*) &dummyTriangle.v[0];
         }
         else if (!strcmp( (char*) (*semanticNodePP)->children->content, "NORMAL" ) ) {
           meshP->triElemsPresent |= NORMAL;
-          dstOffsets[numAttrsPerCorner++] = (U8*) &dummyTriangle.v[0].normalIdx - (U8*) &dummyTriangle.v[0];
+          arrayPtrs[numAttrsPerCorner] = meshP->nml.u.vec3A;
+          elementSzs[numAttrsPerCorner] = sizeof( Vec3 );
+          dstOffsets[numAttrsPerCorner++] = (U8*) &dummyTriangle.v[0].nml - (U8*) &dummyTriangle.v[0];
         }
         else if (!strcmp( (char*) (*semanticNodePP)->children->content, "COLOR" ) ) {
           meshP->triElemsPresent |= COLOR;
-          dstOffsets[numAttrsPerCorner++] = (U8*) &dummyTriangle.v[0].colorIdx - (U8*) &dummyTriangle.v[0];
+          arrayPtrs[numAttrsPerCorner] = meshP->clr.u.vec3A;
+          elementSzs[numAttrsPerCorner] = sizeof( Vec3 );
+          dstOffsets[numAttrsPerCorner++] = (U8*) &dummyTriangle.v[0].clr - (U8*) &dummyTriangle.v[0];
         }
         else if (!strcmp( (char*) (*semanticNodePP)->children->content, "TEXCOORD" ) ) {
           meshP->triElemsPresent |= TEXTURE;
-          dstOffsets[numAttrsPerCorner++] = (U8*) &dummyTriangle.v[0].texelIdx - (U8*) &dummyTriangle.v[0];
+          arrayPtrs[numAttrsPerCorner] = meshP->tex.u.vec2A;
+          elementSzs[numAttrsPerCorner] = sizeof( Vec2 );
+          dstOffsets[numAttrsPerCorner++] = (U8*) &dummyTriangle.v[0].tex - (U8*) &dummyTriangle.v[0];
         }
       }
     }
@@ -344,9 +356,8 @@ void getTriangles( Mesh* meshP, xmlXPathContextPtr context, xmlXPathObjectPtr tr
     // Finally, grab all the data.
     vertexArrayNode = xmlGetNodes ( docP, context, (xmlChar*) "./mb:p" );
     int dstTriIdx = 0, offsetIdx, cornerIdx;
+    void** triElemPP;
     // For each <p> array in current <triangles> node (there should only be one, but idk what idk)...
-    // printf("next triangle <p> node\n");
-
     // Get all offsets
     forEachNode_( vertexArrayNode, vertexElem ) {
       meshP->tri.valString = (char*) ((*vertexElemNodePP)->children->content);
@@ -359,7 +370,8 @@ void getTriangles( Mesh* meshP, xmlXPathContextPtr context, xmlXPathObjectPtr tr
         for ( cornerIdx = 0; cornerIdx < 3; ++cornerIdx ) {
           // For each attribute of each corner (holy nested loops Batman)...
           for ( offsetIdx = 0; offsetIdx < numAttrsPerCorner; ++offsetIdx ) {
-            *((int*) ((U8*) &meshP->tri.u.triA[ dstTriIdx ].v[ cornerIdx ] + dstOffsets[ offsetIdx ] )) = atoi( cPtr );
+            triElemPP = (void**) ((U8*) &meshP->tri.u.triA[ dstTriIdx ].v[ cornerIdx ] + dstOffsets[ offsetIdx ] );
+            *triElemPP = (U8*) arrayPtrs[ offsetIdx ] + elementSzs[ offsetIdx ] * atoi( cPtr );
             // Skip past the current number
             while ( *cPtr != ' ' && *cPtr != '\0' ) {
               ++cPtr;
@@ -368,16 +380,24 @@ void getTriangles( Mesh* meshP, xmlXPathContextPtr context, xmlXPathObjectPtr tr
             while ( *cPtr == ' ' && *cPtr != '\0' ) {
               ++cPtr;
             }
+          }  // for each attribute of each corner
+        }  // for each corner 
+        Triangle* triP = &meshP->tri.u.triA[ dstTriIdx ];
+        for (int i = 0; i < 3; ++i) {
+          printf("%04d: tri.v[%d].pos = { %f, %f, %f }\n", i, triP->v[i].pos->x, triP->v[i].pos->y, triP->v[i].pos->z );
+          printf("%04d: tri.v[%d].nml = { %f, %f, %f }\n", i, triP->v[i].nml->x, triP->v[i].nml->y, triP->v[i].nml->z );
+          if ( triP->v[i].clr ) {
+            printf("%04d: tri.v[%d].clr = { %f, %f, %f }\n", i, triP->v[i].clr->x, triP->v[i].clr->y, triP->v[i].clr->z );
           }
-          // Triangle* triP = &meshP->tri.u.triA[ dstTriIdx ];
-          // for (int i = 0; i < 3; ++i) {
-            // printf("tri.v[%d] is { %d, %d, %d, %d }\n", i, triP->v[i].positionIdx, triP->v[i].normalIdx, triP->v[i].colorIdx, triP->v[i].texelIdx);
-          // }
+          if ( triP->v[i].tex ) {
+            printf("%04d: tri.v[%d].tex = { %f, %f }\n", i, triP->v[i].tex->s, triP->v[i].tex->t );
+          }
         }
-      }
-    }
+      }  // while character pointer is still traversing through array string
+    }  // for each group of vertices for this geometry
   }
 }
+
 
 void pack(U16* array, int bits, U8** result) {
   U32 buffer = 0;
@@ -432,7 +452,7 @@ int main ( int argc, char **argv ) {
     // Extract all data from XML.
     getVertexAttributes( &mesh, xpathContext, vertexXpathResult, docP );
     getTriangles( &mesh, xpathContext, triangleXpathResult, docP );
-    blah( &mesh );
+    getEdges( &mesh );
 
     // Raw quantization
     U16* qPosA = NULL;
@@ -460,35 +480,7 @@ int main ( int argc, char **argv ) {
     inflatableNew( packedQPosA, &infP );
     printf( "Compressed from %dB to %dB.\n", arrayGetNElems( packedQPosA ) * arrayGetElemSz( packedQPosA ), infP->compressedLen );
 
-    // Instead of jumping the gun, I need to learn how to traverse a mesh in spiraling order:
-    // In fact, I should write a function to store the order of half-edges to visit in an array of indices.
-    // Then I can reuse that array for normals, texels, colors, and connectivity (CLERS).
-    // That way, I can avoid having to reset the "met" flags after the first traversal.
-    /*
-     * Allocate a traversal stack as a fray.
-     * Make a stack pointer point to it for faster than "getLastElement()".
-     *
-     * Allocate an array of traversal order.
-     * Make a pointer to it for speed too.
-     *
-     * Start at the first HE (index 0), then start at its opposite triangle.
-     * while curr index is not zero,
-     *   mark HE as "met"
-     *   if he.v is a STRANGER,
-     *      mark he.v as met.
-     *      go to RIGHT triangle ( he.n.o ).
-     *   elif you've met the RIGHT triangle,
-     *      AND if you've met the LEFT triangle (you've met BOTH neighbors),
-     *          pop (?1) (in recursion, this is simply a return out of this nested call)
-     *      else go to the LEFT triangle
-     *   elif you've met the LEFT triangle,
-     *      go to the RIGHT triangle
-     *   else (you've met NEITHER),
-     *      push the LEFT triangle onto a to-do stack
-     *      go to the RIGHT triangle
-     *      
-     *
-     * AFTER GATHERING THE ORDER OF TRAVERSAL:
+     /* AFTER GATHERING THE ORDER OF TRAVERSAL:
      * =======================================
      *
      *  starting with the first HE again, get its position p1.
