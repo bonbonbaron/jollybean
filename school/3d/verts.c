@@ -125,3 +125,5 @@ GLushort cubeIndices[] =
   20, 22, 21
 };
 
+        </source>
+        <source id="Cube-mesh-colors-Attribute" name="Attribute">

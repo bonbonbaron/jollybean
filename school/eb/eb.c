@@ -1,6 +1,23 @@
 #include "eb.h"
 
-#define DBG_HALFEDGES (0)
+#define forEachInArray_( type_, pointerPrefix_ ) \
+  if (1) {  /* this allows redeclaring the below variables across multiple macro uses */ \
+    type_ *pointerPrefix_##P = pointerPrefix_##A;\
+    type_ *pointerPrefix_##EndP = pointerPrefix_##P + arrayGetNElems( pointerPrefix_##A );\
+    for ( ; pointerPrefix_##P < pointerPrefix_##EndP; ++pointerPrefix_##P ) {
+
+#define forEachInFray_( type_, pointerPrefix_ ) \
+  if (1) {  /* this allows redeclaring the below variables across multiple macro uses */ \
+    type_ *pointerPrefix_##P = pointerPrefix_##F;\
+    type_ *pointerPrefix_##EndP = pointerPrefix_##P + frayGetFirstEmpty_( pointerPrefix_##F );\
+    for ( ; pointerPrefix_##P < pointerPrefix_##EndP; ++pointerPrefix_##P ) {
+
+#define endForEach_( loopName_ ) }}
+
+// EdgeBreaker algorithm paper:
+//      (original)   https://faculty.cc.gatech.edu/~jarek/papers/EdgeBreaker.pdf
+//      (simplified) https://www.cs.cmu.edu/~alla/edgebreaker_simple.pdf
+#define DBG_HALFEDGES (1)
 // Velllcommme.... tooooo HELLLL!!!!!
 void hellNew( HeLinkListNode** hellFP, unsigned int nElems ) {
   assert(hellFP && nElems);
@@ -69,20 +86,90 @@ void dispList( HeLinkListNode* hellF, unsigned headIdx ) {
 }
 #endif
 
-#define forEachInArray_( type_, pointerPrefix_ ) \
-  if (1) {  /* this allows redeclaring the below variables across multiple macro uses */ \
-    type_ *pointerPrefix_##P = pointerPrefix_##A;\
-    type_ *pointerPrefix_##EndP = pointerPrefix_##P + arrayGetNElems( pointerPrefix_##A );\
-    for ( ; pointerPrefix_##P < pointerPrefix_##EndP; ++pointerPrefix_##P ) {
+#define findNextBoundaryEdge( currEdge ) \
+  /* Find the next edge ending at this starting vertex. */  \
+  for ( heEndingAtThisVertex = currEdge->s->listOfHesEndingHere; \
+        heEndingAtThisVertex; \
+        heEndingAtThisVertex = heEndingAtThisVertex->next ) { \
+    /* This allows pinch points to traverse an exterior boundary. */ \
+    if ( !heEndingAtThisVertex->heP->o && !heEndingAtThisVertex->heP->m ) { \
+      printf("found unmet oppososite 0x%08x\n", (unsigned) heEndingAtThisVertex); \
+      previousBoundaryP = currEdge; \
+      boundaryIterP = heEndingAtThisVertex->heP; \
+      previousBoundaryP->N = boundaryIterP; \
+      boundaryIterP->P = previousBoundaryP; \
+      break; \
+    } \
+  }
 
-#define forEachInFray_( type_, pointerPrefix_ ) \
-  if (1) {  /* this allows redeclaring the below variables across multiple macro uses */ \
-    type_ *pointerPrefix_##P = pointerPrefix_##F;\
-    type_ *pointerPrefix_##EndP = pointerPrefix_##P + frayGetFirstEmpty_( pointerPrefix_##F );\
-    for ( ; pointerPrefix_##P < pointerPrefix_##EndP; ++pointerPrefix_##P ) {
-
-#define endForEach_( loopName_ ) }}
-
+// ?1 How do we distinguish interior from exterior boundaries?
+#define COME_BACK_AFTER_ALL_BOUNDARIES_LABELED (-1)
+// Finds boundaries in clockwise fashion ( "n" goes clockwise in holes )
+void markBoundaries( Mesh* meshP ) {
+  // int currBoundaryLabel = 0;
+  HalfEdge *boundaryIterP, *previousBoundaryP, *heA;
+  HeLinkListNode* heEndingAtThisVertex;
+  assert( meshP && meshP->heA );
+  heA = meshP->heA;   // convenience pointer
+  int count = 0;
+  int foundUnmet;
+  forEachInArray_( HalfEdge, he ) 
+    // If this is a bounding edge and hasn't been added to a loop list yet
+    if ( !heP->o && !heP->m ) {
+      // printf("0heP N = 0x%08x, P = 0x%08x\n", (unsigned) heP->N, (unsigned) heP->P );
+      boundaryIterP = NULL;
+      // findNextBoundaryEdge( heP );
+      for ( heEndingAtThisVertex = heP->s->listOfHesEndingHere; 
+            heEndingAtThisVertex; 
+            heEndingAtThisVertex = heEndingAtThisVertex->next ) { 
+        /* This allows pinch points to traverse an exterior boundary. */ 
+        if ( heEndingAtThisVertex->heP != heP ){
+          if ( !heEndingAtThisVertex->heP->o && !heEndingAtThisVertex->heP->m ) { 
+            ++count;
+            // printf("heP found unmet oppososite 0x%08x\n", (unsigned) heEndingAtThisVertex->heP); 
+            previousBoundaryP = heP; 
+            boundaryIterP = heEndingAtThisVertex->heP; 
+            previousBoundaryP->N = boundaryIterP; 
+            boundaryIterP->P = previousBoundaryP; 
+            boundaryIterP->m = 1;
+            break;
+          } 
+        }
+      }
+      // Loop around the boundary
+      if ( boundaryIterP ) {
+        foundUnmet = 0;
+        while (boundaryIterP != heP) {
+          for ( heEndingAtThisVertex = boundaryIterP->s->listOfHesEndingHere; 
+              heEndingAtThisVertex; 
+              heEndingAtThisVertex = heEndingAtThisVertex->next ) { 
+            /* This allows pinch points to traverse an exterior boundary. */ 
+            if ( !heEndingAtThisVertex->heP->o && !heEndingAtThisVertex->heP->m ) { 
+              foundUnmet = 1;
+              ++count;
+              // printf("BOUNDARYITERP found unmet oppososite 0x%08x\n", (unsigned) heEndingAtThisVertex->heP); 
+              previousBoundaryP = boundaryIterP; 
+              boundaryIterP = heEndingAtThisVertex->heP; 
+              previousBoundaryP->N = boundaryIterP; 
+              boundaryIterP->P = previousBoundaryP; 
+              boundaryIterP->m = 1;
+              break;
+            } 
+          }
+          if ( !foundUnmet ) {
+            // printf("\e[0;31mcouldn't find nay matches\e[0m\n");
+            printf("mmmmmm");
+            break;
+          }
+          // findNextBoundaryEdge( boundaryIterP );
+        }
+      }
+      heP->m = 1;
+      // printf("fheP N = 0x%08x, P = 0x%08x\n", (unsigned) heP->N, (unsigned) heP->P );
+    }  // if this is a bounding edge
+  endForEach_( half edge on this boundary )
+  printf( " tied togerther %d boudnaries\n", count );
+}
 // Outputs two arrays: Vertex and Half-Edge.
 // Gives you all the half-edges and their relationships to their triangular counterparts
 void getEdges( Mesh *meshP ) {
@@ -156,14 +243,12 @@ void getEdges( Mesh *meshP ) {
   endForEach_(triangle)
 
 #if DBG_HALFEDGES
-  int nCorners, nLists;
+  int nLists = 0;
   for ( int i = 0; i < arrayGetNElems( heA ); ++i ) {
-    dispList( heA[i].e->listOfHesEndingHere, i );
+    // dispList( heA[i].e->listOfHesEndingHere, i );
     nLists += ( heA[i].e->listOfHesEndingHere != NULL );
   }
-  nCorners = arrayGetNElems( meshP->pos.u.vec3A );
-
-  printf( "%d lists, %d corners\n", nLists, nCorners );
+  printf( "%d lists, %d corners\n", nLists, arrayGetNElems( meshP->pos.u.vec3A ) );
 #endif
 
   // Find each half-edge's opposite.
@@ -201,9 +286,23 @@ void getEdges( Mesh *meshP ) {
     heP->e->m |= ( !heP->o );  // treat this vertex prematurely as having been "met"
   endForEach_(he)
 
+  // Genus and mesh type are ISLAND traits, not Mesh.  So: TODO
 #if DBG_HALFEDGES
   printf("%d loners out of %d HEs\n", meshP->nLoners, arrayGetNElems( heA ) );
 #endif
+  if ( meshP->nLoners ) {
+    markBoundaries( meshP );
+    if ( meshP->genus > 0 ) {
+      meshP->meshType = CLERSM;
+    }
+    else {
+      meshP->meshType = CLERS;
+    }
+  }
+  else {
+    meshP->meshType = CLERS;
+  }
+
 
   // free hell
   frayDel( (void**) &hellF );
@@ -251,7 +350,7 @@ void getEdges( Mesh *meshP ) {
   markTriangleAsSeen(h); markVertexAsSeen(h, s); markVertexAsSeen(h, e); markVertexAsSeen(h, v)
 #define markVertexAsSeen(h, d) h->d->m = 1
 #define markTriangleAsSeen(h) h->t->m = 1
-#define DBG_EDGEBREAKER (1)
+#define DBG_EDGEBREAKER (0)
 // EdgeBreaker: https://faculty.cc.gatech.edu/~jarek/papers/EdgeBreaker.pdf
 void getConnectivity( Mesh *meshP ) {
   assert( meshP && meshP->tri.u.triA && meshP->heA && ( arrayGetNElems( meshP->tri.u.triA ) > 0) );
@@ -261,13 +360,25 @@ void getConnectivity( Mesh *meshP ) {
   Error e = arrayNew( (void**) &traversalStackA, sizeof( HalfEdge* ), arrayGetNElems( meshP->tri.u.triA ) );
   assert( !e );
   HalfEdge** stackP = traversalStackA;
-  // Allocate an array of traversal order.
+  // Allocate an array of traversal order of triangles.
   // Make a pointer to it for speed too.
-  e = arrayNew( (void**) &meshP->traversalOrderA, sizeof( TraversalNode ), arrayGetNElems( meshP->tri.u.triA ) );
+  e = arrayNew( (void**) &meshP->triangleTraversalOrderA, sizeof( TriangleTraversalNode ), arrayGetNElems( meshP->tri.u.triA ) );
   assert( !e );
-  TraversalNode* travNodeP = meshP->traversalOrderA;
+  TriangleTraversalNode* triTravP = meshP->triangleTraversalOrderA;
+  int clersHisto[5] = {0};
+  // Allocate an array of traversal order of unmet vertices.
+  // Make a pointer to it for speed too.
+  e = arrayNew( (void**) &meshP->vertexTraversalOrderA, sizeof( VertexTraversalNode ), arrayGetNElems( meshP->pos.u.vec3A ) + 1 );
+  assert( !e );
+  VertexTraversalNode* vertTravP = meshP->vertexTraversalOrderA;
+  // For parallelogram prediction, it's important to start out with a seed of three vertices.
+  if ( meshP->heA[0].o ) {
+
+  }
+  else { 
+  }
 #if DBG_EDGEBREAKER
-  printf("num tris: %d\n", arrayGetNElems( meshP->tri.u.triA ) );
+  printf("num tris: %d; num verts: %d\n", arrayGetNElems( meshP->tri.u.triA ), arrayGetNElems( meshP->pos.u.vec3A ) );
   int nIters = 0;
   Triangle* t;
 #endif
@@ -275,10 +386,10 @@ void getConnectivity( Mesh *meshP ) {
         hP < hEndP; ++hP ) {
     if ( !hP->t->m ) {
       hP->t->g = heP = hP;
+      triTravP->newIsland = 1;  // may be useful for us in vertex attribute compression
 #if DBG_EDGEBREAKER
-      travNodeP->newIsland = 1;
       t = hP->t;
-      printf("\nnew island");  // calling inappropriately for hundreds of triangels
+      printf("\nnew island");  
 #endif
       // I was expecting this to plow through all the triangles of a distinct mesh. E wrong?
       while ( heP ) {
@@ -286,10 +397,11 @@ void getConnectivity( Mesh *meshP ) {
         printf("\niter # % 2d ( @ tri %05d ) -> ", ++nIters, heP->t - meshP->tri.u.triA );
 #endif
         assert( !heP->t->onStack );
-        travNodeP->g = heP;  
+        triTravP->g = heP;  
         // If v is not on boundary, we're lucky; it's an easy C.
         if ( !heP->v->m ) {
-          travNodeP->clersChar = C;
+          triTravP->clersChar = C;
+          ++clersHisto[0];
           goRight;
         }
         // if opp vertex IS on the boundary or has been met, then we gotta figure out what kind this is.
@@ -298,38 +410,56 @@ void getConnectivity( Mesh *meshP ) {
 #if DBG_EDGEBREAKER
             printf( "\e[1;32mS (pushing %05d) ", heP->p->o->t - meshP->tri.u.triA );
 #endif
-            travNodeP->clersChar = S;
+            triTravP->clersChar = S;
+            ++clersHisto[4];
             pushLeftNeighborToStack;
           }
           else {
-            travNodeP->clersChar = L;
+            triTravP->clersChar = L;
+            ++clersHisto[1];
           }
           goRight;
         }
         // TODO There's some nuance i'm missing here. Supposed to find E one step sooner.
         else if ( hasLeftNeighbor ) {
-          travNodeP->clersChar = R;
+          triTravP->clersChar = R;
+          ++clersHisto[3];
           goLeft;
         }
         else {
 #if DBG_EDGEBREAKER
           printf( "\e[1;31mE (pulling %05d) ", *stackP ? ( (*stackP)->t - meshP->tri.u.triA ) : 0 );
 #endif
-          travNodeP->clersChar = E;
+          triTravP->clersChar = E;
+          ++clersHisto[2];
           popFromStack;
         }
 #if DBG_EDGEBREAKER
-        if ( travNodeP->clersChar != E && travNodeP->clersChar != S ) {
-          putchar(travNodeP->clersChar);
+        if ( triTravP->clersChar != E && triTravP->clersChar != S ) {
+          putchar(triTravP->clersChar);
         }
         printf( "\e[0m" );
         assert( t->g );
 #endif
-        ++travNodeP;  // TODO some allocation bug here, maybe because one too many
+        ++triTravP;  // TODO some allocation bug here, maybe because one too many
       }
     }
   }
-  assert( ( travNodeP - meshP->traversalOrderA ) == arrayGetNElems( meshP->tri.u.triA ) );
+
+  printf("CLERS histo: %d, %d, %d, %d, %d\n", 
+      clersHisto[0],    // C
+      clersHisto[1],    // L
+      clersHisto[2],    // E
+      clersHisto[3],    // R
+      clersHisto[4] );  // S
+  printf("Apparently initial bounding loop has %d edges\n",
+      3 * clersHisto[2]
+      + clersHisto[1]
+      + clersHisto[3]
+      - clersHisto[0]
+      - clersHisto[4]
+      );
+  assert( ( triTravP - meshP->triangleTraversalOrderA ) == arrayGetNElems( meshP->tri.u.triA ) );
   arrayDel( (void**) &traversalStackA );
 }
 
@@ -371,7 +501,7 @@ void getConnectivity( Mesh *meshP ) {
   } \
   /* Compute residual between parallelogram prediction and actual g.v value */ \
   short* r##coord##P = meshP->pos.residual.pos.coord##A;  /* convenience pointer */ \
-  forEachInArray_( TraversalNode, trav )  \
+  forEachInArray_( TriangleTraversalNode, trav )  \
     *r##coord##P = q##coord##A[ travP->g->v->posIdx ]   /* actual value */ \
      - (  q##coord##A[ travP->g->s->posIdx ]  \
         + q##coord##A[ travP->g->e->posIdx ]  \
@@ -396,6 +526,7 @@ void getConnectivity( Mesh *meshP ) {
   } \
   printf( "\n\n");
 
+#define DBG_POS_COMPRESSION (0)
 // Parallelogram Predictor: 
 //   (original) https://www.graphicsinterface.org/wp-content/uploads/gi1998-4.pdf
 //   (improved) https://www.cs.unc.edu/~isenburg/papers/ia-cpmgpp-02.pdf
@@ -403,9 +534,9 @@ void getConnectivity( Mesh *meshP ) {
 //    TODO study across- and within- parallelogram predictors (isenburg, p3)
 void compressPositions( Mesh* meshP ) {
   // Check arguments
-  assert( meshP && meshP->traversalOrderA );
+  assert( meshP && meshP->triangleTraversalOrderA );
   assert( meshP->tri.u.triA && ( arrayGetNElems( meshP->tri.u.triA ) > 0 ) );
-  assert( arrayGetNElems( meshP->traversalOrderA ) == arrayGetNElems( meshP->tri.u.triA ) );
+  assert( arrayGetNElems( meshP->triangleTraversalOrderA ) == arrayGetNElems( meshP->tri.u.triA ) );
   // Allocate
   const int nPositions = arrayGetNElems( meshP->pos.u.vec3A );
   Error e = arrayNew( (void**) &meshP->pos.quantized.pos.xA, sizeof( short ), nPositions );
@@ -423,18 +554,17 @@ void compressPositions( Mesh* meshP ) {
   assert( !e );
   // Allocate frays of potentially generated points if necessary.
   if ( meshP->nLoners) {
-    e = frayNew( (void**) &meshP->pos.generated.pos.xF, sizeof( short ), meshP->nLoners );
+    e = arrayNew( (void**) &meshP->pos.generated.pos.xA, sizeof( short ), meshP->nLoners );
     assert( !e );
-    e = frayNew( (void**) &meshP->pos.generated.pos.yF, sizeof( short ), meshP->nLoners );
+    e = arrayNew( (void**) &meshP->pos.generated.pos.yA, sizeof( short ), meshP->nLoners );
     assert( !e );
-    e = frayNew( (void**) &meshP->pos.generated.pos.zF, sizeof( short ), meshP->nLoners );
+    e = arrayNew( (void**) &meshP->pos.generated.pos.zA, sizeof( short ), meshP->nLoners );
     assert( !e );
   }
   // =============
   // X-Coordinates
   // =============
-  // Compute residuals by subtracting the parallelogram prediction from the actual value.
-  TraversalNode* travA = meshP->traversalOrderA;  // convenience pointer
+  TriangleTraversalNode* travA = meshP->triangleTraversalOrderA;  // convenience pointer
 #if 1
   short xHistoA[1024] = { 0 };
   const float convx = 1024.0 / fabs( meshP->pos.max.vec3.x - meshP->pos.min.vec3.x );
@@ -442,56 +572,72 @@ void compressPositions( Mesh* meshP ) {
   short xmin = SHRT_MAX, xmax = SHRT_MIN;
   short generatedCoord;
   int i;
+  /* Quantize */
   for (i = 0; i < nPositions; ++i) {
     qxA[i] = (short) ( (meshP->pos.u.vec3A[i].x - meshP->pos.min.vec3.x ) * convx);
-    printf("quantx[%d] = %d, orig = %f\n", i, qxA[i], meshP->pos.u.vec3A[i].x );
+    // printf("quantx[%d] = %d, orig = %f\n", i, qxA[i], meshP->pos.u.vec3A[i].x );
     assert( qxA[i] >= 0 && qxA[i] <= 1024 );
   }
+#if DBG_POS_COMPRESSION
   printf("%d elems were quantized out of %d\n", i, arrayGetNElems( qxA ) );
+#endif
   short* rA = meshP->pos.residual.pos.xA;  // convenience pointer
   short* rP = rA;  // convenience pointer
-  // The first two values will be raw.
-  *(rP++) = qxA[0];  
-  *(rP++) = qxA[1];
-  forEachInArray_( TraversalNode, trav ) 
+  short* gxP = meshP->pos.generated.pos.xA;
+  // The first three values will be raw.
+  short* qxP = qxA;
+  *(rP++) = *(qxP++);
+  *(rP++) = *(qxP++);
+  *(rP++) = *(qxP++);
+  // Compute residuals by subtracting the parallelogram prediction from the actual value.
+  // How about, to speed this up, we add a traversal order of vertices too?
+  forEachInArray_( TriangleTraversalNode, trav ) 
     // Check to see if this gate is missing an opposite half-edge.
     // If it is, then we need to generate a  point for it on the fly.
     // The way we'll go about doing that is  just reverse-computing the
     // backwards g.o.v. 
     if ( !travP->g->o ) {
+#if 0
+      printf("on a loner\n");
       *rP = GENERATED_COORDINATE;  // 0xffff is perfect since we can't be outside of quantized 1024-range.
-      generatedCoord = 
+      *(gxP++) = 
             qxA[ travP->g->s->posIdx ] 
           + qxA[ travP->g->e->posIdx ] 
           - qxA[ travP->g->v->posIdx ]; /* perfect prediction so residual isn't needed */
-      e = frayAdd( meshP->pos.generated.pos.xF, &generatedCoord, NULL );
-      assert( !e );
+#endif
     }
     else {
-      *rP = qxA[ travP->g->v->posIdx ]   /* actual value */
-       - (  qxA[ travP->g->s->posIdx ] 
-          + qxA[ travP->g->e->posIdx ] 
-          - qxA[ travP->g->o->v->posIdx ] ); /* predicted */
+      if ( travP->g->v->m ) {
+        *rP = qxA[ travP->g->v->posIdx ]   /* actual value */
+         - (  qxA[ travP->g->s->posIdx ] 
+            + qxA[ travP->g->e->posIdx ] 
+            - qxA[ travP->g->o->v->posIdx ] ); /* predicted */
+        if ( *rP < xmin ) {
+          xmin = *rP;
+        }
+        if ( *rP > xmax ) {
+          xmax = *rP;
+        }
+        ++rP;
+        travP->g->v->m = 0;  // toggle the flag so we don't have to reset them all. now 0 = we've met.
+      }
     }
-    if ( *rP < xmin ) {
-      xmin = *rP;
-    }
-    if ( *rP > xmax ) {
-      xmax = *rP;
-    }
-    // printf( "%d ", *rP );
-    ++rP;
+    // printf( "rP is %d / %d \n", rP - rA, arrayGetNElems( rA ) );
   endForEach_( traversal node )
+#if DBG_POS_COMPRESSION
   printf( "\n%d residuals populated out of %d ( %d loners )\n\n", rP - rA, arrayGetNElems( rA ), meshP->nLoners);
+#endif
   // Histogram the values
   forEachInArray_( short, r )
     ++xHistoA[ *rP -= xmin ];  // shift the residual value so index 0 is the starting point
     assert( *rP >= 0 && *rP <= 1024 );
   endForEach_( histoing x )
   // And again, to print it out
+#if DBG_POS_COMPRESSION
   for ( int i = 0; i < 1024; ++i ) {
     printf("%d ", xHistoA[i] );
   }
+#endif
 #else
   processResiduals( x );
 #endif

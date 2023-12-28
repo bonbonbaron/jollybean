@@ -47,7 +47,8 @@ typedef struct {
   Vertex v[3];  // indices to the vertex array
 } Triangle;
 
-typedef enum { C = 'C', L = 'L', E = 'E', R = 'R', S = 'S' } ClersChar;
+typedef enum { C = 'C', L = 'L', E = 'E', R = 'R', S = 'S', M = 'M' } ClersChar;
+typedef enum { CLERS, CLERSM, CLERSM_WITH_HANDLE } MeshType;  // CLERSM changes the code length of LERS from to 4 bits
 
 typedef union {
   struct {
@@ -69,9 +70,9 @@ typedef union {
 
 typedef union {
   struct {
-    short* xF;
-    short* yF;
-    short* zF;
+    short* xA;
+    short* yA;
+    short* zA;
   } pos;
 } Generated;
 
@@ -114,7 +115,11 @@ typedef struct HalfEdge {
   struct HalfEdge
     *n,
     *o,
-    *p;
+    *p,
+    *N,  // next half-edge on bounding loop (if this is a bounding half-edge; NULL otherwise)
+    *P;  // prev half-edge on bounding loop (if this is a bounding half-edge; NULL otherwise)
+  int boundaryId;   // if this Half-edge sits on a boundary,  tell us which boundary it is.  // TODO needed?
+  int m; // indicates whether this half-edge has been met yet, and whether it's exterior or interior
   Triangle* t;
 } HalfEdge;
 
@@ -122,15 +127,26 @@ typedef struct {
   int newIsland;
   ClersChar clersChar;
   HalfEdge* g;   // the gate used for the current triangle
-} TraversalNode;
+} TriangleTraversalNode;
+
+typedef struct {
+  int jumped;
+  HalfEdge* g;   // the gate used for the current triangle
+} VertexTraversalNode;
+
 
 typedef struct {
   XmlResult pos, nml, clr, tex, tri;
   HalfEdge *heA;
-  TraversalNode* traversalOrderA;
+  HalfEdge *initialGate;  // TODO if you have a boundary, find the first bounding half-edge and start there
+  TriangleTraversalNode* triangleTraversalOrderA;
+  VertexTraversalNode* vertexTraversalOrderA;
   VertexStatus *vstatA;
   int triElemsPresent;
   int nLoners;
+  int nBoundingLoops;
+  int genus;  // a hole may be considered an outer boundary if only one exists.
+  MeshType meshType;
 } Mesh;
 
 // Gives you all the half-edges and their relationships to their triangular counterparts
