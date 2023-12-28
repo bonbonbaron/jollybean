@@ -111,7 +111,7 @@ void markBoundaries( Mesh* meshP ) {
   HeLinkListNode* heEndingAtThisVertex;
   assert( meshP && meshP->heA );
   heA = meshP->heA;   // convenience pointer
-  int count = 0;
+  int count = 0, ccount = 0;
   int foundUnmet;
   forEachInArray_( HalfEdge, he ) 
     // If this is a bounding edge and hasn't been added to a loop list yet
@@ -139,6 +139,7 @@ void markBoundaries( Mesh* meshP ) {
       // Loop around the boundary
       if ( boundaryIterP ) {
         foundUnmet = 0;
+        ccount = 1;
         while (boundaryIterP != heP) {
           for ( heEndingAtThisVertex = boundaryIterP->s->listOfHesEndingHere; 
               heEndingAtThisVertex; 
@@ -153,16 +154,17 @@ void markBoundaries( Mesh* meshP ) {
               previousBoundaryP->N = boundaryIterP; 
               boundaryIterP->P = previousBoundaryP; 
               boundaryIterP->m = 1;
+              ++ccount;
               break;
             } 
           }
           if ( !foundUnmet ) {
-            // printf("\e[0;31mcouldn't find nay matches\e[0m\n");
-            printf("mmmmmm");
+            assert( 0 );
             break;
           }
           // findNextBoundaryEdge( boundaryIterP );
         }
+        printf("\ttied %d edges together for current boudnary\n", ccount);
       }
       heP->m = 1;
       // printf("fheP N = 0x%08x, P = 0x%08x\n", (unsigned) heP->N, (unsigned) heP->P );
@@ -526,7 +528,7 @@ void getConnectivity( Mesh *meshP ) {
   } \
   printf( "\n\n");
 
-#define DBG_POS_COMPRESSION (0)
+#define DBG_POS_COMPRESSION (1)
 // Parallelogram Predictor: 
 //   (original) https://www.graphicsinterface.org/wp-content/uploads/gi1998-4.pdf
 //   (improved) https://www.cs.unc.edu/~isenburg/papers/ia-cpmgpp-02.pdf
@@ -566,7 +568,7 @@ void compressPositions( Mesh* meshP ) {
   // =============
   TriangleTraversalNode* travA = meshP->triangleTraversalOrderA;  // convenience pointer
 #if 1
-  short xHistoA[1024] = { 0 };
+  short xHistoA[2048] = { 0 };
   const float convx = 1024.0 / fabs( meshP->pos.max.vec3.x - meshP->pos.min.vec3.x );
   short* qxA = meshP->pos.quantized.pos.xA;  // convenience pointer
   short xmin = SHRT_MAX, xmax = SHRT_MIN;
@@ -597,14 +599,12 @@ void compressPositions( Mesh* meshP ) {
     // The way we'll go about doing that is  just reverse-computing the
     // backwards g.o.v. 
     if ( !travP->g->o ) {
-#if 0
-      printf("on a loner\n");
-      *rP = GENERATED_COORDINATE;  // 0xffff is perfect since we can't be outside of quantized 1024-range.
+      // printf("on a loner\n");
+      *(rP++) = GENERATED_COORDINATE; /* prevents 0-1024 check from bombing us */ 
       *(gxP++) = 
             qxA[ travP->g->s->posIdx ] 
           + qxA[ travP->g->e->posIdx ] 
           - qxA[ travP->g->v->posIdx ]; /* perfect prediction so residual isn't needed */
-#endif
     }
     else {
       if ( travP->g->v->m ) {
@@ -626,17 +626,24 @@ void compressPositions( Mesh* meshP ) {
   endForEach_( traversal node )
 #if DBG_POS_COMPRESSION
   printf( "\n%d residuals populated out of %d ( %d loners )\n\n", rP - rA, arrayGetNElems( rA ), meshP->nLoners);
+  printf( "min = %d, max = %d\n", xmin, xmax );
 #endif
   // Histogram the values
+  int j =0, total =0;
   forEachInArray_( short, r )
-    ++xHistoA[ *rP -= xmin ];  // shift the residual value so index 0 is the starting point
-    assert( *rP >= 0 && *rP <= 1024 );
+    if ( *rP != GENERATED_COORDINATE ) {
+      ++xHistoA[ *rP -= xmin ];  // shift the residual value so index 0 is the starting point
+      printf( "%d at %d\n", ++j, *rP);
+      assert( *rP >= 0 && *rP <= 1024 );
+    }
   endForEach_( histoing x )
   // And again, to print it out
 #if DBG_POS_COMPRESSION
-  for ( int i = 0; i < 1024; ++i ) {
+  for ( int i = 0; i < 2048; ++i ) {
+    total += xHistoA[i];
     printf("%d ", xHistoA[i] );
   }
+  printf("histo total: %d ", total );
 #endif
 #else
   processResiduals( x );
