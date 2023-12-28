@@ -3,8 +3,6 @@
 #undef TRUE
 #include "eb.h"
 
-#include <math.h>
-#include <limits.h>
 #include <zlib.h>
 #include <string.h>
 
@@ -545,6 +543,12 @@ void pack(U16* array, int bits, U8** result) {
 
 void clrMesh( Mesh* meshP ) {
   arrayDel( (void**) &meshP->pos.u.vec3A );
+  arrayDel( (void**) &meshP->pos.quantized.pos.xA );
+  arrayDel( (void**) &meshP->pos.quantized.pos.yA );
+  arrayDel( (void**) &meshP->pos.quantized.pos.zA );
+  arrayDel( (void**) &meshP->pos.residual.pos.xA );
+  arrayDel( (void**) &meshP->pos.residual.pos.yA );
+  arrayDel( (void**) &meshP->pos.residual.pos.zA );
   arrayDel( (void**) &meshP->nml.u.vec3A );
   arrayDel( (void**) &meshP->clr.u.vec4A );
   arrayDel( (void**) &meshP->tex.u.vec2A );
@@ -587,7 +591,10 @@ int main ( int argc, char **argv ) {
     getTriangles( &mesh, xpathContext, triangleXpathResult, docP );
     getEdges( &mesh );
     getConnectivity( &mesh );
+    // Compress them
+    compressPositions( &mesh );
 
+#if 0
     // Raw quantization
     U16* qPosA = NULL;
     arrayNew( (void**) &qPosA, sizeof(U16), mesh.pos.count * 3 );
@@ -613,48 +620,12 @@ int main ( int argc, char **argv ) {
     Inflatable *infP = NULL;
     inflatableNew( packedQPosA, &infP );
     printf( "Compressed from %dB to %dB.\n", arrayGetNElems( packedQPosA ) * arrayGetElemSz( packedQPosA ), infP->compressedLen );
-
-     /* AFTER GATHERING THE ORDER OF TRAVERSAL:
-     * =======================================
-     *
-     *  starting with the first HE again, get its position p1.
-     *  For each of x, y, and z, take the differences between p1 and p2. 
-     *
-     *    
-     *
-     * THIS IS OFF SUBJECT FOR NOW, so leave it alone until you've dealt with the positions.
-     * Every corner has multiple normals, so what's your "angle" there?
-     * I'll just process each nromal independently, wrt the neighboring normal on its edge. 
-     */
-
-    /* Predictive-Delta quantization */
-    //
-    // For residual coding:
-    // ====================
-    //    During compression (process coordinates separately):
-    //    X3' = X1 + (X2 - X1)
-    //    residual = X3' - X3
-    //    (?2) How do I determine the necessary bitlength needed for quantizing?
-    //    Or is VLE really that great?
-    //    qr = quantize( residual, 10 )
-    //
-    //    Then, as each coordinate's residual array, histogram out of 1024 with a grand total.
-    //    Then you'll have your probabilties needed for the arithmetic encoding.
-    //    But compare this output with dead-simple quantization first before you commit to it.
-    //    And compare even that against quantization of differences (how low can they go?).
-    //
-    //    During inflation:
-    //    Arithmetic-decode each array of coordinate residuals
-    //    X3' = X1 + (X2 - X1) 
-    //    X3 = X3' - residual
-    //
-    //    
-    // Now I want to try delta. For this I need to first determine the way positions are connected to each other. In order to do that,
-
-    // Free everything.
     arrayDel( (void**) &qPosA );
     arrayDel( (void**) &packedQPosA );
     inflatableDel( &infP );
+#endif
+
+    // Free everything.
     xmlFreeXpathResult( &vertexXpathResult );
     xmlFreeXpathResult( &triangleXpathResult );
     clrMesh( &mesh );

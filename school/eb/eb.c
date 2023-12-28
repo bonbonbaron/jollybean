@@ -104,8 +104,9 @@ void getEdges( Mesh *meshP ) {
   // Iterate through triangles
   int nHalfEdges = 0;
   HalfEdge *hcP, *hnP, *hpP;  // current, next, and previous (corresponds to CCW in triangle, starting at gate)
-  Vec3 edge0to1, edge1to2, edgeNormal;
+  Vec3 edge0to1, edge1to2;
   float directionOfEdgeNormal;
+  unsigned posIdx;
   forEachInArray_( Triangle, triangle ) 
     hcP = heA + nHalfEdges;
     hnP = heA + nHalfEdges + 1;
@@ -113,14 +114,18 @@ void getEdges( Mesh *meshP ) {
     // Determine which way is CCW around triangle based on comparison between face normal and edge-to-edge cross prod.
     minus(triangleP->v[1].pos, triangleP->v[0].pos, &edge0to1);
     minus(triangleP->v[2].pos, triangleP->v[1].pos, &edge1to2);
-    cross( &edge0to1, &edge1to2, &edgeNormal );
-    directionOfEdgeNormal = dot( &edgeNormal, triangleP->v[0].nml );
+    cross( &edge0to1, &edge1to2, &triangleP->normal );
+    directionOfEdgeNormal = dot( &triangleP->normal, triangleP->v[0].nml );
+    // float inv_magnitude = 1.0 / ( sqrt(   // TODO do i  need this?
 
     // Determine relationships of triangle's half-edges to each other.
-    hcP->s = &meshP->vstatA[ triangleP->v[0].pos - meshP->pos.u.vec3A ];
+    hcP->s = &meshP->vstatA[ posIdx = (triangleP->v[0].pos - meshP->pos.u.vec3A) ];
+    hcP->s->posIdx = posIdx;
     if ( directionOfEdgeNormal > 0.0 ) {
-      hcP->e = &meshP->vstatA[ triangleP->v[1].pos - meshP->pos.u.vec3A ];
-      hcP->v = &meshP->vstatA[ triangleP->v[2].pos - meshP->pos.u.vec3A ];
+      hcP->e = &meshP->vstatA[ posIdx = (triangleP->v[1].pos - meshP->pos.u.vec3A) ];
+      hcP->e->posIdx = posIdx;
+      hcP->v = &meshP->vstatA[ posIdx = (triangleP->v[2].pos - meshP->pos.u.vec3A) ];
+      hcP->v->posIdx = posIdx;
     }
     else {
       hcP->e = &meshP->vstatA[ triangleP->v[2].pos - meshP->pos.u.vec3A ];
@@ -249,7 +254,7 @@ void getEdges( Mesh *meshP ) {
   markTriangleAsSeen(h); markVertexAsSeen(h, s); markVertexAsSeen(h, e); markVertexAsSeen(h, v)
 #define markVertexAsSeen(h, d) h->d->m = 1
 #define markTriangleAsSeen(h) h->t->m = 1
-#define DBG_EDGEBREAKER (0)
+#define DBG_EDGEBREAKER (1)
 // EdgeBreaker: https://faculty.cc.gatech.edu/~jarek/papers/EdgeBreaker.pdf
 void getConnectivity( Mesh *meshP ) {
   assert( meshP && meshP->tri.u.triA && meshP->heA && ( arrayGetNElems( meshP->tri.u.triA ) > 0) );
@@ -267,13 +272,15 @@ void getConnectivity( Mesh *meshP ) {
 #if DBG_EDGEBREAKER
   printf("num tris: %d\n", arrayGetNElems( meshP->tri.u.triA ) );
   int nIters = 0;
+  Triangle* t;
 #endif
   for ( HalfEdge *heP, *hP = meshP->heA, *hEndP = hP + arrayGetNElems( meshP->heA ); 
         hP < hEndP; ++hP ) {
     if ( !hP->t->m ) {
-      heP = hP;
+      hP->t->g = heP = hP;
       travNodeP->newIsland = 1;
 #if DBG_EDGEBREAKER
+      t = hP->t;
       printf("\nnew island");  // calling inappropriately for hundreds of triangels
 #endif
       // I was expecting this to plow through all the triangles of a distinct mesh. E wrong?
@@ -282,7 +289,7 @@ void getConnectivity( Mesh *meshP ) {
         printf("\niter # % 2d ( @ tri %05d ) -> ", ++nIters, heP->t - meshP->tri.u.triA );
 #endif
         assert( !heP->t->onStack );
-        travNodeP->t = heP->t;  
+        travNodeP->g = heP;  
         // If v is not on boundary, we're lucky; it's an easy C.
         if ( !heP->v->m ) {
           travNodeP->clersChar = C;
@@ -319,6 +326,7 @@ void getConnectivity( Mesh *meshP ) {
           putchar(travNodeP->clersChar);
         }
         printf( "\e[0m" );
+        assert( t->g );
 #endif
         ++travNodeP;  // TODO some allocation bug here, maybe because one too many
       }
@@ -328,21 +336,150 @@ void getConnectivity( Mesh *meshP ) {
   arrayDel( (void**) &traversalStackA );
 }
 
+/* ============================== */
+/* Predictive-Delta quantization  */
+/* ============================== */
+//
+// For residual coding:
+// ====================
+//    During compression (process coordinates separately):
+//    X3' = X1 + (X2 - X1)
+//    residual = X3' - X3
+//    (?2) How do I determine the necessary bitlength needed for quantizing?
+//    Or is VLE really that great?
+//    qr = quantize( residual, 10 )
+//
+//    Then, as each coordinate's residual array, histogram out of 1024 with a grand total.
+//    Then you'll have your probabilties needed for the arithmetic encoding.
+//    But compare this output with dead-simple quantization first before you commit to it.
+//    And compare even that against quantization of differences (how low can they go?).
+//
+//    During inflation:
+//    Arithmetic-decode each array of coordinate residuals
+//    X3' = X1 + (X2 - X1) 
+//    X3 = X3' - residual
+//
+//    
+// Now I want to try residual. For this I need to first determine the way positions are connected to each other. In order to do that,
+
+#define processResiduals( coord ) \
+  /* Quantize coordinates */  \
+  short xHistoA[1024] = { 0 }; \
+  short* r##coord##A = meshP->pos.residual.pos.xA;  /* convenience pointer */ \
+  const float convx = 1024.0 / fabs( meshP->pos.max.vec3.x - meshP->pos.min.vec3.x ); \
+  short* q##coord##A = meshP->pos.quantized.pos.xA;  /* convenience pointer */ \
+  short xmin = SHRT_MAX, xmax = SHRT_MIN; \
+  for (int i = 0; i < meshP->pos.count; ++i) { \
+    q##coord##A[i] = (short) ( (meshP->pos.u.vec3A[i].x - meshP->pos.min.vec3.x ) * convx); \
+  } \
+  /* Compute residual between parallelogram prediction and actual g.v value */ \
+  short* r##coord##P = meshP->pos.residual.pos.coord##A;  /* convenience pointer */ \
+  forEachInArray_( TraversalNode, trav )  \
+    *r##coord##P = q##coord##A[ travP->g->v->posIdx ]   /* actual value */ \
+     - (  q##coord##A[ travP->g->s->posIdx ]  \
+        + q##coord##A[ travP->g->e->posIdx ]  \
+        - q##coord##A[ travP->g->o->v->posIdx ] ); /* predicted */ \
+    if ( *r##coord##P < coord##min ) { \
+      coord##min = *r##coord##P; \
+    } \
+    if ( *r##coord##P > coord##max ) { \
+      coord##max = *r##coord##P; \
+    } \
+    printf( "%d ", *r##coord##P ); \
+    ++r##coord##P; \
+  endForEach_( traversal node ) \
+  printf( "\n\n"); \
+  /* Histogram the values */ \
+  forEachInArray_( short, r##coord ) \
+    ++coord##HistoA[ *r##coord##P - coord##min ]; \
+  endForEach_( histoing coord ) \
+  /* And again, to print it out */ \
+  for ( int i = 0; i < 1024; ++i ) { \
+    printf("%d ", coord##HistoA[i] ); \
+  } \
+  printf( "\n\n");
+
 // Parallelogram Predictor: 
 //   (original) https://www.graphicsinterface.org/wp-content/uploads/gi1998-4.pdf
 //   (improved) https://www.cs.unc.edu/~isenburg/papers/ia-cpmgpp-02.pdf
 //   Touma and Gotsmas apply a crease angle enhancement.
 //    TODO study across- and within- parallelogram predictors (isenburg, p3)
 void compressPositions( Mesh* meshP ) {
+  // Check arguments
   assert( meshP && meshP->traversalOrderA );
   assert( meshP->tri.u.triA && ( arrayGetNElems( meshP->tri.u.triA ) > 0 ) );
   assert( arrayGetNElems( meshP->traversalOrderA ) == arrayGetNElems( meshP->tri.u.triA ) );
+  // Allocate
+  const int nPositions = arrayGetNElems( meshP->pos.u.vec3A );
+  Error e = arrayNew( (void**) &meshP->pos.quantized.pos.xA, sizeof( short ), nPositions );
+  assert( !e );
+  e = arrayNew( (void**) &meshP->pos.quantized.pos.yA, sizeof( short ), nPositions );
+  assert( !e );
+  e = arrayNew( (void**) &meshP->pos.quantized.pos.zA, sizeof( short ), nPositions );
+  assert( !e );
+  // Allocate arrays of residuals
   const int nTriangleCorners = 3 * arrayGetNElems( meshP->tri.u.triA );
-  Error e = arrayNew( (void**) &meshP->pos.delta.pos.xA, sizeof( float ), nTriangleCorners );
+  e = arrayNew( (void**) &meshP->pos.residual.pos.xA, sizeof( short ), nTriangleCorners );
   assert( !e );
-  e = arrayNew( (void**) &meshP->pos.delta.pos.yA, sizeof( float ), nTriangleCorners );
+  e = arrayNew( (void**) &meshP->pos.residual.pos.yA, sizeof( short ), nTriangleCorners );
   assert( !e );
-  e = arrayNew( (void**) &meshP->pos.delta.pos.zA, sizeof( float ), nTriangleCorners );
+  e = arrayNew( (void**) &meshP->pos.residual.pos.zA, sizeof( short ), nTriangleCorners );
   assert( !e );
-  
+  // =============
+  // X-Coordinates
+  // =============
+  // Compute residuals by subtracting the parallelogram prediction from the actual value.
+  TraversalNode* travA = meshP->traversalOrderA;  // convenience pointer
+#if 1
+  short xHistoA[1024] = { 0 };
+  const float convx = 1024.0 / fabs( meshP->pos.max.vec3.x - meshP->pos.min.vec3.x );
+  short* qxA = meshP->pos.quantized.pos.xA;  // convenience pointer
+  short xmin = SHRT_MAX, xmax = SHRT_MIN;
+  for (int i = 0; i < meshP->pos.count; ++i) {
+    qxA[i] = (short) ( (meshP->pos.u.vec3A[i].x - meshP->pos.min.vec3.x ) * convx);
+  }
+  short* rA = meshP->pos.residual.pos.xA;  // convenience pointer
+  short* rP = meshP->pos.residual.pos.xA;  // convenience pointer
+  forEachInArray_( TraversalNode, trav ) 
+    *rP = qxA[ travP->g->v->posIdx ]   /* actual value */
+     - (  qxA[ travP->g->s->posIdx ] 
+        + qxA[ travP->g->e->posIdx ] 
+        - qxA[ travP->g->o->v->posIdx ] ); /* predicted */
+    if ( *rP < xmin ) {
+      xmin = *rP;
+    }
+    if ( *rP > xmax ) {
+      xmax = *rP;
+    }
+    printf( "%d ", *rP );
+    ++rP;
+  endForEach_( traversal node )
+  // TODO handle half-edges without an opposite
+  printf( "\n\n");
+  // Histogram the values
+  forEachInArray_( short, r )
+    ++xHistoA[ *rP - xmin ];
+  endForEach_( histoing x )
+  // And again, to print it out
+  for ( int i = 0; i < 1024; ++i ) {
+    printf("%d ", xHistoA[i] );
+  }
+  printf( "\n\n");
+#else
+  processResiduals( x );
+#endif
+  // processResiduals( y );
+  // processResiduals( z );
+
+  // TODO macro the above out after you validate it
+#if 0
+  // Y-Coordinates
+  const float convY = 1024.0 / fabs( meshP->pos.max.vec3.y - meshP->pos.min.vec3.y );
+  // Z-Coordinates
+  const float convZ = 1024.0 / fabs( meshP->pos.max.vec3.z - meshP->pos.min.vec3.z );
+#endif
+  /*
+   * How do we apply crease-enhanced prediction?
+   * And also, if we apply crease-enhanced prediction, does that play any part in decompression?
+   */
 }

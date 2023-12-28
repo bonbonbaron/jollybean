@@ -6,6 +6,8 @@
 #include "vec4.h"
 #include "fray.h"
 #include <assert.h>
+#include <math.h>
+#include <limits.h>
 
 struct HalfEdge;  // This tells HeLinkListNode "I promise this type will exist later in this file."
 
@@ -33,12 +35,15 @@ typedef struct {
 
 typedef struct {
   int m;
+  int posIdx;
   HeLinkListNode* listOfHesEndingHere;
 } VertexStatus;
 
 typedef struct {
   int m;
   int onStack;
+  Vec3 normal;
+  struct HalfEdge* g;  // gate used to access this triangle
   Vertex v[3];  // indices to the vertex array
 } Triangle;
 
@@ -46,11 +51,19 @@ typedef enum { C = 'C', L = 'L', E = 'E', R = 'R', S = 'S' } ClersChar;
 
 typedef union {
   struct {
-    float* xA;
-    float* yA;
-    float* zA;
+    short* xA;
+    short* yA;
+    short* zA;
   } pos;
-} Delta;
+} Quantized;
+
+typedef union {
+  struct {
+    short* xA;
+    short* yA;
+    short* zA;
+  } pos;
+} Residual;
 
 typedef struct {
   int count;         // number of space-delimited elements in valString
@@ -78,7 +91,8 @@ typedef struct {
     Vec4 vec4;
     Triangle* triA;
   } max;
-  Delta delta;
+  Residual residual;
+  Quantized quantized;
 } XmlResult;
 
 typedef struct HalfEdge {
@@ -97,7 +111,7 @@ typedef struct HalfEdge {
 typedef struct {
   int newIsland;
   ClersChar clersChar;
-  Triangle* t;  
+  HalfEdge* g;   // the gate used for the current triangle
 } TraversalNode;
 
 typedef struct {
@@ -113,5 +127,7 @@ void getEdges( Mesh *meshP );
 // Gives you the traversal order for compressing vertex attributes. 
 // It also givecs you the CLERS connectivity compression codes so you only have to figure traversal out once.
 void getConnectivity( Mesh *meshP );
+// Compress positions coordinate-wise using parallelogram rule
+void compressPositions( Mesh* meshP );
 
 #endif
