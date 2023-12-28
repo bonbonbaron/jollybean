@@ -35,7 +35,7 @@ typedef struct {
 
 typedef struct {
   int m;
-  int posIdx;
+  int posIdx;  // index of this vertex's position; will come in handy when you quantize arrays later
   HeLinkListNode* listOfHesEndingHere;
 } VertexStatus;
 
@@ -57,6 +57,8 @@ typedef union {
   } pos;
 } Quantized;
 
+#define GENERATED_COORDINATE (0xffff)
+
 typedef union {
   struct {
     short* xA;
@@ -64,6 +66,14 @@ typedef union {
     short* zA;
   } pos;
 } Residual;
+
+typedef union {
+  struct {
+    short* xF;
+    short* yF;
+    short* zF;
+  } pos;
+} Generated;
 
 typedef struct {
   int count;         // number of space-delimited elements in valString
@@ -93,6 +103,7 @@ typedef struct {
   } max;
   Residual residual;
   Quantized quantized;
+  Generated generated;
 } XmlResult;
 
 typedef struct HalfEdge {
@@ -106,7 +117,6 @@ typedef struct HalfEdge {
     *p;
   Triangle* t;
 } HalfEdge;
- 
 
 typedef struct {
   int newIsland;
@@ -120,6 +130,7 @@ typedef struct {
   TraversalNode* traversalOrderA;
   VertexStatus *vstatA;
   int triElemsPresent;
+  int nLoners;
 } Mesh;
 
 // Gives you all the half-edges and their relationships to their triangular counterparts

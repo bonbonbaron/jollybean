@@ -84,7 +84,7 @@ void extractVec2Array( XmlResult *resultP ) {
   resultP->max.vec2.s = FLT_MIN;
   resultP->max.vec2.t = FLT_MIN;
 
-  arrayNew( (void**) &resultP->u.vec2A, sizeof( Vec2 ), resultP->count );
+  arrayNew( (void**) &resultP->u.vec2A, sizeof( Vec2 ), resultP->count / 2 );  // TODO fix w/o division
   assert( resultP->u.vec2A );
 
   // Extract string into array here.
@@ -148,7 +148,7 @@ void extractVec3Array( XmlResult *resultP ) {
   resultP->max.vec3.y = FLT_MIN;
   resultP->max.vec3.z = FLT_MIN;
 
-  arrayNew( (void**) &resultP->u.vec3A, sizeof( Vec3 ), resultP->count );
+  arrayNew( (void**) &resultP->u.vec3A, sizeof( Vec3 ), resultP->count / 3 );   // TODO fix without division
   assert( resultP->u.vec3A );
 
   // Extract string into array here.

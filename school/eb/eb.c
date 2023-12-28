@@ -116,7 +116,7 @@ void getEdges( Mesh *meshP ) {
     minus(triangleP->v[2].pos, triangleP->v[1].pos, &edge1to2);
     cross( &edge0to1, &edge1to2, &triangleP->normal );
     directionOfEdgeNormal = dot( &triangleP->normal, triangleP->v[0].nml );
-    // float inv_magnitude = 1.0 / ( sqrt(   // TODO do i  need this?
+    // float inv_magnitude = 1.0 / ( sqrt(   // TODO do i  need this for creases in parallelo predicting?
 
     // Determine relationships of triangle's half-edges to each other.
     hcP->s = &meshP->vstatA[ posIdx = (triangleP->v[0].pos - meshP->pos.u.vec3A) ];
@@ -169,10 +169,10 @@ void getEdges( Mesh *meshP ) {
   // Find each half-edge's opposite.
   HeLinkListNode *nodeP;
   HalfEdge* heOppositeP;
-  int nOpps = 0, nLoners = 0;
   forEachInArray_( HalfEdge, he ) 
     /* Half-edge STARTing point says, "My goal is to
        find somebody who ENDs on me. */
+    // Skip this half-edge it it already has an opposite.
     if ( heP->o ) {
       continue;
     }
@@ -187,7 +187,6 @@ void getEdges( Mesh *meshP ) {
       foundOpposite:
       // if ( nodeP->heP->e == heP->s && nodeP->heP->s == heP->e ) {
       if ( nodeP->heP->s == heP->e ) {
-        ++nOpps;
         heOppositeP = nodeP->heP;
         heOppositeP->o = heP;
         heP->o = heOppositeP;
@@ -198,14 +197,12 @@ void getEdges( Mesh *meshP ) {
 
   // Determine whether vertices are on boundary or not.
   forEachInArray_( HalfEdge, he ) 
-    if ( !heP->o ) {
-      ++nLoners;
-    }
+    meshP->nLoners += !heP->o; // count all the loners
     heP->e->m |= ( !heP->o );  // treat this vertex prematurely as having been "met"
   endForEach_(he)
 
 #if DBG_HALFEDGES
-  printf("%d twins + %d loners = %d HEs\n", nOpps, nLoners, arrayGetNElems( heA ) );
+  printf("%d loners out of %d HEs\n", meshP->nLoners, arrayGetNElems( heA ) );
 #endif
 
   // free hell
@@ -278,8 +275,8 @@ void getConnectivity( Mesh *meshP ) {
         hP < hEndP; ++hP ) {
     if ( !hP->t->m ) {
       hP->t->g = heP = hP;
-      travNodeP->newIsland = 1;
 #if DBG_EDGEBREAKER
+      travNodeP->newIsland = 1;
       t = hP->t;
       printf("\nnew island");  // calling inappropriately for hundreds of triangels
 #endif
@@ -369,7 +366,7 @@ void getConnectivity( Mesh *meshP ) {
   const float convx = 1024.0 / fabs( meshP->pos.max.vec3.x - meshP->pos.min.vec3.x ); \
   short* q##coord##A = meshP->pos.quantized.pos.xA;  /* convenience pointer */ \
   short xmin = SHRT_MAX, xmax = SHRT_MIN; \
-  for (int i = 0; i < meshP->pos.count; ++i) { \
+  for (int i = 0; i < nPositions; ++i) { \
     q##coord##A[i] = (short) ( (meshP->pos.u.vec3A[i].x - meshP->pos.min.vec3.x ) * convx); \
   } \
   /* Compute residual between parallelogram prediction and actual g.v value */ \
@@ -418,13 +415,21 @@ void compressPositions( Mesh* meshP ) {
   e = arrayNew( (void**) &meshP->pos.quantized.pos.zA, sizeof( short ), nPositions );
   assert( !e );
   // Allocate arrays of residuals
-  const int nTriangleCorners = 3 * arrayGetNElems( meshP->tri.u.triA );
-  e = arrayNew( (void**) &meshP->pos.residual.pos.xA, sizeof( short ), nTriangleCorners );
+  e = arrayNew( (void**) &meshP->pos.residual.pos.xA, sizeof( short ), nPositions );
   assert( !e );
-  e = arrayNew( (void**) &meshP->pos.residual.pos.yA, sizeof( short ), nTriangleCorners );
+  e = arrayNew( (void**) &meshP->pos.residual.pos.yA, sizeof( short ), nPositions );
   assert( !e );
-  e = arrayNew( (void**) &meshP->pos.residual.pos.zA, sizeof( short ), nTriangleCorners );
+  e = arrayNew( (void**) &meshP->pos.residual.pos.zA, sizeof( short ), nPositions );
   assert( !e );
+  // Allocate frays of potentially generated points if necessary.
+  if ( meshP->nLoners) {
+    e = frayNew( (void**) &meshP->pos.generated.pos.xF, sizeof( short ), meshP->nLoners );
+    assert( !e );
+    e = frayNew( (void**) &meshP->pos.generated.pos.yF, sizeof( short ), meshP->nLoners );
+    assert( !e );
+    e = frayNew( (void**) &meshP->pos.generated.pos.zF, sizeof( short ), meshP->nLoners );
+    assert( !e );
+  }
   // =============
   // X-Coordinates
   // =============
@@ -435,36 +440,58 @@ void compressPositions( Mesh* meshP ) {
   const float convx = 1024.0 / fabs( meshP->pos.max.vec3.x - meshP->pos.min.vec3.x );
   short* qxA = meshP->pos.quantized.pos.xA;  // convenience pointer
   short xmin = SHRT_MAX, xmax = SHRT_MIN;
-  for (int i = 0; i < meshP->pos.count; ++i) {
+  short generatedCoord;
+  int i;
+  for (i = 0; i < nPositions; ++i) {
     qxA[i] = (short) ( (meshP->pos.u.vec3A[i].x - meshP->pos.min.vec3.x ) * convx);
+    printf("quantx[%d] = %d, orig = %f\n", i, qxA[i], meshP->pos.u.vec3A[i].x );
+    assert( qxA[i] >= 0 && qxA[i] <= 1024 );
   }
+  printf("%d elems were quantized out of %d\n", i, arrayGetNElems( qxA ) );
   short* rA = meshP->pos.residual.pos.xA;  // convenience pointer
-  short* rP = meshP->pos.residual.pos.xA;  // convenience pointer
+  short* rP = rA;  // convenience pointer
+  // The first two values will be raw.
+  *(rP++) = qxA[0];  
+  *(rP++) = qxA[1];
   forEachInArray_( TraversalNode, trav ) 
-    *rP = qxA[ travP->g->v->posIdx ]   /* actual value */
-     - (  qxA[ travP->g->s->posIdx ] 
-        + qxA[ travP->g->e->posIdx ] 
-        - qxA[ travP->g->o->v->posIdx ] ); /* predicted */
+    // Check to see if this gate is missing an opposite half-edge.
+    // If it is, then we need to generate a  point for it on the fly.
+    // The way we'll go about doing that is  just reverse-computing the
+    // backwards g.o.v. 
+    if ( !travP->g->o ) {
+      *rP = GENERATED_COORDINATE;  // 0xffff is perfect since we can't be outside of quantized 1024-range.
+      generatedCoord = 
+            qxA[ travP->g->s->posIdx ] 
+          + qxA[ travP->g->e->posIdx ] 
+          - qxA[ travP->g->v->posIdx ]; /* perfect prediction so residual isn't needed */
+      e = frayAdd( meshP->pos.generated.pos.xF, &generatedCoord, NULL );
+      assert( !e );
+    }
+    else {
+      *rP = qxA[ travP->g->v->posIdx ]   /* actual value */
+       - (  qxA[ travP->g->s->posIdx ] 
+          + qxA[ travP->g->e->posIdx ] 
+          - qxA[ travP->g->o->v->posIdx ] ); /* predicted */
+    }
     if ( *rP < xmin ) {
       xmin = *rP;
     }
     if ( *rP > xmax ) {
       xmax = *rP;
     }
-    printf( "%d ", *rP );
+    // printf( "%d ", *rP );
     ++rP;
   endForEach_( traversal node )
-  // TODO handle half-edges without an opposite
-  printf( "\n\n");
+  printf( "\n%d residuals populated out of %d ( %d loners )\n\n", rP - rA, arrayGetNElems( rA ), meshP->nLoners);
   // Histogram the values
   forEachInArray_( short, r )
-    ++xHistoA[ *rP - xmin ];
+    ++xHistoA[ *rP -= xmin ];  // shift the residual value so index 0 is the starting point
+    assert( *rP >= 0 && *rP <= 1024 );
   endForEach_( histoing x )
   // And again, to print it out
   for ( int i = 0; i < 1024; ++i ) {
     printf("%d ", xHistoA[i] );
   }
-  printf( "\n\n");
 #else
   processResiduals( x );
 #endif
