@@ -119,12 +119,14 @@ typedef struct HalfEdge {
     *N,  // next half-edge on bounding loop (if this is a bounding half-edge; NULL otherwise)
     *P;  // prev half-edge on bounding loop (if this is a bounding half-edge; NULL otherwise)
   int boundaryId;   // if this Half-edge sits on a boundary,  tell us which boundary it is.  // TODO needed?
-  int m; // indicates whether this half-edge has been met yet, and whether it's exterior or interior
+  struct HalfEdge* nextStartingGate;  // we loop through boundaries; then we start over for simple meshes
+  int m; // indicates whether this half-edge has been met yet
   Triangle* t;
 } HalfEdge;
 
 typedef struct {
   int newIsland;
+  MeshType islandType;  // the mesh type of the new island
   ClersChar clersChar;
   HalfEdge* g;   // the gate used for the current triangle
 } TriangleTraversalNode;
@@ -135,7 +137,28 @@ typedef struct {
 } VertexTraversalNode;
 
 
-typedef struct {
+/* Euler's characteristic of mesh:
+ * (notes from https://faculty.cc.gatech.edu/~jarek/papers/EBholes.pdf)
+ *  
+ *    x(s) = |T(s)| - |E(s)| + |V(s)| = 2 - 2*g(s) - b(s)
+ *
+ *      where...
+ *        s is the mesh
+ *        T(s) are the triangles in s
+ *        E(s) is the set of edges in s
+ *        V(s) is the set of vertices in s
+ *        g(s) is the genus of s
+ *        b(s) is the number of boundary curves in s
+ *
+ *  But allowing islands in my meshes is complicating things.
+ *
+ *  I can know |E(s)|, |V(s)|, and b(s) overall from counting. T(s) is given.
+ *  If I forbid islands, then g(s) is a simple matter of arithmetic. 
+ *  Or... If i wait to count some things till I handle the islands, I'll be fine.
+ *  I can store the individual counts in a sub-mesh linked list.
+ */
+
+typedef struct Mesh {
   XmlResult pos, nml, clr, tex, tri;
   HalfEdge *heA;
   HalfEdge *initialGate;  // TODO if you have a boundary, find the first bounding half-edge and start there
@@ -144,9 +167,11 @@ typedef struct {
   VertexStatus *vstatA;
   int triElemsPresent;
   int nLoners;
-  int nBoundingLoops;
+  int eulerCharacteristic;
   int genus;  // a hole may be considered an outer boundary if only one exists.
-  MeshType meshType;
+  int nBoundingLoops;  // we can't know this for a mesh with disparate parts,
+  struct Mesh *islandListNodeP;
+  MeshType type;
 } Mesh;
 
 // Gives you all the half-edges and their relationships to their triangular counterparts

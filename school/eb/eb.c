@@ -14,9 +14,32 @@
 
 #define endForEach_( loopName_ ) }}
 
-// EdgeBreaker algorithm paper:
-//      (original)   https://faculty.cc.gatech.edu/~jarek/papers/EdgeBreaker.pdf
-//      (simplified) https://www.cs.cmu.edu/~alla/edgebreaker_simple.pdf
+// EdgeBreaker algorithm papers:
+// =============================
+// 1999 (A: original)                 https://faculty.cc.gatech.edu/~jarek/papers/EdgeBreaker.pdf
+// 2002 (B: corner-table, A++)        https://www.cs.cmu.edu/~alla/edgebreaker_simple.pdf
+// 2004 (C: arbitrary topology, B++)) https://faculty.cc.gatech.edu/~jarek/papers/EBholes.pdf
+// 2007 (D: CLRGF w/o ES, B++)        https://www.scitepress.org/papers/2007/20743/20743.pdf
+//    (D) elimates the need for preprocessing step in decompression and is O(n).
+//
+//      Jollybean follows the edgebreaker algorithm laid out in (TODO D or C?).
+//
+//
+//      TODO
+//
+//      label boundaries
+//      store boundary lengths
+//      separate islands into sub-meshs structures
+//      initialize all loops except the first one as 1, since you don't know which island they're on
+//      make list of visited vertices in getConnectivity(). 
+//      if you're dealing with the first boundary of a new island and it has a bounding loop,
+//          relabel it as 2. Then when it hits another boundary that doesn't match it, 
+//          relink the next and previous bouding loop nodes. Then increment the current submesh's
+//          bounding loop count. TODO decide whether tracking geometry stats is a worthwhile idea,
+//          and whether Euler's characteristic is useful here.
+//
+//
+//
 #define DBG_HALFEDGES (1)
 // Velllcommme.... tooooo HELLLL!!!!!
 void hellNew( HeLinkListNode** hellFP, unsigned int nElems ) {
@@ -86,92 +109,88 @@ void dispList( HeLinkListNode* hellF, unsigned headIdx ) {
 }
 #endif
 
-#define findNextBoundaryEdge( currEdge ) \
-  /* Find the next edge ending at this starting vertex. */  \
-  for ( heEndingAtThisVertex = currEdge->s->listOfHesEndingHere; \
-        heEndingAtThisVertex; \
-        heEndingAtThisVertex = heEndingAtThisVertex->next ) { \
-    /* This allows pinch points to traverse an exterior boundary. */ \
-    if ( !heEndingAtThisVertex->heP->o && !heEndingAtThisVertex->heP->m ) { \
-      printf("found unmet oppososite 0x%08x\n", (unsigned) heEndingAtThisVertex); \
-      previousBoundaryP = currEdge; \
-      boundaryIterP = heEndingAtThisVertex->heP; \
-      previousBoundaryP->N = boundaryIterP; \
-      boundaryIterP->P = previousBoundaryP; \
-      break; \
-    } \
-  }
+void dispBoundaryLink( Vec3* v1, Vec3 *v2 ) {
+  printf( "{ %f, %f, %f } -> { %f, %f, %f }\n", 
+      v1->x,
+      v1->y,
+      v1->z,
+      v2->x,
+      v2->y,
+      v2->z );
+}
 
 // ?1 How do we distinguish interior from exterior boundaries?
-#define COME_BACK_AFTER_ALL_BOUNDARIES_LABELED (-1)
+#define DBG_BOUNDARY_MARKER (1)
+#define UNMET_BOUNDARY (0)
+#define INTERNAL_BOUNDARY (1)
+#define EXTERNAL_BOUNDARY (2)
 // Finds boundaries in clockwise fashion ( "n" goes clockwise in holes )
 void markBoundaries( Mesh* meshP ) {
   // int currBoundaryLabel = 0;
-  HalfEdge *boundaryIterP, *previousBoundaryP, *heA;
+  HalfEdge *boundaryIterP, *heA, *prevBoundaryStartP = NULL;
   HeLinkListNode* heEndingAtThisVertex;
   assert( meshP && meshP->heA );
   heA = meshP->heA;   // convenience pointer
-  int count = 0, ccount = 0;
-  int foundUnmet;
+#if DBG_BOUNDARY_MARKER
+  int count = 0;
+#endif
+  int metLabel;
+  meshP->initialGate = meshP->heA;  // just in case
   forEachInArray_( HalfEdge, he ) 
     // If this is a bounding edge and hasn't been added to a loop list yet
-    if ( !heP->o && !heP->m ) {
-      // printf("0heP N = 0x%08x, P = 0x%08x\n", (unsigned) heP->N, (unsigned) heP->P );
-      boundaryIterP = NULL;
-      // findNextBoundaryEdge( heP );
-      for ( heEndingAtThisVertex = heP->s->listOfHesEndingHere; 
-            heEndingAtThisVertex; 
-            heEndingAtThisVertex = heEndingAtThisVertex->next ) { 
-        /* This allows pinch points to traverse an exterior boundary. */ 
-        if ( heEndingAtThisVertex->heP != heP ){
-          if ( !heEndingAtThisVertex->heP->o && !heEndingAtThisVertex->heP->m ) { 
-            ++count;
-            // printf("heP found unmet oppososite 0x%08x\n", (unsigned) heEndingAtThisVertex->heP); 
-            previousBoundaryP = heP; 
-            boundaryIterP = heEndingAtThisVertex->heP; 
-            previousBoundaryP->N = boundaryIterP; 
-            boundaryIterP->P = previousBoundaryP; 
-            boundaryIterP->m = 1;
-            break;
-          } 
-        }
+    if ( !heP->o && heP->m == UNMET_BOUNDARY ) {
+      if ( !meshP->initialGate ) {
+        meshP->initialGate = heP;
+        metLabel = EXTERNAL_BOUNDARY;
       }
-      // Loop around the boundary
-      if ( boundaryIterP ) {
-        foundUnmet = 0;
-        ccount = 1;
-        while (boundaryIterP != heP) {
-          for ( heEndingAtThisVertex = boundaryIterP->s->listOfHesEndingHere; 
+      else {
+        metLabel = INTERNAL_BOUNDARY;
+      }
+      boundaryIterP = heP;
+      // Find all the bounding edges that form a loop with this one.
+      do {
+        for ( heEndingAtThisVertex = boundaryIterP->s->listOfHesEndingHere; 
               heEndingAtThisVertex; 
               heEndingAtThisVertex = heEndingAtThisVertex->next ) { 
-            /* This allows pinch points to traverse an exterior boundary. */ 
+          /* This allows pinch points to traverse an exterior boundary. */ 
+          if ( heEndingAtThisVertex->heP != boundaryIterP ){
             if ( !heEndingAtThisVertex->heP->o && !heEndingAtThisVertex->heP->m ) { 
-              foundUnmet = 1;
+#if DBG_BOUNDARY_MARKER
               ++count;
-              // printf("BOUNDARYITERP found unmet oppososite 0x%08x\n", (unsigned) heEndingAtThisVertex->heP); 
-              previousBoundaryP = boundaryIterP; 
+#endif
+              heEndingAtThisVertex->heP->P = boundaryIterP;
+              boundaryIterP->N = heEndingAtThisVertex->heP;
               boundaryIterP = heEndingAtThisVertex->heP; 
-              previousBoundaryP->N = boundaryIterP; 
-              boundaryIterP->P = previousBoundaryP; 
-              boundaryIterP->m = 1;
-              ++ccount;
+              boundaryIterP->m = metLabel;
+#if DBG_BOUNDARY_MARKER
+              dispBoundaryLink( 
+                  &meshP->pos.u.vec3A[boundaryIterP->P->s->posIdx], 
+                  &meshP->pos.u.vec3A[boundaryIterP->P->e->posIdx] );
+#endif
               break;
             } 
           }
-          if ( !foundUnmet ) {
-            assert( 0 );
-            break;
-          }
-          // findNextBoundaryEdge( boundaryIterP );
         }
-        printf("\ttied %d edges together for current boudnary\n", ccount);
+      } while ( boundaryIterP != heP );
+      ++meshP->nBoundingLoops;
+      if ( prevBoundaryStartP ) {
+        prevBoundaryStartP->nextStartingGate = heP;
       }
-      heP->m = 1;
-      // printf("fheP N = 0x%08x, P = 0x%08x\n", (unsigned) heP->N, (unsigned) heP->P );
-    }  // if this is a bounding edge
+      assert( heP->P );
+      prevBoundaryStartP = heP;
+    }  // if this is an UNMET bounding edge
   endForEach_( half edge on this boundary )
+#if DBG_BOUNDARY_MARKER
   printf( " tied togerther %d boudnaries\n", count );
+#endif
+  if ( meshP->nBoundingLoops > 1 ) {
+    meshP->type = CLERSM;
+  }
+  else {
+    meshP->type = CLERS;
+  }
 }
+
 // Outputs two arrays: Vertex and Half-Edge.
 // Gives you all the half-edges and their relationships to their triangular counterparts
 void getEdges( Mesh *meshP ) {
@@ -282,27 +301,17 @@ void getEdges( Mesh *meshP ) {
     }
   endForEach_(half-edge)
 
-  // Determine whether vertices are on boundary or not.
-  forEachInArray_( HalfEdge, he ) 
-    meshP->nLoners += !heP->o; // count all the loners
-    heP->e->m |= ( !heP->o );  // treat this vertex prematurely as having been "met"
-  endForEach_(he)
-
   // Genus and mesh type are ISLAND traits, not Mesh.  So: TODO
 #if DBG_HALFEDGES
   printf("%d loners out of %d HEs\n", meshP->nLoners, arrayGetNElems( heA ) );
 #endif
   if ( meshP->nLoners ) {
     markBoundaries( meshP );
-    if ( meshP->genus > 0 ) {
-      meshP->meshType = CLERSM;
-    }
-    else {
-      meshP->meshType = CLERS;
-    }
+    assert( meshP->initialGate );
   }
   else {
-    meshP->meshType = CLERS;
+    meshP->type = CLERS;
+    meshP->initialGate = meshP->heA;
   }
 
 
@@ -352,7 +361,7 @@ void getEdges( Mesh *meshP ) {
   markTriangleAsSeen(h); markVertexAsSeen(h, s); markVertexAsSeen(h, e); markVertexAsSeen(h, v)
 #define markVertexAsSeen(h, d) h->d->m = 1
 #define markTriangleAsSeen(h) h->t->m = 1
-#define DBG_EDGEBREAKER (0)
+#define DBG_EDGEBREAKER (1)
 // EdgeBreaker: https://faculty.cc.gatech.edu/~jarek/papers/EdgeBreaker.pdf
 void getConnectivity( Mesh *meshP ) {
   assert( meshP && meshP->tri.u.triA && meshP->heA && ( arrayGetNElems( meshP->tri.u.triA ) > 0) );
@@ -372,31 +381,29 @@ void getConnectivity( Mesh *meshP ) {
   // Make a pointer to it for speed too.
   e = arrayNew( (void**) &meshP->vertexTraversalOrderA, sizeof( VertexTraversalNode ), arrayGetNElems( meshP->pos.u.vec3A ) + 1 );
   assert( !e );
-  VertexTraversalNode* vertTravP = meshP->vertexTraversalOrderA;
-  // For parallelogram prediction, it's important to start out with a seed of three vertices.
-  if ( meshP->heA[0].o ) {
-
-  }
-  else { 
-  }
 #if DBG_EDGEBREAKER
+  int nTrianglesRemaining = arrayGetNElems( meshP->tri.u.triA );
+  printf("mesh is %s type\n", ( meshP->type == CLERS ) ? "CLERS": "CLERSM" );
   printf("num tris: %d; num verts: %d\n", arrayGetNElems( meshP->tri.u.triA ), arrayGetNElems( meshP->pos.u.vec3A ) );
   int nIters = 0;
-  Triangle* t;
+  Triangle* t = NULL;
 #endif
-  for ( HalfEdge *heP, *hP = meshP->heA, *hEndP = hP + arrayGetNElems( meshP->heA ); 
-        hP < hEndP; ++hP ) {
+  HalfEdge *heP, *hP = meshP->initialGate, *hEndP = meshP->heA + arrayGetNElems( meshP->heA );
+  goto skipNewIslandLogic;
+  while ( hP < hEndP ) {
+    // For the first iteration, jump past the new island logic. Assume first triangle is unmet.
     if ( !hP->t->m ) {
-      hP->t->g = heP = hP;
-      triTravP->newIsland = 1;  // may be useful for us in vertex attribute compression
 #if DBG_EDGEBREAKER
+      --nTrianglesRemaining;
       t = hP->t;
       printf("\nnew island");  
 #endif
-      // I was expecting this to plow through all the triangles of a distinct mesh. E wrong?
+skipNewIslandLogic:
+      triTravP->newIsland = 1;  // may be useful for us in vertex attribute compression
+      hP->t->g = heP = hP;
       while ( heP ) {
 #if DBG_EDGEBREAKER
-        printf("\niter # % 2d ( @ tri %05d ) -> ", ++nIters, heP->t - meshP->tri.u.triA );
+        printf("\niter # %d ( @ tri %05d ) -> ", ++nIters, heP->t - meshP->tri.u.triA );
 #endif
         assert( !heP->t->onStack );
         triTravP->g = heP;  
@@ -412,6 +419,7 @@ void getConnectivity( Mesh *meshP ) {
 #if DBG_EDGEBREAKER
             printf( "\e[1;32mS (pushing %05d) ", heP->p->o->t - meshP->tri.u.triA );
 #endif
+            // TODO this is where you'll apply a condition to switch between S and M
             triTravP->clersChar = S;
             ++clersHisto[4];
             pushLeftNeighborToStack;
@@ -422,7 +430,6 @@ void getConnectivity( Mesh *meshP ) {
           }
           goRight;
         }
-        // TODO There's some nuance i'm missing here. Supposed to find E one step sooner.
         else if ( hasLeftNeighbor ) {
           triTravP->clersChar = R;
           ++clersHisto[3];
@@ -441,12 +448,24 @@ void getConnectivity( Mesh *meshP ) {
           putchar(triTravP->clersChar);
         }
         printf( "\e[0m" );
-        assert( t->g );
+        // Only gets checked on subsequent islands past the first one.
+        if ( t ) {
+          assert( t->g );  // newIsland protects against accessing a null triangle
+        }
 #endif
-        ++triTravP;  // TODO some allocation bug here, maybe because one too many
-      }
+        ++triTravP;
+      }  // while we're covering all the triangles we can, after starting from the initial gate
+    }   // if we haven't met this half-edge's triangle yet
+    if ( hP->nextStartingGate ) {
+      printf("going to next bounding loop\n");
+      exit(0);
+      hP = hP->nextStartingGate;
     }
-  }
+    else {
+      // printf("simple iter\n");
+      ++hP;
+    }
+  }  // while we're still iterating over the whole mesh's half-edges
 
   printf("CLERS histo: %d, %d, %d, %d, %d\n", 
       clersHisto[0],    // C
@@ -454,13 +473,6 @@ void getConnectivity( Mesh *meshP ) {
       clersHisto[2],    // E
       clersHisto[3],    // R
       clersHisto[4] );  // S
-  printf("Apparently initial bounding loop has %d edges\n",
-      3 * clersHisto[2]
-      + clersHisto[1]
-      + clersHisto[3]
-      - clersHisto[0]
-      - clersHisto[4]
-      );
   assert( ( triTravP - meshP->triangleTraversalOrderA ) == arrayGetNElems( meshP->tri.u.triA ) );
   arrayDel( (void**) &traversalStackA );
 }
@@ -567,8 +579,7 @@ void compressPositions( Mesh* meshP ) {
   // X-Coordinates
   // =============
   TriangleTraversalNode* travA = meshP->triangleTraversalOrderA;  // convenience pointer
-#if 1
-  short xHistoA[2048] = { 0 };
+  short xHistoA[1024] = { 0 };
   const float convx = 1024.0 / fabs( meshP->pos.max.vec3.x - meshP->pos.min.vec3.x );
   short* qxA = meshP->pos.quantized.pos.xA;  // convenience pointer
   short xmin = SHRT_MAX, xmax = SHRT_MIN;
@@ -629,27 +640,13 @@ void compressPositions( Mesh* meshP ) {
   printf( "min = %d, max = %d\n", xmin, xmax );
 #endif
   // Histogram the values
-  int j =0, total =0;
   forEachInArray_( short, r )
     if ( *rP != GENERATED_COORDINATE ) {
       ++xHistoA[ *rP -= xmin ];  // shift the residual value so index 0 is the starting point
-      printf( "%d at %d\n", ++j, *rP);
       assert( *rP >= 0 && *rP <= 1024 );
     }
   endForEach_( histoing x )
   // And again, to print it out
-#if DBG_POS_COMPRESSION
-  for ( int i = 0; i < 2048; ++i ) {
-    total += xHistoA[i];
-    printf("%d ", xHistoA[i] );
-  }
-  printf("histo total: %d ", total );
-#endif
-#else
-  processResiduals( x );
-#endif
-  // processResiduals( y );
-  // processResiduals( z );
 
   // TODO macro the above out after you validate it
 #if 0
