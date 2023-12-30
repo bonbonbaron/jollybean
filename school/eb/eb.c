@@ -27,6 +27,7 @@
 //
 //      TODO
 //
+//      corner table
 //      label boundaries
 //      store boundary lengths
 //      separate islands into sub-meshs structures
@@ -139,10 +140,11 @@ void markBoundaries( Mesh* meshP ) {
   forEachInArray_( HalfEdge, he ) 
     // If this is a bounding edge and hasn't been added to a loop list yet
     if ( !heP->o && heP->m == UNMET_BOUNDARY ) {
+      ++meshP->nLoners;
       if ( !meshP->initialGate ) {
         meshP->initialGate = heP;
-        metLabel = EXTERNAL_BOUNDARY;
-      }
+        metLabel = EXTERNAL_BOUNDARY;  // in multi-island meshes, only the first mesh's ext. B will be 2.
+      }                                // Subsequent islands will know to mark first B as 2 later.
       else {
         metLabel = INTERNAL_BOUNDARY;
       }
@@ -305,14 +307,8 @@ void getEdges( Mesh *meshP ) {
 #if DBG_HALFEDGES
   printf("%d loners out of %d HEs\n", meshP->nLoners, arrayGetNElems( heA ) );
 #endif
-  if ( meshP->nLoners ) {
-    markBoundaries( meshP );
-    assert( meshP->initialGate );
-  }
-  else {
-    meshP->type = CLERS;
-    meshP->initialGate = meshP->heA;
-  }
+  markBoundaries( meshP );
+  assert( meshP->initialGate );
 
 
   // free hell
@@ -395,6 +391,7 @@ void getConnectivity( Mesh *meshP ) {
     if ( !hP->t->m ) {
 #if DBG_EDGEBREAKER
       --nTrianglesRemaining;
+      assert( nTrianglesRemaining >= 0 );
       t = hP->t;
       printf("\nnew island");  
 #endif
@@ -466,6 +463,8 @@ skipNewIslandLogic:
       ++hP;
     }
   }  // while we're still iterating over the whole mesh's half-edges
+
+  assert( nTrianglesRemaining == 0 );
 
   printf("CLERS histo: %d, %d, %d, %d, %d\n", 
       clersHisto[0],    // C
@@ -545,7 +544,10 @@ skipNewIslandLogic:
 //   (original) https://www.graphicsinterface.org/wp-content/uploads/gi1998-4.pdf
 //   (improved) https://www.cs.unc.edu/~isenburg/papers/ia-cpmgpp-02.pdf
 //   Touma and Gotsmas apply a crease angle enhancement.
-//    TODO study across- and within- parallelogram predictors (isenburg, p3)
+// Local Quantization (for mobile)   http://cg.postech.ac.kr/papers/mesh_comp_mobile_conference.pdf
+//
+//
+//
 void compressPositions( Mesh* meshP ) {
   // Check arguments
   assert( meshP && meshP->triangleTraversalOrderA );
@@ -659,4 +661,162 @@ void compressPositions( Mesh* meshP ) {
    * How do we apply crease-enhanced prediction?
    * And also, if we apply crease-enhanced prediction, does that play any part in decompression?
    */
+}
+
+
+/* Normal vector compression
+ *
+ *   1) spherical compression (with even distribution toward poles): 
+ *    https://people.tamu.edu/~gpetrova//SPS1.pdf
+ *
+ *
+ *    I'm thinking of (1) in some way, shape, or form:
+ *      1a) with rotating frames, if there's some trick I can use post-quantization
+ *      1b) without rotating frames; just a simple difference detection between prior 2 or 3 normals
+ *      
+ *      Either way, I want to try arithmetic coding for the above. Pi Zero lacks vectorization anyway.
+ *
+ *
+ */
+
+// TODO bresenham-based approach to timed constant rotation when less than one per frame, or even more
+
+/* TODO i'm thinking coarse lossy decompression of normals is fine, but then I want fine rotations.
+        I can do this with shorts. I can perhaps even do it with all three unit vectors at the same time.
+        If I have a timer, I can do it for sure.
+        Goddamn I'm good.
+*/
+
+/* TODO I want to use the spherical approach, but it looks like I need to come up with a 
+        fast way to rotate the unit vectors (both for input and output). 
+
+offline:  done outside the scope of compression and decompression
+pipetime: done during compression, not stored in game engine memory
+runtime:  done during game engine, stored in game engine memory
+
+        The first thing that comes to mind is a combination of fixed point arithmetic and
+        lookup tables. Lookups can be done for the sin and (implicitly) cos values. 
+
+        Yes, this is important, because ALL my transformations CPU-side will be done this way.
+
+        n.x = sin(lat)cos(lon)   ( use runtime sin LUT for both sin and cos )
+        n.y = sin(lat)sin(lon)   ( use runtime sin LUT for both sin and cos )
+        n.z = cos(lat)           ( use runtime sin LUT for both sin and cos ) 
+              ^
+              |
+              +--- because lat is 0 at the unit sphere's north pole
+
+        The above will actually be its own LUT.
+
+        PIPETIME LATLON:
+        lat = acos(z)           ( use pipetime acos LUT for quantized coordinates )
+        lon = atan2(y, x)       ( use pipetime atan2 LUT for quantized coordinates )
+
+        sine LUT (whatever granularity I tell it to)
+        LATGRAN = latitude  granularity =  pi / ( latGranularity - 1 )
+        HALF_LATGRAN = 0.5 * LATGRAN
+        LONGRAN = longitude granularity =  2*pi / lonGranularity 
+        INV_LATGRAN = 1 / LATGRAN
+        INV_LONGRAN = 1 / LONGRAN
+        (I can experiment with making the above unsigned shorts as well.)
+        NLAT = desired number of latitudinal  increments
+        NLON = desired number of longitudinal increments
+
+        lat* = j * LATGRAN, where 0 <= j <= (NLAT - 1)
+        lon* = k * LONGRAN, where 0 <= k <= (NLON - 1)  <-- not a typo since it's exclusive of 2pi
+
+        simple algebraic rearranging of the above gets you the below:
+
+        j = round(lat * INV_LATGRAN)
+        k = round(lon * INV_LONGRAN) % (NLON) ( because each latitude has different NLON(j) )
+        E (angle accuracy) is an input
+
+        If we kept NLON uniform from top to bottom, then there'd be huge clusters of points 
+            toward the poles.
+        That's why we choose NLON adaptively, making j the only independent variable.
+
+        So the total number of possible points on the unit sphere will be:
+          
+          sum( NLON(j) from 0 <= j <= NLAT - 1 )  <-- not a typo
+
+        Every unit vector will map onto a rectangular patch on the unit sphere's surface, which gives:
+
+          (lat, lon) -> (lat*, lon*)
+
+        Lat of 0 points straight up, btw.  So for top half of sphere, 0 <= lat < pi/2.
+        Hence the signage below.
+        On top half of the sphere, the furthest point in each patch from its center are bottom two corners.
+        Its coords are ( lat* + (pi/(2*(NLAT - 1))),  lon* + pi/(NLON(j)) ).
+
+        You use the above to find out the minimum NLON(j) that'll satisfy the above inequality.
+        But don't worry about that for now.
+
+        Instead, you'll just calculate NLON(j) with this (done offline, btw):
+
+        NLON(j) = ceil( 
+                                pi 
+          -----------------------------------------------
+           ( cos(E) - cos(lat*)cos(lat* + HALF_LATGRAN) ) 
+           ( ------------------------------------------ )
+           (     sin(lat*)sin(lat* + HALF_LATGRAN )     )
+        
+        )
+
+        You loop through and keep computing the total number of points based on (NLAT + sum(NLON(j))).
+
+        The above loop will give you the smallest number of points possible to give the desired accuracy.
+
+        For reference, the offline-generated N(j) LUT is only 54 bytes for E = 1.2 degrees.
+        It's 25kB for E = 0.0045 degrees. Hot damn, that's awesome.
+
+        We can generate a LUT for pre-computed unit vectors n.{x,y,z} based on lat* and lon*, 
+          which will only have the total number of points (which is only a few thousand at most).
+          This is especially great if we can concatenate the lat* and lon* values in single bytes.
+
+        For (1b), the only thing we need to do PIPETIME is ... TODO
+
+        Finally, for (1b), the only thing we need to do RUNTIME is 
+          arithmetic decode
+          delta-correct all latlongs
+          compute j
+          look up NLON(j) in NLON_J_LUT
+          compute k
+          compute lat*   ( TODO quantize all radians above )
+          compute lon*
+          compute n.{x,y,z}  <-- offline, figure out a way to make this 16-bit quantized per coordinate
+                                 as 16 bits is PLENTY in terms of rotation
+
+*/
+
+void compressNormals( Mesh* meshP ) {
+  // Check arguments
+  assert( meshP && meshP->triangleTraversalOrderA );
+  assert( meshP->tri.u.triA && ( arrayGetNElems( meshP->tri.u.triA ) > 0 ) );
+  assert( arrayGetNElems( meshP->triangleTraversalOrderA ) == arrayGetNElems( meshP->tri.u.triA ) );
+  // Allocate a buncha crap
+  /*
+  const int nTriangleCorners = 3 * arrayGetNElems( meshP->tri.u.triA );
+  Error e = arrayNew( (void**) &meshP->nml.quantized.nml.xA, sizeof( short ), nPositions );
+  assert( !e );
+  e = arrayNew( (void**) &meshP->nml.quantized.nml.yA, sizeof( short ), nPositions );
+  assert( !e );
+  e = arrayNew( (void**) &meshP->nml.quantized.nml.zA, sizeof( short ), nPositions );
+  assert( !e );
+  // Allocate arrays of residuals
+  e = arrayNew( (void**) &meshP->nml.residual.nml.xA, sizeof( short ), nPositions );
+  assert( !e );
+  e = arrayNew( (void**) &meshP->nml.residual.nml.yA, sizeof( short ), nPositions );
+  assert( !e );
+  e = arrayNew( (void**) &meshP->nml.residual.nml.zA, sizeof( short ), nPositions );
+  assert( !e );
+  // Allocate frays of potentially generated points if necessary.
+  if ( meshP->nLoners) {
+    e = arrayNew( (void**) &meshP->nml.generated.nml.xA, sizeof( short ), meshP->nLoners );
+    assert( !e );
+    e = arrayNew( (void**) &meshP->nml.generated.nml.yA, sizeof( short ), meshP->nLoners );
+    assert( !e );
+    e = arrayNew( (void**) &meshP->nml.generated.nml.zA, sizeof( short ), meshP->nLoners );
+    assert( !e );
+  }
+  */
 }
