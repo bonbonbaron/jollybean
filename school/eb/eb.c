@@ -690,18 +690,18 @@ void compressPositions( Mesh* meshP ) {
 /* TODO I want to use the spherical approach, but it looks like I need to come up with a 
         fast way to rotate the unit vectors (both for input and output). 
 
-offline:  done outside the scope of compression and decompression
+offline:  happens neither when the game engine nor pipeline is running; neither in game engine nor pipeline memory
 pipetime: done during compression, not stored in game engine memory
-runtime:  done during game engine, stored in game engine memory
+gametime:  done during game engine, stored in game engine memory
 
         The first thing that comes to mind is a combination of fixed point arithmetic and
         lookup tables. Lookups can be done for the sin and (implicitly) cos values. 
 
         Yes, this is important, because ALL my transformations CPU-side will be done this way.
 
-        n.x = sin(lat)cos(lon)   ( use runtime sin LUT for both sin and cos )
-        n.y = sin(lat)sin(lon)   ( use runtime sin LUT for both sin and cos )
-        n.z = cos(lat)           ( use runtime sin LUT for both sin and cos ) 
+        n.x = sin(lat)cos(lon)   ( use gametime sin LUT for both sin and cos )
+        n.y = sin(lat)sin(lon)   ( use gametime sin LUT for both sin and cos )
+        n.z = cos(lat)           ( use gametime sin LUT for both sin and cos ) 
               ^
               |
               +--- because lat is 0 at the unit sphere's north pole
@@ -773,16 +773,25 @@ runtime:  done during game engine, stored in game engine memory
           which will only have the total number of points (which is only a few thousand at most).
           This is especially great if we can concatenate the lat* and lon* values in single bytes.
 
-        For (1b), the only thing we need to do PIPETIME is ... TODO
+        OFFLINE (1b)
+  `     ===========
+        TODO
 
-        Finally, for (1b), the only thing we need to do RUNTIME is 
-          arithmetic decode
-          delta-correct all latlongs
+        PIPETIME (1b)
+        ===========================================================
+          convert n{x,y,z} to latlon (raw floats or quantized shorts???)
           compute j
           look up NLON(j) in NLON_J_LUT
           compute k
-          compute lat*   ( TODO quantize all radians above )
-          compute lon*
+          compute quantized lat*
+          compute quantized lon*
+          compute lat*lon*s residuals in clrgf order
+          arithmetic-or-huffman encode residuals (which is better?")
+
+        GAMETIME (1b)
+        ===========================================================
+          arithmetic-or-huffman decode residuals
+          delta-correct all latlongs
           compute n.{x,y,z}  <-- offline, figure out a way to make this 16-bit quantized per coordinate
                                  as 16 bits is PLENTY in terms of rotation
 
