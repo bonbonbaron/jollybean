@@ -712,23 +712,23 @@ gametime:  done during game engine, stored in game engine memory
         lat = acos(z)           ( use pipetime acos LUT for quantized coordinates )
         lon = atan2(y, x)       ( use pipetime atan2 LUT for quantized coordinates )
 
-        sine LUT (whatever granularity I tell it to)
-        LATGRAN = latitude  granularity =  pi / ( latGranularity - 1 )
-        HALF_LATGRAN = 0.5 * LATGRAN
-        LONGRAN = longitude granularity =  2*pi / lonGranularity 
-        INV_LATGRAN = 1 / LATGRAN
-        INV_LONGRAN = 1 / LONGRAN
+        sine LUT (whatever resolution I tell it to)
+        LATRES = latitude  resolution =  pi / ( LATRES - 1 )
+        HALF_LATRES = 0.5 * LATRES
+        LONRES (longitude resolution) =  2*pi / LONRES 
+        INV_LATRES = 1 / LATRES
+        INV_LONRES = 1 / LONRES
         (I can experiment with making the above unsigned shorts as well.)
         NLAT = desired number of latitudinal  increments
         NLON = desired number of longitudinal increments
 
-        lat* = j * LATGRAN, where 0 <= j <= (NLAT - 1)
-        lon* = k * LONGRAN, where 0 <= k <= (NLON - 1)  <-- not a typo since it's exclusive of 2pi
+        lat* = j * LATRES, where 0 <= j <= (NLAT - 1)
+        lon* = k * LONRES, where 0 <= k <= (NLON - 1)  <-- not a typo since it's exclusive of 2pi
 
         simple algebraic rearranging of the above gets you the below:
 
-        j = round(lat * INV_LATGRAN)
-        k = round(lon * INV_LONGRAN) % (NLON) ( because each latitude has different NLON(j) )
+        j = round(lat * INV_LATRES)
+        k = round(lon * INV_LONRES) % (NLON) ( because each latitude has different NLON(j) )
         E (angle accuracy) is an input
 
         If we kept NLON uniform from top to bottom, then there'd be huge clusters of points 
@@ -756,9 +756,9 @@ gametime:  done during game engine, stored in game engine memory
         NLON(j) = ceil( 
                                 pi 
           -----------------------------------------------
-           ( cos(E) - cos(lat*)cos(lat* + HALF_LATGRAN) ) 
+           ( cos(E) - cos(lat*)cos(lat* + HALF_LATRES) ) 
            ( ------------------------------------------ )
-           (     sin(lat*)sin(lat* + HALF_LATGRAN )     )
+           (     sin(lat*)sin(lat* + HALF_LATRES )     )
         
         )
 
@@ -774,8 +774,11 @@ gametime:  done during game engine, stored in game engine memory
           This is especially great if we can concatenate the lat* and lon* values in single bytes.
 
         OFFLINE (1b)
-  `     ===========
-        TODO
+        ===========
+        make cos_lut
+        make cos macro with assertion if you want range < 65536
+        compute min # points for input E based on all sum(NLON(j))
+        also store the above LUT into a C file
 
         PIPETIME (1b)
         ===========================================================
@@ -793,39 +796,49 @@ gametime:  done during game engine, stored in game engine memory
           arithmetic-or-huffman decode residuals
           delta-correct all latlongs
           compute n.{x,y,z}  <-- offline, figure out a way to make this 16-bit quantized per coordinate
-                                 as 16 bits is PLENTY in terms of rotation
+   For R,G, and B, make a 
 
 */
 
 void compressNormals( Mesh* meshP ) {
-  // Check arguments
-  assert( meshP && meshP->triangleTraversalOrderA );
-  assert( meshP->tri.u.triA && ( arrayGetNElems( meshP->tri.u.triA ) > 0 ) );
-  assert( arrayGetNElems( meshP->triangleTraversalOrderA ) == arrayGetNElems( meshP->tri.u.triA ) );
-  // Allocate a buncha crap
-  /*
-  const int nTriangleCorners = 3 * arrayGetNElems( meshP->tri.u.triA );
-  Error e = arrayNew( (void**) &meshP->nml.quantized.nml.xA, sizeof( short ), nPositions );
-  assert( !e );
-  e = arrayNew( (void**) &meshP->nml.quantized.nml.yA, sizeof( short ), nPositions );
-  assert( !e );
-  e = arrayNew( (void**) &meshP->nml.quantized.nml.zA, sizeof( short ), nPositions );
-  assert( !e );
-  // Allocate arrays of residuals
-  e = arrayNew( (void**) &meshP->nml.residual.nml.xA, sizeof( short ), nPositions );
-  assert( !e );
-  e = arrayNew( (void**) &meshP->nml.residual.nml.yA, sizeof( short ), nPositions );
-  assert( !e );
-  e = arrayNew( (void**) &meshP->nml.residual.nml.zA, sizeof( short ), nPositions );
-  assert( !e );
-  // Allocate frays of potentially generated points if necessary.
-  if ( meshP->nLoners) {
-    e = arrayNew( (void**) &meshP->nml.generated.nml.xA, sizeof( short ), meshP->nLoners );
-    assert( !e );
-    e = arrayNew( (void**) &meshP->nml.generated.nml.yA, sizeof( short ), meshP->nLoners );
-    assert( !e );
-    e = arrayNew( (void**) &meshP->nml.generated.nml.zA, sizeof( short ), meshP->nLoners );
-    assert( !e );
-  }
-  */
+}
+
+/* COLOR COMPRESSION
+ * =================
+ *
+ * Since colors are more likely to repeat as opposed to positions, we make a palette.
+ * Also, DAE stores colors in a repetitive way. So a kd-tree is advised here.
+ *
+ * First, quantize every color coordinate from 0-255. (A)
+ * So just create an array of integers (B) for palette, equal in size to (worst-case) the number of colors.
+ * Create another array of integers (C), same size as (B), for colorMAPPing.
+ * For each color in (A), 
+ *    binary-search (B) for it.
+ *    if found, append the color's index to (C).
+ *    if not found, append (A[i]) to (B) and the new index to (C).
+ * 
+ * Then, after you have your color palette and map, and after you've made your edgebreaker connection list,
+ * Allocate a residual array, (D), with 3t elements (t = # of triangles )..
+ * For each triangle, where D{i] is current corner,
+ *    Use the triangle's color index to get the palette index, (E)
+ *    D[i] = E[i] - E[i - 1]   // simply a delta, residuals don't make sense in the color context
+ *  
+ * Finally, `Huffman encode your deltas. I'll figure out this piece separately in my huffman research.
+ *
+ */
+
+void compressColors( Mesh* meshP ) {
+}
+
+/* TEXTURE COORDINATE COMPRESSION
+ * ==============================
+ *
+ * I think the concept here is easier to grasp: It'll be similar to parallelogram prediction used in
+ * the position compression, but this time, it's in 2D instead of 3D. 
+ * The only trick is that textures can wrap around. I don't know how that's going to look yet.
+ * It could be that the predictive stuff works just fine there.
+ *
+ * I'll admit i got a little lazy planning this one since I'm about to go on another date.
+ */
+void compressColors( Mesh* meshP ) {
 }

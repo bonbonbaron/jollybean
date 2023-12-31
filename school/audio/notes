@@ -1,0 +1,12 @@
+opus is smaller and faster than opus, which is smaller than mp3
+however, opus is patented. Vorbis might be the way to go then.
+
+Vorbis uses MCDT: modified cosine discrete transform.
+MCDT xforms sound from time to frequency domain.
+Break freq domain into noise floor and residue components.
+Quantize and entropy code it using a codebook and vector quantization algorithm.
+
+
+UNKNOWNS
+  vector quantization
+  codebook
