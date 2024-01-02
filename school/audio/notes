@@ -1,3 +1,12 @@
+FOURIER TRANSFORM YOUTUBE EXPLANATION
+  https://www.youtube.com/watch?v=_htCsieA0_U
+
+HOW WE EXTRACT AMPLITUDE OF ALIGNMENT TO A GIVEN FREQUENCY:
+  https://www.youtube.com/watch?v=7JDaNL_P_-o
+
+WHERE I LEFT OFF (frequencies in fourier transform):
+  https://www.youtube.com/watch?v=RHjqvcKVopg
+
 opus is smaller and faster than opus, which is smaller than mp3
 however, opus is patented. Vorbis might be the way to go then.
 
@@ -7,6 +16,80 @@ Break freq domain into noise floor and residue components.
 Quantize and entropy code it using a codebook and vector quantization algorithm.
 
 
-UNKNOWNS
-  vector quantization
-  codebook
+When we hear two notes in a critical band together 
+  440 and 441 will produce a beating of 1Hz
+  440 and 450 will produce a beating of 10HZ
+
+  Key terms; 
+    psychoacoustics 
+    critical bands : C and C# sound unpleasant played together because they fall in the same critical band.
+                     So critical bands are groups of frequencies that our ears hate to hear together.
+    coefficients:    complex dot product between a sine wave at some frequency and a signal
+    energy
+
+    so we basically group the coefficients to resemble the critical bands of the human cochlea.
+
+    
+    fourier xform has e^ki = cos(k) + i sin(k)
+    dotting a sine wave with a signal will tell you if it's aligned IF you have same phase
+    but the above will do it with both cosine and sine wave so you get a sense of whether phase is just off
+   
+    we don't get to pick which sine wave frequencies we test for in the signal
+    it's all about the dot product
+
+    the m*e^ik = m * ( cos(k) + i sin(k) )  (just think "mike")
+
+    amplitude spectrum is the magnitude of fourier coefficients
+
+
+    the number of tiem points in signal is number of frequencies you can extract
+
+    
+
+
+This is so fucking cool and simple!
+
+  All CELT does (thanks ChatGPT, no thanks to you self-aggrandizingly obfuscating humans on Google) is this:
+
+  ? detect transients (T?)
+  ? transforms the signal to frequency domain with MDCT (M?)
+  determines the range of frequencies and divides it up into N bins
+  ? k-means clustering (K?) on each bin to vector-quantize it
+  ? pyramid vectdor quantizatoin (PVQ?)
+      https://en.wikipedia.org/wiki/Pyramid_vector_quantization
+  ? structure vectors into pulse vectors (PV?)
+  ? range coding (R?) on the vectors as a pulse 
+      https://en.wikipedia.org/wiki/Range_coding
+
+  Then you gotta do the above in reverse for decompressing.
+
+
+  (M)
+      prereqs:
+      ========
+        energy: sum of squares of sample values (accounts for negatives)
+        the forward and inverse equations are the same
+        exploit symmetry property to halve the computations needed
+        frame = stretch of samples for all channels combined
+        codec = COmpression & DECompression... cool!
+        preserve the energy in each band (vorbis)
+
+
+      WHEN WE GET BACK (go have fun son):
+        study how MDCT 
+
+      VERIFY: the reason it maps from 2N -> N is because of the mirroring property
+
+      OPTIMIZATION NOTES:
+        you can keep the overlapping portion of the last computation (somehow.... study FFT)
+        you can make a LUT of the cosine computations for MDCT and IMDCT (pipe- and gametime, respectively)
+        
+
+      detect transients
+      transient detected  -> reduce the overlap (effectively same as shorter window = higher time resolution)
+      stationary detected -> increase overlap (same as longer window = higher freuqency resolution)
+
+      the window size for the mdct computations is constant for celt, but the overlaps vary in order
+      to control the resolution. Smaller windows capture more details, bigger for more stationary tonal sounds.
+
+      mp3 does a highpass filter with cutoff between 2Hz and 10Hz)
