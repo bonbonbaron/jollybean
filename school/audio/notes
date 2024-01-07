@@ -93,3 +93,27 @@ This is so fucking cool and simple!
       to control the resolution. Smaller windows capture more details, bigger for more stationary tonal sounds.
 
       mp3 does a highpass filter with cutoff between 2Hz and 10Hz)
+
+
+
+20240103
+
+  I'm grokking the celt algorithm right now. I've sort of understood what's going on on the MDCT part,
+  but there's still more to uncover:
+
+  CELT ALGO:
+    MDCT with small blocks
+    group coeffs from above to resemble critical bands
+    analyze the total energy of each group
+    quantize the band energies for data reduction
+    compress through prediction
+    transmit only the differences to the predicted values
+    normalize the coeffs with the unquantized band energy
+    (P?) pyramid vector quantize the resulting normalized "residual signal" (called "band shape") 
+
+
+(P): PYRAMID VECTOR QUANTIZATION
+  (See "A Pyramid Vector Quantizer" by Thomas R. Fischer if wiki fails you.)
+  You'll be quantizing and transmitting unit vectors. So at decode time, you'll know mag, not direction yet.
+  Basically, when you divide the coeffs by their band energy, you get a unit vector.
+  
