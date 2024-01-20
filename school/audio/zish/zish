@@ -1,0 +1,69 @@
+#!/bin/bash
+
+export PIPE=~/.temppipe
+rm -f $PIPE
+mkfifo $PIPE
+killall -q zynaddsubfx
+
+# First, we need to look for any of our known pianos attached.
+# Once we grab them, we're going to sed the ~/.midishrc file's connected MIDI instruments.
+declare -a devices
+devices+=("Piano MIDI Device")
+devices+=("V25 MKII")
+
+# Delete old dnew declarations in ~/.midishrc.
+echo "" > ~/.midishrc
+
+# Insert each registered MIDI device.
+deviceId=0
+for (( i=0; i < ${#devices[*]}; ++i )); do
+  # Get the device address.
+  #echo "looking for ${devices[$i]}..."
+  deviceNum=$(aconnect -l | grep -A1 "^client.*${devices[$i]}" | sed -E -n '1s/^client ([0-9]+).*/\1/p')
+  portNum=$(aconnect -l | grep -A1 "^client.*${devices[$i]}" | sed -E -n '2s/^\s*([0-9]+).*/\1/p')
+  # Insert a "dnew" declaration for the current device in ~/.midishrc.
+  echo "dnew $((deviceId++)) \"$deviceNum:$portNum\" ro # ${devices[$i]}" >> ~/.midishrc
+done
+
+# Insert ZynAddSubFX
+zyn="ZynAddSubFX"  # just in case the name ever varies across versions
+# Start zynaddsubfx for long enough to get its proper device address.
+zynaddsubfx -U -I alsa -O alsa -e zish-helper &>/dev/null &
+zynpid=$!
+cat $PIPE | read -n 1 # this hangs till pipe has a single character
+ZYN_DEVICE_NUM=$(aconnect -l | grep -A1 "^client.*$zyn" | sed -E -n '1s/^client ([0-9]+).*/\1/p')
+ZYN_PORT_NUM=$(aconnect -l | grep -A1 "^client.*$zyn" | sed -E -n '2s/^\s*([0-9]+).*/\1/p')
+kill $zynpid
+echo "dnew $((deviceId)) \"$ZYN_DEVICE_NUM:$ZYN_PORT_NUM\" wo # $zyn" >> ~/.midishrc
+zynDeviceId=$deviceId
+
+# Write the rest of ~/.midishrc (filter maps, tracks, and filter map-track assignments)
+echo "" >> ~/.midishrc
+
+for (( i=0; i < ${#devices[*]}; ++i )); do
+  echo "fnew f$i
+fmap {any {$i 0}} {any {$zynDeviceId $i}}
+tnew t$i
+ct t$i
+tsetf f$i
+" >> ~/.midishrc
+done
+
+echo "ct t0" >> ~/.midishrc  # make it already in instrument mode
+echo "i" >> ~/.midishrc  # make it already in instrument mode
+
+# Make sure we have one argument.
+if [ $# -ne 1 ]; then
+  echo "You're supposed to pass in a *.xmz file as an argument. Exiting..."
+  exit 1
+fi
+
+# Run zyn if we have an xmz file for an argument.
+inputfile=$1
+if [ "${inputfile#*.}" = 'xmz' ]; then
+  zynaddsubfx -U -I alsa -O alsa -l $1 -e midish 
+else
+  echo "$1 is not an XMZ file. Exiting..."
+  exit 1
+fi
+
