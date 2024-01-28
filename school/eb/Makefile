@@ -1,5 +1,8 @@
-o: main.c xmlParser.c eb.c include/eb.h include/xmlParser.h 
-	gcc -g -Wall $(shell pkg-config libxml-2.0 --cflags --libs) -lz *.c -Iinclude -o o 
+o: build/main.o build/xmlParser.o build/eb.o build/fray.o build/array.o build/vec3.o build/mem.o
+	gcc -g -Wall build/*.o $(shell pkg-config libxml-2.0 --libs) -lz -o $@
+
+build/%.o: %.c 
+	gcc -g -Wall $(shell pkg-config libxml-2.0 --cflags) -c $< -Iinclude -o $@
 
 clean:
 	rm o

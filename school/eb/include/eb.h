@@ -47,8 +47,7 @@ typedef struct {
   Vertex v[3];  // indices to the vertex array
 } Triangle;
 
-typedef enum { C = 'C', L = 'L', E = 'E', R = 'R', S = 'S', M = 'M' } ClersChar;
-typedef enum { CLERS, CLERSM, CLERSM_WITH_HANDLE } MeshType;  // CLERSM changes the code length of LERS from to 4 bits
+typedef enum { C = 'C', L = 'L', R = 'R', G = 'G', F = 'F' } ClrgfChar;
 
 typedef union {
   struct {
@@ -126,8 +125,7 @@ typedef struct HalfEdge {
 
 typedef struct {
   int newIsland;
-  MeshType islandType;  // the mesh type of the new island
-  ClersChar clersChar;
+  ClrgfChar clrgfChar;
   HalfEdge* g;   // the gate used for the current triangle
 } TriangleTraversalNode;
 
@@ -171,13 +169,12 @@ typedef struct Mesh {
   int genus;  // a hole may be considered an outer boundary if only one exists.
   int nBoundingLoops;  // we can't know this for a mesh with disparate parts,
   struct Mesh *islandListNodeP;
-  MeshType type;
 } Mesh;
 
 // Gives you all the half-edges and their relationships to their triangular counterparts
 void getEdges( Mesh *meshP );
 // Gives you the traversal order for compressing vertex attributes. 
-// It also givecs you the CLERS connectivity compression codes so you only have to figure traversal out once.
+// It also givecs you the CLRGF connectivity compression codes so you only have to figure traversal out once.
 void getConnectivity( Mesh *meshP );
 // Compress positions coordinate-wise using parallelogram rule
 void compressPositions( Mesh* meshP );

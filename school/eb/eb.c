@@ -1,5 +1,14 @@
 #include "eb.h"
 
+/* TODO
+ *
+ *  implement CLRGF connectivity         <-- 1/27/2024
+ *  compress positions accordingly
+ *  compress normals accordingly
+ *  compress texture coordsaccordingly
+ *  compress colors accordingly
+ */
+
 #define forEachInArray_( type_, pointerPrefix_ ) \
   if (1) {  /* this allows redeclaring the below variables across multiple macro uses */ \
     type_ *pointerPrefix_##P = pointerPrefix_##A;\
@@ -120,11 +129,11 @@ void dispBoundaryLink( Vec3* v1, Vec3 *v2 ) {
       v2->z );
 }
 
-// ?1 How do we distinguish interior from exterior boundaries?
+// TODO if no boundaries found, then initialize boundary as initial gate's triangle edges (OUTWARD from tri)
+//      it's given that without a B, the edges are guaranteed to have twins.
 #define DBG_BOUNDARY_MARKER (1)
 #define UNMET_BOUNDARY (0)
-#define INTERNAL_BOUNDARY (1)
-#define EXTERNAL_BOUNDARY (2)
+#define MET_BOUNDARY (1)
 // Finds boundaries in clockwise fashion ( "n" goes clockwise in holes )
 void markBoundaries( Mesh* meshP ) {
   // int currBoundaryLabel = 0;
@@ -135,7 +144,6 @@ void markBoundaries( Mesh* meshP ) {
 #if DBG_BOUNDARY_MARKER
   int count = 0;
 #endif
-  int metLabel;
   meshP->initialGate = meshP->heA;  // just in case
   forEachInArray_( HalfEdge, he ) 
     // If this is a bounding edge and hasn't been added to a loop list yet
@@ -143,14 +151,13 @@ void markBoundaries( Mesh* meshP ) {
       ++meshP->nLoners;
       if ( !meshP->initialGate ) {
         meshP->initialGate = heP;
-        metLabel = EXTERNAL_BOUNDARY;  // in multi-island meshes, only the first mesh's ext. B will be 2.
-      }                                // Subsequent islands will know to mark first B as 2 later.
-      else {
-        metLabel = INTERNAL_BOUNDARY;
       }
       boundaryIterP = heP;
       // Find all the bounding edges that form a loop with this one.
       do {
+        // Get list of all half-edges ENDing at current half-edge's STARTING vertex.
+        // Only traverse across BOUNDARY half-edges (those without opposites).
+        // Looks like "next" goes clockwise and "prev" goes CCW.
         for ( heEndingAtThisVertex = boundaryIterP->s->listOfHesEndingHere; 
               heEndingAtThisVertex; 
               heEndingAtThisVertex = heEndingAtThisVertex->next ) { 
@@ -163,7 +170,7 @@ void markBoundaries( Mesh* meshP ) {
               heEndingAtThisVertex->heP->P = boundaryIterP;
               boundaryIterP->N = heEndingAtThisVertex->heP;
               boundaryIterP = heEndingAtThisVertex->heP; 
-              boundaryIterP->m = metLabel;
+              boundaryIterP->m = MET_BOUNDARY;
 #if DBG_BOUNDARY_MARKER
               dispBoundaryLink( 
                   &meshP->pos.u.vec3A[boundaryIterP->P->s->posIdx], 
@@ -185,12 +192,6 @@ void markBoundaries( Mesh* meshP ) {
 #if DBG_BOUNDARY_MARKER
   printf( " tied togerther %d boudnaries\n", count );
 #endif
-  if ( meshP->nBoundingLoops > 1 ) {
-    meshP->type = CLERSM;
-  }
-  else {
-    meshP->type = CLERS;
-  }
 }
 
 // Outputs two arrays: Vertex and Half-Edge.
@@ -315,48 +316,36 @@ void getEdges( Mesh *meshP ) {
   frayDel( (void**) &hellF );
 }
 
-
-/*
- * while curr index is not zero,
- *   mark HE as "met"
- *   if he.v is a STRANGER,
- *      mark he.v as met.
- *      go to RIGHT triangle ( he.n.o ).
- *   elif you've met the RIGHT triangle,
- *      AND if you've met the LEFT triangle (you've met BOTH neighbors),
- *          pop (?1) (in recursion, this is simply a return out of this nested call)
- *      else go to the LEFT triangle
- *   elif you've met the LEFT triangle,
- *      go to the RIGHT triangle
- *   else (you've met NEITHER),
- *      push the LEFT triangle onto a to-do stack
- *      go to the RIGHT triangle
- *      
- */
-
-// TODO keep track of most common letter
-// Gives you the traversal order for compressing vertex attributes. 
-// It also givecs you the CLERS connectivity compression codes so you only have to figure traversal out once.
-// Then I can reuse this traversal-order array for normals, texels, colors, and connectivity (CLERS).
-// That way, I can avoid having to reset the "met" flags after the first traversal.
-#define hasRightNeighbor heP->n->o && !heP->n->o->t->m
-#define hasLeftNeighbor  heP->p->o && !heP->p->o->t->m
-#define goRight markAllAsSeen(heP); heP = heP->n->o
-#define goLeft markAllAsSeen(heP); heP = heP->p->o
-#define pushLeftNeighborToStack markAllAsSeen(heP->p->o); heP->p->o->t->onStack = 1; *(++stackP) = heP->p->o
-#define popFromStack \
-  markAllAsSeen(heP); \
-  if ( stackP > traversalStackA ) { \
-    heP = *(stackP--); \
-    heP->t->onStack = 0; \
-  } \
-  else { \
-    heP = NULL; \
+typedef enum { LEFT_IS_SHORTER, RIGHT_IS_SHORTER } BoundaryMeasOutcome;
+static inline BoundaryMeasOutcome measureBoundaryLengthRight( HalfEdge *heP ) {
+  // Measure the boundary length to the right of the passed-in gate first.
+  int rBoundaryLen = 0, lBoundaryLen = 0;
+  for ( HalfEdge *g = heP->N; g->s != heP->s; g = g->N, ++rBoundaryLen );
+  // Then measure the boundary length to the left of the passed-in gate.
+  for ( HalfEdge *g = heP->P; g->s != heP->s; g = g->P, ++lBoundaryLen ) {
+    if ( lBoundaryLen >= rBoundaryLen ) {
+      return RIGHT_IS_SHORTER;
+    }
   }
+  return LEFT_IS_SHORTER;
+}
+
+// Gives you the traversal order for compressing vertex attributes. 
+// It also givecs you the CLRGF connectivity compression codes so you only have to figure traversal out once.
+// Then I can reuse this traversal-order array for normals, texels, colors, and connectivity (CLRGF).
+// That way, I can avoid having to reset the "met" flags after the first traversal.
+#define hasRightNeighbor g->n->o && !g->n->o->t->m
+#define hasLeftNeighbor  g->p->o && !g->p->o->t->m
+#define goRight markAllAsSeen(g); g = g->n->o
+#define slideRight markAllAsSeen(g); g = g->N
+#define slideLeft markAllAsSeen(g); g = g->P
+#define goLeft markAllAsSeen(g); g = g->p->o
 #define markAllAsSeen(h) \
   markTriangleAsSeen(h); markVertexAsSeen(h, s); markVertexAsSeen(h, e); markVertexAsSeen(h, v)
 #define markVertexAsSeen(h, d) h->d->m = 1
 #define markTriangleAsSeen(h) h->t->m = 1
+#define link( a, b ) a->N = b; b->P = a;
+// TODO look at first edgebreaker paper for deets on changing active boundary
 #define DBG_EDGEBREAKER (1)
 // EdgeBreaker: https://faculty.cc.gatech.edu/~jarek/papers/EdgeBreaker.pdf
 void getConnectivity( Mesh *meshP ) {
@@ -364,86 +353,120 @@ void getConnectivity( Mesh *meshP ) {
   // Allocate a traversal stack as a fray.
   // Make a stack pointer point to it for faster than "getLastElement()".
   HalfEdge** traversalStackA;
-  Error e = arrayNew( (void**) &traversalStackA, sizeof( HalfEdge* ), arrayGetNElems( meshP->tri.u.triA ) );
-  assert( !e );
-  HalfEdge** stackP = traversalStackA;
   // Allocate an array of traversal order of triangles.
   // Make a pointer to it for speed too.
-  e = arrayNew( (void**) &meshP->triangleTraversalOrderA, sizeof( TriangleTraversalNode ), arrayGetNElems( meshP->tri.u.triA ) );
+  Error e = arrayNew( (void**) &meshP->triangleTraversalOrderA, sizeof( TriangleTraversalNode ), arrayGetNElems( meshP->tri.u.triA ) );
   assert( !e );
   TriangleTraversalNode* triTravP = meshP->triangleTraversalOrderA;
-  int clersHisto[5] = {0};
+  int clrgfHisto[5] = {0};
   // Allocate an array of traversal order of unmet vertices.
   // Make a pointer to it for speed too.
   e = arrayNew( (void**) &meshP->vertexTraversalOrderA, sizeof( VertexTraversalNode ), arrayGetNElems( meshP->pos.u.vec3A ) + 1 );
   assert( !e );
 #if DBG_EDGEBREAKER
   int nTrianglesRemaining = arrayGetNElems( meshP->tri.u.triA );
-  printf("mesh is %s type\n", ( meshP->type == CLERS ) ? "CLERS": "CLERSM" );
   printf("num tris: %d; num verts: %d\n", arrayGetNElems( meshP->tri.u.triA ), arrayGetNElems( meshP->pos.u.vec3A ) );
   int nIters = 0;
   Triangle* t = NULL;
 #endif
-  HalfEdge *heP, *hP = meshP->initialGate, *hEndP = meshP->heA + arrayGetNElems( meshP->heA );
+  HalfEdge *g, *hP = meshP->initialGate, *hEndP = meshP->heA + arrayGetNElems( meshP->heA );
   goto skipNewIslandLogic;
   while ( hP < hEndP ) {
     // For the first iteration, jump past the new island logic. Assume first triangle is unmet.
     if ( !hP->t->m ) {
+skipNewIslandLogic:
 #if DBG_EDGEBREAKER
-      --nTrianglesRemaining;
-      assert( nTrianglesRemaining >= 0 );
-      t = hP->t;
       printf("\nnew island");  
 #endif
-skipNewIslandLogic:
       triTravP->newIsland = 1;  // may be useful for us in vertex attribute compression
-      hP->t->g = heP = hP;
-      while ( heP ) {
+      hP->t->g = g = hP;
+      // If island lacks boundaries, give it one. This algo requires them. 
+      // This simulates popping the first triangle out, creating a boundary of three sides in its place.
+      if ( g->o ) {
+        link( g->o, g->p->o );
+        link( g->p->o, g->n->o );
+        link( g->n->o, g->o );
+        triTravP->clrgfChar = C;
+        ++clrgfHisto[0];
+        goRight;
+      }
+      // Loop through all the triangles in this region.
+      while ( g ) {
 #if DBG_EDGEBREAKER
-        printf("\niter # %d ( @ tri %05d ) -> ", ++nIters, heP->t - meshP->tri.u.triA );
+        assert( nTrianglesRemaining-- >= 0 );
+        t = hP->t;
 #endif
-        assert( !heP->t->onStack );
-        triTravP->g = heP;  
+#if DBG_EDGEBREAKER
+        printf("\niter # %5d ( @ tri %5d, he %5d ) -> ", ++nIters, g->t - meshP->tri.u.triA, g - meshP->initialGate );
+#endif
+        assert( !g->t->onStack );
+        triTravP->g = g;  
         // If v is not on boundary, we're lucky; it's an easy C.
-        if ( !heP->v->m ) {
-          triTravP->clersChar = C;
-          ++clersHisto[0];
+        if ( !g->v->m ) {
+          triTravP->clrgfChar = C;
+          ++clrgfHisto[0];
+          // Update boundary for C-case.
+          link( g->P, g->p->o );
+          link( g->p->o, g->n->o );
+          link( g->n->o, g->N );
           goRight;
+#if DBG_EDGEBREAKER
+          printf( "\e[32mC");
+#endif
         }
         // if opp vertex IS on the boundary or has been met, then we gotta figure out what kind this is.
-        else if ( hasRightNeighbor ){
-          if ( hasLeftNeighbor ) {
+        else if ( !hasRightNeighbor ){
+          triTravP->clrgfChar = R;
+          ++clrgfHisto[2];
+          // Update boundary for R-case.
+          link( g->p->o, g->N->N );
+          link( g->P, g->p->o );
 #if DBG_EDGEBREAKER
-            printf( "\e[1;32mS (pushing %05d) ", heP->p->o->t - meshP->tri.u.triA );
+          printf( "\e[32mR");
 #endif
-            // TODO this is where you'll apply a condition to switch between S and M
-            triTravP->clersChar = S;
-            ++clersHisto[4];
-            pushLeftNeighborToStack;
+          if ( !hasLeftNeighbor ) {
+            markAllAsSeen( g );
+            break;  // End of the road. You must have visited the whole mesh by this point.
           }
           else {
-            triTravP->clersChar = L;
-            ++clersHisto[1];
+            slideRight;  // avoid going left by stepping counterclockwise around the boundary.
           }
-          goRight;
         }
-        else if ( hasLeftNeighbor ) {
-          triTravP->clersChar = R;
-          ++clersHisto[3];
-          goLeft;
-        }
-        else {
+        else if ( !hasLeftNeighbor ) {
+          triTravP->clrgfChar = L;
+          ++clrgfHisto[1];
+          // Update boundary for L-case.
+          link( g->P->P, g->n->o );
+          link( g->n->o, g->N );
 #if DBG_EDGEBREAKER
-          printf( "\e[1;31mE (pulling %05d) ", *stackP ? ( (*stackP)->t - meshP->tri.u.triA ) : 0 );
+          printf( "\e[32mL");
 #endif
-          triTravP->clersChar = E;
-          ++clersHisto[2];
-          popFromStack;
+          slideRight;  // avoid going left by stepping counterclockwise around the boundary.
+        }
+        // Otherwise, you've reached a pinch point.
+        // There's a boundary loop to the left and the right.
+        // Whichever one's shorter is the direction you go in.
+        else {
+          // TODO ew, now you have to calculate the right and left boundary lengths.
+          // Measure boundary to the right.
+          if ( measureBoundaryLengthRight( g ) == RIGHT_IS_SHORTER ) {
+            triTravP->clrgfChar = G;
+            ++clrgfHisto[3];
+            slideRight;
+#if DBG_EDGEBREAKER
+          printf( "\e[32mG");
+#endif
+          }
+          else {  // LEFT_IS_SHORTER
+            triTravP->clrgfChar = F;
+            ++clrgfHisto[4];
+            slideLeft;
+#if DBG_EDGEBREAKER
+          printf( "\e[32mF");
+#endif
+          }
         }
 #if DBG_EDGEBREAKER
-        if ( triTravP->clersChar != E && triTravP->clersChar != S ) {
-          putchar(triTravP->clersChar);
-        }
         printf( "\e[0m" );
         // Only gets checked on subsequent islands past the first one.
         if ( t ) {
@@ -466,15 +489,41 @@ skipNewIslandLogic:
 
   assert( nTrianglesRemaining == 0 );
 
-  printf("CLERS histo: %d, %d, %d, %d, %d\n", 
-      clersHisto[0],    // C
-      clersHisto[1],    // L
-      clersHisto[2],    // E
-      clersHisto[3],    // R
-      clersHisto[4] );  // S
+  printf("CLRGF histo: %d, %d, %d, %d, %d\n", 
+      clrgfHisto[0],    // C
+      clrgfHisto[1],    // L
+      clrgfHisto[2],    // E
+      clrgfHisto[3],    // R
+      clrgfHisto[4] );  // S
   assert( ( triTravP - meshP->triangleTraversalOrderA ) == arrayGetNElems( meshP->tri.u.triA ) );
   arrayDel( (void**) &traversalStackA );
 }
+
+/* TODO
+ *
+ * how do you handle boundary-stepping on a genus-0 mesh?
+ * Before that, what does boundary even mean in that context?
+ * They say "pick any triangle as an arbitrary active boundary."
+ * So this paper doesn't explain it; it's detailed in the first paper.
+ * Oh... I found it: 
+ *    "Each step removes one triangle from the current mesh.
+ *     At each stage, the remaining portion of the mesh is composed of one 
+ *     or several regions, denoted R, which are simple meshes.
+ *
+ *     ... The edges bounding each region form a closed manifold polgonal curve, called loop, 
+ *     which has no self-intersections. One edge of each loop is called a gate." ( p6 of (1) )
+ *
+ * "Simple mesh" above is defined as a region that's homeomorphic to either a sphere or half-sphere.
+ * (It follows that the sphere must be bowl-shaped instead of closed, because a closed one would still
+ * be homeomorphic to a sphere.) Multiple simple meshes are allowed to share one or more vertices with
+ * others, but no edges (because otherwise then they'd be the same region).
+ *
+ * Okay, so anyway, to finally answer my original question, the boundary is created when you remove
+ * a triangle from the mesh. And if you already have one or more boundaries to begin with, then you
+ * start with a gate on that boundary.
+ *
+ *
+ */
 
 /* ============================== */
 /* Predictive-Delta quantization  */
@@ -486,7 +535,7 @@ skipNewIslandLogic:
 //    X3' = X1 + (X2 - X1)
 //    residual = X3' - X3
 //    (?2) How do I determine the necessary bitlength needed for quantizing?
-//    Or is VLE really that great?
+//    Or is VLE really that great? There's also huffman, so I might fall back on that for performance.
 //    qr = quantize( residual, 10 )
 //
 //    Then, as each coordinate's residual array, histogram out of 1024 with a grand total.
@@ -840,5 +889,5 @@ void compressColors( Mesh* meshP ) {
  *
  * I'll admit i got a little lazy planning this one since I'm about to go on another date.
  */
-void compressColors( Mesh* meshP ) {
+void compressTexels( Mesh* meshP ) {
 }
