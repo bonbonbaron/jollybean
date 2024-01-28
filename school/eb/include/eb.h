@@ -17,10 +17,10 @@ typedef struct HeLinkListNode {
   struct HalfEdge* heP;
 } HeLinkListNode;
 
-void hellNew( HeLinkListNode** hellFP, unsigned int nElems );
-HeLinkListNode* hellAdd( HeLinkListNode* hellF, HeLinkListNode* headP, struct HalfEdge* heP);
-HeLinkListNode* hellNewHead( HeLinkListNode *hellF, struct HalfEdge* heP );
-void dispList( HeLinkListNode* hellF, unsigned headIdx );
+// void hellNew( HeLinkListNode** hellFP, unsigned int nElems );
+// HeLinkListNode* hellAdd( HeLinkListNode* hellF, HeLinkListNode* headP, struct HalfEdge* heP);
+// HeLinkListNode* hellNewHead( HeLinkListNode *hellF, struct HalfEdge* heP );
+// oid dispList( HeLinkListNode* hellF, unsigned headIdx );
 
 // Reason for this distinction is there's no need to
 // duplicate mesh geometry information. The above Vertex
@@ -41,13 +41,12 @@ typedef struct {
 
 typedef struct {
   int m;
-  int onStack;
   Vec3 normal;
   struct HalfEdge* g;  // gate used to access this triangle
   Vertex v[3];  // indices to the vertex array
 } Triangle;
 
-typedef enum { C = 'C', L = 'L', R = 'R', G = 'G', F = 'F' } ClrgfChar;
+typedef enum { C, L, R, G, F } ClrgfChar;
 
 typedef union {
   struct {

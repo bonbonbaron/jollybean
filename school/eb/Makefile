@@ -4,5 +4,7 @@ o: build/main.o build/xmlParser.o build/eb.o build/fray.o build/array.o build/ve
 build/%.o: %.c 
 	gcc -g -Wall $(shell pkg-config libxml-2.0 --cflags) -c $< -Iinclude -o $@
 
+.PHONY: clean
 clean:
-	rm o
+	rm -f o
+	rm -f build/*
