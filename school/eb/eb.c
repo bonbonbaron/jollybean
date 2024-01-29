@@ -122,7 +122,7 @@ void dispList( HeLinkListNode* hellF, unsigned headIdx ) {
 }
 
 static void dispBoundaryLink( Vec3* v1, Vec3 *v2 ) {
-  printf( "{ %f, %f, %f } -> { %f, %f, %f }\n", 
+  printf( "\t\e[34m{ %f, %f, %f } -> { %f, %f, %f }\e[0m\n", 
       v1->x,
       v1->y,
       v1->z,
@@ -132,10 +132,6 @@ static void dispBoundaryLink( Vec3* v1, Vec3 *v2 ) {
 }
 #endif
 
-// TODO if no boundaries found, then initialize boundary as initial gate's triangle edges (OUTWARD from tri)
-//      it's given that without a B, the edges are guaranteed to have twins.
-#define UNMET_BOUNDARY (0)
-#define MET_BOUNDARY (1)
 // Finds boundaries in clockwise fashion ( "n" goes clockwise in holes )
 void markBoundaries( Mesh* meshP ) {
   // int currBoundaryLabel = 0;
@@ -149,27 +145,37 @@ void markBoundaries( Mesh* meshP ) {
   meshP->initialGate = meshP->heA;  // just in case
   forEachInArray_( HalfEdge, he ) 
     // If this is a bounding edge and hasn't been added to a loop list yet
-    if ( !heP->o && heP->m == UNMET_BOUNDARY ) {
+    // printf( "next potential boundary edge\n" );
+    if ( !heP->o && !heP->m ) {
+      printf( "good nuff potential boundary edge\n" );
       ++meshP->nLoners;  // ultimately counts boundary loops
       if ( !meshP->initialGate ) {
         meshP->initialGate = heP;
       }
       boundaryIterP = heP;
       // Find all the bounding edges that form a loop with this one.
+      // Iterates through the boundary loop.
       do {
         // Get list of all half-edges ENDing at current half-edge's STARTING vertex.
         // Only traverse across BOUNDARY half-edges (those without opposites).
         // Looks like "next" goes clockwise and "prev" goes CCW.
+        // Iterates through all the half-edges connected to current boundary edge's starting vertex.
+        // Goal is to find the next boundary half-edge.
         for ( heEndingAtThisVertex = boundaryIterP->s->listOfHesEndingHere; 
               heEndingAtThisVertex; 
               heEndingAtThisVertex = heEndingAtThisVertex->next ) { 
+          printf( "\tnext potential neighbor\n" );
           /* This allows pinch points to traverse an exterior boundary. */ 
           if ( heEndingAtThisVertex->heP != boundaryIterP ){
+            printf( "\tnot curr boundary iter, good... has o = 0x%08x, met = %d\n", (int) heEndingAtThisVertex->heP->o, heEndingAtThisVertex->heP->m );
             if ( !heEndingAtThisVertex->heP->o && !heEndingAtThisVertex->heP->m ) { 
+
+              printf( "\tgood nuff boundary edge to be next\n" );
+              // Link the current
               heEndingAtThisVertex->heP->P = boundaryIterP;
               boundaryIterP->N = heEndingAtThisVertex->heP;
               boundaryIterP = heEndingAtThisVertex->heP; 
-              boundaryIterP->m = MET_BOUNDARY;
+              boundaryIterP->m = 1;
 #if DBG_BOUNDARY_MARKER
               ++count;
               dispBoundaryLink( 
@@ -185,8 +191,12 @@ void markBoundaries( Mesh* meshP ) {
       if ( prevBoundaryStartP ) {
         prevBoundaryStartP->nextStartingGate = heP;
       }
-      assert( heP->P );  // why? did i not trust it to link up to the first boundary edge?
       prevBoundaryStartP = heP;
+#if DBG_BOUNDARY_MARKER
+      // Interesting, the third boundary heP has no met/prev/next either.
+      // assert( heP->m ); assert( heP->N ); assert( heP->P );
+      putchar( '\n' );
+#endif
     }  // if this is an UNMET bounding edge
   endForEach_( half edge on this boundary )
 #if DBG_BOUNDARY_MARKER
@@ -305,10 +315,10 @@ void getEdges( Mesh *meshP ) {
   endForEach_(half-edge)
 
   // Genus and mesh type are ISLAND traits, not Mesh.  So: TODO
+  markBoundaries( meshP );
 #if DBG_HALFEDGES
   printf("%d loners out of %d HEs\n", meshP->nLoners, arrayGetNElems( heA ) );
 #endif
-  markBoundaries( meshP );
   assert( meshP->initialGate );
 
 
