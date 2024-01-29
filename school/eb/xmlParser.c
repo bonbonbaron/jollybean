@@ -27,7 +27,7 @@ xmlXPathContextPtr xmlGetNamespaceContext( xmlDocPtr doc, const char* nsAlias ) 
   result = xmlXPathEvalExpression ( BAD_CAST "namespace-uri(/*)", context );
   // I'm noticing it's actually getvertexting the namespace in the stringval.
   if ( result != NULL && result->stringval != NULL ) {
-    printf( "aliasing namespace %s with %s\n", result->stringval, nsAlias );
+    // printf( "aliasing namespace %s with %s\n", result->stringval, nsAlias );
     int registryResult = xmlXPathRegisterNs ( context, BAD_CAST nsAlias, BAD_CAST result->stringval );
     if ( registryResult == 0 ) {
     } else {

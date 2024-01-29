@@ -596,7 +596,7 @@ int main ( int argc, char **argv ) {
     getEdges( &mesh );
     getConnectivity( &mesh );
     // Compress them
-    compressPositions( &mesh );
+    // compressPositions( &mesh );
 
 #if 0
     // Raw quantization
