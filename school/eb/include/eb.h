@@ -56,7 +56,6 @@ typedef union {
   } pos;
 } Quantized;
 
-#define GENERATED_COORDINATE (0xffff)
 
 typedef union {
   struct {
@@ -65,14 +64,6 @@ typedef union {
     short* zA;
   } pos;
 } Residual;
-
-typedef union {
-  struct {
-    short* xA;
-    short* yA;
-    short* zA;
-  } pos;
-} Generated;
 
 typedef struct {
   int count;         // number of space-delimited elements in valString
@@ -102,9 +93,9 @@ typedef struct {
   } max;
   Residual residual;
   Quantized quantized;
-  Generated generated;
 } XmlResult;
 
+typedef enum { UNMET, MET, DISCARDED } MetStatus;
 typedef struct HalfEdge {
   VertexStatus
     *s,
@@ -118,7 +109,7 @@ typedef struct HalfEdge {
     *P;  // prev half-edge on bounding loop (if this is a bounding half-edge; NULL otherwise)
   int boundaryId;   // if this Half-edge sits on a boundary,  tell us which boundary it is.  // TODO needed?
   struct HalfEdge* nextStartingGate;  // we loop through boundaries; then we start over for simple meshes
-  int m; // indicates whether this half-edge has been met yet
+  MetStatus m; // indicates whether this half-edge has been met yet
   Triangle* t;
 } HalfEdge;
 
@@ -163,7 +154,6 @@ typedef struct Mesh {
   VertexTraversalNode* vertexTraversalOrderA;
   VertexStatus *vstatA;
   int triElemsPresent;
-  int nLoners;
   int eulerCharacteristic;
   int genus;  // a hole may be considered an outer boundary if only one exists.
   int nBoundingLoops;  // we can't know this for a mesh with disparate parts,

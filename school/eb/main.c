@@ -549,9 +549,6 @@ void clrMesh( Mesh* meshP ) {
   arrayDel( (void**) &meshP->pos.residual.pos.xA );
   arrayDel( (void**) &meshP->pos.residual.pos.yA );
   arrayDel( (void**) &meshP->pos.residual.pos.zA );
-  arrayDel( (void**) &meshP->pos.generated.pos.xA );
-  arrayDel( (void**) &meshP->pos.generated.pos.yA );
-  arrayDel( (void**) &meshP->pos.generated.pos.zA );
   arrayDel( (void**) &meshP->nml.u.vec3A );
   arrayDel( (void**) &meshP->clr.u.vec4A );
   arrayDel( (void**) &meshP->tex.u.vec2A );

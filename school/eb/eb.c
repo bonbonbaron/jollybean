@@ -1,6 +1,6 @@
 #include "eb.h"
-#define DBG_HALFEDGES (1)
-#define DBG_BOUNDARY_MARKER (1)
+#define DBG_HALFEDGES (0)
+#define DBG_BOUNDARY_MARKER (0)
 #define DBG_EDGEBREAKER (1)
 #define DBG_POS_COMPRESSION (1)
 
@@ -140,22 +140,25 @@ void markBoundaries( Mesh* meshP ) {
   assert( meshP && meshP->heA );
   heA = meshP->heA;   // convenience pointer
 #if DBG_BOUNDARY_MARKER
-  int count = 0;
+  int nBoundaryEdges = 0;
 #endif
-  meshP->initialGate = meshP->heA;  // just in case
+  int nDiscards = 0;
   forEachInArray_( HalfEdge, he ) 
     // If this is a bounding edge and hasn't been added to a loop list yet
     // printf( "next potential boundary edge\n" );
     if ( !heP->o && !heP->m ) {
-      printf( "good nuff potential boundary edge\n" );
-      ++meshP->nLoners;  // ultimately counts boundary loops
+      ++meshP->nBoundingLoops;  // ultimately counts boundary loops
       if ( !meshP->initialGate ) {
         meshP->initialGate = heP;
       }
+      /* Boundary iteration pointer only changes when we find the next
+       * unvisited loner that ends at its starting vertex. 
+       * Honestly, the assumption is that there's always going to be one connected.
+       * */
       boundaryIterP = heP;
-      // Find all the bounding edges that form a loop with this one.
-      // Iterates through the boundary loop.
       do {
+        // Find all the bounding edges that form a loop with this one.
+        // Iterates through the boundary loop.
         // Get list of all half-edges ENDing at current half-edge's STARTING vertex.
         // Only traverse across BOUNDARY half-edges (those without opposites).
         // Looks like "next" goes clockwise and "prev" goes CCW.
@@ -164,20 +167,18 @@ void markBoundaries( Mesh* meshP ) {
         for ( heEndingAtThisVertex = boundaryIterP->s->listOfHesEndingHere; 
               heEndingAtThisVertex; 
               heEndingAtThisVertex = heEndingAtThisVertex->next ) { 
-          printf( "\tnext potential neighbor\n" );
           /* This allows pinch points to traverse an exterior boundary. */ 
           if ( heEndingAtThisVertex->heP != boundaryIterP ){
-            printf( "\tnot curr boundary iter, good... has o = 0x%08x, met = %d\n", (int) heEndingAtThisVertex->heP->o, heEndingAtThisVertex->heP->m );
             if ( !heEndingAtThisVertex->heP->o && !heEndingAtThisVertex->heP->m ) { 
-
-              printf( "\tgood nuff boundary edge to be next\n" );
               // Link the current
+              boundaryIterP->s->m = MET;
+              boundaryIterP->e->m = MET;
               heEndingAtThisVertex->heP->P = boundaryIterP;
               boundaryIterP->N = heEndingAtThisVertex->heP;
               boundaryIterP = heEndingAtThisVertex->heP; 
-              boundaryIterP->m = 1;
+              boundaryIterP->m = MET;
 #if DBG_BOUNDARY_MARKER
-              ++count;
+              ++nBoundaryEdges;
               dispBoundaryLink( 
                   &meshP->pos.u.vec3A[boundaryIterP->P->s->posIdx], 
                   &meshP->pos.u.vec3A[boundaryIterP->P->e->posIdx] );
@@ -186,28 +187,46 @@ void markBoundaries( Mesh* meshP ) {
             } 
           }
         }
-      } while ( boundaryIterP != heP );
-      ++meshP->nBoundingLoops;
-      if ( prevBoundaryStartP ) {
-        prevBoundaryStartP->nextStartingGate = heP;
-      }
-      prevBoundaryStartP = heP;
+      }  while (  boundaryIterP != heP );
+      // Indicate whether or not we've found a boundary. 
+      // If we didn't find one, treat this as a stray edge and discard it.
+      if ( heP->N && heP->P ) {
+        ++meshP->nBoundingLoops;
+        // This lets the user jump to the next boundary when this one is done. TODO do we need this?
+        if ( prevBoundaryStartP ) {
+          prevBoundaryStartP->nextStartingGate = heP;
+        }
+        prevBoundaryStartP = heP;
 #if DBG_BOUNDARY_MARKER
-      // Interesting, the third boundary heP has no met/prev/next either.
-      // assert( heP->m ); assert( heP->N ); assert( heP->P );
-      putchar( '\n' );
+        putchar( '\n' );
 #endif
+      }
+      // If we didn't find any boundaries matching these, mark them as discarded.
+      // (Here's a question: How are these showing up if they're not technically on a triangle?)
+      else {
+        for ( ; boundaryIterP; boundaryIterP = boundaryIterP->P ) {
+          boundaryIterP->m = DISCARDED;
+          ++nDiscards;
+        }
+      }
     }  // if this is an UNMET bounding edge
   endForEach_( half edge on this boundary )
 #if DBG_BOUNDARY_MARKER
-  printf( " tied togerther %d boudnaries\n", count );
+  printf( "Tied togerther %d boudnaries\n", nBoundaryEdges );
+  printf( "Discarded %d stray edges.\n", nDiscards );
 #endif
+  if ( !meshP->initialGate ) {
+    meshP->initialGate = meshP->heA;
+  }
 }
 
 // Outputs two arrays: Vertex and Half-Edge.
 // Gives you all the half-edges and their relationships to their triangular counterparts
 void getEdges( Mesh *meshP ) {
-  assert( meshP && meshP->pos.u.vec3A && meshP->nml.u.vec3A && meshP->tri.u.triA );
+  assert( meshP );
+  assert( meshP->pos.u.vec3A );
+  assert( meshP->nml.u.vec3A );
+  assert( meshP->tri.u.triA );
   // Conditional assertions
   Triangle* triangleA = meshP->tri.u.triA;  // convenience pointer
   HalfEdge *heA;  // convenience pointer
@@ -314,11 +333,7 @@ void getEdges( Mesh *meshP ) {
     }
   endForEach_(half-edge)
 
-  // Genus and mesh type are ISLAND traits, not Mesh.  So: TODO
   markBoundaries( meshP );
-#if DBG_HALFEDGES
-  printf("%d loners out of %d HEs\n", meshP->nLoners, arrayGetNElems( heA ) );
-#endif
   assert( meshP->initialGate );
 
 
@@ -456,6 +471,8 @@ skipNewIslandLogic:
       while ( g ) {
 #if DBG_EDGEBREAKER
         assert( nTrianglesRemaining-- >= 0 );  // keeps it from going forever on bad bugs
+        assert( g->N );
+        assert( g->P );
 #endif
 #if DBG_EDGEBREAKER
         printf("\niter # %5d ( @ tri %5d, he %5d )\n", ++nIters, g->t - meshP->tri.u.triA, g - meshP->initialGate );
@@ -466,9 +483,9 @@ skipNewIslandLogic:
           g->v->posIdx );
 #endif
         // If v is not on boundary, we're lucky; it's an easy C.
-        if ( !g->v->m ) {
+        if ( !g->v->m ) {            // BUG: g->v->m should be nonzero if on a boundary.
           markTriangle(C);
-          link( g->P, g->p->o );
+          link( g->P, g->p->o );  
           link( g->p->o, g->n->o );
           link( g->n->o, g->N );
           goRight;
@@ -513,11 +530,10 @@ skipNewIslandLogic:
 #if DBG_EDGEBREAKER
         printf( "\e[0m" );
 #endif
-      }  // while we're covering all the triangles we can, after starting from the initial gate
+      }  // literating over one island's triangles
     }   // if we haven't met this half-edge's triangle yet
-    if ( hP->nextStartingGate ) {
+    if ( hP->nextStartingGate ) {  // TODO is this right?
       printf("going to next bounding loop\n");
-      exit(0);
       hP = hP->nextStartingGate;
     }
     else {
@@ -593,7 +609,6 @@ skipNewIslandLogic:
 
 #define processResiduals( coord ) \
   /* Quantize coordinates */  \
-  short xHistoA[1024] = { 0 }; \
   short* r##coord##A = meshP->pos.residual.pos.xA;  /* convenience pointer */ \
   const float convx = 1024.0 / fabs( meshP->pos.max.vec3.x - meshP->pos.min.vec3.x ); \
   short* q##coord##A = meshP->pos.quantized.pos.xA;  /* convenience pointer */ \
@@ -657,24 +672,13 @@ void compressPositions( Mesh* meshP ) {
   assert( !e );
   e = arrayNew( (void**) &meshP->pos.residual.pos.zA, sizeof( short ), nPositions );
   assert( !e );
-  // Allocate frays of potentially generated points if necessary.
-  if ( meshP->nLoners) {
-    e = arrayNew( (void**) &meshP->pos.generated.pos.xA, sizeof( short ), meshP->nLoners );
-    assert( !e );
-    e = arrayNew( (void**) &meshP->pos.generated.pos.yA, sizeof( short ), meshP->nLoners );
-    assert( !e );
-    e = arrayNew( (void**) &meshP->pos.generated.pos.zA, sizeof( short ), meshP->nLoners );
-    assert( !e );
-  }
   // =============
   // X-Coordinates
   // =============
   TriangleTraversalNode* travA = meshP->triangleTraversalOrderA;  // convenience pointer
-  short xHistoA[1024] = { 0 };
   const float convx = 1024.0 / fabs( meshP->pos.max.vec3.x - meshP->pos.min.vec3.x );
   short* qxA = meshP->pos.quantized.pos.xA;  // convenience pointer
   short xmin = SHRT_MAX, xmax = SHRT_MIN;
-  // short generatedCoord;
   int i;
   /* Quantize */
   for (i = 0; i < nPositions; ++i) {
@@ -687,7 +691,6 @@ void compressPositions( Mesh* meshP ) {
 #endif
   short* rA = meshP->pos.residual.pos.xA;  // convenience pointer
   short* rP = rA;  // convenience pointer
-  short* gxP = meshP->pos.generated.pos.xA;
   // The first three values will be raw.
   short* qxP = qxA;
   *(rP++) = *(qxP++);
@@ -700,44 +703,26 @@ void compressPositions( Mesh* meshP ) {
     // If it is, then we need to generate a  point for it on the fly.
     // The way we'll go about doing that is  just reverse-computing the
     // backwards g.o.v. 
-    if ( !travP->g->o ) {
-      // printf("on a loner\n");
-      *(rP++) = GENERATED_COORDINATE; /* prevents 0-1024 check from bombing us */ 
-      *(gxP++) = 
-            qxA[ travP->g->s->posIdx ] 
+    if ( travP->g->v->m ) {
+      *rP = qxA[ travP->g->v->posIdx ]   /* actual value */
+       - (  qxA[ travP->g->s->posIdx ] 
           + qxA[ travP->g->e->posIdx ] 
-          - qxA[ travP->g->v->posIdx ]; /* perfect prediction so residual isn't needed */
-    }
-    else {
-      if ( travP->g->v->m ) {
-        *rP = qxA[ travP->g->v->posIdx ]   /* actual value */
-         - (  qxA[ travP->g->s->posIdx ] 
-            + qxA[ travP->g->e->posIdx ] 
-            - qxA[ travP->g->o->v->posIdx ] ); /* predicted */
-        if ( *rP < xmin ) {
-          xmin = *rP;
-        }
-        if ( *rP > xmax ) {
-          xmax = *rP;
-        }
-        ++rP;
-        travP->g->v->m = 0;  // toggle the flag so we don't have to reset them all. now 0 = we've met.
+          - qxA[ travP->g->o->v->posIdx ] ); /* predicted */
+      if ( *rP < xmin ) {
+        xmin = *rP;
       }
+      if ( *rP > xmax ) {
+        xmax = *rP;
+      }
+      ++rP;
+      travP->g->v->m = 0;  // toggle the flag so we don't have to reset them all. now 0 = we've met.
     }
     // printf( "rP is %d / %d \n", rP - rA, arrayGetNElems( rA ) );
   endForEach_( traversal node )
 #if DBG_POS_COMPRESSION
-  printf( "\n%d residuals populated out of %d ( %d loners )\n\n", rP - rA, arrayGetNElems( rA ), meshP->nLoners);
+  printf( "\n%d residuals populated out of %d\n\n", rP - rA, arrayGetNElems( rA ) );
   printf( "min = %d, max = %d\n", xmin, xmax );
 #endif
-  // Histogram the values
-  forEachInArray_( short, r )
-    if ( *rP != GENERATED_COORDINATE ) {
-      ++xHistoA[ *rP -= xmin ];  // shift the residual value so index 0 is the starting point
-      assert( *rP >= 0 && *rP <= 1024 );
-    }
-  endForEach_( histoing x )
-  // And again, to print it out
 
   // TODO macro the above out after you validate it
 #if 0
