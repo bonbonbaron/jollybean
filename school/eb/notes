@@ -3,4 +3,9 @@ From what I remember, the problem is when V is on another boundary. There has to
   Am i traversing the boundary correctly on Gs and Fs?
 
 So here's how I'm going to solve it:
-  I'll run it on my loopcut m
+  Transport loopcut double-holed model
+  run o on it
+  follow along and understand how o is currently traversing 
+    a) triangles
+    b) boundaries
+  ensure that both (a) and (b) are correct
