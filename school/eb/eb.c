@@ -280,6 +280,11 @@ void getEdges( Mesh *meshP ) {
     hnP->v = hpP->e = hcP->s;
     hcP->t = hnP->t = hpP->t = triangleP;
 
+    // Tell each v it's been seen by a gate.
+    ++hcP->v->nGatesPointingAtMe;
+    ++hpP->v->nGatesPointingAtMe;
+    ++hnP->v->nGatesPointingAtMe;
+
     // Add this triangle's corners' terminating edges to the linked list.
     for ( int i = 0; i < 3; ++i ) {
       /* Storing the head in here over and over again may be redundant,
@@ -347,10 +352,14 @@ static inline BoundaryMeasOutcome measureBoundaryLengthRight( HalfEdge *heP ) {
   int rBoundaryLen = 0, lBoundaryLen = 0;
   HalfEdge *g;
   // Count to the right until you hit the gate's opposite vertex (the pinch point between two regions).
-  for ( g = heP->N; g->s != heP->v; g = g->N, ++rBoundaryLen );
-  for ( g = heP->P; g->e != heP->v; g = g->P, ++lBoundaryLen );
+  for ( g = heP->N; 
+        g->s != heP->v &&  g != heP;
+        g = g->N, ++rBoundaryLen );
+  for ( g = heP->P; 
+        g->e != heP->v && g != heP; 
+        g = g->P, ++lBoundaryLen );
+  printf("\e[33mright boundary: %d\nleft boundary:  %d\n\e[0m", rBoundaryLen, lBoundaryLen );
   if ( lBoundaryLen >= rBoundaryLen ) {
-    printf("\e[33mright boundary: %d\nleft boundary:  %d\n\e[0m", rBoundaryLen, lBoundaryLen );
     return RIGHT_IS_SHORTER;
   }
   return LEFT_IS_SHORTER;
@@ -517,6 +526,19 @@ skipNewIslandLogic:
         // There's a boundary loop to the left and the right.
         // Whichever one's shorter is the direction you go in.
         else {
+          // This means the current triangle bounds two holes.
+          // TODO hypothesis: this means we're at a through-hole. This causes infinite slides.
+          if ( g->v->nGatesPointingAtMe == 1 ) {  // I'm no longer convinced this is the right way to approach it. It can spread out after a few triangles and yield an eventual C. 
+                                                  // We gotta figure out a better way to do this.
+            // TODO
+            if ( hasRightNeighbor ) {
+              // TODO
+            }
+            else {  // has left neighbor
+              // TODO 
+            }
+          }
+              
           if ( measureBoundaryLengthRight( g ) == RIGHT_IS_SHORTER ) {
             echoTriangleLabel(G);
             slideRight;

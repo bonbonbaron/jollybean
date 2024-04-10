@@ -36,6 +36,7 @@ typedef struct {
 typedef struct {
   int m;
   int posIdx;  // index of this vertex's position; will come in handy when you quantize arrays later
+  int nGatesPointingAtMe;
   HeLinkListNode* listOfHesEndingHere;
 } VertexStatus;
 
