@@ -1,10 +1,9 @@
 #include "map.h"
 
-Map* mapNew(Map **mapPP, MapElemType elemType, const U8 elemSz, const Key nElems) {
+Map* mapNew( MapElemType elemType, const U8 elemSz, const Key nElems) {
 	assert (elemSz && nElems);
   Map* mapP = jbAlloc(sizeof(Map), 1);
 	mapP->mapA = arrayNew(elemSz, nElems);
-  // memset((*mapPP)->flagA, 0, sizeof(FlagInfo) * N_FLAG_BYTES);  // do we need this?
   mapP->population = 0;
   mapP->elemType = elemType;
   return mapP;
@@ -132,6 +131,7 @@ void mapSet(Map *mapP, const Key key, const void *valP) {
 	void *elemP, *nextElemP;
   U32 nBytesToMove;
   _preMapSet(mapP, key, &elemP, &nextElemP, &nBytesToMove);
+  //printf("nb2m: %d\n", nBytesToMove);
   if (nBytesToMove) {
     memmove(nextElemP, (const void*) elemP, nBytesToMove);
   }

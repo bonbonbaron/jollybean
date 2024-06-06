@@ -1,0 +1,1 @@
+I"m seeing the newMP loop crashing on the 6th iteration every time. That's the onlly consistent thing I see. Valgrind complains about an uninit'd value controlling conditionals, but I don't see it. The only remote possibility I see is that I removed the memset-zeroingo of the arrays. 

@@ -44,7 +44,7 @@ typedef struct {
 	void  *mapA;  
 } Map;
 
-Map* mapNew(Map **mapPP, MapElemType elemType, const U8 elemSz, const Key nElems);
+Map* mapNew( MapElemType elemType, const U8 elemSz, const Key nElems);
 void  mapDel(Map **mapPP);
 void mapSet(Map *mapP, const U8 key, const void *valP);
 void* mapGet(const Map *mapP, const U8 key);
