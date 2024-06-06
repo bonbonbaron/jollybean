@@ -9,8 +9,9 @@ D_SRCS  := $(SRC_DIR)/data/strip.c $(SRC_DIR)/data/inflatable.c $(SRC_DIR)/data/
 # Implemented systems must come before their dependency, x.c.
 XI_SRCS := $(shell find $(SRC_DIR)/x -type f -name "x[^.]*.c") $(shell find $(SRC_DIR)/x -type f -name "x.c") $(shell find $(SRC_DIR)/interface -type f -name "*.c")
 
-SRCS    := $(XI_SRCS) $(D_SRCS) 
-#SRCS    := $(DX_SRCS) 
+#SRCS    := $(XI_SRCS) $(D_SRCS)   # TODO uncomment this when ready to test X with data
+SRCS    := $(D_SRCS) 
+
 OBJS    := $(SRCS:$(SRC_DIR)/%.c=$(BLD_DIR)/%.o)
 
 _INCS   := $(shell find ${SRC_DIR} -type d -name include)

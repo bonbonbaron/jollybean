@@ -28,14 +28,11 @@ static const int N_ELEMS = 100;
 TAU_MAIN()
 
 TEST_F_SETUP(Array) {
-  Error e = arrayNew((void**) &tau->P, sizeof(U32), N_ELEMS);
-  REQUIRE_EQ(e, SUCCESS);
+  tau->P = arrayNew( sizeof(U32), N_ELEMS);
   CHECK_NOT_NULL(tau->P);
   REQUIRE_EQ(arrayGetNElems(tau->P), N_ELEMS);
-  if (!e) {
-    for (U32 i = 0; i < N_ELEMS; ++i) {
-      ((U32*) tau->P)[i] = i;
-    }
+  for (U32 i = 0; i < N_ELEMS; ++i) {
+    ((U32*) tau->P)[i] = i;
   }
   tau->dummyNumber = 10000;
 }
@@ -65,8 +62,7 @@ TEST_F(Array, GetLastVoidElPtrWorks) {
 }
 
 TEST_F(Array, SetVoidElPtrWorks) {
-  Error e = arraySetVoidElem((void*) tau->P, 50, (void*) &tau->dummyNumber);
-  REQUIRE_EQ(e, SUCCESS);
+  arraySetVoidElem(tau->P,  50, (void*) &tau->dummyNumber);
   CHECK_EQ(tau->P[50], tau->dummyNumber);
 }
 
@@ -86,39 +82,6 @@ TEST_F(Array, IllegalEndPtr) {
   U32 *iP, *iEndP;
   arrayIniPtrs((void*) tau->P, (void**) &iP, (void**) &iEndP, N_ELEMS + 1);
   CHECK_NULL(iEndP);
-}
-
-TEST_F(Array, BadArgsArrayNew) {
-  Error e = SUCCESS;
-  e = arrayNew(NULL, 1, 1);
-  CHECK_NE(e, SUCCESS);
-  e = arrayNew((void**) &tau->P, 0, 1);
-  CHECK_NE(e, SUCCESS);
-  e = arrayNew((void**) &tau->P, 1, 0);
-  CHECK_NE(e, SUCCESS);
-}
-
-TEST_F(Array, BadArgsGetNElems) {
-  CHECK_EQ(arrayGetNElems(NULL), 0);
-}
-
-TEST_F(Array, BadArgsGetElemSz) {
-  CHECK_EQ(arrayGetElemSz(NULL), 0);
-}
-
-TEST_F(Array, BadArgsGetVoidElemPtr) {
-  void *voidP = arrayGetVoidElemPtr((void*) tau->P, N_ELEMS + 1);
-  CHECK_NULL(voidP);
-}
-
-TEST_F(Array, BadArgsSetVoidElem) {
-  tau->dummyNumber = N_ELEMS + 1;
-  Error e = SUCCESS;
-  e = arraySetVoidElem((void*) tau->P, 1, NULL);
-  CHECK_NE(e, SUCCESS);
-  e = arraySetVoidElem((void*) tau->P, tau->dummyNumber, &tau->dummyNumber);
-  CHECK_NE(e, SUCCESS);
-  e = arraySetVoidElem((void*) NULL, 1, &tau->dummyNumber);
 }
 
 TEST_F(Array, FastElemSzWorks) {
