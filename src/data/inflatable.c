@@ -61,7 +61,6 @@ enum
 //  Function returns a pointer to the decompressed data, or NULL on failure.
 //  *pOut_len will be set to the decompressed data's size, which could be larger than src_buf_len on uncompressible data.
 //  The caller must free() the returned block when it's no longer needed.
-//Error tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_len, void *pDst_buf, size_t *pOut_len);
 
 // tinfl_decompress_mem_to_callback() decompresses a block in memory to an internal 32KB buffer, and a user provided callback function will be called to flush the buffer.
 // Returns 1 on success or 0 on failure.
@@ -507,11 +506,8 @@ common_exit:
 }
 
 // Higher depth helper functions.
-static Error tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_len, void **ppDst_buf, size_t *pOut_len) {
-  Error e= jbAlloc(ppDst_buf, *pOut_len, 1);
-  if (e) {
-    return e;
-  }
+static void tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_len, void **ppDst_buf, size_t *pOut_len) {
+  *ppDst_buf = jbAlloc(*pOut_len, 1);
   tinfl_decompressor decomp; 
   void *pDst_buf = *ppDst_buf;
   //void *pNew_buf; 
@@ -537,10 +533,7 @@ static Error tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_l
           | TINFL_FLAG_USING_NON_WRAPPING_OUTPUT_BUF
     );
 
-    if ((status < 0) || (status == TINFL_STATUS_NEEDS_MORE_INPUT)) {
-      *pOut_len = 0; 
-      return E_INFLATION_FAILED;
-		}
+    assert ((status >= 0) && (status != TINFL_STATUS_NEEDS_MORE_INPUT));
 
     src_buf_ofs += src_buf_size;
     *pOut_len += dst_buf_size;
@@ -556,18 +549,16 @@ static Error tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_l
     //pNew_buf = MZ_REALLOC(pDst_buf, new_out_buf_capacity);
 
     //if (!pNew_buf) {
-    if (!pDst_buf) {
-      MZ_FREE(pDst_buf); 
-      *pOut_len = 0; 
-      return E_INFLATION_FAILED;
-		}
+    assert (pDst_buf);
+      //MZ_FREE(pDst_buf); 
+      //*pOut_len = 0; 
+      //return E_INFLATION_FAILED;
+		//}
 
     //pDst_buf = pNew_buf; 
     out_buf_capacity = new_out_buf_capacity;
 #endif
   }
-
-  return SUCCESS;
 }
 
 
@@ -601,33 +592,20 @@ static Error tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_l
   For more information, please refer to <http://unlicense.org/>
 */
 
-Error inflatableIni(Inflatable *inflatableP) {
-	if (inflatableP != NULL) {
-    Error e = SUCCESS;
-    if (inflatableP->inflatedDataP == NULL) {
-      long long unsigned int expectedInflatedLen;
-      //e = jbAlloc(&inflatableP->inflatedDataP, inflatableP->inflatedLen, 1);
-      expectedInflatedLen = inflatableP->inflatedLen;
-      e = tinfl_decompress_mem_to_heap(
-         (const void*) inflatableP->compressedDataA, 
-         (size_t) inflatableP->compressedLen, 
-         &inflatableP->inflatedDataP,
-         &inflatableP->inflatedLen
-      ); 
-      if (inflatableP->inflatedLen != expectedInflatedLen) {
-        e = E_UNEXPECTED_DCMP_SZ;
-        jbFree(&inflatableP->inflatedDataP);
-      }
-    }
-    return e;
-	}
-  return E_BAD_ARGS;
+void inflatableIni(Inflatable *inflatableP) {
+  assert(inflatableP && !inflatableP->inflatedDataP);
+  long long unsigned int expectedInflatedLen;
+  expectedInflatedLen = inflatableP->inflatedLen;
+  tinfl_decompress_mem_to_heap(
+     (const void*) inflatableP->compressedDataA, 
+     (size_t) inflatableP->compressedLen, 
+     &inflatableP->inflatedDataP,
+     &inflatableP->inflatedLen
+  ); 
+  assert (inflatableP->inflatedLen == expectedInflatedLen);
 }
 
 void inflatableClr(Inflatable *inflatableP) {
-  if (inflatableP) {
-    if (inflatableP->inflatedDataP) {
-      jbFree(&inflatableP->inflatedDataP);
-    }
-  }
+  assert (inflatableP && inflatableP->inflatedDataP);
+  jbFree(&inflatableP->inflatedDataP);
 }

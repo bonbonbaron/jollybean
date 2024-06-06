@@ -1,26 +1,13 @@
 #include "map.h"
 
-Error mapNew(Map **mapPP, MapElemType elemType, const U8 elemSz, const Key nElems) {
-	if (!mapPP || elemSz == 0 || nElems == 0) {
-    return E_BAD_ARGS;
-  }
-  Error e = jbAlloc((void**) mapPP, sizeof(Map), 1);
-	if (!e) {
-		e = arrayNew(&(*mapPP)->mapA, elemSz, nElems);
-  }
-  if (!e) {
-    memset((*mapPP)->flagA, 0, sizeof(FlagInfo) * N_FLAG_BYTES);
-    (*mapPP)->population = 0;
-    (*mapPP)->elemType = elemType;
-  }
-  // assume we'll just error out of the application for code coverage's sake
-#if 0
-  else {
-    arrayDel(&(*mapPP)->mapA);
-    jbFree((void**)mapPP);
-  }
-#endif
-	return e;
+Map* mapNew(Map **mapPP, MapElemType elemType, const U8 elemSz, const Key nElems) {
+	assert (elemSz && nElems);
+  Map* mapP = jbAlloc(sizeof(Map), 1);
+	mapP->mapA = arrayNew(elemSz, nElems);
+  // memset((*mapPP)->flagA, 0, sizeof(FlagInfo) * N_FLAG_BYTES);  // do we need this?
+  mapP->population = 0;
+  mapP->elemType = elemType;
+  return mapP;
 }
 
 void mapDel(Map **mapPP) {
@@ -65,15 +52,12 @@ inline static U32 _getElemIdx(const FlagInfo f, const Key key) {
 	return f.prevBitCount + _countBits(f.flags & (bitFlag_(key) - 1));
 }
 
-Error mapGetIndex(const Map *mapP, const Key key, Key *idxP) {
+Key mapGetIndex(const Map *mapP, const Key key) {
 	const register Key keyMinus1 = key - 1;
 	const register FlagInfo f = mapP->flagA[keyMinus1 >> 3];  // Divide N by 8 for byte with Nth bit.
 	const register Key bitFlag = 1 << (keyMinus1 & 0x07);     // 0x07 keeps bit inside 8-bit bounds.
-	if (f.flags & bitFlag) {
-    *idxP = _getElemIdx(f, key);
-    return SUCCESS;
-  }
-  return E_BAD_KEY;
+	assert (f.flags & bitFlag);
+  return _getElemIdx(f, key);
 }
 
 inline static void* _getElemP(const Map *mapP, const FlagInfo f, const Key key) {
@@ -85,9 +69,7 @@ inline static U32 _getMapElemSz(const Map *mapP) {
 }
 
 void* mapGet(const Map *mapP, const Key key) {
-  if (!mapP || !key) {
-    return NULL;
-  }
+  assert (mapP && key);  // key has to be 1 or greater.
 	const register U32 keyMinus1 = key - 1;
 	const register FlagInfo f = mapP->flagA[keyMinus1 >> 3];
 	const register U32 bitFlag = 1 << (keyMinus1 & 0x07);
@@ -96,6 +78,7 @@ void* mapGet(const Map *mapP, const Key key) {
     register U32 count = f.flags & (bitFlag - 1);  // initialize count with the bits we're counting
     // The desired array index is the number of bits set before the key'th bit.
 #ifdef __ARM_NEON__
+    // This counts the number of high bits in a word in just a few single CPU cycles.
     asm("vmov.8 d21[0], %0\n\t"
         "vcnt.i8 d20, d21\n\t"
         "vmov.u8 %0, d20[0]"
@@ -143,13 +126,9 @@ void mapSetFlag(Map *mapP, const Key key) {
   }
 }
 
-Error mapSet(Map *mapP, const Key key, const void *valP) {
-  if (!mapP || !key || !valP) {
-    return E_BAD_ARGS;
-  }
-  if (mapP->population >= arrayGetNElems(mapP->mapA)) {
-    return E_MAP_FULL;
-  }
+void mapSet(Map *mapP, const Key key, const void *valP) {
+  assert (mapP && key && valP);
+  assert (mapP->population < arrayGetNElems(mapP->mapA));
 	void *elemP, *nextElemP;
   U32 nBytesToMove;
   _preMapSet(mapP, key, &elemP, &nextElemP, &nBytesToMove);
@@ -162,13 +141,10 @@ Error mapSet(Map *mapP, const Key key, const void *valP) {
   mapSetFlag(mapP, key);
   /* Increment map's population. */
   ++mapP->population;
-	return SUCCESS;
 }
 
-Error mapRem(Map *mapP, const Key key) {
-  if (!mapP || !key) {
-    return E_BAD_ARGS;
-  }
+void mapRem(Map *mapP, const Key key) {
+  assert (mapP && key);
 	void *elemP, *nextElemP;
   U32 nBytesToMove;
   _preMapSet(mapP, key, &elemP, &nextElemP, &nBytesToMove);
@@ -183,69 +159,41 @@ Error mapRem(Map *mapP, const Key key) {
     --mapP->flagA[byteIdx].prevBitCount;
   }
   --mapP->population;
-	return SUCCESS;
 }
 
-Error mapCopyKeys(Map *dstMP, Map *srcMP) {
-  if (!dstMP || !srcMP) {
-    return E_BAD_ARGS;
-  }
+void mapCopyKeys(Map *dstMP, Map *srcMP) {
+  assert (dstMP &&  srcMP);
   memcpy(dstMP->flagA, srcMP->flagA, N_FLAG_BYTES * sizeof(FlagInfo));
-  return SUCCESS;
 }
 
-Error mapGetNestedMapP(Map *outerMP, Key mapKey, Map **innerMapPP) {
-  if (!innerMapPP || !outerMP || !mapKey || outerMP->elemType != MAP_POINTER) {
-    return E_BAD_ARGS;
-  }
-
+Map* mapGetNestedMapP(Map *outerMP, Key mapKey) {
+  assert (outerMP && mapKey && outerMP->elemType == MAP_POINTER);
   Map **_innerMapPP = (Map**) mapGet(outerMP, mapKey);
-
-  if (_innerMapPP && *_innerMapPP) {
-    *innerMapPP = *_innerMapPP;
-  }
-  else {
-    return E_BAD_KEY;
-  }
-
-  return SUCCESS;
+  assert (_innerMapPP && *_innerMapPP);
+  return *_innerMapPP;
 }
 
-Error mapGetNestedMapPElem(Map *mapP, Key mapKey, Key elemKey, MapElemType expectedElemType, void **returnedItemPP) {
-  if (!mapP || !mapKey || !elemKey || !returnedItemPP) {
-    return E_BAD_ARGS;
-  }
+void* mapGetNestedMapPElem(Map *mapP, Key mapKey, Key elemKey, MapElemType expectedElemType) {
+  assert (mapP && mapKey && elemKey);
 
-  Map *nestedMP = NULL;
-  Error e = mapGetNestedMapP(mapP, mapKey, &nestedMP);
-  if (!e && nestedMP->elemType != expectedElemType) {
-    return E_MAP_WRONG_ELEM_TYPE;
-  }
+  Map *nestedMP = mapGetNestedMapP(mapP, mapKey);
+  assert (nestedMP->elemType == expectedElemType);
 
   void **valPP;
-  if (!e) {
-    // No case-switch necessary since there are only two possibilities: raw and some kind of pointer.
-    // Non-matching type is impossible due to check above.
-    if (nestedMP->elemType == RAW_DATA) {
-      // This safely returns a single-pointer.
-      *returnedItemPP = mapGet(nestedMP, elemKey);
-    }
-    else {
-      valPP = mapGet(nestedMP, elemKey);
-      if (valPP) {
-        *returnedItemPP = *valPP;
-      }
-      else {
-        *returnedItemPP = NULL;
-      }
-    }
-    // Ensure we have something in our hands.
-    if (!*returnedItemPP) {
-      return E_BAD_KEY;
+  // No case-switch necessary since there are only two possibilities: raw and some kind of pointer.
+  // Non-matching type is impossible due to check above.
+  if (nestedMP->elemType == RAW_DATA) {
+    // This safely returns a single-pointer.
+    return mapGet(nestedMP, elemKey);
+  }
+  else {
+    valPP = mapGet(nestedMP, elemKey);
+    if (valPP) {
+      assert( *valPP);
+      return *valPP;
     }
   }
-
-  return e;
+  return NULL;
 }
 
 void mapOfNestedMapsDel(Map **outerMapPP) {

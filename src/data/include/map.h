@@ -44,16 +44,16 @@ typedef struct {
 	void  *mapA;  
 } Map;
 
-Error mapNew(Map **mapPP, MapElemType elemType, const U8 elemSz, const Key nElems);
+Map* mapNew(Map **mapPP, MapElemType elemType, const U8 elemSz, const Key nElems);
 void  mapDel(Map **mapPP);
-Error mapSet(Map *mapP, const U8 key, const void *valP);
+void mapSet(Map *mapP, const U8 key, const void *valP);
 void* mapGet(const Map *mapP, const U8 key);
-Error mapRem(Map *mapP, const Key key);
-Error mapGetIndex(const Map *mapP, const Key key, Key *idxP);
+void mapRem(Map *mapP, const Key key);
+Key mapGetIndex(const Map *mapP, const Key key);
 void  mapSetFlag(Map *mapP, const Key key);
-Error mapCopyKeys(Map *dstMP, Map *srcMP);
-Error mapGetNestedMapP(Map *mapP, Key mapKey, Map **mapPP);
-Error mapGetNestedMapPElem(Map *mapP, Key mapKey, Key elemKey, MapElemType expectedElemType, void **returnedItemPP);
+void mapCopyKeys(Map *dstMP, Map *srcMP);
+Map* mapGetNestedMapP(Map *mapP, Key mapKey);
+void* mapGetNestedMapPElem(Map *mapP, Key mapKey, Key elemKey, MapElemType expectedElemType);
 void  mapOfNestedMapsDel(Map **outerMapPP);
 
 

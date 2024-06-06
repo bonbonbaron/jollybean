@@ -1,14 +1,11 @@
 #include "mem.h"
 
-Error jbAlloc(void **voidPP, U32 elemSz, U32 nElems) {
-	if (voidPP == NULL || !elemSz || !nElems) {
-		return E_BAD_ARGS;
-  }
-	*voidPP = malloc(nElems * elemSz);
-	if (*voidPP == NULL) {
-		return E_NO_MEMORY;
-  }
-	return SUCCESS;
+// Note: This means you never have to assert successful allocation downstream.
+void* jbAlloc( U32 elemSz, U32 nElems) {
+	assert (elemSz && nElems);
+	void* voidP = malloc(nElems * elemSz);
+	assert (*voidP != NULL);
+	return voidP;
 }
 
 void jbFree(void **voidPP) {

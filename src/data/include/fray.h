@@ -25,14 +25,14 @@ typedef struct {
   fc_.intermediateIdx = -1;\
   fc_.newIdx = -1;
 
-Error frayNew(void **fPP, U32 elemSz, U32 nElems);
+void* frayNew( U32 elemSz, U32 nElems);
 void  frayDel(void **frayPP);
-Error frayAdd(const void *frayP, void *elemP, U32 *elemNewIdxP);
-Error frayAddEmpty(const void *frayP, U32 *elemNewIdxP);
-Error frayActivate(const void *frayP, U32 idx, FrayChanges *changesP);
-Error frayDeactivate(const void *frayP, U32 idx, FrayChanges *changesP);
-Error frayPause(const void *frayP, U32 idx, FrayChanges *changesP);
-Error frayUnpause(const void *frayP, U32 idx, FrayChanges *changesP);
+void frayAdd(const void *frayP, void *elemP, U32 *elemNewIdxP);
+void frayAddEmpty(const void *frayP, U32 *elemNewIdxP);
+void frayActivate(const void *frayP, U32 idx, FrayChanges *changesP);
+void frayDeactivate(const void *frayP, U32 idx, FrayChanges *changesP);
+void frayPause(const void *frayP, U32 idx, FrayChanges *changesP);
+void frayUnpause(const void *frayP, U32 idx, FrayChanges *changesP);
 U8    frayElemIsActive(const void *frayP, U32 idx);
 void  frayActivateAll(const void *frayP);
 void  frayDeactivateAll(const void *frayP);

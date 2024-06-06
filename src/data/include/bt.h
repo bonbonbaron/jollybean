@@ -47,7 +47,7 @@ inline void _btLinkNodes(BtElHeader *parentHdrP, BtElHeader *childHdrP, Key pare
   childHdrP->parent = parentIdx;
 }
 
-Error btNew(void **btAP, U32 elemSz, U32 nElems);
+void* btNew( U32 elemSz, U32 nElems);
 
 inline void _btDel(BtElHeader **btPP) {
   arrayDel((void**) btPP);

@@ -1,6 +1,6 @@
 #include "fray.h"
 
-Error frayNew(void **fPP, U32 elemSz, U32 nElems) {
+void* frayNew(void **fPP, U32 elemSz, U32 nElems) {
   Error e = SUCCESS;
   U32 *ptr;
   if (elemSz <= 0 || nElems <= 0 || fPP == NULL) {

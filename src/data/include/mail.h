@@ -12,10 +12,10 @@ typedef struct {
 	Key arg;       // e.g. change component value to MOVE_UP
 } Message;  
 
-Error mailboxNew(Message **mailboxPP, U32 maxNMsgs);
+Message* mailboxNew( U32 maxNMsgs);
 void  mailboxDel(Message **mailboxPP);
-Error mailboxWrite(Message *mailboxF, Key address, Key attn, Key cmd, Key arg);
-Error mailboxForward(Message *mailboxF, Message *msgP);
-typedef Error (*inboxRead)(Message *mailboxF);
+void mailboxWrite(Message *mailboxF, Key address, Key attn, Key cmd, Key arg);
+void mailboxForward(Message *mailboxF, Message *msgP);
+typedef void (*inboxRead)(Message *mailboxF);
 
 #endif  // #ifndef MAIL_H

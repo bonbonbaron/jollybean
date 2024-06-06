@@ -41,9 +41,9 @@ typedef struct {
 } StripDataS;
 
 void stripClr(StripDataS *sdP);
-Error stripIni(StripDataS *sdP);
-Error sdInflate(StripDataS *sdP);
-Error sdUnpack(StripDataS *sdP);
-Error sdAssemble(StripDataS *sdP);
+void stripIni(StripDataS *sdP);
+void sdInflate(StripDataS *sdP);
+void sdUnpack(StripDataS *sdP);
+void sdAssemble(StripDataS *sdP);
 
 #endif  // #ifndef STRIP_H

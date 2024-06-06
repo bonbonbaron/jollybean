@@ -35,42 +35,6 @@ typedef U8 Bln;   // Boolean
 
 #define swap_(a, b) {a^=b; b^=a; a^=b;}
 
-typedef enum Error {
-	SUCCESS,
-	E_BAD_ARGS,
-	E_NO_MEMORY,
-  E_SEGFAULT,
-  E_INFLATION_FAILED,
-  E_FILE_IO,
-  E_BAD_DATA,
-	E_BAD_INDEX,
-	E_BAD_KEY,  // 8
-  E_MAP_FULL,
-  E_MAP_WRONG_ELEM_TYPE,  // 10
-	E_MSG_TO_ECS_TYPE_MISMATCH,
-	E_MSG_TO_ID_MISMATCH,
-	E_MSG_INVALID_CMD,
-	E_UNEXPECTED_DCMP_SZ,
-	E_UNSUPPORTED_PIXEL_FORMAT,
-	E_SYS_CMP_MISMATCH,
-  E_ENTITY_NOT_IN_SYSTEM,
-  E_BAD_COMPONENT_TYPE,
-	E_NULL_VAR,
-	E_FRAY_FULL,  // 20
-  E_FRAY_SEGFAULT,
-  E_MAILBOX_BAD_ADDRESS,
-  E_MAILBOX_BAD_RECIPIENT,
-  E_MAILBOX_BAD_COMMAND,
-  E_MAILBOX_BAD_ARG,
-  E_MAILBOX_BAD_ATTN,
-  E_BB_GENES_DONT_DO_INITIALIZATION,
-  E_NULL_GENE_DATA,
-  E_INVALID_GENE_CLASS,
-  E_PAUSE,  // 30
-  E_UNPAUSE,
-  E_QUIT
-} Error;
-
 #define structMemberOffset_(structType_, memberName_) (U32) &(((structType_*) NULL)->memberName_)
 #define structMemberSizeof_(structType_, memberName_) sizeof(((structType_*) NULL)->memberName_)
 #define stitch_(dstP_, dstType_, dstMemberName_, srcP_) \

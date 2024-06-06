@@ -1,11 +1,9 @@
 #include "mail.h"
 
 // There is no corresponding mailboxRead() function because that's specific to each implementer.
-Error mailboxNew(Message **mailboxPP, U32 maxNMsgs) {
-  if (!mailboxPP || !maxNMsgs) {
-    return E_BAD_ARGS;
-  }
-  return frayNew((void**) mailboxPP, sizeof(Message), maxNMsgs);
+Message* mailboxNew(U32 maxNMsgs) {
+  assert (maxNMsgs);
+  return (Message*) frayNew(sizeof(Message), maxNMsgs);
 }
 
 void mailboxDel(Message **mailboxPP) {
@@ -14,16 +12,16 @@ void mailboxDel(Message **mailboxPP) {
   }
 }
 
-Error mailboxWrite(Message *mailboxP, Key address, Key attn, Key cmd, Key arg) {
+void mailboxWrite(Message *mailboxP, Key address, Key attn, Key cmd, Key arg) {
   Message message = {
     .address = address,
     .attn = attn,
     .cmd = cmd,
     .arg = arg 
   };
-  return frayAdd((void*) mailboxP, &message, NULL);
+  frayAdd((void*) mailboxP, &message, NULL);
 }
 
-Error mailboxForward(Message *mailboxP, Message *msgP) {
-  return frayAdd((void*) mailboxP, msgP, NULL);
+void mailboxForward(Message *mailboxP, Message *msgP) {
+  frayAdd((void*) mailboxP, msgP, NULL);
 }

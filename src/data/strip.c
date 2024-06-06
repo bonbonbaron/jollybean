@@ -40,26 +40,22 @@ __inline__ static void _unpackStrip4Bpu(U32 **srcStripPP, U32 **dstStripPP) {
 #endif
 #endif
 
-Error sdInflate(StripDataS *sdP) {
+void sdInflate(StripDataS *sdP) {
   if (sdP->flags & SD_SKIP_INFLATION_) {
-    return SUCCESS;
+    return;
   }
-  Error e = inflatableIni(sdP->ss.infP);
+  inflatableIni(sdP->ss.infP);
   // Skipping assembly means no map is used.
-  if (!e && !(sdP->flags & SD_SKIP_ASSEMBLY_) )  {
-    e = inflatableIni(sdP->sm.infP);
+  if (!(sdP->flags & SD_SKIP_ASSEMBLY_) )  {
+    inflatableIni(sdP->sm.infP);
   }
-  return e;
 }
 
 // Unpack bits to reconstruct original data (uesd for debugging img.c)
-Error sdUnpack(StripDataS *sdP) {
-  if (sdP && sdP->flags & SD_SKIP_UNPACKING_) {
-    return SUCCESS;
-  }
-
-  if (!sdP || (sdP->ss.infP && !sdP->ss.infP->compressedDataA)) {
-    return E_BAD_ARGS;
+void sdUnpack(StripDataS *sdP) {
+  assert(sdP && (sdP->ss.infP && sdP->ss.infP->compressedDataA));
+  if (sdP->flags & SD_SKIP_UNPACKING_) {
+    return;
   }
 
   Stripset *ssP = &sdP->ss;
@@ -69,10 +65,7 @@ Error sdUnpack(StripDataS *sdP) {
   U32 nUnitsInExtraPackedWord = ssP->nUnits % nPackedUnitsPerWord; 
 
   // start copy
-  Error e = arrayNew((void**) &ssP->unpackedDataP, sizeof(U8), ssP->nUnits);
-  if (e) {
-    return e;
-  }
+  ssP->unpackedDataP = arrayNew(sizeof(U8), ssP->nUnits);
 
   U32 mask = 0;
   switch(ssP->bpu) {
@@ -86,7 +79,7 @@ Error sdUnpack(StripDataS *sdP) {
       mask = 0x0f0f0f0f;
       break;
     default:
-      return e;
+      assert( 0 );   // this means "unsupported bits per unit"
   }
 
   const U32 offset = (sdP->ss.offset << 24) |
@@ -122,60 +115,47 @@ Error sdUnpack(StripDataS *sdP) {
   }
   // Fewer than 4 packed units remaining in last word
   // If last word has fewer than 4 units remaining, carefully extract them into < 4 output bytes.
-  if (!e && nUnitsInExtraPackedWord > 0) {
+  if (nUnitsInExtraPackedWord > 0) {
     U32 lastUnpackedWord = ((*packedWordP >> j) & mask) + offset;
     memcpy((void*) dstUnpackedWordP, &lastUnpackedWord, nUnitsInExtraPackedWord);
   }
-
-  return e;
 }
 
-Error sdAssemble(StripDataS *sdP) {
-  if ( sdP && sdP->flags & SD_SKIP_ASSEMBLY_) {
-    return SUCCESS;
+void sdAssemble(StripDataS *sdP) {
+  assert (sdP && sdP->ss.unpackedDataP && sdP->sm.infP->inflatedDataP && !sdP->assembledDataA
+      && sdP->ss.nUnitsPerStrip > 0);
+
+  if ( sdP->flags & SD_SKIP_ASSEMBLY_) {
+    return;
   }
 
-  if (!sdP || !sdP->ss.unpackedDataP || !sdP->sm.infP->inflatedDataP || sdP->assembledDataA
-      || sdP->ss.nUnitsPerStrip == 0) {
-    return E_BAD_ARGS;
-  } 
+  sdP->assembledDataA = arrayNew( sizeof(U8), sdP->sm.nIndices * sdP->ss.nUnitsPerStrip);
 
-  Error e = arrayNew((void**) &sdP->assembledDataA, sizeof(U8), sdP->sm.nIndices * sdP->ss.nUnitsPerStrip);
-  
   // Piece together strips
-  if (!e) {
-    // If the data was never compressed, then we're going to pull it from the "compressed" field.
-    // It's just a safe place to put data that otherwise would get deleted by stripClr().
+  // If the data was never compressed, then we're going to pull it from the "compressed" field.
+  // It's just a safe place to put data that otherwise would get deleted by stripClr().
 #if 0
-    if ( sdP->flags & SD_SKIP_INFLATION_ ) {
-      packedWordP = (U32*) ssP->infP->compressedDataA;  // storing here is a trick to avoid new data fields
-    }
-    else {  // But if it really IS inflated, pull the inflated data.
-      packedWordP = (U32*) ssP->infP->inflatedDataP;
-    }
-#endif
-    StripmapElem *smElemP = sdP->sm.infP->inflatedDataP;
-    StripmapElem *smElemEndP = smElemP + sdP->sm.nIndices;
-    U8 *assembledDataP = sdP->assembledDataA;
-    for (; smElemP < smElemEndP; ++smElemP, assembledDataP += sdP->ss.nUnitsPerStrip) {
-      memcpy(assembledDataP,
-             sdP->ss.unpackedDataP + (*smElemP * sdP->ss.nUnitsPerStrip),
-             sdP->ss.nUnitsPerStrip);
-    }
+  if ( sdP->flags & SD_SKIP_INFLATION_ ) {
+    packedWordP = (U32*) ssP->infP->compressedDataA;  // storing here is a trick to avoid new data fields
   }
-
-  return e;
+  else {  // But if it really IS inflated, pull the inflated data.
+    packedWordP = (U32*) ssP->infP->inflatedDataP;
+  }
+#endif
+  StripmapElem *smElemP = sdP->sm.infP->inflatedDataP;
+  StripmapElem *smElemEndP = smElemP + sdP->sm.nIndices;
+  U8 *assembledDataP = sdP->assembledDataA;
+  for (; smElemP < smElemEndP; ++smElemP, assembledDataP += sdP->ss.nUnitsPerStrip) {
+    memcpy(assembledDataP,
+        sdP->ss.unpackedDataP + (*smElemP * sdP->ss.nUnitsPerStrip),
+        sdP->ss.nUnitsPerStrip);
+  }
 }
 
 // This is the single-threaded version of inflating stripd data.
-Error stripIni(StripDataS *sdP) {
-  Error e = sdInflate(sdP);
-  if (!e) {
-    e = sdUnpack(sdP);
-  }
-  if (!e) {
-    e = sdAssemble(sdP);
-  }
-  return e;
+void stripIni(StripDataS *sdP) {
+  sdInflate(sdP);
+  sdUnpack(sdP);
+  sdAssemble(sdP);
 }
 

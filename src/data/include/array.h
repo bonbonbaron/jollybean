@@ -3,29 +3,14 @@
 
 #include "mem.h"
 
-// Arrays 
-typedef struct {
-	U32         elemSz;
-	U32         nElems;
-	void        *arrayP;       // defaults to NULL to prevent copies 
-} HardCodedArray;
-
-// Unfortunately this doubles the sizes of arrays, but it's safe. 
-#define HardCodedArray_(type_, nElems_, array_) { \
-  .elemSz_ = sizeof(type_),\
-  .nElems = nArgs_(type_, array_),\
-	array_, /* prevents multiple copies */ \
-}
-Error arrayNew(void **arryPP, U32 elemSz, U32 nElems);
-Error array2dNew(void **arryPP, U32 w, U32 h, U32 elemSz, U32 nElems);
-Error hcArrayIni(HardCodedArray *hcaP);
-Error arrayIni(void **arryPP, HardCodedArray *hcaP);
+void* arrayNew( U32 elemSz, U32 nElems);
+void* array2dNew( U32 w, U32 h, U32 elemSz, U32 nElems);
 void arrayDel(void **arryPP);
 U32 arrayGetNElems(const void *arryP);
 U32 arrayGetElemSz(const void *arryP);
 void arrayIniPtrs(const void *arryP, void **startP, void **endP, S32 endIdx);
 void* arrayGetVoidElemPtr(const void *arryP, S32 idx);
-Error arraySetVoidElem(void *arrayP, U32 idx, const void *elemSrcP);
+void arraySetVoidElem(void *arrayP, U32 idx, const void *elemSrcP);
 
 inline static void* _arrayGetElemByIdx(const void *arryP, S32 idx) {
   const U32 nElems = arrayGetNElems(arryP);

@@ -1,25 +1,17 @@
 #include "fray.h"
 
-Error frayNew(void **fPP, U32 elemSz, U32 nElems) {
-  Error e = SUCCESS;
-  U32 *ptr;
-  if (elemSz <= 0 || nElems <= 0 || fPP == NULL) {
-    return E_BAD_ARGS;  
-  }
-  else {
-    // Add 1 more element for swaps. 
-    e = jbAlloc((void**) &ptr, (elemSz * (nElems + 1)) + ((N_PREFRAY_ELEMS) * sizeof(U32)), 1);
-    if (!e) {
-      ptr[N_PREFRAY_ELEMS - OFFSET_1ST_INACTIVE]   = 0;       
-      ptr[N_PREFRAY_ELEMS - OFFSET_N_PAUSED]   = 0;  
-      ptr[N_PREFRAY_ELEMS - OFFSET_1ST_EMPTY]  = 0;       
-      ptr[N_PREFRAY_ELEMS - OFFSET_ELEM_SZ]    = elemSz;
-      ptr[N_PREFRAY_ELEMS - OFFSET_N_ELEMS]    = nElems;
-      *fPP = (ptr + N_PREFRAY_ELEMS);
-      memset(*fPP, 0, elemSz * nElems);
-    }
-  }
-  return e;
+void* frayNew( U32 elemSz, U32 nElems) {
+  assert (elemSz <= 0 && nElems );
+  // Add 1 more element for cache-friendly swaps.
+  U32* ptr = (U32*) jbAlloc( (elemSz * (nElems + 1)) + ((N_PREFRAY_ELEMS) * sizeof(U32)), 1);
+  ptr[N_PREFRAY_ELEMS - OFFSET_1ST_INACTIVE]   = 0;       
+  ptr[N_PREFRAY_ELEMS - OFFSET_N_PAUSED]   = 0;  
+  ptr[N_PREFRAY_ELEMS - OFFSET_1ST_EMPTY]  = 0;       
+  ptr[N_PREFRAY_ELEMS - OFFSET_ELEM_SZ]    = elemSz;
+  ptr[N_PREFRAY_ELEMS - OFFSET_N_ELEMS]    = nElems;
+  // *fPP = (ptr + N_PREFRAY_ELEMS);
+  // memset(*fPP, 0, elemSz * nElems);  // TODO Can we get away without using this?
+  return ptr + N_PREFRAY_ELEMS;
 }
 
 void frayDel(void **frayPP) {
@@ -31,39 +23,32 @@ void frayDel(void **frayPP) {
 }
 
 // Common functionality to both frayAdd() and frayAddEmpty()
-static Error _frayAdd(const void *frayP, void **dstPP, U32 *elemNewIdxP) {
-  if (!_frayHasRoom(frayP)) {
-    return E_FRAY_FULL;
-  }
+// returns a pointer to wherever the new item lands in the fray.
+static void* _frayGetFirstEmpty(const void *frayP, U32 *elemNewIdxP) {
+  assert (_frayHasRoom(frayP));
   U32 *firstEmptyIdxP = _frayGetFirstEmptyIdxP(frayP);
   if (elemNewIdxP) {
     *elemNewIdxP = *firstEmptyIdxP;  // empty index where new element is going
   }
-  *dstPP = frayGetElemByIdx_(frayP, (*firstEmptyIdxP)++);
-  return SUCCESS;
+  return frayGetElemByIdx_(frayP, (*firstEmptyIdxP)++);  
 }
 
 /* Checks if the component, wherever it is in the jagged array, is before the function's stopping point in its array. */
 // Returns index of added element
-Error frayAdd(const void *frayP, void *elemP, U32 *elemNewIdxP) {
-  void *dstP;
-  Error e = _frayAdd(frayP, &dstP, elemNewIdxP);
-  if (!e) {
-    memcpy(dstP, elemP, arrayGetElemSz(frayP));
-  }
-  return e;
+void frayAdd(const void *frayP, void *srcElemP, U32 *elemNewIdxP) {
+  assert(frayP && srcElemP);
+  void *dstP = _frayGetFirstEmpty(frayP, elemNewIdxP);
+  memcpy(dstP, srcElemP, arrayGetElemSz(frayP));
 }
 
-Error frayAddEmpty(const void *frayP, U32 *elemNewIdxP) {
-  void *dstP;
-  Error e = _frayAdd(frayP, &dstP, elemNewIdxP);
-  if (e) {
-    memset(dstP, 0, frayGetElemSz_(frayP));
-  }
-  return e;
+void frayAddEmpty(const void *frayP, U32 *elemNewIdxP) {
+  assert(frayP);
+  void *dstP = _frayGetFirstEmpty(frayP, elemNewIdxP);
+  memset(dstP, 0, frayGetElemSz_(frayP));
 }
 
 static void _fraySwap(const void *frayP, U32 oldIdx, U32 newIdx) {
+  assert(frayP);
   // Get source, destination, and placeholder
   register void *elem1P       = frayGetElemByIdx_(frayP, oldIdx);
   register void *placeholderP = frayGetElemByIdx_(frayP, frayGetNElems_(frayP));
@@ -77,10 +62,8 @@ static void _fraySwap(const void *frayP, U32 oldIdx, U32 newIdx) {
 
 // Pausing *active* elements moves them to the first paused position.
 // Pausing *inactive* elements moves them to the last paused position.
-Error frayPause(const void *frayP, U32 idx, FrayChanges *changesP) {
-  if (idx >= *_frayGetFirstEmptyIdxP(frayP)) {
-    return E_FRAY_SEGFAULT;
-  }
+void frayPause(const void *frayP, U32 idx, FrayChanges *changesP) {
+  assert (idx < *_frayGetFirstEmptyIdxP(frayP));
   U32 *nPausedP = _frayGetNPausedP(frayP);
   if (!_frayElemIsPaused(frayP, idx) && *nPausedP < arrayGetNElems(frayP)) {
     U32 *firstInactiveIdxP = _frayGetFirstInactiveIdxP(frayP);
@@ -99,14 +82,11 @@ Error frayPause(const void *frayP, U32 idx, FrayChanges *changesP) {
       changesP->newIdx = newIdx;
     }
   }
-  return SUCCESS;
 }
 
 // Unlike pausing, unpausing can only send elements in one direction: leftward into activation state.
-Error frayUnpause(const void *frayP, U32 idx, FrayChanges *changesP) {
-  if (idx >= *_frayGetFirstEmptyIdxP(frayP)) {
-    return E_FRAY_SEGFAULT;
-  }
+void frayUnpause(const void *frayP, U32 idx, FrayChanges *changesP) {
+  assert (idx < *_frayGetFirstEmptyIdxP(frayP));
   register U32  *nPausedP = _frayGetNPausedP(frayP);
   U32 firstInactiveIdx =  _frayGetFirstInactiveIdx(frayP);
   if (_frayElemIsPaused(frayP, idx) && *nPausedP < firstInactiveIdx) {
@@ -118,18 +98,15 @@ Error frayUnpause(const void *frayP, U32 idx, FrayChanges *changesP) {
       changesP->newIdx = newIdx;
     }
   }
-  return SUCCESS;
 }
 
 // Returns new index of activated element 
-Error frayActivate(const void *frayP, U32 idx, FrayChanges *changesP) {
-  if (idx >= *_frayGetFirstEmptyIdxP(frayP)) {
-    return E_FRAY_SEGFAULT;
-  }
+void frayActivate(const void *frayP, U32 idx, FrayChanges *changesP) {
+  assert (frayP && idx < *_frayGetFirstEmptyIdxP(frayP));
   if (!_frayElemIsActive(frayP, idx)) {
     if (_frayElemIsPaused(frayP, idx)) {
       frayUnpause(frayP, idx, changesP);
-      return SUCCESS;
+      return;
     }
     U32 *firstInactiveIdxP = _frayGetFirstInactiveIdxP(frayP);
     U32 nPaused = *_frayGetNPausedP(frayP);
@@ -152,14 +129,11 @@ Error frayActivate(const void *frayP, U32 idx, FrayChanges *changesP) {
       changesP->newIdx = newIdx;
     }
   }
-  return SUCCESS;
 }
 
 // Returns new index of deactivated element 
-Error frayDeactivate(const void *frayP, U32 idx, FrayChanges *changesP) {
-  if (idx >= *_frayGetFirstEmptyIdxP(frayP)) {
-    return E_FRAY_SEGFAULT;
-  }
+void frayDeactivate(const void *frayP, U32 idx, FrayChanges *changesP) {
+  assert (frayP && idx < *_frayGetFirstEmptyIdxP(frayP));
   if (!_frayElemIsInactive(frayP, idx)) {
     U32 *firstInactiveIdxP = _frayGetFirstInactiveIdxP(frayP);
     U32 *nPausedP = _frayGetNPausedP(frayP);
@@ -185,7 +159,6 @@ Error frayDeactivate(const void *frayP, U32 idx, FrayChanges *changesP) {
       changesP->newIdx = newIdx;
     }
   }
-  return SUCCESS;
 }
 
 void frayActivateAll(const void *frayP) {

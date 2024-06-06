@@ -1,21 +1,13 @@
 #include "array.h"
 
-Error arrayNew(void **arryPP, U32 elemSz, U32 nElems) {
-  Error e = SUCCESS;
-  U32 *ptr;
-	if (elemSz <= 0 || nElems <= 0 || arryPP == NULL) {
-		return E_BAD_ARGS;  
-  }
-	else {
-		e = jbAlloc((void**) &ptr, (elemSz * nElems) + (2 * sizeof(U32)), 1);
-    if (!e) {
-      ptr[0] = elemSz;
-      ptr[1] = nElems;
-      *arryPP = (ptr + 2);
-      memset(*arryPP, 0, elemSz * nElems);
-    }
-	}
-	return e;
+void* arrayNew( U32 elemSz, U32 nElems) {
+	assert (elemSz && nElems);
+	U32* ptr = (U32*) jbAlloc( (elemSz * nElems) + (2 * sizeof(U32)), 1);
+  ptr[0] = elemSz;
+  ptr[1] = nElems;
+  // void *arryP = ptr + 2;
+  // memset(arryP, 0, elemSz * nElems);  // is there a consequence to leaving this out? 
+	return ptr + 2;
 }
 
 void arrayDel(void **arryPP) {
@@ -61,14 +53,10 @@ void* arrayGetVoidElemPtr(const void *arryP, S32 idx) {
   return NULL;  
 }
 
-Error arraySetVoidElem(void *arrayP, U32 idx, const void *elemSrcompP) {
-	if (!arrayP || idx >= arrayGetNElems(arrayP) || !elemSrcompP) {
-		return E_BAD_ARGS;
-  }
+void arraySetVoidElem(void *arrayP, U32 idx, const void *elemSrcompP) {
+	assert (arrayP && idx < arrayGetNElems(arrayP) && elemSrcompP);
 	U32 elemSz = arrayGetElemSz((const void*) arrayP);
-	void *dstP = (U8*) arrayP + (idx * elemSz);
-	memcpy(dstP, elemSrcompP, elemSz);
-	return SUCCESS;
+	memcpy((void*)((U8*) arrayP + (idx * elemSz)), elemSrcompP, elemSz);
 }
 
 // If endIdx is illegal, endP's being NULL should be okay since it stops loops.
