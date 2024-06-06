@@ -21,8 +21,8 @@ TEST_F_SETUP(Tau) {
   tau->nElems = 100;
   tau->btP = NULL;
 
-  Error e = btNew((void**) &tau->btP, sizeof(BattleStat), tau->nElems);
-  REQUIRE_TRUE(!e && tau->btP != NULL);
+  tau->btP = btNew( sizeof(BattleStat), tau->nElems);
+  REQUIRE_TRUE(tau->btP != NULL);
   BattleStat 
     *statP = tau->btP,
     *statEndP = statP + arrayGetNElems(tau->btP);
@@ -45,11 +45,6 @@ TEST_F_TEARDOWN(Tau) {
 
 TEST_F(Tau, btNew) {
   REQUIRE_TRUE(1);
-}
-
-TEST_F(Tau, btNew_badArgs) {
-  Error e = btNew(NULL, 1, 1);
-  CHECK_EQ(e, E_BAD_ARGS);
 }
 
 TEST_F(Tau, btHasExpectedValues) {
