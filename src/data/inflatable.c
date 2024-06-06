@@ -506,7 +506,7 @@ common_exit:
 }
 
 // Higher depth helper functions.
-static void tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_len, void **ppDst_buf, size_t *pOut_len) {
+static void tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_len, void **ppDst_buf, U32 *pOut_len) {
   *ppDst_buf = jbAlloc(*pOut_len, 1);
   tinfl_decompressor decomp; 
   void *pDst_buf = *ppDst_buf;
@@ -600,7 +600,7 @@ void inflatableIni(Inflatable *inflatableP) {
      (const void*) inflatableP->compressedDataA, 
      (size_t) inflatableP->compressedLen, 
      &inflatableP->inflatedDataP,
-     (size_t*) &inflatableP->inflatedLen
+     &inflatableP->inflatedLen
   ); 
   assert (inflatableP->inflatedLen == expectedInflatedLen);
 }

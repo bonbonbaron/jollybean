@@ -31,8 +31,9 @@ TEST(InflatableSuite, OnlyTest) {
 
     // Create inflatable.
     CHECK_NOT_NULL(dummyDataA);
-    infP = inflatableNew((void*) dummyDataA);  // TODO make utils asserts insteaed of error-checks too
+    infP = inflatableNew((void*) dummyDataA);  
     REQUIRE_TRUE(infP != NULL);
+    REQUIRE_TRUE(infP->inflatedDataP == NULL);
 
     // Delete array inflatable comes from.
     arrayDel((void**) &dummyDataA);
