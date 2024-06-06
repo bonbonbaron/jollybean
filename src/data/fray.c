@@ -1,7 +1,7 @@
 #include "fray.h"
 
 void* frayNew( U32 elemSz, U32 nElems) {
-  assert (elemSz <= 0 && nElems );
+  assert (elemSz && nElems );
   // Add 1 more element for cache-friendly swaps.
   U32* ptr = (U32*) jbAlloc( (elemSz * (nElems + 1)) + ((N_PREFRAY_ELEMS) * sizeof(U32)), 1);
   ptr[N_PREFRAY_ELEMS - OFFSET_1ST_INACTIVE]   = 0;       
