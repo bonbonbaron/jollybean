@@ -2,8 +2,8 @@
 #define INFLATABLE_UTIL_H
 #include "inflatable.h"
 
-Error inflatableNew(void *voidA, Inflatable **inflatablePP);
+Inflatable* inflatableNew( Inflatable **inflatablePP);
 void inflatableDel(Inflatable **inflatablePP);
-Error inflatableWrite(Inflatable *inflatableP, char *filepathA, char *inflatableNameA);
-Error inflatableAppend(Inflatable *inflatableP, FILE *fP, char *inflatableNameA);
+void inflatableWrite(Inflatable *inflatableP, char *filepathA, char *inflatableNameA);
+void inflatableAppend(Inflatable *inflatableP, FILE *fP, char *inflatableNameA);
 #endif

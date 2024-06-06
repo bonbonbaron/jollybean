@@ -600,7 +600,7 @@ void inflatableIni(Inflatable *inflatableP) {
      (const void*) inflatableP->compressedDataA, 
      (size_t) inflatableP->compressedLen, 
      &inflatableP->inflatedDataP,
-     &inflatableP->inflatedLen
+     (size_t*) &inflatableP->inflatedLen
   ); 
   assert (inflatableP->inflatedLen == expectedInflatedLen);
 }

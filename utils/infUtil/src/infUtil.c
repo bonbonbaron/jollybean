@@ -4,11 +4,9 @@
 #include "inflatable.h"
 #include "array.h"
 
-Error inflatableNew(void *voidA, Inflatable **inflatablePP) {
-  if (!voidA || !inflatablePP)
-    return E_BAD_ARGS;
-
-  Error e = SUCCESS;
+Inflatable* inflatableNew(void* voidA) {
+  assert(voidA);  // pray to god it's actually an array... welcome to C
+  Inflatable* infP;
   U32 szDataOrig = arrayGetNElems(voidA) * arrayGetElemSz(voidA);
   unsigned long szDataCompressed  = (szDataOrig * 1.1) + 12;
   U8 *dataOrigP = (U8*) voidA;
@@ -24,44 +22,38 @@ Error inflatableNew(void *voidA, Inflatable **inflatablePP) {
       break;
     case Z_MEM_ERROR:
     case Z_BUF_ERROR:
-      e = E_NO_MEMORY;
+      assert(0); // this means no memory
       break;
     default:
-      e = (Error) z_result;
+      assert(0); // this means some other strange error happened
       break;
   }
 
-  if (!e) {
-    e = jbAlloc((void**) inflatablePP, sizeof(Inflatable), 1);
-  }
-  if (!e) {
-    (*inflatablePP)->compressedLen   = szDataCompressed;
-    (*inflatablePP)->inflatedLen     = szDataOrig;
-    (*inflatablePP)->inflatedDataP   = NULL;
-    (*inflatablePP)->compressedDataA = dataCompressed;
-  }
+  infP = jbAlloc( sizeof(Inflatable), 1);
 
-  return e;
+ infP->compressedLen   = szDataCompressed;
+ infP->inflatedLen     = szDataOrig;
+ infP->inflatedDataP   = NULL;
+ infP->compressedDataA = dataCompressed;
 }
 
 // The reason data.c doesn't own this function is because inflatables are permanent in-game.
-void inflatableDel(Inflatable **inflatablePP) {
-  if (inflatablePP && *inflatablePP) {
-    if ((*inflatablePP)->compressedDataA) {
-      free((*inflatablePP)->compressedDataA);
-      (*inflatablePP)->compressedDataA = NULL;
+void inflatableDel(Inflatable **infPP) {
+  if (infPP && *infPP) {
+    if ((*infPP)->compressedDataA) {
+      free((*infPP)->compressedDataA);
+      (*infPP)->compressedDataA = NULL;
     }
-    if ((*inflatablePP)->inflatedDataP) {
-      free((*inflatablePP)->inflatedDataP);
-      (*inflatablePP)->inflatedDataP = NULL;
+    if ((*infPP)->inflatedDataP) {
+      free((*infPP)->inflatedDataP);
+      (*infPP)->inflatedDataP = NULL;
     }
-    jbFree((void**) inflatablePP);
+    jbFree((void**) infPP);
   }
 }
 
-Error inflatableWrite(Inflatable *inflatableP, char *filepathA, char *inflatableNameA) {
-  if (!inflatableP || !filepathA || !inflatableNameA)
-    return E_BAD_ARGS;
+void inflatableWrite(Inflatable *infP, char *filepathA, char *inflatableNameA) {
+  assert (infP && !filepathA && inflatableNameA);
 
   unsigned int len = 0;
   FILE *fOutP = fopen(filepathA, "w");
@@ -70,12 +62,12 @@ Error inflatableWrite(Inflatable *inflatableP, char *filepathA, char *inflatable
     int counter = 0;
     fprintf(fOutP, "#include \"botox/botox.h\"\n\n");
     fprintf(fOutP, "Inflatable %s = {\n", inflatableNameA);
-    fprintf(fOutP, "\t.compressedLen   = %d,\n", inflatableP->compressedLen);
+    fprintf(fOutP, "\t.compressedLen   = %d,\n", infP->compressedLen);
     fprintf(fOutP, "\t.inflatedDataP   = NULL,\n");
-    fprintf(fOutP, "\t.inflatedLen     = %d,\n", inflatableP->inflatedLen);
+    fprintf(fOutP, "\t.inflatedLen     = %d,\n", infP->inflatedLen);
     fprintf(fOutP, "\t.compressedDataA = {\n\t");
-    U8 *infByteP = inflatableP->compressedDataA;
-    U8 *infByteEndP = infByteP + inflatableP->compressedLen;
+    U8 *infByteP = infP->compressedDataA;
+    U8 *infByteEndP = infByteP + infP->compressedLen;
     for (; infByteP < infByteEndP; ++infByteP) {
       fprintf(fOutP, "0x%02x, ", *infByteP);
       if (++counter >= 16) {
@@ -87,13 +79,10 @@ Error inflatableWrite(Inflatable *inflatableP, char *filepathA, char *inflatable
     fprintf(fOutP, "\n\t}\n};");
     fclose(fOutP);
   }
-
-  return 0;
 }
 
-Error inflatableAppend(Inflatable *inflatableP, FILE *fP, char *inflatableNameA) {
-  if (!inflatableP || !fP || !inflatableNameA)
-    return E_BAD_ARGS;
+void inflatableAppend(Inflatable *infP, FILE *fP, char *inflatableNameA) {
+  assert (infP && fP && inflatableNameA);
 
   unsigned int len = 0;
 
@@ -101,8 +90,8 @@ Error inflatableAppend(Inflatable *inflatableP, FILE *fP, char *inflatableNameA)
     int counter = 0;
     // Inflatable's compressed data
     fprintf(fP, "U8 %sInfCompressedDataA[] = {\n", inflatableNameA);
-    U8 *infByteP = inflatableP->compressedDataA;
-    U8 *infByteEndP = infByteP + inflatableP->compressedLen;
+    U8 *infByteP = infP->compressedDataA;
+    U8 *infByteEndP = infByteP + infP->compressedLen;
     fprintf(fP, "\t");
     for (; infByteP < infByteEndP; ++infByteP) {
       fprintf(fP, "0x%02x, ", *infByteP);
@@ -115,12 +104,10 @@ Error inflatableAppend(Inflatable *inflatableP, FILE *fP, char *inflatableNameA)
     fprintf(fP, "\n};\n\n");
     // Inflatble itself
     fprintf(fP, "Inflatable %s = {\n", inflatableNameA);
-    fprintf(fP, "\t.compressedLen  = %d,\n", inflatableP->compressedLen);
+    fprintf(fP, "\t.compressedLen  = %d,\n", infP->compressedLen);
     fprintf(fP, "\t.inflatedDataP  = NULL,\n");
-    fprintf(fP, "\t.inflatedLen    = %d,\n", inflatableP->inflatedLen);
+    fprintf(fP, "\t.inflatedLen    = %d,\n", infP->inflatedLen);
     fprintf(fP, "\t.compressedDataA = %sInfCompressedDataA\n", inflatableNameA);
     fprintf(fP, "};\n\n");
   }
-
-  return 0;
 }
