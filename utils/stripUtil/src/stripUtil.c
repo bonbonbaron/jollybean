@@ -71,10 +71,8 @@ void printStripData(StripDataS *sdP) {
 }
 
 // Pack all the bits in strip set.
-static Error _packBits(U8 **ssPackedAP, U8 *ssUnpackedA, U32 nUnits, U32 bpu, U8 verbose) {
-  if (!ssPackedAP | !ssUnpackedA || !nUnits || !bpu || (bpu != 1 && bpu !=2 && bpu !=4)) {
-    return E_BAD_ARGS;
-  }
+static void _packBits(U8 **ssPackedAP, U8 *ssUnpackedA, U32 nUnits, U32 bpu, U8 verbose) {
+  assert (ssPackedAP && ssUnpackedA && nUnits && bpu && (bpu == 1 || bpu ==2 || bpu ==4));
 
   U32 nPackedUnitsPerWord     = N_BITS_PER_WORD / bpu;
   U32 nWhollyPackedWords      = nUnits / nPackedUnitsPerWord;
@@ -99,7 +97,7 @@ static Error _packBits(U8 **ssPackedAP, U8 *ssUnpackedA, U32 nUnits, U32 bpu, U8
       break;
     default:
       printf("[_packBits] no packing to be done.\n");
-      return SUCCESS;;
+      return;
   }
 
   /*   N units   M bits   1 byte
@@ -109,42 +107,38 @@ static Error _packBits(U8 **ssPackedAP, U8 *ssUnpackedA, U32 nUnits, U32 bpu, U8
    *   In the case of a partial byte, you add one more.
    *
    */
-  Error e = arrayNew((void**) ssPackedAP, 
-                     sizeof(U8), 
-                     4 * (nWhollyPackedWords + (nUnitsInExtraPackedWord > 0))); 
-  if (!e) {
-    U32 *packedWordP    = (U32*) *ssPackedAP;
-    U32 *packedWordEndP = packedWordP + nWhollyPackedWords;
-    U8  *inputByteP     = ssUnpackedA;
-    U8  *inputByteEndP  = inputByteP + nUnits;
-    // For each output word....
-    for (; packedWordP < packedWordEndP && inputByteP < inputByteEndP; ++packedWordP) {
-      // For each unit you can pack into that output word...
-      for (U8 i = 0; i < nPackedUnitsPerWord; ++i) {
-        // Pack unit into output word.
-        *packedWordP |= *(inputByteP++) << bitIdxA[i];
-      }
+  sPackedAP = arrayNew(  
+      sizeof(U8), 
+      4 * (nWhollyPackedWords + (nUnitsInExtraPackedWord > 0))); 
+  U32 *packedWordP    = (U32*) *ssPackedAP;
+  U32 *packedWordEndP = packedWordP + nWhollyPackedWords;
+  U8  *inputByteP     = ssUnpackedA;
+  U8  *inputByteEndP  = inputByteP + nUnits;
+  // For each output word....
+  for (; packedWordP < packedWordEndP && inputByteP < inputByteEndP; ++packedWordP) {
+    // For each unit you can pack into that output word...
+    for (U8 i = 0; i < nPackedUnitsPerWord; ++i) {
+      // Pack unit into output word.
+      *packedWordP |= *(inputByteP++) << bitIdxA[i];
     }
-    // Remainder bytes
-    for (U8 i = 0; i < nUnitsInExtraPackedWord; ++i) {
-      *packedWordP |= *(inputByteP++) << bitIdxA[i];  // packs 4-bit values into a word
-    }
-    // Post-pack stats
-    if (verbose) {
-      printf("[_packBits] unpacked stripset size: %12d bytes\n", nUnits);
-      printf("[_packBits] packed   stripset size: %12d bytes\n", 
-          arrayGetNElems(*ssPackedAP) * arrayGetElemSz(*ssPackedAP));
-    }
+  }
+  // Remainder bytes
+  for (U8 i = 0; i < nUnitsInExtraPackedWord; ++i) {
+    *packedWordP |= *(inputByteP++) << bitIdxA[i];  // packs 4-bit values into a word
+  }
+  // Post-pack stats
+  if (verbose) {
+    printf("[_packBits] unpacked stripset size: %12d bytes\n", nUnits);
+    printf("[_packBits] packed   stripset size: %12d bytes\n", 
+        arrayGetNElems(*ssPackedAP) * arrayGetElemSz(*ssPackedAP));
   }
   // Otherwise, if something bad happened, clean up.
   else {
     arrayDel((void**) &ssPackedAP);
   }
-
-  return e;
 }
 
-static Error _checkMatch(U32 *srcUnpackedWordP, U8 *srcUnpackedDataP, U32 dstUnpackedWord, U32 nUnitsToCompare, U32 nUnits) {
+static void _checkMatch(U32 *srcUnpackedWordP, U8 *srcUnpackedDataP, U32 dstUnpackedWord, U32 nUnitsToCompare, U32 nUnits) {
   if (memcmp(srcUnpackedWordP, &dstUnpackedWord, nUnitsToCompare)) {
     printf("Src unpacked word %9d of %9d: %9d != dst %d\n", 
         srcUnpackedWordP - (U32*) srcUnpackedDataP, 
@@ -152,21 +146,20 @@ static Error _checkMatch(U32 *srcUnpackedWordP, U8 *srcUnpackedDataP, U32 dstUnp
         *srcUnpackedWordP,
         dstUnpackedWord);
     printf("Bombing out...\n\n");
-    return E_BAD_DATA;
+    assert(0);
   }
-  else {
 #if 0
+  else {
     printf("Src unpacked word %9d of %9d: %9d == dst\n", 
         srcUnpackedWordP - (U32*) srcUnpackedDataP, 
         (nUnits >> 2) - 1,  // bytes / 4 = # words
         *srcUnpackedWordP);
-#endif
-    return SUCCESS;
   }
+#endif
 }
 
 
-static Error _validateBitPacking(U8 *packedDataA, U8 *srcUnpackedDataP, U32 nUnits, U32 bpu) {
+static void _validateBitPacking(U8 *packedDataA, U8 *srcUnpackedDataP, U32 nUnits, U32 bpu) {
   U32 nPackedUnitsPerWord     = N_BITS_PER_WORD / bpu;
   U32 nWhollyPackedWords      = nUnits / nPackedUnitsPerWord;
   U32 nUnitsInExtraPackedWord = nUnits % nPackedUnitsPerWord; 
@@ -184,7 +177,7 @@ static Error _validateBitPacking(U8 *packedDataA, U8 *srcUnpackedDataP, U32 nUni
       break;
     default:
       printf("[_validateBitPacking] This data isn't packed. No validation to do.\n");
-      return SUCCESS;
+      return;
   }
 
   U32 *packedWordP         = (U32*) packedDataA;
@@ -192,46 +185,38 @@ static Error _validateBitPacking(U8 *packedDataA, U8 *srcUnpackedDataP, U32 nUni
   U32 *srcUnpackedWordP    = (U32*) srcUnpackedDataP;
   U32 dstUnpackedWord      = 0;
   U32 j = 0;
-  Error e = SUCCESS;
 
   // Wholly packed words
-  for (; !e && packedWordP < wholePackedWordEndP; ++packedWordP) {
-    for (j = 0; !e && j < N_BITS_PER_BYTE; j += bpu, ++srcUnpackedWordP) {
+  for (; packedWordP < wholePackedWordEndP; ++packedWordP) {
+    for (j = 0; j < N_BITS_PER_BYTE; j += bpu, ++srcUnpackedWordP) {
       dstUnpackedWord = (*packedWordP >> j) & mask;
-      e = _checkMatch(srcUnpackedWordP, srcUnpackedDataP, dstUnpackedWord, 4, nUnits);
+      _checkMatch(srcUnpackedWordP, srcUnpackedDataP, dstUnpackedWord, 4, nUnits);
     }
   }
   // One partially packed word's remainder units
-  if (!e) {
-    // While theres at least 4 packed units remaining in word...
-    for (j = 0; 
-         !e && nUnitsInExtraPackedWord >= 4; 
-         nUnitsInExtraPackedWord -= 4, j += bpu, ++srcUnpackedWordP) {
-      dstUnpackedWord = (*packedWordP >> j) & mask;
-      e = _checkMatch(srcUnpackedWordP, srcUnpackedDataP, dstUnpackedWord, 4, nUnits);
-    }
-    // Fewer than 4 packed units remaining
-    if (!e && nUnitsInExtraPackedWord > 0) {
-      dstUnpackedWord = (*packedWordP >> j) & mask;
-      e = _checkMatch(srcUnpackedWordP, srcUnpackedDataP, dstUnpackedWord, nUnitsInExtraPackedWord, nUnits);
-    }
+  // While theres at least 4 packed units remaining in word...
+  for (j = 0; 
+      nUnitsInExtraPackedWord >= 4; 
+      nUnitsInExtraPackedWord -= 4, j += bpu, ++srcUnpackedWordP) {
+    dstUnpackedWord = (*packedWordP >> j) & mask;
+    _checkMatch(srcUnpackedWordP, srcUnpackedDataP, dstUnpackedWord, 4, nUnits);
+  }
+  // Fewer than 4 packed units remaining
+  if (nUnitsInExtraPackedWord > 0) {
+    dstUnpackedWord = (*packedWordP >> j) & mask;
+    _checkMatch(srcUnpackedWordP, srcUnpackedDataP, dstUnpackedWord, nUnitsInExtraPackedWord, nUnits);
   }
 
-  if (!e) {
-    printf("\nCONGRATULATIONS! We validated your stripmap's bitpacking integrity!\n\n");
-  }
+  printf("\nCONGRATULATIONS! We validated your stripmap's bitpacking integrity!\n\n");
 
   // For each packed remainder byte till it reaches (B),
   //    unpack a byte
   //    see if that unpacked byte equals the original byte
-  return e;
 }
 
 #if DEBUG_
-static Error _validateStripmapping(U8 *ssA, U32 nBytesPerUnpackedStrip, StripmapElem *smA, U8 *srcA) {
-  if (!ssA || !smA || !srcA) {
-    return E_BAD_ARGS;
-  }
+static void _validateStripmapping(U8 *ssA, U32 nBytesPerUnpackedStrip, StripmapElem *smA, U8 *srcA) {
+  assert (ssA && smA && srcA);
 
   StripmapElem *smElemP = smA;
   StripmapElem *smElemEndP = smElemP + arrayGetNElems(smA);
@@ -244,66 +229,57 @@ static Error _validateStripmapping(U8 *ssA, U32 nBytesPerUnpackedStrip, Stripmap
     // If unpacked strip doensn't match original data it maps to, bomb out.
     if (memcmp(ssElemP, origElemP, nBytesPerUnpackedStrip)) {
       printf("Found mismatching strip\n");
-      return E_BAD_DATA;
+      assert(0);
     }  // if original strip does not match one in stripset
   }  // for each strip in stripset
 
   printf("\nCONGRULATIONS! We validated your stripmap's integrity!\n\n");
-  return SUCCESS;
 }
 
-static Error _validateInflatables(StripDataS *sdP, StripmapElem *smSrcA, U8 *packedStripsetA) {
+static void _validateInflatables(StripDataS *sdP, StripmapElem *smSrcA, U8 *packedStripsetA) {
   if (!sdP || !smSrcA || !packedStripsetA) {
     return E_BAD_ARGS;
   }
   // Initialize inflatables
-  Error e = inflatableIni(sdP->ss.infP);
-  if (!e) {
-    e = inflatableIni(sdP->sm.infP);
-  }
+  inflatableIni(sdP->ss.infP);
+  inflatableIni(sdP->sm.infP);
   // See if their contents match their sources
-  if (!e && memcmp(sdP->ss.infP->inflatedDataP, packedStripsetA, sdP->ss.infP->inflatedLen)) {
+  if (memcmp(sdP->ss.infP->inflatedDataP, packedStripsetA, sdP->ss.infP->inflatedLen)) {
     printf("\nSTRIPSET INFLATABLE'S BAD\n");
-    e = E_BAD_DATA;
+    assert(0)
   }
-  if (!e && memcmp(sdP->sm.infP->inflatedDataP, smSrcA, sdP->sm.infP->inflatedLen)) {
+  if (memcmp(sdP->sm.infP->inflatedDataP, smSrcA, sdP->sm.infP->inflatedLen)) {
     printf("\nSTRIPSET INFLATABLE'S BAD\n");
-    e = E_BAD_DATA;
+    assert(0)
   }
-  if (!e) {
-    printf("\nCONGRATS! We validated your stripset and stripmap inflatables!\n\n");
-  }
+  printf("\nCONGRATS! We validated your stripset and stripmap inflatables!\n\n");
   inflatableClr(sdP->ss.infP);
   inflatableClr(sdP->sm.infP);
-  return e;
 }
 
-static Error _validateUnstrippedData(StripDataS *sdP, U8 *srcA) {
-  if (!sdP || !sdP->assembledDataA || !sdP->sm.infP || !sdP->sm.infP->inflatedDataP || !srcA) {
-    return E_BAD_ARGS;
-  }
+static void _validateUnstrippedData(StripDataS *sdP, U8 *srcA) {
+  assert(sdP && sdP->assembledDataA && sdP->sm.infP && sdP->sm.infP->inflatedDataP && srcA);
   // Validate output element size
   if (arrayGetElemSz(sdP->assembledDataA) != arrayGetElemSz(srcA)) {
     printf("[_validateUnstrippedData] Unstripped data's elements size %d doesn't match source data's element size %d.\n");
-    return E_BAD_DATA;
+    assert(0);
   }
   // Validate output element count
   if (arrayGetNElems(sdP->assembledDataA) != arrayGetNElems(srcA)) {
     printf("[_validateUnstrippedData] Unstripped data's %d elements doesn't match source data's %d elements.\n");
-    return E_BAD_DATA;
+    assert(0);
   }
 
-  Error e = SUCCESS;
   if (memcmp(srcA, sdP->assembledDataA, arrayGetElemSz(srcA) * arrayGetNElems(srcA))) {
     printf("[_validateUnstrippedData] Unstripped data doesn't  match original.\n");
     printf("[_validateUnstrippedData] Unstripped data:\n");
-    for (U32 i = 0; 
-         i < arrayGetElemSz(sdP->assembledDataA) * arrayGetNElems(sdP->assembledDataA); 
-         ++i) {
+    U32 i;
+    for (i = 0; 
+        i < arrayGetElemSz(sdP->assembledDataA) * arrayGetNElems(sdP->assembledDataA); 
+        ++i) {
       if (sdP->assembledDataA[i] != srcA[i]) {
-        e = E_BAD_DATA;
         StripmapElem *smElemP = (StripmapElem*) sdP->sm.infP->inflatedDataP 
-                             + (i / sdP->ss.nUnitsPerStrip);
+          + (i / sdP->ss.nUnitsPerStrip);
         U32 maxStripIdx = (sdP->ss.nUnits / sdP->ss.nUnitsPerStrip) - 1;
         printf("[_validateUnstrippedData] Element mismatch: output %3d (from stripset's strip %5d of %5d), source %3d\n", 
             sdP->assembledDataA[i], *smElemP, maxStripIdx, srcA[i]);
@@ -318,45 +294,48 @@ static Error _validateUnstrippedData(StripDataS *sdP, U8 *srcA) {
         }
       }
     }
-    printf("\n\n");
-    return E_BAD_DATA;
-  }
 
-  return e;
+    // Bomb out if it failed in the above for-loop.
+    if (i < arrayGetElemSz(sdP->assembledDataA) * arrayGetNElems(sdP->assembledDataA)) {
+      assert(0);  
+    }
+
+    printf("\n\n");
+  }
 }
 
 #endif
 
-Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bpu, StripDataS **sdPP, U32 flags, U8 verbose) {
+void stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bpu, StripDataS **sdPP, U32 flags, U8 verbose) {
   if (!srcA) {
     printf( "[stripNew] Source array is null.\n" );
-    return E_BAD_ARGS;
+    assert(0);
   }
   if (!sdPP ) {
     printf( "[stripNew] StripData** is null.\n" );
-    return E_BAD_ARGS;
+    assert(0);
   }
   if (!nBytesPerUnpackedStrip) {
     printf( "[stripNew] No bytes per unpacked strip.\n" );
-    return E_BAD_ARGS;
+    assert(0);
   }
   if ( !bpu ) {
     printf( "[stripNew] No bits per packed byte.\n" );
-    return E_BAD_ARGS;
+    assert(0);
   }
   if (bpu > 8) {
     printf( "[stripNew] Too many bits per packed byte.\n" );
-    return E_BAD_ARGS;
+    assert(0);
   }
   if (((arrayGetNElems(srcA) * arrayGetElemSz(srcA)) % nBytesPerUnpackedStrip) != 0) {
     printf( "[stripNew] There should be no remainder units; %d bytes isn't cleanly divided by %d.\n",  (arrayGetNElems(srcA) * arrayGetElemSz(srcA)), nBytesPerUnpackedStrip);
-    return E_BAD_ARGS;
+    assert(0);
   }
   /* Number of strips needed:
    *              unit          strip      8 bits
    * X units    ----------  * -------  *  -----   = 0 strips
    *            1|2|4 bits   32 units     byte        
-  */
+   */
   // From image's perspective, srcA is the colormap. 
   // Assumes 8 bits per unpacked unit.
   // maximum possible number of strips 
@@ -377,24 +356,17 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bpu, StripDa
   // Strip set
   U8 *ssUnpackedA = NULL;  // stripset placeholder till we compress it into output's inflatable
   U8 *ssPackedA = NULL;  // stripset placeholder till we compress it into output's inflatable
-  // Strip map
+                         // Strip map
   StripmapElem *smDataA = NULL;  // ditto
 
   // Allocate output stripmap and stripset
-  *sdPP = NULL;
-  Error e = jbAlloc((void**) sdPP, sizeof(StripDataS), 1);
-  if (!e ) {
-    memset(*sdPP, 0, sizeof(StripDataS));
-    e = arrayNew((void**) &ssUnpackedA, sizeof(U8), nStripsInOrigData * nBytesPerUnpackedStrip);
-  }
-  if (!e) {
-    memset(ssUnpackedA, 0, sizeof(U8) * nStripsInOrigData * nBytesPerUnpackedStrip);
-    // Strip map
-    e = arrayNew((void**) &smDataA, sizeof(StripmapElem), nStripsInOrigData);
-  }
-  if (!e) {
-    (*sdPP)->flags = flags;
-  }
+  *sdPP = jbAlloc(sizeof(StripDataS), 1);
+  memset(*sdPP, 0, sizeof(StripDataS));
+  ssUnpackedA = arrayNew( sizeof(U8), nStripsInOrigData * nBytesPerUnpackedStrip);
+  memset(ssUnpackedA, 0, sizeof(U8) * nStripsInOrigData * nBytesPerUnpackedStrip);
+  // Strip map
+  smDataA = arrayNew( sizeof(StripmapElem), nStripsInOrigData);
+  (*sdPP)->flags = flags;
   if (verbose) {
     printf("Analyzing viability of breaking image into %d strips of %d units each...\n", nStripsInOrigData, nBytesPerUnpackedStrip);
   }
@@ -402,220 +374,173 @@ Error stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bpu, StripDa
   // Find distinct strips and write an index-mapping to them.
   U8 *currStripP;
   U8 *nextStripP;  
-  if (!e) {
-    for (U32 i = 0; i < nStripsInOrigData; ++i) {
-      // This strip hasn't been labelled yet. 
-      // So give it its own label and add it to the set of unique strips.
-      if (!stripsLabelled[i]) {
-        memcpy((void*) &ssUnpackedA[stripLabel * nBytesPerUnpackedStrip], 
-                       &srcA[i * nBytesPerUnpackedStrip], 
-                       nBytesPerUnpackedStrip);
-        stripsLabelled[i] = 1;  // If it's not labeled, you're labelling it now.
-        smDataA[i] = stripLabel;
-        /* All strips up to current "i" should be labelled, so search for strips
-         * beyond that that match the current, newly labelled strip. */
-        currStripP = srcA + (nBytesPerUnpackedStrip * i);
-        for (StripmapElem ii = i + 1; ii < nStripsInOrigData; ++ii) {
-          if (!stripsLabelled[ii]) {
-            nextStripP = srcA + (ii * nBytesPerUnpackedStrip);
-            // If they match forwards...
-            if (!memcmp((const void*) nextStripP, 
+  for (U32 i = 0; i < nStripsInOrigData; ++i) {
+    // This strip hasn't been labelled yet. 
+    // So give it its own label and add it to the set of unique strips.
+    if (!stripsLabelled[i]) {
+      memcpy((void*) &ssUnpackedA[stripLabel * nBytesPerUnpackedStrip], 
+          &srcA[i * nBytesPerUnpackedStrip], 
+          nBytesPerUnpackedStrip);
+      stripsLabelled[i] = 1;  // If it's not labeled, you're labelling it now.
+      smDataA[i] = stripLabel;
+      /* All strips up to current "i" should be labelled, so search for strips
+       * beyond that that match the current, newly labelled strip. */
+      currStripP = srcA + (nBytesPerUnpackedStrip * i);
+      for (StripmapElem ii = i + 1; ii < nStripsInOrigData; ++ii) {
+        if (!stripsLabelled[ii]) {
+          nextStripP = srcA + (ii * nBytesPerUnpackedStrip);
+          // If they match forwards...
+          if (!memcmp((const void*) nextStripP, 
                 (const void*) currStripP, 
                 sizeof(U8) * nBytesPerUnpackedStrip)) {
-              smDataA[ii] = stripLabel;  
-              stripsLabelled[ii] = 1;
-            }  // if strip is straight-up equal
-          }  // if this strip isn't labelled...
-        }  // for each element after current to look for matches (forward or backwards)...
-        ++stripLabel;
-      }  // if strip is unlabelled...
-    }  // for all strips in original data...
-    if (verbose) {
-      printf("%d distinct strips out of a maximum possible %d strips\n", stripLabel, nStripsInOrigData);
-    }
+            smDataA[ii] = stripLabel;  
+            stripsLabelled[ii] = 1;
+          }  // if strip is straight-up equal
+        }  // if this strip isn't labelled...
+      }  // for each element after current to look for matches (forward or backwards)...
+      ++stripLabel;
+    }  // if strip is unlabelled...
+  }  // for all strips in original data...
+  if (verbose) {
+    printf("%d distinct strips out of a maximum possible %d strips\n", stripLabel, nStripsInOrigData);
   }
 #if DEBUG_
-  if (!e) {
-    e = _validateStripmapping(ssUnpackedA, nBytesPerUnpackedStrip, smDataA, srcA);
-  }
+  _validateStripmapping(ssUnpackedA, nBytesPerUnpackedStrip, smDataA, srcA);
 #endif
-  if (!e) {
-    U32 nUnitsInStripset = stripLabel * nBytesPerUnpackedStrip;
-    // If it's worth doing, store compressed stuff into colormap profile.
-    // Compress data into an inflatable.
-    if (!e) {
-      e = _packBits(&ssPackedA, ssUnpackedA, nUnitsInStripset, bpu, verbose);
-    }
+  U32 nUnitsInStripset = stripLabel * nBytesPerUnpackedStrip;
+  // If it's worth doing, store compressed stuff into colormap profile.
+  // Compress data into an inflatable.
+  _packBits(&ssPackedA, ssUnpackedA, nUnitsInStripset, bpu, verbose);
 #if DEBUG_
-    if (!e) {
-      e = _validateBitPacking(ssPackedA, ssUnpackedA, nUnitsInStripset, bpu);
-    }
+  _validateBitPacking(ssPackedA, ssUnpackedA, nUnitsInStripset, bpu);
 #endif
 
-    // One last thing: Pack the raw, non-stripped data to see if it can contend with the strip/zips.
-    U8 *packedRawA = NULL;
-    if (!e) {
-      e = _packBits( &packedRawA, srcA, arrayGetNElems(srcA), bpu, verbose );
-    }
-    // Oh, and also compress the raw as well so we can compare that too.
-    Inflatable *rawInfP = NULL;
-    if (!e) {
-      // Error inflatableNew(void *voidA, Inflatable **inflatablePP) {
-      e = inflatableNew( srcA, &rawInfP );
-    }
-    // OH YEAH, annnnd compress the *packed* raw too.
-    Inflatable *packedInfP = NULL;
-    if (!e) {
-      e = inflatableNew( packedRawA, &packedInfP );
-    }
-    // Go ahead and act like you're going to use stripset and stripmap for now.
-    // We'll see if we really want them after we compare their sizes to the other compresion methods.
-    // Stripset
-    if (!e) {
-      (*sdPP)->ss.nUnits = nUnitsInStripset;
-      (*sdPP)->ss.nUnitsPerStrip = nBytesPerUnpackedStrip;
-      (*sdPP)->ss.bpu = bpu;
-      e = inflatableNew((void*) ssPackedA, &(*sdPP)->ss.infP);
-    }
-    if (!e && verbose) {
-      printf("[stripNew] SS Compressed size: %d bytes\n", 
-          (*sdPP)->ss.infP->compressedLen);
-    }
+  // One last thing: Pack the raw, non-stripped data to see if it can contend with the strip/zips.
+  U8 *packedRawA = NULL;
+  _packBits( &packedRawA, srcA, arrayGetNElems(srcA), bpu, verbose );
+  // Oh, and also compress the raw as well so we can compare that too.
+  Inflatable* rawInfP = inflatableNew( srcA);
+  // OH YEAH, annnnd compress the *packed* raw too.
+  Inflatable *packedInfP =  inflatableNew( packedRawA );
+  // Go ahead and act like you're going to use stripset and stripmap for now.
+  // We'll see if we really want them after we compare their sizes to the other compresion methods.
+  // Stripset
+  (*sdPP)->ss.nUnits = nUnitsInStripset;
+  (*sdPP)->ss.nUnitsPerStrip = nBytesPerUnpackedStrip;
+  (*sdPP)->ss.bpu = bpu;
+  (*sdPP)->ss.infP = inflatableNew((void*) ssPackedA);
+  if (verbose) {
+    printf("[stripNew] SS Compressed size: %d bytes\n", 
+        (*sdPP)->ss.infP->compressedLen);
+  }
+  // Stripmap
+  (*sdPP)->sm.nIndices = nStripsInOrigData;
+  (*sdPP)->sm.infP = inflatableNew((void*) smDataA,);
+  // First, figure out what the best compression method to use is based on our results.
+  /*
+   * 5 contenders;
+   * =============
+   *   packed
+   *   zipped
+   *   packed + zipped
+   *   packed + stripped
+   *   packed + stripped + zipped
+   *
+   * Since all three de-compression methods are so fast, I vote we just go for the smallest one no matter what. 
+   * Nothng fancy. */
+
+  // Figure out the smallest compression.
+  U32 packedSz = arrayGetElemSz(packedRawA) * arrayGetNElems(packedRawA);
+  U32 zippedSz = rawInfP->compressedLen + sizeof(Inflatable);
+  U32 pakZipSz = packedInfP->compressedLen + sizeof(Inflatable);
+  U32 pkStrpSz = (*sdPP)->ss.infP->inflatedLen   + (*sdPP)->sm.infP->inflatedLen   + 2 * sizeof(Inflatable);
+  U32 pkSpZpSz = (*sdPP)->ss.infP->compressedLen + (*sdPP)->sm.infP->compressedLen + 2 * sizeof(Inflatable);
+
+  U32 smallestSz = ( packedSz < zippedSz ) ? packedSz : zippedSz;
+  if ( smallestSz > pakZipSz ) smallestSz = pakZipSz;
+  if ( smallestSz > pkStrpSz ) smallestSz = pkStrpSz;
+  if ( smallestSz > pkSpZpSz ) smallestSz = pkSpZpSz;
+
+  // if using only packed data...
+  if ( smallestSz == packedSz ) {
+    assert( (*sdPP)->ss.infP != NULL );
+    inflatableClr( (*sdPP)->ss.infP );
+    &(*sdPP)->ss.infP->compressedDataA, = jbAlloc( arrayGetElemSz( packedRawA ), arrayGetNElems( packedRawA ) );
+    memcpy( (*sdPP)->ss.infP->compressedDataA, packedRawA, arrayGetElemSz( packedRawA ) * arrayGetNElems( packedRawA ) );
+    // Flags
+    (*sdPP)->flags = SD_SKIP_INFLATION_ | SD_SKIP_ASSEMBLY_;
+  }
+  // if using only zipped raw data...
+  else if ( smallestSz == zippedSz ) {
+    stripClr( *sdPP );  // don't need any data in it
+                        // Stripset
+    (*sdPP)->ss.bpu = bpu;
+    (*sdPP)->ss.nUnits = arrayGetElemSz( srcA );
+    (*sdPP)->ss.infP = rawInfP;
+    rawInfP = NULL;
     // Stripmap
-    if (!e) {
-      (*sdPP)->sm.nIndices = nStripsInOrigData;
-      e = inflatableNew((void*) smDataA, &(*sdPP)->sm.infP);
+    memset( &(*sdPP)->sm, 0, sizeof( Stripmap ) );
+    // Flags
+    (*sdPP)->flags = SD_SKIP_UNPACKING_ | SD_SKIP_ASSEMBLY_;
+  }
+  // if using zipped-up packed data...
+  else if ( smallestSz == pakZipSz ) {
+    // Stripset
+    (*sdPP)->ss.bpu = bpu;
+    (*sdPP)->ss.nUnits = arrayGetElemSz( srcA );
+    (*sdPP)->ss.infP = packedInfP;
+    packedInfP = NULL;
+    // Stripmap
+    memset( &(*sdPP)->sm, 0, sizeof( Stripmap ) );
+    // Flags
+    (*sdPP)->flags = SD_SKIP_ASSEMBLY_;
+  }
+  // if using stripped packed data...
+  else if ( smallestSz == pkStrpSz ) {
+    // Get rid of inflatables
+    inflatableClr( (*sdPP)->ss.infP ) ;
+    inflatableClr( (*sdPP)->sm.infP );
+    // Populate uncompressed (yet packed) stripset.
+    // Allocate stripset.
+    (*sdPP)->ss.infP->compressedDataA = jbAlloc(  arrayGetElemSz( ssPackedA ), arrayGetNElems( ssPackedA ) );
+    // Allocate stripmap.
+    (*sdPP)->sm.infP->compressedDataA = jbAlloc(  sizeof(StripmapElem), (*sdPP)->sm.nIndices);
+    // Copy into stripset.
+    memcpy( (*sdPP)->ss.infP->compressedDataA, ssPackedA, arrayGetElemSz( ssPackedA ) * arrayGetNElems( ssPackedA ) );
+    // Copy into stripmap.
+    memcpy( (*sdPP)->sm.infP->compressedDataA, smDataA, arrayGetElemSz( smDataA ) * arrayGetNElems( smDataA ) );
+    // Keep the rest of the data as-is.
+    // Flags
+    (*sdPP)->flags = SD_SKIP_INFLATION_;
+    // if using zipped-up stripped & packed data...
+    else if ( smallestSz == pkSpZpSz ) {
+      // No need to do anything. We have the inflatables already here.
+      // Keep the rest of the data as-is.
+      // Flags
+      (*sdPP)->flags = 0;
     }
-    // First, figure out what the best compression method to use is based on our results.
-    /*
-     * 5 contenders;
-     * =============
-     *   packed
-     *   zipped
-     *   packed + zipped
-     *   packed + stripped
-     *   packed + stripped + zipped
-     *
-     * Since all three de-compression methods are so fast, I vote we just go for the smallest one no matter what. 
-     * Nothng fancy. */
-
-    // Figure out the smallest compression.
-    if (!e && rawInfP ) {
-      U32 packedSz = arrayGetElemSz(packedRawA) * arrayGetNElems(packedRawA);
-      U32 zippedSz = rawInfP->compressedLen + sizeof(Inflatable);
-      U32 pakZipSz = packedInfP->compressedLen + sizeof(Inflatable);
-      U32 pkStrpSz = (*sdPP)->ss.infP->inflatedLen   + (*sdPP)->sm.infP->inflatedLen   + 2 * sizeof(Inflatable);
-      U32 pkSpZpSz = (*sdPP)->ss.infP->compressedLen + (*sdPP)->sm.infP->compressedLen + 2 * sizeof(Inflatable);
-
-      U32 smallestSz = ( packedSz < zippedSz ) ? packedSz : zippedSz;
-      if ( smallestSz > pakZipSz ) smallestSz = pakZipSz;
-      if ( smallestSz > pkStrpSz ) smallestSz = pkStrpSz;
-      if ( smallestSz > pkSpZpSz ) smallestSz = pkSpZpSz;
-
-      // if using only packed data...
-      if ( smallestSz == packedSz ) {
-        assert( (*sdPP)->ss.infP != NULL );
-        inflatableClr( (*sdPP)->ss.infP );
-        e = jbAlloc( (void**) &(*sdPP)->ss.infP->compressedDataA, arrayGetElemSz( packedRawA ), arrayGetNElems( packedRawA ) );
-        if ( !e ) {
-          memcpy( (*sdPP)->ss.infP->compressedDataA, packedRawA, arrayGetElemSz( packedRawA ) * arrayGetNElems( packedRawA ) );
-        }
-        // Flags
-        (*sdPP)->flags = SD_SKIP_INFLATION_ | SD_SKIP_ASSEMBLY_;
-      }
-      // if using only zipped raw data...
-      else if ( smallestSz == zippedSz ) {
-        stripClr( *sdPP );  // don't need any data in it
-                           // Stripset
-        (*sdPP)->ss.bpu = bpu;
-        (*sdPP)->ss.nUnits = arrayGetElemSz( srcA );
-        (*sdPP)->ss.infP = rawInfP;
-        rawInfP = NULL;
-        // Stripmap
-        memset( &(*sdPP)->sm, 0, sizeof( Stripmap ) );
-        // Flags
-        (*sdPP)->flags = SD_SKIP_UNPACKING_ | SD_SKIP_ASSEMBLY_;
-      }
-      // if using zipped-up packed data...
-      else if ( smallestSz == pakZipSz ) {
-        // Stripset
-        (*sdPP)->ss.bpu = bpu;
-        (*sdPP)->ss.nUnits = arrayGetElemSz( srcA );
-        (*sdPP)->ss.infP = packedInfP;
-        packedInfP = NULL;
-        // Stripmap
-        memset( &(*sdPP)->sm, 0, sizeof( Stripmap ) );
-        // Flags
-        (*sdPP)->flags = SD_SKIP_ASSEMBLY_;
-      }
-      // if using stripped packed data...
-      else if ( smallestSz == pkStrpSz ) {
-        // Get rid of inflatables
-        inflatableClr( (*sdPP)->ss.infP ) ;
-        inflatableClr( (*sdPP)->sm.infP );
-        // Populate uncompressed (yet packed) stripset.
-        // Allocate stripset.
-        if (!e) {
-          e = jbAlloc( (void**) &(*sdPP)->ss.infP->compressedDataA, arrayGetElemSz( ssPackedA ), arrayGetNElems( ssPackedA ) );
-        }
-        // Allocate stripmap.
-        if (!e) {
-          e = jbAlloc( (void**) &(*sdPP)->sm.infP->compressedDataA, sizeof(StripmapElem), (*sdPP)->sm.nIndices);
-        }
-        // Copy into stripset.
-        if ( !e ) {
-          memcpy( (*sdPP)->ss.infP->compressedDataA, ssPackedA, arrayGetElemSz( ssPackedA ) * arrayGetNElems( ssPackedA ) );
-        }
-        // Copy into stripmap.
-        if ( !e ) {
-          memcpy( (*sdPP)->sm.infP->compressedDataA, smDataA, arrayGetElemSz( smDataA ) * arrayGetNElems( smDataA ) );
-        }
-        // Keep the rest of the data as-is.
-        // Flags
-        (*sdPP)->flags = SD_SKIP_INFLATION_;
-      }
-      // if using zipped-up stripped & packed data...
-      else if ( smallestSz == pkSpZpSz ) {
-        // No need to do anything. We have the inflatables already here.
-        // Keep the rest of the data as-is.
-        // Flags
-        (*sdPP)->flags = 0;
-      }
-    }
-    // TODO free everything allocated in the new lines.
-    // ssPackedA
-    arrayDel( (void**) &ssPackedA );
-    // packedRawA
-    arrayDel( (void**) &packedRawA );
-    // packedInfP
-    inflatableDel( &packedInfP );  // TODO why doesn't the compiler see this?
+  }
+  // TODO free everything allocated in the new lines.
+  // ssPackedA
+  arrayDel( (void**) &ssPackedA );
+  // packedRawA
+  arrayDel( (void**) &packedRawA );
+  // packedInfP
+  inflatableDel( &packedInfP );  // TODO why doesn't the compiler see this?
 #if 0
 #if DEBUG_
-    if (!e && verbose) {
-      e = _validateInflatables(*sdPP, smDataA, ssPackedA);
-    }
+  if (verbose) {
+    _validateInflatables(*sdPP, smDataA, ssPackedA);
+  }
 #endif
-    if (!e) {
-      e =  stripIni(*sdPP);  // it was bombing out here originally.
-    }
+  stripIni(*sdPP);  // it was bombing out here originally.
 #if DEBUG_
-    if (!e) {
-      e = _validateUnstrippedData(*sdPP, srcA);
-    }
+  _validateUnstrippedData(*sdPP, srcA);
 #endif
 #endif
-  }
-  else {
-    inflatableDel(&(*sdPP)->ss.infP);
-    inflatableDel(&(*sdPP)->sm.infP);
-  }
   arrayDel((void**) &smDataA);
   arrayDel((void**) &ssUnpackedA);
   arrayDel((void**) &ssPackedA);
-  if (e) {
-    jbFree((void**) sdPP);
-  }
-  return e;
 }  // stripNew()
 
 void stripDel(StripDataS **sdPP) {
@@ -632,10 +557,8 @@ void stripDel(StripDataS **sdPP) {
   }
 }
 
-Error writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripDataS *sdP) {
-  if (!fP || !sdP) {
-    return E_BAD_ARGS;
-  }
+void writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripDataS *sdP) {
+  assert (fP && sdP)r
 
   char smInfName[strlen(objNameA) + strlen("Stripmap") + strlen("Inf")];
   memset(smInfName, 0, strlen(smInfName));
@@ -648,47 +571,43 @@ Error writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripDataS *sdP
   strcat(ssInfName, "Stripset");
   strcat(ssInfName, "Inf");
 
-    // TODO: figure out all the cases things will vary by in here.
-    //       -- NO STRIPMAPS --
-    //       SD_SKIP_INFLATION_ | SD_SKIP_ASSEMBLY_  -> ss.infP->compressedDataA  ( packing only )
-    //       SD_SKIP_UNPACKING_ | SD_SKIP_ASSEMBLY_  -> ss.infP  ( zipping only )
-    //       SD_SKIP_ASSEMBLY_ -> ss.infP ( packing + zipping )
-    //
-    //       -- WITH STRIPMAPS --
-    //       
-    //       
+  // TODO: figure out all the cases things will vary by in here.
+  //       -- NO STRIPMAPS --
+  //       SD_SKIP_INFLATION_ | SD_SKIP_ASSEMBLY_  -> ss.infP->compressedDataA  ( packing only )
+  //       SD_SKIP_UNPACKING_ | SD_SKIP_ASSEMBLY_  -> ss.infP  ( zipping only )
+  //       SD_SKIP_ASSEMBLY_ -> ss.infP ( packing + zipping )
+  //
+  //       -- WITH STRIPMAPS --
+  //       
+  //       
 
   // Stripset inflatable
-  Error e = inflatableAppend(sdP->ss.infP, fP, ssInfName);
-  if (!e && !( sdP->flags & SD_SKIP_ASSEMBLY_ ) ) {
+  inflatableAppend(sdP->ss.infP, fP, ssInfName);
+  if (!( sdP->flags & SD_SKIP_ASSEMBLY_ ) ) {
     // Stripmap inflatable
-    e = inflatableAppend(sdP->sm.infP, fP, smInfName);
+    inflatableAppend(sdP->sm.infP, fP, smInfName);
   }
-  if (!e) {
-    //Stripmap
-    fprintf(fP, "\n\n");
-    fprintf(fP, "StripDataS %sStripData = {\n", objNameA);
-    // Stripmap
-    fprintf(fP, "\t.sm = {\n");
-    fprintf(fP, "\t\t.nIndices = %d,\n", sdP->sm.nIndices);
-    if (!e && !( sdP->flags & SD_SKIP_ASSEMBLY_ ) ) {
-      fprintf(fP, "\t\t.infP = &%s\n", smInfName);
-    }
-    else {
-      fprintf(fP, "\t\t.infP = NULL\n", smInfName);
-    }
-    fprintf(fP, "\t},\n");
-    // Stripset
-    fprintf(fP, "\t.ss = {\n");
-    fprintf(fP, "\t\t.nUnitsPerStrip = %d,\n", sdP->ss.nUnitsPerStrip);  // in case we ever want to give each sprite its own strip length... wuh oh.
-    fprintf(fP, "\t\t.nUnits  = %d,\n", sdP->ss.nUnits);
-    fprintf(fP, "\t\t.bpu  = %d,\n", sdP->ss.bpu);
-    fprintf(fP, "\t\t.infP = &%s,\n", ssInfName);
-    fprintf(fP, "\t},\n");
-    // Unstripped data
-    fprintf(fP, "\t.assembledDataA = NULL\n");
-    fprintf(fP, "};\n\n");
+  //Stripmap
+  fprintf(fP, "\n\n");
+  fprintf(fP, "StripDataS %sStripData = {\n", objNameA);
+  // Stripmap
+  fprintf(fP, "\t.sm = {\n");
+  fprintf(fP, "\t\t.nIndices = %d,\n", sdP->sm.nIndices);
+  if (!( sdP->flags & SD_SKIP_ASSEMBLY_ ) ) {
+    fprintf(fP, "\t\t.infP = &%s\n", smInfName);
   }
-
-  return e;
+  else {
+    fprintf(fP, "\t\t.infP = NULL\n", smInfName);
+  }
+  fprintf(fP, "\t},\n");
+  // Stripset
+  fprintf(fP, "\t.ss = {\n");
+  fprintf(fP, "\t\t.nUnitsPerStrip = %d,\n", sdP->ss.nUnitsPerStrip);  // in case we ever want to give each sprite its own strip length... wuh oh.
+  fprintf(fP, "\t\t.nUnits  = %d,\n", sdP->ss.nUnits);
+  fprintf(fP, "\t\t.bpu  = %d,\n", sdP->ss.bpu);
+  fprintf(fP, "\t\t.infP = &%s,\n", ssInfName);
+  fprintf(fP, "\t},\n");
+  // Unstripped data
+  fprintf(fP, "\t.assembledDataA = NULL\n");
+  fprintf(fP, "};\n\n");
 }  // writeStripDataInFile

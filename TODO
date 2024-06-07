@@ -1,3 +1,9 @@
+Mission to clearing out error-handling:
+  all of src/data: almost
+    ~ lingering strip unit test, which needs the strip util to be free from it as well
+  all of src/x
+  all of src/interface
+
 MVP 2D
 ~~~~~~
 \x
