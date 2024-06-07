@@ -12,9 +12,9 @@ BLD = $(JB)/build/src
 SRC = $(JB)/src
 KR  = ${HOME}/jb/src/Keyring
 
-OBJS := ../file/build/fileUtils.o ../genie/build/genie.o ../stripUtil/build/stripUtil.o ../db/build/db.o ../infUtil/build/infUtil.o ${BUILDDIR}/body.o ${BUILDDIR}/img.o ${BUILDDIR}/anim.o ${BUILDDIR}/coll.o ${BUILDDIR}/previewImg.o 
+OBJS := ../file/build/fileUtils.o ../genie/build/genie.o ../stripUtil/build/stripUtil.o ../infUtil/build/infUtil.o ${BUILDDIR}/body.o ${BUILDDIR}/img.o ${BUILDDIR}/anim.o ${BUILDDIR}/coll.o ${BUILDDIR}/previewImg.o 
 
-INCS := -I../stripUtil/src/include -I./src/include -I../infUtil/src/include -I$(SRC)/data/include -I$(SRC)/x/include -I$(SRC)/interface/include -I$(SRC)/include -I$(KR) -I../file/src/include/ -I../db/src/include -I../genie/src/include -I/usr/include/libfastjson 
+INCS := -I../stripUtil/src/include -I./src/include -I../infUtil/src/include -I$(SRC)/data/include -I$(SRC)/x/include -I$(SRC)/interface/include -I$(SRC)/include -I$(KR) -I../file/src/include/ -I../genie/src/include -I/usr/include/libfastjson 
 
 # Linker
 ${BINDIR}/body: $(OBJS)
@@ -35,9 +35,6 @@ ${BUILDDIR}/%.o: ./src/%.c ./src/include/%.h
 ../infUtil/build/infUtil.o: ../infUtil/src/infUtil.c ../infUtil/src/include/infUtil.h
 	make -C ../infUtil
 
-../db/build/db.o: ../db/src/db.c ../db/src/include/db.h
-	make -C ../db
-
 ../genie/build/genie.o: ../genie/src/genie.c ../genie/src/include/genie.h
 	make -C ../genie
 
@@ -50,7 +47,7 @@ $(BLD)/x/%.o: $(SRC)/x/%.c
 $(BLD)/interface/%.o: $(SRC)/interface/%.c
 	make -C $(JB)
 
-# Build dbectory (dependency)
+# Build directory (dependency)
 ${BUILDDIR}:
 	mkdir -p ${BUILDDIR}
 

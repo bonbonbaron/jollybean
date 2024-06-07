@@ -14,7 +14,6 @@
 #include "fileUtils.h"
 #include "stripUtil.h"
 #include "strip.h"
-#include "db.h"
 #include "genie.h"
 #include "anim.h"
 
@@ -36,6 +35,6 @@ Error readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *an
 Error getColorPaletteAndColormap(ColorPalette *cpP, Colormap *cmP, png_image *pngImgP, U8 *pixelP, U8 srcPixelSize, U8 verbose);
 void cpClr(ColorPalette *cpP);
 void cmClr(Colormap *cmP);
-Error img(char *entityNameP, Database *cpDirP, Database *cmDirP, AnimJsonData *animP, U8 verbose);
+Error img(char *entityNameP, AnimJsonData *animP, U8 verbose);
 
 #endif

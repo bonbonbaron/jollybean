@@ -585,7 +585,7 @@ static Error _validateWholeInput(Colormap *cmP, ColorPalette *cpP) {
 }
 
 //##########################################
-Error img(char *entityNameP, Database *cpDirP, Database *cmDirP, AnimJsonData *animP, U8 verbose) {
+Error img(char *entityNameP, AnimJsonData *animP, U8 verbose) {
   U8 *pixelP = NULL;  // can be 1bpp colormap, 2bpp gray+alpha, or 4bpp RGBA
   U8 srcPixelSize = 0;
   ColorPalette cp = {0};
@@ -636,29 +636,6 @@ Error img(char *entityNameP, Database *cpDirP, Database *cmDirP, AnimJsonData *a
   if (!e && verbose) {
     e = _validateWholeInput(&cm, &cp);
   }
-
-#if 0
-  // Update color palette database if necessary
-  // TODO remove 0 &&
-  if (0 && !e) {
-    EntryData entryDataToFind = {0};
-    entryDataToFind.palette.nColors = cp.nColors;
-    memcpy(entryDataToFind.palette.paletteA, &cp, sizeof(U32) * cp.nColors);
-    char *existingPaletteName = dbFindNameByValue(cpDirP, &entryDataToFind, verbose);
-    if (!existingPaletteName) {
-      genieAsk(
-          "This palette is new. What would you like to name it?",   // TODO Having to rename the color palette is bullshit.
-          DIR_FILE, (List*) cpDirP, verbose);
-      // Store our palette only because it doesn't already exist in the directory.
-      dbAddEntry(cpDirP, entityNameP, &entryDataToFind, verbose);  
-    }
-    else {
-      if (verbose) {
-        printf("%s found a matching palette. Skipping write stage.\n", entityNameP);
-      }
-    }
-  }
-#endif
 
   cmClr(&cm);
   arrayDel((void**) &cp.colorA);

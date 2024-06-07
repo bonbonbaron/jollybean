@@ -2,7 +2,7 @@
 
 const char LOCAL_TROVE_BOOKKEEPING_DIR[] = "/jb/src/Database/";
 
-static Error _dbNew(char *filepath, U8 verbose) {
+static void _dbNew(char *filepath, U8 verbose) {
   const static Database dbPrototype = {0};
   FILE *fP = fopen(filepath, "wb");
   if (fP) {
@@ -13,12 +13,12 @@ static Error _dbNew(char *filepath, U8 verbose) {
   }
   else { 
     printf("Failed to create missing file, %s\n", filepath);
-    return E_FILE_IO;
+    assert(0);
   }
-  return SUCCESS;
 }
 
-Error dbGet(Database **dbPP, char *dbName, int argc, U8 verbose) {
+Database* dbGet(char *dbName, int argc, U8 verbose) {
+  Database *dbP = NULL;
   char *HOME = getenv("HOME");
   char filepath[strlen(HOME) + strlen(LOCAL_TROVE_BOOKKEEPING_DIR) + strlen(dbName)];
   strcpy(filepath, HOME);
@@ -37,7 +37,7 @@ Error dbGet(Database **dbPP, char *dbName, int argc, U8 verbose) {
       fP = fopen(filepath, "rb");  // Should open if we successfully created it.
       if (!fP) {
         printf("no such db file:\n\t%s\n", filepath);
-        e = E_FILE_IO;
+        assert(0);
       }
     }
   }
@@ -62,7 +62,7 @@ Error dbGet(Database **dbPP, char *dbName, int argc, U8 verbose) {
       nBytesTotal = ftell(fP);
     }
     // Make room to store the file's data in memory.
-    e = jbAlloc((void**) dbPP, 2 *(nBytesTotal + (argc * sizeof(Entry))), 1);  // "* 2" just for safety
+    dbP = jbAlloc(2 *(nBytesTotal + (argc * sizeof(Entry))), 1);  // "* 2" just for safety
   }
   // Read it into memory and make sure it's as big as we say it is.
   if (!e) {
@@ -77,23 +77,21 @@ Error dbGet(Database **dbPP, char *dbName, int argc, U8 verbose) {
     fclose(fP);
   }
 
-  return e;
+  return dbP;
 }
 
-Error dbReplaceOriginal(Database *dbP, char *dbName, U8 verbose) {
+void dbReplaceOriginal(Database *dbP, char *dbName, U8 verbose) {
   char *HOME = getenv("HOME");
   char filepath[strlen(HOME) + strlen(LOCAL_TROVE_BOOKKEEPING_DIR) + strlen(dbName)];
   strcpy(filepath, HOME);
   strcat(filepath, LOCAL_TROVE_BOOKKEEPING_DIR);
   strcat(filepath, dbName);
 
-  Error e = SUCCESS;
-
   // Open the file.
   FILE *fP = fopen(filepath, "wb");
   if (!fP) {
     fclose(fP);
-    return E_BAD_ARGS;
+    assert(0);
   }
 
   // Write to it.
@@ -109,44 +107,34 @@ Error dbReplaceOriginal(Database *dbP, char *dbName, U8 verbose) {
 
   // Close it.
   fclose(fP);
-
-  return e;
 }
 
 void dbAddEntry(Database *dbP, char *name, EntryData *dataP, U8 verbose) {
-  if (verbose)
+  if (verbose) {
     printf("adding %s to database\n", name);
+  }
 
   strcpy(dbP->entryA[dbP->nEntries].name, name);
   dbP->entryA[dbP->nEntries++].data = *dataP;
 }
 
 // List nodes for finding multiple partial query hits
-Error nameNodeNew(NameNode **nodePP) {
-  if (!nodePP)
-    return E_BAD_ARGS;
-  Error e = jbAlloc((void**) nodePP, sizeof(NameNode), 1);
-  if (!e) 
-    memset(*nodePP, 0, sizeof(NameNode));
-  return e;
+NameNode* nameNodeNew() {
+  NameNode* nodeP = jbAlloc(sizeof(NameNode), 1);
+  memset(nodeP, 0, sizeof(NameNode));
+  return nodeP;
 }
 
 static Error _nameNodeGrow(NameNode **nodePP) {
-  if (!nodePP)
-    return E_BAD_ARGS;
-  Error e = SUCCESS;
+  assert (nodePP);
   // If this is the first node
   if (!*nodePP) {
     e = nameNodeNew(nodePP);
   }
   // If this is after the first node
   else {
-    e = nameNodeNew(&(*nodePP)->nextP);
-    if (!e) {
-      *nodePP = (*nodePP)->nextP;
-    }
+    (*nodePP)->nextP = nameNodeNew();
   }
-  return e;
 }
 
 void nameNodeDel(NameNode **nodePP) {
