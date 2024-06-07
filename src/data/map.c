@@ -3,6 +3,7 @@
 Map* mapNew( MapElemType elemType, const U8 elemSz, const Key nElems) {
 	assert (elemSz && nElems);
   Map* mapP = jbAlloc(sizeof(Map), 1);
+  memset(mapP->flagA, 0, sizeof(FlagInfo) * N_FLAG_BYTES);
 	mapP->mapA = arrayNew(elemSz, nElems);
   mapP->population = 0;
   mapP->elemType = elemType;
@@ -131,7 +132,6 @@ void mapSet(Map *mapP, const Key key, const void *valP) {
 	void *elemP, *nextElemP;
   U32 nBytesToMove;
   _preMapSet(mapP, key, &elemP, &nextElemP, &nBytesToMove);
-  //printf("nb2m: %d\n", nBytesToMove);
   if (nBytesToMove) {
     memmove(nextElemP, (const void*) elemP, nBytesToMove);
   }
@@ -149,6 +149,17 @@ void mapRem(Map *mapP, const Key key) {
   U32 nBytesToMove;
   _preMapSet(mapP, key, &elemP, &nextElemP, &nBytesToMove);
   if (nBytesToMove) {
+    // First, you have to account for the "how many bytes
+    // to move" equation in _preMapSet() having been written
+    // for how many bytes to move to the RIGHT. That's when
+    // we're adding something in the value's slot; in mapSet()
+    // we'd have to shift everything to the right of the 
+    // current value AND itself to the right..
+    // But in this case, we're removing the value's slot and 
+    // shifting everything TO THE RIGHT OF (excluding) it.
+    nBytesToMove -= _getMapElemSz(mapP);
+
+    // This is trying to read 2 bytes at the very end of mapA.
     memmove(elemP, (const void*) nextElemP, nBytesToMove);
   }
   /* Unset flag. */

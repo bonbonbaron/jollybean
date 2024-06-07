@@ -4,10 +4,10 @@
 static void _popMap(Map *mP, U32 nElems) {
   // Populate inner map with 1...100
   for (Key j = 2; j <= nElems; ++j) {
-    U32 k = (U32) j;
+    U32 k = (U32) j;  // convert Key to a U32, which is the type our map stores
     mapSet(mP, j, &k);
   }
-  // In order to cover the shifting of map array elements over by one:
+  // In order to get code-coverage of mapSet shifting elements to the right...
   U32 k = 1;
   mapSet(mP, 1, &k);
 }
@@ -37,6 +37,7 @@ TEST_F_SETUP(Tau) {
   CHECK_NOT_NULL(tau->P);
   _popMap(tau->P, tau->nElems);
 
+#if 1
   // Allocate map to copy keys to.
   tau->cpP = mapNew( RAW_DATA, sizeof(U32), tau->nElems);
   CHECK_NOT_NULL(tau->cpP);
@@ -72,6 +73,7 @@ TEST_F_SETUP(Tau) {
     _popMap(newMP, tau->nElems);
     mapSet(tau->mapOfNestedMaps, i, &newMP);
   }
+#endif
 }
 
 TEST_F_TEARDOWN(Tau) {
@@ -81,6 +83,24 @@ TEST_F_TEARDOWN(Tau) {
   mapOfNestedMapsDel(&tau->mapOfNestedPtrMaps);
 }
 
+TEST_F(Tau, mapGetIndex) {
+  Key idx = mapGetIndex(tau->P, 5);
+  CHECK_EQ(idx, 4);
+}
+
+// This passes if it's the first thing to run.
+// But it doesn't as the second.
+// Its values are in the wrong order on the second run.
+// In fact, the debugger says its array's elem size is 4.
+// Something recently surprised me of being size 8... pointers.
+// Okay, so good news is that U32s are still respected.
+// Here's some questins:
+//  1. If i insert the values in order like a nice little boy, will it work?
+//  2. If so, is there something goofy about the amount by which memcpy moves things compared to sizeof(U32)?
+// 
+// When I insert in order, the values look right, but the top size is still corrupted. (What does that mean?)
+// When I insert out of order, MOST values look right, but some (including conspicuously powers of two) are 0 or 1.
+//
 TEST_F(Tau, mapGet) {
   for (Key key = 1; key <= tau->nElems; ++key) {
     U32 *valP = (U32*) mapGet(tau->P, key);
@@ -88,12 +108,7 @@ TEST_F(Tau, mapGet) {
     CHECK_EQ(*valP, key);
   }
 }
-
-TEST_F(Tau, mapGetIndex) {
-  Key idx = mapGetIndex(tau->P, 5);
-  CHECK_EQ(idx, 4);
-}
-#if 0
+#if 1
 
 TEST_F(Tau, mapGetNestedMapP) {
   Map *mP = NULL;
@@ -114,7 +129,8 @@ TEST_F(Tau, mapGetNestedMapP_PointerType) {
 }
 
 TEST_F(Tau, mapGet_Null) {
-  U32 *valP = (U32*) mapGet(tau->P, 1);
+  // pass in a key that's one greater than the highest valid key. Should get a null value.
+  U32 *valP = (U32*) mapGet(tau->P, tau->nElems + 1);  
   CHECK_NULL(valP);
 }
 
@@ -125,9 +141,17 @@ TEST_F(Tau, mapGet_Overreach) {
 }
 
 TEST_F(Tau, mapRem) {
-  mapRem(tau->P, 20);
-  U32 *valP = mapGet(tau->P, 20);
-  CHECK_NULL(valP);
+  mapRem(tau->P, 50);
+  U32* valP;
+  for (Key i = 1; i <= tau->nElems; ++i) {
+    valP = (U32*) mapGet(tau->P, i);
+    if (i == 50) {
+      CHECK_NULL(valP);
+    }
+    else {
+      CHECK_EQ(*valP, i);
+    }
+  }
 }
 
 TEST_F(Tau, mapCopyKeys) {
