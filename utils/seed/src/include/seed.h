@@ -2,7 +2,6 @@
 #define SEED_H
 #include "biome.h"
 #include "fileUtils.h"
-#include "genie.h"
 
 #include "seed.h"
 

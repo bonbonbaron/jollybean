@@ -14,7 +14,6 @@
 #include "fileUtils.h"
 #include "stripUtil.h"
 #include "strip.h"
-#include "genie.h"
 #include "anim.h"
 
 //const char LOCAL_TROVE_IMAGE_DIR[] = "/jb/src/Image/";

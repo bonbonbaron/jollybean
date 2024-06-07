@@ -1,5 +1,4 @@
 #include "img.h"
-#include "genie.h"
 #include "previewImg.h"
 
 #define DEBUG_IMG_ 1
