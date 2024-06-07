@@ -7,7 +7,7 @@
 #include <string.h>
 #include "mem.h"
 #include "inflatable.h"
-#include "infUtil.h"
+#include "inf.h"
 #include "strip.h"
 #include "fileUtils.h"
 

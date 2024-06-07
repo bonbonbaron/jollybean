@@ -606,6 +606,7 @@ void inflatableIni(Inflatable *inflatableP) {
 }
 
 void inflatableClr(Inflatable *inflatableP) {
-  assert (inflatableP && inflatableP->inflatedDataP);
-  jbFree(&inflatableP->inflatedDataP);
+  if (inflatableP && inflatableP->inflatedDataP) {
+    jbFree(&inflatableP->inflatedDataP);
+  }
 }

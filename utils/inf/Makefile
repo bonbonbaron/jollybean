@@ -11,8 +11,8 @@ INSTALLDIR     = /usr/local/lib
 ##############################
 # Compiler
 ##############################
-infUtil.o: ./src/infUtil.c ./src/include/infUtil.h ${BUILDDIR}
-	$(CC) -g -I../../src/data/include -L../../lib -ljb $(sdl2-config --cflags) $(pkg-config --cflags zlib) -lz -c ./src/infUtil.c -o $@
+inf.o: ./src/inf.c ./src/include/inf.h ${BUILDDIR}
+	$(CC) -g -I../../src/data/include -L../../lib -ljb $(sdl2-config --cflags) $(pkg-config --cflags zlib) -lz -c ./src/inf.c -o $@
 	mv $@ build/
 	touch build/$@
 

@@ -122,12 +122,14 @@ void sdUnpack(StripDataS *sdP) {
 }
 
 void sdAssemble(StripDataS *sdP) {
-  assert (sdP && sdP->ss.unpackedDataP && sdP->sm.infP->inflatedDataP && !sdP->assembledDataA
-      && sdP->ss.nUnitsPerStrip > 0);
+  assert (sdP );
 
   if ( sdP->flags & SD_SKIP_ASSEMBLY_) {
     return;
   }
+
+  assert (sdP->ss.unpackedDataP && sdP->sm.infP->inflatedDataP && !sdP->assembledDataA
+      && sdP->ss.nUnitsPerStrip > 0);
 
   sdP->assembledDataA = arrayNew( sizeof(U8), sdP->sm.nIndices * sdP->ss.nUnitsPerStrip);
 

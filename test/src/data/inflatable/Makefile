@@ -2,14 +2,14 @@ CC=gcc
 
 RPO_DIR := $(shell git rev-parse --show-toplevel)
 LIB_DIR := $(RPO_DIR)/lib
-INF_DIR := $(RPO_DIR)/utils/infUtil
+INF_DIR := $(RPO_DIR)/utils/inf
 INF_BLD := $(INF_DIR)/build
 INF_SRC := $(INF_DIR)/src
 _INCS   := $(shell find ${RPO_DIR}/src ${INF_SRC} -type d -name 'include')
 INCS    := -I. $(_INCS:%=-I%)
 
 SRCS    := $(shell find . -type f -name "*.c")
-OBJS    := $(SRCS:%.c=%.o) ${INF_BLD}/infUtil.o
+OBJS    := $(SRCS:%.c=%.o) ${INF_BLD}/inf.o
 
 all: o 
 

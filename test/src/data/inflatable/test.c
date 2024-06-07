@@ -1,5 +1,5 @@
 #include "tau/tau.h"
-#include "infUtil.h"
+#include "inf.h"
 // #include "inflatable.h"
 #include "array.h"
 

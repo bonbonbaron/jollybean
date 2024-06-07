@@ -1,6 +1,6 @@
 #include "tau/tau.h"
 #include "strip.h"
-#include "stripUtil.h"
+#include "sd.h"
 
 // TODO rename strip util to not clash
 // TODO include strip util to pack stuff to make this easier and portable
@@ -55,9 +55,9 @@ TEST_F_SETUP(Tau) {
   memcpy((void*) tau->raw4bppA, (void*) rawData4bpp, sizeof(rawData4bpp[0]) * sizeof(rawData4bpp) / sizeof(rawData4bpp[0]));
 
   // Make strip data with random units per strips
-  tau->raw1bppA = stripNew( 3, 1, &tau->sd1bppP, 0, 0);
-  tau->raw2bppA = stripNew( 3, 2, &tau->sd2bppP, 0, 0);
-  tau->raw4bppA = stripNew( 5, 4, &tau->sd4bppP, 0, 0);
+  tau->sd1bppP = stripNew(tau->raw1bppA, 3, 1, 0, 0);
+  tau->sd2bppP = stripNew(tau->raw2bppA, 3, 2, 0, 0);
+  tau->sd4bppP = stripNew(tau->raw4bppA, 5, 4, 0, 0);
   stripClr(tau->sd1bppP);
   stripClr(tau->sd2bppP);
   stripClr(tau->sd4bppP);
