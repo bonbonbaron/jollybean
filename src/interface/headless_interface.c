@@ -25,55 +25,30 @@
 static struct termios tty_attr;
 static FILE *file = NULL;
 
-Error guiNew(Gui **guiPP) {
-	if (!guiPP) {
-		return E_BAD_ARGS;
-  }
+Gui* guiNew() {
+  Gui* guiP = jbAlloc(sizeof(Gui), 1);
+  assert(guiP);
+  memset(*guiPP, 0, sizeof(Gui));
+  guiP->windowP = jbAlloc(  sizeof(Window), 1 );
+  assert(guiP->windowP);
 
-	// Init the GUI
-  Error e = jbAlloc((void**) guiPP, sizeof(Gui), 1);
+  // Init renderer
+  guiP->rendererP = jbAlloc(sizeof(Window), 1 );
+  assert(guiP->rendererP);
+  (*guiPP)->rendererP->dstTextureP = arrayNew(sizeof(Texture_), 1 );
 
-  if (!e) {
-    memset(*guiPP, 0, sizeof(Gui));
-	// Init window
-    e = jbAlloc( (void**) &(*guiPP)->windowP, sizeof(Window), 1 );
-  }
+  // open up the keyboard file in read binary mode so we can accept key presses.
+  file = fopen(KEYFILE, "rb"); 
+  assert(file);
 
-	if ( e ) {
-    guiDel(guiPP);
-		return EXIT_FAILURE;
-  }
+  // Set terminal settings: 
+  struct termios new_tty_attr = tty_attr;
+  new_tty_attr.c_lflag &= ~(ICANON | ECHO); // turn off canonic mode and echo
 
-	// Init renderer
-  if (!e) {
-    e = jbAlloc( (void**) &(*guiPP)->rendererP, sizeof(Window), 1 );
-    if ( !e ) {
-      e = arrayNew( (void**) &(*guiPP)->rendererP->dstTextureP, sizeof(Texture_), 1 );
-    }
+  // Apply new terminal settings
+  tcsetattr(STDIN_FILENO, TCSANOW, &new_tty_attr);
 
-  }
-
-	if ( e ) {
-    guiDel(guiPP);
-		return EXIT_FAILURE;
-	}
-  
-  if ( !e ) {
-    if ((file = fopen(KEYFILE, "rb")) == NULL)
-    {
-      perror("Could not open specified path");
-      exit(1);
-    }
-
-    // Set terminal settings: 
-    struct termios new_tty_attr = tty_attr;
-    new_tty_attr.c_lflag &= ~(ICANON | ECHO); // turn off canonic mode and echo
-
-    // Apply new terminal settings
-    tcsetattr(STDIN_FILENO, TCSANOW, &new_tty_attr);
-  }
-
-	return e;
+  return guiP;
 }
 
 void guiDel(Gui **guiPP) {
@@ -94,10 +69,8 @@ static Color_* _getPixelP( Texture_ *textureP, U32 x, U32 y ) {
 }
 
 // Since the headless renderer isn't actually going to display anything, we don't care about scaling.
-Error copy ( Renderer* rendererP, Texture_* srcTextureP, Rect_* srcRectP, Rect_* dstRectP ) {
-  if ( !rendererP || !srcTextureP || !srcRectP || !dstRectP ) {
-    return E_BAD_ARGS;
-  }
+void copy ( Renderer* rendererP, Texture_* srcTextureP, Rect_* srcRectP, Rect_* dstRectP ) {
+  assert ( rendererP && srcTextureP && srcRectP && dstRectP );
 
   // TODO support scaling for headless so we can test that feature headlessly in xRender.
   assert( dstRectP->w == srcRectP->w && dstRectP->h == srcRectP->h );
@@ -108,7 +81,7 @@ Error copy ( Renderer* rendererP, Texture_* srcTextureP, Rect_* srcRectP, Rect_*
        dstRectP->y >= rendererP->h ||
        ( dstRectP->x + dstRectP->w ) < 0 ||
        ( dstRectP->y + dstRectP->h ) < 0 ) {
-    return SUCCESS; 
+    return; 
   }
 
   // The source rectangle must overlap with the source texture.
@@ -116,7 +89,7 @@ Error copy ( Renderer* rendererP, Texture_* srcTextureP, Rect_* srcRectP, Rect_*
        srcRectP->y >= srcTextureP->h ||
        ( srcRectP->x + srcRectP->w ) < 0 ||
        ( srcRectP->y + srcRectP->h ) < 0 ) {
-    return SUCCESS;  // just skip this copy peacefully if source rect isn't located on texture
+    return;  // just skip this copy peacefully if source rect isn't located on texture
   }
 
   // Determine which part of src and dst rects to copy from/to.
@@ -150,8 +123,6 @@ Error copy ( Renderer* rendererP, Texture_* srcTextureP, Rect_* srcRectP, Rect_*
     dstStartPixelP = _getPixelP( dstTextureP, dstStartX, dstY );
     memcpy( dstStartPixelP, srcStartPixelP, dstW );
   }
-  
-  return SUCCESS;
 }
 
 void present ( Renderer* rendererP ) {
@@ -159,20 +130,14 @@ void present ( Renderer* rendererP ) {
 }
 
 // Makes palette without setting its colors.
-Error surfaceNew(Surface_ **surfacePP, void *pixelDataA, U32 w, U32 h) {
-	if (!surfacePP || !pixelDataA) {
-    return E_BAD_ARGS;
-  }
-  Error e = jbAlloc( (void**) surfacePP, sizeof( Surface ), 1 );
-  if (!e ) {
-    e = arrayNew( (void**) &(*surfacePP)->pixelA, sizeof( Color_ ), w * h );
-    if ( e ) {
-      jbFree( (void**) surfacePP );
-    }
-    (*surfacePP)->w = w;
-    (*surfacePP)->h = h;
-  }
-	return e;
+Surface* surfaceNew(void *pixelDataA, U32 w, U32 h) {
+  assert (pixelDataA && w && h);
+  Surface* surfaceP = jbAlloc(sizeof( Surface ), 1 );
+  surfaceP->pixelA = arrayNew( sizeof( Color_ ), w * h );
+  assert(surfaceP->pixelA);
+  surfaceP->w = w;
+  surfaceP->h = h;
+  return surfaceP;
 }
 
 void surfaceDel(Surface_ **surfacePP) {
@@ -186,21 +151,16 @@ void appendAtlasPalette(Surface_ *atlasSurfaceP, ColorPalette *srcPaletteP) {
   // do  nothing lawl 
 }
 
-Error textureNew(Texture_ **texturePP, Renderer_ *rendererP, Surface_ *surfaceP) {
-	if ( !texturePP || !rendererP || !surfaceP ) {
-    return E_BAD_ARGS;
-  }
-  Error e = jbAlloc( (void**) texturePP, sizeof( Texture_ ), 1 );
-  if (!e ) {
-    e = arrayNew( (void**) &(*texturePP)->pixelA, sizeof( Color_ ), surfaceP->w * surfaceP->h );
-    if ( e ) {
-      jbFree( (void**) texturePP );
-    }
-    (*texturePP)->w = surfaceP->w;
-    (*texturePP)->h = surfaceP->h;
-    memcpy( (*texturePP)->pixelA, surfaceP->pixelA, arrayGetElemSz( surfaceP->pixelA ) * arrayGetNElems( surfaceP->pixelA ) );
-  }
-	return e;
+Texture* textureNew(Renderer_ *rendererP, Surface_ *surfaceP) {
+  assert(  rendererP && surfaceP );
+  Texture *textureP = jbAlloc(sizeof( Texture_ ), 1 );
+  assert(textureP);
+  textureP->pixelA = arrayNew( sizeof( Color_ ), surfaceP->w * surfaceP->h );
+  assert(textureP->pixelA);
+  textureP->w = surfaceP->w;
+  textureP->h = surfaceP->h;
+  memcpy( textureP->pixelA, surfaceP->pixelA, arrayGetElemSz( surfaceP->pixelA ) * arrayGetNElems( surfaceP->pixelA ) );
+  return textureP;
 }
 
 void textureDel(Texture_ **texturePP) {
@@ -244,14 +204,14 @@ static void* _mtGenericLoop(ThreadFuncArg *thargP) {
   const U32 ptrIncr = arrayGetElemSz(thargP->array);
   U8 *voidP = (U8*) thargP->array + ptrIncr * thargP->startIdx;
   U8 *voidEndP = voidP + thargP->nElemsToProcess;
-  for (Error e = SUCCESS; !e && voidP < voidEndP; voidP += ptrIncr) {
-    e = thargP->funcP((void*) *((U32*) voidP));  // ugly but... how else to generalize?
+  for (; voidP < voidEndP; voidP += ptrIncr) {
+    thargP->funcP((void*) *((U32*) voidP));  
   }
   return NULL;
 }
 
 // Multithreading entry point
-Error multiThread( CriticalFunc funcP, void *_array) {
+void multiThread( CriticalFunc funcP, void *_array) {
   if (!_array || !funcP) {
     return E_BAD_ARGS;
   }
