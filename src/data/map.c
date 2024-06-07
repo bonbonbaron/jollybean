@@ -208,6 +208,11 @@ void* mapGetNestedMapPElem(Map *mapP, Key mapKey, Key elemKey, MapElemType expec
 }
 
 void mapOfNestedMapsDel(Map **outerMapPP) {
+  mapOfNestedMapsClr(outerMapPP);
+  mapDel(outerMapPP);
+}
+
+void mapOfNestedMapsClr(Map **outerMapPP) {
   if (outerMapPP && *outerMapPP) {
     Map **mapPP = (Map**) (*outerMapPP)->mapA;
     Map **mapEndPP = mapPP + (*outerMapPP)->population;
@@ -216,6 +221,5 @@ void mapOfNestedMapsDel(Map **outerMapPP) {
         mapDel(mapPP);
       }
     }
-    mapDel(outerMapPP);
   }
 }

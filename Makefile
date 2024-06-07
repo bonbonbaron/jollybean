@@ -7,10 +7,10 @@ BLD_DIR := $(RPO_DIR)/build/src
 D_SRCS  := $(SRC_DIR)/data/strip.c $(SRC_DIR)/data/inflatable.c $(SRC_DIR)/data/bt.c $(SRC_DIR)/data/map.c $(SRC_DIR)/data/mail.c $(SRC_DIR)/data/fray.c $(SRC_DIR)/data/array.c  $(SRC_DIR)/data/mem.c
 
 # Implemented systems must come before their dependency, x.c.
-XI_SRCS := $(shell find $(SRC_DIR)/x -type f -name "x[^.]*.c") $(shell find $(SRC_DIR)/x -type f -name "x.c") $(shell find $(SRC_DIR)/interface -type f -name "*.c")
+#XI_SRCS := $(shell find $(SRC_DIR)/x -type f -name "x[^.]*.c") $(shell find $(SRC_DIR)/x -type f -name "x.c") $(shell find $(SRC_DIR)/interface -type f -name "*.c")
+XI_SRCS := $(shell find $(SRC_DIR)/x -type f -name "x.c")
 
-#SRCS    := $(XI_SRCS) $(D_SRCS)   # TODO uncomment this when ready to test X with data
-SRCS    := $(D_SRCS) 
+SRCS    := $(XI_SRCS) $(D_SRCS)   # TODO uncomment this when ready to test X with data
 
 OBJS    := $(SRCS:$(SRC_DIR)/%.c=$(BLD_DIR)/%.o)
 

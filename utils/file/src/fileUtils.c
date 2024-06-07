@@ -109,16 +109,11 @@ static char* getSrcDir(U32 nExtraSpaces, char *srcLocalDirName, U8 verbose) {
 char* getSrcFilePath(char *srcLocalDirName, char *srcFileName, char *srcFileSuffix, U8 verbose) {
   char* srcFilePath = getSrcDir(strlen(srcFileName) + strlen(srcFileSuffix), srcLocalDirName, verbose);
 
-  if (srcFilePath) {
-    strcat(srcFilePath, srcFileName);
-    strcat(srcFilePath, srcFileSuffix);
-    if (verbose) {
-      printf("final src file path: %s\n", srcFilePath);
-    }
-  }
-  else {
-    jbFree((void**) &srcFilePath);
-    assert(0);
+  assert (srcFilePath);
+  strcat(srcFilePath, srcFileName);
+  strcat(srcFilePath, srcFileSuffix);
+  if (verbose) {
+    printf("final src file path: %s\n", srcFilePath);
   }
   return srcFilePath;
 }
@@ -175,10 +170,7 @@ FILE* getBuildFile(char *buildLocalDirName, char *buildFileName, char *buildFile
   }
   // Open file.
   fP = fopen(buildFilePath, "w");
-  if (!fP) {
-    printf("[getBuildFile] file opening failed for path %s\n", buildFilePath);
-    assert(0);
-  }
+  assert(fP);
   if (buildFilePath) {
     jbFree((void**) &buildFilePath);
   }
@@ -197,10 +189,7 @@ FILE* getSrcFile(char *srcLocalDirName, char *srcFileName, char *srcFileSuffix, 
   }
   // Open file.
   fP = fopen(srcFilePath, "r");
-  if (!fP) {
-    printf("[getSrcFile] file opening failed for path %s\n", srcFilePath);
-    assert(0);
-  }
+  assert(fP);
   if (srcFilePath) {
     jbFree((void**) &srcFilePath);
   }

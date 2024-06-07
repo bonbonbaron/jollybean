@@ -22,8 +22,6 @@ Inflatable* inflatableNew(void* voidA) {
       break;
     case Z_MEM_ERROR:
     case Z_BUF_ERROR:
-      assert(0); // this means no memory
-      break;
     default:
       assert(0); // this means some other strange error happened
       break;

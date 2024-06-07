@@ -28,14 +28,9 @@ XIniSysFuncDef_(A) {
 	unused_(sParamsP);
   XA *xP = (XA*) sP;
   xP->someSystemwideU32 = 100000;
-  Error e = mapNew(&xP->aMP, RAW_DATA, sizeof(int), 255);
-  if (!e) {
-    e = mapNew(&xP->dMP, RAW_DATA, sizeof(double), 255);
-  }
-  if (!e) {
-    e = frayNew((void**) &xP->entityF, sizeof(Entity), 255);
-  }
-  return e;
+  xP->aMP = mapNew(RAW_DATA, sizeof(int), 255);
+  xP->dMP = mapNew(RAW_DATA, sizeof(double), 255);
+  xP->entityF = frayNew( sizeof(Entity), 255);
 }
 #endif
 /* Let's think through the design a bit.
@@ -56,48 +51,36 @@ XIniSysFuncDef_(A) {
 XIniSubcompFuncDefUnused_(A); 
 #else 
 XIniSubcompFuncDef_(A) {
-	if (!sP || !entity || !subtype || !dataP) {
-		return E_BAD_ARGS;
-  }
+	assert (sP && entity && subtype && dataP);
 
-  Error e = SUCCESS;
 	XA *xP = (XA*) sP;
 
   switch (subtype) {
     case 0x40:
-      e = mapSet(xP->aMP, entity, (int*) dataP);
+      mapSet(xP->aMP, entity, (int*) dataP);
+      // Only add entity once to fray for post-processing.
+      frayAdd(xP->entityF, (void*) &entity, NULL);
       break;
     case 0x80:
-      e = mapSet(xP->dMP, entity, (double*) dataP);
+      mapSet(xP->dMP, entity, (double*) dataP);
       break;
     case 0xa0:
     default:
       break;
   }
 
-  // Add entity to entity array for post-processing.
-  if (!e) {
-    if (xP->entityF[entity - 1] != entity) {
-      e = frayAdd(xP->entityF, (void*) &entity, NULL);
-    }
-  }
-
-	return e;
 }
 #endif
 
 // We'll populate the component's intP member with this.
+// #define XGetShareFuncDef_(name_) Map* x##name_##GetShare(System *sP, Map *shareMPMP)
 #if 0
 XGetShareFuncDefUnused_(A);
 #else
 XGetShareFuncDef_(A) {
   XA *xP = (XA*) sP;
-  Error e = SUCCESS;
-  int *intP;
-  if (sP && shareMPMP) {
-    e = mapGetNestedMapP(shareMPMP, 1, &xP->sharedIntMP);
-  }
-  return e;
+  assert(sP);
+  xP->sharedIntMP = mapGetNestedMapP(shareMPMP, 1);
 }
 #endif
 
@@ -107,23 +90,16 @@ XPostprocessCompsDefUnused_(A);
 // xAddEntityData() is called before this, so just call xAddComp() if you need to.
 XPostprocessCompsDef_(A) {
   XA *xP = (XA*) sP;
-  Error e = SUCCESS;
   Entity *entityP = xP->entityF;
   Entity *entityEndP = entityP + *_frayGetFirstEmptyIdxP(xP->entityF);
   // For each entity...
-  for (; !e && entityP < entityEndP; ++entityP) {
+  for (; entityP < entityEndP; ++entityP) {
     int *aP = (int*) mapGet(xP->aMP, *entityP);
     // Get current entity's a.
-    if (!aP) {
-      e = E_BAD_KEY;
-      break;
-    }
+    assert(aP);
     // Get current entity's d.
     double *dP = (double*) mapGet(xP->dMP, *entityP);
-    if (!dP) {
-      e = E_BAD_KEY;
-      break;
-    }
+    assert (dP);
     // Turn it into a full-fledged component.
     XAComp component = {
       .a = *aP,     // this is a pre-populated, immutable subcomponent
@@ -134,10 +110,8 @@ XPostprocessCompsDef_(A) {
     };
     // Now the component's populated. Add it to the system.
     //printf("adding component with a = %d and d = %f to entity %d\n", *aP, *dP, *entityP);
-    e = xAddComp(sP, *entityP, &component);
+    xAddComp(sP, *entityP, &component);
   }
-
-  return e;
 }
 #endif
 
@@ -151,7 +125,6 @@ XPostMutateFuncDef_(A) {
     xcP->a *= xcP->b + 1;
     xcP->d *= xcP->c - 2;
   }
-  return SUCCESS;
 }
 #endif
 
@@ -159,21 +132,18 @@ XPostMutateFuncDef_(A) {
 XProcMsgFuncDefUnused_(A);
 #else
 XProcMsgFuncDef_(A) {
-  if (!sP || !msgP) {
-    return E_BAD_ARGS;
-  }
+  assert (sP &&  msgP);
   if (msgP->cmd == 20) {
     XA* xP = (XA*) sP;
     xP->someSystemwideU32 = 100;
   }
-	return SUCCESS;
 }
 #endif
 
 //======================================================
 // A run function
 //======================================================
-Error xARun(System *sP) {
+void xARun(System *sP) {
 	XAComp *cP = (XAComp*) sP->cF;
 	XAComp *cEndP = cP + _frayGetFirstPausedIdx(sP->cF);
 
@@ -183,8 +153,6 @@ Error xARun(System *sP) {
     --cP->c;
     cP->d = cP->a + 1;
   }
-
-	return SUCCESS;
 }
 
 #if 0
@@ -202,12 +170,11 @@ XClrFuncDef_(A) {
     if (xP->entityF) {
       frayDel((void**) &xP->entityF);
     }
-    if (xP->sharedIntMP) {
-      mapDel(&xP->sharedIntMP);
-    }
     xP->someSystemwideU32 = 0;
+    mapOfNestedMapsClr(&sP->mutationMPMP);  // THIS is where we properly clear the innards of a nested map, 
+                                           // in case more than one system has the same mutation map in their
+                                           // entity-to-mutations map.
   }
-  return SUCCESS;
 }
 #endif
 

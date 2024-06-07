@@ -91,19 +91,19 @@ typedef enum { INITIALIZED = 1 } SubcomponentState;
 struct _System;
 
 // Function pointer types
-typedef Error (*XIniSU)(struct _System *sP, void* sParamsP);
-typedef Error (*XIniSubcompU)(struct _System *sP, const Entity entity, const Key subtype, void *dataP);
-typedef Error (*XRunU)(struct _System *sP);
-typedef Error (*XClrU)(struct _System *sP);
-typedef Error (*XProcMsgU)(struct _System *sP, Message *messageP);
-typedef Error (*XGetShareU)(struct _System *sP, Map *shareMPMP);
-typedef Error (*XPostprocessCompsU)(struct _System *sP);
-typedef Error (*XPostMutateU)(struct _System *sP, void *cP);  // changes immutables alogn with mutables
+typedef void (*XIniSU)(struct _System *sP, void* sParamsP);
+typedef void (*XIniSubcompU)(struct _System *sP, const Entity entity, const Key subtype, void *dataP);
+typedef void (*XRunU)(struct _System *sP);
+typedef void (*XClrU)(struct _System *sP);
+typedef void (*XProcMsgU)(struct _System *sP, Message *messageP);
+typedef void (*XGetShareU)(struct _System *sP, Map* shareMPMP);
+typedef void (*XPostprocessCompsU)(struct _System *sP);
+typedef void (*XPostMutateU)(struct _System *sP, void *cP);  // changes immutables alogn with mutables
 #define XPostprocessCompsDefUnused_(name_) XPostprocessCompsDef_(name_) {\
   unused_(sP);\
   return SUCCESS;\
 }
-#define XPostprocessCompsDef_(name_) Error x##name_##PostprocessComps(System *sP)
+#define XPostprocessCompsDef_(name_) void x##name_##PostprocessComps(System *sP)
 
 #define XIniSysFuncDefUnused_(name_) XIniSysFuncDef_(name_) {\
   unused_(sP);\
@@ -111,7 +111,7 @@ typedef Error (*XPostMutateU)(struct _System *sP, void *cP);  // changes immutab
   return SUCCESS;\
 }
 
-#define XIniSysFuncDef_(name_) Error x##name_##IniSys(System *sP, void *sParamsP)
+#define XIniSysFuncDef_(name_) void x##name_##IniSys(System *sP, void *sParamsP)
 
 #define XIniSubcompFuncDefUnused_(name_) XIniSubcompFuncDef_(name_) {\
   unused_(sP);\
@@ -120,37 +120,37 @@ typedef Error (*XPostMutateU)(struct _System *sP, void *cP);  // changes immutab
   unused_(dataP);\
   return SUCCESS;\
 }
-#define XIniSubcompFuncDef_(name_)  Error x##name_##IniSubcomp(System *sP, const Entity entity, const Key subtype, void *dataP)
+#define XIniSubcompFuncDef_(name_)  void x##name_##IniSubcomp(System *sP, const Entity entity, const Key subtype, void *dataP)
 
 #define XClrFuncDefUnused_(name_) XClrFuncDef_(name_) {\
   unused_(sP);\
   return SUCCESS;\
 }
-#define XClrFuncDef_(name_)      Error x##name_##Clr(System *sP)
+#define XClrFuncDef_(name_)      void x##name_##Clr(System *sP)
 
 #define XProcMsgFuncDefUnused_(name_)  XProcMsgFuncDef_(name_) {\
   unused_(sP);\
   unused_(msgP);\
   return SUCCESS;\
 }
-#define XProcMsgFuncDef_(name_)  Error x##name_##ProcessMessage(System *sP, Message *msgP)
+#define XProcMsgFuncDef_(name_)  void x##name_##ProcessMessage(System *sP, Message *msgP)
 
-#define XGetShareFuncDefUnused_(name_) Error x##name_##GetShare(System *sP, Map *shareMPMP) {\
+#define XGetShareFuncDefUnused_(name_) void x##name_##GetShare(System *sP, Map* shareMPMP) {\
   unused_(sP); \
   unused_(shareMPMP); \
   return SUCCESS; \
 }
-#define XGetShareFuncDef_(name_) Error x##name_##GetShare(System *sP, Map *shareMPMP)
+#define XGetShareFuncDef_(name_) void x##name_##GetShare(System *sP, Map* shareMPMP)
 
-#define XRunFuncDef_(name_) Error x##name_##Run(System *sP)
+#define XRunFuncDef_(name_) void x##name_##Run(System *sP)
 
-#define XPostMutateFuncDefUnused_(name_) Error x##name_##PostMutate(System *sP, void *cP) {\
+#define XPostMutateFuncDefUnused_(name_) void x##name_##PostMutate(System *sP, void *cP) {\
   unused_(sP);\
   unused_(cP);\
   return SUCCESS;\
 }
 
-#define XPostMutateFuncDef_(name_) Error x##name_##PostMutate(System *sP, void *cP)
+#define XPostMutateFuncDef_(name_) void x##name_##PostMutate(System *sP, void *cP)
 
 typedef struct {
   Entity owner;
@@ -194,27 +194,27 @@ typedef struct _System {
   XGetShareU   getShare;             // Some systems' components share pointers to common data. This is how it retrieves them by a parent system's call. 
 } System;
 
-Error    xAddComp(System *sP, Entity entity, void *compDataP);
-Error    xMutateComponent(System *sP, Entity entity, Key newCompKey);
-Error    xIniSys(System *sP, U32 nComps, void *miscP);
-Error    xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP);
-Error    xIniSubcomp(System *sP, const Entity entity, const void *cmpP);
-Error    xAddEntity(System *sP, Entity entity, Key compType, void *compDataP, Map *mutationMP);
-Error    xAddMutationMap(System *sP, Entity entity, Map *mutationMP);
+void    xAddComp(System *sP, Entity entity, void *compDataP);
+void    xMutateComponent(System *sP, Entity entity, Key newCompKey);
+void    xIniSys(System *sP, U32 nComps, void *miscP);
+void    xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP);
+void    xIniSubcomp(System *sP, const Entity entity, const void *cmpP);
+void    xAddEntity(System *sP, Entity entity, Key compType, void *compDataP, Map *mutationMP);
+void    xAddMutationMap(System *sP, Entity entity, Map *mutationMP);
 //void*    xGetComp(System *sP, Entity entity);
 Entity   xGetEntityByVoidComponentPtr(System *sP, void *componentP);
 U32      xGetNComps(System *sP);
 void*    xGetCompValP(System *sP, Entity entity, Key key);
 Entity   xGetEntityByCompIdx(System *sP, Key compIdx);
 void*    xGetCompPByEntity(System *sP, Entity entity);
-Error    xActivateComponentByEntity(System *sP, Entity e1);
-Error    xDeactivateComponentByEntity(System *sP, Entity e1);
-Error    xPauseComponentByEntity(System *sP, Entity entity);
-Error    xUnpauseComponentByEntity(System *sP, Entity entity);
-Error    xActivateComponentByIdx(System *sP, Key compOrigIdx);
-Error    xDeactivateComponentByIdx(System *sP, Key compOrigIdx);
-Error    xQueuePause(System *sP, void *componentP);
-Error    xQueueDeactivate(System *sP, void *componentP);
+void     xActivateComponentByEntity(System *sP, Entity e1);
+void     xDeactivateComponentByEntity(System *sP, Entity e1);
+void     xPauseComponentByEntity(System *sP, Entity entity);
+void     xUnpauseComponentByEntity(System *sP, Entity entity);
+void     xActivateComponentByIdx(System *sP, Key compOrigIdx);
+void     xDeactivateComponentByIdx(System *sP, Key compOrigIdx);
+void     xQueuePause(System *sP, void *componentP);
+void     xQueueDeactivate(System *sP, void *componentP);
 void     xClr(System *sP);
-Error    xRun(System *sP);
+void     xRun(System *sP);
 #endif

@@ -137,16 +137,14 @@ static U8* _packBits(U8 *ssUnpackedA, U32 nUnits, U32 bpu, U8 verbose) {
 }
 
 static void _checkMatch(U32 *srcUnpackedWordP, U8 *srcUnpackedDataP, U32 dstUnpackedWord, U32 nUnitsToCompare, U32 nUnits) {
-  if (memcmp(srcUnpackedWordP, &dstUnpackedWord, nUnitsToCompare)) {
-    printf("Src unpacked word %9d of %9d: %9d != dst %d\n", 
-        srcUnpackedWordP - (U32*) srcUnpackedDataP, 
-        (nUnits >> 2) - 1,
-        *srcUnpackedWordP,
-        dstUnpackedWord);
-    printf("Bombing out...\n\n");
-    assert(0);
-  }
+  assert(!memcmp(srcUnpackedWordP, &dstUnpackedWord, nUnitsToCompare));
 #if 0
+  printf("Src unpacked word %9d of %9d: %9d != dst %d\n", 
+      srcUnpackedWordP - (U32*) srcUnpackedDataP, 
+      (nUnits >> 2) - 1,
+      *srcUnpackedWordP,
+      dstUnpackedWord);
+  printf("Bombing out...\n\n");
   else {
     printf("Src unpacked word %9d of %9d: %9d == dst\n", 
         srcUnpackedWordP - (U32*) srcUnpackedDataP, 
@@ -225,10 +223,7 @@ static void _validateStripmapping(U8 *ssA, U32 nBytesPerUnpackedStrip, StripmapE
   for (; smElemP < smElemEndP && origElemP < origElemEndP; ++smElemP, origElemP += nBytesPerUnpackedStrip) {
     ssElemP = ssA + (*smElemP * nBytesPerUnpackedStrip); 
     // If unpacked strip doensn't match original data it maps to, bomb out.
-    if (memcmp(ssElemP, origElemP, nBytesPerUnpackedStrip)) {
-      printf("Found mismatching strip\n");
-      assert(0);
-    }  // if original strip does not match one in stripset
+    assert (!memcmp(ssElemP, origElemP, nBytesPerUnpackedStrip)) {
   }  // for each strip in stripset
 
   printf("\nCONGRULATIONS! We validated your stripmap's integrity!\n\n");
@@ -242,14 +237,8 @@ static void _validateInflatables(StripDataS *sdP, StripmapElem *smSrcA, U8 *pack
   inflatableIni(sdP->ss.infP);
   inflatableIni(sdP->sm.infP);
   // See if their contents match their sources
-  if (memcmp(sdP->ss.infP->inflatedDataP, packedStripsetA, sdP->ss.infP->inflatedLen)) {
-    printf("\nSTRIPSET INFLATABLE'S BAD\n");
-    assert(0)
-  }
-  if (memcmp(sdP->sm.infP->inflatedDataP, smSrcA, sdP->sm.infP->inflatedLen)) {
-    printf("\nSTRIPSET INFLATABLE'S BAD\n");
-    assert(0)
-  }
+  assert (!memcmp(sdP->ss.infP->inflatedDataP, packedStripsetA, sdP->ss.infP->inflatedLen));
+  assert(!memcmp(sdP->sm.infP->inflatedDataP, smSrcA, sdP->sm.infP->inflatedLen));
   printf("\nCONGRATS! We validated your stripset and stripmap inflatables!\n\n");
   inflatableClr(sdP->ss.infP);
   inflatableClr(sdP->sm.infP);
@@ -258,15 +247,9 @@ static void _validateInflatables(StripDataS *sdP, StripmapElem *smSrcA, U8 *pack
 static void _validateUnstrippedData(StripDataS *sdP, U8 *srcA) {
   assert(sdP && sdP->assembledDataA && sdP->sm.infP && sdP->sm.infP->inflatedDataP && srcA);
   // Validate output element size
-  if (arrayGetElemSz(sdP->assembledDataA) != arrayGetElemSz(srcA)) {
-    printf("[_validateUnstrippedData] Unstripped data's elements size %d doesn't match source data's element size %d.\n");
-    assert(0);
-  }
+  assert (arrayGetElemSz(sdP->assembledDataA) == arrayGetElemSz(srcA));
   // Validate output element count
-  if (arrayGetNElems(sdP->assembledDataA) != arrayGetNElems(srcA)) {
-    printf("[_validateUnstrippedData] Unstripped data's %d elements doesn't match source data's %d elements.\n");
-    assert(0);
-  }
+  assert (arrayGetNElems(sdP->assembledDataA) == arrayGetNElems(srcA));
 
   if (memcmp(srcA, sdP->assembledDataA, arrayGetElemSz(srcA) * arrayGetNElems(srcA))) {
     printf("[_validateUnstrippedData] Unstripped data doesn't  match original.\n");
@@ -294,9 +277,7 @@ static void _validateUnstrippedData(StripDataS *sdP, U8 *srcA) {
     }
 
     // Bomb out if it failed in the above for-loop.
-    if (i < arrayGetElemSz(sdP->assembledDataA) * arrayGetNElems(sdP->assembledDataA)) {
-      assert(0);  
-    }
+    assert (i == arrayGetElemSz(sdP->assembledDataA) * arrayGetNElems(sdP->assembledDataA));
 
     printf("\n\n");
   }
@@ -305,26 +286,11 @@ static void _validateUnstrippedData(StripDataS *sdP, U8 *srcA) {
 #endif
 
 StripDataS* stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bpu,  U32 flags, U8 verbose) {
-  if (!srcA) {
-    printf( "[stripNew] Source array is null.\n" );
-    assert(0);
-  }
-  if (!nBytesPerUnpackedStrip) {
-    printf( "[stripNew] No bytes per unpacked strip.\n" );
-    assert(0);
-  }
-  if ( !bpu ) {
-    printf( "[stripNew] No bits per packed byte.\n" );
-    assert(0);
-  }
-  if (bpu > 8) {
-    printf( "[stripNew] Too many bits per packed byte.\n" );
-    assert(0);
-  }
-  if (((arrayGetNElems(srcA) * arrayGetElemSz(srcA)) % nBytesPerUnpackedStrip) != 0) {
-    printf( "[stripNew] There should be no remainder units; %d bytes isn't cleanly divided by %d.\n",  (arrayGetNElems(srcA) * arrayGetElemSz(srcA)), nBytesPerUnpackedStrip);
-    assert(0);
-  }
+  assert (srcA);
+  assert (nBytesPerUnpackedStrip);
+  assert (!bpu );
+  assert (bpu <= 8);
+  assert (((arrayGetNElems(srcA) * arrayGetElemSz(srcA)) % nBytesPerUnpackedStrip) == 0);
   /* Number of strips needed:
    *              unit          strip      8 bits
    * X units    ----------  * -------  *  -----   = 0 strips
