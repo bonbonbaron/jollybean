@@ -1,27 +1,21 @@
 #include "anim.h"
 
 // Frames ------------
-Error frameNodeNew(FrameNode **nodePP) {
-  if (!nodePP)
-    return E_BAD_ARGS;
-  Error e = jbAlloc((void**) nodePP, sizeof(FrameNode), 1);
-  if (!e) 
-    memset(*nodePP, 0, sizeof(FrameNode));
-  return e;
+FrameNode* frameNodeNew() {
+  FrameNode* fnP = jbAlloc(sizeof(FrameNode), 1);
+  memset(fnP, 0, sizeof(FrameNode));
+  return fnP;
 }
 
-Error frameNodeGrow(FrameNode **nodePP) {
-  if (!nodePP)
-    return E_BAD_ARGS;
-  Error e = SUCCESS;
-  if (!*nodePP)
-    e = frameNodeNew(nodePP);
-  else {
-    e = frameNodeNew(&(*nodePP)->nextP);
-    if (!e)
-      *nodePP = (*nodePP)->nextP;
+void frameNodeGrow(FrameNode **nodePP) {
+  assert (nodePP);
+  if (!*nodePP) {
+    *nodePP = frameNodeNew();
   }
-  return e;
+  else {
+    (*nodePP)->nextP = frameNodeNew();
+    *nodePP = (*nodePP)->nextP;
+  }
 }
 
 void frameNodeDel(FrameNode **nodePP) {
@@ -31,27 +25,21 @@ void frameNodeDel(FrameNode **nodePP) {
 }
 
 // Tags  ---------------
-Error tagNodeNew(TagNode **nodePP) {
-  if (!nodePP)
-    return E_BAD_ARGS;
-  Error e = jbAlloc((void**) nodePP, sizeof(TagNode), 1);
-  if (!e) 
-    memset(*nodePP, 0, sizeof(TagNode));
-  return e;
+TagNode* tagNodeNew() {
+  TagNode* tnP = jbAlloc(sizeof(TagNode), 1);
+  memset(tnP, 0, sizeof(TagNode));
+  return tnP;
 }
 
-Error tagNodeGrow(TagNode **nodePP) {
-  if (!nodePP)
-    return E_BAD_ARGS;
-  Error e = SUCCESS;
-  if (!*nodePP)
-    e = tagNodeNew(nodePP);
-  else {
-    e = tagNodeNew(&(*nodePP)->nextP);
-    if (!e)
-      *nodePP = (*nodePP)->nextP;
+void tagNodeGrow(TagNode **nodePP) {
+  assert(nodePP);
+  if (!*nodePP) {
+    *nodePP = tagNodeNew();
   }
-  return e;
+  else {
+    (*nodePP)->nextP = tagNodeNew();
+    *nodePP = (*nodePP)->nextP;
+  }
 }
 
 void tagNodeDel(FrameNode **nodePP) {
@@ -107,11 +95,9 @@ void setFrame(FrameNode *frameP, fjson_object *jsonObjP) {
 }
 // At this point the caller has run into the "frames" key. 
 // Its value is either going to be an object of objects or an array of objects.
-Error setFrames(FrameNode **framePP, fjson_object *jsonObjP, fjson_type framesType, U8 verbose) {
-  if (!framePP || !jsonObjP)
-    return E_BAD_ARGS;
+void setFrames(FrameNode **framePP, fjson_object *jsonObjP, fjson_type framesType, U8 verbose) {
+  assert (framePP && jsonObjP);
 
-  Error e = SUCCESS;
   fjson_object *currObjP = NULL;
   FrameNode **currFramePP = framePP;
   FrameNode *firstFrameNodeP = NULL;
@@ -131,16 +117,15 @@ Error setFrames(FrameNode **framePP, fjson_object *jsonObjP, fjson_type framesTy
       currObjP = fjson_object_iter_peek_value(&itr);
       // Grow a new frame node either from root or head.
       if (!*currFramePP) {
-        e = frameNodeGrow(currFramePP);
+        frameNodeGrow(currFramePP);
         firstFrameNodeP = *currFramePP;
       }
       else {
-        e = frameNodeGrow(currFramePP);
+        frameNodeGrow(currFramePP);
       }
-      //e = frameNodeGrow(currFramePP);
+      //e = frameNodeGrow(currFramePP);   // TODo why'd i comment this out?
       // Set the new frame node's values.
-      if (!e)
-        setFrame(*currFramePP, currObjP); 
+      setFrame(*currFramePP, currObjP); 
     }
   }
   else if (framesType == fjson_type_array) {
@@ -155,29 +140,23 @@ Error setFrames(FrameNode **framePP, fjson_object *jsonObjP, fjson_type framesTy
     for (int j = 0; j < nArrElems; ++j) {
       // Grow a new frame node either from root or head.
       if (!*currFramePP) {
-        e = frameNodeGrow(currFramePP);
+        frameNodeGrow(currFramePP);
         firstFrameNodeP = *currFramePP;
       }
       else {
-        e = frameNodeGrow(currFramePP);
+        frameNodeGrow(currFramePP);
       }
-      if (!e) {
-        arrayObjP = fjson_object_array_get_idx(jsonObjP, j);
-        setFrame(*currFramePP, arrayObjP);
-      }
+      arrayObjP = fjson_object_array_get_idx(jsonObjP, j);
+      setFrame(*currFramePP, arrayObjP);
     }
   }
-  if (!e)
-    *framePP = firstFrameNodeP;
-  return e;
+  *framePP = firstFrameNodeP;
 }
 
 // At this point the caller has run into the "frameTags" key. 
-Error setTags(TagNode **tagNodePP, fjson_object *jsonObjP, U8 verbose) {
-  if (!tagNodePP || !jsonObjP)
-    return E_BAD_ARGS;
+void setTags(TagNode **tagNodePP, fjson_object *jsonObjP, U8 verbose) {
+  assert (tagNodePP && jsonObjP);
 
-  Error e = SUCCESS;
   fjson_object *currObjP = NULL;
   TagNode **currTagPP = tagNodePP;
   TagNode *firstTagNodeP = NULL;
@@ -190,46 +169,42 @@ Error setTags(TagNode **tagNodePP, fjson_object *jsonObjP, U8 verbose) {
   nArrElems = fjson_object_array_length(jsonObjP);
   // Iterate through frames' array.
   for (int j = 0; j < nArrElems; ++j) {
-    if (verbose)
+    if (verbose) {
       printf("Tags array elem #%d...\n", j);
-    // Grow a new frame node either from root or head.
-    if (!e) {
-      // Get frame tag at index j.
-      arrayElemObjP = fjson_object_array_get_idx(jsonObjP, j);
-      struct fjson_object_iterator arrIter = fjson_object_iter_begin(arrayElemObjP);
-      //struct fjson_object_iterator arrIterEnd = fjson_object_iter_end(arrayElemObjP);
-      // be sure to store the outcome to come back to it later. I know it's ugly but i'm tired.
-      if (!*currTagPP) {
-        e = tagNodeGrow(currTagPP);
-        firstTagNodeP = *currTagPP;
-      }
-      else {
-        e = tagNodeGrow(currTagPP);
-      }
-
-      if (e)
-        break;
-      // Get name of current object in array.
-      // Name
-      fjson_object *frameTagInnerObjP = fjson_object_iter_peek_value(&arrIter);
-      (*currTagPP)->name = (char*) fjson_object_get_string(frameTagInnerObjP);
-      fjson_object_iter_next(&arrIter);
-      // From
-      frameTagInnerObjP = fjson_object_iter_peek_value(&arrIter);
-      (*currTagPP)->from = fjson_object_get_int(frameTagInnerObjP);
-      fjson_object_iter_next(&arrIter);
-      // To
-      frameTagInnerObjP = fjson_object_iter_peek_value(&arrIter);
-      (*currTagPP)->to = (U32) fjson_object_get_int(frameTagInnerObjP);
-      fjson_object_iter_next(&arrIter);
-      // Direction
-      frameTagInnerObjP = fjson_object_iter_peek_value(&arrIter);
-      (*currTagPP)->direction = (char*) fjson_object_get_string(frameTagInnerObjP);
     }
+    // Grow a new frame node either from root or head.
+    // Get frame tag at index j.
+    arrayElemObjP = fjson_object_array_get_idx(jsonObjP, j);
+    struct fjson_object_iterator arrIter = fjson_object_iter_begin(arrayElemObjP);
+    //struct fjson_object_iterator arrIterEnd = fjson_object_iter_end(arrayElemObjP);
+    // be sure to store the outcome to come back to it later. I know it's ugly but i'm tired.
+    if (!*currTagPP) {
+      tagNodeGrow(currTagPP);
+      firstTagNodeP = *currTagPP;
+    }
+    else {
+      tagNodeGrow(currTagPP);
+    }
+
+    // Get name of current object in array.
+    // Name
+    fjson_object *frameTagInnerObjP = fjson_object_iter_peek_value(&arrIter);
+    (*currTagPP)->name = (char*) fjson_object_get_string(frameTagInnerObjP);
+    fjson_object_iter_next(&arrIter);
+    // From
+    frameTagInnerObjP = fjson_object_iter_peek_value(&arrIter);
+    (*currTagPP)->from = fjson_object_get_int(frameTagInnerObjP);
+    fjson_object_iter_next(&arrIter);
+    // To
+    frameTagInnerObjP = fjson_object_iter_peek_value(&arrIter);
+    (*currTagPP)->to = (U32) fjson_object_get_int(frameTagInnerObjP);
+    fjson_object_iter_next(&arrIter);
+    // Direction
+    frameTagInnerObjP = fjson_object_iter_peek_value(&arrIter);
+    (*currTagPP)->direction = (char*) fjson_object_get_string(frameTagInnerObjP);
   }
-  if (!e)
-    *tagNodePP = firstTagNodeP;
-  return e;
+
+  *tagNodePP = firstTagNodeP;
 }
 
 void printResults(AnimJsonData *animP) {
@@ -253,8 +228,7 @@ void printResults(AnimJsonData *animP) {
 
 // JSON tree traversal 
 // ====================
-Error getJsonData(AnimJsonData *animP, fjson_object *objP, U8 verbose) {
-  Error e = SUCCESS;
+void getJsonData(AnimJsonData *animP, fjson_object *objP, U8 verbose) {
   struct fjson_object_iterator itr =  fjson_object_iter_begin(objP);
   struct fjson_object_iterator itrEnd =  fjson_object_iter_end(objP);
   // Recurse along the current level of the JSON tree.
@@ -262,7 +236,7 @@ Error getJsonData(AnimJsonData *animP, fjson_object *objP, U8 verbose) {
     fjson_object *currObjP = fjson_object_iter_peek_value(&itr);
     const char *name = fjson_object_iter_peek_name(&itr);
     if (!strcmp(name, "frames")) 
-      e = setFrames(&animP->frameNodeA, currObjP, fjson_object_get_type(currObjP), verbose);
+      setFrames(&animP->frameNodeA, currObjP, fjson_object_get_type(currObjP), verbose);
     else if (!strcmp(name, "meta")) {
       struct fjson_object_iterator metaItr = fjson_object_iter_begin(currObjP);
       struct fjson_object_iterator metaItrEnd =  fjson_object_iter_end(currObjP);
@@ -270,38 +244,39 @@ Error getJsonData(AnimJsonData *animP, fjson_object *objP, U8 verbose) {
         const char *name = fjson_object_iter_peek_name(&metaItr);
         if (!strcmp(name, "frameTags")) {
           fjson_object *metaArrayObjP = fjson_object_iter_peek_value(&metaItr);
-          e = setTags(&animP->tagNodeA, metaArrayObjP, verbose);
+          setTags(&animP->tagNodeA, metaArrayObjP, verbose);
           break;
         }
       }
     }
   }
-  return e;
 }
 
 TagNode* getTagNode(TagNode *rootP, U32 idx) {
-  if (!rootP)
+  if (!rootP) {
     return NULL;
+  }
   TagNode *resultP = rootP;
-  for (int i = 0; i < idx; ++i)
+  for (int i = 0; i < idx; ++i) {
     resultP = resultP->nextP;
+  }
   return resultP;
 }
 
 FrameNode* getFrameNode(FrameNode *rootP, U32 idx) {
-  if (!rootP)
+  if (!rootP) {
     return NULL;
+  }
   FrameNode *resultP = rootP;
-  for (int i = 0; i < idx; ++i)
+  for (int i = 0; i < idx; ++i) {
     resultP = resultP->nextP;
+  }
   return resultP;
 }
 
-Error writeAnimJsonData(char *entityName, AnimJsonData *animP, U8 verbose) {
+void writeAnimJsonData(char *entityName, AnimJsonData *animP, U8 verbose) {
   FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Animation/src", entityName, "Anim.c", verbose); 
-  if (!fP) {
-    return E_FILE_IO;
-  }
+  assert(fP);
   Key nKeyValPairs = 0;
   fprintf(fP, "#include \"xAnim.h\"\n");
   fprintf(fP, "#include \"animKeyring.h\"\n\n");
@@ -310,8 +285,7 @@ Error writeAnimJsonData(char *entityName, AnimJsonData *animP, U8 verbose) {
     // AnimJsonData frame arrays
     fprintf(fP, "AnimFrame frame_%s_%s_A[] = {\n", entityName, tagP->name);
     FrameNode *frameNodeP = getFrameNode(animP->frameNodeA, tagP->from);
-    if (!frameNodeP)
-      return E_BAD_ARGS;
+    assert(frameNodeP);
     for (int i = tagP->from; frameNodeP && i <= tagP->to; ++i, frameNodeP = frameNodeP->nextP) {
       fprintf(fP, "\t{\n");
       fprintf(fP, "\t\t.rect = {\n");
@@ -338,44 +312,31 @@ Error writeAnimJsonData(char *entityName, AnimJsonData *animP, U8 verbose) {
     ++nKeyValPairs;
   }
   fclose(fP);
-
-  return SUCCESS;
 }
 
-Error writeAnimHeader(char *entityName, AnimJsonData *animP, U8 verbose) {
+void writeAnimHeader(char *entityName, AnimJsonData *animP, U8 verbose) {
   FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Animation/include", entityName, "Anim.h", verbose); 
-  if (!fP) {
-    return E_FILE_IO;
-  }
+  assert(fP);
   fprintf(fP, "#include \"xAnim.h\"\n");
   for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
     fprintf(fP, "extern AnimStrip %sAnimStrip_%s;\n", entityName, tagP->name);
   }
   fclose(fP);
-
-  return SUCCESS;
 }
 
 /* anim() outputs an AnimJsonData** in case the caller wants to use its 
    frame data to look for collision rectangles. */
-Error anim (char *entityNameP, U8 verbose, AnimJsonData **animPP) {
-  if (!entityNameP || !animPP) {
-    return E_BAD_ARGS;
-  }
+void anim (char *entityNameP, U8 verbose, AnimJsonData **animPP) {
+  assert (entityNameP && animPP);
 
   FILE *fP = getSrcFile("Body/Graybody/Animation", entityNameP, ".json", verbose); 
-  if (!fP) {
-    return E_FILE_IO;
-  }
+  assert(fP);
 
   // Get file size
   fseek(fP, 0, SEEK_END);
   int nBytes = ftell(fP);
-  if (nBytes <= 0) {
-    printf("~/jb/src/Body/GrayBody/Animation/%s.json is empty! Exiting...\n", entityNameP);
-    return E_FILE_IO;
-  }
-  else if (verbose) {
+  assert (nBytes > 0);
+  if (verbose) {
     printf("~/jb/src/Body/GrayBody/Animation/%s.json is %d bytes.\n", entityNameP);
   }
   fseek(fP, 0, SEEK_SET);
@@ -392,31 +353,16 @@ Error anim (char *entityNameP, U8 verbose, AnimJsonData **animPP) {
   fjson_object *topLevelObjP = fjson_tokener_parse(jsonFileContents);
 
   // Turn it into a C struct
-  AnimJsonData *animP;
-  Error e = jbAlloc((void**) &animP, sizeof(AnimJsonData), 1);
+  AnimJsonData *animP = jbAlloc(sizeof(AnimJsonData), 1);
 
-  if (!e) {
-    memset(animP, 0, sizeof(AnimJsonData));
-    e = getJsonData(animP, topLevelObjP, verbose);
-  }
-  if (!e && verbose) {
+  memset(animP, 0, sizeof(AnimJsonData));
+  getJsonData(animP, topLevelObjP, verbose);
+  if (verbose) {
     printResults(animP);
   }
-  if (!e) {
-    e = writeAnimJsonData(entityNameP, animP, verbose);
-  }
-  if (!e) {
-    e = writeAnimHeader(entityNameP, animP, verbose);
-  }
+  writeAnimJsonData(entityNameP, animP, verbose);
+  writeAnimHeader(entityNameP, animP, verbose);
 
   // Return animation if it's good; otherwise free it and return NULL.
-  if (!e) {
-    *animPP = animP;
-  }
-  else {
-    *animPP = NULL;
-    jbFree((void**) &animP);
-  }
-
-  return e;
+  *animPP = animP;
 }

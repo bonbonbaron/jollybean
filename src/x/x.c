@@ -295,7 +295,7 @@ static void _deactivateQueue(System *sP) {
 
 Entity xGetEntityByVoidComponentPtr(System *sP, void *componentP) {
   assert (sP && componentP);
-  Entity compIdx = ((U32) componentP - (U32) sP->cF) / sP->compSz;
+  Entity compIdx = ((void*) componentP - (void*) sP->cF) / sP->compSz;
   return xGetEntityByCompIdx(sP, compIdx);
 }
 

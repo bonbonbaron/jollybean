@@ -12,9 +12,9 @@ BLD = $(JB)/build/src
 SRC = $(JB)/src
 KR  = ${HOME}/jb/src/Keyring
 
-OBJS := ../file/build/fileUtils.o ../stripUtil/build/stripUtil.o ../infUtil/build/infUtil.o ${BUILDDIR}/body.o ${BUILDDIR}/img.o ${BUILDDIR}/anim.o ${BUILDDIR}/coll.o ${BUILDDIR}/previewImg.o 
+OBJS := ../file/build/fileUtils.o ../sd/build/sd.o ../inf/build/inf.o ${BUILDDIR}/body.o ${BUILDDIR}/img.o ${BUILDDIR}/anim.o ${BUILDDIR}/coll.o ${BUILDDIR}/previewImg.o 
 
-INCS := -I../stripUtil/src/include -I./src/include -I../infUtil/src/include -I$(SRC)/data/include -I$(SRC)/x/include -I$(SRC)/interface/include -I$(SRC)/include -I$(KR) -I../file/src/include/ -I/usr/include/libfastjson 
+INCS := -I../sd/src/include -I./src/include -I../inf/src/include -I$(SRC)/data/include -I$(SRC)/x/include -I$(SRC)/interface/include -I$(SRC)/include -I$(KR) -I../file/src/include/ -I/usr/include/libfastjson 
 
 # Linker
 ${BINDIR}/body: $(OBJS)
@@ -29,11 +29,11 @@ ${BUILDDIR}/%.o: ./src/%.c ./src/include/%.h
 ../file/build/fileUtils.o: ../file/src/fileUtils.c ../file/src/include/fileUtils.h
 	make -C ../file
 
-../stripUtil/build/stripUtil.o: ../stripUtil/src/stripUtil.c ../stripUtil/src/include/stripUtil.h
-	make -C ../stripUtil
+../sd/build/sd.o: ../sd/src/sd.c ../sd/src/include/sd.h
+	make -C ../sd
 
-../infUtil/build/infUtil.o: ../infUtil/src/infUtil.c ../infUtil/src/include/infUtil.h
-	make -C ../infUtil
+../inf/build/inf.o: ../inf/src/inf.c ../inf/src/include/inf.h
+	make -C ../inf
 
 $(BLD)/data/%.o: $(SRC)/data/%.c
 	make -C $(JB)

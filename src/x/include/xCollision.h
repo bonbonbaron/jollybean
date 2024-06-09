@@ -29,7 +29,7 @@ typedef struct {
 } XCollision;
 
 // Functions
-Error xCollisionIniS(System *sP, void *sParamsP);
-Error xCollisionProcessMessage(System *sP, Message *msgP);
+void xCollisionIniS(System *sP, void *sParamsP);
+void xCollisionProcessMessage(System *sP, Message *msgP);
 extern System *sCollisionP;
 #endif

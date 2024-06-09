@@ -60,11 +60,11 @@ typedef struct {
 typedef struct {} XRenderMutation;
 
 // Images
-Error atlasNew(Atlas **atlasPP, Image **imgPF);
+Atlas* atlasNew( Image **imgPF);
 void atlasDel(Atlas **atlasPP);
-Error atlasPlanPlacements(Atlas *atlasP);
-Error xRenderIniS(System *sP, void *sParamsP);
-Error xRenderProcessMessage(System *sP, Message *msgP);
+void atlasPlanPlacements(Atlas *atlasP);
+void xRenderIniS(System *sP, void *sParamsP);
+void xRenderProcessMessage(System *sP, Message *msgP);
 typedef void (*XRenderPresentU)(Renderer_ *rendererP);  // TODO uh.. what was this for again?
 extern XPostprocessCompsDef_(Render);
 

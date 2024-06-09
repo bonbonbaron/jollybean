@@ -11,13 +11,13 @@
 #include "json.h"
 #include "anim.h"
 #include "fileUtils.h"
-#include "infUtil.h"
-#include "stripUtil.h"
+#include "inf.h"
+#include "sd.h"
 #include "xCollision.h"
 
 #define TEST_ 1
 
-Error coll(char *entityName, U8 isBg, AnimJsonData *animP, U8 verbose);
+void coll(char *entityName, U8 isBg, AnimJsonData *animP, U8 verbose);
 // We color collidable objects' collision rectangles/grids.
 // That way we know how someone should react when bumping into them.
 #endif

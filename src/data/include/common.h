@@ -35,7 +35,7 @@ typedef U8 Bln;   // Boolean
 
 #define swap_(a, b) {a^=b; b^=a; a^=b;}
 
-#define structMemberOffset_(structType_, memberName_) (U32) &(((structType_*) NULL)->memberName_)
+#define structMemberOffset_(structType_, memberName_) (size_t) &(((structType_*) NULL)->memberName_)
 #define structMemberSizeof_(structType_, memberName_) sizeof(((structType_*) NULL)->memberName_)
 #define stitch_(dstP_, dstType_, dstMemberName_, srcP_) \
   /* Throw a compile-time error if stitching mismatches destination. */\

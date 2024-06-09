@@ -36,7 +36,7 @@ static void* _mtGenericLoop(ThreadFuncArg *thargP) {
   U8 *voidP = (U8*) thargP->array + ptrIncr * thargP->startIdx;
   U8 *voidEndP = voidP + thargP->nElemsToProcess;
   for (; voidP < voidEndP; voidP += ptrIncr) {
-    thargP->funcP((void*) *((U32*) voidP));  // ugly but... how else to generalize?
+    thargP->funcP((void*) *((size_t*) voidP));  // ugly but... how else to generalize?
   }
   return NULL;
 }
