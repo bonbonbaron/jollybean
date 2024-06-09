@@ -179,7 +179,10 @@ static Error _histoGenes(GeneHisto *geneHistoP, const Biome *biomeP, const U32 n
       /*
        * The reason I add to distinct shared genes without checking "if counted already" here,
        * unlike in _histoGene()'s SHARED_GENE case, is because implicit genes are mutually 
-       * exclusive; they only belong to one explicit gene type.
+       * exclusive; they only belong to one explicit gene type. In other words, if a renderer
+       * gene (the "explicit" gene) causes a destination rectangle to be made in the background
+       * (the "implicit" gene), then NO OTHER GENE can also cause a destination rectangle to be
+       * made in the background. ("In the background" means to the shared gene maps in master.)
        *
        * Since we're looping through the explicit gene types, if we have any, we just add the
        * number of implicit genes attached to them here. 
@@ -482,7 +485,7 @@ static Error _distributeGene(
         (*((StripDataS**) gene.u.unitary.dataP))->flags |= SD_SET_FOR_INFLATION_;
         e = frayAdd(sdPF, gene.u.unitary.dataP, NULL);
         // If we DON'T want to feed this bad boy into a system, then let's not do that.
-        // Sometimes genes need to point to things out in space. 
+        // Sometimes genes need to point to things out in space. (TODO what's an example?)
         if ( !gene.u.unitary.isIngredient ) {
           break;
         }
@@ -563,7 +566,6 @@ static Error _distributeGenes(XMaster *xP, Key nSystemsMax) {
   }
   Spawn *spawnP = xP->biomeP->spawnA;
   Spawn *spawnEndP = spawnP + xP->biomeP->nSpawns;   // pointer to the end of the above array
-  Genome *genomeP;
   Gene **genePP, **geneEndPP;   // pointers to an array of gene header pointers and its end
   Map *bbMP = NULL;
   GeneHisto geneHisto = {0};
@@ -600,7 +602,6 @@ static Error _distributeGenes(XMaster *xP, Key nSystemsMax) {
     for (Entity entityEnd = entity + spawnP->nEntitiesToSpawn; entity < entityEnd; ++entity) {
       // Make a blackboard map for this entity if it has any genes to put in it.
       bbMP = NULL;
-      genomeP = spawnP->genomeP;
       genePP = spawnP->genomeP->genePA;
       geneEndPP = genePP + genomeP->nGenes;
       // For each gene of this spawn...
@@ -725,14 +726,11 @@ Error xMasterIni(XMaster *xMasterSysP, System **sPA, U16 nXSystems, Key nXSystem
 Error xMasterRun(System *sP) {
   XMaster *xP = (XMaster*) sP;
 
-  Error e = guiProcessEvents(xP->guiP);
-  if (e == E_PAUSE) {
-    _frayPauseAll(sP->cF);  // pause all systems
-    return SUCCESS;
-  }
-  else if (e == E_UNPAUSE) {
-    _frayUnpauseAll(sP->cF);
-  }
+  guiProcessEvents(xP->guiP);
+  switch(xP->guiP->guiState) {
+    case PAUSED: _frayPauseAll(sP->cF); break;
+    case UNPAUSED: _frayUnpauseAll(sP->cF);
+    case QUIT: return;
   else if (e == E_QUIT) {
     return E_QUIT;
   }

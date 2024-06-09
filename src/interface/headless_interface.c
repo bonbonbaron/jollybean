@@ -28,14 +28,14 @@ static FILE *file = NULL;
 Gui* guiNew() {
   Gui* guiP = jbAlloc(sizeof(Gui), 1);
   assert(guiP);
-  memset(*guiPP, 0, sizeof(Gui));
+  memset(guiP, 0, sizeof(Gui));
   guiP->windowP = jbAlloc(  sizeof(Window), 1 );
   assert(guiP->windowP);
 
   // Init renderer
   guiP->rendererP = jbAlloc(sizeof(Window), 1 );
   assert(guiP->rendererP);
-  (*guiPP)->rendererP->dstTextureP = arrayNew(sizeof(Texture_), 1 );
+  guiP->rendererP->dstTextureP = arrayNew(sizeof(Texture_), 1 );
 
   // open up the keyboard file in read binary mode so we can accept key presses.
   file = fopen(KEYFILE, "rb"); 
@@ -180,23 +180,22 @@ void clearScreen(Renderer_ *rendererP) {
 // Multithreading
 // =======================================
 static void _threadFuncArgArrayIni(CriticalFunc funcP, ThreadFuncArg *argA, U32 *nThreadsNeededP, void *_array) {
-  if (argA && _array) {
-    U32 nElemsToProcess = arrayGetNElems(_array);
-    if (nElemsToProcess < *nThreadsNeededP) {
-      *nThreadsNeededP = nElemsToProcess;
-    }
-    // Tell each thread where to start in array and how many items to process
-    const U32 nElemsPerThread = ((nElemsToProcess + (*nThreadsNeededP >> 1)) / *nThreadsNeededP);
-    for (U32 i = 0; i < *nThreadsNeededP; ++i) {
-      argA[i].startIdx = i * nElemsPerThread;
-      argA[i].nElemsToProcess = nElemsPerThread;
-      argA[i].funcP = funcP;
-      argA[i].array = _array;
-    }
-    // Last thread may have a different number of elems to process then the rest
-    // (This might be faster than modulo.)
-    argA[*nThreadsNeededP - 1].nElemsToProcess = nElemsToProcess - (nElemsPerThread * (*nThreadsNeededP - 1));
+  assert (argA && _array);
+  U32 nElemsToProcess = arrayGetNElems(_array);
+  if (nElemsToProcess < *nThreadsNeededP) {
+    *nThreadsNeededP = nElemsToProcess;
   }
+  // Tell each thread where to start in array and how many items to process
+  const U32 nElemsPerThread = ((nElemsToProcess + (*nThreadsNeededP >> 1)) / *nThreadsNeededP);
+  for (U32 i = 0; i < *nThreadsNeededP; ++i) {
+    argA[i].startIdx = i * nElemsPerThread;
+    argA[i].nElemsToProcess = nElemsPerThread;
+    argA[i].funcP = funcP;
+    argA[i].array = _array;
+  }
+  // Last thread may have a different number of elems to process then the rest
+  // (This might be faster than modulo.)
+  argA[*nThreadsNeededP - 1].nElemsToProcess = nElemsToProcess - (nElemsPerThread * (*nThreadsNeededP - 1));
 }
 
 // Generic multithreading function
@@ -212,34 +211,27 @@ static void* _mtGenericLoop(ThreadFuncArg *thargP) {
 
 // Multithreading entry point
 void multiThread( CriticalFunc funcP, void *_array) {
-  if (!_array || !funcP) {
-    return E_BAD_ARGS;
-  }
+  assert (_array &&  funcP);
 
   Thread threadA[N_CORES];
-  ThreadFuncArg *thArgA = NULL;
-  Error e = arrayNew((void**) &thArgA, sizeof(ThreadFuncArg), N_CORES);
+  ThreadFuncArg* thArgA = arrayNew( sizeof(ThreadFuncArg), N_CORES);
 
-  if (!e) {
-    U32 nThreadsNeeded = N_CORES;
-    // nThreadsNeeded gets updated to fewer than N_CORES if fewer elements than cores exist.
-    _threadFuncArgArrayIni(funcP, thArgA, &nThreadsNeeded, _array);
+  U32 nThreadsNeeded = N_CORES;
+  // nThreadsNeeded gets updated to fewer than N_CORES if fewer elements than cores exist.
+  _threadFuncArgArrayIni(funcP, thArgA, &nThreadsNeeded, _array);
 
-    for (int i = 0; i < nThreadsNeeded; ++i) {
-      threadIni_(&threadA[i], &thArgA[i]);
-    }
+  for (int i = 0; i < nThreadsNeeded; ++i) {
+    threadIni_(&threadA[i], &thArgA[i]);
+  }
 
-    for (int i = 0; i < nThreadsNeeded; ++i) {
-      threadJoin_(threadA[i]);
-    }
+  for (int i = 0; i < nThreadsNeeded; ++i) {
+    threadJoin_(threadA[i]);
   }
 
   arrayDel((void**) &thArgA);
-
-  return e;
 }
 
-Error guiProcessEvents(Gui *guiP) {
+void guiProcessEvents(Gui *guiP) {
 
   // ******************************************  Move things above this comment to guiNew
   // ******************************************  Move things above this comment to guiNew
@@ -292,6 +284,7 @@ Error guiProcessEvents(Gui *guiP) {
           case KEY_z_:      guiP->buttonsPressed &= ~BTN_PRESSED_z; break;
           case KEY_SPACE_:  guiP->buttonsPressed &= ~BTN_PRESSED_SPACE; break;
           case KEY_LSHIFT_: guiP->buttonsPressed &= ~BTN_PRESSED_LSHIFT; break;
+          case KEY_ESCAPE_: guiP->buttonsPressed &= ~BTN_PRESSED_ESCAPE; break;
           default: break;
         }  // switch-case for keys released
       } // if key-up event
@@ -326,14 +319,11 @@ Error guiProcessEvents(Gui *guiP) {
           case KEY_z_:      guiP->buttonsPressed |=  BTN_PRESSED_z; break;
           case KEY_SPACE_:  guiP->buttonsPressed |=  BTN_PRESSED_SPACE; break;
           case KEY_LSHIFT_: guiP->buttonsPressed |=  BTN_PRESSED_LSHIFT; break;
+          case KEY_ESCAPE_: guiP->buttonsPressed |=  BTN_PRESSED_ESCAPE; break;
         }  // switch-case for keys pressed
       }  // if key-down event
     }
-    if (ev.code ==1 ) {
-      return E_QUIT;
-    }
   }
-  return SUCCESS;
 }
 
 // TODO get rid of these after you fix xRender to not have an atlas palette.

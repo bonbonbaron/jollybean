@@ -43,7 +43,7 @@ defineDumb_ ( Palette );
 
 // newHeadlessWindow  ... what was i doing with this?
 
-Error copy ( Renderer* rendererP, Texture* srcTextureP, Rect* srcRectP, Rect* dstRectP );
+void copy ( Renderer* rendererP, Texture* srcTextureP, Rect* srcRectP, Rect* dstRectP );
 void present ( Renderer* rendererP );
 
 #define Color_ Color

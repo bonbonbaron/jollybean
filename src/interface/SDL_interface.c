@@ -22,47 +22,32 @@ static int _eventFilter(void *userDataP, SDL_Event *eventP) {
   }
 }
 
-Error guiNew(Gui **guiPP) {
-	if (!guiPP) {
-		return E_BAD_ARGS;
-  }
+Gui* guiNew() {
 	// Init SDL
-	if (SDL_Init(SDL_INIT_VIDEO) != SUCCESS) {
-		return EXIT_FAILURE;
-  }
-  Error e = jbAlloc((void**) guiPP, sizeof(Gui), 1);
-  if (!e) {
-    memset(*guiPP, 0, sizeof(Gui));
-	// Init window
-	  (*guiPP)->windowP = SDL_CreateWindow("Hello world!", 100, 100, 512, 448, 
-        SDL_WINDOW_BORDERLESS | 
-        SDL_WINDOW_RESIZABLE | 
-        SDL_WINDOW_OPENGL
-    );
-  }
-	if (!(*guiPP)->windowP) {
-    guiDel(guiPP);
-		return EXIT_FAILURE;
-  }
+	int e = SDL_Init(SDL_INIT_VIDEO);
+  assert(!e);
+  Gui* guiP = jbAlloc(sizeof(Gui), 1);
+  assert(guiP);
+  memset(*guiPP, 0, sizeof(Gui));
+  // Init window
+  (*guiPP)->windowP = SDL_CreateWindow("Hello world!", 100, 100, 512, 448, 
+      SDL_WINDOW_BORDERLESS | 
+      SDL_WINDOW_RESIZABLE | 
+      SDL_WINDOW_OPENGL
+  );
+	assert(guiP->windowP);
 	// Init renderer
-  if (!e) {
-    (*guiPP)->rendererP = SDL_CreateRenderer(
-        (*guiPP)->windowP,
-        -1, 
-        SDL_RENDERER_ACCELERATED | 
-        SDL_RENDERER_PRESENTVSYNC
-    );
-  }
-	if (!(*guiPP)->rendererP) {
-    guiDel(guiPP);
-		return EXIT_FAILURE;
-	}
-  if (!e) {
-    e = SDL_RenderSetLogicalSize((*guiPP)->rendererP, 256, 224);
-  }
+  guiP->rendererP = SDL_CreateRenderer(
+      guiP->windowP,
+      -1, 
+      SDL_RENDERER_ACCELERATED | 
+      SDL_RENDERER_PRESENTVSYNC
+  );
+	assert (guiP->rendererP);
+  e = SDL_RenderSetLogicalSize((*guiPP)->rendererP, 256, 224);
+  assert(!e);
   // Events
   SDL_SetEventFilter(_eventFilter, NULL);
-	return e;
 }
 
 void guiDel(Gui **guiPP) {
@@ -81,19 +66,13 @@ void guiDel(Gui **guiPP) {
 }
 
 // Makes palette without setting its colors.
-Error surfaceNew(Surface_ **surfacePP, void *pixelDataA, U32 w, U32 h) {
-	if (!surfacePP) {
-    return E_BAD_ARGS;
-  }
+Surface* surfaceNew(void *pixelDataA, U32 w, U32 h) {
+	assert (pixelDataA && w && h);
   SDL_ClearError();
-  *surfacePP = SDL_CreateRGBSurfaceWithFormatFrom(pixelDataA, w, h, 8, w, SDL_PIXELFORMAT_INDEX8);
+  Surface* surfaceP = SDL_CreateRGBSurfaceWithFormatFrom(pixelDataA, w, h, 8, w, SDL_PIXELFORMAT_INDEX8);
   // Palette
-  if (!*surfacePP) {
-    printf("\n\nSDL error: %s\n\n\n", SDL_GetError());
-		return E_UNSUPPORTED_PIXEL_FORMAT;
-  }
-
-	return SUCCESS;
+  assert (surfaceP);
+  return surfaceP;
 }
 
 void surfaceDel(Surface_ **surfacePP) {
@@ -111,19 +90,15 @@ U32 getNColors( Surface_ *surfaceP ) {
   return surfaceP->format->palette->ncolors;
 }
 
-Error textureNew(Texture_ **texturePP, Renderer_ *rendererP, Surface_ *surfaceP) {
-	if (!texturePP || !rendererP || !surfaceP) {
-		return E_BAD_ARGS;
-  }
+Texture* textureNew(Renderer_ *rendererP, Surface_ *surfaceP) {
+	assert (texturePP && rendererP && surfaceP);
 
   //TODO add an #if that only uses this code when interfacing SDL
-	*texturePP = SDL_CreateTextureFromSurface(rendererP, surfaceP);
-	if (!*texturePP) {
-		return E_UNSUPPORTED_PIXEL_FORMAT;
-  }
-  Error e = textureSetAlpha(*texturePP);
-
-	return e;
+	Texture* textureP = SDL_CreateTextureFromSurface(rendererP, surfaceP);
+  assert(textureP);
+  int e = textureSetAlpha(*texturePP);
+  assert(!e);
+  return textureP;
 }
 
 void textureDel(Texture_ **texturePP) {
@@ -133,11 +108,9 @@ void textureDel(Texture_ **texturePP) {
   }
 }
 
-Error textureSetAlpha(Texture_ *textureP) {
-	if (!textureP) {
-		return E_BAD_ARGS;
-  }
-	return SDL_SetTextureBlendMode(textureP, SDL_BLENDMODE_BLEND);
+void textureSetAlpha(Texture_ *textureP) {
+  assert(textureP);
+	assert(!SDL_SetTextureBlendMode(textureP, SDL_BLENDMODE_BLEND));
 }
 
 void clearScreen(Renderer_ *rendererP) {
@@ -175,48 +148,38 @@ static void* _mtGenericLoop(ThreadFuncArg *thargP) {
   const U32 ptrIncr = arrayGetElemSz(thargP->array);
   U8 *voidP = (U8*) thargP->array + ptrIncr * thargP->startIdx;
   U8 *voidEndP = voidP + thargP->nElemsToProcess;
-  for (Error e = SUCCESS; !e && voidP < voidEndP; voidP += ptrIncr) {
-    e = thargP->funcP((void*) *((U32*) voidP));  // ugly but... how else to generalize?
+  for (; voidP < voidEndP; voidP += ptrIncr) {
+    thargP->funcP((void*) *((U32*) voidP));  // ugly but... how else to generalize?
   }
   return NULL;
 }
 
 // Multithreading entry point
-Error multiThread( CriticalFunc funcP, void *_array) {
-  if (!_array || !funcP) {
-    return E_BAD_ARGS;
-  }
+void multiThread( CriticalFunc funcP, void *_array) {
+  assert (_array && funcP);
 
   Thread threadA[N_CORES];
-  ThreadFuncArg *thArgA = NULL;
-  Error e = arrayNew((void**) &thArgA, sizeof(ThreadFuncArg), N_CORES);
+  ThreadFuncArg *thArgA = arrayNew( sizeof(ThreadFuncArg), N_CORES);
 
-  if (!e) {
-    U32 nThreadsNeeded = N_CORES;
-    // nThreadsNeeded gets updated to fewer than N_CORES if fewer elements than cores exist.
-    _threadFuncArgArrayIni(funcP, thArgA, &nThreadsNeeded, _array);
+  U32 nThreadsNeeded = N_CORES;
+  // nThreadsNeeded gets updated to fewer than N_CORES if fewer elements than cores exist.
+  _threadFuncArgArrayIni(funcP, thArgA, &nThreadsNeeded, _array);
 
-    for (int i = 0; i < nThreadsNeeded; ++i) {
-      threadIni_(&threadA[i], &thArgA[i]);
-    }
+  for (int i = 0; i < nThreadsNeeded; ++i) {
+    threadIni_(&threadA[i], &thArgA[i]);
+  }
 
-    for (int i = 0; i < nThreadsNeeded; ++i) {
-      threadJoin_(threadA[i]);
-    }
+  for (int i = 0; i < nThreadsNeeded; ++i) {
+    threadJoin_(threadA[i]);
   }
 
   arrayDel((void**) &thArgA);
-
-  return e;
 }
 
-Error guiProcessEvents(Gui *guiP) {
+void guiProcessEvents(Gui *guiP) {
 	Event_ event;
 	while (pollEvent_(&event)) {
-		if (event.type == EVENT_QUIT_) {
-      return E_QUIT;
-		}
-    // Keyboard button-release events (only process this if engine is unpaused)
+    e/ Keyboard button-release events (only process this if engine is unpaused)
     // NOTE: You can implement a partial pause with any one of the other keys.
     if (guiP->state == UNPAUSED) {
       if (event.type == EVENT_KEYUP_ && event.key.repeat == 0) {
@@ -249,7 +212,7 @@ Error guiProcessEvents(Gui *guiP) {
         case KEY_z_:      guiP->buttonsPressed &= ~BTN_PRESSED_z; break;
         case KEY_SPACE_:  guiP->buttonsPressed &= ~BTN_PRESSED_SPACE; break;
         case KEY_LSHIFT_: guiP->buttonsPressed &= ~BTN_PRESSED_LSHIFT; break;
-        case KEY_ESCAPE_: return E_QUIT;
+        case KEY_ESCAPE_: guiP->buttonsPressed &= ~BTN_PRESSED_ESCAPE; break;
         default:
           break;
         }  // switch-case for keys released
@@ -285,7 +248,7 @@ Error guiProcessEvents(Gui *guiP) {
         case KEY_z_:      guiP->buttonsPressed |=  BTN_PRESSED_z; break;
         case KEY_SPACE_:  guiP->buttonsPressed |=  BTN_PRESSED_SPACE; break;
         case KEY_LSHIFT_: guiP->buttonsPressed |=  BTN_PRESSED_LSHIFT; break;
-        case KEY_ESCAPE_: return E_QUIT;
+        case KEY_ESCAPE_: guiP->buttonsPressed |=  BTN_PRESSED_ESCAPE; break;
         }  // switch-case for keys pressed
       }  // if key-down event
 		}  // if unpaused
@@ -312,7 +275,6 @@ Error guiProcessEvents(Gui *guiP) {
       }
     }
 	}
-  return SUCCESS;
 }
 #endif
 #endif

@@ -74,9 +74,7 @@ typedef struct {
   U8 nGenes;
   U8 type;
 	struct _Gene **genePA;   // pointers prevent multiple entities with same genes from reinitializing them
-} Genome;
-
-typedef Genome Composite;  // We can lego block genomes together to form more complex entites.
+} Composite;
 
 typedef struct _Gene {
 	U8 geneClass;    // exclusive, shared, blackboard, media, or composite gene

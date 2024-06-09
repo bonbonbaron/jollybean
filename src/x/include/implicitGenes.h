@@ -4,7 +4,8 @@
 // Implicit genes can go with exclusive genes, which must be masked by MASK_COMPONENT_TYPE.
 
 // I tried macro'ing the hell out of this, but it can't be done in a clean way.
-// So instead I have to do it manually. I think it'll be rare enough to be fine though.
+// So instead I have to do it manually. I think implicit genes will  be rare 
+// enough for that to be fine though.
 
 #define ig_(enumType_, sizeType_) { .size = sizeof(sizeType_), .type = enumType_ }
 #define impGeneList_(name_, arrayName_) \

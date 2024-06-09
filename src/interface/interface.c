@@ -35,39 +35,32 @@ static void* _mtGenericLoop(ThreadFuncArg *thargP) {
   const U32 ptrIncr = arrayGetElemSz(thargP->array);
   U8 *voidP = (U8*) thargP->array + ptrIncr * thargP->startIdx;
   U8 *voidEndP = voidP + thargP->nElemsToProcess;
-  for (Error e = SUCCESS; !e && voidP < voidEndP; voidP += ptrIncr) {
-    e = thargP->funcP((void*) *((U32*) voidP));  // ugly but... how else to generalize?
+  for (; voidP < voidEndP; voidP += ptrIncr) {
+    thargP->funcP((void*) *((U32*) voidP));  // ugly but... how else to generalize?
   }
   return NULL;
 }
 
 // Multithreading entry point
-Error multiThread( CriticalFunc funcP, void *_array) {
-  if (!_array || !funcP) {
-    return E_BAD_ARGS;
-  }
+void multiThread( CriticalFunc funcP, void *_array) {
+  assert (_array && funcP);
 
   Thread threadA[N_CORES];
-  ThreadFuncArg *thArgA = NULL;
-  Error e = arrayNew((void**) &thArgA, sizeof(ThreadFuncArg), N_CORES);
+  ThreadFuncArg *thArgA = arrayNew( sizeof(ThreadFuncArg), N_CORES);
 
-  if (!e) {
-    U32 nThreadsNeeded = N_CORES;
-    // nThreadsNeeded gets updated to fewer than N_CORES if fewer elements than cores exist.
-    _threadFuncArgArrayIni(funcP, thArgA, &nThreadsNeeded, _array);
+  U32 nThreadsNeeded = N_CORES;
+  // nThreadsNeeded gets updated to fewer than N_CORES if fewer elements than cores exist.
+  _threadFuncArgArrayIni(funcP, thArgA, &nThreadsNeeded, _array);
 
-    for (int i = 0; i < nThreadsNeeded; ++i) {
-      threadIni_(&threadA[i], &thArgA[i]);
-    }
+  for (int i = 0; i < nThreadsNeeded; ++i) {
+    threadIni_(&threadA[i], &thArgA[i]);
+  }
 
-    for (int i = 0; i < nThreadsNeeded; ++i) {
-      threadJoin_(threadA[i]);
-    }
+  for (int i = 0; i < nThreadsNeeded; ++i) {
+    threadJoin_(threadA[i]);
   }
 
   arrayDel((void**) &thArgA);
-
-  return e;
 }
 
 #endif //#ifdef MULTITHREADED_

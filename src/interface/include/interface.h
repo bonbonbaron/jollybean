@@ -93,7 +93,8 @@ typedef struct {
 // GUI
 typedef enum {
   UNPAUSED,
-  PAUSED
+  PAUSED,
+  QUIT
 } GuiState;
   
 typedef struct {
@@ -107,12 +108,12 @@ typedef struct {
   Rect_     *cameraRectP;
 } Gui;
 
-Error guiNew(Gui **guiPP);
+Gui* guiNew();
 void  guiDel(Gui **guiPP);
-Error guiProcessEvents(Gui *guiP);
+void guiProcessEvents(Gui *guiP);
 
 // Surface
-Error surfaceNew(Surface_ **surfacePP, void *pixelDataA, U32 w, U32 h);
+Surface* surfaceNew( void *pixelDataA, U32 w, U32 h);
 void surfaceDel(Surface_ **surfacePP);
 
 // Atlas Palette
@@ -120,9 +121,9 @@ Color_* getColorPalette( Surface_ *surfaceP );
 U32 getNColors( Surface_ *surfaceP );
 
 // Texture
-Error textureNew(Texture_ **texturePP, Renderer_ *rendererP, Surface_ *surfaceP);
+Texture* textureNew( Renderer_ *rendererP, Surface_ *surfaceP);
 void textureDel(Texture_ **texturePP);
-Error textureSetAlpha(Texture_ *textureP);
+void textureSetAlpha(Texture_ *textureP);
 
 // Screen
 void clearScreen(Renderer_ *rendererP);
@@ -137,7 +138,7 @@ void clearScreen(Renderer_ *rendererP);
 #define threadJoin_(threadP_) pthread_join(threadP_, NULL)
 
 typedef pthread_t Thread;
-typedef Error (*CriticalFunc)(void *argP);
+typedef void (*CriticalFunc)(void *argP);
 typedef struct {
   U32 startIdx;
   U32 nElemsToProcess;
@@ -149,7 +150,7 @@ typedef void* (*ThreadFunc)(ThreadFuncArg*);
 typedef void* (*DummyFuncCast)(void*);  // trick compiler into allowing ThreadFuncs in pthread_create
 
 #define multithread_(funcP_, array_) multiThread((CriticalFunc) funcP_, array_)
-Error multiThread( CriticalFunc funcP, void *_array);
+void multiThread( CriticalFunc funcP, void *_array);
 
 #endif // #if USE_PTHREAD_
 

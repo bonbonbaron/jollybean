@@ -1,0 +1,24 @@
+Let's think ahead for a moment on the core mechanic of the game engine UI.
+
+GOAL: Make adding genes to genomes as easy as
+  jb gene <some-gene> [add|remove|replace]
+
+I envision genes being stacked together like legos, yet without making any copies of them, even the composites. They can be "inherited" from other compound genes. 
+
+Genes require:
+  type: knowing which system or share map it belongs to
+  class: knowing 
+  size
+  key
+  pointer to actual data in memory
+
+CLASS:
+  single object: you can just do a "jb media <your file>"
+  multiple objects: There could be different "inboxes" (one for each gene class) that jb uses to process its data. Or you just give a command. The inbox is a good way to bulk process them though.
+
+TYPE:
+  
+I do NOT want to configure that for every little game object I make. However, composites need to be configured manually; there's no avoiding that, and there's also no avoiding specifying whether it's exclusive, implicit, shared, media, or composite. 
+
+QUESTIONS:
+  is type needed of the class is composite?
