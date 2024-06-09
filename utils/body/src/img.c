@@ -244,7 +244,7 @@ void readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *ani
   pngP->version = PNG_IMAGE_VERSION;
   // Set up PNG reader.
   int e = png_image_begin_read_from_file(pngP, imgPathA);
-  assert(!e);  // means file IO error if it's 0
+  assert(e);  // means file IO error if it's 0
   // No errors. Perform actual read.
   U8 *colormapA = NULL;
   srcPixelSize = PNG_IMAGE_PIXEL_SIZE(pngP->format);
@@ -275,8 +275,8 @@ void readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *ani
     cpP->nColors = PNG_IMAGE_COLORMAP_SIZE(*pngP) / sizeof(Color_);
     assert ((cpP->nColors / sizeof(Color_)) <= N_COLORS_SUPPORTED_MAX_);
     e = png_image_finish_read(pngP, NULL, colormapA, 0, cpP->colorA);
-    // png's error returns 0 if it fails, hence !e.
-    assert(!e);
+    // png's error returns 0 if it fails, hence e.
+    assert(e);
     // mallocSanityCheck("after finishing reeading PNG 1");
     if (verbose) {
       printf("\nColor palette in colormap-type PNG:\n");

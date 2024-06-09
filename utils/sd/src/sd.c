@@ -288,8 +288,7 @@ static void _validateUnstrippedData(StripDataS *sdP, U8 *srcA) {
 StripDataS* stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bpu,  U32 flags, U8 verbose) {
   assert (srcA);
   assert (nBytesPerUnpackedStrip);
-  assert (!bpu );
-  assert (bpu <= 8);
+  assert (bpu > 0 && bpu <= 8);
   assert (((arrayGetNElems(srcA) * arrayGetElemSz(srcA)) % nBytesPerUnpackedStrip) == 0);
   /* Number of strips needed:
    *              unit          strip      8 bits

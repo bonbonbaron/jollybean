@@ -13,7 +13,7 @@
 // We have to make these constants so the compiler doesn't cry about the array initializers not having constant sizes.
 #define N_ENTITIES (100)
 #define N_MUTATIONS_PER_ENTITY (5)
-#define requireSuccess_ REQUIRE_EQ(tau->e, SUCCESS)
+
 #define forEachEntity_(nEntities_) for (Entity entity = 1; entity <= nEntities_; ++entity)
 
 #define RECT_X_COEFF (10)
@@ -34,7 +34,6 @@
 TAU_MAIN();
 
 typedef struct Tau {
-  Error e;
   XRender *xP;
   U32 nEntities;
   U32 nMutationsPerEntity;
@@ -48,12 +47,12 @@ TEST_F_SETUP(Tau) {
   tau->xP = &xRender;
   tau->sP = &tau->xP->system;
   // Make a new GUI.
-  tau->e = guiNew( &tau->xP->guiP );
-  requireSuccess_;
+  tau->xP->guiP = guiNew();
+
   // Initialize the system basics.
   tau->nEntities = N_ENTITIES;
   tau->nMutationsPerEntity = N_MUTATIONS_PER_ENTITY;
-  tau->e = xIniSys(tau->sP, tau->nEntities, NULL);
+  xIniSys(tau->sP, tau->nEntities, NULL);
   tau->renderCompF = tau->sP->cF;
   REQUIRE_EQ(tau->sP->compSz, sizeof(XRenderComp));
   REQUIRE_EQ(xGetNComps(tau->sP), tau->nEntities);
@@ -65,81 +64,78 @@ TEST_F_SETUP(Tau) {
   // 4) color palettes
   // 5) body'ing the three test images you have in Makefile (steal from 
   // ************ SHARES **************
-  tau->e = mapNew(&tau->shareMPMP, MAP_POINTER, sizeof(Map*), 3);
-  requireSuccess_;
+  tau->shareMPMP = mapNew( MAP_POINTER, sizeof(Map*), 3);
+
   // Make the share inner map. This maps entities to actual, raw data.
-  Map *sharedSrcRectMP = NULL;  // Make the share inner map. Maps entities to shared rectangles.
-  Map *sharedDstRectMP = NULL;  // Make the share inner map. Maps entities to shared rectangles.
-  Map *sharedOffsetMP = NULL;  // Make the share inner map. Maps entities to shared rectangles.
-  tau->e = mapNew(&sharedSrcRectMP, RAW_DATA, sizeof(Rect_), tau->nEntities);
-  requireSuccess_;
-  tau->e = mapNew(&sharedDstRectMP, RAW_DATA, sizeof(Rect_), tau->nEntities);
-  requireSuccess_;
-  tau->e = mapNew(&sharedOffsetMP, RAW_DATA, sizeof(RectOffset), tau->nEntities);
-  requireSuccess_;
+  Map* sharedSrcRectMP = mapNew( RAW_DATA, sizeof(Rect_), tau->nEntities);
+  Map* sharedDstRectMP = mapNew( RAW_DATA, sizeof(Rect_), tau->nEntities);
+  Map* sharedOffsetMP  = mapNew( RAW_DATA, sizeof(RectOffset), tau->nEntities);
+  Map* sharedGuiMP     = mapNew( NONMAP_POINTER, sizeof(Gui*), 1);
+
+  // Set gui pointer in its map... TODO wouldn't it be nice to have SDL or whatever just be owned by the rendering system?
+  mapSet(sharedGuiMP, GUI_KEY_, &tau->guiP);
+
   // Now populate the entities' shared rectangles.
   // You don't know what your source rect is until you mutate.
   forEachEntity_( tau->nEntities ) {
     Rect_ currSrcRect = { 0 };  // the post-mutate function will change this value before renderating
-    tau->e = mapSet(sharedSrcRectMP, entity, &currSrcRect);
-    requireSuccess_;
+    mapSet(sharedSrcRectMP, entity, &currSrcRect);
+
     Rect_ currDstRect = { 0 };  // the post-mutate function will change this value before renderating
-    tau->e = mapSet(sharedDstRectMP, entity, &currDstRect);
-    requireSuccess_;
+    mapSet(sharedDstRectMP, entity, &currDstRect);
+
     RectOffset currRectOffset = {
       .x = OFFSET_X,  //  5
       .y = OFFSET_Y   // 10
     };
-    tau->e = mapSet(sharedOffsetMP, entity, &currRectOffset);
-    requireSuccess_;
+    mapSet(sharedOffsetMP, entity, &currRectOffset);
+
   }
   // If ordering is sacred, then we need fixed functions that'll encapsulate this sacred ordering for us.
   // Now add the entity to the actual system itself.
   forEachEntity_( tau->nEntities ) {
-    tau->e = xAddEntityData(&tau->xP->system, entity, RENDER, NULL);
-    requireSuccess_;
+    xAddEntityData(&tau->xP->system, entity, RENDER, NULL);
+
   }
   // Map the inner share map to key value "0" in the outer shared map.
-  tau->e = mapSet(tau->shareMPMP, SRC_RECT, &sharedSrcRectMP);
-  requireSuccess_;
-  tau->e = mapSet(tau->shareMPMP, DST_RECT, &sharedDstRectMP);
-  requireSuccess_;
-  tau->e = mapSet(tau->shareMPMP, RECT_OFFSET, &sharedOffsetMP);
-  requireSuccess_;
+  mapSet(tau->shareMPMP, SRC_RECT, &sharedSrcRectMP);
+  mapSet(tau->shareMPMP, DST_RECT, &sharedDstRectMP);
+  mapSet(tau->shareMPMP, RECT_OFFSET, &sharedOffsetMP);
   // Give the shared map to the system. (This particular system wants a pointer to the inner shared map.)
-  tau->e = tau->xP->system.getShare(&tau->xP->system, tau->shareMPMP);
-  requireSuccess_;
-  tau->e = xRun( tau->sP );
-  requireSuccess_;
+  tau->xP->system.getShare(&tau->xP->system, tau->shareMPMP);
+
+  xRun( tau->sP );
+
   
 
   // PREPARE TEST SAMPLES
   // *********************************
   // Entity 6 strip 1: repeat + pingpong
 #define ENTITY_WITH_PINGPONG_REPEAT (6)
-  tau->e = mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_PINGPONG_REPEAT, MUTATE_AND_ACTIVATE, 1);
-  requireSuccess_;
+  mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_PINGPONG_REPEAT, MUTATE_AND_ACTIVATE, 1);
+
   // *********************************
   // Entity 1 strip 2: pingpong only
 #define ENTITY_WITH_PINGPONG (1)
-  tau->e = mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_PINGPONG, MUTATE_AND_ACTIVATE, 2);
-  requireSuccess_;
+  mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_PINGPONG, MUTATE_AND_ACTIVATE, 2);
+
   // *********************************
   // Entity 88 strip 3: repeat only
 #define ENTITY_WITH_REPEAT (88)  // TODO change back to 88 after you find and fix bug
-  tau->e = mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_REPEAT, MUTATE_AND_ACTIVATE, 3);
-  requireSuccess_;
+  mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_REPEAT, MUTATE_AND_ACTIVATE, 3);
+
   // *********************************
   // Entity 30 strip 4: neither repeat nor pingpong
 #define ENTITY_WITH_NOTHING (30)
-  tau->e = mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_NOTHING, MUTATE_AND_ACTIVATE, 4);
-  requireSuccess_;
+  mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_NOTHING, MUTATE_AND_ACTIVATE, 4);
+
 
   // Don't run system here. Instead, let each test case decide whether to advance by timestep, frame, or full strip.
 }
 
 TEST_F_TEARDOWN(Tau) {
   guiDel( &tau->xP->guiP );
+  mapOfNestedMapsDel(&tau->shareMPMP );
   xClr( &tau->xP->system );
 }
 
@@ -147,13 +143,12 @@ TEST_F(Tau, xRenderRun) {
   REQUIRE_TRUE(1);
 }
 #define USE_HEADLESS_INTERFACE
-#include "previewImg.h"
+//#include "previewImg.h"
 
-int main(int argc, char **argv) {
+TEST_F(Tau, somethingfornow) {
   // ====================================================
   // Repeat things done in multithreadingg test for setup
   // ====================================================
-  Colormap **cmPF = NULL;
 
   Colormap *cmPA[] = {
     &blehColormap,
@@ -167,35 +162,30 @@ int main(int argc, char **argv) {
     &heckColorPalette
   };
 
-  // Why're we putting it in a fray?
-  Error e = frayNew((void**) &cmPF, sizeof(Colormap*), 3);
-  for (U32 i = 0; !e && i < 3; ++i) {
-    e = frayAdd(cmPF, &cmPA[i], NULL);
+  // TODO Why're we putting it in a fray?
+  Colormap** cmPF = frayNew( sizeof(Colormap*), 3);
+  for (U32 i = 0; i < 3; ++i) {
+    frayAdd(cmPF, &cmPA[i], NULL);
   }
 
   U32 N_SAMPLES = *_frayGetFirstEmptyIdxP(cmPF);
 
   // Offset color palette and colormap indices to match future texture atlas destinations
   U8 atlasOffset = 0;
-  for (int i = 0; !e && i < N_SAMPLES; ++i) {
+  for (int i = 0; i < N_SAMPLES; ++i) {
     atlasOffset += cpPA[i]->nColors;
   }
 
   // Extract stripdatas into an array so we can multithread process them all.
-  StripDataS **sdPA = NULL;
-  if (!e) {
-    e = arrayNew((void**) &sdPA, sizeof(StripDataS*), N_SAMPLES);
-  }
+  StripDataS **sdPA = arrayNew(sizeof(StripDataS*), N_SAMPLES);
 
-  if (!e) {
-    for (U32 i = 0, iEnd = arrayGetNElems(sdPA); i < iEnd; ++i) {
-      sdPA[i] = cmPF[i]->sdP;
-    }
+  for (U32 i = 0, iEnd = arrayGetNElems(sdPA); i < iEnd; ++i) {
+    sdPA[i] = cmPF[i]->sdP;
   }
 
   // Inflate colormap inflatables
-  for (int i = 0; !tau->e && i < N_SAMPLES; ++i) {
-    tau->e = stripIni(sdPA[i]);
+  for (int i = 0; i < N_SAMPLES; ++i) {
+    stripIni(sdPA[i]);
   }
 
   // ====================================================
@@ -203,6 +193,5 @@ int main(int argc, char **argv) {
   // ====================================================
   arrayDel((void**) &sdPA);
   frayDel((void**) &cmPF);
-  arrayDel((void**) &atlasPixelA);
-  return e;
+  // arrayDel((void**) &atlasPixelA);  TODO what was this for? Did i accidentally delete something?
 }
