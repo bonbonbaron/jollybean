@@ -104,6 +104,7 @@ static char* getSrcDir(U32 nExtraSpaces, char *srcLocalDirName, U8 verbose) {
   if (verbose) {
     printf("src dir path result: %s\n", srcDirPath);
   }
+  return srcDirPath;
 }
 
 char* getSrcFilePath(char *srcLocalDirName, char *srcFileName, char *srcFileSuffix, U8 verbose) {
@@ -141,6 +142,7 @@ static char* getBuildDir(U32 nExtraSpaces, char *buildLocalDirName, U8 verbose) 
   if (verbose) {
     printf("build dir path result: %s\n", buildDirPath);
   }
+  return buildDirPath;
 }
 
 char* getBuildFilePath( char *buildLocalDirName, char *buildFileName, char *buildFileSuffix, U8 verbose) {
@@ -156,6 +158,7 @@ char* getBuildFilePath( char *buildLocalDirName, char *buildFileName, char *buil
   else {
     jbFree((void**) &buildFilePath);
   }
+  return buildFilePath;
 }
 
 FILE* getBuildFile(char *buildLocalDirName, char *buildFileName, char *buildFileSuffix, U8 verbose) {
