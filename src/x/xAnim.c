@@ -7,87 +7,65 @@ XIniSubcompFuncDefUnused_(Anim);
 XPostprocessCompsDefUnused_(Anim);
 
 XProcMsgFuncDef_(Anim) {
-  Error e = SUCCESS;
   XAnim *xP = (XAnim*) sP;
   /* When the render system makes a texture atlas, the animation frames' rectangles no longer
      have the correct XY coordinates. We have to offset them here to ensure we draw from the 
      right place in the atlas. */
   // Put the most commonly used logic first.
   if (msgP->cmd == ANIMATE) {
-    e = xMutateComponent(sP, msgP->attn, msgP->arg);
+    xMutateComponent(sP, msgP->attn, msgP->arg);
   }
   else if (msgP->cmd == UPDATE_RECT) {
     AnimStrip *animStripP, *animStripEndP;
     AnimFrame *frameP, *frameEndP;
-    Map *animMP = NULL;
-    RectOffset *offsetP = NULL;
     // Get animation subcomponent and offset to apply to all its frames.
-    if (!e) {
-      e = mapGetNestedMapP(xP->system.mutationMPMP, msgP->attn, &animMP);
-    }
-    if (!e && animMP) {
-      offsetP = (RectOffset*) mapGet(xP->offsetMP, msgP->attn);
-    }
+    Map* animMP = mapGetNestedMapP(xP->system.mutationMPMP, msgP->attn);
+    assert(animMP);
+    RectOffset* offsetP = (RectOffset*) mapGet(xP->offsetMP, msgP->attn);
     // Update all of this entity's animation frames' XY coordinates by the offset.
-    if (!e && animMP && offsetP) {
-      animStripP = (AnimStrip*) animMP->mapA;
-      // Avoid offsetting any animation more than once.
-      if (!(animStripP->flags & IS_OFFSET)) {
-        animStripP->flags |= IS_OFFSET;
-        animStripEndP = animStripP + animMP->population;
-        // Offset all the frames' rectangles in this strip to reflect their texture atlas offsets.
-        for (; animStripP < animStripEndP; ++animStripP) {
-          frameP = animStripP->frameA;
-          frameEndP = frameP + animStripP->nFrames;
-          for (; frameP < frameEndP; ++frameP) {
-            frameP->rect.x += offsetP->x;
-            frameP->rect.y += offsetP->y;
-          }
+    assert(animMP && offsetP);
+    animStripP = (AnimStrip*) animMP->mapA;
+    // Avoid offsetting any animation more than once.
+    if (!(animStripP->flags & IS_OFFSET)) {
+      animStripP->flags |= IS_OFFSET;
+      animStripEndP = animStripP + animMP->population;
+      // Offset all the frames' rectangles in this strip to reflect their texture atlas offsets.
+      for (; animStripP < animStripEndP; ++animStripP) {
+        frameP = animStripP->frameA;
+        frameEndP = frameP + animStripP->nFrames;
+        for (; frameP < frameEndP; ++frameP) {
+          frameP->rect.x += offsetP->x;
+          frameP->rect.y += offsetP->y;
         }
       }
     }
   }
   else {
-    e = E_MAILBOX_BAD_RECIPIENT;
+    assert(0);  // The above should be the only two message types sent to XAnim.
   }
-	return e;
 }
 
 XGetShareFuncDef_(Anim) {
-  if (!sP) {
-    return E_BAD_ARGS;
-  }
+  assert(sP);
   // Get shared inner maps of resources we need (offsets and source rects)
   XAnim *xP = (XAnim*) sP;
-  Error e = mapGetNestedMapP(shareMPMP, RECT_OFFSET, &xP->offsetMP);
-  if (!e) {
-    mapGetNestedMapP(shareMPMP, SRC_RECT, &xP->srcRectMP);
-  }
-  if (!e) {
-    mapGetNestedMapP(shareMPMP, DST_RECT, &xP->dstRectMP);
-  }
+  xP->offsetMP = mapGetNestedMapP(shareMPMP, RECT_OFFSET);
+  xP->srcRectMP = mapGetNestedMapP(shareMPMP, SRC_RECT);
+  xP->dstRectMP = mapGetNestedMapP(shareMPMP, DST_RECT);
+  assert(xP->offsetMP);
+  assert(xP->srcRectMP);
+  assert(xP->dstRectMP);
   // Give each entity its source and dest rectangles.
   XAnimComp *cP = (XAnimComp*) sP->cF;
   XAnimComp *cEndP = cP + *_frayGetFirstEmptyIdxP(sP->cF);
-  for (Entity entity; !e && cP < cEndP; ++cP) {
+  for (Entity entity; cP < cEndP; ++cP) {
     entity = xGetEntityByVoidComponentPtr(sP, (void*) cP);
-    if (!entity) {
-      e = E_NULL_VAR;
-    }
-    if (!e) {
-      cP->srcRectP = (Rect_*) mapGet(xP->srcRectMP, entity);
-      if (!cP->srcRectP) {
-        e = E_BAD_KEY;
-      }
-      if (!e) {
-        cP->dstRectP = (Rect_*) mapGet(xP->dstRectMP, entity);
-        if (!cP->dstRectP) {
-          e = E_BAD_KEY;
-        }
-      }
-    }
+    assert (entity);
+    cP->srcRectP = (Rect_*) mapGet(xP->srcRectMP, entity);
+    cP->dstRectP = (Rect_*) mapGet(xP->dstRectMP, entity);
+    assert (cP->srcRectP);
+    assert (cP->dstRectP);
   }
-  return e;
 }
 
 XPostMutateFuncDef_(Anim) {
@@ -102,15 +80,12 @@ XPostMutateFuncDef_(Anim) {
   _cP->srcRectP->w    = _cP->dstRectP->w = _cP->currStrip.frameA[0].rect.w;
   _cP->srcRectP->h    = _cP->dstRectP->h = _cP->currStrip.frameA[0].rect.h;
   _cP->timeLeft       = _cP->currStrip.frameA[0].duration;
-  return SUCCESS;
 }
 
 //======================================================
 // Anim activity
 //======================================================
-Error xAnimRun(System *sP) {
-	Error e = SUCCESS;
-
+void xAnimRun(System *sP) {
 	XAnimComp *cP = (XAnimComp*) sP->cF;
 	XAnimComp *cEndP = cP + _frayGetFirstInactiveIdx(sP->cF);
 
@@ -167,8 +142,6 @@ Error xAnimRun(System *sP) {
       cP->dstRectP->h = cP->srcRectP->h;
     }
   }
-
-	return e;
 }
 
 //======================================================

@@ -99,16 +99,16 @@ typedef void (*XProcMsgU)(struct _System *sP, Message *messageP);
 typedef void (*XGetShareU)(struct _System *sP, Map* shareMPMP);
 typedef void (*XPostprocessCompsU)(struct _System *sP);
 typedef void (*XPostMutateU)(struct _System *sP, void *cP);  // changes immutables alogn with mutables
+// TODO if these functions are unused, then should they be null? 
+// Or since they're only called at startup, does it really matter?
 #define XPostprocessCompsDefUnused_(name_) XPostprocessCompsDef_(name_) {\
   unused_(sP);\
-  return SUCCESS;\
 }
 #define XPostprocessCompsDef_(name_) void x##name_##PostprocessComps(System *sP)
 
 #define XIniSysFuncDefUnused_(name_) XIniSysFuncDef_(name_) {\
   unused_(sP);\
   unused_(sParamsP);\
-  return SUCCESS;\
 }
 
 #define XIniSysFuncDef_(name_) void x##name_##IniSys(System *sP, void *sParamsP)
@@ -118,27 +118,23 @@ typedef void (*XPostMutateU)(struct _System *sP, void *cP);  // changes immutabl
   unused_(entity);\
   unused_(subtype);\
   unused_(dataP);\
-  return SUCCESS;\
 }
 #define XIniSubcompFuncDef_(name_)  void x##name_##IniSubcomp(System *sP, const Entity entity, const Key subtype, void *dataP)
 
 #define XClrFuncDefUnused_(name_) XClrFuncDef_(name_) {\
   unused_(sP);\
-  return SUCCESS;\
 }
 #define XClrFuncDef_(name_)      void x##name_##Clr(System *sP)
 
 #define XProcMsgFuncDefUnused_(name_)  XProcMsgFuncDef_(name_) {\
   unused_(sP);\
   unused_(msgP);\
-  return SUCCESS;\
 }
 #define XProcMsgFuncDef_(name_)  void x##name_##ProcessMessage(System *sP, Message *msgP)
 
 #define XGetShareFuncDefUnused_(name_) void x##name_##GetShare(System *sP, Map* shareMPMP) {\
   unused_(sP); \
   unused_(shareMPMP); \
-  return SUCCESS; \
 }
 #define XGetShareFuncDef_(name_) void x##name_##GetShare(System *sP, Map* shareMPMP)
 
@@ -147,7 +143,6 @@ typedef void (*XPostMutateU)(struct _System *sP, void *cP);  // changes immutabl
 #define XPostMutateFuncDefUnused_(name_) void x##name_##PostMutate(System *sP, void *cP) {\
   unused_(sP);\
   unused_(cP);\
-  return SUCCESS;\
 }
 
 #define XPostMutateFuncDef_(name_) void x##name_##PostMutate(System *sP, void *cP)
