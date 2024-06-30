@@ -1,6 +1,8 @@
+Give GUI-related systems ownership of GUI elements via ENGINE_START and ENGINE_SHUTDOWN messages and pointers preserved from sysClr().
+  That's how you can easily have a game with text and no music by simply taking that system out.
 Mission to clearing out error-handling:
-  all of src/data: almost
-    ~ lingering strip unit test, which needs the strip util to be free from it as well
+  /all of src/data: almost
+    /~ lingering strip unit test, which needs the strip util to be free from it as well
   all of src/x
   all of src/interface
 
