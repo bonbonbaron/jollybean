@@ -10,7 +10,7 @@ OBJS=$(SRCS:%.c=%.o)
 
 all: o
 
-o: ${OBJS} 
+o: ${OBJS} ${SRCS}
 	$(CC) --coverage -g ${OBJS} -L${LIB_DIR} $(shell sdl2-config --libs) -ljb -lpthread -o $@
 
 src/%.o: src/%.c include/%.h

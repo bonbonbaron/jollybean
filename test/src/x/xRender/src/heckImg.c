@@ -1,4 +1,6 @@
 #include "xRender.h"
+#include "heckColormap.h"
+#include "heckColorPalette.h"
 
 Image heckImg = {
 	.state = 0,

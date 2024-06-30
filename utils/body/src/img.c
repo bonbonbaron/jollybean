@@ -114,9 +114,9 @@ void writeImage(char *imgNameA, U8 verbose) {
   FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Image/src", imgNameA, "Img.c", verbose);
   assert(fP);
   // Make Title format of image name.
-  fprintf(fP, "#include \"xRender.h\"\n\n");
-  fprintf(fP, "#include \"%sColormap.h\"\n\n");
-  fprintf(fP, "#include \"%sColorPalette.h\"\n\n");
+  fprintf(fP, "#include \"xRender.h\"\n");
+  fprintf(fP, "#include \"%sColormap.h\"\n", imgNameA);
+  fprintf(fP, "#include \"%sColorPalette.h\"\n\n", imgNameA);
   // Write stripmap and stripset data.
   // Write colormap
   fprintf(fP, "Image %sImg = {\n", imgNameA);

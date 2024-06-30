@@ -1,4 +1,6 @@
 #include "xRender.h"
+#include "redColormap.h"
+#include "redColorPalette.h"
 
 Image redImg = {
 	.state = 0,
