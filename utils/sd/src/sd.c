@@ -544,6 +544,8 @@ void writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripDataS *sdP)
   //Stripmap
   fprintf(fP, "\n\n");
   fprintf(fP, "StripDataS %sStripData = {\n", objNameA);
+  // Flags
+  fprintf(fP, "\t.flags = %d,\n", sdP->flags);
   // Stripmap
   fprintf(fP, "\t.sm = {\n");
   fprintf(fP, "\t\t.nIndices = %d,\n", sdP->sm.nIndices);

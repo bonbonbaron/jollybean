@@ -13,8 +13,22 @@ all: o
 o: ${OBJS} 
 	$(CC) --coverage -g ${OBJS} -L${LIB_DIR} $(shell sdl2-config --libs) -ljb -lpthread -o $@
 
+src/%.o: src/%.c include/%.h
+	$(CC) --coverage -g $(INCS) $(shell sdl2-config --cflags) -c $< -o $@
+	
 %.o: %.c
 	$(CC) --coverage -g $(INCS) $(shell sdl2-config --cflags) -c $< -o $@
+
+src/%.c :
+	${RPO_DIR}/utils/body/bin/body red bleh heck
+	cp ${HOME}/jb/build/Seed/Genome/Gene/Body/Image/src/$<.c src
+	cp ${HOME}/jb/build/Seed/Genome/Gene/Body/Image/Colormap/src/$<.c src
+	cp ${HOME}/jb/build/Seed/Genome/Gene/Body/Image/ColorPalette/src/$<.c src
+
+include/%.h:
+	cp ${HOME}/jb/build/Seed/Genome/Gene/Body/Image/include/$<.h include 
+	cp ${HOME}/jb/build/Seed/Genome/Gene/Body/Image/Colormap/include/$<.h include 
+	cp ${HOME}/jb/build/Seed/Genome/Gene/Body/Image/ColorPalette/include/$<.h include 
 
 $(LIB_DIR)/libjb:
 	make -C ${RPO_DIR}

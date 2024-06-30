@@ -64,7 +64,7 @@ TEST_F_SETUP(Tau) {
   // 4) color palettes
   // 5) body'ing the three test images you have in Makefile (steal from 
   // ************ SHARES **************
-  tau->shareMPMP = mapNew( MAP_POINTER, sizeof(Map*), 3);
+  tau->shareMPMP = mapNew( MAP_POINTER, sizeof(Map*), 4);
 
   // Make the share inner map. This maps entities to actual, raw data.
   Map* sharedSrcRectMP = mapNew( RAW_DATA, sizeof(Rect_), tau->nEntities);
@@ -73,7 +73,7 @@ TEST_F_SETUP(Tau) {
   Map* sharedGuiMP     = mapNew( NONMAP_POINTER, sizeof(Gui*), 1);
 
   // Set gui pointer in its map... TODO wouldn't it be nice to have SDL or whatever just be owned by the rendering system?
-  mapSet(sharedGuiMP, GUI_KEY_, &tau->guiP);
+  mapSet(sharedGuiMP, GUI_KEY_, &tau->xP->guiP);
 
   // Now populate the entities' shared rectangles.
   // You don't know what your source rect is until you mutate.
@@ -101,6 +101,7 @@ TEST_F_SETUP(Tau) {
   mapSet(tau->shareMPMP, SRC_RECT, &sharedSrcRectMP);
   mapSet(tau->shareMPMP, DST_RECT, &sharedDstRectMP);
   mapSet(tau->shareMPMP, RECT_OFFSET, &sharedOffsetMP);
+  mapSet(tau->shareMPMP, GUI_KEY_, &sharedGuiMP);
   // Give the shared map to the system. (This particular system wants a pointer to the inner shared map.)
   tau->xP->system.getShare(&tau->xP->system, tau->shareMPMP);
 
@@ -185,6 +186,8 @@ TEST_F(Tau, somethingfornow) {
 
   // Inflate colormap inflatables
   for (int i = 0; i < N_SAMPLES; ++i) {
+    // PROBLEM: bleh doesn't have a stripmap, but it's marked for assembly.
+    // strip data's flags are not being written
     stripIni(sdPA[i]);
   }
 
