@@ -1,3 +1,4 @@
+We're now developing the renderer system. We want it to parse the colormaps into 4-channel color images, not just blindly copy everything. But what's the fastest way to do this? For now, just assume the simplest and worry about performance later.
 Give GUI-related systems ownership of GUI elements via ENGINE_START and ENGINE_SHUTDOWN messages and pointers preserved from sysClr().
   That's how you can easily have a game with text and no music by simply taking that system out.
 Mission to clearing out error-handling:
