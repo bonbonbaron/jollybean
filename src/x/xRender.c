@@ -265,50 +265,120 @@ XClrFuncDef_(Render) {
   }
 }
 
-// Texture atlas array
-// TODO this wasn't designed to take color palettes into consideration at all, trusting runtime to do that every frame. Screw that. 
-//      We need to ensure it copies them into the final picture now.
-//      1) Stretch allocated texture atlas memory out by a factor of 4.
-//      2) Figure out a way to include color palette in args.
-//      3) index every individual colormap's color palette. Multiple CMs can have different CPs. 
-static U8* _assembleTextureAtlas(XRender *xP, Atlas *atlasP) {
-  // Declare locals
+static void fillRectFromStripmap(const Image *imgP, const Rect_* rectP, Color_* atlasPixelA, const U32 ATLAS_WIDTH) {
+  assert(imgP && imgP->cpP && imgP->cpP->colorA && rectP);
+  // Figure out how to increment the destination pixel per row.
   U32 nStripsPerRow;
   StripmapElem *smElemP, *smElemEndP;
-  U8 *dstP;
-  U32 srcIdx;
-  U32 nUnitsPerStrip;
+  U32 nUnitsPerStrip = imgP->cmP->sdP->ss.nUnitsPerStrip;
+  const U32 MEMCPY_SZ = nUnitsPerStrip * sizeof( Color_ );
+  nStripsPerRow  = imgP->cmP->w / nUnitsPerStrip;
+  smElemP        = (StripmapElem*) imgP->cmP->sdP->sm.infP->inflatedDataP;
+  // Colorize the stripset first 
+  // To colorize the stripset, we need to first stretch it to 4 times its length.
+  Color_* colorizedStripsetP = arrayNew(sizeof(Color_), arrayGetNElems(imgP->cmP->sdP->ss.unpackedDataP));
+  Color_* colorP = colorizedStripsetP;
+  Color_* colorEndP = colorP + arrayGetNElems(colorizedStripsetP);
+  Color_ *colorPaletteP = imgP->cpP->colorA;
+  U8* stripSetElemP = imgP->cmP->sdP->ss.unpackedDataP;
+  for (; colorP < colorEndP; ++stripSetElemP, ++colorP) {
+    *colorP = colorPaletteP[ *stripSetElemP ];
+  }
+  // Now we can just copy straight from the colorized stripset into the target image.
+  // For each row of this source rectangle...
+  Color_* dstP    = atlasPixelA + rectP->x + ( rectP->y ) * ATLAS_WIDTH;
+  Color_* dstEndP = dstP + ( rectP->h * ATLAS_WIDTH );
+  const U32 INCREMENT = ATLAS_WIDTH - rectP->w;
+  for ( ; dstP < dstEndP; dstP += INCREMENT ) {
+    smElemEndP = smElemP + nStripsPerRow;
+    // Paste the source row into the atlas's destination rectangle row. There can be multiple strips per row.
+    for ( ; smElemP < smElemEndP; ++smElemP, dstP += nUnitsPerStrip ) {
+      memcpy( dstP, 
+          colorizedStripsetP + ( *smElemP * nUnitsPerStrip ), 
+          MEMCPY_SZ );
+    }
+  }
+  arrayDel((void**) &colorizedStripsetP);
+}
+
+#ifdef MULTITHREADED_
+typedef struct {
+  Color_* dstP;
+  Color_* dstEndP;
+  U8* cmA;
+  Color_* cpA;
+  U32 INCREMENT;
+} FillRectParamsMT;
+
+void fillPortionOfRect( FillRectParamsMT* fillRectParamsP ) {
+  U8* cmElemP = fillRectParamsP->cmA;
+  for ( ; fillRectParamsP->dstP < fillRectParamsP->dstEndP; fillRectParamsP->dstP += fillRectParamsP->INCREMENT ) {
+    *fillRectParamsP->dstP = fillRectParamsP->cpA[ *(cmElemP++) ];
+  }
+}
+#endif
+
+static void fillRect( U8* cmA, Color_* cpA, Rect_* rectP, Color_* atlasPixelA, const U32 ATLAS_WIDTH ) {
+  
+  assert( cmA && cpA && rectP && atlasPixelA );
+
+  const U32 INCREMENT = ATLAS_WIDTH - rectP->w;
+
+#ifdef MULTITHREADED_
+  FillRectParamsMT* paramsA = arrayNew( sizeof( FillRectParamsMT ), N_CORES );
+  // TODO height sliver for each thread
+  U32 heightSliver = rectP->h / N_CORES;
+  for ( U32 i = 0; i < N_CORES; ++i ) {
+    paramsA[i].dstP = atlasPixelA + rectP->x + ( rectP->y + ( i * heightSliver) ) * ATLAS_WIDTH;
+    paramsA[i].dstEndP = paramsA[i].dstP + ( heightSliver * ATLAS_WIDTH );
+    paramsA[i].cmA = cmA;
+    paramsA[i].cpA = cpA;
+    paramsA[i].INCREMENT = INCREMENT;
+  }
+  // Then finish off by giving the last thread a slightly more responsibility if the sections aren't divisible by N_CORES.
+  paramsA[ N_CORES - 1 ].dstEndP += ( rectP->h % N_CORES ) * ATLAS_WIDTH;
+  multithread_( fillPortionOfRect, (void*) paramsA );
+  arrayDel( (void**) &paramsA );
+#else
+  Color_* dstP = atlasPixelA + rectP->x + ( rectP->y ) * ATLAS_WIDTH;
+  Color_* dstEndP = dstP + ( rectP->h * ATLAS_WIDTH );
+  U8* cmElemP = cmA;
+  for ( ; dstP < dstEndP; dstP += INCREMENT ) {
+    dstP = cpA[ *(cmElemP++) ];
+  }
+#endif
+
+}
+
+// Texture atlas array
+static Color_* _assembleTextureAtlas(XRender *xP, Atlas *atlasP) {
+  // Declare locals
   const U32 ATLAS_WIDTH = atlasP->btP[0].remW;
   const Image **imgPF = (const Image**) xP->imgPF;
   // Make output atlas image
-  U8* atlasPixelA = arrayNew(sizeof(U8), atlasP->btP[0].remW * atlasP->btP[0].remH);
-  // Number of rect nodes is the  number of elements in the rectangle binary tree.
+  Color_* atlasPixelA = arrayNew(sizeof(Color_), atlasP->btP[0].remW * atlasP->btP[0].remH);
+  // Number of rect nodes is the number of elements in the rectangle binary tree.
   U32 iEnd = arrayGetNElems(atlasP->btP);
-  // TODO why are you using stripmap elements here? Isn't your data already assembled by this point?
   // For each source rectangle...
+  U32 srcRectIdx;
+  Rect_ *dstRectP;
   for (U32 i = 0; i < iEnd; ++i) {
-    srcIdx = atlasP->btP[i].srcIdx;
-    nUnitsPerStrip = imgPF[srcIdx]->cmP->sdP->ss.nUnitsPerStrip;
-    nStripsPerRow  = imgPF[srcIdx]->cmP->w / nUnitsPerStrip;
-    smElemP        = (StripmapElem*) imgPF[srcIdx]->cmP->sdP->sm.infP->inflatedDataP;
-    // For each row of this source rectangle...
-    for (U32 j = 0, h = atlasP->btP[i].rect.h; j < h; ++j) {
-      smElemEndP = smElemP + nStripsPerRow;
-      dstP       = atlasPixelA + atlasP->btP[i].rect.x + (j + atlasP->btP[i].rect.y) * ATLAS_WIDTH;
-      // Paste the source row into the atlas's destination rectangle row.
-      // TODO change this to copy colors, not indices, into texture atlas.
-      //      You know, it seems like the fastest way to go about this is to only copy colors into a stripmap
-      //      Oh shit... I'm assuming stripmaps here when that won't always be the case.
-      //      That means I'm going to have to restructure at least this portion of the code.
-      //      How many places use stripmaps in this file?
-      //      GOOD! only this part!
-      //      So I need an if-statement to take care of two different copying mechanisms for me.
-      //      TODO first, focus as you were, top-down. Check onn the atals allocation
-      for (; smElemP < smElemEndP; ++smElemP, dstP += nUnitsPerStrip) {
-        memcpy(dstP, 
-            imgPF[srcIdx]->cmP->sdP->ss.unpackedDataP + (*smElemP * nUnitsPerStrip), 
-            nUnitsPerStrip);
-      }
+    srcRectIdx = atlasP->btP[i].srcIdx;
+    dstRectP = &atlasP->btP[i].rect;
+    const Image* imgP = imgPF[srcRectIdx];
+    switch(imgP->cmP->sdP->flags) {
+      // When this was never stripmapped, it's just a raw colormap.
+      // However, the colormap may be sourced differently.
+      case SD_SKIP_INFLATION_ | SD_SKIP_ASSEMBLY_:
+        break;
+      case SD_SKIP_UNPACKING_ | SD_SKIP_ASSEMBLY_:
+        break;
+      case SD_SKIP_ASSEMBLY_:
+        break;
+      case SD_SKIP_INFLATION_:
+      default:  // skipping nothing
+        fillRectFromStripmap( imgP, (const Rect_*) dstRectP, atlasPixelA, ATLAS_WIDTH );
+        break;
     }
   }
   return atlasPixelA;
@@ -339,7 +409,7 @@ static void _updateSrcRects(XRender *xP, Atlas *atlasP) {
   RectOffset rectOffset = {0};
   Image *imgP;
   // If we own the src rect map, we better populate its flags before we access it.
-    // Give everybody an empty rectangle for now.
+  // Give everybody an empty rectangle for now.
   if (xP->system.flags & RENDER_SYS_OWNS_SRC_AND_OFFSET) {
     // Copy the flags from one map to another. It's a cheat code.
     mapCopyKeys(xP->srcRectMP, xP->dstRectMP);
@@ -351,9 +421,9 @@ static void _updateSrcRects(XRender *xP, Atlas *atlasP) {
   for (; scoP < scoEndP; ++scoP) {
     imgP = (Image*) scoP->subcompA[IMG_SUBCOMP_IDX];
     assert(scoP->owner);  // Having a colormap is mandatory for xRender components.)E
-    // Source rectangle initialization (set flag first because implicit share maps don't know 
-    // which entities they should be mapped to ahead of time... would be nice if I found a way
-    // to use mapCopyKeys() for all systems prior to this function)
+                          // Source rectangle initialization (set flag first because implicit share maps don't know 
+                          // which entities they should be mapped to ahead of time... would be nice if I found a way
+                          // to use mapCopyKeys() for all systems prior to this function)
     if (!(xP->system.flags & RENDER_SYS_OWNS_SRC_AND_OFFSET)) {
       mapSetFlag(xP->srcRectMP, scoP->owner);
     }
@@ -394,11 +464,11 @@ XPostprocessCompsDef_(Render) {
   // Texture atlas
   Atlas* atlasP = atlasNew(xP->imgPF);
   atlasPlanPlacements(atlasP);
-  U8* atlasPixelA = _assembleTextureAtlas(xP, atlasP);
+  Color_* atlasPixelA = _assembleTextureAtlas(xP, atlasP);
   // Let colormaps track where their rectangles are sorted.
   _updateCmSrcRectIndices(xP->imgPF, atlasP);
   // Texture surface
-  Surface* atlasSurfaceP = surfaceNew((void*) atlasPixelA, atlasP->btP[0].remW, atlasP->btP[0].remH);
+  Surface_* atlasSurfaceP = surfaceNew((void*) atlasPixelA, atlasP->btP[0].remW, atlasP->btP[0].remH);
   // NOTE: I got rid of the color palette appending loop. So this means every palette needs to be stored with its colormap in order to compose full texture atlas.
   // Texture
   xP->atlasTextureP = textureNew(xP->guiP->rendererP, atlasSurfaceP);
@@ -457,13 +527,13 @@ XPostMutateFuncDef_(Render) {
 void xRenderRun(System *sP) {
   XRender *xP = (XRender*) sP;
 
-	XRenderComp *cP = (XRenderComp*) sP->cF;
-	XRenderComp *cEndP = cP + *_frayGetFirstInactiveIdxP(sP->cF);
+  XRenderComp *cP = (XRenderComp*) sP->cF;
+  XRenderComp *cEndP = cP + *_frayGetFirstInactiveIdxP(sP->cF);
 
   Renderer_ *rendererP = xP->guiP->rendererP;
-	clearScreen(rendererP);
-	for (; cP < cEndP; cP++) {
-		copy_(rendererP, xP->atlasTextureP, cP->srcRectP, cP->dstRectP);
+  clearScreen(rendererP);
+  for (; cP < cEndP; cP++) {
+    copy_(rendererP, xP->atlasTextureP, cP->srcRectP, cP->dstRectP);
   }
   present_(rendererP);
 }

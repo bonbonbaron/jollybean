@@ -28,9 +28,8 @@ Gui* guiNew() {
   assert(!e);
   Gui* guiP = jbAlloc(sizeof(Gui), 1);
   assert(guiP);
-  memset(*guiPP, 0, sizeof(Gui));
   // Init window
-  (*guiPP)->windowP = SDL_CreateWindow("Hello world!", 100, 100, 512, 448, 
+  guiP->windowP = SDL_CreateWindow("Hello world!", 100, 100, 512, 448, 
       SDL_WINDOW_BORDERLESS | 
       SDL_WINDOW_RESIZABLE | 
       SDL_WINDOW_OPENGL
@@ -44,10 +43,12 @@ Gui* guiNew() {
       SDL_RENDERER_PRESENTVSYNC
   );
 	assert (guiP->rendererP);
-  e = SDL_RenderSetLogicalSize((*guiPP)->rendererP, 256, 224);
+  e = SDL_RenderSetLogicalSize(guiP->rendererP, 256, 224);
   assert(!e);
   // Events
   SDL_SetEventFilter(_eventFilter, NULL);
+
+  return guiP;
 }
 
 void guiDel(Gui **guiPP) {
@@ -66,10 +67,10 @@ void guiDel(Gui **guiPP) {
 }
 
 // Makes palette without setting its colors.
-Surface* surfaceNew(void *pixelDataA, U32 w, U32 h) {
+Surface_* surfaceNew(void *pixelDataA, U32 w, U32 h) {
 	assert (pixelDataA && w && h);
   SDL_ClearError();
-  Surface* surfaceP = SDL_CreateRGBSurfaceWithFormatFrom(pixelDataA, w, h, 8, w, SDL_PIXELFORMAT_INDEX8);
+  Surface_* surfaceP = SDL_CreateRGBSurfaceWithFormatFrom(pixelDataA, w, h, 8, w, SDL_PIXELFORMAT_INDEX8);
   // Palette
   assert (surfaceP);
   return surfaceP;
@@ -90,14 +91,13 @@ U32 getNColors( Surface_ *surfaceP ) {
   return surfaceP->format->palette->ncolors;
 }
 
-Texture* textureNew(Renderer_ *rendererP, Surface_ *surfaceP) {
-	assert (texturePP && rendererP && surfaceP);
+Texture_* textureNew(Renderer_ *rendererP, Surface_ *surfaceP) {
+	assert (rendererP && surfaceP);
 
   //TODO add an #if that only uses this code when interfacing SDL
-	Texture* textureP = SDL_CreateTextureFromSurface(rendererP, surfaceP);
+	Texture_* textureP = SDL_CreateTextureFromSurface(rendererP, surfaceP);
   assert(textureP);
-  int e = textureSetAlpha(*texturePP);
-  assert(!e);
+  textureSetAlpha(textureP);
   return textureP;
 }
 
@@ -149,37 +149,15 @@ static void* _mtGenericLoop(ThreadFuncArg *thargP) {
   U8 *voidP = (U8*) thargP->array + ptrIncr * thargP->startIdx;
   U8 *voidEndP = voidP + thargP->nElemsToProcess;
   for (; voidP < voidEndP; voidP += ptrIncr) {
-    thargP->funcP((void*) *((U32*) voidP));  // ugly but... how else to generalize?
+    thargP->funcP((void*) *((size_t*) voidP));  // ugly but... how else to generalize?
   }
   return NULL;
-}
-
-// Multithreading entry point
-void multiThread( CriticalFunc funcP, void *_array) {
-  assert (_array && funcP);
-
-  Thread threadA[N_CORES];
-  ThreadFuncArg *thArgA = arrayNew( sizeof(ThreadFuncArg), N_CORES);
-
-  U32 nThreadsNeeded = N_CORES;
-  // nThreadsNeeded gets updated to fewer than N_CORES if fewer elements than cores exist.
-  _threadFuncArgArrayIni(funcP, thArgA, &nThreadsNeeded, _array);
-
-  for (int i = 0; i < nThreadsNeeded; ++i) {
-    threadIni_(&threadA[i], &thArgA[i]);
-  }
-
-  for (int i = 0; i < nThreadsNeeded; ++i) {
-    threadJoin_(threadA[i]);
-  }
-
-  arrayDel((void**) &thArgA);
 }
 
 void guiProcessEvents(Gui *guiP) {
 	Event_ event;
 	while (pollEvent_(&event)) {
-    e/ Keyboard button-release events (only process this if engine is unpaused)
+    // Keyboard button-release events (only process this if engine is unpaused)
     // NOTE: You can implement a partial pause with any one of the other keys.
     if (guiP->state == UNPAUSED) {
       if (event.type == EVENT_KEYUP_ && event.key.repeat == 0) {
@@ -265,11 +243,11 @@ void guiProcessEvents(Gui *guiP) {
         present_(guiP->rendererP);
         break;
       case SDL_WINDOWEVENT_FOCUS_GAINED:   
-        return E_UNPAUSE;
+        guiP->state = UNPAUSED;
       case SDL_WINDOWEVENT_FOCUS_LOST:     
-        return E_PAUSE;
+        guiP->state = PAUSED;
       case SDL_WINDOWEVENT_CLOSE:          
-        return E_QUIT;
+        guiP->state = QUIT;
       default: 
         break;
       }

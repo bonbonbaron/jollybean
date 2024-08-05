@@ -4,7 +4,6 @@
 #include "strip.h"
 
 // Choose your interface!!
-#define USE_HEADLESS_INTERFACE
 #ifndef USE_HEADLESS_INTERFACE
 #define USE_SDL_INTERFACE  // default to this when we're not specifying headless for now
 #endif
@@ -16,9 +15,7 @@
 #endif
 #endif
 
-#define MULTITHREADED 1
 #define USE_PTHREAD_ 1
-
 #if USE_PTHREAD_
 #define MULTITHREADED_
 #endif
@@ -113,7 +110,7 @@ void  guiDel(Gui **guiPP);
 void guiProcessEvents(Gui *guiP);
 
 // Surface
-Surface* surfaceNew( void *pixelDataA, U32 w, U32 h);
+Surface_* surfaceNew( void *pixelDataA, U32 w, U32 h);
 void surfaceDel(Surface_ **surfacePP);
 
 // Atlas Palette
@@ -121,7 +118,7 @@ Color_* getColorPalette( Surface_ *surfaceP );
 U32 getNColors( Surface_ *surfaceP );
 
 // Texture
-Texture* textureNew( Renderer_ *rendererP, Surface_ *surfaceP);
+Texture_* textureNew( Renderer_ *rendererP, Surface_ *surfaceP);
 void textureDel(Texture_ **texturePP);
 void textureSetAlpha(Texture_ *textureP);
 

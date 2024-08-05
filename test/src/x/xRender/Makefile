@@ -11,7 +11,7 @@ OBJS=$(SRCS:%.c=%.o)
 all: o
 
 o: ${OBJS} ${SRCS}
-	$(CC) --coverage -g ${OBJS} -L${LIB_DIR} $(shell sdl2-config --libs) -ljb -lpthread -o $@
+	$(CC) --coverage -g ${OBJS} -ljb -L${LIB_DIR} -L/usr/lib/aarch64-linux-gnu $(shell sdl2-config --libs) -lpthread -o $@
 
 src/%.o: src/%.c include/%.h
 	$(CC) --coverage -g $(INCS) $(shell sdl2-config --cflags) -c $< -o $@

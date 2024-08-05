@@ -1,5 +1,7 @@
 #include "tau/tau.h"
+#if 0   // Don't use this for now, we gotta make sure it works first.
 #define USE_HEADLESS_INTERFACE
+#endif
 #include "xRender.h"
 // Images we're testing xRender with
 #include "blehColormap.h"
