@@ -61,8 +61,8 @@ void sdUnpack(StripDataS *sdP) {
   Stripset *ssP = &sdP->ss;
   // Packed data is all whole words. Unpacked may not be.
   // Only way to tell is by looking at the number of units.
-  const U32 nPackedUnitsPerWord     = N_BITS_PER_WORD / ssP->bpu;
-  U32 nUnitsInExtraPackedWord = ssP->nUnits % nPackedUnitsPerWord; 
+  const U32 nPackedUnitsPerWord     = N_BITS_PER_WORD / ssP->bpu;  // TODO same here
+  U32 nUnitsInExtraPackedWord = ssP->nUnits % nPackedUnitsPerWord;   // TODO same here
 
   printf("bpu: %d\n", ssP->bpu);
   printf("units per word: %d\n", nPackedUnitsPerWord);
@@ -71,7 +71,8 @@ void sdUnpack(StripDataS *sdP) {
   // start copy
   ssP->unpackedDataP = arrayNew(sizeof(U8), ssP->nUnits);
 
-  U32 mask = 0;
+  U32 mask = 0;  // TODO same here
+  // TODO make a 64-bit version of the below.
   switch(ssP->bpu) {
     case 1:
       mask = 0x01010101;
@@ -93,12 +94,12 @@ void sdUnpack(StripDataS *sdP) {
    *      size_t    8
    *      int       4
    */
-  const U32 offset = (sdP->ss.offset << 24) |
+  const U32 offset = (sdP->ss.offset << 24) |  // TODO same here
                      (sdP->ss.offset << 16) |
                      (sdP->ss.offset <<  8) |
                      (sdP->ss.offset      );
 
-  U32 *packedWordP;
+  U32 *packedWordP;  // TODO same here
   // If the data was never compressed, then we're going to pull it from the "compressed" field.
   // It's just a safe place to put data that otherwise would get deleted by stripClr().
   if ( sdP->flags & SD_SKIP_INFLATION_ ) {
@@ -120,8 +121,8 @@ void sdUnpack(StripDataS *sdP) {
   }
   // While theres >= 4 units left in packed word...
   for (j = 0; 
-       nUnitsInExtraPackedWord >= sizeof(U32); 
-       nUnitsInExtraPackedWord -= sizeof(U32), j += ssP->bpu) {
+       nUnitsInExtraPackedWord >= sizeof(U32);   // TODO same here
+       nUnitsInExtraPackedWord -= sizeof(U32), j += ssP->bpu) {  // TODO same here
     *(dstUnpackedWordP++) = ((*packedWordP >> j) & mask) + offset;
   }
   // Fewer than 4 packed units remaining in last word
