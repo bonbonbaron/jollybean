@@ -64,6 +64,10 @@ void sdUnpack(StripDataS *sdP) {
   const U32 nPackedUnitsPerWord     = N_BITS_PER_WORD / ssP->bpu;
   U32 nUnitsInExtraPackedWord = ssP->nUnits % nPackedUnitsPerWord; 
 
+  printf("bpu: %d\n", ssP->bpu);
+  printf("units per word: %d\n", nPackedUnitsPerWord);
+  printf("units in extra packed word: %d\n", nUnitsInExtraPackedWord);
+
   // start copy
   ssP->unpackedDataP = arrayNew(sizeof(U8), ssP->nUnits);
 
@@ -82,6 +86,13 @@ void sdUnpack(StripDataS *sdP) {
       assert( 0 );   // this means "unsupported bits per unit"
   }
 
+  /* TODO: is offset proper for 64-bit systems too?
+   *       type     size (on 64bit sys)
+   *      -----     ---------------------
+   *      pointer   8
+   *      size_t    8
+   *      int       4
+   */
   const U32 offset = (sdP->ss.offset << 24) |
                      (sdP->ss.offset << 16) |
                      (sdP->ss.offset <<  8) |
