@@ -382,12 +382,20 @@ void readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *ani
 
 static void _validateWholeInput(Colormap *cmP, ColorPalette *cpP) {
   assert (cmP && cpP);
+  assert (cmP->sdP);
+
+  if (!cmP->sdP->assembledDataA) {
+    stripIni(cmP->sdP);
+  }
+  assert (cmP->sdP->assembledDataA); // here's the bug
+  assert (arrayGetNElems(cmP->sdP->assembledDataA) > 0);
 
   // Deflate colormap/palette and get rid of their resulting outputs to truly test strip-piecing.
   U32 wOrig = cmP->w;
   U32 hOrig = cmP->h;
   U32 bppOrig = cmP->bpp;
   U8 *cmOrigP = NULL;
+    printf("0\n");
   cmOrigP = arrayNew(arrayGetElemSz(cmP->sdP->assembledDataA), arrayGetNElems(cmP->sdP->assembledDataA));
   memcpy(cmOrigP, cmP->sdP->assembledDataA, arrayGetElemSz(cmP->sdP->assembledDataA) * arrayGetNElems(cmP->sdP->assembledDataA));
   // Clear out old colormap
@@ -406,7 +414,7 @@ static void _validateWholeInput(Colormap *cmP, ColorPalette *cpP) {
       arrayGetElemSz(cmOrigP), arrayGetElemSz(cmP->sdP->assembledDataA));
   assert ((arrayGetNElems(cmP->sdP->assembledDataA) == arrayGetNElems(cmOrigP)));
   // Verify array elem sizes match.
-  assert (arrayGetElemSz(cmP->sdP->assembledDataA) != arrayGetElemSz(cmOrigP));
+  assert (arrayGetElemSz(cmP->sdP->assembledDataA) == arrayGetElemSz(cmOrigP));
 #endif
   // Compare data directly
   U8 theyMatch = 0;
