@@ -21,4 +21,4 @@ TYPE:
 I do NOT want to configure that for every little game object I make. However, composites need to be configured manually; there's no avoiding that, and there's also no avoiding specifying whether it's exclusive, implicit, shared, media, or composite. 
 
 QUESTIONS:
-  is type needed of the class is composite?
+  is type needed if the class is composite?

@@ -1,6 +1,5 @@
 #ifndef COLL_H
 #define COLL_H
-#define USE_HEADLESS_INTERFACE
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>

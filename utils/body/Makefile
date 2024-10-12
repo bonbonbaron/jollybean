@@ -8,7 +8,6 @@ BINDIR         = ./bin
 INSTALLDIR     = /usr/local/lib
 
 JB = $(shell git rev-parse --show-toplevel)
-BLD = $(JB)/build/src
 SRC = $(JB)/src
 KR  = ${HOME}/jb/src/Keyring
 
@@ -34,15 +33,6 @@ ${BUILDDIR}/%.o: ./src/%.c ./src/include/%.h
 
 ../inf/build/inf.o: ../inf/src/inf.c ../inf/src/include/inf.h
 	make -C ../inf
-
-$(BLD)/data/%.o: $(SRC)/data/%.c
-	make -C $(JB)
-
-$(BLD)/x/%.o: $(SRC)/x/%.c
-	make -C $(JB)
-
-$(BLD)/interface/%.o: $(SRC)/interface/%.c
-	make -C $(JB)
 
 # Build directory (dependency)
 ${BUILDDIR}:

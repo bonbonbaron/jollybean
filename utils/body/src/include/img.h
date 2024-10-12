@@ -1,6 +1,5 @@
 #ifndef IMG_H_
 #define IMG_H_
-#define USE_HEADLESS_INTERFACE
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>

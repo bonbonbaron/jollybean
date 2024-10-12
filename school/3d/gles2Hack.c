@@ -274,7 +274,7 @@ int Init ( ESContext *esContext ) {
   // Generate texture
   // First, load the image we want.
   Image img = {0};
-  Error e = readPng("./ddr.png", &img, 1);
+  unsigned char e = readPng("./ddr.png", &img, 1);
   glGenTextures(1, &ud->texture);
   checkError("generating texture");
   glBindTexture(GL_TEXTURE_2D, ud->texture);
@@ -292,7 +292,7 @@ int Init ( ESContext *esContext ) {
 // Handle input
 //
 #define SENSITIVITY (0.0001)
-void Key ( ESContext *esContext) {
+void getkeypresses ( ESContext *esContext) {
   UserData* ud = &esContext->ud;
   esContext->ud.mouseMoved = 0;
   XEvent xev;
@@ -649,7 +649,7 @@ int main ( int argc, char *argv[] )
 
   // Main loop
   while(!esContext.ud.itsTimeToExit) {
-    Key(&esContext);
+    getkeypresses(&esContext);
     Update(&esContext.ud, 0.01);
     Draw(&esContext);
     eglSwapBuffers(esContext.eglDisplay, esContext.eglSurface);
