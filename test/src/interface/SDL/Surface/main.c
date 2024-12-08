@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
     sdPA[i] = *((StripDataS**) genePA[i]->u.unitary.dataP);  
   }
 
-#define MULTITHREADED 1
+#define MULTITHREADED 0
   // Inflate colormap inflatables
 #if MULTITHREADED
   multithread_(sdInflate, (void*) sdPA);
@@ -56,7 +56,7 @@ int main(int argc, char **argv) {
   multithread_(sdAssemble, (void*) sdPA);
 #else 
   for (int i = 0; i < N_SAMPLES; ++i) {
-    stripIni(*((StripDataS**) genePA[i]->dataP));
+    stripIni(*((StripDataS**) genePA[i]->u.unitary.dataP));
   }
 #endif
 
@@ -157,7 +157,7 @@ int main(int argc, char **argv) {
   multithread_(stripClr, (void*) sdPA);
 #else
   for (int i = 0; i < N_SAMPLES; ++i) {
-    stripClr(*((StripDataS**) genePA[i]->dataP));
+    stripClr(*((StripDataS**) genePA[i]->u.unitary.dataP));
   }
 #endif
 

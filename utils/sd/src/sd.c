@@ -81,7 +81,7 @@ static U8* _packBits(U8 *ssUnpackedA, U32 nUnits, U32 bpu, U8 verbose) {
   // Pre-pack stats
   if (verbose) {
     printf("[_packBits] Packing %d bytes to %d bytes (%d full words) + %d bytes (1 partial word)\n" 
-        ,nUnits, nWhollyPackedWords * 4, nWhollyPackedWords, nUnitsInExtraPackedWord); 
+        ,nUnits, nWhollyPackedWords * sizeof(U32), nWhollyPackedWords, nUnitsInExtraPackedWord); 
   }
 
   U8 *bitIdxA;
@@ -109,7 +109,7 @@ static U8* _packBits(U8 *ssUnpackedA, U32 nUnits, U32 bpu, U8 verbose) {
    */
   U8* ssPackedA = arrayNew(  
       sizeof(U8), 
-      4 * (nWhollyPackedWords + (nUnitsInExtraPackedWord > 0))); 
+      sizeof(U32) * (nWhollyPackedWords + (nUnitsInExtraPackedWord > 0))); 
   U32 *packedWordP    = (U32*) ssPackedA;
   U32 *packedWordEndP = packedWordP + nWhollyPackedWords;
   U8  *inputByteP     = ssUnpackedA;
@@ -186,16 +186,16 @@ static void _validateBitPacking(U8 *packedDataA, U8 *srcUnpackedDataP, U32 nUnit
   for (; packedWordP < wholePackedWordEndP; ++packedWordP) {
     for (j = 0; j < N_BITS_PER_BYTE; j += bpu, ++srcUnpackedWordP) {
       dstUnpackedWord = (*packedWordP >> j) & mask;
-      _checkMatch(srcUnpackedWordP, srcUnpackedDataP, dstUnpackedWord, 4, nUnits);
+      _checkMatch(srcUnpackedWordP, srcUnpackedDataP, dstUnpackedWord, sizeof(U32), nUnits);
     }
   }
   // One partially packed word's remainder units
   // While theres at least 4 packed units remaining in word...
   for (j = 0; 
-      nUnitsInExtraPackedWord >= 4; 
-      nUnitsInExtraPackedWord -= 4, j += bpu, ++srcUnpackedWordP) {
+      nUnitsInExtraPackedWord >= sizeof(U32); 
+      nUnitsInExtraPackedWord -= sizeof(U32), j += bpu, ++srcUnpackedWordP) {
     dstUnpackedWord = (*packedWordP >> j) & mask;
-    _checkMatch(srcUnpackedWordP, srcUnpackedDataP, dstUnpackedWord, 4, nUnits);
+    _checkMatch(srcUnpackedWordP, srcUnpackedDataP, dstUnpackedWord, sizeof(U32), nUnits);
   }
   // Fewer than 4 packed units remaining
   if (nUnitsInExtraPackedWord > 0) {
@@ -381,6 +381,7 @@ StripDataS* stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bpu,  
   sdP->ss.nUnits = nUnitsInStripset;
   sdP->ss.nUnitsPerStrip = nBytesPerUnpackedStrip;
   sdP->ss.bpu = bpu;
+  inflatableDel( &sdP->ss.infP );
   sdP->ss.infP = inflatableNew((void*) ssPackedA);
   if (verbose) {
     printf("[stripNew] SS Compressed size: %d bytes\n", 
@@ -409,6 +410,15 @@ StripDataS* stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bpu,  
   U32 pkStrpSz = sdP->ss.infP->inflatedLen   + sdP->sm.infP->inflatedLen   + 2 * sizeof(Inflatable);
   U32 pkSpZpSz = sdP->ss.infP->compressedLen + sdP->sm.infP->compressedLen + 2 * sizeof(Inflatable);
 
+  if (verbose) {
+    printf("\e[33mraw: %d bytes\n", arrayGetNElems(srcA) * arrayGetElemSz(srcA));
+    printf("\e[33mpacked: %d bytes\n", packedSz);
+    printf("zipped: %d bytes\n", zippedSz);
+    printf("packed & zipped: %d bytes\n", pakZipSz);
+    printf("packed & stripped: %d bytes\n", pkStrpSz);
+    printf("packed & stripped & zipped: %d bytes\e[0m\n", pkSpZpSz);
+  }
+
   U32 smallestSz = ( packedSz < zippedSz ) ? packedSz : zippedSz;
   if ( smallestSz > pakZipSz ) smallestSz = pakZipSz;
   if ( smallestSz > pkStrpSz ) smallestSz = pkStrpSz;
@@ -422,6 +432,9 @@ StripDataS* stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bpu,  
     memcpy( sdP->ss.infP->compressedDataA, packedRawA, arrayGetElemSz( packedRawA ) * arrayGetNElems( packedRawA ) );
     // Flags
     sdP->flags = SD_SKIP_INFLATION_ | SD_SKIP_ASSEMBLY_;
+    if (verbose) {
+      printf("[stripNew] best size is \e[92mpack-only\e[0m (skip inflation and  assembly).\n");
+    }
   }
   // if using only zipped raw data...
   else if ( smallestSz == zippedSz ) {
@@ -429,24 +442,37 @@ StripDataS* stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bpu,  
                         // Stripset
     sdP->ss.bpu = bpu;
     sdP->ss.nUnits = arrayGetElemSz( srcA );
+    inflatableDel( &sdP->ss.infP );
     sdP->ss.infP = rawInfP;
     rawInfP = NULL;
     // Stripmap
+    inflatableDel( &sdP->sm.infP );
     memset( &sdP->sm, 0, sizeof( Stripmap ) );
     // Flags
     sdP->flags = SD_SKIP_UNPACKING_ | SD_SKIP_ASSEMBLY_;
+    if (verbose) {
+      printf("[stripNew] best size is \e[92mzip-only\e[0m (skip unpacking and  assembly).\n");
+    }
+    inflatableDel( &packedInfP );
   }
   // if using zipped-up packed data...
   else if ( smallestSz == pakZipSz ) {
     // Stripset
     sdP->ss.bpu = bpu;
     sdP->ss.nUnits = arrayGetElemSz( srcA );
+    inflatableDel( &sdP->ss.infP );
     sdP->ss.infP = packedInfP;
     packedInfP = NULL;
     // Stripmap
+    inflatableDel( &sdP->sm.infP );
     memset( &sdP->sm, 0, sizeof( Stripmap ) );
     // Flags
     sdP->flags = SD_SKIP_ASSEMBLY_;
+    if (verbose) {
+      printf("[stripNew] best size is \e[92mzip-and-pack\e[0m (skip assembly).\n");
+    }
+    // Clean the rest of the stuff
+    inflatableDel( &rawInfP );
   }
   // if using stripped packed data...
   else if ( smallestSz == pkStrpSz ) {
@@ -466,12 +492,22 @@ StripDataS* stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bpu,  
     // Flags
     sdP->flags = SD_SKIP_INFLATION_;
     // if using zipped-up stripped & packed data...
+    if (verbose) {
+      printf("[stripNew] best size is \e[92mpack-and-assembly\e[0m (skip zip).\n");
+    }
+    inflatableDel( &rawInfP );
   }
   else if ( smallestSz == pkSpZpSz ) {
     // No need to do anything. We have the inflatables already here.
     // Keep the rest of the data as-is.
     // Flags
     sdP->flags = 0;
+    if (verbose) {
+      printf("[stripNew] best size is \e[92mpack-and-assembly-and-zip\e[0m.\n");
+    }
+  }
+  else {
+    assert(0); // well, it's gotta compress SOMEhow!
   }
   // TODO free everything allocated in the new lines.
   // ssPackedA

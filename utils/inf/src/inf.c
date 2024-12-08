@@ -29,10 +29,10 @@ Inflatable* inflatableNew(void* voidA) {
 
   infP = jbAlloc( sizeof(Inflatable), 1);
 
- infP->compressedLen   = szDataCompressed;
- infP->inflatedLen     = szDataOrig;
- infP->inflatedDataP   = NULL;
- infP->compressedDataA = dataCompressed;
+  infP->compressedLen   = szDataCompressed;
+  infP->inflatedLen     = szDataOrig;
+  infP->inflatedDataP   = NULL;
+  infP->compressedDataA = dataCompressed;
 }
 
 // The reason data.c doesn't own this function is because inflatables are permanent in-game.

@@ -1,4 +1,21 @@
-The problem is, when you run the Surface test (to see if SDL works), it bombs out when allocating an SD's unpacked data. Turns out that at some point (below), there's an invalid write in sdUnpack(). We're trying to write 4 bytes into the last byte of a 9-byte block.
+The problem is, when you run the test/src/interface/SDL/Surface test (to see if SDL works), it bombs out when allocating an SD's unpacked data. Turns out that at some point (below), there's an invalid write in sdUnpack(). We're trying to write 4 bytes into the last byte of a 9-byte block.
+
+FACTS
+=====
+* blows up (not necessarily *only*) on red
+* 16 units/word
+* times 4 bits/unit
+* = 64 bits / word
+* dies on allocating 480 bytes on ssP->unpackedDataP, which can mean anything. So i need to take a step back.
+
+* Three checks are now failing in strip. ARe other tests passing? <-- yes
+* Those three checks are expecting a pointer to be null, and none of them are. Stopped working
+  after I switched to a 64-bit system.
+
+* expects only unzipping. We need to check the flag. Flag's fine, but this is 4bpp. Is that what's bombing in the surface test? <-- no
+
+
+
 ==32723== Memcheck, a memory error detector
 ==32723== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
 ==32723== Using Valgrind-3.19.0 and LibVEX; rerun with -h for copyright info

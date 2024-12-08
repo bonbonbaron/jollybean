@@ -17,6 +17,8 @@ typedef struct Tau {
 } Tau;
 
 TEST_F_SETUP(Tau) {
+  U8 rawData1bpp[] = {1, 0, 0, 1, 0, 0, 0, 0, 1};
+  U8 rawData2bpp[] = {1, 2, 0, 3, 0, 2, 3, 2, 1};
   U8 rawData4bpp[] = {
     1, 15, 12, 2, 0, 10, 8, 9, 1, 0,
     3, 15, 12, 2, 0, 10, 9, 10, 1, 98,
@@ -188,6 +190,18 @@ TEST_F_SETUP(Tau) {
     1, 15, 12, 2, 0, 10, 8, 9, 2, 0,
     255, 35, 12, 2, 0, 10, 8, 9, 2, 0
   };
+  // 1bpp
+  tau->raw1bppA = arrayNew(  sizeof(rawData1bpp[0]), sizeof(rawData1bpp) / sizeof(rawData1bpp[0]));
+  REQUIRE_TRUE(tau->raw1bppA != NULL);
+  REQUIRE_EQ(arrayGetElemSz((void*) tau->raw1bppA), (U32) sizeof(rawData1bpp[0]));
+  REQUIRE_EQ(arrayGetNElems((void*) tau->raw1bppA), sizeof(rawData1bpp) / sizeof(rawData1bpp[0]));
+  memcpy((void*) tau->raw1bppA, (void*) rawData1bpp, sizeof(rawData1bpp[0]) * sizeof(rawData1bpp) / sizeof(rawData1bpp[0]));
+  // 2bpp
+  tau->raw2bppA = arrayNew(  sizeof(rawData2bpp[0]), sizeof(rawData2bpp) / sizeof(rawData2bpp[0]));
+  REQUIRE_TRUE(tau->raw2bppA != NULL);
+  REQUIRE_EQ(arrayGetElemSz((void*) tau->raw2bppA), sizeof(rawData2bpp[0]));
+  REQUIRE_EQ(arrayGetNElems((void*) tau->raw2bppA), sizeof(rawData2bpp) / sizeof(rawData2bpp[0]));
+  memcpy((void*) tau->raw2bppA, (void*) rawData2bpp, sizeof(rawData2bpp[0]) * sizeof(rawData2bpp) / sizeof(rawData2bpp[0]));
   // 4bpp
   tau->raw4bppA = arrayNew(  sizeof(rawData4bpp[0]), sizeof(rawData4bpp) / sizeof(rawData4bpp[0]));
   REQUIRE_TRUE(tau->raw4bppA != NULL);
@@ -202,13 +216,23 @@ TEST_F_SETUP(Tau) {
   //      const U8 bitsPerPackedByte, 
   //      U32 flags, 
   //      U8 verbose);
+  printf("\e[92m1bpp strip init\e[0m\n");
+  tau->sd1bppP = stripNew(tau->raw1bppA, 3, 1, 0, 0);
+  printf("\e[92m2bpp strip init\e[0m\n");
+  tau->sd2bppP = stripNew(tau->raw2bppA, 3, 2, 0, 0);
   printf("\e[92m4bpp strip init\e[0m\n");
   tau->sd4bppP = stripNew(tau->raw4bppA, 5, 4, 0, 1);
-  //stripClr(tau->sd4bppP);
+  stripClr(tau->sd1bppP);
+  stripClr(tau->sd2bppP);
+  stripClr(tau->sd4bppP);
 }
 
 TEST_F_TEARDOWN(Tau) {
+  arrayDel((void**) &tau->raw1bppA);
+  arrayDel((void**) &tau->raw2bppA);
   arrayDel((void**) &tau->raw4bppA);
+  stripDel(&tau->sd1bppP);
+  stripDel(&tau->sd2bppP);
   stripDel(&tau->sd4bppP);
 }
 
@@ -226,7 +250,40 @@ TEST_F(Tau, sdAssemble) {
 }
 
 TEST_F(Tau, stripIni) {
+  stripIni(tau->sd1bppP);
+  stripIni(tau->sd2bppP);
   stripIni(tau->sd4bppP);
+}
+
+TEST_F(Tau, stripIni_SkipInflation) {
+  tau->sd1bppP->flags |= SD_SKIP_INFLATION_;
+  sdInflate(tau->sd1bppP);
+  CHECK_TRUE(tau->sd1bppP->ss.infP->inflatedDataP == NULL);
+  CHECK_TRUE(tau->sd1bppP->sm.infP->inflatedDataP == NULL);
+}
+
+TEST_F(Tau, stripIni_SkipUnpacking) {
+  tau->sd1bppP->flags |= SD_SKIP_UNPACKING_;
+  sdInflate(tau->sd1bppP);
+  CHECK_TRUE(tau->sd1bppP->ss.infP->inflatedDataP == NULL);
+  CHECK_TRUE(tau->sd1bppP->sm.infP->inflatedDataP == NULL);
+  sdUnpack(tau->sd1bppP);
+  CHECK_TRUE(tau->sd1bppP->ss.unpackedDataP == NULL);
+  // Now make it unpack.
+  tau->sd1bppP->flags &= ~SD_SKIP_UNPACKING_;
+  sdUnpack(tau->sd1bppP);
+  CHECK_TRUE(tau->sd1bppP->ss.unpackedDataP != NULL);
+}
+
+TEST_F(Tau, stripIni_SkipAssembly) {
+  tau->sd1bppP->flags |= SD_SKIP_ASSEMBLY_;
+  sdInflate(tau->sd1bppP);
+  CHECK_TRUE(tau->sd1bppP->ss.infP->inflatedDataP == NULL);
+  CHECK_TRUE(tau->sd1bppP->sm.infP->inflatedDataP == NULL);
+  sdUnpack(tau->sd1bppP);
+  CHECK_TRUE(tau->sd1bppP->ss.unpackedDataP != NULL);
+  sdAssemble(tau->sd1bppP);
+  CHECK_TRUE(tau->sd1bppP->assembledDataA == NULL);
 }
 
 // TODO 32-bit system thinks this is only unzipping, 64-bit thinks only unpacking

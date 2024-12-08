@@ -5,8 +5,8 @@
 
 // Inflatables 
 typedef struct Inflatable {
-	U32 compressedLen;
-	U32 inflatedLen;
+	size_t compressedLen;
+	size_t inflatedLen;
 	void *inflatedDataP;
 	U8  *compressedDataA;
 } Inflatable;
