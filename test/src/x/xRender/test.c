@@ -13,25 +13,9 @@
 
 
 // We have to make these constants so the compiler doesn't cry about the array initializers not having constant sizes.
-#define N_ENTITIES (100)
 #define N_MUTATIONS_PER_ENTITY (5)
 
 #define forEachEntity_(nEntities_) for (Entity entity = 1; entity <= nEntities_; ++entity)
-
-#define RECT_X_COEFF (10)
-#define RECT_Y_COEFF (20)
-#define RECT_W_COEFF (30)
-#define RECT_H_COEFF (40)
-#define SRC_RECT_X (1)
-#define SRC_RECT_Y (2)
-#define SRC_RECT_W (3)
-#define SRC_RECT_H (4)
-#define DST_RECT_X (5)
-#define DST_RECT_Y (6)
-#define DST_RECT_W (7)
-#define DST_RECT_H (8)
-#define OFFSET_X (5)
-#define OFFSET_Y (10)
 
 TAU_MAIN();
 
@@ -86,12 +70,6 @@ TEST_F_SETUP(Tau) {
     Rect_ currDstRect = { 0 };  // the post-mutate function will change this value before renderating
     mapSet(sharedDstRectMP, entity, &currDstRect);
 
-    RectOffset currRectOffset = {
-      .x = OFFSET_X,  //  5
-      .y = OFFSET_Y   // 10
-    };
-    mapSet(sharedOffsetMP, entity, &currRectOffset);
-
   }
   // If ordering is sacred, then we need fixed functions that'll encapsulate this sacred ordering for us.
   // Now add the entity to the actual system itself.
@@ -107,32 +85,6 @@ TEST_F_SETUP(Tau) {
   // Give the shared map to the system. (This particular system wants a pointer to the inner shared map.)
   tau->xP->system.getShare(&tau->xP->system, tau->shareMPMP);
 
-  xRun( tau->sP );
-
-  
-
-  // PREPARE TEST SAMPLES
-  // *********************************
-  // Entity 6 strip 1: repeat + pingpong
-#define ENTITY_WITH_PINGPONG_REPEAT (6)
-  mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_PINGPONG_REPEAT, MUTATE_AND_ACTIVATE, 1);
-
-  // *********************************
-  // Entity 1 strip 2: pingpong only
-#define ENTITY_WITH_PINGPONG (1)
-  mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_PINGPONG, MUTATE_AND_ACTIVATE, 2);
-
-  // *********************************
-  // Entity 88 strip 3: repeat only
-#define ENTITY_WITH_REPEAT (88)  // TODO change back to 88 after you find and fix bug
-  mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_REPEAT, MUTATE_AND_ACTIVATE, 3);
-
-  // *********************************
-  // Entity 30 strip 4: neither repeat nor pingpong
-#define ENTITY_WITH_NOTHING (30)
-  mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_NOTHING, MUTATE_AND_ACTIVATE, 4);
-
-
   // Don't run system here. Instead, let each test case decide whether to advance by timestep, frame, or full strip.
 }
 
@@ -143,10 +95,11 @@ TEST_F_TEARDOWN(Tau) {
 }
 
 TEST_F(Tau, xRenderRun) {
-  REQUIRE_TRUE(1);
+  for (int i = 0; i < 50; ++i) {
+    xRun(&tau->xP->system);
+  }
 }
 #define USE_HEADLESS_INTERFACE
-//#include "previewImg.h"
 
 TEST_F(Tau, somethingfornow) {
   // ====================================================

@@ -1,107 +1,76 @@
+The problem is, when you run the Surface test (to see if SDL works), it bombs out when allocating an SD's unpacked data. Turns out that at some point (below), there's an invalid write in sdUnpack(). We're trying to write 4 bytes into the last byte of a 9-byte block.
+==32723== Memcheck, a memory error detector
+==32723== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
+==32723== Using Valgrind-3.19.0 and LibVEX; rerun with -h for copyright info
+==32723== Command: ./o
+==32723== 
+==32723== Thread 2:
+==32723== Invalid write of size 4
+==32723==    at 0x10B35C: sdUnpack (strip.c:107)
+==32723==    by 0x10AB0F: _mtGenericLoop (interface.c:39)
+==32723==    by 0x4B0EE57: start_thread (pthread_create.c:442)
+==32723==    by 0x4B77F9B: thread_start (clone.S:79)
+==32723==  Address 0x5f11e88 is 8 bytes inside a block of size 9 alloc'd
+==32723==    at 0x48850C8: malloc (vg_replace_malloc.c:381)
+==32723==    by 0x10FFE7: jbAlloc (mem.c:5)
+==32723==    by 0x10F96F: arrayNew (array.c:5)
+==32723==    by 0x10B11B: sdUnpack (strip.c:68)
+==32723==    by 0x10AB0F: _mtGenericLoop (interface.c:39)
+==32723==    by 0x4B0EE57: start_thread (pthread_create.c:442)
+==32723==    by 0x4B77F9B: thread_start (clone.S:79)
+==32723== 
 
-We're now developing the renderer system. We want it to parse the colormaps into 4-channel color images, not just blindly copy everything. But what's the fastest way to do this? For now, just assume the simplest and worry about performance later.
-Give GUI-related systems ownership of GUI elements via ENGINE_START and ENGINE_SHUTDOWN messages and pointers preserved from sysClr().
-  That's how you can easily have a game with text and no music by simply taking that system out.
-Mission to clearing out error-handling:
-  /all of src/data: almost
-    /~ lingering strip unit test, which needs the strip util to be free from it as well
-  all of src/x
-  all of src/interface
-Make database process run after all game objects are processed; that way we insert in bulk.
-If new game object is created, make a table for it.
-Think up what your database structure should be. Preferably sqlite3.
-
-MVP 2D
-~~~~~~
-\x
-\motion (2d)
-\animation (2d)
-rendering (2d)
-action
-controller
-master
-collision (2d)
-timer
-sound
-
-gene editor
-level pipeline
-behavior pipeline
-sound pipeline
-midi pipeline
-
---- 2D GOAL REACHED
-
-MVP 3D
-~~~~~~
-3d mesh compression/inflation
-xforms
-rendering (3d)
-camera movement w/ mouse + WASD
-motion (3d)
-colors
-lighting
-textures
-models
-animation (3d)
-shadows
-collision (3d)
-pre-compiled shaders
-limiting vertex data sent to GPU
-perma-load static points (maybe)
-index points in array
-
-3d character pipeline
-3d level pipeline
-
---- 3D GOAL REACHED
+valgrind: m_mallocfree.c:303 (get_bszB_as_is): Assertion 'bszB_lo == bszB_hi' failed.
+valgrind: Heap block lo/hi size mismatch: lo = 80, hi = 4294967297.
+This is probably caused by your program erroneously writing past the
+end of a heap block and corrupting heap metadata.  If you fix any
+invalid writes reported by Memcheck, this assertion failure will
+probably go away.  Please try that before reporting this as a bug.
 
 
+host stacktrace:
+==32723==    at 0x58040D44: show_sched_status_wrk (m_libcassert.c:406)
+==32723==    by 0x58040E93: report_and_quit (m_libcassert.c:477)
+==32723==    by 0x58040FFB: vgPlain_assert_fail (m_libcassert.c:543)
+==32723==    by 0x5804B5D3: get_bszB_as_is (m_mallocfree.c:303)
+==32723==    by 0x5804B5D3: vgPlain_describe_arena_addr (m_mallocfree.c:1597)
+==32723==    by 0x58039227: vgPlain_describe_addr (m_addrinfo.c:185)
+==32723==    by 0x5803790B: vgMemCheck_update_Error_extra (mc_errors.c:1185)
+==32723==    by 0x5803C33F: vgPlain_maybe_record_error (m_errormgr.c:822)
+==32723==    by 0x58036B03: vgMemCheck_record_address_error (mc_errors.c:765)
+==32723==    by 0x1003AC4787: ???
 
-NTH
-~~~
-add option to body compressor to force any given type of compression. Developer may want speed over size, or vice versa.
-take advantage of anim strips' flags to decide whether to anchor dest rect to a corner, side, or center.
-animated bg tiles
-camera
-lerping motion
-accelerating motion
-mirroring
-planar rendering
-scaling (applies to planes)
-parallax
-z-ordering
-shaking
-orbiting
-rotating
-text
-menus
-game's (jb's) build system
+sched status:
+  running_tid=2
 
-PROBLEMS:
-=========
-  NEWER:
-  ======
-    * the GPU doesn't appear to support colormap-based rendering, so you may need to render the colors directly to the texture atlas yourself (if you haven't already).
-      you need to change all possible error checks to asserts. That way you can turn them off by defining NDEBUG before including assert.h in your baseline header file. 
+Thread 1: status = VgTs_Yielding (lwpid 32723)
+==32723==    at 0x4B77F78: clone (clone.S:64)
+==32723==    by 0x4B0EA93: create_thread (pthread_create.c:295)
+==32723==    by 0x4B0F473: pthread_create@@GLIBC_2.34 (pthread_create.c:831)
+==32723==    by 0x10ACB3: multiThread (interface.c:56)
+==32723==    by 0x10A3AF: main (main.c:54)
+client stack range: [0x1FFEFFD000 0x1FFF000FFF] client SP: 0x1FFEFFF890
+valgrind stack range: [0x1002F42000 0x1003041FFF] top usage: 19776 of 1048576
 
-    * figure out why you're using stripmap elements to put together texture atlas. Shouldn't it be sd.assembledDataA?
+Thread 2: status = VgTs_Runnable (lwpid 32727)
+==32723==    at 0x488D25C: __GI_memcpy (vg_replace_strmem.c:1121)
+==32723==    by 0x10B4A3: sdUnpack (strip.c:120)
+==32723==    by 0x10AB0F: _mtGenericLoop (interface.c:39)
+==32723==    by 0x4B0EE57: start_thread (pthread_create.c:442)
+==32723==    by 0x4B77F9B: thread_start (clone.S:79)
+client stack range: [0x7341000 0x7B3FFFF] client SP: 0x7B3F780
+valgrind stack range: [0x1005A25000 0x1005B24FFF] top usage: 5216 of 1048576
 
-    * figure out how you're going to use sdP->assembledDataA in all decompression cases for xRender.
 
-    * Replace errors with assertions. Have a sleek engine with zero impurities.
+Note: see also the FAQ in the source distribution.
+It contains workarounds to several common problems.
+In particular, if Valgrind aborted or crashed after
+identifying problems in your program, there's a good chance
+that fixing those problems will prevent Valgrind aborting or
+crashing, especially if it happened in m_mallocfree.c.
 
-  DONE
-  ====
-    * Fix compiler warnings about unseen infUtil functions
+If that doesn't help, please report this bug to: www.valgrind.org
 
-  OLDER:
-  ======
-  See if making animation a composite gene is what's causing master not to populate shared map of source rectangles.
-
-  Partial answer: Turns out anim strips are incrementing the src rect count to 6 instead of 2 (we want 2 for 2 entities). We need to let composite genes increment this count as well, which has to do with 
-                geneHistoP->histoXElemA[i].count);
-
-  Figure out how to make a composite gene, now called "Animation", contribute to the number of source rectangles and components in the Animation system. Then figure out how to make the shared gene called "Animation Strip" contribute to the number of mutations. Figure out how to generalize this.
-
+In the bug report, send all the above text, the valgrind
+version, and what OS and version you are using.  Thanks.
 
