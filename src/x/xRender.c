@@ -326,7 +326,6 @@ static void fillRect( U8* cmA, Color_* cpA, Rect_* rectP, Color_* atlasPixelA, c
 
 #ifdef MULTITHREADED_
   FillRectParamsMT* paramsA = arrayNew( sizeof( FillRectParamsMT ), N_CORES );
-  // TODO height sliver for each thread
   U32 heightSliver = rectP->h / N_CORES;
   for ( U32 i = 0; i < N_CORES; ++i ) {
     paramsA[i].dstP = atlasPixelA + rectP->x + ( rectP->y + ( i * heightSliver) ) * ATLAS_WIDTH;
@@ -359,11 +358,9 @@ Color_* assembleTextureAtlas(Image** imgPF, Atlas *atlasP) {
   // Number of rect nodes is the number of elements in the rectangle binary tree.
   U32 iEnd = arrayGetNElems(atlasP->btP);
   // For each source rectangle...
-  U32 srcRectIdx;
-  Rect_ *dstRectP;
   for (U32 i = 0; i < iEnd; ++i) {
-    srcRectIdx = atlasP->btP[i].srcIdx;
-    dstRectP = &atlasP->btP[i].rect;
+    U32 srcRectIdx = atlasP->btP[i].srcIdx;
+    const Rect_* dstRectP = &atlasP->btP[i].rect;
     const Image* imgP = imgPF[srcRectIdx];
     switch(imgP->cmP->sdP->flags) {
       // When this was never stripmapped, it's just a raw colormap.
@@ -376,7 +373,7 @@ Color_* assembleTextureAtlas(Image** imgPF, Atlas *atlasP) {
         break;
       case SD_SKIP_INFLATION_:
       default:  // skipping nothing
-        fillRectFromStripmap( imgP, (const Rect_*) dstRectP, atlasPixelA, ATLAS_WIDTH );
+        fillRectFromStripmap( imgP, dstRectP, atlasPixelA, ATLAS_WIDTH );
         break;
     }
   }
