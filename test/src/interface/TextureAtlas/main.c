@@ -37,13 +37,14 @@ int main(int argc, char **argv) {
 
   Image** imgPF = frayNew(sizeof(Image*), N_SAMPLES);
   for (U32 i = 0; i < N_SAMPLES; ++i) {
-    frayAdd(imgPF, &imgA[i], NULL);
+    Image* imgP = &imgA[i];
+    frayAdd(imgPF, &imgP, NULL);
   }
 
   // Extract stripdatas into an array so we can multithread process them all.
   StripDataS **sdPA = arrayNew(sizeof(StripDataS*), N_SAMPLES);
 
-  for (U32 i = 0, iEnd = arrayGetNElems(sdPA); i < iEnd; ++i) {
+  for (U32 i = 0; i < N_SAMPLES; ++i) {
     sdPA[i] = imgPF[i]->cmP->sdP;
   }
 
