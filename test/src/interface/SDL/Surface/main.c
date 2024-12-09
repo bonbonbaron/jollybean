@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
     sdPA[i] = *((StripDataS**) genePA[i]->u.unitary.dataP);  
   }
 
-#define MULTITHREADED 0
+#define MULTITHREADED 1
   // Inflate colormap inflatables
 #if MULTITHREADED
   multithread_(sdInflate, (void*) sdPA);
@@ -63,6 +63,7 @@ int main(int argc, char **argv) {
   // *********************************************
   // Init SDL
   // *********************************************
+  printf("getting video drivers\n");
   for (int i = 0; i < SDL_GetNumVideoDrivers(); ++i) {
     printf("%s\n", SDL_GetVideoDriver(i));
   }

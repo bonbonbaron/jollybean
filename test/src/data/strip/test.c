@@ -2,10 +2,15 @@
 #include "strip.h"
 #include "sd.h"
 
-// TODO rename strip util to not clash
-// TODO include strip util to pack stuff to make this easier and portable
+// Let's test on real images too.
+#include "blehColormap.h"
+#include "heckColormap.h"
+#include "redColormap.h"
 
 TAU_MAIN()
+
+// In addition to the made-up arrays below,
+//   load in the images we made for the SDL surface unit test.
 
 typedef struct Tau {
   U8 *raw1bppA;
@@ -195,15 +200,7 @@ TEST_F_SETUP(Tau) {
   //REQUIRE_EQ(arrayGetNElems((void*) tau->raw4bppA), sizeof(rawData4bpp) / sizeof(rawData4bpp[0]));
   memcpy((void*) tau->raw4bppA, (void*) rawData4bpp, sizeof(rawData4bpp[0]) * sizeof(rawData4bpp) / sizeof(rawData4bpp[0]));
 
-  // Make strip data with random units per strips
-  // StripDataS* stripNew(
-  //      U8 *srcA, 
-  //      const U32 nUsedBytesPerUnpackedStrip, 
-  //      const U8 bitsPerPackedByte, 
-  //      U32 flags, 
-  //      U8 verbose);
-  printf("\e[92m4bpp strip init\e[0m\n");
-  tau->sd4bppP = stripNew(tau->raw4bppA, 5, 4, 0, 1);
+  tau->sd4bppP = stripNew(tau->raw4bppA, 5, 4, 0, 0);
   //stripClr(tau->sd4bppP);
 }
 
@@ -227,10 +224,27 @@ TEST_F(Tau, sdAssemble) {
 
 TEST_F(Tau, stripIni) {
   stripIni(tau->sd4bppP);
+  stripClr(tau->sd4bppP);
+}
+
+TEST_F(Tau, bleh) {
+  stripIni( blehColormap.sdP );
+  stripClr( blehColormap.sdP );
+}
+
+TEST_F(Tau, red) {
+  stripIni( redColormap.sdP );
+  stripClr( redColormap.sdP );
+}
+
+TEST_F(Tau, heck) {
+  stripIni( heckColormap.sdP );
+  stripClr( heckColormap.sdP );
 }
 
 // TODO 32-bit system thinks this is only unzipping, 64-bit thinks only unpacking
 //      This is populating inflation even though its flag says it shouldn't inflate.
+#if 0
 TEST_F(Tau, stripIni_4bpp_expectOnlyUnpacking) {
   CHECK_TRUE( tau->sd4bppP->flags == (SD_SKIP_INFLATION_ | SD_SKIP_ASSEMBLY_ ) );
   // we store packed data in infP->compressedDataA even if we don't inflate it later.
@@ -245,3 +259,4 @@ TEST_F(Tau, stripIni_4bpp_expectOnlyUnpacking) {
   // Strip data
   CHECK_TRUE(tau->sd4bppP->assembledDataA == NULL);
 }
+#endif

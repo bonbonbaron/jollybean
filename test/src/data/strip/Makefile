@@ -1,45 +1,51 @@
-CC=gcc
+BODY_DIR = ${HOME}/jb/build/Seed/Genome/Gene/Body
 
-RPO_DIR := $(shell git rev-parse --show-toplevel)
-LIB_DIR := $(RPO_DIR)/lib
-INF_DIR := $(RPO_DIR)/utils/inf
-INF_BLD := $(INF_DIR)/build
-INF_SRC := $(INF_DIR)/src
-STR_DIR := $(RPO_DIR)/utils/sd
-STR_BLD := $(STR_DIR)/build
-STR_SRC := $(STR_DIR)/src
-FIL_DIR := $(RPO_DIR)/utils/file
-FIL_BLD := $(FIL_DIR)/build
-FIL_SRC := $(FIL_DIR)/src
-_INCS   := $(shell find ${RPO_DIR}/src ${INF_SRC} ${STR_SRC} ${FIL_SRC} -type d -name 'include')
-INCS    := -I. $(_INCS:%=-I%)
+COLORMAP_DIR = ${BODY_DIR}/Image/Colormap
+CM_SRC_DIR = ${COLORMAP_DIR}/src
+CM_INC_DIR = ${COLORMAP_DIR}/include
+CM_OBJ_DIR = ${COLORMAP_DIR}/obj
 
-SRCS    := $(shell find . -type f -name "*.c")
-OBJS    := $(SRCS:%.c=%.o) ${INF_BLD}/inf.o ${STR_BLD}/sd.o ${FIL_BLD}/fileUtils.o
+COLOR_PALETTE_DIR = ${BODY_DIR}/Image/ColorPalette
+CP_SRC_DIR = ${COLOR_PALETTE_DIR}/src
+CP_INC_DIR = ${COLOR_PALETTE_DIR}/include
+CP_OBJ_DIR = ${COLOR_PALETTE_DIR}/obj
 
-all: o 
+JB_DIR = ${HOME}/hack/jollybean/
+UTIL_DIR = $(JB_DIR)/utils
+KR_DIR = ${HOME}/jb/src/Keyring
+JB_INCS = -I${JB_DIR}src/x/include -I${JB_DIR}src/interface/include -I${JB_DIR}src/data/include
 
-o: ${OBJS} $(LIB_DIR)/libjb.a
-	rm -rf coverage/*
-	$(CC) --coverage -g ${OBJS} -L${LIB_DIR} -lz -ljb -o $@
+./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./test.o ${JB_DIR}/lib/libjb.a ${CM_SRC_DIR}/blehColormap.c ${CM_SRC_DIR}/heckColormap.c ${CM_SRC_DIR}/redColormap.c $(UTIL_DIR)/build/sd.o $(UTIL_DIR)/build/inf.o 
+	gcc -save-temps --coverage ./test.o $(UTIL_DIR)/build/inf.o $(UTIL_DIR)/build/sd.o ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o -L/usr/local/lib -Wl,-rpath,/usr/local/lib -Wl,--enable-new-dtags $(shell sdl2-config --libs) -L${JB_DIR}/lib -ljb -lpthread -lz -o $@
 
-%.o: %.c
-	$(CC) --coverage -g $(INCS) -c $< -o $@
+./test.o: ./test.c
+	gcc -save-temps --coverage -g -c test.c ${JB_INCS} -I${KR_DIR} -I${JB_DIR}src/include/ -I$(UTIL_DIR)/include -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags) -o $@
 
-$(INF_BLD)/%.o: $(INF_SRC)/%.c
-	make -C $(INF_DIR)
+${CM_OBJ_DIR}/%Colormap.o: ${CM_SRC_DIR}/%Colormap.c
+	gcc -save-temps --coverage -g ${JB_INCS} -I${KR_DIR} -I${JB_DIR}src/include -c ${CM_SRC_DIR}/$*Colormap.c $(shell sdl2-config --cflags) -o $@
 
-$(STR_BLD)/%.o: $(STR_SRC)/%.c
-	make -C $(STR_DIR)
+${CP_OBJ_DIR}/%ColorPalette.o: ${CP_SRC_DIR}/%ColorPalette.c
+	gcc -save-temps --coverage -g ${JB_INCS} -I${KR_DIR} -I${JB_DIR}src/include -c $< $(shell sdl2-config --cflags) -o $@
 
-$(FIL_BLD)/%.o: $(FIL_SRC)/%.c
-	make -C $(FIL_DIR)
+${CP_SRC_DIR}/%ColorPalette.c: $(UTIL_DIR)/build/body 
+	$(UTIL_DIR)/build/body $*
 
-$(LIB_DIR)/libjb.a:
-	make -C ${RPO_DIR}
+${CM_SRC_DIR}/%Colormap.c: $(UTIL_DIR)/build/body
+	$(UTIL_DIR)/build/body $*
+
+$(UTIL_DIR)/build/body:
+	make -C $(UTIL_DIR)
+
+${JB_DIR}build/%.o: ${JB_DIR}src/%.c
+	make -C ${JB_DIR}
 
 .PHONY: clean
 clean:
-	rm -rf o 2>/dev/null
-	rm -rf coverage 2>/dev/null
-	rm -f ${OBJS} 2>/dev/null
+	rm -f ./o 2>/dev/null
+	rm -f ./render.o 2>/dev/null
+	rm -f ${CP_INC_DIR}/*.h 2>/dev/null
+	rm -f ${CP_OBJ_DIR}/*.o 2>/dev/null
+	rm -f ${CP_SRC_DIR}/*.c 2>/dev/null
+	rm -f ${CM_INC_DIR}/*.h 2>/dev/null
+	rm -f ${CM_OBJ_DIR}/*.o 2>/dev/null
+	rm -f ${CM_SRC_DIR}/*.c 2>/dev/null

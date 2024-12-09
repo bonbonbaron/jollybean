@@ -2,14 +2,12 @@ CC=gcc
 
 RPO_DIR := $(shell git rev-parse --show-toplevel)
 LIB_DIR := $(RPO_DIR)/lib
-INF_DIR := $(RPO_DIR)/utils/inf
-INF_BLD := $(INF_DIR)/build
-INF_SRC := $(INF_DIR)/src
-_INCS   := $(shell find ${RPO_DIR}/src ${INF_SRC} -type d -name 'include')
+UTL_DIR := $(RPO_DIR)/utils
+_INCS   := $(shell find ${RPO_DIR}/src -type d -name 'include') $(UTL_DIR)/include
 INCS    := -I. $(_INCS:%=-I%)
 
 SRCS    := $(shell find . -type f -name "*.c")
-OBJS    := $(SRCS:%.c=%.o) ${INF_BLD}/inf.o
+OBJS    := $(SRCS:%.c=%.o) $(UTL_DIR)/build/inf.o
 
 all: o 
 
@@ -22,8 +20,8 @@ o: ${OBJS} $(LIB_DIR)/libjb.a
 %.o: %.c
 	$(CC) --coverage -g $(INCS) -c $< -o $@
 
-$(INF_BLD)/%.o: $(INF_SRC)/%.c
-	make -C $(INF_DIR)
+$(UTL_DIR)/build/inf.o:
+	make -C $(UTL_DIR)
 
 $(LIB_DIR)/libjb.a:
 	make -C ${RPO_DIR}

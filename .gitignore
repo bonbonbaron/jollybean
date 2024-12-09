@@ -2,6 +2,8 @@ bin
 build
 o
 *.o
+*.i
+*.s
 *.a
 .*swo
 .*swp

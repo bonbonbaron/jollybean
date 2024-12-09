@@ -14,33 +14,26 @@ JB_DIR = ${HOME}/hack/jollybean/
 KR_DIR = ${HOME}/jb/src/Keyring
 JB_INCS = -I${JB_DIR}src/x/include -I${JB_DIR}src/interface/include -I${JB_DIR}src/data/include
 
-./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./main.o ${JB_DIR}/lib/libjb.a
-	gcc --coverage ./main.o ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o -L/usr/local/lib -Wl,-rpath,/usr/local/lib -Wl,--enable-new-dtags $(shell sdl2-config --libs) -L${JB_DIR}/lib -ljb -lpthread -o $@
-	touch $@
+./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./main.o ${JB_DIR}/lib/libjb.a ${CM_SRC_DIR}/blehColormap.c ${CM_SRC_DIR}/heckColormap.c ${CM_SRC_DIR}/redColormap.c
+	gcc -save-temps --coverage ./main.o ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o -L/usr/local/lib -Wl,-rpath,/usr/local/lib -Wl,--enable-new-dtags $(shell sdl2-config --libs) -L${JB_DIR}/lib -ljb -lpthread -o $@
 
 ./main.o: ./main.c
-	gcc --coverage -g -c main.c ${JB_INCS} -I${KR_DIR} -I${JB_DIR}src/include/ -I${JB_DIR}utils/body/src/include -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags) -o $@
-	touch $@
+	gcc -save-temps --coverage -g -c main.c ${JB_INCS} -I${KR_DIR} -I${JB_DIR}src/include/ -I${JB_DIR}utils/body/src/include -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags) -o $@
 
 ${CM_OBJ_DIR}/%Colormap.o: ${CM_SRC_DIR}/%Colormap.c
-	gcc --coverage -g ${JB_INCS} -I${KR_DIR} -I${JB_DIR}src/include -c ${CM_SRC_DIR}/$*Colormap.c $(shell sdl2-config --cflags) -o $@
-	touch $@
+	gcc -save-temps --coverage -g ${JB_INCS} -I${KR_DIR} -I${JB_DIR}src/include -c ${CM_SRC_DIR}/$*Colormap.c $(shell sdl2-config --cflags) -o $@
 
 ${CP_OBJ_DIR}/%ColorPalette.o: ${CP_SRC_DIR}/%ColorPalette.c
-	gcc --coverage -g ${JB_INCS} -I${KR_DIR} -I${JB_DIR}src/include -c $< $(shell sdl2-config --cflags) -o $@
-	touch $@
+	gcc -save-temps --coverage -g ${JB_INCS} -I${KR_DIR} -I${JB_DIR}src/include -c $< $(shell sdl2-config --cflags) -o $@
 
 ${CP_SRC_DIR}/%ColorPalette.c:
 	${JB_DIR}utils/body/bin/body $*
-	touch $@
 
 ${CM_SRC_DIR}/%Colormap.c:
 	${JB_DIR}utils/body/bin/body $*
-	touch $@
 
 ${JB_DIR}build/%.o: ${JB_DIR}src/%.c
 	make -C ${JB_DIR}
-	touch $@
 
 .PHONY: clean
 clean:
