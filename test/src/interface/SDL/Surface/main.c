@@ -10,6 +10,11 @@
 #include "redColormap.h"
 #include "redColorPalette.h"
 
+#define W (10)
+#define H (10)
+#define N (W * H)
+U32 dumbSurf[100] = { 0xff0000ff };
+
 // We leverage this knowledge to navigate backwards without re-entering already-explored nodes.
 #define getParentAtlasIdx_(childIdx_) ((childIdx_ - 1 - !(cameFromRight = childIdx_ & 1)) >> 1)
 #define N_SAMPLES (3)
@@ -46,7 +51,7 @@ int main(int argc, char **argv) {
     sdPA[i] = *((StripDataS**) genePA[i]->u.unitary.dataP);  
   }
 
-#define MULTITHREADED 1
+#define MULTITHREADED 0
   // Inflate colormap inflatables
 #if MULTITHREADED
   multithread_(sdInflate, (void*) sdPA);
@@ -67,14 +72,12 @@ int main(int argc, char **argv) {
   for (int i = 0; i < SDL_GetNumVideoDrivers(); ++i) {
     printf("%s\n", SDL_GetVideoDriver(i));
   }
-  //return 0;
-  printf("before sdl init\n");
+
 #define SUCCESS (0)
   if (SDL_Init(SDL_INIT_VIDEO) != SUCCESS) {
-    //printf("[guiNew] SDL error: %s\n", SDL_GetError());
+    printf("[initializing SDL] SDL error: %s\n", SDL_GetError());
     return EXIT_FAILURE;
   }
-  printf("after sdl init\n");
 
   // Window and renderer
   SDL_Window *windowP = NULL;
@@ -82,72 +85,73 @@ int main(int argc, char **argv) {
 #if 0
   windowP = SDL_CreateWindow("Hello world!", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1080, 1920, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_OPENGL);
 #else
-  printf("before window\n");
   windowP = SDL_CreateWindow("Hello world!", 100, 100, 500, 500, SDL_WINDOW_OPENGL );
-  printf("after window\n");
 #endif
   if (!windowP) {
     return EXIT_FAILURE;
   }
-  printf("before renderer\n");
+
   rendererP = SDL_CreateRenderer(windowP, 0, 0);
   SDL_RendererInfo info;
   SDL_GetRendererInfo(rendererP, &info);
   printf("using renderer %s\n", info.name);
-  printf("after renderer\n");
+
   if (!rendererP) {
     SDL_DestroyWindow(windowP);
     SDL_Quit();
     return EXIT_FAILURE;
   }
 
-  // Surfaces
+  // Surfaces and Palletes
   Surface_ **surfPA = arrayNew( sizeof(Surface_*), N_SAMPLES);
   for (int i = 0; i < N_SAMPLES; ++i) {
-    printf("surface %d\n", i);
-    printf("newing\n");
     Colormap *cmP = (Colormap*) genePA[i]->u.unitary.dataP;
-    /*
-       SDL_Surface * SDL_CreateRGBSurfaceFrom(
-       void *pixels, int width, int height, int depth, int pitch,
-       Uint32 Rmask, Uint32 Gmask, Uint32 Bmask,
-       Uint32 Amask)
-       */
-    //SDL_CreateRGBSurfaceWithFormatFrom(void *pixels,
-    //int width, int height, int depth, int pitch,
-    //Uint32 format)
-    //surfPA[i] = SDL_CreateRGBSurfaceWithFormatFrom(cmP->sdP->assembledDataA, 
-    //cmP->w, cmP->h, 8, cmP->w, 0xff000000, 0x00ff0000, 0x0000ff00, 0x000000ff);
+#if 0
+    // Surface
     surfPA[i] = SDL_CreateRGBSurfaceWithFormatFrom(cmP->sdP->assembledDataA, 
         cmP->w, cmP->h, 8, cmP->w, SDL_PIXELFORMAT_INDEX8);
-    SDL_SetPaletteColors(surfPA[i]->format->palette, cpPA[i]->colorA, 0, cpPA[i]->nColors);
-
-
-    //surfPA[i] = SDL_CreateRGBSurface(0, cmP->w, cmP->h, 8, 0, 0, 0, 0);
-    assert(surfPA[i]);
-#if 0
-    // Sanity check
-    for (int y = 0; y < surfPA[i]->h; ++y) {
-      for (int x = 0; x < surfPA[i]->pitch; ++x) {
-        printf("%d", ((U8*) surfPA[i]->pixels)[y * surfPA[i]->pitch + x]);
-      }
-      printf("\n");
+    if ( !surfPA[i] ) {
+      printf("[creating rgb surface] SDL error: %s\n", SDL_GetError());
+      return EXIT_FAILURE;
+    }
+    // Pallete
+    int err = SDL_SetPaletteColors(surfPA[i]->format->palette, cpPA[i]->colorA, 0, cpPA[i]->nColors);
+    if (err) {
+      printf("[setting palette] SDL error: %s\n", SDL_GetError());
+      return EXIT_FAILURE;
+    }
+#else
+    // Surface
+    surfPA[i] = SDL_CreateRGBSurfaceWithFormatFrom(dumbSurf, W, H, 32, W * sizeof(dumbSurf[0]), SDL_PIXELFORMAT_RGBA32);
+    // surfPA[i] = SDL_CreateRGBSurface(0, W, H, 32, 0, 0, 0, 0 );
+    if ( !surfPA[i] ) {
+      printf("[creating rgb surface] SDL error: %s\n", SDL_GetError());
+      return EXIT_FAILURE;
     }
 #endif
   }
 
-  // Palette
   // Textures
-  SDL_Texture **texturePA = arrayNew( sizeof(void*), N_SAMPLES);
+  SDL_Texture **texturePA = arrayNew( sizeof(SDL_Texture*), N_SAMPLES);
+  assert( arrayGetNElems( texturePA ) == 3 );
+  assert( arrayGetElemSz( texturePA ) == sizeof( SDL_Texture* ) );
   for (int i = 0; i < N_SAMPLES; ++i) {
     texturePA[i] = SDL_CreateTextureFromSurface(rendererP, surfPA[i]);
-    assert(texturePA[i]);
+    // SDL_CreateTextureFromSurface(rendererP, surfPA[i]);
+    if ( !texturePA[i] ) {
+      printf("[creating texture from surface] SDL error: %s\n", SDL_GetError());
+      return EXIT_FAILURE;
+    }
   }
+
+  SDL_Rect srcRect = { 0, 0, W, H };
+
+  // Present results
   SDL_SetRenderDrawColor(rendererP, 0xff, 0xff, 0xff, 0xff);
   for (int i = 0; i < N_SAMPLES; ++i) {
     printf("rendering %d\n", i);
     SDL_RenderClear(rendererP);
-    SDL_RenderCopy(rendererP, texturePA[i], NULL, NULL);
+    SDL_RenderCopy(rendererP, texturePA[i], &srcRect, NULL);
     SDL_RenderPresent(rendererP);
     SDL_Delay(1000);
   }
