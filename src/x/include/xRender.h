@@ -59,15 +59,6 @@ typedef struct {
 
 typedef struct {} XRenderMutation;
 
-// Images
-Atlas* atlasNew( Image **imgPF);
-void atlasDel(Atlas **atlasPP);
-void atlasPlanPlacements(Atlas *atlasP);
-void xRenderIniS(System *sP, void *sParamsP);
-void xRenderProcessMessage(System *sP, Message *msgP);
-typedef void (*XRenderPresentU)(Renderer_ *rendererP);  // TODO uh.. what was this for again?
-extern XPostprocessCompsDef_(Render);
-
 typedef struct {
   System         system;
   U8             atlasPaletteOffset;
@@ -80,6 +71,17 @@ typedef struct {
   Map           *dstRectMP;   // shortcut-pointer to shared array of destination rectangles
   Map           *xRenderCompSourceMP;
 } XRender;
+
+// Images
+Atlas* atlasNew( Image **imgPF);
+void atlasDel(Atlas **atlasPP);
+void atlasPlanPlacements(Atlas *atlasP);
+void xRenderIniS(System *sP, void *sParamsP);
+void xRenderProcessMessage(System *sP, Message *msgP);
+typedef void (*XRenderPresentU)(Renderer_ *rendererP);  // TODO uh.. what was this for again?
+extern XPostprocessCompsDef_(Render);
+void updateCmSrcRectIndices(Image **imgPF, Atlas *atlasP);
+Color_* assembleTextureAtlas(Image** imgPF, Atlas *atlasP);
 
 extern System *sRenderP;
 #endif

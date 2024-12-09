@@ -351,10 +351,9 @@ static void fillRect( U8* cmA, Color_* cpA, Rect_* rectP, Color_* atlasPixelA, c
 }
 
 // Texture atlas array
-static Color_* _assembleTextureAtlas(XRender *xP, Atlas *atlasP) {
+Color_* assembleTextureAtlas(Image** imgPF, Atlas *atlasP) {
   // Declare locals
   const U32 ATLAS_WIDTH = atlasP->btP[0].remW;
-  const Image **imgPF = (const Image**) xP->imgPF;
   // Make output atlas image
   Color_* atlasPixelA = arrayNew(sizeof(Color_), atlasP->btP[0].remW * atlasP->btP[0].remH);
   // Number of rect nodes is the number of elements in the rectangle binary tree.
@@ -448,7 +447,7 @@ static void _updateSrcRects(XRender *xP, Atlas *atlasP) {
 }
 
 // Updates colormaps' indices to sorted rects so we can track their atlas XY offsets
-static void _updateCmSrcRectIndices(Image **imgPF, Atlas *atlasP) {
+void updateCmSrcRectIndices(Image **imgPF, Atlas *atlasP) {
   AtlasElem *aeP = atlasP->btP;
   AtlasElem *aeEndP = aeP + arrayGetNElems(atlasP->btP);
   for (; aeP < aeEndP; ++aeP) {
@@ -464,9 +463,9 @@ XPostprocessCompsDef_(Render) {
   // Texture atlas
   Atlas* atlasP = atlasNew(xP->imgPF);
   atlasPlanPlacements(atlasP);
-  Color_* atlasPixelA = _assembleTextureAtlas(xP, atlasP);
+  Color_* atlasPixelA = assembleTextureAtlas(xP->imgPF, atlasP);
   // Let colormaps track where their rectangles are sorted.
-  _updateCmSrcRectIndices(xP->imgPF, atlasP);
+  updateCmSrcRectIndices(xP->imgPF, atlasP);
   // Texture surface
   Surface_* atlasSurfaceP = surfaceNew((void*) atlasPixelA, atlasP->btP[0].remW, atlasP->btP[0].remH);
   // NOTE: I got rid of the color palette appending loop. So this means every palette needs to be stored with its colormap in order to compose full texture atlas.

@@ -64,89 +64,31 @@ int main(int argc, char **argv) {
 #endif
 
   // Create an unfinished atlas with colormap rectangles sorted by size in descending order.
-  Atlas *atlasP =  atlasNew(imgPF);
-#if 0
-  for (int i = 0 ; i < N_SAMPLES; i++) {
-    printf("BEFORE planning placements:\n{%d, %d, %d, %d}, {%d, %d}, srcIdx = %d\n", 
-        atlasP->btP[i].rect.x,
-        atlasP->btP[i].rect.y,
-        atlasP->btP[i].rect.w,
-        atlasP->btP[i].rect.h,
-        atlasP->btP[i].remW,
-        atlasP->btP[i].remH,
-        atlasP->btP[i].srcIdx
-        );
-  }
-#endif
   // Texture atlas
+  Atlas *atlasP =  atlasNew(imgPF);
   atlasPlanPlacements(atlasP);
-#if 0
-  for (int i = 0 ; i < N_SAMPLES; i++) {
-    printf("AFTER planning placements:\n{%d, %d, %d, %d}, {%d, %d}, srcIdx = %d\n", 
-        atlasP->btP[i].rect.x,
-        atlasP->btP[i].rect.y,
-        atlasP->btP[i].rect.w,
-        atlasP->btP[i].rect.h,
-        atlasP->btP[i].remW,
-        atlasP->btP[i].remH,
-        atlasP->btP[i].srcIdx
-        );
-  }
-#endif
-  // Texture atlas array
-  U8* atlasPixelA = arrayNew( sizeof(U8), atlasP->btP[0].remW * atlasP->btP[0].remH);
-  Surface_ *textureSurfaceP = NULL;
-  const U32 ATLAS_WIDTH = atlasP->btP[0].remW;
-  U32 nStripsPerRow;
-  StripmapElem *smElemP, *smElemEndP;
-  U8 *dstP;
-  U32 nUnitsPerStrip;
-  U32 srcIdx;
-  // For each sample...
-  for (int i = 0; i < N_SAMPLES; ++i) {
-#if 0
-    printf("drawing to {%d, %d, %d, %d}...\n", 
-        atlasP->btP[i].rect.x,
-        atlasP->btP[i].rect.y,
-        atlasP->btP[i].rect.w,
-        atlasP->btP[i].rect.h);
-#endif
-    srcIdx = atlasP->btP[i].srcIdx;
-    nUnitsPerStrip = imgPF[srcIdx]->cmP->sdP->ss.nUnitsPerStrip;
-    nStripsPerRow = imgPF[srcIdx]->cmP->w / nUnitsPerStrip;
-    smElemP    = (StripmapElem*) imgPF[srcIdx]->cmP->sdP->sm.infP->inflatedDataP;
-    // For each row of this sample's atlas rectangle...
-    for (int j = 0, h = atlasP->btP[i].rect.h; j < h; ++j) {
-      smElemEndP = smElemP + nStripsPerRow;
-      dstP       = atlasPixelA + atlasP->btP[i].rect.x + (j + atlasP->btP[i].rect.y) * ATLAS_WIDTH;
-      // Paste rectangle row
-      for (; smElemP < smElemEndP; ++smElemP, dstP += nUnitsPerStrip) {
-        memcpy(dstP, 
-            imgPF[srcIdx]->cmP->sdP->ss.unpackedDataP + (*smElemP * nUnitsPerStrip), 
-            nUnitsPerStrip);
-      }
-    }
-  }
-#if 1
-  // Texture surface
-  textureSurfaceP = SDL_CreateRGBSurfaceWithFormatFrom((void*) atlasPixelA, 
-      atlasP->btP[0].remW, atlasP->btP[0].remH, 8, atlasP->btP[0].remW, SDL_PIXELFORMAT_RGBA32);
-  if (!textureSurfaceP) {
-    printf("Error: %s\n", SDL_GetError());
-    return 1;
-  }
-  // Window and renderer 
-  Gui *guiP = NULL;
-  guiNew(&guiP);
+  // GUI
+  Gui *guiP =  guiNew();
+  assert(guiP);
   // Texture
-  Texture_ *textureP =  textureNew(guiP->rendererP, textureSurfaceP);
+  Color_* atlasPixelA = assembleTextureAtlas(imgPF, atlasP);
+  // Let colormaps track where their rectangles are sorted.
+  updateCmSrcRectIndices(imgPF, atlasP);
+  // Texture surface
+  Surface_* atlasSurfaceP = surfaceNew((void*) atlasPixelA, atlasP->btP[0].remW, atlasP->btP[0].remH);
+  // Texture
+  Texture_ *textureP =  textureNew(guiP->rendererP, atlasSurfaceP);
+  /* "Pixel data is not managed automatically with SDL_CreateRGBSurfaceWithFormatFrom().
+     You must free the surface before you free the pixel data." */
+  surfaceDel(&atlasSurfaceP);
+  arrayDel((void**) &atlasPixelA);
+
   // Render it
   clearScreen(guiP->rendererP);
   copy_(guiP->rendererP, textureP, NULL, NULL);
   // Show it
   present_(guiP->rendererP);
   SDL_Delay(2000);
-#endif
 
   // Deflate colormap inflatables
 #if MULTITHREADED
@@ -163,7 +105,7 @@ int main(int argc, char **argv) {
   atlasDel(&atlasP);
   arrayDel((void**) &sdPA);
   frayDel((void**) &imgPF);
-  SDL_FreeSurface(textureSurfaceP);
+  SDL_FreeSurface(atlasSurfaceP);
   arrayDel((void**) &atlasPixelA);
   SDL_DestroyTexture(textureP);
   guiDel(&guiP);
