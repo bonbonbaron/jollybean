@@ -11,7 +11,7 @@
 #include "strip.h"
 #include "fileUtils.h"
 
-StripDataS* stripNew(U8 *srcA, const U32 nUsedBytesPerUnpackedStrip, const U8 bitsPerPackedByte, U32 flags, U8 verbose);
+StripDataS* stripNew(U8 *srcA, const size_t nUsedBytesPerUnpackedStrip, const U8 bitsPerPackedByte, size_t flags, U8 verbose);
 void stripDel(StripDataS **sdPP);
 void writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripDataS *sdP);
 void writeStripData(char *objNameA, char *OBJ_TYPE, U8 verbose, StripDataS *sdP);

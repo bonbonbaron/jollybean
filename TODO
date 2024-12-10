@@ -1,4 +1,5 @@
-memory-proof SD
+\cover all of SD
+\memory-proof SD
 data-proof SD
 Unit test texture atlas
   * fix current skewed image bug
