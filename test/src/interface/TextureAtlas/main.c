@@ -16,14 +16,14 @@ int main(int argc, char **argv) {
     {
       .state = 0,
       .sortedRectIdx = 0,
-      .cmP = &blehColormap,
-      .cpP = &blehColorPalette
+      .cmP = &redColormap,
+      .cpP = &redColorPalette
     },
     {
       .state = 0,
       .sortedRectIdx = 0,
-      .cmP = &redColormap,
-      .cpP = &redColorPalette
+      .cmP = &blehColormap,
+      .cpP = &blehColorPalette
     },
     {
       .state = 0,
@@ -33,7 +33,8 @@ int main(int argc, char **argv) {
     }
   };
  
-  U32 N_SAMPLES = sizeof(imgA) / sizeof(imgA[0]);
+  // U32 N_SAMPLES = sizeof(imgA) / sizeof(imgA[0]);
+  U32 N_SAMPLES = 1;
 
   Image** imgPF = frayNew(sizeof(Image*), N_SAMPLES);
   for (U32 i = 0; i < N_SAMPLES; ++i) {
@@ -88,7 +89,7 @@ int main(int argc, char **argv) {
   copy_(guiP->rendererP, textureP, NULL, NULL);
   // Show it
   present_(guiP->rendererP);
-  SDL_Delay(2000);
+  SDL_Delay(20000);
 
   // Deflate colormap inflatables
 #if MULTITHREADED

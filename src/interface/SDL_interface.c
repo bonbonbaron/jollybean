@@ -70,7 +70,7 @@ void guiDel(Gui **guiPP) {
 Surface_* surfaceNew(void *pixelDataA, U32 w, U32 h) {
 	assert (pixelDataA && w && h);
   SDL_ClearError();
-  Surface_* surfaceP = SDL_CreateRGBSurfaceWithFormatFrom(pixelDataA, w, h, 32, w * arrayGetElemSz(pixelDataA), SDL_PIXELFORMAT_ARGB32);
+  Surface_* surfaceP = SDL_CreateRGBSurfaceWithFormatFrom(pixelDataA, w, h, 32, w * arrayGetElemSz(pixelDataA), SDL_PIXELFORMAT_RGBA32);
   // Palette
   assert (surfaceP);
   return surfaceP;

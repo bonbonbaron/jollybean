@@ -11,20 +11,33 @@ TAU_MAIN()
 //   load in the images we made for the SDL surface unit test.
 
 TEST_F_SETUP(Tau) {
-  // 4bpp
-  tau->raw4bppA = arrayNew(  sizeof(rawData4bpp[0]), sizeof(rawData4bpp) / sizeof(rawData4bpp[0]));
-  REQUIRE_TRUE(tau->raw4bppA != NULL);
-  REQUIRE_EQ(arrayGetElemSz((void*) tau->raw4bppA), sizeof(rawData4bpp[0]));
-  //REQUIRE_EQ(arrayGetNElems((void*) tau->raw4bppA), sizeof(rawData4bpp) / sizeof(rawData4bpp[0]));
-  memcpy((void*) tau->raw4bppA, (void*) rawData4bpp, sizeof(rawData4bpp[0]) * sizeof(rawData4bpp) / sizeof(rawData4bpp[0]));
+  // Make arrays, because inflatableNew() expects Jollybean arrays.
+  tau->raw1bppA = arrayNew(  sizeof(rawData1bpp[0]), sizeof(rawData1bpp) / sizeof(rawData1bpp[0]));
+  memcpy((void*) tau->raw1bppA, (void*) rawData1bpp, sizeof(rawData1bpp[0]) * sizeof(rawData1bpp) / sizeof(rawData1bpp[0]));
+  tau->sd1bppP = stripNew(tau->raw1bppA, 3, 1, 0, 1);
 
-  tau->sd4bppP = stripNew(tau->raw4bppA, 5, 4, 0, 0);
-  //stripClr(tau->sd4bppP);
+  tau->raw2bppA = arrayNew(  sizeof(rawData2bpp[0]), sizeof(rawData2bpp) / sizeof(rawData2bpp[0]));
+  memcpy((void*) tau->raw2bppA, (void*) rawData2bpp, sizeof(rawData2bpp[0]) * sizeof(rawData2bpp) / sizeof(rawData2bpp[0]));
+  tau->sd2bppP = stripNew(tau->raw2bppA, 3, 2, 0, 1);
+
+  tau->raw4bppA = arrayNew(  sizeof(rawData4bpp[0]), sizeof(rawData4bpp) / sizeof(rawData4bpp[0]));
+  memcpy((void*) tau->raw4bppA, (void*) rawData4bpp, sizeof(rawData4bpp[0]) * sizeof(rawData4bpp) / sizeof(rawData4bpp[0]));
+  tau->sd4bppP = stripNew(tau->raw4bppA, 5, 4, 0, 1);
 }
 
 TEST_F_TEARDOWN(Tau) {
+  stripDel(&tau->sd1bppP);
+  arrayDel((void**) &tau->raw1bppA);
+
+  stripDel(&tau->sd2bppP);
+  arrayDel((void**) &tau->raw2bppA);
+
   arrayDel((void**) &tau->raw4bppA);
   stripDel(&tau->sd4bppP);
+
+  stripClr( blehColormap.sdP );
+  stripClr( redColormap.sdP );
+  stripClr( heckColormap.sdP );
 }
 
 
@@ -41,29 +54,26 @@ TEST_F(Tau, sdAssemble) {
 }
 
 TEST_F(Tau, stripIni) {
+  stripIni(tau->sd1bppP);
+  stripIni(tau->sd2bppP);
   stripIni(tau->sd4bppP);
-  stripClr(tau->sd4bppP);
 }
 
 TEST_F(Tau, bleh) {
   stripIni( blehColormap.sdP );
-  stripClr( blehColormap.sdP );
 }
 
 TEST_F(Tau, red) {
   stripIni( redColormap.sdP );
-  stripClr( redColormap.sdP );
 }
 
 TEST_F(Tau, heck) {
   stripIni( heckColormap.sdP );
-  stripClr( heckColormap.sdP );
 }
 
 TEST_F(Tau, heck_with_offset) {
   heckColormap.sdP->ss.offset = 55;
   stripIni( heckColormap.sdP );
-  stripClr( heckColormap.sdP );
 }
 
 TEST_F(Tau, stripIni_4bpp_expectOnlyInflation) {

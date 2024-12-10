@@ -64,11 +64,6 @@ void sdUnpack(StripDataS *sdP) {
   const size_t nPackedUnitsPerWord     = N_BITS_PER_WORD / ssP->bpu;  // TODO same here
   size_t nUnitsInExtraPackedWord = ssP->nUnits % nPackedUnitsPerWord;   // TODO same here
 
-  printf("bpu: %d\n", ssP->bpu);
-  printf("units per word: %d\n", nPackedUnitsPerWord);
-  printf("total # units (including extras): %d\n", ssP->nUnits);
-  printf("units in extra packed word: %d\n", nUnitsInExtraPackedWord);
-
   // start copy
   ssP->unpackedDataP = arrayNew(sizeof(U8), ssP->nUnits);
 

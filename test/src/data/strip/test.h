@@ -11,6 +11,10 @@ typedef struct Tau {
   StripDataS *sd4bppP;
 } Tau;
 
+U8 rawData1bpp[] = {1, 0, 0, 1, 0, 0, 0, 0, 1};
+
+U8 rawData2bpp[] = {1, 2, 0, 3, 0, 2, 3, 2, 1};
+
 U8 rawData4bpp[] = {
   1, 15, 12, 2, 0, 10, 8, 9, 1, 0,
   3, 15, 12, 2, 0, 10, 9, 10, 1, 98,

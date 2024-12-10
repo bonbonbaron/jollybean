@@ -24,6 +24,7 @@ Inflatable* inflatableNew(void* voidA) {
     case Z_BUF_ERROR:
     default:
       assert(0); // this means some other strange error happened
+      return NULL;
       break;
   }
 
@@ -33,6 +34,8 @@ Inflatable* inflatableNew(void* voidA) {
   infP->inflatedLen     = szDataOrig;
   infP->inflatedDataP   = NULL;
   infP->compressedDataA = dataCompressed;
+
+  return infP;
 }
 
 // The reason data.c doesn't own this function is because inflatables are permanent in-game.

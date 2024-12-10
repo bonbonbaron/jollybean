@@ -428,6 +428,8 @@ StripDataS* stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bpu,  
   if ( smallestSz == packedSz ) {
     assert( sdP->ss.infP != NULL );
     inflatableClr( sdP->ss.infP );
+    free( sdP->ss.infP->compressedDataA );  // this is a raw array.. sigh
+    inflatableDel( &rawInfP );
     sdP->ss.infP->compressedDataA = jbAlloc( arrayGetElemSz( packedRawA ), arrayGetNElems( packedRawA ) );
     memcpy( sdP->ss.infP->compressedDataA, packedRawA, arrayGetElemSz( packedRawA ) * arrayGetNElems( packedRawA ) );
     // Flags
@@ -439,7 +441,7 @@ StripDataS* stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bpu,  
   // if using only zipped raw data...
   else if ( smallestSz == zippedSz ) {
     stripClr( sdP );  // don't need any data in it
-                        // Stripset
+                      // Stripset
     sdP->ss.bpu = bpu;
     sdP->ss.nUnits = arrayGetElemSz( srcA );
     inflatableDel( &sdP->ss.infP );
@@ -501,6 +503,8 @@ StripDataS* stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bpu,  
     // No need to do anything. We have the inflatables already here.
     // Keep the rest of the data as-is.
     // Flags
+    inflatableDel( &rawInfP );
+    inflatableDel( &packedInfP );
     sdP->flags = 0;
     if (verbose) {
       printf("[stripNew] best size is \e[92mpack-and-assembly-and-zip\e[0m.\n");
@@ -536,13 +540,8 @@ StripDataS* stripNew(U8 *srcA, const U32 nBytesPerUnpackedStrip, const U8 bpu,  
 void stripDel(StripDataS **sdPP) {
   if (sdPP && *sdPP) {
     stripClr(*sdPP);
-    // if ( ! ( (*sdPP)->flags & SD_SKIP_INFLATION_ ) ) {
     inflatableDel(&(*sdPP)->ss.infP);
-    // }
-    // if ( ! ( (*sdPP)->flags & SD_SKIP_ASSEMBLY_ ) ) {
     inflatableDel(&(*sdPP)->sm.infP);
-    // }
-
     jbFree((void**) sdPP);
   }
 }
