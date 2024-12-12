@@ -33,8 +33,7 @@ int main(int argc, char **argv) {
     }
   };
  
-  // U32 N_SAMPLES = sizeof(imgA) / sizeof(imgA[0]);
-  U32 N_SAMPLES = 1;
+  U32 N_SAMPLES = sizeof(imgA) / sizeof(imgA[0]);
 
   Image** imgPF = frayNew(sizeof(Image*), N_SAMPLES);
   for (U32 i = 0; i < N_SAMPLES; ++i) {
@@ -49,18 +48,17 @@ int main(int argc, char **argv) {
     sdPA[i] = imgPF[i]->cmP->sdP;
   }
 
-#define MULTITHREADED 1
+#define MULTITHREADED 0
   // Inflate colormap inflatables
 #if MULTITHREADED
   multithread_(sdInflate, (void*) sdPA);
   // Unpack stripsets
   multithread_(sdUnpack, (void*) sdPA);
   // Assemble colormaps from strips
-  //multithread_(sdAssemble, (void*) sdPA);
+  multithread_(sdAssemble, (void*) sdPA);
 #else 
   for (int i = 0; i < N_SAMPLES; ++i) {
-    sdInflate(imgPF[i]->cmP->sdP);
-    sdUnpack(imgPF[i]->cmP->sdP);
+    stripIni(imgPF[i]->cmP->sdP);
   }
 #endif
 
@@ -89,14 +87,14 @@ int main(int argc, char **argv) {
   copy_(guiP->rendererP, textureP, NULL, NULL);
   // Show it
   present_(guiP->rendererP);
-  SDL_Delay(20000);
+  SDL_Delay(10000);
 
   // Deflate colormap inflatables
 #if MULTITHREADED
   multithread_(stripClr,   (void*) sdPA);
 #else
-  for (int i = 0; !e && i < N_SAMPLES; ++i) {
-    stripClr(cmPF[i]->sdP);
+  for (int i = 0; i < N_SAMPLES; ++i) {
+    stripClr(imgPF[i]->cmP->sdP);
   }
 #endif
 

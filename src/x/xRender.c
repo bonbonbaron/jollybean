@@ -1,4 +1,5 @@
 #include "xRender.h"
+#undef MULTITHREADED_
 
 static inline void __atlasLinkNodes(
     Atlas *atlasP,
@@ -318,7 +319,7 @@ void fillPortionOfRect( FillRectParamsMT* fillRectParamsP ) {
 }
 #endif
 
-static void fillRect( U8* cmA, Color_* cpA, Rect_* rectP, Color_* atlasPixelA, const U32 ATLAS_WIDTH ) {
+static void fillRect( U8* cmA, Color_* cpA, const Rect_* rectP, Color_* atlasPixelA, const U32 ATLAS_WIDTH ) {
   
   assert( cmA && cpA && rectP && atlasPixelA );
 
@@ -343,7 +344,7 @@ static void fillRect( U8* cmA, Color_* cpA, Rect_* rectP, Color_* atlasPixelA, c
   Color_* dstEndP = dstP + ( rectP->h * ATLAS_WIDTH );
   U8* cmElemP = cmA;
   for ( ; dstP < dstEndP; dstP += INCREMENT ) {
-    dstP = cpA[ *(cmElemP++) ];
+    *dstP = cpA[ *(cmElemP++) ];
   }
 #endif
 
@@ -361,20 +362,17 @@ Color_* assembleTextureAtlas(Image** imgPF, Atlas *atlasP) {
   for (U32 i = 0; i < iEnd; ++i) {
     U32 srcRectIdx = atlasP->btP[i].srcIdx;
     const Rect_* dstRectP = &atlasP->btP[i].rect;
+    printf("dst rect is { %d, %d, %d, %d }.\n", dstRectP->x, dstRectP->y, dstRectP->w, dstRectP->h );
     const Image* imgP = imgPF[srcRectIdx];
-    switch(imgP->cmP->sdP->flags) {
-      // When this was never stripmapped, it's just a raw colormap.
-      // However, the colormap may be sourced differently.
-      case SD_SKIP_INFLATION_ | SD_SKIP_ASSEMBLY_:
-        break;
-      case SD_SKIP_UNPACKING_ | SD_SKIP_ASSEMBLY_:
-        break;
-      case SD_SKIP_ASSEMBLY_:
-        break;
-      case SD_SKIP_INFLATION_:
-      default:  // skipping nothing
-        fillRectFromStripmap( imgP, dstRectP, atlasPixelA, ATLAS_WIDTH );
-        break;
+    // If it needs to be assembled, you have to assemble strips 
+    // into a full grayscale image first.
+    if ( ! ( imgP->cmP->sdP->flags & SD_SKIP_ASSEMBLY_ ) ) {
+      fillRectFromStripmap( imgP, dstRectP, atlasPixelA, ATLAS_WIDTH );
+    }
+    // Otherwise, it's a grayscale image that's ready to go.
+    else {
+      U8* cmP = ssGetOutput( imgP->cmP->sdP );
+      fillRect( cmP, imgP->cpP->colorA, dstRectP, atlasPixelA, ATLAS_WIDTH );
     }
   }
   return atlasPixelA;
