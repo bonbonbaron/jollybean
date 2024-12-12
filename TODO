@@ -1,6 +1,10 @@
 \cover all of SD
-\memory-proof SD
+memory-proof SD
 data-proof SD
+  ... is it possible we never 64bittified _packBits()?
+  bleh test case is crashing after 64-bittifying sd.c
+  looks like math for wordsize is off in printout, i'd look there first.
+  Also try running sd with debug on
 Unit test texture atlas
   * fix current skewed image bug
   * need to call fillRect() in assembleTextureAtlas()

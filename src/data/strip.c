@@ -1,11 +1,67 @@
 #include "strip.h"
 
+#if (__WORDSIZE == 32)
+#define MASK_1BPP (0x01010101)
+#define MASK_2BPP (0x03030303)
+#define MASK_4BPP (0x0f0f0f0f)
+#define MASK_8BPP (0xffffffff)
+#define FULLY_PACKED_WORD_COUNT_RSHIFT (5)
+#elif (__WORDSIZE == 64)
+#define MASK_1BPP (0x0101010101010101)
+#define MASK_2BPP (0x0303030303030303)
+#define MASK_4BPP (0x0f0f0f0f0f0f0f0f)
+#define MASK_8BPP (0xffffffffffffffff)
+#define FULLY_PACKED_WORD_COUNT_RSHIFT (6)
+#else
+static_assert(0, "Only 32- and 64-bit systems are supported.");
+#endif
+
+#define assert_and_return_( x ) \
+  assert( x ); \
+  return x
+
+U8* stripGetInput( StripDataS* sdP ) {
+  switch( sdP->flags ) {
+    // When this was never stripmapped, it's just a raw colormap.
+    // However, the colormap may be sourced differently.
+    case SD_SKIP_INFLATION_ | SD_SKIP_ASSEMBLY_:
+      assert_and_return_( sdP->ss.infP->compressedDataA );
+    case SD_SKIP_UNPACKING_ | SD_SKIP_ASSEMBLY_:
+      assert_and_return_( sdP->ss.infP->compressedDataA );
+    case SD_SKIP_ASSEMBLY_:
+      assert_and_return_( sdP->ss.infP->compressedDataA );
+    case SD_SKIP_INFLATION_:
+      assert_and_return_( sdP->ss.infP->compressedDataA );
+    default:  // skipping nothing
+      assert_and_return_( sdP->ss.infP->compressedDataA );
+  }
+}
+
+U8* stripGetOutput( StripDataS* sdP ) {
+  switch( sdP->flags ) {
+    // When this was never stripmapped, it's just a raw colormap.
+    // However, the colormap may be sourced differently.
+    case SD_SKIP_INFLATION_ | SD_SKIP_ASSEMBLY_:
+      assert_and_return_( sdP->ss.unpackedDataA );
+#if 0
+    case SD_SKIP_UNPACKING_ | SD_SKIP_ASSEMBLY_:
+      break;
+    case SD_SKIP_ASSEMBLY_:
+      break;
+    case SD_SKIP_INFLATION_:
+    default:  // skipping nothing
+      fillRectFromStripmap( imgP, dstRectP, atlasPixelA, ATLAS_WIDTH );
+      break;
+#endif
+  }
+}
+
 // Stripmapped Data
 void stripClr(StripDataS *sdP) {
   if (sdP) {
     inflatableClr(sdP->ss.infP);
     inflatableClr(sdP->sm.infP);
-    arrayDel((void**) &sdP->ss.unpackedDataP);
+    arrayDel((void**) &sdP->ss.unpackedDataA);
     arrayDel((void**) &sdP->assembledDataA);
   }
 }
@@ -61,65 +117,46 @@ void sdUnpack(StripDataS *sdP) {
   Stripset *ssP = &sdP->ss;
   // Packed data is all whole words. Unpacked may not be.
   // Only way to tell is by looking at the number of units.
-  const size_t nPackedUnitsPerWord     = N_BITS_PER_WORD / ssP->bpu;  // TODO same here
-  size_t nUnitsInExtraPackedWord = ssP->nUnits % nPackedUnitsPerWord;   // TODO same here
+  const size_t nPackedUnitsPerWord     = __WORDSIZE / ssP->bpu;  
+  size_t nUnitsInExtraPackedWord = ssP->nUnits % nPackedUnitsPerWord;   
+  const size_t nWhollyPackedWords      = ( ( ssP->nUnits * ssP->bpu ) >> FULLY_PACKED_WORD_COUNT_RSHIFT );
 
   // start copy
-  ssP->unpackedDataP = arrayNew(sizeof(U8), ssP->nUnits);
+  ssP->unpackedDataA = arrayNew(sizeof(U8), ssP->nUnits); // 9 bytes allocated here
 
-  size_t mask = 0;  // TODO same here
-  // TODO make a 64-bit version of the below.
+  const size_t mask = 
+    (ssP->bpu == 1) ? MASK_1BPP :
+    (ssP->bpu == 2) ? MASK_2BPP :
+    (ssP->bpu == 4) ? MASK_4BPP : MASK_8BPP;
+
+  assert( mask != MASK_8BPP );   // No point in unpacking if there's nothing to unpack.
+
+// The offset is the number we're going to add to all units. This applies, for instance,
+// if we're appending all color palettes to a global color palette and need to update
+// the color palette indices in the colormap. (An old version of jollybean does that, but
+// I eventually decided raw color data is better as it's faster for the GPU to process.)
 #if (__WORDSIZE == 32)
-  switch(ssP->bpu) {
-    case 1:
-      mask = 0x01010101;
-      break;
-    case 2:
-      mask = 0x03030303;
-      break;
-    case 4:
-      mask = 0x0f0f0f0f;
-      break;
-    default:
-      assert( 0 );   // this means "unsupported bits per unit"
-  }
-  const size_t offset = (sdP->ss.offset << 24) |  // TODO same here
+  const size_t offset = (sdP->ss.offset << 24) |  
                         (sdP->ss.offset << 16) |
                         (sdP->ss.offset <<  8) |
                         (sdP->ss.offset      );
 #elif (__WORDSIZE == 64)
-  switch(ssP->bpu) {
-    case 1:
-      mask = 0x0101010101010101;
-      break;
-    case 2:
-      mask = 0x0303030303030303;
-      break;
-    case 4:
-      mask = 0x0f0f0f0f0f0f0f0f;
-      break;
-    default:
-      assert( 0 );   // this means "unsupported bits per unit"
-  }
   // You have to cast the U8 to a size_t in order for the compiler to
   // be okay with you left-shifting it by more than 31 bits.
-  size_t offset = 0;
-  if ( sdP->ss.offset ) {
-    offset = ((size_t) sdP->ss.offset << 56) |
-                          ((size_t) sdP->ss.offset << 48) |
-                          ((size_t) sdP->ss.offset << 40) |
-                          ((size_t) sdP->ss.offset << 32) |
-                          ((size_t) sdP->ss.offset << 24) |
-                          ((size_t) sdP->ss.offset << 16) |
-                          ((size_t) sdP->ss.offset <<  8) |
-                          ((size_t) sdP->ss.offset      );
-  }
+  const size_t offset = ( sdP->ss.offset ) ?
+      ((size_t) sdP->ss.offset << 56) |
+      ((size_t) sdP->ss.offset << 48) |
+      ((size_t) sdP->ss.offset << 40) |
+      ((size_t) sdP->ss.offset << 32) |
+      ((size_t) sdP->ss.offset << 24) |
+      ((size_t) sdP->ss.offset << 16) |
+      ((size_t) sdP->ss.offset <<  8) |
+      ((size_t) sdP->ss.offset      ) : 0;
 #else
     static_assert(0, "Only 32- and 64-bit systems are supported.");
 #endif
 
-  size_t *packedWordP;  // TODO same here
-  size_t *packedWordEndP; // TODO ditto
+  size_t *packedWordP;  
   // If the data was never compressed, then we're going to pull it from the "compressed" field.
   // It's just a safe place to put data that otherwise would get deleted by stripClr().
   if ( sdP->flags & SD_SKIP_INFLATION_ ) {
@@ -128,29 +165,27 @@ void sdUnpack(StripDataS *sdP) {
   else {  // But if it really IS inflated, pull the inflated data.
     packedWordP = (size_t*) ssP->infP->inflatedDataP;
   }
-  packedWordEndP = (size_t*) ((U8*) packedWordP + (ssP->infP->inflatedLen))
-                             - (nUnitsInExtraPackedWord > 0);  // stop short of partially packed word
-  size_t *dstUnpackedWordP    = (size_t*) ssP->unpackedDataP;
-
+  const size_t* fullyPackedWordEndP = packedWordP + nWhollyPackedWords;
+  size_t *dstUnpackedWordP = (size_t*) ssP->unpackedDataA;
   size_t j;
-  // Unpack whole words with reckless abandon (CRAZY GORILLA MODE)
-  for (; packedWordP < packedWordEndP; ++packedWordP) {
+  // Unpack fully packed words.
+  for (; packedWordP < fullyPackedWordEndP; ++packedWordP) {
     for (j = 0; j < N_BITS_PER_BYTE; j += ssP->bpu) {
       *(dstUnpackedWordP++) = ((*packedWordP >> j) & mask) + offset;
     }
   }
-  // For leftover units that don't fill a word...
+  // Unpack partly packed words with a whole mask.
   for (j = 0; 
-       nUnitsInExtraPackedWord >= sizeof(size_t);   // TODO same here
-       nUnitsInExtraPackedWord -= sizeof(size_t), j += ssP->bpu) {  // TODO same here
+       nUnitsInExtraPackedWord >= sizeof(size_t);   
+       nUnitsInExtraPackedWord -= sizeof(size_t), j += ssP->bpu) {  
     *(dstUnpackedWordP++) = ((*packedWordP >> j) & mask) + offset;
   }
-  // If a wholesale copy overflows destination array, perform a careful memcpy.
+  // Unpack the remaining bytes of a partly packed word that don't fill a whole mask.
   if (nUnitsInExtraPackedWord > 0) {
     size_t lastUnpackedWord = ((*packedWordP >> j) & mask) + offset;
     memcpy((void*) dstUnpackedWordP, &lastUnpackedWord, nUnitsInExtraPackedWord);
   }
-}
+}  // sdUnpack() 
 
 void sdAssemble(StripDataS *sdP) {
   assert (sdP );
@@ -159,7 +194,7 @@ void sdAssemble(StripDataS *sdP) {
     return;
   }
 
-  assert (sdP->ss.unpackedDataP && sdP->sm.infP->inflatedDataP && !sdP->assembledDataA
+  assert (sdP->ss.unpackedDataA && sdP->sm.infP->inflatedDataP && !sdP->assembledDataA
       && sdP->ss.nUnitsPerStrip > 0);
 
   sdP->assembledDataA = arrayNew( sizeof(U8), sdP->sm.nIndices * sdP->ss.nUnitsPerStrip);
@@ -180,7 +215,7 @@ void sdAssemble(StripDataS *sdP) {
   U8 *assembledDataP = sdP->assembledDataA;
   for (; smElemP < smElemEndP; ++smElemP, assembledDataP += sdP->ss.nUnitsPerStrip) {
     memcpy(assembledDataP,
-        sdP->ss.unpackedDataP + (*smElemP * sdP->ss.nUnitsPerStrip),
+        sdP->ss.unpackedDataA + (*smElemP * sdP->ss.nUnitsPerStrip),
         sdP->ss.nUnitsPerStrip);
   }
 }
@@ -191,4 +226,5 @@ void stripIni(StripDataS *sdP) {
   sdUnpack(sdP);
   sdAssemble(sdP);
 }
+
 

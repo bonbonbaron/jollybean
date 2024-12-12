@@ -28,10 +28,10 @@ ${CP_OBJ_DIR}/%ColorPalette.o: ${CP_SRC_DIR}/%ColorPalette.c
 	gcc -save-temps --coverage -g ${JB_INCS} -I${KR_DIR} -I${JB_DIR}src/include -c $< $(shell sdl2-config --cflags) -o $@
 
 ${CP_SRC_DIR}/%ColorPalette.c: $(UTIL_DIR)/build/body 
-	$(UTIL_DIR)/build/body $*
+	$(UTIL_DIR)/build/body -v $*
 
 ${CM_SRC_DIR}/%Colormap.c: $(UTIL_DIR)/build/body
-	$(UTIL_DIR)/build/body $*
+	$(UTIL_DIR)/build/body -v $*
 
 $(UTIL_DIR)/build/body:
 	make -C $(UTIL_DIR)

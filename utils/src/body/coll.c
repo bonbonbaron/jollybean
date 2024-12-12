@@ -27,6 +27,7 @@ static void rectNodeGrow(RectNode **nodePP) {
   }
 }
 
+#if 0 // unused function
 static void rectNodeDel(RectNode **nodePP) {
   if (nodePP && *nodePP) {
     jbFree((void**) nodePP);
@@ -42,6 +43,7 @@ static void rectListDel(RectNode **nodePP) {
     }
   }
 }
+#endif
 
 RectNode* getRectNode(RectNode *rootP, U32 idx) {
   if (!rootP) {
@@ -93,7 +95,7 @@ static U8* calcLastPixelPInRowP(FrameNode *fNodeP, U8 *firstPixelP, U32 pixelSiz
 static void findCollisionRects(Colormap *cmP, AnimJsonData *animP, RectNode **rectNodePP, U8 verbose) {
   assert (cmP && cmP->bpp <= 4 && rectNodePP);
 
-  U32 nPixels = cmP->w * cmP->h;
+  // U32 nPixels = cmP->w * cmP->h;
   U32 imgPitch = cmP->w * arrayGetElemSz(cmP->sdP->assembledDataA);
 
   // Keep track of the first node so we don't pass out the most recent one and lose all predecessors. 
@@ -202,7 +204,7 @@ void writeCollisionGridMap(char *entityName, Colormap *cmP, U8 verbose) {
 
 // Write a map of rectangle arrays to a C file.
 void writeCollisionRectMap(char *entityName, AnimJsonData *animP, RectNode *collTreeP, U8 verbose) {
-  char *filepath = NULL;
+  // char *filepath = NULL;
   FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Collision/Rect/src", entityName, "ColRect.c", verbose);
   assert(fP);
 

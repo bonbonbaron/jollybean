@@ -28,9 +28,9 @@ typedef png_color Pixel;
 
 void getBaseNameIndices(char *filepathP, char *extension, U32 *startIdxP, U32 *endIdxP);
 void imgDimsIni(ImgDims *imgDimsP, U32 width, U32 height, U32 bpp);
-S32 getColormapIdx(U8 *cpColorA, const U8 *colorQueryP, U8 verbose);
+S32 getColormapIdx(U8* cpColorA, const U8* colorQueryP, U8 verbose);
 void readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *animP, U8 verbose);
-void getColorPaletteAndColormap(ColorPalette *cpP, Colormap *cmP, png_image *pngImgP, U8 *pixelP, U8 srcPixelSize, U8 verbose);
+void getColorPaletteAndColormap(U8* cpP, Colormap *cmP, png_image *pngImgP, U8 *pixelP, U8 srcPixelSize, U8 verbose);
 void cpClr(ColorPalette *cpP);
 void cmClr(Colormap *cmP);
 void img(char *entityNameP, AnimJsonData *animP, U8 verbose);

@@ -14,15 +14,15 @@ TEST_F_SETUP(Tau) {
   // Make arrays, because inflatableNew() expects Jollybean arrays.
   tau->raw1bppA = arrayNew(  sizeof(rawData1bpp[0]), sizeof(rawData1bpp) / sizeof(rawData1bpp[0]));
   memcpy((void*) tau->raw1bppA, (void*) rawData1bpp, sizeof(rawData1bpp[0]) * sizeof(rawData1bpp) / sizeof(rawData1bpp[0]));
-  tau->sd1bppP = stripNew(tau->raw1bppA, 3, 1, 0, 1);
+  tau->sd1bppP = stripNew(tau->raw1bppA, 3, 1, 0, 0);
 
   tau->raw2bppA = arrayNew(  sizeof(rawData2bpp[0]), sizeof(rawData2bpp) / sizeof(rawData2bpp[0]));
   memcpy((void*) tau->raw2bppA, (void*) rawData2bpp, sizeof(rawData2bpp[0]) * sizeof(rawData2bpp) / sizeof(rawData2bpp[0]));
-  tau->sd2bppP = stripNew(tau->raw2bppA, 3, 2, 0, 1);
+  tau->sd2bppP = stripNew(tau->raw2bppA, 3, 2, 0, 0);
 
   tau->raw4bppA = arrayNew(  sizeof(rawData4bpp[0]), sizeof(rawData4bpp) / sizeof(rawData4bpp[0]));
   memcpy((void*) tau->raw4bppA, (void*) rawData4bpp, sizeof(rawData4bpp[0]) * sizeof(rawData4bpp) / sizeof(rawData4bpp[0]));
-  tau->sd4bppP = stripNew(tau->raw4bppA, 5, 4, 0, 1);
+  tau->sd4bppP = stripNew(tau->raw4bppA, 5, 4, 0, 0);
 }
 
 TEST_F_TEARDOWN(Tau) {
@@ -53,14 +53,14 @@ TEST_F(Tau, sdAssemble) {
   REQUIRE_TRUE(1);
 }
 
+TEST_F(Tau, bleh) {
+  stripIni( blehColormap.sdP );
+}
+
 TEST_F(Tau, stripIni) {
   stripIni(tau->sd1bppP);
   stripIni(tau->sd2bppP);
   stripIni(tau->sd4bppP);
-}
-
-TEST_F(Tau, bleh) {
-  stripIni( blehColormap.sdP );
 }
 
 TEST_F(Tau, red) {

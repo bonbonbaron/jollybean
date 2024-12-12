@@ -13,7 +13,7 @@ typedef struct {
   U8 offset;  // amount to increment all units by (e.g. for sub-palette in atlas color palette)
   U32 nUnits;  // e.g. number of pixels in entire stripset
   Inflatable *infP;  // strip set's compressed source data
-  U8 *unpackedDataP;  // destination of unpacking step in strip data inflation, if not skipped
+  U8 *unpackedDataA;  // destination of unpacking step in strip data inflation, if not skipped
 } Stripset;
 
 typedef struct {

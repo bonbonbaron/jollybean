@@ -55,7 +55,6 @@ void setFrame(FrameNode *frameP, fjson_object *jsonObjP) {
   struct fjson_object_iterator itr =  fjson_object_iter_begin(jsonObjP);
   struct fjson_object_iterator itrEnd =  fjson_object_iter_end(jsonObjP);
   struct fjson_object_iterator innerItr; //struct fjson_object_iterator innerItrEnd;
-  struct fjson_object *objP =  NULL;
   
   // Iterate through the frame's inner members.
   for (; !fjson_object_iter_equal(&itr, &itrEnd); fjson_object_iter_next(&itr)) {
@@ -133,7 +132,7 @@ void setFrames(FrameNode **framePP, fjson_object *jsonObjP, fjson_type framesTyp
     int nArrElems = 0;
     fjson_object *arrayObjP = NULL;
     // Get number of array elements.
-    struct fjson_object_iterator itr =  fjson_object_iter_begin(jsonObjP);
+    //struct fjson_object_iterator itr =  fjson_object_iter_begin(jsonObjP);
     //currObjP = fjson_object_iter_peek_value(&itr);
     nArrElems = fjson_object_array_length(jsonObjP);
     // Iterate through frames' array.
@@ -157,7 +156,7 @@ void setFrames(FrameNode **framePP, fjson_object *jsonObjP, fjson_type framesTyp
 void setTags(TagNode **tagNodePP, fjson_object *jsonObjP, U8 verbose) {
   assert (tagNodePP && jsonObjP);
 
-  fjson_object *currObjP = NULL;
+  // fjson_object *currObjP = NULL;
   TagNode **currTagPP = tagNodePP;
   TagNode *firstTagNodeP = NULL;
   // Iterate through the tag array...
@@ -337,7 +336,7 @@ void anim (char *entityNameP, U8 verbose, AnimJsonData **animPP) {
   int nBytes = ftell(fP);
   assert (nBytes > 0);
   if (verbose) {
-    printf("~/jb/src/Body/GrayBody/Animation/%s.json is %d bytes.\n", entityNameP);
+    printf("~/jb/src/Body/GrayBody/Animation/%s.json is %d bytes.\n", entityNameP, nBytes);
   }
   fseek(fP, 0, SEEK_SET);
 

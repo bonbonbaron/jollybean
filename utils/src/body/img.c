@@ -2,6 +2,7 @@
 #include "previewImg.h"
 
 #define DEBUG_IMG_ 1
+#define SHOW_PREVIEW 0
 // TODO: copied from xRender. Fix linker error in cmGen there so you can reuse it without copy/paste.
 void cmClr(Colormap *cmP) {
 	if (cmP != NULL) {
@@ -152,14 +153,17 @@ S32 getColormapIdx(U8 *cpColorA, const U8 *colorQueryP, U8 verbose) {
       return (colorP - cpColorA) / cpElemSz;
     }
   }
-  return -1;
+  // Tell the caller we've never encountered this color before because it's not in our palette.
+  return -1;  
 }
 
+#if 0 // unused function
 static void mallocSanityCheck(char *msgDetails) {
   U8 *memA = jbAlloc(sizeof(U8), 100000);
   printf("malloc works fine: %s\n", msgDetails);
   jbFree((void**) &memA);
 }
+#endif
 
 //##########################################
 // Coming in, colors in palette may be 2 or 4 bytes depending on whether it's gray-alpha or not.
@@ -174,7 +178,9 @@ static void _makeColorPaletteAndColormap(U8 **colormapAP, ColorPalette *cpP, Col
   // Allocate colormap (in a placeholder colormap array, not the proper location due to testing).
   *colormapAP = arrayNew(sizeof(ColormapIdx), srcImgDataP->width * srcImgDataP->height);
   // Allocate color palette.
+  // TODO this is the problem.
   cpP->colorA = arrayNew(srcPixelSz, N_COLORS_SUPPORTED_MAX_); 
+  memset(cpP->colorA, 0, arrayGetNElems(cpP->colorA) * arrayGetElemSz(cpP->colorA));
   // Set up pointers for looping through input image.
   U8 *srcPixelP = srcPixelA;
   U8 *pixelEndP = srcPixelP + (srcImgDataP->width * srcImgDataP->height * srcPixelSz);
@@ -232,13 +238,13 @@ void readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *ani
   FILE *fP = fopen(imgPathA, "rb");
   if (fP && verbose) {
     fseek(fP, 0, SEEK_END);
-    printf("PNG: original size is %d bytes.\n", ftell(fP));
+    printf("PNG: original size is %ld bytes.\n", ftell(fP));
     fclose(fP);
   }
 #endif
 
   
-  png_color blackBg = {0}; // used to replace alpha pixels for 1-byte output pixel format
+  // png_color blackBg = {0}; // used to replace alpha pixels for 1-byte output pixel format
   U8 srcPixelSize = 0;
   // Allocate PNG image info
   png_image *pngP = jbAlloc(sizeof(png_image), 1);
@@ -353,15 +359,12 @@ void readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *ani
     stripLen = animP->frameNodeA[0].w;
   }
   cmP->sdP = stripNew(colormapA, stripLen, cmP->bpp, SD_SKIP_ASSEMBLY_, verbose);
-  //if (!e) {
-  //  e = stripIni(cmP->sdP);  // Ah-HAH.... This is something I had a problem with before too. Looks like commenting it out here solved my problem then too.
-  //}                          // Did it have to do with the SD_SKIP_ASSEMBLY_ above, perhaps?
   // We're gonna cheat and preview the ground truth image here. 
   // We'll test stripIni properly in _validateWholeInput().
   arrayDel((void**) &cmP->sdP->assembledDataA);
   cmP->sdP->assembledDataA = colormapA;
   // Sanity check before making strips
-  if (verbose) {
+  if (verbose && SHOW_PREVIEW) {
     previewImg(cmP, cpP, 1000);
   }
 
@@ -378,7 +381,7 @@ void readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *ani
     cmClr(cmP);
   }
   jbFree((void**) &pngP);
-}
+}  // readPng()
 
 static void _validateWholeInput(Colormap *cmP, ColorPalette *cpP) {
   assert (cmP && cpP);
@@ -387,21 +390,23 @@ static void _validateWholeInput(Colormap *cmP, ColorPalette *cpP) {
   if (!cmP->sdP->assembledDataA) {
     stripIni(cmP->sdP);
   }
-  assert (cmP->sdP->assembledDataA); // here's the bug
+  // I'm assuming we're populating assembledDataA no matter what... Let's confirm that's the case.
+  assert (cmP->sdP->assembledDataA); 
   assert (arrayGetNElems(cmP->sdP->assembledDataA) > 0);
 
   // Deflate colormap/palette and get rid of their resulting outputs to truly test strip-piecing.
-  U32 wOrig = cmP->w;
-  U32 hOrig = cmP->h;
-  U32 bppOrig = cmP->bpp;
+  // U32 wOrig = cmP->w;
+  // U32 hOrig = cmP->h;
+  // U32 bppOrig = cmP->bpp;
   U8 *cmOrigP = NULL;
-    printf("0\n");
   cmOrigP = arrayNew(arrayGetElemSz(cmP->sdP->assembledDataA), arrayGetNElems(cmP->sdP->assembledDataA));
   memcpy(cmOrigP, cmP->sdP->assembledDataA, arrayGetElemSz(cmP->sdP->assembledDataA) * arrayGetNElems(cmP->sdP->assembledDataA));
   // Clear out old colormap
   printf("original input\n");
   printStripData(cmP->sdP);
+#if SHOW_PREVIEW
   previewImg(cmP, cpP, 1000);
+#endif
   cmClr(cmP);
   stripIni(cmP->sdP);
   printf("reconstructed input\n");
@@ -433,13 +438,15 @@ static void _validateWholeInput(Colormap *cmP, ColorPalette *cpP) {
           cmOrigP, 
           arrayGetElemSz(cmP->sdP->assembledDataA) 
           * arrayGetNElems(cmP->sdP->assembledDataA)))) {
-    printf("\n\nthey match!\n");
+    printf("\n\n\e[92mthey match! :)\e[0m\n");
   }
   else {
-    printf("\n\nthey don't match :( \n");
+    printf("\n\n\e[91mthey don't match :(\e[0m \n");
   }
   if (theyMatch) {
+#if SHOW_PREVIEW
     previewImg(cmP, cpP, 1000);
+#endif
   }
 
   arrayDel((void**) &cmOrigP);
@@ -447,11 +454,10 @@ static void _validateWholeInput(Colormap *cmP, ColorPalette *cpP) {
 
 //##########################################
 void img(char *entityNameP, AnimJsonData *animP, U8 verbose) {
-  U8 *pixelP = NULL;  // can be 1bpp colormap, 2bpp gray+alpha, or 4bpp RGBA
-  U8 srcPixelSize = 0;
+  // U8 *pixelP = NULL;  // can be 1bpp colormap, 2bpp gray+alpha, or 4bpp RGBA
+  // U8 srcPixelSize = 0;
   ColorPalette cp = {0};
   Colormap cm = {0};
-  U8 *groundTruthColormapA = NULL;
 
   // Only supports PNG for now
   char* imgFilePathP = getSrcFilePath("Body/Graybody/Colormap", entityNameP, ".png", verbose); 

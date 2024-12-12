@@ -63,9 +63,9 @@ void inflatableWrite(Inflatable *infP, char *filepathA, char *inflatableNameA) {
     int counter = 0;
     fprintf(fOutP, "#include \"botox/botox.h\"\n\n");
     fprintf(fOutP, "Inflatable %s = {\n", inflatableNameA);
-    fprintf(fOutP, "\t.compressedLen   = %d,\n", infP->compressedLen);
+    fprintf(fOutP, "\t.compressedLen   = %ld,\n", infP->compressedLen);
     fprintf(fOutP, "\t.inflatedDataP   = NULL,\n");
-    fprintf(fOutP, "\t.inflatedLen     = %d,\n", infP->inflatedLen);
+    fprintf(fOutP, "\t.inflatedLen     = %ld,\n", infP->inflatedLen);
     fprintf(fOutP, "\t.compressedDataA = {\n\t");
     U8 *infByteP = infP->compressedDataA;
     U8 *infByteEndP = infByteP + infP->compressedLen;
@@ -105,9 +105,9 @@ void inflatableAppend(Inflatable *infP, FILE *fP, char *inflatableNameA) {
     fprintf(fP, "\n};\n\n");
     // Inflatble itself
     fprintf(fP, "Inflatable %s = {\n", inflatableNameA);
-    fprintf(fP, "\t.compressedLen  = %d,\n", infP->compressedLen);
+    fprintf(fP, "\t.compressedLen  = %ld,\n", infP->compressedLen);
     fprintf(fP, "\t.inflatedDataP  = NULL,\n");
-    fprintf(fP, "\t.inflatedLen    = %d,\n", infP->inflatedLen);
+    fprintf(fP, "\t.inflatedLen    = %ld,\n", infP->inflatedLen);
     fprintf(fP, "\t.compressedDataA = %sInfCompressedDataA\n", inflatableNameA);
     fprintf(fP, "};\n\n");
   }

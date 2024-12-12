@@ -276,11 +276,11 @@ static void fillRectFromStripmap(const Image *imgP, const Rect_* rectP, Color_* 
   smElemP        = (StripmapElem*) imgP->cmP->sdP->sm.infP->inflatedDataP;
   // Colorize the stripset first 
   // To colorize the stripset, we need to first stretch it to 4 times its length.
-  Color_* colorizedStripsetP = arrayNew(sizeof(Color_), arrayGetNElems(imgP->cmP->sdP->ss.unpackedDataP));
+  Color_* colorizedStripsetP = arrayNew(sizeof(Color_), arrayGetNElems(imgP->cmP->sdP->ss.unpackedDataA));
   Color_* colorP = colorizedStripsetP;
   Color_* colorEndP = colorP + arrayGetNElems(colorizedStripsetP);
   Color_ *colorPaletteP = imgP->cpP->colorA;
-  U8* stripSetElemP = imgP->cmP->sdP->ss.unpackedDataP;
+  U8* stripSetElemP = imgP->cmP->sdP->ss.unpackedDataA;
   for (; colorP < colorEndP; ++stripSetElemP, ++colorP) {
     *colorP = colorPaletteP[ *stripSetElemP ];
   }

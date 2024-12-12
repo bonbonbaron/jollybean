@@ -83,8 +83,9 @@ typedef struct {
 typedef struct {
   U8 state;  // prevents copies of images from being added to texture atlas
   Key sortedRectIdx;  // Index of sorted rectangle so you can adjust src rect's XY offset in atlas
+  // We don't store raw image data in this struct. It actually winds up in a texture atlas in xRender.
   Colormap* cmP;
-  ColorPalette* cpP;
+  ColorPalette* cpP;  
 } Image;
 
 // GUI

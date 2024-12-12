@@ -11,35 +11,35 @@ all: $(OBJS) build/body
 
 # Linker
 build/body: $(OBJS)
-	$(CC) --coverage -g $(OBJS) -L${JB}/lib/ -ljb -lfastjson -lpthread $(shell pkg-config --libs zlib) $(shell sdl2-config --libs) $(shell libpng-config --libs) -o $@
+	$(CC) -Wall --coverage -g $(OBJS) -L${JB}/lib/ -ljb -lfastjson -lpthread $(shell pkg-config --libs zlib) $(shell sdl2-config --libs) $(shell libpng-config --libs) -o $@
 
 # Body
 build/body.o: src/body/body.c 
-	$(CC) -c --coverage -g $< $(shell sdl2-config --cflags) $(INC) -o $@
+	$(CC) -Wall -c --coverage -g $< $(shell sdl2-config --cflags) $(INC) -o $@
 
 build/anim.o: src/body/anim.c
-	$(CC) -c --coverage -g $< $(shell sdl2-config --cflags) $(INC) -o $@
+	$(CC) -Wall -c --coverage -g $< $(shell sdl2-config --cflags) $(INC) -o $@
 
 build/img.o: src/body/img.c
-	$(CC) -c --coverage -g $< $(shell sdl2-config --cflags) $(INC) -o $@
+	$(CC) -Wall -c --coverage -g $< $(shell sdl2-config --cflags) $(INC) -o $@
 
 build/coll.o: src/body/coll.c
-	$(CC) -c --coverage -g $< $(shell sdl2-config --cflags) $(INC) -o $@
+	$(CC) -Wall -c --coverage -g $< $(shell sdl2-config --cflags) $(INC) -o $@
 
 build/previewImg.o: src/body/previewImg.c
-	$(CC) -c --coverage -g $< $(shell sdl2-config --cflags) $(INC) -o $@
+	$(CC) -Wall -c --coverage -g $< $(shell sdl2-config --cflags) $(INC) -o $@
 
 # File
 build/fileUtils.o: src/file/fileUtils.c
-	$(CC) -c --coverage -g $< $(INC) -o $@
+	$(CC) -Wall -c --coverage -g $< $(INC) -o $@
 
 # Inflatable
 build/inf.o: src/inf/inf.c
-	$(CC) -c --coverage -g $< $(INC) -o $@
+	$(CC) -Wall -c --coverage -g $< $(INC) -o $@
 
 # StripData
 build/sd.o: src/sd/sd.c
-	$(CC) -c --coverage -g $< $(INC) -o $@
+	$(CC) -Wall -c --coverage -g $< $(INC) -o $@
 
 clean:
 	rm build/*
