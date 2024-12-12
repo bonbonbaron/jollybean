@@ -2,7 +2,7 @@
 #include "previewImg.h"
 
 #define DEBUG_IMG_ 1
-#define SHOW_PREVIEW 0
+#define SHOW_PREVIEW 1
 // TODO: copied from xRender. Fix linker error in cmGen there so you can reuse it without copy/paste.
 void cmClr(Colormap *cmP) {
 	if (cmP != NULL) {
@@ -377,7 +377,8 @@ void readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *ani
     printf("PNG image load success: %d x %d \n", pngP->width, pngP->height);
   }
 
-  if (e) { 
+  // TODO Do we want to clear when it DOES or when it DOESN'T succeed?
+  if (!e) { 
     cmClr(cmP);
   }
   jbFree((void**) &pngP);
@@ -387,20 +388,12 @@ static void _validateWholeInput(Colormap *cmP, ColorPalette *cpP) {
   assert (cmP && cpP);
   assert (cmP->sdP);
 
-  if (!cmP->sdP->assembledDataA) {
-    stripIni(cmP->sdP);
-  }
-  // I'm assuming we're populating assembledDataA no matter what... Let's confirm that's the case.
-  assert (cmP->sdP->assembledDataA); 
-  assert (arrayGetNElems(cmP->sdP->assembledDataA) > 0);
+  U8* outputA = ssGetOutput( cmP->sdP );  // Output pointer is asserted to be non-null internally.
 
   // Deflate colormap/palette and get rid of their resulting outputs to truly test strip-piecing.
-  // U32 wOrig = cmP->w;
-  // U32 hOrig = cmP->h;
-  // U32 bppOrig = cmP->bpp;
   U8 *cmOrigP = NULL;
-  cmOrigP = arrayNew(arrayGetElemSz(cmP->sdP->assembledDataA), arrayGetNElems(cmP->sdP->assembledDataA));
-  memcpy(cmOrigP, cmP->sdP->assembledDataA, arrayGetElemSz(cmP->sdP->assembledDataA) * arrayGetNElems(cmP->sdP->assembledDataA));
+  cmOrigP = arrayNew(arrayGetElemSz( outputA ), arrayGetNElems( outputA ));
+  memcpy(cmOrigP, outputA, arrayGetElemSz( outputA ) * arrayGetNElems( outputA ));
   // Clear out old colormap
   printf("original input\n");
   printStripData(cmP->sdP);
@@ -409,17 +402,18 @@ static void _validateWholeInput(Colormap *cmP, ColorPalette *cpP) {
 #endif
   cmClr(cmP);
   stripIni(cmP->sdP);
+  outputA = ssGetOutput( cmP->sdP );  // Old pointer's dangling after deletion, so you have to reset it.
   printf("reconstructed input\n");
   printStripData(cmP->sdP);
 #if 1
   // Verify array lengths match.
   printf("orig cm has %d elems; new cm has %d\n", 
-      arrayGetNElems(cmOrigP), arrayGetNElems(cmP->sdP->assembledDataA));
+      arrayGetNElems(cmOrigP), arrayGetNElems( outputA ));
   printf("orig cm elem size is %d; new cm elem size is %d\n", 
-      arrayGetElemSz(cmOrigP), arrayGetElemSz(cmP->sdP->assembledDataA));
-  assert ((arrayGetNElems(cmP->sdP->assembledDataA) == arrayGetNElems(cmOrigP)));
+      arrayGetElemSz(cmOrigP), arrayGetElemSz( outputA ));
+  assert ((arrayGetNElems( outputA ) == arrayGetNElems(cmOrigP)));
   // Verify array elem sizes match.
-  assert (arrayGetElemSz(cmP->sdP->assembledDataA) == arrayGetElemSz(cmOrigP));
+  assert (arrayGetElemSz( outputA ) == arrayGetElemSz(cmOrigP));
 #endif
   // Compare data directly
   U8 theyMatch = 0;
@@ -429,15 +423,15 @@ static void _validateWholeInput(Colormap *cmP, ColorPalette *cpP) {
     printf("%d", *p);
   }
   printf("\n\nNew colormap array:\n");
-  for (U8 *p = cmP->sdP->assembledDataA; p < cmP->sdP->assembledDataA + arrayGetNElems(cmP->sdP->assembledDataA); ++p) {
+  for (U8 *p = outputA; p < outputA + arrayGetNElems(outputA); ++p) {
     printf("%d", *p);
   }
   printf("\n\n\n");
 #endif
-  if ((theyMatch = !memcmp(cmP->sdP->assembledDataA, 
+  if ((theyMatch = !memcmp(outputA, 
           cmOrigP, 
-          arrayGetElemSz(cmP->sdP->assembledDataA) 
-          * arrayGetNElems(cmP->sdP->assembledDataA)))) {
+          arrayGetElemSz(outputA) 
+          * arrayGetNElems(outputA)))) {
     printf("\n\n\e[92mthey match! :)\e[0m\n");
   }
   else {

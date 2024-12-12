@@ -3,12 +3,14 @@
 // TODO fix this at some future date. I don't have the patience for this right now. 
 
 void previewImg(Colormap *cmP, ColorPalette *cpP, U32 preview_ms) {
-  assert (cmP && cmP->sdP && cmP->sdP->assembledDataA && cpP && preview_ms != 0);
+  assert (cmP && cmP->sdP && cpP && preview_ms != 0);
+
+  U8* output = ssGetOutput( cmP->sdP );
 
   Gui* guiP= guiNew();
   // Colorize image first since surfaceNew() expects RGBA32 now instead of COLOR_IDX8.
-  U8* cmElemP = cmP->sdP->assembledDataA;
-  const U32 N_PIXELS = arrayGetNElems( cmP->sdP->assembledDataA );
+  U8* cmElemP = output;
+  const U32 N_PIXELS = arrayGetNElems( output );
   const U8* cmElemEndP = cmElemP + N_PIXELS;
   const U8 MAX_COLORPAL_IDX = cpP->nColors - 1;
   Color_* colorizedImg = arrayNew( sizeof(Color_), N_PIXELS );

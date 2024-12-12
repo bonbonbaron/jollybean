@@ -98,7 +98,10 @@ void printStripData(StripDataS *sdP) {
     else {
       printf("can't print a null stripset\n");
     }
-    if (sdP->sm.infP->inflatedDataP) {
+    // If we're assembling, that implies we have stripmap data to look at.
+    if ( !( sdP->flags & SD_SKIP_ASSEMBLY_ ) ) {
+      assert( sdP->sm.infP );
+      assert( sdP->sm.infP->inflatedDataP );
       printf("Stripmap data:\n");
       printf("%d elems\n", sdP->sm.nIndices);
       U16 *shortP    = sdP->sm.infP->inflatedDataP;
@@ -342,7 +345,7 @@ static void _validateInflatables(StripDataS *sdP, StripmapElem *smSrcA, U8 *pack
 }
 #endif
 
-static void _validateUnstrippedData(StripDataS *sdP, U8 *srcA) {
+static void _validateAssembledData(StripDataS *sdP, U8 *srcA) {
   assert(sdP);
   assert(sdP->assembledDataA);
   assert(sdP->sm.infP);
@@ -354,8 +357,8 @@ static void _validateUnstrippedData(StripDataS *sdP, U8 *srcA) {
   assert (arrayGetNElems(sdP->assembledDataA) == arrayGetNElems(srcA));
 
   if (memcmp(srcA, sdP->assembledDataA, arrayGetElemSz(srcA) * arrayGetNElems(srcA))) {
-    printf("[_validateUnstrippedData] Unstripped data doesn't  match original.\n");
-    printf("[_validateUnstrippedData] Unstripped data:\n");
+    printf("[_validateAssembledData] Assembled data doesn't  match original.\n");
+    printf("[_validateAssembledData] Assembled data:\n");
     size_t i;
     for (i = 0; 
         i < arrayGetElemSz(sdP->assembledDataA) * arrayGetNElems(sdP->assembledDataA); 
@@ -364,7 +367,7 @@ static void _validateUnstrippedData(StripDataS *sdP, U8 *srcA) {
         StripmapElem *smElemP = (StripmapElem*) sdP->sm.infP->inflatedDataP 
           + (i / sdP->ss.nUnitsPerStrip);
         size_t maxStripIdx = (sdP->ss.nUnits / sdP->ss.nUnitsPerStrip) - 1;
-        printf("[_validateUnstrippedData] Element mismatch: output %3d (from stripset's strip %5d of %5ld), source %3d\n", 
+        printf("[_validateAssembledData] Element mismatch: output %3d (from stripset's strip %5d of %5ld), source %3d\n", 
             sdP->assembledDataA[i], *smElemP, maxStripIdx, srcA[i]);
         if (*smElemP >= maxStripIdx) {
           printf("Looks like the index is out of bounds. The true last strip is this:\n");
@@ -631,15 +634,18 @@ StripDataS* stripNew(U8 *srcA, const size_t nBytesPerUnpackedStrip, const U8 bpu
     //_validateInflatables(sdP, smDataA, ssPackedA);
   }
 #endif
-  stripIni(sdP);  // it was bombing out here originally.
+  stripIni(sdP);  // Make sure it's fully populated after this point.
 #if DEBUG_
   if ( !( sdP->flags & SD_SKIP_ASSEMBLY_ ) ) {
-    _validateUnstrippedData(sdP, srcA);
+    _validateAssembledData(sdP, srcA);
+    // Why is sdP not assembled at this point?
+    assert( sdP->assembledDataA );
   }
 #endif
   arrayDel((void**) &smDataA);
   arrayDel((void**) &ssUnpackedA);
   arrayDel((void**) &ssPackedA);
+
   return sdP;
 }  // stripNew()
 
@@ -706,7 +712,7 @@ void writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripDataS *sdP)
   fprintf(fP, "\t\t.bpu  = %d,\n", sdP->ss.bpu);
   fprintf(fP, "\t\t.infP = &%s,\n", ssInfName);
   fprintf(fP, "\t},\n");
-  // Unstripped data
+  // Assembled data
   fprintf(fP, "\t.assembledDataA = NULL\n");
   fprintf(fP, "};\n\n");
   

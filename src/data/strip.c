@@ -20,15 +20,18 @@ static_assert(0, "Only 32- and 64-bit systems are supported.");
   assert( x ); \
   return x
 
-U8* stripGetInput( StripDataS* sdP ) {
+/* But here's the thing... Not all outputs are jb arrays.
+ * For that reason, it would be truly awesome to make inflatable
+ * turn output into an array. This would simplify call-handling. */
+U8* ssGetInput( StripDataS* sdP ) {
   switch( sdP->flags ) {
     // When this was never stripmapped, it's just a raw colormap.
     // However, the colormap may be sourced differently.
+    case SD_SKIP_ASSEMBLY_:
     case SD_SKIP_INFLATION_ | SD_SKIP_ASSEMBLY_:
       assert_and_return_( sdP->ss.infP->compressedDataA );
     case SD_SKIP_UNPACKING_ | SD_SKIP_ASSEMBLY_:
       assert_and_return_( sdP->ss.infP->compressedDataA );
-    case SD_SKIP_ASSEMBLY_:
       assert_and_return_( sdP->ss.infP->compressedDataA );
     case SD_SKIP_INFLATION_:
       assert_and_return_( sdP->ss.infP->compressedDataA );
@@ -37,22 +40,19 @@ U8* stripGetInput( StripDataS* sdP ) {
   }
 }
 
-U8* stripGetOutput( StripDataS* sdP ) {
+// First prove this one out.
+U8* ssGetOutput( StripDataS* sdP ) {
   switch( sdP->flags ) {
-    // When this was never stripmapped, it's just a raw colormap.
-    // However, the colormap may be sourced differently.
+    // Unpacked
+    case SD_SKIP_ASSEMBLY_:
     case SD_SKIP_INFLATION_ | SD_SKIP_ASSEMBLY_:
       assert_and_return_( sdP->ss.unpackedDataA );
-#if 0
+    // Inflated
     case SD_SKIP_UNPACKING_ | SD_SKIP_ASSEMBLY_:
-      break;
-    case SD_SKIP_ASSEMBLY_:
-      break;
+      assert_and_return_( sdP->ss.infP->inflatedDataP );
     case SD_SKIP_INFLATION_:
     default:  // skipping nothing
-      fillRectFromStripmap( imgP, dstRectP, atlasPixelA, ATLAS_WIDTH );
-      break;
-#endif
+      assert_and_return_( sdP->assembledDataA );
   }
 }
 
@@ -178,7 +178,7 @@ void sdUnpack(StripDataS *sdP) {
   for (j = 0; 
        nUnitsInExtraPackedWord >= sizeof(size_t);   
        nUnitsInExtraPackedWord -= sizeof(size_t), j += ssP->bpu) {  
-    *(dstUnpackedWordP++) = ((*packedWordP >> j) & mask) + offset;
+    *(dstUnpackedWordP++) = ((size_t) (*packedWordP >> j) & mask) + offset;
   }
   // Unpack the remaining bytes of a partly packed word that don't fill a whole mask.
   if (nUnitsInExtraPackedWord > 0) {

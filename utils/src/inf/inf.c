@@ -103,7 +103,7 @@ void inflatableAppend(Inflatable *infP, FILE *fP, char *inflatableNameA) {
       ++len;
     }
     fprintf(fP, "\n};\n\n");
-    // Inflatble itself
+    // Inflatable itself
     fprintf(fP, "Inflatable %s = {\n", inflatableNameA);
     fprintf(fP, "\t.compressedLen  = %ld,\n", infP->compressedLen);
     fprintf(fP, "\t.inflatedDataP  = NULL,\n");

@@ -42,6 +42,8 @@ typedef struct {
 
 void stripClr(StripDataS *sdP);
 void stripIni(StripDataS *sdP);
+U8* ssGetInput( StripDataS* sdP );
+U8* ssGetOutput( StripDataS* sdP );
 void sdInflate(StripDataS *sdP);
 void sdUnpack(StripDataS *sdP);
 void sdAssemble(StripDataS *sdP);
