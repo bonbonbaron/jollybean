@@ -1,8 +1,8 @@
 #include "img.h"
 #include "previewImg.h"
 
-#define DEBUG_IMG_ 1
-#define SHOW_PREVIEW 1
+#define DEBUG_IMG_ 0
+#define SHOW_PREVIEW 0
 // TODO: copied from xRender. Fix linker error in cmGen there so you can reuse it without copy/paste.
 void cmClr(Colormap *cmP) {
 	if (cmP != NULL) {

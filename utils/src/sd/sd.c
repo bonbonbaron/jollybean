@@ -123,7 +123,9 @@ void printStripData(StripDataS *sdP) {
 // Pack all the bits in strip set.
 static size_t* _packBits(U8 *ssUnpackedA, size_t nUnits, size_t bpu, U8 verbose) {
   assert (ssUnpackedA && nUnits && bpu && (bpu == 1 || bpu ==2 || bpu ==4));
-  printf("nUnits: %lx\nbpu: %lx\n", nUnits, bpu);
+  if (verbose) {
+    printf("nUnits: %lx\nbpu: %lx\n", nUnits, bpu);
+  }
 
   const size_t nPackedUnitsPerWord     = __WORDSIZE / bpu;
   const size_t nWhollyPackedWords      = ( ( nUnits * bpu ) >> FULLY_PACKED_WORD_COUNT_RSHIFT );
@@ -131,8 +133,8 @@ static size_t* _packBits(U8 *ssUnpackedA, size_t nUnits, size_t bpu, U8 verbose)
 
   // Pre-pack stats
   if (verbose) {
-    printf("[_packBits] Packing %lx bytes to %lx bytes (%lx full words) + %lx bytes (1 partial word)\n" 
-        ,nUnits, nWhollyPackedWords * sizeof(size_t), nWhollyPackedWords, nUnitsInExtraPackedWord); 
+    printf("[_packBits] Packing %ld bytes into %ld bytes (%ld full words) + %ld bytes (%d partial word)\n" 
+        , nUnits, nWhollyPackedWords * sizeof(size_t), nWhollyPackedWords, (nUnitsInExtraPackedWord * bpu + 4) / 8, nUnitsInExtraPackedWord > 0 ? 1 : 0); 
   }
 
   U8 *bitIdxA;
@@ -147,7 +149,9 @@ static size_t* _packBits(U8 *ssUnpackedA, size_t nUnits, size_t bpu, U8 verbose)
       bitIdxA = (U8*) bitIdx4Bpu;
       break;
     default:
-      printf("[_packBits] no packing to be done.\n");
+      if (verbose) {
+        printf("[_packBits] no packing to be done.\n");
+      }
       return NULL;
   }
 
@@ -161,13 +165,11 @@ static size_t* _packBits(U8 *ssUnpackedA, size_t nUnits, size_t bpu, U8 verbose)
   size_t* ssPackedA = arrayNew(  
       sizeof(size_t), 
       (nWhollyPackedWords + (( nUnitsInExtraPackedWord > 0 ? 1 : 0) ))); 
-
-  // Experiment with zeroing out the whole damn thijng to see if that does awya with the uninit problem.
-#if 1
-  // Yes, this does fix the problem. So where am I missing words?
   memset(ssPackedA, 0, arrayGetNElems( ssPackedA ) * arrayGetElemSz( ssPackedA ) );
-#endif
-  printf("There are %d packed words.\n", arrayGetNElems( ssPackedA ) );
+
+  if (verbose) {
+    printf("There are %d packed words.\n", arrayGetNElems( ssPackedA ) );
+  }
   size_t *packedWordP    = (size_t*) ssPackedA;
   size_t *fullyPackedWordEndP = packedWordP + nWhollyPackedWords;
   U8  *inputByteP     = ssUnpackedA;
@@ -177,18 +179,12 @@ static size_t* _packBits(U8 *ssUnpackedA, size_t nUnits, size_t bpu, U8 verbose)
   //   masking + shifting into place.
   size_t nWordsSoFar = 1;
   for (; packedWordP < fullyPackedWordEndP; ++packedWordP, ++nWordsSoFar) {
-    if (verbose) {
-      printf("%3ld / %3ld) packing 0x", nWordsSoFar, nWhollyPackedWords + (nUnitsInExtraPackedWord > 0 ? 1 : 0 ));
-    }
     // For each unit you can pack into that output word...
     for (U8 i = 0; i < nPackedUnitsPerWord; ++i) {
-      if ( verbose && i > 0 && (i & 7) == 0 ) {
-        printf("|");
+      if ( verbose && i % sizeof( size_t ) == 0 ) {  // 8 because 
+        printf("%3ld / %3ld) packing 0x%016lx\n", nWordsSoFar, nWhollyPackedWords + (nUnitsInExtraPackedWord > 0 ? 1 : 0 ), *( (size_t*) inputByteP ));
       }
       // Pack unit into output word.
-      if (verbose) {
-        printf("%02x", *inputByteP);
-      }
       *packedWordP |= (size_t) *(inputByteP++) << bitIdxA[i];
     }
     if (verbose) {
@@ -206,9 +202,10 @@ static size_t* _packBits(U8 *ssUnpackedA, size_t nUnits, size_t bpu, U8 verbose)
   if (verbose) {
     printf("%3ld / %3ld) packing 0x", nWordsSoFar, nWhollyPackedWords + (nUnitsInExtraPackedWord > 0 ? 1 : 0 ));
   }
+  size_t inputWord = 0;  // to make printouts of the input words cleaner
   for (U8 i = 0; i < nUnitsInExtraPackedWord; ++i) {
-    if ( verbose && i > 0 && (i & 7) == 0 ) {
-      printf("|");
+    if (verbose && i % sizeof( size_t ) == 0 ) {
+      printf("%3ld / %3ld) packing 0x%016lx\n", nWordsSoFar, nWhollyPackedWords + (nUnitsInExtraPackedWord > 0 ? 1 : 0 ), inputWord);
     }
     if (verbose) {
       printf("%02x", *inputByteP);
@@ -269,7 +266,9 @@ static void _validateBitPacking(size_t *packedDataA, U8 *srcUnpackedDataP, size_
       mask = MASK_4BPP;
       break;
     default:
-      printf("[_validateBitPacking] This data isn't packed. No validation to do.\n");
+      if (verbose) {
+        printf("[_validateBitPacking] This data isn't packed. No validation to do.\n");
+      }
       return;
   }
 
@@ -307,12 +306,14 @@ static void _validateBitPacking(size_t *packedDataA, U8 *srcUnpackedDataP, size_
     _checkMatch(*srcUnpackedWordP, dstUnpackedWord, nUnitsInExtraPackedWord);
   }
 
-  printf("\n\e[92mCONGRATULATIONS! We validated your bitpacking integrity!\e[0m\n\n");
+  if (verbose) {
+    printf("\n\e[92mCONGRATULATIONS! We validated your bitpacking integrity!\e[0m\n\n");
+  }
 } // _validateBitPacking()
 #endif
 
 #if DEBUG_
-static void _validateStripmapping(U8 *ssA, size_t nBytesPerUnpackedStrip, StripmapElem *smA, U8 *srcA) {
+static void _validateStripmapping(U8 *ssA, size_t nBytesPerUnpackedStrip, StripmapElem *smA, U8 *srcA, U8 verbose) {
   assert (ssA && smA && srcA);
 
   StripmapElem *smElemP = smA;
@@ -327,7 +328,9 @@ static void _validateStripmapping(U8 *ssA, size_t nBytesPerUnpackedStrip, Stripm
     assert (!memcmp(ssElemP, origElemP, nBytesPerUnpackedStrip));
   }  // for each strip in stripset
 
-  printf("\n\e[92mCONGRATULATIONS! We validated your stripmap's integrity!\e[0m\n\n");
+  if (verbose) {
+    printf("\n\e[92mCONGRATULATIONS! We validated your stripmap's integrity!\e[0m\n\n");
+  }
 }
 
 #if 0
@@ -345,7 +348,7 @@ static void _validateInflatables(StripDataS *sdP, StripmapElem *smSrcA, U8 *pack
 }
 #endif
 
-static void _validateAssembledData(StripDataS *sdP, U8 *srcA) {
+static void _validateAssembledData(StripDataS *sdP, U8 *srcA, U8 verbose) {
   assert(sdP);
   assert(sdP->assembledDataA);
   assert(sdP->sm.infP);
@@ -357,8 +360,10 @@ static void _validateAssembledData(StripDataS *sdP, U8 *srcA) {
   assert (arrayGetNElems(sdP->assembledDataA) == arrayGetNElems(srcA));
 
   if (memcmp(srcA, sdP->assembledDataA, arrayGetElemSz(srcA) * arrayGetNElems(srcA))) {
-    printf("[_validateAssembledData] Assembled data doesn't  match original.\n");
-    printf("[_validateAssembledData] Assembled data:\n");
+    if (verbose) {
+      printf("[_validateAssembledData] Assembled data doesn't  match original.\n");
+      printf("[_validateAssembledData] Assembled data:\n");
+    }
     size_t i;
     for (i = 0; 
         i < arrayGetElemSz(sdP->assembledDataA) * arrayGetNElems(sdP->assembledDataA); 
@@ -367,15 +372,20 @@ static void _validateAssembledData(StripDataS *sdP, U8 *srcA) {
         StripmapElem *smElemP = (StripmapElem*) sdP->sm.infP->inflatedDataP 
           + (i / sdP->ss.nUnitsPerStrip);
         size_t maxStripIdx = (sdP->ss.nUnits / sdP->ss.nUnitsPerStrip) - 1;
-        printf("[_validateAssembledData] Element mismatch: output %3d (from stripset's strip %5d of %5ld), source %3d\n", 
-            sdP->assembledDataA[i], *smElemP, maxStripIdx, srcA[i]);
+        if (verbose) {
+          printf("[_validateAssembledData] Element mismatch: output %3d (from stripset's strip %5d of %5ld), source %3d\n", sdP->assembledDataA[i], *smElemP, maxStripIdx, srcA[i]);
+        }
         if (*smElemP >= maxStripIdx) {
-          printf("Looks like the index is out of bounds. The true last strip is this:\n");
-          U8 *lastUnpackedStripP = sdP->ss.unpackedDataA + (sdP->ss.nUnitsPerStrip * (maxStripIdx));
-          for (size_t i = 0; i < sdP->ss.nUnitsPerStrip; ++i) {
-            printf("%d", lastUnpackedStripP[i]);
+          if (verbose) {
+            printf("Looks like the index is out of bounds. The true last strip is this:\n");
           }
-          printf("\n\n");
+          U8 *lastUnpackedStripP = sdP->ss.unpackedDataA + (sdP->ss.nUnitsPerStrip * (maxStripIdx));
+          if (verbose) {
+            for (size_t i = 0; i < sdP->ss.nUnitsPerStrip; ++i) {
+              printf("%d", lastUnpackedStripP[i]);
+            }
+            printf("\n\n");
+          }
           break;
         }
       }
@@ -384,7 +394,9 @@ static void _validateAssembledData(StripDataS *sdP, U8 *srcA) {
     // Bomb out if it failed in the above for-loop.
     assert (i == arrayGetElemSz(sdP->assembledDataA) * arrayGetNElems(sdP->assembledDataA));
 
-    printf("\n\n");
+    if (verbose) {
+      printf("\n\n");
+    }
   }
 }
 
@@ -464,20 +476,26 @@ StripDataS* stripNew(U8 *srcA, const size_t nBytesPerUnpackedStrip, const U8 bpu
     printf("%d distinct strips out of a maximum possible %ld strips\n", stripLabel, nStripsInOrigData);
   }
 #if DEBUG_
-  _validateStripmapping(ssUnpackedA, nBytesPerUnpackedStrip, smDataA, srcA);
+  if (verbose) {
+    _validateStripmapping(ssUnpackedA, nBytesPerUnpackedStrip, smDataA, srcA, verbose);
+  }
 #endif
   size_t nUnitsInStripset = stripLabel * nBytesPerUnpackedStrip;
   // If it's worth doing, store compressed stuff into colormap profile.
   // Compress data into an inflatable.
   size_t* ssPackedA = _packBits(ssUnpackedA, nUnitsInStripset, bpu, verbose);
 #if DEBUG_
-  _validateBitPacking(ssPackedA, ssUnpackedA, nUnitsInStripset, bpu, verbose);
+  if (verbose) {
+    _validateBitPacking(ssPackedA, ssUnpackedA, nUnitsInStripset, bpu, verbose);
+  }
 #endif
 
   // One last thing: Pack the raw, non-stripped data to see if it can contend with the strip/zips.
   size_t* packedRawA =  _packBits(srcA, arrayGetNElems(srcA), bpu, verbose );
 #if DEBUG_
-  _validateBitPacking(packedRawA, srcA, nUnitsInStripset, bpu, verbose);
+  if (verbose) {
+    _validateBitPacking(packedRawA, srcA, nUnitsInStripset, bpu, verbose);
+  }
 #endif
   // Oh, and also compress the raw as well so we can compare that too.
   Inflatable* rawInfP = inflatableNew( srcA);
@@ -636,8 +654,8 @@ StripDataS* stripNew(U8 *srcA, const size_t nBytesPerUnpackedStrip, const U8 bpu
 #endif
   stripIni(sdP);  // Make sure it's fully populated after this point.
 #if DEBUG_
-  if ( !( sdP->flags & SD_SKIP_ASSEMBLY_ ) ) {
-    _validateAssembledData(sdP, srcA);
+  if ( verbose && !( sdP->flags & SD_SKIP_ASSEMBLY_ ) ) {
+    _validateAssembledData(sdP, srcA, verbose);
     // Why is sdP not assembled at this point?
     assert( sdP->assembledDataA );
   }
@@ -715,7 +733,7 @@ void writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripDataS *sdP)
   // Assembled data
   fprintf(fP, "\t.assembledDataA = NULL\n");
   fprintf(fP, "};\n\n");
-  
+
   // Clean up
   jbFree( (void**) &smInfName );
   jbFree( (void**) &ssInfName );

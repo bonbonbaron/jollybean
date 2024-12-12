@@ -19,12 +19,12 @@ LIB_DIR := $(JB_DIR)/lib
 _INCS   := $(shell find ${JB_DIR}/src -type d -name include) ${CM_INC_DIR} ${CP_INC_DIR} ${UTILS}/include
 INCS    := $(_INCS:%=-I%)
 
-./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./main.o ${LIB_DIR}/libjb.a ${UTILS}/build/*.o
-	gcc --coverage ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ${UTILS}/build/previewImg.o ./main.o $(shell sdl2-config --libs) -L${LIB_DIR} -ljb -lpthread -o $@
+./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./test.o ${LIB_DIR}/libjb.a ${UTILS}/build/*.o
+	gcc --coverage ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ${UTILS}/build/previewImg.o ./test.o $(shell sdl2-config --libs) -L${LIB_DIR} -ljb -lpthread -o $@
 	touch $@
 
-./main.o: ./main.c
-	gcc --coverage -g -c main.c ${INCS} $(shell sdl2-config --cflags --cflags) -o $@
+./test.o: ./test.c
+	gcc --coverage -g -c test.c ${INCS} $(shell sdl2-config --cflags --cflags) -o $@
 	touch $@
 
 ${CM_OBJ_DIR}/%Colormap.o: ${CM_SRC_DIR}/%Colormap.c
