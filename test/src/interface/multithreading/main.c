@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
   printf("sum: %d\n", sum);
 
   // Inflate colormap inflatables
-#if 0
+#if 1
   if (!e) {
     e = multithread_(sdInflate, (void*) sdPA);
   }

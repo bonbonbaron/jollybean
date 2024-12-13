@@ -7,6 +7,8 @@
 #include "redColorPalette.h"
 #include "previewImg.h"
 
+#define MULTITHREADED 1
+
 int main(int argc, char **argv) {
   // ====================================================
   // Repeat things done in multithreadingg test for setup
@@ -48,7 +50,6 @@ int main(int argc, char **argv) {
     sdPA[i] = imgPF[i]->cmP->sdP;
   }
 
-#define MULTITHREADED 0
   // Inflate colormap inflatables
 #if MULTITHREADED
   multithread_(sdInflate, (void*) sdPA);
@@ -76,18 +77,25 @@ int main(int argc, char **argv) {
   // Texture surface
   Surface_* atlasSurfaceP = surfaceNew((void*) atlasPixelA, atlasP->btP[0].remW, atlasP->btP[0].remH);
   // Texture
-  Texture_ *textureP =  textureNew(guiP->rendererP, atlasSurfaceP);
+  Texture_ *atlasTextureP = textureNew(guiP->rendererP, atlasSurfaceP);
   /* "Pixel data is not managed automatically with SDL_CreateRGBSurfaceWithFormatFrom().
      You must free the surface before you free the pixel data." */
   surfaceDel(&atlasSurfaceP);
   arrayDel((void**) &atlasPixelA);
 
+  /* We don't need to update images' source rectangles here,
+   * because we're not drawing individual entities in arbitrary
+   * locations. We're just drawing the texture atlas.
+   *
+   * That's why we're straying from xRender::XPostprocessCompsDef_()
+   * in that regard. */
+
   // Render it
   clearScreen(guiP->rendererP);
-  copy_(guiP->rendererP, textureP, NULL, NULL);
+  copy_(guiP->rendererP, atlasTextureP, NULL, NULL);
   // Show it
   present_(guiP->rendererP);
-  SDL_Delay(10000);
+  SDL_Delay(1000);
 
   // Deflate colormap inflatables
 #if MULTITHREADED
@@ -106,7 +114,7 @@ int main(int argc, char **argv) {
   frayDel((void**) &imgPF);
   SDL_FreeSurface(atlasSurfaceP);
   arrayDel((void**) &atlasPixelA);
-  SDL_DestroyTexture(textureP);
+  SDL_DestroyTexture(atlasTextureP);
   guiDel(&guiP);
   return 0;
 }

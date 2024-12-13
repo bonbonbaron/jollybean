@@ -30,11 +30,16 @@ static void _threadFuncArgArrayIni(CriticalFunc funcP, ThreadFuncArg *argA, U32 
   }
 }
 
-// Generic multithreading function
+// Generic multithreading function (which gets called in threadIni_ macro)
 static void* _mtGenericLoop(ThreadFuncArg *thargP) {
-  const U32 ptrIncr = arrayGetElemSz(thargP->array);
+  const size_t ptrIncr = arrayGetElemSz(thargP->array);
   U8 *voidP = (U8*) thargP->array + ptrIncr * thargP->startIdx;
   U8 *voidEndP = voidP + thargP->nElemsToProcess;
+  /* ******** NOTE *********
+   * Because of the below design,
+   * the input to the thargP->funcP *must* be a pointer.
+   * That is, every element of _array in multiThread() must be a pointer.
+   */
   for (; voidP < voidEndP; voidP += ptrIncr) {
     thargP->funcP((void*) *((size_t*) voidP));  // ugly but... how else to generalize?
   }

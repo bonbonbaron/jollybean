@@ -1,5 +1,4 @@
 #include "xRender.h"
-#undef MULTITHREADED_
 
 static inline void __atlasLinkNodes(
     Atlas *atlasP,
@@ -303,51 +302,69 @@ static void fillRectFromStripmap(const Image *imgP, const Rect_* rectP, Color_* 
 }
 
 #ifdef MULTITHREADED_
+
 typedef struct {
   Color_* dstP;
   Color_* dstEndP;
   U8* cmA;
   Color_* cpA;
   U32 INCREMENT;
+  U32 rectWidth;
 } FillRectParamsMT;
 
-void fillPortionOfRect( FillRectParamsMT* fillRectParamsP ) {
+static void fillPortionOfRect( FillRectParamsMT* fillRectParamsP ) {
   U8* cmElemP = fillRectParamsP->cmA;
+  assert( fillRectParamsP->dstEndP > fillRectParamsP->dstP );
   for ( ; fillRectParamsP->dstP < fillRectParamsP->dstEndP; fillRectParamsP->dstP += fillRectParamsP->INCREMENT ) {
-    *fillRectParamsP->dstP = fillRectParamsP->cpA[ *(cmElemP++) ];
+    const Color_* dstRowEndP = fillRectParamsP->dstP + fillRectParamsP->rectWidth;
+    for ( ; fillRectParamsP->dstP < dstRowEndP; ++fillRectParamsP->dstP ) {
+      *fillRectParamsP->dstP = fillRectParamsP->cpA[ *(cmElemP++) ];
+    }
   }
 }
+
 #endif
 
+
 static void fillRect( U8* cmA, Color_* cpA, const Rect_* rectP, Color_* atlasPixelA, const U32 ATLAS_WIDTH ) {
-  
   assert( cmA && cpA && rectP && atlasPixelA );
 
   const U32 INCREMENT = ATLAS_WIDTH - rectP->w;
 
 #ifdef MULTITHREADED_
-  FillRectParamsMT* paramsA = arrayNew( sizeof( FillRectParamsMT ), N_CORES );
-  U32 heightSliver = rectP->h / N_CORES;
-  for ( U32 i = 0; i < N_CORES; ++i ) {
-    paramsA[i].dstP = atlasPixelA + rectP->x + ( rectP->y + ( i * heightSliver) ) * ATLAS_WIDTH;
-    paramsA[i].dstEndP = paramsA[i].dstP + ( heightSliver * ATLAS_WIDTH );
-    paramsA[i].cmA = cmA;
-    paramsA[i].cpA = cpA;
+  const U32 N_THREADS = ( rectP->h < N_CORES ) ? rectP->h : N_CORES;
+
+  FillRectParamsMT* paramsA = arrayNew( sizeof( FillRectParamsMT ), N_THREADS );
+  U32 heightSliver = rectP->h / N_THREADS;
+  for ( U32 i = 0; i < N_THREADS; ++i ) {
+    paramsA[i].dstP      = atlasPixelA + rectP->x + ( rectP->y + ( i * heightSliver) ) * ATLAS_WIDTH;
+    paramsA[i].dstEndP   = paramsA[i].dstP + ( heightSliver * ATLAS_WIDTH );
+    paramsA[i].cmA       = cmA + ( i * heightSliver ) * rectP->w;  // rect is as wide as source colormap
+    paramsA[i].cpA       = cpA;
     paramsA[i].INCREMENT = INCREMENT;
+    paramsA[i].rectWidth = rectP->w;
+    assert( paramsA[i].dstEndP > paramsA[i].dstP );
   }
-  // Then finish off by giving the last thread a slightly more responsibility if the sections aren't divisible by N_CORES.
-  paramsA[ N_CORES - 1 ].dstEndP += ( rectP->h % N_CORES ) * ATLAS_WIDTH;
-  multithread_( fillPortionOfRect, (void*) paramsA );
+  FillRectParamsMT** ptrA = arrayNew( sizeof( FillRectParamsMT* ), N_THREADS );
+  for ( U32 i = 0; i < N_THREADS; ++i ) {
+    ptrA[i] = &paramsA[i];
+  }
+  // Then finish off by giving the last thread a slightly more responsibility if the sections aren't divisible by N_THREADS.
+  paramsA[ N_THREADS - 1 ].dstEndP += ( rectP->h % N_THREADS ) * ATLAS_WIDTH;
+  multithread_( fillPortionOfRect, (void*) ptrA );
   arrayDel( (void**) &paramsA );
+  arrayDel( (void**) &ptrA );
 #else
   Color_* dstP = atlasPixelA + rectP->x + ( rectP->y ) * ATLAS_WIDTH;
   Color_* dstEndP = dstP + ( rectP->h * ATLAS_WIDTH );
   U8* cmElemP = cmA;
   for ( ; dstP < dstEndP; dstP += INCREMENT ) {
-    *dstP = cpA[ *(cmElemP++) ];
+    const Color_* dstRowEndP = dstP + rectP->w;
+    for ( ; dstP < dstRowEndP; ++dstP ) {
+      *dstP = cpA[ *(cmElemP++) ];
+    }
   }
 #endif
-
 }
 
 // Texture atlas array
@@ -356,13 +373,15 @@ Color_* assembleTextureAtlas(Image** imgPF, Atlas *atlasP) {
   const U32 ATLAS_WIDTH = atlasP->btP[0].remW;
   // Make output atlas image
   Color_* atlasPixelA = arrayNew(sizeof(Color_), atlasP->btP[0].remW * atlasP->btP[0].remH);
+  // Not even sure if memsetting the above array matters. Looks white to me either way.
+  // memset( atlasPixelA, 0, arrayGetNElems( atlasPixelA ) * arrayGetElemSz( atlasPixelA ) );
+
   // Number of rect nodes is the number of elements in the rectangle binary tree.
   U32 iEnd = arrayGetNElems(atlasP->btP);
   // For each source rectangle...
   for (U32 i = 0; i < iEnd; ++i) {
     U32 srcRectIdx = atlasP->btP[i].srcIdx;
     const Rect_* dstRectP = &atlasP->btP[i].rect;
-    printf("dst rect is { %d, %d, %d, %d }.\n", dstRectP->x, dstRectP->y, dstRectP->w, dstRectP->h );
     const Image* imgP = imgPF[srcRectIdx];
     // If it needs to be assembled, you have to assemble strips 
     // into a full grayscale image first.
@@ -414,10 +433,11 @@ static void _updateSrcRects(XRender *xP, Atlas *atlasP) {
   // For each entity...
   for (; scoP < scoEndP; ++scoP) {
     imgP = (Image*) scoP->subcompA[IMG_SUBCOMP_IDX];
-    assert(scoP->owner);  // Having a colormap is mandatory for xRender components.)E
-                          // Source rectangle initialization (set flag first because implicit share maps don't know 
-                          // which entities they should be mapped to ahead of time... would be nice if I found a way
-                          // to use mapCopyKeys() for all systems prior to this function)
+    assert(scoP->owner);  
+    // Having a colormap is mandatory for xRender components.
+    // Source rectangle initialization (set flag first because implicit share maps don't know 
+    // which entities they should be mapped to ahead of time... would be nice if I found a way
+    // to use mapCopyKeys() for all systems prior to this function)
     if (!(xP->system.flags & RENDER_SYS_OWNS_SRC_AND_OFFSET)) {
       mapSetFlag(xP->srcRectMP, scoP->owner);
     }

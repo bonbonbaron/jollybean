@@ -71,7 +71,6 @@ Surface_* surfaceNew(void *pixelDataA, U32 w, U32 h) {
 	assert (pixelDataA && w && h);
   SDL_ClearError();
   Surface_* surfaceP = SDL_CreateRGBSurfaceWithFormatFrom(pixelDataA, w, h, 32, w * arrayGetElemSz(pixelDataA), SDL_PIXELFORMAT_RGBA32);
-  printf("Error: %s\n", SDL_GetError());
   // Palette
   assert (surfaceP);
   return surfaceP;
