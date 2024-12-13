@@ -11,6 +11,27 @@
 #include "redColormap.h"
 #include "redColorPalette.h"
 
+Image imgA[] = {
+  {
+    .state = 0,
+    .sortedRectIdx = 0,
+    .cmP = &redColormap,
+    .cpP = &redColorPalette
+  },
+  {
+    .state = 0,
+    .sortedRectIdx = 0,
+    .cmP = &blehColormap,
+    .cpP = &blehColorPalette
+  },
+  {
+    .state = 0,
+    .sortedRectIdx = 0,
+    .cmP = &heckColormap,
+    .cpP = &heckColorPalette
+  }
+};
+
 
 // We have to make these constants so the compiler doesn't cry about the array initializers not having constant sizes.
 #define N_MUTATIONS_PER_ENTITY (5)
@@ -36,7 +57,7 @@ TEST_F_SETUP(Tau) {
   tau->xP->guiP = guiNew();
 
   // Initialize the system basics.
-  tau->nEntities = N_ENTITIES;
+  tau->nEntities = sizeof( imgA ) / sizeof( imgA[0] );  // for lack of anything better for now
   tau->nMutationsPerEntity = N_MUTATIONS_PER_ENTITY;
   xIniSys(tau->sP, tau->nEntities, NULL);
   tau->renderCompF = tau->sP->cF;
@@ -48,7 +69,9 @@ TEST_F_SETUP(Tau) {
   // 2) dest rects 
   // 3) colormaps
   // 4) color palettes
-  // 5) body'ing the three test images you have in Makefile (steal from 
+  // 5) body'ing the three test images you have in Makefile 
+  // 6) Send them into the system in the setup stage
+  // 7) 
   // ************ SHARES **************
   tau->shareMPMP = mapNew( MAP_POINTER, sizeof(Map*), 4);
 
@@ -64,7 +87,7 @@ TEST_F_SETUP(Tau) {
   // Now populate the entities' shared rectangles.
   // You don't know what your source rect is until you mutate.
   forEachEntity_( tau->nEntities ) {
-    Rect_ currSrcRect = { 0 };  // the post-mutate function will change this value before renderating
+    Rect_ currSrcRect = { 0 };  // the post-mutate function will change this value before rendering
     mapSet(sharedSrcRectMP, entity, &currSrcRect);
 
     Rect_ currDstRect = { 0 };  // the post-mutate function will change this value before renderating
@@ -99,56 +122,25 @@ TEST_F(Tau, xRenderRun) {
     xRun(&tau->xP->system);
   }
 }
-#define USE_HEADLESS_INTERFACE
 
 TEST_F(Tau, somethingfornow) {
   // ====================================================
   // Repeat things done in multithreadingg test for setup
   // ====================================================
-
-  Colormap *cmPA[] = {
-    &blehColormap,
-    &redColormap,
-    &heckColormap
-  };
-
-  ColorPalette *cpPA[] = {
-    &blehColorPalette,
-    &redColorPalette,
-    &heckColorPalette
-  };
-
-  // TODO Why're we putting it in a fray?
-  Colormap** cmPF = frayNew( sizeof(Colormap*), 3);
-  for (U32 i = 0; i < 3; ++i) {
-    frayAdd(cmPF, &cmPA[i], NULL);
-  }
-
-  U32 N_SAMPLES = *_frayGetFirstEmptyIdxP(cmPF);
-
-  // Offset color palette and colormap indices to match future texture atlas destinations
-  U8 atlasOffset = 0;
-  for (int i = 0; i < N_SAMPLES; ++i) {
-    atlasOffset += cpPA[i]->nColors;
-  }
-
-  // Extract stripdatas into an array so we can multithread process them all.
-  StripDataS **sdPA = arrayNew(sizeof(StripDataS*), N_SAMPLES);
-
-  for (U32 i = 0, iEnd = arrayGetNElems(sdPA); i < iEnd; ++i) {
+  Colormap** cmPF = frayNew( sizeof(Colormap*), tau->nEntities);
+  StripDataS **sdPA = arrayNew(sizeof(StripDataS*), tau->nEntities);
+  for (U32 i = 0; i < tau->nEntities; ++i) {
+    frayAdd(cmPF, &imgA[i].cmP, NULL);
     sdPA[i] = cmPF[i]->sdP;
-  }
-
-  // Inflate colormap inflatables
-  for (int i = 0; i < N_SAMPLES; ++i) {
-    // PROBLEM: bleh doesn't have a stripmap, but it's marked for assembly.
-    // strip data's flags are not being written
     stripIni(sdPA[i]);
   }
 
   // ====================================================
   // Clean up
   // ====================================================
+  for (U32 i = 0; i < tau->nEntities; ++i) {
+    stripClr(sdPA[i]);
+  }
   arrayDel((void**) &sdPA);
   frayDel((void**) &cmPF);
   // arrayDel((void**) &atlasPixelA);  TODO what was this for? Did i accidentally delete something?
