@@ -48,11 +48,16 @@ void frayAddEmpty(const void *frayP, U32 *elemNewIdxP) {
 }
 
 static void _fraySwap(const void *frayP, U32 oldIdx, U32 newIdx) {
+  // we want to preserve the speed of memcpy over memmove. 
+  // The latter has to copy to an empty array first.
+  if ( oldIdx == newIdx ) {
+    return;  
+  }
   assert(frayP);
   // Get source, destination, and placeholder
   register void *elem1P       = frayGetElemByIdx_(frayP, oldIdx);
-  register void *placeholderP = frayGetElemByIdx_(frayP, frayGetNElems_(frayP));
   register void *elem2P       = frayGetElemByIdx_(frayP, newIdx); 
+  register void *placeholderP = frayGetElemByIdx_(frayP, frayGetNElems_(frayP));
   // Swap with the first inactive.
   register U32   elemSz       = frayGetElemSz_(frayP);
   memcpy(placeholderP, elem1P,       elemSz);

@@ -15,7 +15,7 @@
 #endif
 #endif
 
-#define USE_PTHREAD_ 1
+#define USE_PTHREAD_ 0
 #if USE_PTHREAD_
 #define MULTITHREADED_
 #endif

@@ -219,7 +219,7 @@ void xRenderIniSys(System *sP, void *sParamsP) {
 }
 
 //=========================================================================
-// Initialize xRender's components' elements (Colormaps and Color Palettes)
+// Initialize xRender's components' elements (images and tilemaps)
 //=========================================================================
 void xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void *dataP) {
   assert (sP && entity && dataP && subtype);
@@ -256,6 +256,9 @@ void xRenderProcessMessage(System *sP, Message *msgP) {
 // None of the render system's specials should be cleared as the main system owns them.
 XClrFuncDef_(Render) {
   XRender *xP = (XRender*) sP;
+  for ( size_t i = 0; i < frayGetNElems_(xP->imgPF); ++i ) {
+    xP->imgPF[i]->state = 0;
+  }
   frayDel((void**) &xP->imgPF);
   frayDel((void**) &xP->entityF);
   textureDel(&xP->atlasTextureP);
@@ -314,11 +317,18 @@ typedef struct {
 
 static void fillPortionOfRect( FillRectParamsMT* fillRectParamsP ) {
   U8* cmElemP = fillRectParamsP->cmA;
-  assert( fillRectParamsP->dstEndP > fillRectParamsP->dstP );
-  for ( ; fillRectParamsP->dstP < fillRectParamsP->dstEndP; fillRectParamsP->dstP += fillRectParamsP->INCREMENT ) {
-    const Color_* dstRowEndP = fillRectParamsP->dstP + fillRectParamsP->rectWidth;
-    for ( ; fillRectParamsP->dstP < dstRowEndP; ++fillRectParamsP->dstP ) {
-      *fillRectParamsP->dstP = fillRectParamsP->cpA[ *(cmElemP++) ];
+  Color_* dstP = fillRectParamsP->dstP;
+  Color_* dstEndP = fillRectParamsP->dstEndP;
+  Color_* cpA = fillRectParamsP->cpA;
+  size_t INCREMENT = fillRectParamsP->INCREMENT;
+  size_t rectWidth = fillRectParamsP->rectWidth;
+
+  assert( dstEndP > dstP );
+  for ( ; dstP < dstEndP; dstP += INCREMENT ) {
+    const Color_* dstRowEndP = dstP + rectWidth;
+    for ( ; dstP < dstRowEndP; ++dstP ) {
+      assert( ( cmElemP - fillRectParams
+      *dstP = cpA[ *(cmElemP++) ];  
     }
   }
 }
@@ -358,9 +368,15 @@ static void fillRect( U8* cmA, Color_* cpA, const Rect_* rectP, Color_* atlasPix
   Color_* dstP = atlasPixelA + rectP->x + ( rectP->y ) * ATLAS_WIDTH;
   Color_* dstEndP = dstP + ( rectP->h * ATLAS_WIDTH );
   U8* cmElemP = cmA;
+
+  assert( arrayGetNElems( cmA ) == ( rectP->w * rectP->h ) );
+  // assert( ( dstEndP - dstP ) /  == rectP->h );
+  // assert( ( dstEndP - dstP ) / INCREMENT == rectP->h );
+
   for ( ; dstP < dstEndP; dstP += INCREMENT ) {
     const Color_* dstRowEndP = dstP + rectP->w;
     for ( ; dstP < dstRowEndP; ++dstP ) {
+      assert( cmElemP < ( cmA + arrayGetNElems( cmA ) ) );
       *dstP = cpA[ *(cmElemP++) ];
     }
   }
@@ -509,7 +525,7 @@ XPostprocessCompsDef_(Render) {
   }
 
   // TODO remove this when you're ready to try out XAction-based initialization.
-  frayActivateAll(sP->cF);
+  // frayActivateAll(sP->cF);
 
   // Clean up.
   atlasDel(&atlasP);

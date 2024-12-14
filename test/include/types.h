@@ -14,11 +14,11 @@ Copyright (c) 2021 Jason Dsouza <@jasmcaus>
 #ifndef TAU_TYPES_H
 #define TAU_TYPES_H
 
-#include <tau/compilers.h>
+#include <compilers.h>
 
 // Simple assertion checks (that don't require a message to STDOUT).
 // Condition failure raises a compilation error (negative index) --> 0*2 == 0 + (-1) == -1!
-// This macro is intended only for this file (tau/types.h)
+// This macro is intended only for this file (types.h)
 #define TAU_STAT_ASSERT1__(cond, line)      typedef char static_assertion_at_line_##line[(!!(cond))*2-1]
 #define TAU_STATIC_ASSERT(cond)             TAU_STAT_ASSERT1__(cond, __LINE__)
 

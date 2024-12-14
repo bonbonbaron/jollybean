@@ -1,7 +1,4 @@
-#include "tau/tau.h"
-#if 0   // Don't use this for now, we gotta make sure it works first.
-#define USE_HEADLESS_INTERFACE
-#endif
+#include "tau.h"
 #include "xRender.h"
 // Images we're testing xRender with
 #include "blehColormap.h"
@@ -10,6 +7,8 @@
 #include "heckColorPalette.h"
 #include "redColormap.h"
 #include "redColorPalette.h"
+
+#define N_FRAMES 50
 
 Image imgA[] = {
   {
@@ -32,6 +31,8 @@ Image imgA[] = {
   }
 };
 
+void moveEntity( Entity entity, U32 x, U32 y ) {
+}
 
 // We have to make these constants so the compiler doesn't cry about the array initializers not having constant sizes.
 #define N_MUTATIONS_PER_ENTITY (5)
@@ -81,7 +82,8 @@ TEST_F_SETUP(Tau) {
   Map* sharedOffsetMP  = mapNew( RAW_DATA, sizeof(RectOffset), tau->nEntities);
   Map* sharedGuiMP     = mapNew( NONMAP_POINTER, sizeof(Gui*), 1);
 
-  // Set gui pointer in its map... TODO wouldn't it be nice to have SDL or whatever just be owned by the rendering system?
+  // Set gui pointer in its map... 
+  // TODO wouldn't it be nice to have SDL or whatever just be owned by the rendering system?
   mapSet(sharedGuiMP, GUI_KEY_, &tau->xP->guiP);
 
   // Now populate the entities' shared rectangles.
@@ -89,59 +91,71 @@ TEST_F_SETUP(Tau) {
   forEachEntity_( tau->nEntities ) {
     Rect_ currSrcRect = { 0 };  // the post-mutate function will change this value before rendering
     mapSet(sharedSrcRectMP, entity, &currSrcRect);
-
     Rect_ currDstRect = { 0 };  // the post-mutate function will change this value before renderating
     mapSet(sharedDstRectMP, entity, &currDstRect);
-
-  }
-  // If ordering is sacred, then we need fixed functions that'll encapsulate this sacred ordering for us.
-  // Now add the entity to the actual system itself.
-  forEachEntity_( tau->nEntities ) {
-    xAddEntityData(&tau->xP->system, entity, RENDER, NULL);
 
   }
   // Map the inner share map to key value "0" in the outer shared map.
   mapSet(tau->shareMPMP, SRC_RECT, &sharedSrcRectMP);
   mapSet(tau->shareMPMP, DST_RECT, &sharedDstRectMP);
-  mapSet(tau->shareMPMP, RECT_OFFSET, &sharedOffsetMP);
+  //
+  // mapSet(tau->shareMPMP, RECT_OFFSET, &sharedOffsetMP); 
   mapSet(tau->shareMPMP, GUI_KEY_, &sharedGuiMP);
   // Give the shared map to the system. (This particular system wants a pointer to the inner shared map.)
   tau->xP->system.getShare(&tau->xP->system, tau->shareMPMP);
 
-  // Don't run system here. Instead, let each test case decide whether to advance by timestep, frame, or full strip.
+  // Set the stripsets and stripmaps up since xRender relies on that already being done by xMaster.
+  for (int i = 0; i < tau->nEntities; ++i ) {
+    stripIni( imgA[i].cmP->sdP );
+  }
+
+  // If ordering is sacred, then we need fixed functions that'll encapsulate this sacred ordering for us.
+  // Now add the entity to the actual system itself.
+  forEachEntity_( tau->nEntities ) {
+#if 0
+    Image* imgP = &imgA[entity - 1];
+    xAddEntityData(&tau->xP->system, entity, RENDER | IMAGE, &imgP );
+#else
+    xAddEntityData(&tau->xP->system, entity, RENDER | IMAGE, &imgA[ entity - 1 ]);
+#endif
+  }
+
+  tau->sP->postprocessComps( tau->sP );
 }
 
 TEST_F_TEARDOWN(Tau) {
-  guiDel( &tau->xP->guiP );
+  for (int i = 0; i < tau->nEntities; ++i ) {
+    stripClr( imgA[i].cmP->sdP );
+    imgA[i].state = 0;
+  }
   mapOfNestedMapsDel(&tau->shareMPMP );
   xClr( &tau->xP->system );
+  guiDel( &tau->xP->guiP );
 }
 
-TEST_F(Tau, xRenderRun) {
-  for (int i = 0; i < 50; ++i) {
+TEST_F(Tau, xRenderRun_red) {
+  xActivateComponentByEntity( tau->sP, 1 );
+  for (int i = 0; i < N_FRAMES; ++i) {
+    xRun(&tau->xP->system);
+  }
+}
+
+TEST_F(Tau, xRenderRun_bleh) {
+  xActivateComponentByEntity( tau->sP, 2 );
+  for (int i = 0; i < N_FRAMES; ++i) {
+    xRun(&tau->xP->system);
+  }
+}
+
+TEST_F(Tau, xRenderRun_heck) {
+  xActivateComponentByEntity( tau->sP, 3 );
+  for (int i = 0; i < N_FRAMES; ++i) {
     xRun(&tau->xP->system);
   }
 }
 
 TEST_F(Tau, somethingfornow) {
-  // ====================================================
-  // Repeat things done in multithreadingg test for setup
-  // ====================================================
-  Colormap** cmPF = frayNew( sizeof(Colormap*), tau->nEntities);
-  StripDataS **sdPA = arrayNew(sizeof(StripDataS*), tau->nEntities);
-  for (U32 i = 0; i < tau->nEntities; ++i) {
-    frayAdd(cmPF, &imgA[i].cmP, NULL);
-    sdPA[i] = cmPF[i]->sdP;
-    stripIni(sdPA[i]);
+  for (int i = 0; i < N_FRAMES; ++i) {
+    xRun(&tau->xP->system);
   }
-
-  // ====================================================
-  // Clean up
-  // ====================================================
-  for (U32 i = 0; i < tau->nEntities; ++i) {
-    stripClr(sdPA[i]);
-  }
-  arrayDel((void**) &sdPA);
-  frayDel((void**) &cmPF);
-  // arrayDel((void**) &atlasPixelA);  TODO what was this for? Did i accidentally delete something?
 }

@@ -40,6 +40,7 @@ int main(int argc, char **argv) {
   Image** imgPF = frayNew(sizeof(Image*), N_SAMPLES);
   for (U32 i = 0; i < N_SAMPLES; ++i) {
     Image* imgP = &imgA[i];
+    // frayAdd() adds the address of the image pointer.
     frayAdd(imgPF, &imgP, NULL);
   }
 

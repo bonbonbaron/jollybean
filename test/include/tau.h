@@ -13,8 +13,8 @@ Copyright (c) 2021 Jason Dsouza <http://github.com/jasmcaus>
 #ifndef TAU_H_
 #define TAU_H_
 
-#include <tau/types.h>
-#include <tau/misc.h>
+#include <types.h>
+#include <misc.h>
 
 TAU_DISABLE_DEBUG_WARNINGS
 
@@ -1254,7 +1254,7 @@ inline int tau_main(const int argc, const char* const * const argv) {
 /**
     We need to declare these variables here because they're used in multiple translation units (if compiled
     as so).
-    For example, if test1.c(pp) #includes `tau/tau.h` and test2.c(pp) does the same, declaring the variables
+    For example, if test1.c(pp) #includes `tau.h` and test2.c(pp) does the same, declaring the variables
     static will only make them exist in the first translation unit the compiler sees.
     We can get around this by compiling only one file (eg. main.c(pp)) and including the other source files
     using `#include`, but this would be counter-productive.

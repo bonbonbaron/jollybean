@@ -13,7 +13,8 @@ typedef Key Entity;
 
 typedef enum {ACTIVATED, DEACTIVATED} BuiltinMsgArg;
 
-// Pieces are parts of components. For example, Rendering components have colormaps and color palettes.
+// Subcomponents are things used to build components. 
+// For example, Rendering components have colormaps and color palettes, and possibly tilemaps.
 typedef enum { INITIALIZED = 1 } SubcomponentState; 
 #define MASK_COMPONENT_TYPE    (0x3f)
 #define MASK_COMPONENT_SUBTYPE (~MASK_COMPONENT_TYPE & 0xff)
