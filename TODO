@@ -1,14 +1,30 @@
-\cover all of SD
-memory-proof SD
-data-proof SD
-  ... is it possible we never 64bittified _packBits()?
-  bleh test case is crashing after 64-bittifying sd.c
-  looks like math for wordsize is off in printout, i'd look there first.
-  Also try running sd with debug on
-Unit test texture atlas
-  * fix current skewed image bug
-  * need to call fillRect() in assembleTextureAtlas()
-  * make sure you source from the right colormap data in each case
-  * test all variations of SDs
-Unit test xRender
+Finish unit testing xAction
 
+Think of foolproofing actions in 3 steps:
+
+  1. Pushing data to the blackboard
+  2. Grabbing data from the blackboard
+  3. Guarding against raw, unwrapper'd mapGet()s in the whole Gene directory structure with some kind of make job
+
+  1a) Look for where blackboard actually gets populated... Review xMaster i think, BB_GENE i believe
+  1b) table only exists during the #ifndef NDEBUG; it maps keys to stringified types in a macro
+      * But here's the problem: Genes use void pointers too in order to wrap data in system-type checking.
+        That means you're not passing original data into the macros yet.
+        So you're not going to succeed with things as they are in bbSet().
+        The solution, then, has to be further back, in the actual data itself.
+        We might make this easier later with tools.
+        
+  1c) wrap mapSet in a function (bbSet?) that takes different forms between NDEBUG and not NDEBUG using (1b)
+  1d) also make (1c) consume an enum type that 1) is less than 256 (for Key-conversion) & 2) less than BBKEY_MAX
+  1e) make key creation a trivial matter... you shouldn't have to remember which files to edit or where they are
+  
+  2a) Wrap the mapGet in a macro 
+  2b) typecheck the expected return type against the table in (1b) (since it'll be all void pointers) 
+  2c) assert returned value is !NULL
+
+  3) Research Makefile tricks to calling, say, a grep command that mandates no existing mapGets in directory tree.
+
+Bonuses (in the whatever-future)
+  1. Make systems not so FREAKIN painful to build unit tests around
+  2. Do the same with Makefiles... Those shouldn't have so much boilerplate either.
+  3. Make map's element type disappear when #ifdef NDEBUG

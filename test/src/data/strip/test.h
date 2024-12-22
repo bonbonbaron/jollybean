@@ -1,4 +1,4 @@
-#include "tau/tau.h"
+#include "tau.h"
 #include "strip.h"
 #include "sd.h"
 

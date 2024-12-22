@@ -2,7 +2,7 @@ CC=gcc
 
 RPO_DIR := $(shell git rev-parse --show-toplevel)
 LIB_DIR := $(RPO_DIR)/lib
-_INCS   := $(shell find ${RPO_DIR}/src -type d -name 'include')
+_INCS   := $(shell find ${RPO_DIR}/src -type d -name 'include') $(RPO_DIR)/test/include
 INCS    := -I. $(_INCS:%=-I%)
 
 SRCS=$(shell find . -type f -name "*.c")

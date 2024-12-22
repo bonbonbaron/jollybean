@@ -9,7 +9,6 @@ typedef Key Entity;
 // System type flags
 #define FLG_NO_MUTATIONS_   (0x01)
 #define FLG_NO_CF_SRC_A_    (0x02)
-#define FLG_DONT_ADD_COMP   (0x04)
 
 typedef enum {ACTIVATED, DEACTIVATED} BuiltinMsgArg;
 

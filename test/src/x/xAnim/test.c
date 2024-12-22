@@ -1,4 +1,4 @@
-#include "tau/tau.h"
+#include "tau.h"
 #include "xAnim.h"
 
 // We have to make these constants so the compiler doesn't cry about the array initializers not having constant sizes.
@@ -146,7 +146,7 @@ TEST_F_SETUP(Tau) {
   // The postprocess function call hereafter will take care of the mutable velocities and shared rect pointers.
   // Finally, tell the animation system to update all its rects with their offsets.
   forEachEntity_( tau->nEntities ) {
-    mailboxWrite( tau->sP->mailboxF, ANIMATION, entity, UPDATE_RECT, 0 );
+    mailboxWrite( tau->sP->mailboxF, ANIMATION, entity, UPDATE_RECT, 0, NULL );
 
   }
   // Go ahead and run the system to flush out the rectangle-update messages. 
@@ -159,22 +159,22 @@ TEST_F_SETUP(Tau) {
   // *********************************
   // Entity 6 strip 1: repeat + pingpong
 #define ENTITY_WITH_PINGPONG_REPEAT (6)
-  mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_PINGPONG_REPEAT, MUTATE_AND_ACTIVATE, 1);
+  mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_PINGPONG_REPEAT, MUTATE_AND_ACTIVATE, 1, NULL);
 
   // *********************************
   // Entity 1 strip 2: pingpong only
 #define ENTITY_WITH_PINGPONG (1)
-  mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_PINGPONG, MUTATE_AND_ACTIVATE, 2);
+  mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_PINGPONG, MUTATE_AND_ACTIVATE, 2, NULL);
 
   // *********************************
   // Entity 88 strip 3: repeat only
 #define ENTITY_WITH_REPEAT (88)  // TODO change back to 88 after you find and fix bug
-  mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_REPEAT, MUTATE_AND_ACTIVATE, 3);
+  mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_REPEAT, MUTATE_AND_ACTIVATE, 3, NULL);
 
   // *********************************
   // Entity 30 strip 4: neither repeat nor pingpong
 #define ENTITY_WITH_NOTHING (30)
-  mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_NOTHING, MUTATE_AND_ACTIVATE, 4);
+  mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_NOTHING, MUTATE_AND_ACTIVATE, 4, NULL);
 
 
   // Don't run system here. Instead, let each test case decide whether to advance by timestep, frame, or full strip.
@@ -276,7 +276,7 @@ TEST_F(Tau, xAnim_pingPongStrip_incrementOneTimestep) {
 
 TEST_F(Tau, xAnim_pingPongStrip_incrementOneFullFrame) {
   checkAnimComp( tau, ENTITY_WITH_PINGPONG, 0, 0, GOING_FORWARD );
-  mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_PINGPONG, MUTATE_AND_ACTIVATE, 1);
+  mailboxWrite(tau->sP->mailboxF, ANIMATION, ENTITY_WITH_PINGPONG, MUTATE_AND_ACTIVATE, 1, NULL);
   advanceOneFrame( tau );
   checkAnimComp( tau, ENTITY_WITH_PINGPONG, DURATION, 1, GOING_FORWARD );
 }

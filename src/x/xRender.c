@@ -430,7 +430,8 @@ Color_* assembleTextureAtlas(Image** imgPF, Atlas *atlasP) {
 static void _updateSrcRects(XRender *xP, Atlas *atlasP) {
   // Get all the animation rectangles we need to update when building our texture atlas.
   // First count all the rectangles we're going to need.
-  XRenderComp c;
+  // At this point, empty components will already have been added by xAddComp().
+  XRenderComp* cP;
 
   SubcompOwner *scoP = xP->system.subcompOwnerMP->mapA;
   SubcompOwner *scoEndP = scoP + xP->system.subcompOwnerMP->population;
@@ -450,6 +451,7 @@ static void _updateSrcRects(XRender *xP, Atlas *atlasP) {
   for (; scoP < scoEndP; ++scoP) {
     imgP = (Image*) scoP->subcompA[IMG_SUBCOMP_IDX];
     assert(scoP->owner);  
+    cP = xGetCompPByEntity( &xP->system, scoP->owner );
     // Having a colormap is mandatory for xRender components.
     // Source rectangle initialization (set flag first because implicit share maps don't know 
     // which entities they should be mapped to ahead of time... would be nice if I found a way
@@ -457,22 +459,20 @@ static void _updateSrcRects(XRender *xP, Atlas *atlasP) {
     if (!(xP->system.flags & RENDER_SYS_OWNS_SRC_AND_OFFSET)) {
       mapSetFlag(xP->srcRectMP, scoP->owner);
     }
-    c.srcRectP = (Rect_*) mapGet(xP->srcRectMP, scoP->owner);
-    assert (c.srcRectP);
-    c.srcRectP->x = atlasP->btP[imgP->sortedRectIdx].rect.x;
-    c.srcRectP->y = atlasP->btP[imgP->sortedRectIdx].rect.y;
-    c.srcRectP->w = atlasP->btP[imgP->sortedRectIdx].rect.w;
-    c.srcRectP->h = atlasP->btP[imgP->sortedRectIdx].rect.h;
-    // Add component to system
-    xAddComp(&xP->system, scoP->owner, &c);
+    cP->srcRectP = (Rect_*) mapGet(xP->srcRectMP, scoP->owner);
+    assert (cP->srcRectP);
+    cP->srcRectP->x = atlasP->btP[imgP->sortedRectIdx].rect.x;
+    cP->srcRectP->y = atlasP->btP[imgP->sortedRectIdx].rect.y;
+    cP->srcRectP->w = atlasP->btP[imgP->sortedRectIdx].rect.w;
+    cP->srcRectP->h = atlasP->btP[imgP->sortedRectIdx].rect.h;
     // If there's an animation system (which tells master that rect offsets are implied),
     // tell the animation system to update its frame rectangles' XY coordinates to their places
     // in the texture atlas.
     if (xP->offsetRectMP) {
-      rectOffset.x = c.srcRectP->x;
-      rectOffset.y = c.srcRectP->y;
+      rectOffset.x = cP->srcRectP->x;
+      rectOffset.y = cP->srcRectP->y;
       mapSet(xP->offsetRectMP, scoP->owner, &rectOffset);
-      mailboxWrite(xP->system.mailboxF, ANIMATION, scoP->owner, UPDATE_RECT, 0);
+      mailboxWrite(xP->system.mailboxF, ANIMATION, scoP->owner, UPDATE_RECT, 0, NULL);
     }
   }
 }

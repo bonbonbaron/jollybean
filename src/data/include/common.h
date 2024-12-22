@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#if 0
+#define NDEBUG
+#endif
 #include <assert.h>
 
 typedef unsigned char U8;
@@ -14,6 +17,35 @@ typedef unsigned int U32;
 typedef signed int S32;
 typedef U8 Key;
 typedef U8 Bln;   // Boolean
+
+typedef union Generic {
+  U8 u8;
+  S8 s8;
+  U16 u16;
+  S16 s16;
+  U32 u32;
+  S32 s32;  // e.g. hurt target enemy with X amount of damage
+  struct {
+    U8 u8a;   // this'll be good for having *up to* four  byte-sized pieces of generic data
+    U8 u8b;
+    U8 u8c;
+    U8 u8d;
+  } u8quad;
+  struct {
+    S8 s8a;   // this'll be good for having *up to* four  byte-sized pieces of generic data
+    S8 s8b;
+    S8 s8c;
+    S8 s8d;
+  } s8quad;
+  struct {
+    U16 u16a;  // These'll be useful for telling someone to go *to* a location.
+    U16 u16b;  // (and for other generic pairwise data, of course)
+  } u16pair;
+  struct {
+    S16 s16a;  // These'll be useful for telling someone to go *to* a location.
+    S16 s16b;  // (and for other generic pairwise data, of course)
+  } s16pair;
+} Generic;
 
 #define N_BITS_PER_BYTE (8)
 #define N_BITS_PER_WORD (N_BITS_PER_BYTE * sizeof(size_t))

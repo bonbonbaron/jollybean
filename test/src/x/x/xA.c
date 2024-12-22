@@ -90,6 +90,8 @@ XPostprocessCompsDefUnused_(A);
 // xAddEntityData() is called before this, so just call xAddComp() if you need to.
 XPostprocessCompsDef_(A) {
   XA *xP = (XA*) sP;
+  // x.c has already added empty components for us.
+  // So all we have to do is set them.
   Entity *entityP = xP->entityF;
   Entity *entityEndP = entityP + *_frayGetFirstEmptyIdxP(xP->entityF);
   // For each entity...
@@ -110,7 +112,8 @@ XPostprocessCompsDef_(A) {
     };
     // Now the component's populated. Add it to the system.
     //printf("adding component with a = %d and d = %f to entity %d\n", *aP, *dP, *entityP);
-    xAddComp(sP, *entityP, &component);
+    XAComp* compP = (XAComp*) xGetCompPByEntity( sP, *entityP );
+    *compP = component;
   }
 }
 #endif

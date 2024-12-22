@@ -1,4 +1,4 @@
-#include "tau/tau.h"
+#include "tau.h"
 #include "xMotion.h"
 
 
@@ -84,9 +84,9 @@ TEST_F_TEARDOWN(Tau) {
 
 TEST_F(Tau, xMotionRun) {
   // Request system to set entity 5's velocity to the one mapped to arbitrary key, 1.
-  mailboxWrite(tau->sP->mailboxF, MOTION, 5, MUTATE_AND_ACTIVATE, 1);
+  mailboxWrite(tau->sP->mailboxF, MOTION, 5, MUTATE_AND_ACTIVATE, 1, NULL);
   // Request system to set entity 6's velocity to the one mapped to arbitrary key, 2.
-  mailboxWrite(tau->sP->mailboxF, MOTION, 6, MUTATE_AND_ACTIVATE, 2);
+  mailboxWrite(tau->sP->mailboxF, MOTION, 6, MUTATE_AND_ACTIVATE, 2, NULL);
   // Have key mutate and activate those dudes' motion components and then run.
   xRun(tau->sP);
   // Make sure entity 5's velocity is right.

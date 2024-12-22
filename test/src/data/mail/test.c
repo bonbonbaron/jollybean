@@ -1,4 +1,4 @@
-#include "tau/tau.h"
+#include "tau.h"
 #include "mail.h"
 
 
@@ -33,7 +33,7 @@ TEST_F_TEARDOWN(Tau) {
 
 
 TEST_F(Tau, mailboxWrite) {
-  mailboxWrite(tau->mailboxF, 1, 2, 3, 4);
+  mailboxWrite(tau->mailboxF, 1, 2, 3, 4, NULL);
   CHECK_EQ(tau->mailboxF[0].address, 1);
   CHECK_EQ(tau->mailboxF[0].attn, 2);
   CHECK_EQ(tau->mailboxF[0].cmd, 3);
@@ -42,7 +42,7 @@ TEST_F(Tau, mailboxWrite) {
 
 TEST_F(Tau, mailboxWrite_TillFull) {
   for (U32 i = 0; i < frayGetNElems_(tau->mailboxF); ++i) {
-    mailboxWrite(tau->mailboxF, 1, 2, 3, 4);
+    mailboxWrite(tau->mailboxF, 1, 2, 3, 4, NULL);
     U32 lastMsg = *_frayGetFirstEmptyIdxP(tau->mailboxF) - 1;
     CHECK_EQ(tau->mailboxF[lastMsg].address, 1);
     CHECK_EQ(tau->mailboxF[lastMsg].attn, 2);
@@ -52,7 +52,7 @@ TEST_F(Tau, mailboxWrite_TillFull) {
 }
 
 TEST_F(Tau, mailboxForward) {
-  mailboxWrite(tau->mailboxF, 1, 2, 3, 4);
+  mailboxWrite(tau->mailboxF, 1, 2, 3, 4, NULL);
   mailboxForward(tau->fwdMailboxF, &tau->mailboxF[0]);
   CHECK_EQ(tau->mailboxF[0].address, tau->fwdMailboxF[0].address);
   CHECK_EQ(tau->mailboxF[0].attn,    tau->fwdMailboxF[0].attn);

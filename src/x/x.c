@@ -130,6 +130,19 @@ void xAddComp(System *sP, Entity entity, void *compDataP) {
   }
 }
 
+void _xAddEmptyComp(System *sP, Entity entity) {
+  assert (sP &&  entity);
+  // Skip entities who already have a component in this system.
+  if (!mapGet(sP->e2cIdxMP, entity)) {
+    // Put component in first empty slot. (Will be zeros if this is a map. That's okay.)
+    U32 cIdx; 
+    frayAddEmpty(sP->cF, &cIdx);
+    // Add lookups from C -> E and E -> C.
+    mapSet(sP->e2cIdxMP, entity, &cIdx);
+    sP->cIdx2eA[cIdx] = entity;
+  }
+}
+
 inline static void _iniSubcompOwner(System *sP, Entity entity, Key subcompType, void *dataP) {
   // If subcomponent type doesn't fall into subcomponent mask
   assert ((subcompType & MASK_COMPONENT_SUBTYPE) == subcompType);
@@ -160,14 +173,12 @@ void xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP) 
     sP->iniSubcomp(sP, entity, compType & MASK_COMPONENT_SUBTYPE, entityDataP);
     /* Let's take the burden of adding components off our individual systems 
      * (unless they insist otherwise with their flags) so they only have to 
-     * worry about mutations. Some systems will want to do so in postProcess(). */
-    // TODO was this a mistake?
-    //if (!e && ) {
-      //e = xAddComp(sP, entity, NULL);
-    //} 
+     * worry about mutations. */
+    // Entity needs a component even if it's not populated right now.
+    _xAddEmptyComp(sP, entity);
   }
   // Else it's the main component; feed it straight in baby.
-  else if (!(sP->flags & FLG_DONT_ADD_COMP)) {
+  else {
     xAddComp(sP, entity, entityDataP);
   }
 }
@@ -183,6 +194,7 @@ void xIniSys(System *sP, U32 nComps, void *miscP) {
     sP->mutationMPMP = mapNew( MAP_POINTER, sizeof(Map*), nComps);
   }
 	// Only allocate one mailbox; it serves as input and output.
+  // TODO make this smarter than a raw constant
   // Also, give it ample room to handle multiple messages per entity.
 #define MAILBOX_MULTIPLY_NUM_SLOTS (3)
   sP->mailboxF = frayNew(sizeof(Message), nComps * MAILBOX_MULTIPLY_NUM_SLOTS );
@@ -216,8 +228,10 @@ void xMutateComponent(System *sP, Entity entity, Key newCompKey) {
   if (!(sP->flags & FLG_NO_MUTATIONS_)) {
     // Get the nested map of mutations for this particular entity.
     Map *mutationMP = mapGetNestedMapP(sP->mutationMPMP, entity);
+#if 0  /* I don't think we need to guard against map element types. xAction uses Quirk pointers. */
     // Ensure the nested map has raw data-- nothing funky like pointers or (more) inner maps.
     assert(mutationMP->elemType == RAW_DATA);
+#endif
     // Get a pointer to the entity's component.
     void* cP = xGetCompPByEntity(sP, entity);
     if (cP) {

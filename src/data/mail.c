@@ -12,14 +12,20 @@ void mailboxDel(Message **mailboxPP) {
   }
 }
 
-void mailboxWrite(Message *mailboxP, Key address, Key attn, Key cmd, Key arg) {
-  Message message = {
+void mailboxWrite(Message *mailboxP, Key address, Key attn, Key cmd, Key arg, Generic* attachmentP) {
+  Message msg = {
     .address = address,
     .attn = attn,
     .cmd = cmd,
-    .arg = arg 
+    .arg = arg
   };
-  frayAdd((void*) mailboxP, &message, NULL);
+  if (attachmentP) {
+    msg.attachment = *attachmentP;
+  }
+  else {
+    msg.attachment.u32 = 0;
+  }
+  frayAdd((void*) mailboxP, &msg, NULL);
 }
 
 void mailboxForward(Message *mailboxP, Message *msgP) {

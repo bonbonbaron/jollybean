@@ -1,20 +1,22 @@
 JB  = $(shell git rev-parse --show-toplevel)
 SRC = ${JB}/src
-INC = ${SRC}/include
+_INC = $(shell find ${SRC} -type d -name include) $(JB)/test/include
+INC := -I. $(_INC:%=-I%)
 BLD = ${JB}/build
+LIB = ${JB}/lib
 KR  = ${HOME}/jb/src/Keyring
 
-./o: ./test.o ${BLD}/data.o ${BLD}/x.o ${BLD}/xAction.o
-	${CC} ./test.o $(shell sdl2-config --libs) ${BLD}/xAction.o ${BLD}/x.o ${BLD}/data.o -o $@ 
+srcs_and_incs := $(shell find ${JB} -type f -name *.[ch])
+
+./o: ./test.o $(LIB)/libjb.a
+	${CC} -g --coverage ./test.o $(shell sdl2-config --libs) -L$(LIB) -ljb  -o $@ 
 	touch $@
 
-./%.o: %.c 
-	${CC} -g -I${INC} -I${KR} -c $*.c $(shell sdl2-config --cflags) -o $@
-	touch $@
+./test.o: ./test.c ./test.h
+	${CC} -g --coverage $(INC) -c ./test.c
 
-${BLD}/%.o: ${SRC}/%.c ${INC}/%.h
-	make -C ${JB}
-	touch $@
+$(LIB)/libjb.a: $(srcs_and_incs)
+	make -C $(JB)
 
 .PHONY: clean
 clean:

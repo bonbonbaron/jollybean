@@ -1,4 +1,4 @@
-#include "tau/tau.h"
+#include "tau.h"
 #include "xA.h"
 
 /* STRUCTURE OF AN XA COMPONENT:
@@ -153,8 +153,8 @@ TEST_F(Tau, xGetEntityByCompIdx) {
 
 TEST_F(Tau, xActivateComponentByEntity) {
   // Write a couple activation messages to the system.
-  mailboxWrite(tau->sP->mailboxF, 1, 10, ACTIVATE, 0);
-  mailboxWrite(tau->sP->mailboxF, 1, 50, ACTIVATE, 0);
+  mailboxWrite(tau->sP->mailboxF, 1, 10, ACTIVATE, 0, NULL);
+  mailboxWrite(tau->sP->mailboxF, 1, 50, ACTIVATE, 0, NULL);
 
   // Run the system so it reads its inbox letters from the above.
   xRun(tau->sP);
@@ -175,8 +175,8 @@ TEST_F(Tau, xActivateComponentByEntity) {
 
 TEST_F( Tau, mutateAndActivate) {
   // Write a couple activation messages to the system.
-  mailboxWrite(tau->sP->mailboxF, 1, 10, MUTATE_AND_ACTIVATE, 1);
-  mailboxWrite(tau->sP->mailboxF, 1, 50, MUTATE_AND_ACTIVATE, 1);
+  mailboxWrite(tau->sP->mailboxF, 1, 10, MUTATE_AND_ACTIVATE, 1, NULL);
+  mailboxWrite(tau->sP->mailboxF, 1, 50, MUTATE_AND_ACTIVATE, 1, NULL);
 
   // Run the system so it reads its inbox letters from the above.
   xRun(tau->sP);
@@ -190,8 +190,8 @@ TEST_F( Tau, mutateAndActivate) {
 
 TEST_F( Tau, mutateAndDeactivate) {
   // Write a couple activation messages to the system.
-  mailboxWrite(tau->sP->mailboxF, 1, 10, MUTATE_AND_DEACTIVATE, 1);
-  mailboxWrite(tau->sP->mailboxF, 1, 50, MUTATE_AND_DEACTIVATE, 1);
+  mailboxWrite(tau->sP->mailboxF, 1, 10, MUTATE_AND_DEACTIVATE, 1, NULL);
+  mailboxWrite(tau->sP->mailboxF, 1, 50, MUTATE_AND_DEACTIVATE, 1, NULL);
 
   // Run the system so it reads its inbox letters from the above.
   xRun(tau->sP);
@@ -214,9 +214,9 @@ TEST_F(Tau, xDeactivateComponentByEntity) {
   // make sure first elem ain't active
   CHECK_FALSE(_frayElemIsActive(tau->sP->cF, 0));
   // activate entity 10
-  mailboxWrite(tau->sP->mailboxF, 1, 10, ACTIVATE, 0);
+  mailboxWrite(tau->sP->mailboxF, 1, 10, ACTIVATE, 0, NULL);
   // deactivate entity 10
-  mailboxWrite(tau->sP->mailboxF, 1, 10, DEACTIVATE, 0);
+  mailboxWrite(tau->sP->mailboxF, 1, 10, DEACTIVATE, 0, NULL);
 
   // RUn it.
   xRun(tau->sP);
@@ -236,10 +236,10 @@ TEST_F(Tau, xDeactivateComponentByEntity) {
 TEST_F(Tau, xPauseComponentByEntity) {
   // Activate the first 3 entities
   for (Entity entity = 1; entity <= 3; ++entity) {
-    mailboxWrite(tau->sP->mailboxF, 1, entity, ACTIVATE, 0);
+    mailboxWrite(tau->sP->mailboxF, 1, entity, ACTIVATE, 0, NULL);
   }
   // Pause the middle one
-  mailboxWrite(tau->sP->mailboxF, 1, 2, PAUSE, 0);
+  mailboxWrite(tau->sP->mailboxF, 1, 2, PAUSE, 0, NULL);
   xRun(tau->sP);
   // Make sure the ordering is correct in the entity-to-component array.
   _validateEntityPosition(tau, 1, 0);
@@ -251,10 +251,10 @@ TEST_F(Tau, xUnpauseComponentByEntity) {
   // Repeat the same test as the above so we can unpause the paused element.
   // Activate the first 3 entities
   for (Entity entity = 1; entity <= 3; ++entity) {
-    mailboxWrite(tau->sP->mailboxF, 1, entity, ACTIVATE, 0);
+    mailboxWrite(tau->sP->mailboxF, 1, entity, ACTIVATE, 0, NULL);
   }
   // Pause the middle one
-  mailboxWrite(tau->sP->mailboxF, 1, 2, PAUSE, 0);
+  mailboxWrite(tau->sP->mailboxF, 1, 2, PAUSE, 0, NULL);
   xRun(tau->sP);
   // Make sure the ordering is correct in the entity-to-component array.
   // Entity 1's still in index 0
@@ -262,7 +262,7 @@ TEST_F(Tau, xUnpauseComponentByEntity) {
   _validateEntityPosition(tau, 2, 2);
   _validateEntityPosition(tau, 3, 1);
   // Unpause entity 2
-  mailboxWrite(tau->sP->mailboxF, 1, 2, UNPAUSE, 0);
+  mailboxWrite(tau->sP->mailboxF, 1, 2, UNPAUSE, 0, NULL);
   xRun(tau->sP);
   // Entity 2's still in index 2
   _validateEntityPosition(tau, 2, 2);
@@ -274,7 +274,7 @@ TEST_F(Tau, xGetNComps) {
 
 TEST_F(Tau, xMutateComponent) {
   // Request mutation.
-  mailboxWrite(tau->sP->mailboxF, 1, 5, MUTATE, 7);  // will this work w/ only 5 mutations?
+  mailboxWrite(tau->sP->mailboxF, 1, 5, MUTATE, 7, NULL);  // will this work w/ only 5 mutations?
   XAComp *cP = (XAComp*) xGetCompPByEntity(tau->sP, 5);
   validateUnprocessedUnmutated( 5, cP );
   // Mutate it.
@@ -326,17 +326,17 @@ TEST_F(Tau, ActivateAcrossPause) {
   // First let's set up a 3-activated and 3-paused situation before we run our test.
   // Activate 3.
   for (Entity entity = 1; entity <= 3; ++entity) {
-    mailboxWrite(tau->sP->mailboxF, 1, entity, ACTIVATE, 0);
+    mailboxWrite(tau->sP->mailboxF, 1, entity, ACTIVATE, 0, NULL);
   }
   // Pause 3.
   for (Entity entity = 4; entity <= 6; ++entity) {
-    mailboxWrite(tau->sP->mailboxF, 1, entity, PAUSE, 0);
+    mailboxWrite(tau->sP->mailboxF, 1, entity, PAUSE, 0, NULL);
   }
   // Process requests.
   xRun(tau->sP);
   // Now activate 2 more across the pauses.
   for (Entity entity = 7; entity <= 8; ++entity) {
-    mailboxWrite(tau->sP->mailboxF, 1, entity, ACTIVATE, 0);
+    mailboxWrite(tau->sP->mailboxF, 1, entity, ACTIVATE, 0, NULL);
   }
   // Process requests.
   xRun(tau->sP);
@@ -351,6 +351,6 @@ TEST_F(Tau, ActivateAcrossPause) {
 }
 
 TEST_F(Tau, miscProcesMessage) {
-  mailboxWrite(tau->sP->mailboxF, 1, 1, 20, 0);  // 20 is the command to make our default procMsg() run.
+  mailboxWrite(tau->sP->mailboxF, 1, 1, 20, 0, NULL);  // 20 is the command to make our default procMsg() run.
   xRun(tau->sP);
 }
