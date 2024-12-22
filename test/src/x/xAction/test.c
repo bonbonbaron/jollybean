@@ -94,7 +94,6 @@ int main(int argc, char **argv) {
   for (Entity entity = 1; entity <= N_ENTITIES; ++entity) {
     // Give this entity a component. We'll make the first quirk it.
     xAddEntityData(sActionP, entity, ACTION | PERSONALITY, &personality);
-    // TODO  
     xAddEntityData(sActionP, entity, ACTION | BLACKBOARD, bbMPA[ entity - 1 ]);  // bend some rules
   }
   // Make the mutation maps and put them in the system's map of mutation maps.

@@ -44,6 +44,11 @@ XIniSubcompFuncDef_(Action) {
 
 XClrFuncDef_(Action) {
   XAction *xActionP = (XAction*) sP;
+  XActionComp* cP = sP->cF;
+  XActionComp* cEndP = cP + xGetNComps( sP );
+  for ( ; cP < cEndP; ++cP ) {
+    mapDel( &cP->bbMP );
+  }
   hivemindDel(&xActionP->hivemindMP);
   arrayDel((void**) &xActionP->histoHivemindTriggerA);
   frayDel((void**) &xActionP->entityPersonalityPairF );
