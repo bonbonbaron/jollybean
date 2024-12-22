@@ -33,6 +33,7 @@ XClrFuncDef_(Master) {
   return SUCCESS;
 }
 
+// delete after gene tool makes this obsolete
 // Number of entities to spawn (both total and per spawn struct)
 static void _countEntitiesToSpawn(Biome *biomeP) {
   PositionNode *posNodeP, *posNodeEndP;
@@ -55,6 +56,7 @@ static void _countEntitiesToSpawn(Biome *biomeP) {
   }
 }
 
+// delete after gene tool makes this obsolete
 /*************************/
 /*****  HISTOGRAMS  ******/
 /*************************/
@@ -76,6 +78,7 @@ static void _countEntitiesToSpawn(Biome *biomeP) {
 // All gene histo-incrementing functions are inlined. 
 // Their purpose is to enforce their corresponding enums.
 
+// delete after gene tool makes this obsolete
 typedef enum {DONT_INCREMENT_NUM_OF_ENTITIES, DO_INCREMENT_NUM_OF_ENTITIES} IncrementEntity;
 inline static IncrementEntity _incrementXHistoElem(XHistoElem *xheP, Gene *geneP, Key incrementBy) {
   // This combines a subtype needing to be 0x40 or being a full-component gene into one comparison.
@@ -97,6 +100,7 @@ inline static IncrementEntity _incrementXHistoElem(XHistoElem *xheP, Gene *geneP
   return DONT_INCREMENT_NUM_OF_ENTITIES;
 }
 
+// delete after gene tool makes this obsolete
 static Error _histoGene(
     Gene **genePP, 
     const Biome *biomeP, 
@@ -154,6 +158,7 @@ static Error _histoGene(
   return e;
 }
 
+// delete after gene tool makes this obsolete
 static Error _histoGenes(GeneHisto *geneHistoP, const Biome *biomeP, const U32 nSystemsMax) {
   Error e = SUCCESS;
   if (!geneHistoP || !geneHistoP->nExclusivesA || !biomeP) {
@@ -230,7 +235,7 @@ static Error _addSharedSubmap(Map *outerShareMP, MapElemType mapElemClass, Share
 }
 
 Error _makeSharedGeneMap(Map **sharedGenesMPP, GeneHisto *geneHistoP) {
-  // Create all the inner maps according to the histo'd number of elements they hold.
+  // Create all the inner shared maps according to the histo'd number of elements they hold.
   // Add RENDERER_GENE_TYPE (= 2) to total number for window and renderer shares.
   Error e = mapNew(sharedGenesMPP, MAP_POINTER, sizeof(Map*), geneHistoP->nSharedGeneMaps + GUI_GENE_TYPE);  
   if (!e) {
@@ -284,7 +289,7 @@ void xMasterDelShareMap(Map **sharedMPMPP) {
   }
 }
 
-
+// delete after gene tool makes this obsolete
 static Error _geneHistoIni(GeneHisto *geneHistoP, Entity nEntities, Entity nSystemsMax) {
   geneHistoP->nDistinctMedia   = 0;
   geneHistoP->nSharedGeneMaps = 0;
@@ -298,6 +303,7 @@ static Error _geneHistoIni(GeneHisto *geneHistoP, Entity nEntities, Entity nSyst
   return e;
 }
 
+// delete after gene tool makes this obsolete
 static void _geneHistoClr(GeneHisto *geneHistoP) {
   if (geneHistoP) {
     geneHistoP->nDistinctMedia   = 0;
@@ -335,6 +341,7 @@ static Error _addSpecialSharedGene(Map *sharedGeneMPMP, void *geneP, Key geneTyp
   return e;
 }
 
+// delete after gene tool makes this obsolete; rects ought to be handled by implicit gene logic.
 // This is for adding dest rect. Maybe other stuff in the future too.
 static Error _spawnEntities(Map *sharedGeneMPMP, Biome *biomeP) {
   if (!sharedGeneMPMP || !biomeP || !biomeP->nEntitiesToSpawn || !biomeP->nSpawns || !biomeP->spawnA) {
@@ -594,7 +601,7 @@ static Error _distributeGenes(XMaster *xP, Key nSystemsMax) {
     e = _makeMutationMapArrays(xP->biomeP, &geneHisto, nSystemsMax);
   }
   if (!e) {
-    e = frayNew((void**) &sdPF, sizeof(StripDataS*), geneHisto.nDistinctMedia);
+    e = frayNew((void**) &sdPF, sizeof(StripDataS*), geneHisto.nDistinctMedia);  // << move to gene.c
   }
 
   // Distribute genes to all spawned entties.
@@ -617,7 +624,7 @@ static Error _distributeGenes(XMaster *xP, Key nSystemsMax) {
 
   // Inflate all media-type genes. All components using them will see it from inside their systems.
   if (!e) {
-    e = _biomeMediaInflate(sdPF);
+    e = _biomeMediaInflate(sdPF);  // << move to gene.c
   }
   // Shared genes can't be distributed till components using them exist.
   // Some systems like xRender need to wait till post-processing to make their components.

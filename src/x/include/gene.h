@@ -1,23 +1,8 @@
-#ifndef XMAIN_
-#define XMAIN_
-#define MASTER_ (1)
-#include "x.h"
-#include "strip.h"
-#include "interface.h"
-#include "fray.h"
+#ifndef GENE_
+#define GENE_
 
 #define geneName_(name_) name_##Gene
-#define genomeName_(name_) name_##Genome
 #define compositeName_(name_) name_##Composite
-
-#define Genome_(name_, ...) \
-  Gene* name_##GenomeGenePA[] = {\
-    __VA_ARGS__\
-  };\
-  Genome genomeName_(name_) = {\
-    .nGenes = nArgs_(Gene*, __VA_ARGS__),\
-    .genePA = name_##GenomeGenePA\
-  };
 
 #define UnitaryGene_(name_, geneClass_, geneType_, key_, dataType_)\
   Gene geneName_(name_) = {\
@@ -44,11 +29,6 @@
     }\
   };
 
-// Media genes are inflated, unpacked, and assembled into original data.
-typedef enum {SCENE_START, SCENE_CHANGE, SCENE_STOP} SceneAction;
-
-typedef U32 MediaGeneHistoElem;
-
 typedef struct {
   U32 *nMutationsPerSpawnAA;  // X dimension: entity #s. Y dimension: system #s.
   // TODO finish designing so we know what to do about  mutable and immutable exclusives.
@@ -59,19 +39,22 @@ typedef struct {
   U32  nDistinctMedia;        // determines # of strip data to inflate/unpack/assemble
 } GeneHisto;
 
-/**************************/
-/******** GENOME  *********/
-/**************************/
+/************************/
+/******** GENE  *********/
+/************************/
+
+typedef enum {EXCLUSIVE_GENE, MEDIA_GENE, SHARED_GENE, COMPOSITE_GENE, IMPLICIT_GENE} GeneClass;
+
 struct _Gene;
 
 typedef struct {
   U8 nGenes;
   U8 type;
-	struct _Gene **genePA;   // pointers prevent multiple entities with same genes from reinitializing them
+  struct _Gene **genePA;   // pointers prevent multiple entities with same genes from reinitializing them
 } Composite;
 
 typedef struct _Gene {
-	U8 geneClass;    // exclusive, shared, blackboard, media, or composite gene
+	GeneClass class;
   union {
     struct {
       U8 type;         // lower 6 bits hold system this belongs to, upper 2 is component subtype
@@ -81,12 +64,17 @@ typedef struct _Gene {
       void *dataP;     // the location of the gene's actual data
     } unitary;
     Composite composite;
+    struct {
+      Composite composite;
+      Key nGeneTypes;
+      Key* geneTypeHistoA;  // has a histo of the entire genome so we don't have to calculate it at runtime
+    } root;  // Only use root for a scene's top level.
   } u;
 } Gene;
 
 /* Implicit genes are shared genes that start out empty, which would be a 
-   waste to store in ROM (not to mention annoying to have to remember).
-   Better to automate them. */
+   waste to store in ROM (not to mention annoying to have to remember to store).
+   Better to create them on startup. */
 typedef struct {
   U8 type;
   U8 size;
@@ -97,28 +85,4 @@ typedef struct {
   ImplicitGene *listA;
 } ImplicitGenesList;
 
-#if 0 // i don't like having any levels above Genes. Let's purify it on this revamp.
-/************************/
-/******** BIOME *********/
-/************************/
-typedef struct {
-  Key keyhole;
-  Position position;
-} PositionNode;
-
-typedef struct {
-  U8 nEntitiesPossible;  // total number of positions in position node array
-  U8 nEntitiesToSpawn;  // number of position nodes whose keyholes the *keyP fits
-  Genome *genomeP;
-  Key *keyP;   // if an entity can spawn in one of multiple places, this determines which one.
-  Map **geneMutationMPA;  // array of pointers to maps of gene mutations; ptrs are distro'd to entities
-  PositionNode *positionNodeA;  // all possible places these seeds can spawn
-} Spawn;
-
-typedef struct {
-  Key nEntitiesToSpawn;  // number of individual entities to spawn
-  Key nSpawns;  // number of spawns (a spawn can hold one or more entities, each with a uniqe position)
-  Spawn *spawnA;
-} Biome;
-#endif
 #endif

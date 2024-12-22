@@ -26,7 +26,8 @@ if [ $# -gt 0 ]; then
     image|img) imgExe ${*:2};;
     gene) echo "what the del";;
     build) buildExe ${*:2};;
-    ini) mkdir -p ${TROVE}/src/Body/{Palette/{Color,Collision},Graybody/{Animation,Collision,Colormap}};;
+    ini) mkdir -p ${TROVE}/src/Body/{Palette/{Color,Collision},Graybody/{Animation,Collision,Colormap}}
+         mkdir -p ${TROVE}/src/Body/{Palette/{Color,Collision},Graybody/{Animation,Collision,Colormap}}
     *) echo "jb: Command $mainArg not recognized.";;
   esac
 fi

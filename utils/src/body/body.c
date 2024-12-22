@@ -24,7 +24,5 @@ int main(int argc, char ** argv) {
     coll(argv[i], 0, animP, verbose);
 skipColl:
     jbFree((void**) &animP);
-    // Genome TODO
-    // Seed TODO
   }
 }

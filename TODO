@@ -1,25 +1,33 @@
-Finish unit testing xAction
-
 Think of foolproofing actions in 3 steps:
 
+  0. Gene's void* type-safety
   1. Pushing data to the blackboard
   2. Grabbing data from the blackboard
   3. Guarding against raw, unwrapper'd mapGet()s in the whole Gene directory structure with some kind of make job
 
-  1a) Look for where blackboard actually gets populated... Review xMaster i think, BB_GENE i believe
-  1b) table only exists during the #ifndef NDEBUG; it maps keys to stringified types in a macro
-      * But here's the problem: Genes use void pointers too in order to wrap data in system-type checking.
-        That means you're not passing original data into the macros yet.
-        So you're not going to succeed with things as they are in bbSet().
-        The solution, then, has to be further back, in the actual data itself.
-        We might make this easier later with tools.
-        
-  1c) wrap mapSet in a function (bbSet?) that takes different forms between NDEBUG and not NDEBUG using (1b)
-  1d) also make (1c) consume an enum type that 1) is less than 256 (for Key-conversion) & 2) less than BBKEY_MAX
-  1e) make key creation a trivial matter... you shouldn't have to remember which files to edit or where they are
+  ---------
+  - Genes -
+  ---------
+  0a) Give Gene a string typename #ifndef NDEBUG.
+  0b) Make a tool that writes Gene files that does the following (TODO):
+  0c) When master reads genes, 
+
+  --------------
+  --- bbSet() -- 
+  --------------
+  1a) Make table mapping keys to typenames #ifndef NDEBUG.
+  1b) Write bbSet, a wrapper for mapSet, which does the following:
+        * Gets a string from (1a) with the key
+        * use a macro to convert expected return type to a string with # prefix
+        * assert( !strcmp( the above two things ) );
+  1c) also make (1b) consume an enum type that 1) is less than 256 (for Key-conversion) & 2) less than BBKEY_MAX
+  1d) make key creation a trivial matter... you shouldn't have to remember which files to edit or where they are
   
+  -------------
+  -- bbGet() --
+  -------------
   2a) Wrap the mapGet in a macro 
-  2b) typecheck the expected return type against the table in (1b) (since it'll be all void pointers) 
+  2b) typecheck the expected return type against (1a) (since it'll be all void pointers) 
   2c) assert returned value is !NULL
 
   3) Research Makefile tricks to calling, say, a grep command that mandates no existing mapGets in directory tree.
@@ -28,3 +36,4 @@ Bonuses (in the whatever-future)
   1. Make systems not so FREAKIN painful to build unit tests around
   2. Do the same with Makefiles... Those shouldn't have so much boilerplate either.
   3. Make map's element type disappear when #ifdef NDEBUG
+  4. Fix the broken unit tests from the colormap/palette jb trove reorg

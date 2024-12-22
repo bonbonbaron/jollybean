@@ -274,7 +274,7 @@ FrameNode* getFrameNode(FrameNode *rootP, U32 idx) {
 }
 
 void writeAnimJsonData(char *entityName, AnimJsonData *animP, U8 verbose) {
-  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Animation/src", entityName, "Anim.c", verbose); 
+  FILE *fP = getBuildFile("Gene/Body/Animation/src", entityName, "Anim.c", verbose); 
   assert(fP);
   Key nKeyValPairs = 0;
   fprintf(fP, "#include \"xAnim.h\"\n");
@@ -314,7 +314,7 @@ void writeAnimJsonData(char *entityName, AnimJsonData *animP, U8 verbose) {
 }
 
 void writeAnimHeader(char *entityName, AnimJsonData *animP, U8 verbose) {
-  FILE *fP = getBuildFile("Seed/Genome/Gene/Body/Animation/include", entityName, "Anim.h", verbose); 
+  FILE *fP = getBuildFile("Gene/Body/Animation/include", entityName, "Anim.h", verbose); 
   assert(fP);
   fprintf(fP, "#include \"xAnim.h\"\n");
   for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
