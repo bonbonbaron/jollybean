@@ -41,6 +41,7 @@ typedef struct {
 	FlagInfo flagA[N_FLAG_BYTES];  // "A" means "Array" for JB's naming standards 
   MapElemType elemType;  // is element a pointer? Double pointer? Raw data?
   Key    population;
+  U8     nestedRef;      // Number of times this is nested in an outer map
 	void  *mapA;  
 } Map;
 

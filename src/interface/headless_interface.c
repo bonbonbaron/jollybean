@@ -106,7 +106,7 @@ void copy ( Renderer* rendererP, Texture_* srcTextureP, Rect_* srcRectP, Rect_* 
     srcStartY = fabs( dstRectP->y );
   }
   // Clamp the end of the rectangles.
-  U32 srcEndX = ( ( srcRectP->x + srcRectP->w ) >= srcTextureP->w ) ? srcRectP->w : srcRectP->x;
+  // U32 srcEndX = ( ( srcRectP->x + srcRectP->w ) >= srcTextureP->w ) ? srcRectP->w : srcRectP->x;  // UNUSED
   U32 srcEndY = ( ( srcRectP->y + srcRectP->h ) >= srcTextureP->h ) ? srcRectP->h : srcRectP->y;
   U32 dstEndX = ( ( dstRectP->x + dstRectP->w ) >= rendererP->dstTextureP->w ) ? rendererP->dstTextureP->w : dstRectP->x;
   U32 dstEndY = ( ( dstRectP->y + dstRectP->h ) >= rendererP->dstTextureP->h ) ? rendererP->dstTextureP->h : dstRectP->y;

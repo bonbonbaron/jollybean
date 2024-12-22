@@ -80,6 +80,7 @@ TEST_F_SETUP(Tau) {
 
 TEST_F_TEARDOWN(Tau) {
   xClr(&tau->xP->system);
+  mapOfNestedMapsDel( &tau->shareMPMP );
 }
 
 TEST_F(Tau, xMotionRun) {

@@ -79,7 +79,7 @@ TEST_F_SETUP(Tau) {
   // Make the share inner map. This maps entities to actual, raw data.
   Map* sharedSrcRectMP = mapNew( RAW_DATA, sizeof(Rect_), tau->nEntities);
   Map* sharedDstRectMP = mapNew( RAW_DATA, sizeof(Rect_), tau->nEntities);
-  Map* sharedOffsetMP  = mapNew( RAW_DATA, sizeof(RectOffset), tau->nEntities);
+  // Map* sharedOffsetMP  = mapNew( RAW_DATA, sizeof(RectOffset), tau->nEntities);
   Map* sharedGuiMP     = mapNew( NONMAP_POINTER, sizeof(Gui*), 1);
 
   // Set gui pointer in its map... 

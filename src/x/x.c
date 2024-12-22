@@ -102,12 +102,11 @@ U32 xGetNComps(System *sP) {
 // Insert inner mutation map (maps trigger to mutation) into outer mutation map (maps Entity to Map*)
 void xAddMutationMap(System *sP, Entity entity, Map *mutationMP) {
   assert(entity &&  sP);  // null mutation map is okay
+  assert (mutationMP && sP->mutationMPMP);
+  assert(arrayGetElemSz(mutationMP->mapA) == sP->mutationSz);
   // If the component is immutable, that's fine, don't worry about it. 
   // If the user intended to mutate the gene, ensure we have both pieces of data.
-  if (mutationMP && sP->mutationMPMP) {
-    assert(arrayGetElemSz(mutationMP->mapA) == sP->mutationSz);
-    return mapSet(sP->mutationMPMP, entity, &mutationMP);
-  }
+  mapSet(sP->mutationMPMP, entity, &mutationMP);
   // Otherwise just return successfully, assuming they never intended to mutate this entity's component in the first place.
 }
 
@@ -205,20 +204,22 @@ void xIniSys(System *sP, U32 nComps, void *miscP) {
 
 // Don't erase everything in a system. Some things should be permanent.
 void xClr(System *sP) {
-  if (sP) {
-    sP->clr(sP);  // This MUST run first as it may rely on things we're about to erase
-    frayDel((void**) &sP->cF);
-    frayDel((void**) &sP->mailboxF);
-    frayDel((void**) &sP->deactivateQueueF);
-    frayDel((void**) &sP->pauseQueueF);
-    mapDel(&sP->subcompOwnerMP);
-    mapDel(&sP->e2cIdxMP);
-    // Don't delete inner maps as there may be multiple copies pointing at the same thing.
-    // You're required to have deleted or acquired a pointer to the mutation map's inner maps by this point.
-    //mapOfNestedMapsDel(&sP->mutationMPMP);  <-- don't do this.  
-    mapDel(&sP->mutationMPMP);
-    arrayDel((void**) &sP->cIdx2eA);
-  }
+  assert(sP);
+  sP->clr(sP);  // This MUST run first as it may rely on things we're about to erase
+  frayDel((void**) &sP->cF);
+  frayDel((void**) &sP->mailboxF);
+  frayDel((void**) &sP->deactivateQueueF);
+  frayDel((void**) &sP->pauseQueueF);
+  mapDel(&sP->subcompOwnerMP);
+  mapDel(&sP->e2cIdxMP);
+  // Don't delete inner maps as there may be multiple copies pointing at the same thing.
+  // You're required to have deleted or acquired pointers to its inner maps by this point.
+#if 1
+  mapOfNestedMapsDel(&sP->mutationMPMP);  // <-- don't do this. ( See if you can now with refs. )
+#else
+  mapDel(&sP->mutationMPMP);
+#endif
+  arrayDel((void**) &sP->cIdx2eA);
 }
 
 void xMutateComponent(System *sP, Entity entity, Key newCompKey) {
@@ -313,6 +314,11 @@ Entity xGetEntityByVoidComponentPtr(System *sP, void *componentP) {
   return xGetEntityByCompIdx(sP, compIdx);
 }
 
+Bln xIsEntityActive( System  *sP, Entity entity ) {
+  Key* idxP = _getCompIdxPByEntity(sP, entity);
+  assert( idxP );
+  return _frayElemIsActive( sP->cF, *idxP );
+}
 
 void xQueuePause(System *sP, void *componentP) {
   Entity entity = xGetEntityByVoidComponentPtr(sP, componentP);

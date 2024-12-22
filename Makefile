@@ -41,13 +41,13 @@ $(TGT): $(OBJS)
 
 $(BLD_DIR)/interface/%.o: ${SRC_DIR}/interface/%.c %{SRC_DIR}/interface/include/%.h
 $(BLD_DIR)/interface/%.o: ${SRC_DIR}/interface/%.c $(DEP_DIR)/interface/%.d | ${BLD_SEN} ${DEP_SEN}
-	$(CC) --coverage -g $(SDLFLGS) $(DEPFLGS) $(DEP_DIR)/interface/$*.d $(INCS) -c $< -o $@
+	$(CC) -Wall --coverage -g $(SDLFLGS) $(DEPFLGS) $(DEP_DIR)/interface/$*.d $(INCS) -c $< -o $@
 
 $(BLD_DIR)/x/%.o: ${SRC_DIR}/x/%.c ${SRC_DIR}/x/include/%.h $(DEP_DIR)/x/%.d | ${BLD_SEN} ${DEP_SEN}
-	$(CC) --coverage -g $(SDLFLGS) $(DEPFLGS) $(DEP_DIR)/x/$*.d $(INCS) -c $< -o $@
+	$(CC) -Wall --coverage -g $(SDLFLGS) $(DEPFLGS) $(DEP_DIR)/x/$*.d $(INCS) -c $< -o $@
 
 $(BLD_DIR)/data/%.o: ${SRC_DIR}/data/%.c ${SRC_DIR}/data/include/%.h $(DEP_DIR)/data/%.d | ${BLD_SEN} ${DEP_SEN}
-	$(CC) --coverage -g $(DEPFLGS) $(DEP_DIR)/data/$*.d $(INCS) -c $< -o $@
+	$(CC) -Wall --coverage -g $(DEPFLGS) $(DEP_DIR)/data/$*.d $(INCS) -c $< -o $@
 
 # Mention each dependency as a target so Make doesn't fail above if it doesn't exist.
 $(DEPS):

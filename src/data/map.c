@@ -6,6 +6,7 @@ Map* mapNew( MapElemType elemType, const U8 elemSz, const Key nElems) {
   memset(mapP->flagA, 0, sizeof(FlagInfo) * N_FLAG_BYTES);
 	mapP->mapA = arrayNew(elemSz, nElems);
   mapP->population = 0;
+  mapP->nestedRef = 0;  // number of times this is nested in an outer map
   mapP->elemType = elemType;
   return mapP;
 }
@@ -15,7 +16,7 @@ void mapDel(Map **mapPP) {
     if ((*mapPP)->mapA != NULL) {
       arrayDel(&(*mapPP)->mapA);
     }
-		jbFree((void**) mapPP);
+    jbFree((void**) mapPP);
 	}
 }
 
@@ -135,6 +136,13 @@ void mapSet(Map *mapP, const Key key, const void *valP) {
   if (nBytesToMove) {
     memmove(nextElemP, (const void*) elemP, nBytesToMove);
   }
+  if ( mapP->elemType == MAP_POINTER ) {
+    // increment the reference so you can track how many places this pointer exists.
+    // That way we can easily and safely free it at the right time.
+    // It's appropriate to do so here if the mutation map is designated as
+    // MAP_POINTER type.
+    ++(*((Map**) valP ))->nestedRef;
+  }
   /* Write value to map element. */
   memcpy(elemP, valP, _getMapElemSz(mapP));
   /* Set flag. */
@@ -219,7 +227,7 @@ void mapOfNestedMapsClr(Map **outerMapPP) {
     Map **mapPP = (Map**) (*outerMapPP)->mapA;
     Map **mapEndPP = mapPP + (*outerMapPP)->population;
     for (; mapPP < mapEndPP; ++mapPP) {
-      if (*mapPP) {
+      if ( *mapPP && --(*mapPP)->nestedRef == 0 ) {
         mapDel(mapPP);
       }
     }

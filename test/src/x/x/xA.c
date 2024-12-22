@@ -185,4 +185,4 @@ XClrFuncDef_(A) {
 // System definition
 //======================================================
 #define FLAGS_HERE (0)
-X_(A, 1, b, FLG_DONT_ADD_COMP);
+X_(A, 1, b, 0);

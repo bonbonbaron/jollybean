@@ -42,8 +42,6 @@ XProcMsgFuncDefUnused_(Motion);
 void xMotionRun(System *sP) {
   assert(sP);
 
-  XMotion *xP = (XMotion*) sP;
-
 	XMotionComp *cP = (XMotionComp*) sP->cF;
 	XMotionComp *cEndP = cP + _frayGetFirstPausedIdx(sP->cF);
 

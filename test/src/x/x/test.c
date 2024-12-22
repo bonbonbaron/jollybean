@@ -22,7 +22,7 @@ typedef struct Tau {
   XA *xP;
   Map *bMP;  // map of "b" mutations
   Map *cMP;  // map of "c" mutations
-  Map *shareMPMP;
+  Map *sharedMPMP;
   System *sP;
 } Tau;
 
@@ -55,7 +55,7 @@ TEST_F_SETUP(Tau) {
   double dA[N_ENTITIES] = {0};
 
   // Make the shared outer map. This maps datatypes to inner maps. We'll only store one map in there.
-  tau->shareMPMP = mapNew(MAP_POINTER, sizeof(Map*), tau->nEntities);
+  tau->sharedMPMP = mapNew(MAP_POINTER, sizeof(Map*), tau->nEntities);
 
   // Populate all the entities' subcomponents.
   for (Entity entity = 1; entity <= tau->nEntities; ++entity) {
@@ -79,11 +79,11 @@ TEST_F_SETUP(Tau) {
     // ************ SHARES **************
     // TODO make a share map for *intP here.
     // Make the shared inner map. This maps entities to actual, raw data.
-    Map* shareMP = mapNew(RAW_DATA, sizeof(Map*), tau->nMutationsPerEntity);
+    Map* sharedMP = mapNew(RAW_DATA, sizeof(Map*), tau->nMutationsPerEntity);
     // Map the inner share map to key value "1" in the outer shared map.
-    mapSet(tau->shareMPMP, entity, &shareMP);
+    mapSet(tau->sharedMPMP, entity, &sharedMP);
     // Give the shared map to the system. (This particular system wants a pointer to the inner shared map.)
-    tau->xP->system.getShare(&tau->xP->system, tau->shareMPMP);
+    tau->xP->system.getShare(&tau->xP->system, tau->sharedMPMP);
 
     // Make arrays of the immutable subcomponents. 
     // The subcomponent intializers consume only pointers to the original data,
@@ -99,7 +99,7 @@ TEST_F_SETUP(Tau) {
 }
 
 TEST_F_TEARDOWN(Tau) {
-  mapOfNestedMapsDel(&tau->shareMPMP);
+  mapOfNestedMapsDel(&tau->sharedMPMP);
   xClr(&tau->xP->system);
 }
 

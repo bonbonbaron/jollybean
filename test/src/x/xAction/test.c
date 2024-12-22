@@ -106,9 +106,7 @@ int main(int argc, char **argv) {
           (void*) &personality.quirkPA[quirkIdx]);
     }
     // Put mutation map into system's map of mutation maps.
-    if (innerMP) {
-      xAddMutationMap(sActionP, entity, innerMP);
-    }
+    xAddMutationMap(sActionP, entity, innerMP);
   }
 
   sActionP->postprocessComps( sActionP );
@@ -117,6 +115,7 @@ int main(int argc, char **argv) {
   xRun(sActionP); // Run once for entity 1 to hit entity 0.
   xRun(sActionP); // Run again for entity 2 to experience the pain. lol
   mailboxWrite( sActionP->mailboxF, ACTION, 1, HIT, 2, NULL );
+  mailboxWrite( sActionP->mailboxF, ACTION, 1, DANCE, 0, NULL );
   xRun(sActionP); // Run once more for 1 to deliver final blow to 2.
   xRun(sActionP); // Run one last time for 2 to die.
 

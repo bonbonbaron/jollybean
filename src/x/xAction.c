@@ -113,7 +113,7 @@ void hivemindDel(Map **hivemindMPP) {
     Map *hivemindMP = *hivemindMPP;
     if (hivemindMP && hivemindMP->mapA) {
       Entity **entityAP = hivemindMP->mapA;
-      Entity **entityEndAP = hivemindMP->mapA + hivemindMP->population;
+      Entity **entityEndAP = entityAP + hivemindMP->population;
       for (; entityAP < entityEndAP; entityAP++) {
         arrayDel((void**) entityAP);
       }
@@ -123,7 +123,7 @@ void hivemindDel(Map **hivemindMPP) {
 }
 
 inline static U8 _isHigherPriority(U8 newPriority, U8 existingPriority) {
-  return newPriority > existingPriority;
+  return newPriority < existingPriority;  // lower numbers are higher priority lol
 }
 
 static void _triggerIndividual(XAction *xActionSysP, Message *msgP) {
@@ -132,20 +132,19 @@ static void _triggerIndividual(XAction *xActionSysP, Message *msgP) {
   // Get entity's Action system component.
   XActionComp* cP = (XActionComp*) xGetCompPByEntity( sP, msgP->attn );
   assert (cP);
-  // Set the target of this entity's action, if any.
-  cP->tgtEntity = msgP->arg;
-  // Set the quantity for the action, if applicable.
-  cP->amount = msgP->attachment;  // better use S32 for actions
   // Get the personality, one per entity.
   Map **activityMPMP = (Map**) mapGet(sP->mutationMPMP, msgP->attn);
-  assert (activityMPMP && (*activityMPMP));
   // Get the tree that *would* be triggered if the entity is inactive or doing something less important. 
-  XActionComp *cNewP = (XActionComp*) mapGet(*activityMPMP, msgP->cmd);
-  assert( cNewP );
-    // Queue new action if it's higher priority than old or entity's inactive.
-  if (!_frayElemIsActive(sP->cF, msgP->attn) || 
-      _isHigherPriority(cNewP->quirkP->priority, cP->quirkP->priority)) {
+  Quirk** requestedQuirkPP = (Quirk**) mapGet(*activityMPMP, msgP->cmd);
+  assert( requestedQuirkPP && *requestedQuirkPP );
+  // Queue new action if it's higher priority than old or entity's inactive.
+  if (!xIsEntityActive(sP, msgP->attn) || !cP->quirkP ||
+      _isHigherPriority((*requestedQuirkPP)->priority, cP->quirkP->priority)) {
     xMutateComponent( sP, msgP->attn, msgP->cmd );
+    // Set the target of this entity's action, if any.
+    cP->tgtEntity = msgP->arg;
+    // Set the quantity for the action, if applicable.
+    cP->amount = msgP->attachment;  // better use S32 for actions
   }
   // Activate activity.
   xActivateComponentByEntity(sP, msgP->attn);

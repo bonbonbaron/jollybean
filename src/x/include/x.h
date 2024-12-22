@@ -210,6 +210,7 @@ void     xActivateComponentByIdx(System *sP, Key compOrigIdx);
 void     xDeactivateComponentByIdx(System *sP, Key compOrigIdx);
 void     xQueuePause(System *sP, void *componentP);
 void     xQueueDeactivate(System *sP, void *componentP);
+Bln      xIsEntityActive( System  *sP, Entity entity );
 void     xClr(System *sP);
 void     xRun(System *sP);
 #endif
