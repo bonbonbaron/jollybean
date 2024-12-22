@@ -8,6 +8,7 @@ XIniSysFuncDef_(Action) {
   xActionP->entityPersonalityPairF = frayNew( sizeof( EntityPersonalityPair ), xGetNComps(sP) );
   xActionP->entityBlackboardPairF = frayNew( sizeof( EntityBlackboardPair ), xGetNComps(sP) );
   xActionP->histoHivemindTriggerA = arrayNew( sizeof(U32), KEY_MAX );
+  memset( xActionP->histoHivemindTriggerA, 0, sizeof(U32) * KEY_MAX );
 }
 
 //#define XIniSubcompFuncDef_(name_)  Error x##name_##IniSubcomp(System *sP, const Entity entity, const Key subtype, void *dataP)
@@ -25,7 +26,11 @@ XIniSubcompFuncDef_(Action) {
     // For each quirk in the personality, increment the number of distinct triggers
     // whenever you find one we've never encountered before.
     for (; quirkPP < quirkEndPP; ++quirkPP) {
-      xActionP->nDistinctHivemindTriggers += (!(xActionP->histoHivemindTriggerA[(*quirkPP)->trigger]++));
+      U32 *histoElemP = &xActionP->histoHivemindTriggerA[ (*quirkPP)->trigger ];
+      if ( *histoElemP  ) {
+        ++xActionP->nDistinctHivemindTriggers;
+      }
+      ++( *histoElemP );
     }
   }
   else if ( subtype == BLACKBOARD  ) {
@@ -56,11 +61,7 @@ static void _distributeHiveminds(XAction *xActionP) {
   for (U32 trigger = 0; trigger < nElems; ++trigger) {
     if (xActionP->histoHivemindTriggerA[trigger]) {
       Entity *entityA = arrayNew( sizeof(Entity), xActionP->histoHivemindTriggerA[trigger] );
-      // Put the array of entities subscribed to trigger "trigger" in the hivemind map.
-      hivemindEntitiesAP = (Entity**) mapGet(xActionP->hivemindMP, trigger);
-      if (hivemindEntitiesAP) {
-        *hivemindEntitiesAP = entityA;
-      }
+      mapSet(xActionP->hivemindMP, trigger, &entityA);
     }
   }
   // Fill the hiveminds.
@@ -148,11 +149,11 @@ static void _triggerIndividual(XAction *xActionSysP, Message *msgP) {
 static void _triggerHivemind(XAction *xActionSysP, Message *msgP) {
   assert(msgP);
   // Get the Action system's hivemind array for the given stimulus.
-  Entity *eA = (Entity*) mapGet(xActionSysP->hivemindMP, msgP->cmd);
-  assert(eA);
+  Entity **eAP = (Entity**) mapGet(xActionSysP->hivemindMP, msgP->cmd);
+  assert( eAP && *eAP );
   // Init pointers.
   Entity *eP, *eEndP;
-  arrayIniPtrs((void*) eA, (void**) &eP, (void**) &eEndP, -1);
+  arrayIniPtrs( (void*) *eAP, (void**) &eP, (void**) &eEndP, -1 );
   // Forward the message to each individual in the hivemind.
   for (; eP < eEndP; eP++) {
     msgP->attn = *eP;
@@ -181,6 +182,9 @@ void xActionRun(System *sP) {
   XActionComp *cEndP = cP + _frayGetFirstInactiveIdx(sP->cF);
   for (; cP < cEndP; cP++) {
     cP->quirkP->actionU( xGetEntityByVoidComponentPtr( sP, cP ),  (Activity*) cP, sP->mailboxF );
+    if ( cP->complete ) {
+      xQueueDeactivate( sP, cP );
+    }
   }
 }
 

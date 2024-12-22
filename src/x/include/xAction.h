@@ -69,6 +69,7 @@ typedef struct {
 // Union of quirk, blackboard, and tree status.
 typedef struct Activity {
   Entity      tgtEntity;     // Thing to perform action on (0 if action isn't transitive)
+  Bln         complete;      // Action system queues an activity for deactivation when this is true.
   Generic     amount;        // Naming this "amount" because we always assume action is quantitative.
   Quirk      *quirkP;        // trigger-action pair
   Map        *bbMP;          // blackboard 

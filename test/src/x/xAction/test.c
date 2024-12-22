@@ -3,11 +3,13 @@
 // Blackboard items
 static DanceSkills goodGuyDanceSkills = {
   .spin = 3,
+  .bop = 5,
   .hop = 12
 };
 
 static DanceSkills badGuyDanceSkills = {
   .spin = 4,
+  .bop = 8,
   .hop = 2
 };
 
@@ -29,7 +31,15 @@ Stat*        bgStatsP       = &badguyStats;
 
 ActionFuncDef_( takeDamage ) {
   assertAction_;
-  printf("%d takes %d damage. ", entity, activityP->amount);
+  bbGet( Stat, stat, STAT );
+  U32 oldhp = statP->hp;
+  statP->hp -= activityP->amount.u32;
+  printf("%d takes %d damage. HP falls from %d to %d. ", entity, activityP->amount, oldhp, statP->hp );
+  if ( statP->hp <= 0 ) {
+    printf(" He's dead!");
+  }
+  printf("\n");
+  activityP->complete = 1;
 }
 
 ActionFuncDef_( dance ) {
@@ -45,6 +55,7 @@ ActionFuncDef_( hit ) {
   printf("%d hits %d with %d strength.\n", entity, activityP->tgtEntity, statsP->strength );
   Generic g = { .u32 = statsP->strength };
   mailboxWrite( mailboxF, ACTION, activityP->tgtEntity, TAKE_DAMAGE, 0, &g );
+  activityP->complete = 1;
 }
 
 Quirk q1 = { .actionU = hit, .priority = HIGH, .trigger = HIT };
@@ -103,12 +114,16 @@ int main(int argc, char **argv) {
 
   sActionP->postprocessComps( sActionP );
 
-  // Run once for entity 1 to hit entity 0.
   mailboxWrite( sActionP->mailboxF, ACTION, 1, HIT, 2, NULL );
-  xRun(sActionP);
+  xRun(sActionP); // Run once for entity 1 to hit entity 0.
+  xRun(sActionP); // Run again for entity 2 to experience the pain. lol
+  mailboxWrite( sActionP->mailboxF, ACTION, 1, HIT, 2, NULL );
+  xRun(sActionP); // Run once more for 1 to deliver final blow to 2.
+  xRun(sActionP); // Run one last time for 2 to die.
 
-  // Run again for entity 2 to experience the pain. lol
-  xRun(sActionP);
+  // Then test hiveminds by letting everybody, even the dead guy, dance.
+  mailboxWrite( sActionP->mailboxF, ACTION, 0, DANCE, 0, NULL );
+  xRun(sActionP); 
 
   xClr(sActionP);
 
