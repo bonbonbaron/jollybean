@@ -1,5 +1,5 @@
 #include "tau.h"
-#include "xMotion.h"
+#include "x/xMotion.h"
 
 
 // We have to make these constants so the compiler doesn't cry about the array initializers not having constant sizes.

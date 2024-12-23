@@ -1,7 +1,7 @@
 JB  = $(shell git rev-parse --show-toplevel)
 SRC = ${JB}/src
 _INC = $(shell find ${SRC} -type d -name include) $(JB)/test/include
-INC := -I. $(_INC:%=-I%)
+INC := -I${JB}/include
 BLD = ${JB}/build
 LIB = ${JB}/lib
 KR  = ${HOME}/jb/src/Keyring

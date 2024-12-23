@@ -1,5 +1,5 @@
 #define USE_HEADLESS_INTERFACE
-#include "interface.h"
+#include "interface/interface.h"
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>

@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include "interface.h"
+#include "interface/interface.h"
 
 U32 buttonsPressed = 0;
 

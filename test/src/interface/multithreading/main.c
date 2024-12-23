@@ -1,6 +1,6 @@
-#include "xRender.h"
+#include "x/xRender.h"
 #include "jb.h"
-#include "interface.h"
+#include "interface/interface.h"
 #include "blehColormap.h"
 #include "blehColorPalette.h"
 #include "heckColormap.h"

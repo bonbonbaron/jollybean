@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#include "xAction.h"
+#include "x/xAction.h"
 #include "jb.h"
 
 typedef enum {DANCE_SKILLS = 1, STAT} BbKey;

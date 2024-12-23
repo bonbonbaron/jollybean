@@ -1,8 +1,8 @@
 #ifndef SYS_RENDER
 #define SYS_RENDER
-#include "x.h"
-#include "interface.h"
-#include "bt.h"
+#include "x/x.h"
+#include "interface/interface.h"
+#include "data/bt.h"
 #include "jb.h"
 
 // TODO is both being 1 a bug, or is that the *inner* key value?

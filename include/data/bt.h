@@ -1,7 +1,7 @@
 #ifndef BT_H
 #define BT_H
 
-#include "array.h"
+#include "data/array.h"
 
 /* Binary trees
  * ============

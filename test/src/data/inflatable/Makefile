@@ -3,8 +3,7 @@ CC=gcc
 RPO_DIR := $(shell git rev-parse --show-toplevel)
 LIB_DIR := $(RPO_DIR)/lib
 UTL_DIR := $(RPO_DIR)/utils
-_INCS   := $(shell find ${RPO_DIR}/src -type d -name 'include') $(UTL_DIR)/include $(RPO_DIR)/test/include
-INCS    := -I. $(_INCS:%=-I%)
+INCS    := -I${RPO_DIR}/include -I$(RPO_DIR)/test/include
 
 SRCS    := $(shell find . -type f -name "*.c")
 OBJS    := $(SRCS:%.c=%.o) $(UTL_DIR)/build/inf.o

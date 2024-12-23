@@ -6,7 +6,7 @@
 #include <png.h>
 #include <assert.h>
 #include <string.h>
-#include "common.h"
+#include "data/common.h"
 #include "json.h"
 #include "fileUtils.h"
 

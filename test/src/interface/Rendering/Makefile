@@ -2,7 +2,7 @@ BODY_DIR = ${HOME}/jb/build/Seed/Genome/Gene/Body
 
 JB  = $(shell git rev-parse --show-toplevel)
 SRC = ${JB}/src
-INC = ${SRC}/include
+INC = ${JB}/include
 BLD = ${JB}/build
 UTL = ${JB}/utils
 PRI = ${UTL}/body/build
@@ -47,7 +47,7 @@ ${PRI}/previewImg.o: ${UTL}/body/src/previewImg.c ${BLD}/data.o ${BLD}/interface
 	make -C ${JB}
 	touch $@
 
-${BLD}/%.o: ${SRC}/%.c ${INC}/%.h
+${BLD}/%.o: ${SRC}/%.c ${INC}/x/%.h
 	make -C ${JB}
 	touch $@
 

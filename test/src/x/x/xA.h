@@ -1,6 +1,6 @@
 #ifndef SYS_A
 #define SYS_A
-#include "x.h"
+#include "x/x.h"
 
 #define XA_TYPE (1)
 #define MADE_UP_SHARE_TYPE (1)

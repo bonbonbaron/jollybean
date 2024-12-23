@@ -1,4 +1,4 @@
-#include "array.h"
+#include "data/array.h"
 
 void* arrayNew( U32 elemSz, U32 nElems) {
 	assert (elemSz && nElems);

@@ -1,7 +1,7 @@
 #ifndef SYS_Collision
 #define SYS_Collision
-#include "x.h"
-#include "interface.h"
+#include "x/x.h"
+#include "interface/interface.h"
 
 typedef struct {
   Entity entity;   // Collider

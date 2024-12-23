@@ -1,6 +1,6 @@
 #ifndef HEADLESS_INTERFACE_H
 #define HEADLESS_INTERFACE_H
-#include "common.h"
+#include "data/common.h"
 
 // ==============
 // Rendering

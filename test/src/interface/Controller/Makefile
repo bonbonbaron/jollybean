@@ -1,6 +1,6 @@
 JB  := $(shell git rev-parse --show-toplevel)
 SRC := ${JB}/src
-INC := -I${SRC}/interface/include -I${SRC}/x/include -I${SRC}/data/include
+INC := -I${JB}/include
 BLD := ${JB}/build/src
 OBJ := ${BLD}/interface/interface.o ${BLD}/x/x.o ${BLD}/data/fray.o ${BLD}/data/map.o ${BLD}/data/array.o ${BLD}/data/mem.o
 ./o: ./test.o ${OBJ}

@@ -1,4 +1,4 @@
-#include "map.h"
+#include "data/map.h"
 
 int main(int argc, char **argv) {
   Map *mP = NULL;

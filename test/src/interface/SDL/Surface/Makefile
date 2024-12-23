@@ -13,19 +13,19 @@ CP_OBJ_DIR = ${COLOR_PALETTE_DIR}/obj
 JB_DIR = $(shell git rev-parse --show-toplevel)
 UTILS = ${JB_DIR}/utils
 KR_DIR = ${HOME}/jb/src/Keyring
-JB_INCS = -I${JB_DIR}/src/x/include -I${JB_DIR}/src/interface/include -I${JB_DIR}/src/data/include
+JB_INCS = -I${JB_DIR}/include
 
 ./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./main.o ${JB_DIR}/lib/libjb.a ${CM_SRC_DIR}/blehColormap.c ${CM_SRC_DIR}/heckColormap.c ${CM_SRC_DIR}/redColormap.c
 	gcc --coverage ./main.o ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o -L/usr/local/lib -Wl,-rpath,/usr/local/lib -Wl,--enable-new-dtags $(shell sdl2-config --libs) -L${JB_DIR}/lib -ljb -lpthread -o $@
 
 ./main.o: ./main.c
-	gcc --coverage -g -c main.c ${JB_INCS} -I${KR_DIR} -I${JB_DIR}/src/include/ -I${UTILS}/include -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags) -o $@
+	gcc --coverage -g -c main.c ${JB_INCS} -I${KR_DIR} -I${JB_DIR}/include/ -I${UTILS}/include -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags) -o $@
 
 ${CM_OBJ_DIR}/%Colormap.o: ${CM_SRC_DIR}/%Colormap.c
-	gcc -save-temps --coverage -g ${JB_INCS} -I${KR_DIR} -I${JB_DIR}/src/include -c ${CM_SRC_DIR}/$*Colormap.c $(shell sdl2-config --cflags) -o $@
+	gcc -save-temps --coverage -g ${JB_INCS} -I${KR_DIR} -I${JB_DIR}/include -c ${CM_SRC_DIR}/$*Colormap.c $(shell sdl2-config --cflags) -o $@
 
 ${CP_OBJ_DIR}/%ColorPalette.o: ${CP_SRC_DIR}/%ColorPalette.c
-	gcc -save-temps --coverage -g ${JB_INCS} -I${KR_DIR} -I${JB_DIR}/src/include -c $< $(shell sdl2-config --cflags) -o $@
+	gcc -save-temps --coverage -g ${JB_INCS} -I${KR_DIR} -I${JB_DIR}/include -c $< $(shell sdl2-config --cflags) -o $@
 
 ${CP_SRC_DIR}/%ColorPalette.c: ${UTILS}/build/body
 	${UTILS}/build/body $*

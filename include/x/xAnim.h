@@ -1,9 +1,9 @@
 #ifndef X_ANIM_H
 #define X_ANIM_H
-#include "strip.h"
-#include "fray.h"
-#include "x.h"
-#include "interface.h"
+#include "data/strip.h"
+#include "data/fray.h"
+#include "x/x.h"
+#include "interface/interface.h"
 #include "jb.h"
 
 #define ANIMATION_SUBTYPE (0x40)

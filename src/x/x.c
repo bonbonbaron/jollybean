@@ -1,4 +1,4 @@
-#include "x.h"
+#include "x/x.h"
 
 // Copied these from data.c since I don't know how to inline across files.
 inline static Key* _getCompIdxPByEntity(System *sP, Entity entity) {

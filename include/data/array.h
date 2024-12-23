@@ -1,7 +1,7 @@
 #ifndef ARRAY_H
 #define ARRAY_H
 
-#include "mem.h"
+#include "data/mem.h"
 
 void* arrayNew( U32 elemSz, U32 nElems);
 void* array2dNew( U32 w, U32 h, U32 elemSz, U32 nElems);

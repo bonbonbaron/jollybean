@@ -1,8 +1,8 @@
 #ifndef X_H
 #define X_H
-#include "map.h"
-#include "fray.h"
-#include "mail.h"
+#include "data/map.h"
+#include "data/fray.h"
+#include "data/mail.h"
 
 typedef Key Entity;
 

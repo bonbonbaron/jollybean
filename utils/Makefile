@@ -5,7 +5,7 @@ BODY_SRCS := src/body/anim.c src/body/body.c src/body/coll.c src/body/img.c src/
 BODY_OBJS := build/anim.o build/body.o build/coll.o build/img.o build/previewImg.o
 
 OBJS := $(BODY_OBJS) build/fileUtils.o build/inf.o build/sd.o
-INC := -I./include -I$(RPO_DIR)/src/data/include -I$(RPO_DIR)/src/interface/include -I$(RPO_DIR)/src/x/include -I/usr/include/libfastjson -I$(RPO_DIR)/src/include
+INC := -I./include -I${RPO_DIR}/include -I/usr/include/libfastjson 
 
 all: $(OBJS) build/body
 

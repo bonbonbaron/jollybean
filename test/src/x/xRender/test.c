@@ -1,5 +1,5 @@
 #include "tau.h"
-#include "xRender.h"
+#include "x/xRender.h"
 // Images we're testing xRender with
 #include "blehColormap.h"
 #include "blehColorPalette.h"

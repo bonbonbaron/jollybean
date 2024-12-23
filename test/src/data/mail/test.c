@@ -1,5 +1,5 @@
 #include "tau.h"
-#include "mail.h"
+#include "data/mail.h"
 
 
 TAU_MAIN()

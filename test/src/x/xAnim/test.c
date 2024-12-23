@@ -1,5 +1,5 @@
 #include "tau.h"
-#include "xAnim.h"
+#include "x/xAnim.h"
 
 // We have to make these constants so the compiler doesn't cry about the array initializers not having constant sizes.
 #define N_ENTITIES (100)

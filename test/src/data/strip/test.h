@@ -1,5 +1,5 @@
 #include "tau.h"
-#include "strip.h"
+#include "data/strip.h"
 #include "sd.h"
 
 typedef struct Tau {

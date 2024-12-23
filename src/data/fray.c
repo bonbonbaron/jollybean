@@ -1,4 +1,4 @@
-#include "fray.h"
+#include "data/fray.h"
 
 void* frayNew( U32 elemSz, U32 nElems) {
   assert (elemSz && nElems );

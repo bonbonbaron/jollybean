@@ -1,7 +1,7 @@
 #ifndef FRAY_H
 #define FRAY_H
 
-#include "array.h"
+#include "data/array.h"
 
 // Efficient Arrays (frays)
 #define N_PREFRAY_ELEMS (5)

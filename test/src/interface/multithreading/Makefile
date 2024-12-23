@@ -19,19 +19,19 @@ KR_DIR = ${HOME}/jb/src/Keyring
 	touch $@
 
 ./main.o: ./main.c
-	gcc -g -c main.c -I${KR_DIR} -I${JB_DIR}/src/include/ -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags --cflags) -lpthread -o $@
+	gcc -g -c main.c -I${KR_DIR} -I${JB_DIR}/include/ -I${CM_INC_DIR} -I${CP_INC_DIR} $(shell sdl2-config --cflags --cflags) -lpthread -o $@
 	touch $@
 
 ${CM_OBJ_DIR}/%Colormap.o: ${CM_SRC_DIR}/%Colormap.c
-	gcc -g -I${KR_DIR} -I${JB_DIR}/src/include -c $< $(shell sdl2-config --cflags) -o $@
+	gcc -g -I${KR_DIR} -I${JB_DIR}/include -c $< $(shell sdl2-config --cflags) -o $@
 	touch $@
 
 ${CP_OBJ_DIR}/%ColorPalette.o: ${CP_SRC_DIR}/%ColorPalette.c
-	gcc -g -I${KR_DIR} -I${JB_DIR}/src/include -c $< $(shell sdl2-config --cflags) -o $@
+	gcc -g -I${KR_DIR} -I${JB_DIR}/include -c $< $(shell sdl2-config --cflags) -o $@
 	touch $@
 
 ${JB_DIR}/build/%.o: ${JB_DIR}/src/%.c
-	gcc -c $< -I${KR_DIR} $(shell sdl2-config --cflags) -I${JB_DIR}/src/include -o $@
+	gcc -c $< -I${KR_DIR} $(shell sdl2-config --cflags) -I${JB_DIR}/include -o $@
 	touch $@
 
 ${CP_SRC_DIR}/%ColorPalette.c:

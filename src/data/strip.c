@@ -1,4 +1,4 @@
-#include "strip.h"
+#include "data/strip.h"
 
 #if (__WORDSIZE == 32)
 #define MASK_1BPP (0x01010101)

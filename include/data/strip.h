@@ -1,8 +1,8 @@
 #ifndef STRIP_H
 #define STRIP_H
 
-#include "array.h"
-#include "inflatable.h"
+#include "data/array.h"
+#include "data/inflatable.h"
 
 // Strip Data
 typedef U16 StripmapElem;  // Stripmap's inflated data is in U16 format.

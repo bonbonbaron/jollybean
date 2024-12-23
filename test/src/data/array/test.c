@@ -1,5 +1,5 @@
 #include "tau.h"
-#include "array.h"
+#include "data/array.h"
 
 
 /*

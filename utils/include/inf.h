@@ -1,6 +1,6 @@
 #ifndef INFLATABLE_UTIL_H
 #define INFLATABLE_UTIL_H
-#include "inflatable.h"
+#include "data/inflatable.h"
 
 Inflatable* inflatableNew( void* voidA);
 void inflatableDel(Inflatable **inflatablePP);

@@ -7,12 +7,12 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include "xRender.h"
+#include "x/xRender.h"
 #include "inf.h"
-#include "inflatable.h"
+#include "data/inflatable.h"
 #include "fileUtils.h"
 #include "sd.h"
-#include "strip.h"
+#include "data/strip.h"
 #include "anim.h"
 
 //const char LOCAL_TROVE_IMAGE_DIR[] = "/jb/src/Image/";

@@ -1,6 +1,6 @@
 #ifndef X_ACTION
 #define X_ACTION
-#include "x.h"
+#include "x/x.h"
 
 #define ACTION_ (2)
 #define PERSONALITY (0x40)

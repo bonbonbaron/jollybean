@@ -1,7 +1,7 @@
 #ifndef JB_H
 #define JB_H
 
-#include "x.h"
+#include "x/x.h"
 
 // Keys  (hopefully obsolete later)
 typedef enum {UPDATE_RECT = N_XMAIL_BUILTIN_CMDS, ANIMATE} MessageCommand;

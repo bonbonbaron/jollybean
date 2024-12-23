@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <zlib.h>
-#include "inflatable.h"
-#include "array.h"
+#include "data/inflatable.h"
+#include "data/array.h"
 
 Inflatable* inflatableNew(void* voidA) {
   assert(voidA);  // pray to god it's actually an array... welcome to C

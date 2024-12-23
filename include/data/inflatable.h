@@ -1,7 +1,7 @@
 #ifndef INFLATABLE_H
 #define INFLATABLE_H
 
-#include "mem.h"
+#include "data/mem.h"
 
 // Inflatables 
 typedef struct Inflatable {

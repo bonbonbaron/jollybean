@@ -6,13 +6,13 @@
 #include <png.h>
 #include <assert.h>
 #include <string.h>
-#include "common.h"
+#include "data/common.h"
 #include "json.h"
 #include "anim.h"
 #include "fileUtils.h"
 #include "inf.h"
 #include "sd.h"
-#include "xCollision.h"
+#include "x/xCollision.h"
 
 #define TEST_ 1
 

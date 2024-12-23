@@ -1,4 +1,4 @@
-#include "mail.h"
+#include "data/mail.h"
 
 // There is no corresponding mailboxRead() function because that's specific to each implementer.
 Message* mailboxNew(U32 maxNMsgs) {

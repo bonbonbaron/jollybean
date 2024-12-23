@@ -1,4 +1,4 @@
-#include "bt.h"
+#include "data/bt.h"
 
 // Binary trees
 void* btNew( U32 elemSz, U32 nElems) {

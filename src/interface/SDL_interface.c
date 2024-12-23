@@ -1,4 +1,4 @@
-#include "interface.h"
+#include "interface/interface.h"
 #ifdef USE_SDL_INTERFACE  // ignores the below... temporary measure to prevent compiler errors
 #include "SDL_events.h"
 

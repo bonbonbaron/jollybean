@@ -17,7 +17,7 @@ LIB_DIR := $(JB_DIR)/lib
 
 
 _INCS   := $(shell find ${JB_DIR}/src -type d -name include) ${CM_INC_DIR} ${CP_INC_DIR} ${UTILS}/include
-INCS    := $(_INCS:%=-I%)
+INCS    := -I${JB_DIR}/include
 
 ./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./test.o ${LIB_DIR}/libjb.a ${UTILS}/build/*.o ${JB_DIR}/build/src/x/xRender.o ${JB_DIR}/src/x/xRender.c
 	gcc --coverage ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ${UTILS}/build/previewImg.o ./test.o $(shell sdl2-config --libs) -L${LIB_DIR} -ljb -lpthread -o $@

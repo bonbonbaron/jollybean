@@ -1,7 +1,6 @@
 #include "tau.h"
-#include "inf.h"
-// #include "inflatable.h"
-#include "array.h"
+#include "../utils/include/inf.h"  // << includes "inflatable.h"
+#include "data/array.h"
 
 /*
 functions to test:

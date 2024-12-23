@@ -37,3 +37,9 @@ Bonuses (in the whatever-future)
   2. Do the same with Makefiles... Those shouldn't have so much boilerplate either.
   3. Make map's element type disappear when #ifdef NDEBUG
   4. Fix the broken unit tests from the colormap/palette jb trove reorg
+
+
+Let's desing the crap out of the gene editor odwn here:
+
+
+jb make gene

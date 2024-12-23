@@ -1,5 +1,5 @@
-#include "inflatable.h"
-#include "array.h"
+#include "data/inflatable.h"
+#include "data/array.h"
 
 /*************************************/
 /******** TINFL DECOMPRESSION ********/

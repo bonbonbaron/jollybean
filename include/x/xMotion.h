@@ -1,8 +1,8 @@
 #ifndef SYS_Motion
 #define SYS_Motion
-#include "x.h"
+#include "x/x.h"
 #include "jb.h"
-#include "interface.h"
+#include "interface/interface.h"
 
 typedef struct {
   S8 x;

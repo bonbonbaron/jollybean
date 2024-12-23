@@ -1,4 +1,4 @@
-#include "map.h"
+#include "data/map.h"
 
 Map* mapNew( MapElemType elemType, const U8 elemSz, const Key nElems) {
 	assert (elemSz && nElems);

@@ -1,4 +1,4 @@
-#include "mem.h"
+#include "data/mem.h"
 
 void* jbAlloc( U32 elemSz, U32 nElems) {
 	assert (elemSz && nElems);

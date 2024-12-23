@@ -1,5 +1,5 @@
 #include "tau.h"
-#include "fray.h"
+#include "data/fray.h"
 
 
 TAU_MAIN()

@@ -1,10 +1,10 @@
 #ifndef XMAIN_
 #define XMAIN_
 #define MASTER_ (1)
-#include "x.h"
-#include "strip.h"
-#include "interface.h"
-#include "fray.h"
+#include "x/x.h"
+#include "data/strip.h"
+#include "interface/interface.h"
+#include "data/fray.h"
 
 #define geneName_(name_) name_##Gene
 #define genomeName_(name_) name_##Genome

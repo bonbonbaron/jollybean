@@ -1,5 +1,5 @@
 #include "tau.h"
-#include "mem.h"
+#include "data/mem.h"
 
 
 TAU_MAIN()

@@ -1,8 +1,8 @@
 #ifndef MAIL_H
 #define MAIL_H
 
-#include "mem.h"
-#include "fray.h"
+#include "data/mem.h"
+#include "data/fray.h"
 
 // Mailboxes
 typedef struct {

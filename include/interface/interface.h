@@ -1,17 +1,17 @@
 #ifndef INTERFACE_H
 #define INTERFACE_H
-#include "x.h"
-#include "strip.h"
+#include "x/x.h"
+#include "data/strip.h"
 
 // Choose your interface!!
 #ifndef USE_HEADLESS_INTERFACE
 #define USE_SDL_INTERFACE  // default to this when we're not specifying headless for now
 #endif
 #ifdef USE_SDL_INTERFACE
-#include "SDL_interface.h"
+#include "interface/SDL_interface.h"
 #else
 #ifdef USE_HEADLESS_INTERFACE // Use if you don't have any graphical capabilities-- most likely you're unit testing if you're doing this.
-#include "headless_interface.h"
+#include "interface/headless_interface.h"
 #endif
 #endif
 

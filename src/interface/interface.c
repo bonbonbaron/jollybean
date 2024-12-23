@@ -1,4 +1,4 @@
-#include "interface.h"
+#include "interface/interface.h"
 #include "SDL_events.h"
 
 /**********************

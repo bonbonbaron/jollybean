@@ -5,10 +5,10 @@
 #include <ctype.h>
 #include <assert.h>
 #include <string.h>
-#include "mem.h"
-#include "inflatable.h"
+#include "data/mem.h"
+#include "data/inflatable.h"
 #include "inf.h"
-#include "strip.h"
+#include "data/strip.h"
 #include "fileUtils.h"
 
 StripDataS* stripNew(U8 *srcA, const size_t nUsedBytesPerUnpackedStrip, const U8 bitsPerPackedByte, size_t flags, U8 verbose);
