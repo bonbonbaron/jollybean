@@ -24,7 +24,7 @@ Entity xGetEntityByCompIdx(System *sP, Key compIdx) {
   return _getEntityByCompIdx(sP, compIdx);
 }
 
-inline static void __xSwap(System *sP, S32 origIdx, S32 newIdx) {
+static void __xSwap(System *sP, S32 origIdx, S32 newIdx) {
   assert (sP && newIdx >= 0 && origIdx >= 0);
   if (origIdx != newIdx) {
     Entity entity1 = _getEntityByCompIdx(sP, origIdx);
@@ -62,6 +62,7 @@ void xActivateComponentByEntity(System *sP, Entity entity) {
   frayChangesIni_(changes, *compOrigIdxP);
   frayActivate(sP->cF, *compOrigIdxP, &changes);
   _xSwap(sP, &changes);
+  sP->postActivate( sP, &changes );
 }
 
 void xDeactivateComponentByEntity(System *sP, Entity entity) {
@@ -72,6 +73,7 @@ void xDeactivateComponentByEntity(System *sP, Entity entity) {
   frayChangesIni_(changes, *compOrigIdxP);
   frayDeactivate(sP->cF, *compOrigIdxP, &changes);
   _xSwap(sP, &changes);
+  sP->postDeactivate( sP, &changes );
 }
 
 void xPauseComponentByEntity(System *sP, Entity entity) {

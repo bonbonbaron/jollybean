@@ -57,6 +57,8 @@ typedef enum { INITIALIZED = 1 } SubcomponentState;
     .iniSubcomp        = x##name_##IniSubcomp,\
     .postprocessComps  = x##name_##PostprocessComps,\
     .postMutate        = x##name_##PostMutate,\
+    .postActivate      = x##name_##PostActivate,\
+    .postDeactivate    = x##name_##PostDeactivate,\
     .clr               = x##name_##Clr,\
     .getShare          = x##name_##GetShare,\
     .processMessage    = x##name_##ProcessMessage,\
@@ -82,6 +84,8 @@ typedef enum { INITIALIZED = 1 } SubcomponentState;
     .iniSubcomp        = x##name_##IniSubcomp,\
     .postprocessComps  = x##name_##PostprocessComps,\
     .postMutate        = x##name_##PostMutate,\
+    .postActivate      = x##name_##PostActivate,\
+    .postDeactivate    = x##name_##PostDeactivate,\
     .clr               = x##name_##Clr,\
     .getShare          = x##name_##GetShare,\
     .processMessage    = x##name_##ProcessMessage,\
@@ -99,6 +103,8 @@ typedef void (*XProcMsgU)(struct _System *sP, Message *messageP);
 typedef void (*XGetShareU)(struct _System *sP, Map* shareMPMP);
 typedef void (*XPostprocessCompsU)(struct _System *sP);
 typedef void (*XPostMutateU)(struct _System *sP, void *cP);  // changes immutables alogn with mutables
+typedef void (*XPostActivateU)(struct _System *sP, FrayChanges *changesP);  // changes immutables alogn with mutables
+typedef void (*XPostDeactivateU)(struct _System *sP, FrayChanges *changesP);  // changes immutables alogn with mutables
 // TODO if these functions are unused, then should they be null? 
 // Or since they're only called at startup, does it really matter?
 #define XPostprocessCompsDefUnused_(name_) XPostprocessCompsDef_(name_) {\
@@ -147,6 +153,22 @@ typedef void (*XPostMutateU)(struct _System *sP, void *cP);  // changes immutabl
 
 #define XPostMutateFuncDef_(name_) void x##name_##PostMutate(System *sP, void *cP)
 
+#define XPostActivateFuncDefUnused_(name_) void x##name_##PostActivate(System *sP, FrayChanges* changesP) {\
+  unused_(sP);\
+  unused_(changesP);\
+}
+
+#define XPostActivateFuncDef_(name_) void x##name_##PostActivate(System *sP, FrayChanges* changesP)
+
+#define XPostDeactivateFuncDefUnused_(name_) void x##name_##PostDeactivate(System *sP, FrayChanges* changesP) {\
+  unused_(sP);\
+  unused_(changesP);\
+}
+
+#define XPostDeactivateFuncDef_(name_) void x##name_##PostDeactivate(System *sP, FrayChanges* changesP)
+
+
+
 typedef struct {
   Entity owner;
   void* subcompA[N_POSSIBLE_SUBCOMPS];
@@ -182,6 +204,8 @@ typedef struct _System {
   XRunU        run;                  // runs the system 
   XProcMsgU    processMessage;       // What to do in response to commands in inbox messages. 
   XPostMutateU postMutate;           // changes immutables after mutables are changed
+  XPostActivateU postActivate;       // changes sys-specific members after component is activated
+  XPostDeactivateU postDeactivate;   // changes sys-specific members after component is deactivated
   XIniSU       iniSys;               // System init function pointer 
   XIniSubcompU iniSubcomp;              // Some systems need to inflate components before using them. 
   XPostprocessCompsU postprocessComps;  // If components are composites, piece them together here.

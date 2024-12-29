@@ -11,6 +11,8 @@
 //======================================================
 XIniSysFuncDefUnused_(Motion);
 XIniSubcompFuncDefUnused_(Motion);
+XPostActivateFuncDefUnused_(Motion);
+XPostDeactivateFuncDefUnused_(Motion);
 
 XGetShareFuncDef_(Motion) {
   assert (sP && shareMPMP);

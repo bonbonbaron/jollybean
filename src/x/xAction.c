@@ -169,6 +169,9 @@ XGetShareFuncDefUnused_(Action);
 
 XPostMutateFuncDefUnused_(Action);
 
+XPostActivateFuncDefUnused_(Action);
+XPostDeactivateFuncDefUnused_(Action);
+
 // Entity acts on message if it's more urgent than its current activity.
 XProcMsgFuncDef_(Action) {
   XAction *xActionSysP = (XAction*) sP;

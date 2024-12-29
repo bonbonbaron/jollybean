@@ -43,7 +43,7 @@ typedef struct {
 /******** GENE  *********/
 /************************/
 
-typedef enum {EXCLUSIVE_GENE, MEDIA_GENE, SHARED_GENE, COMPOSITE_GENE, IMPLICIT_GENE} GeneClass;
+typedef enum {ROOT_GENE, EXCLUSIVE_GENE, MEDIA_GENE, SHARED_GENE, COMPOSITE_GENE, IMPLICIT_GENE} GeneClass;
 
 struct _Gene;
 

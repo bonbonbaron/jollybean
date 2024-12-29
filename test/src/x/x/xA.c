@@ -118,6 +118,9 @@ XPostprocessCompsDef_(A) {
 }
 #endif
 
+XPostActivateFuncDefUnused_(A);
+XPostDeactivateFuncDefUnused_(A);
+
 #if 0
 XPostMutateFuncDefUnused_(A);
 #else

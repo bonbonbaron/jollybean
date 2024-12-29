@@ -54,7 +54,7 @@ typedef struct {
 
 typedef struct {
   Rect_ *srcRectP;
-  Rect_ *dstRectP;
+  ZRect *dstRectP;
 } XRenderComp;
 
 typedef struct {} XRenderMutation;
@@ -70,6 +70,7 @@ typedef struct {
   Map           *srcRectMP;   // shortcut-pointer to shared array of source rectangles
   Map           *dstRectMP;   // shortcut-pointer to shared array of destination rectangles
   Map           *xRenderCompSourceMP;
+  Key           *zHeightIdxA;
 } XRender;
 
 // Images
@@ -79,7 +80,7 @@ void atlasPlanPlacements(Atlas *atlasP);
 void xRenderIniS(System *sP, void *sParamsP);
 void xRenderProcessMessage(System *sP, Message *msgP);
 typedef void (*XRenderPresentU)(Renderer_ *rendererP);  // TODO uh.. what was this for again?
-extern XPostprocessCompsDef_(Render);
+// extern XPostprocessCompsDef_(Render);
 void updateCmSrcRectIndices(Image **imgPF, Atlas *atlasP);
 Color_* assembleTextureAtlas(Image** imgPF, Atlas *atlasP);
 

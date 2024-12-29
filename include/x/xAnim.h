@@ -27,7 +27,7 @@ typedef struct {
   S8         incrDecrement; // increments or decrements animation frame depending on pingpong
   U8         currFrameIdx;  // keeps track of where we are in animation system
   Rect_     *srcRectP;      // shared source rectangle to update; this pointer stays constant
-  Rect_     *dstRectP;      // shared source rectangle to update; this pointer stays constant
+  ZRect     *dstRectP;      // shared source rectangle to update; this pointer stays constant
   S32        timeLeft;      // time left for current animation frame
   AnimStrip  currStrip;     // current animation strip
 } XAnimComp;

@@ -1,0 +1,59 @@
+==========
+QUESTIONS:
+==========
+
+\0) How do I do Z-ordering?
+\1) How do I determine an entity?
+?2) How do I figure out an entity's conditional components?
+?3) Can I decide on an entity's Z-height at gene-editing time? 
+4) How do I manage layer-changing when de/activating?
+   Or how does that detect when de/activation happens? 
+   Because this matters for both render and collision systems.
+   Uh oh... The collision system goes by a different rectangle! Z-ordering
+   needs to be shared then in this case.
+
+===
+0):
+===
+
+* Put Z-Heights in a new struct called ZRECT.
+* Track Z-layers with an index array (I)
+
+* ALGO FOR MOVING *UP* A LAYER
+  While present layer isn't target layer:
+  1) swap 5 with the one before next layer
+  2) decrement next layer's index 
+
+* ALGO FOR MOVING *DOWN* A LAYER
+  While present layer isn't target layer:
+  1) swap 5 with first one in its present layer
+  2) increment prsent layer's index
+  
+  Then, either way, set the dst rect's z-height to the target layer.
+
+* Use __xSwap() to switch among Z layers.
+
+===
+1):
+===
+
+Do it by incrementing the current entity number when you encounter another entity. Entities may not contain one another.
+
+===
+2): ??? IDK yet
+===
+
+
+===
+3):
+===
+
+In tileD, i might be able to determine layer-ordering by the layer index in the tilemap's metadata. Not conclusive right now though.
+
+===
+4):
+===
+
+I hate to say this, but I think I need to add a post-de/activation function for all my systems. I knowwwww it sucks. Only other way is to check every frame, which seems a poor use of time. I don't see any other way around it.
+
+Another thing that sucks is that the Z-heights have to be a poitner, not a raw valuek, to a shared map. But mostly that's okay, because we're only ever going to access them either when 1) changing the Z-height of an entity, and/or 2) re-sorting the Z-height members.

@@ -266,6 +266,8 @@ XClrFuncDef_(Render) {
     mapDel(&xP->srcRectMP);
     mapDel(&xP->offsetRectMP);
   }
+
+  arrayDel( (void**) &xP->zHeightIdxA );
 }
 
 static void fillRectFromStripmap(const Image *imgP, const Rect_* rectP, Color_* atlasPixelA, const U32 ATLAS_WIDTH) {
@@ -397,7 +399,7 @@ Color_* assembleTextureAtlas(Image** imgPF, Atlas *atlasP) {
   // For each source rectangle...
   for (U32 i = 0; i < iEnd; ++i) {
     U32 srcRectIdx = atlasP->btP[i].srcIdx;
-    const Rect_* dstRectP = &atlasP->btP[i].rect;
+    const Rect_* dstRectP = &atlasP->btP[i].rect;  // not to be confused with the component's dstRectP
     const Image* imgP = imgPF[srcRectIdx];
     // If it needs to be assembled, you have to assemble strips 
     // into a full grayscale image first.
@@ -516,21 +518,47 @@ XPostprocessCompsDef_(Render) {
   XRenderComp *cP = NULL;
   for (; entityP < entityEndP; ++entityP) {
     cP = (XRenderComp*) xGetCompPByEntity(sP, *entityP);
-    if (cP) {
-      cP->dstRectP = (Rect_*) mapGet(xP->dstRectMP, *entityP);
-      assert (cP->dstRectP);
-      cP->dstRectP->w = cP->srcRectP->w;
-      cP->dstRectP->h = cP->srcRectP->h;
+    assert (cP);
+    cP->dstRectP = (ZRect*) mapGet(xP->dstRectMP, *entityP);
+    assert (cP->dstRectP);
+    cP->dstRectP->rect.w = cP->srcRectP->w;
+    cP->dstRectP->rect.h = cP->srcRectP->h;
+  }
+
+  // Figure out what the highest Z-height is and create an array that can hold it.
+  ZRect* zrectP    = xP->dstRectMP->mapA;
+  ZRect* zrectEndP = zrectP + xP->dstRectMP->population;
+  Key maxZ = 0;
+  for ( ; zrectP < zrectEndP; ++zrectP ) {
+    if ( zrectP->z > maxZ ) {
+      maxZ = zrectP->z;
     }
   }
 
-  // TODO remove this when you're ready to try out XAction-based initialization.
-  // frayActivateAll(sP->cF);
+  if ( maxZ ) {
+    xP->zHeightIdxA = arrayNew( sizeof( Key ), maxZ + 1 );  // +1 allows a maxZ of 1 to index array[1] without subtracting by 1 every time
+    memset( xP->zHeightIdxA, 0,  sizeof( Key ) * ( maxZ + 1 ) );
+    // The good news is, we don't have to worry about sorting here since
+    // everything starts out deactivated.
+    // Nor do we have to locate where they are for the same reason.
+  }
 
   // Clean up.
   atlasDel(&atlasP);
   frayDel((void**) &xP->imgPF);
   frayDel((void**) &xP->entityF);
+}
+
+XPostActivateFuncDef_(Render) {
+  XRender* xP = (XRender*) sP;
+  // TODO re-sort the z-height fray here
+  // First, get the Z-height of the newly activated component.
+  XRenderComp* newlyActivatedCompP = &( (XRenderComp*) sP->cF )[ changesP->newIdx ];
+}
+
+XPostDeactivateFuncDef_(Render) {
+  XRender* xP = (XRender*) sP;
+  // TODO re-sort the z-height fray here
 }
 
 // Only get the render and window. Components' src & dst rects come from SCENE_START stimulus to XAction.
@@ -563,7 +591,7 @@ void xRenderRun(System *sP) {
   Renderer_ *rendererP = xP->guiP->rendererP;
   clearScreen(rendererP);
   for (; cP < cEndP; cP++) {
-    copy_(rendererP, xP->atlasTextureP, cP->srcRectP, cP->dstRectP);
+    copy_(rendererP, xP->atlasTextureP, cP->srcRectP, &cP->dstRectP->rect);
   }
   present_(rendererP);
 }
