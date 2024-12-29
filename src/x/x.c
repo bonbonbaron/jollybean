@@ -1,10 +1,5 @@
 #include "x/x.h"
 
-// Copied these from data.c since I don't know how to inline across files.
-inline static Key* _getCompIdxPByEntity(System *sP, Entity entity) {
-  return (Key*) mapGet(sP->e2cIdxMP, entity);
-}
-
 inline static Entity _getEntityByCompIdx(System *sP, Key compIdx) {
   return sP->cIdx2eA[compIdx];
 }
@@ -24,7 +19,7 @@ Entity xGetEntityByCompIdx(System *sP, Key compIdx) {
   return _getEntityByCompIdx(sP, compIdx);
 }
 
-static void __xSwap(System *sP, S32 origIdx, S32 newIdx) {
+void __xSwap(System *sP, S32 origIdx, S32 newIdx) {
   assert (sP && newIdx >= 0 && origIdx >= 0);
   if (origIdx != newIdx) {
     Entity entity1 = _getEntityByCompIdx(sP, origIdx);

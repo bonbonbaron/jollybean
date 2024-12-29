@@ -18,6 +18,8 @@ XProcMsgFuncDef_(REPLACEME);
 XRunFuncDef_(REPLACEME);
 XClrFuncDef_(REPLACEME);
 XPostMutateFuncDef_(REPLACEME);
+XPostActivateFuncDef_(REPLACEME);
+XPostDeactivateFuncDef_(REPLACEME);
 
 typedef struct {
   System system;  // This MUST stay the first element in the struct!!

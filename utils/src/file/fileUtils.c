@@ -2,6 +2,7 @@
 
 char JB_DIR_NAME[] = "jb";
 char SRC_DIR_NAME[] = "src";
+char RESOURCE_DIR_NAME[] = "resource";
 char BUILD_DIR_NAME[] = "build";
 
 // An image name looks like this: /some/path/to/entityName.png
@@ -107,6 +108,44 @@ static char* getSrcDir(U32 nExtraSpaces, char *srcLocalDirName, U8 verbose) {
   return srcDirPath;
 }
 
+static char* getResourceDir(U32 nExtraSpaces, char *resourceLocalDirName, U8 verbose) {
+  char *HOME = getenv("HOME");
+  U32 nChars = strlen(HOME)         + strlen(SEP) + 
+               strlen(JB_DIR_NAME)  + strlen(SEP) + 
+               strlen(RESOURCE_DIR_NAME) + strlen(SEP) + 
+               strlen(resourceLocalDirName)   + strlen(SEP) + 
+               nExtraSpaces + 1;
+
+  char* resourceDirPath = jbAlloc(sizeof(char), nChars);  // extra spaces if you plan to append filename to dir path
+  memset(resourceDirPath, 0, sizeof(char) * nChars);
+
+  strcpy(resourceDirPath, HOME);
+  strcat(resourceDirPath, SEP);
+  strcat(resourceDirPath, JB_DIR_NAME);
+  strcat(resourceDirPath, SEP);
+  strcat(resourceDirPath, RESOURCE_DIR_NAME);
+  strcat(resourceDirPath, SEP);
+  strcat(resourceDirPath, resourceLocalDirName);
+  strcat(resourceDirPath, SEP);
+
+  if (verbose) {
+    printf("resource dir path result: %s\n", resourceDirPath);
+  }
+  return resourceDirPath;
+}
+
+char* getResourceFilePath(char *resourceLocalDirName, char *resourceFileName, char *resourceFileSuffix, U8 verbose) {
+  char* resourceFilePath = getResourceDir(strlen(resourceFileName) + strlen(resourceFileSuffix), resourceLocalDirName, verbose);
+
+  assert (resourceFilePath);
+  strcat(resourceFilePath, resourceFileName);
+  strcat(resourceFilePath, resourceFileSuffix);
+  if (verbose) {
+    printf("final resource file path: %s\n", resourceFilePath);
+  }
+  return resourceFilePath;
+}
+
 char* getSrcFilePath(char *srcLocalDirName, char *srcFileName, char *srcFileSuffix, U8 verbose) {
   char* srcFilePath = getSrcDir(strlen(srcFileName) + strlen(srcFileSuffix), srcLocalDirName, verbose);
 
@@ -191,10 +230,29 @@ FILE* getSrcFile(char *srcLocalDirName, char *srcFileName, char *srcFileSuffix, 
     printf("About to open source file %s...\n", srcFilePath);
   }
   // Open file.
-  fP = fopen(srcFilePath, "r");
+  fP = fopen(srcFilePath, "w");
   assert(fP);
   if (srcFilePath) {
     jbFree((void**) &srcFilePath);
+  }
+  return fP;
+}
+
+FILE* getResourceFile(char *resourceLocalDirName, char *resourceFileName, char *resourceFileSuffix, U8 verbose) {
+  FILE  *fP = NULL;
+  if (!resourceLocalDirName || !resourceFileName || !resourceFileSuffix) {
+    printf("[getResourceFile] error: one of the args is NULL or 0.\n");
+    return NULL;
+  }
+  char *resourceFilePath = getResourceFilePath(resourceLocalDirName, resourceFileName, resourceFileSuffix, verbose);
+  if (verbose) {
+    printf("About to open source file %s...\n", resourceFilePath);
+  }
+  // Open file.
+  fP = fopen(resourceFilePath, "r");
+  assert(fP);
+  if (resourceFilePath) {
+    jbFree((void**) &resourceFilePath);
   }
   return fP;
 }

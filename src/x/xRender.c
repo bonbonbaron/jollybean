@@ -248,7 +248,71 @@ void xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void 
   }
 }
 
+static void raiseWithinSameZ( System* sP, Entity entity ) {
+  if ( _frayElemIsActive( sP->cF, *_getCompIdxPByEntity(sP, entity) ) ) {
+    XRenderComp* firstPausedCP = sP->cF + _frayGetFirstPausedIdx(sP->cF);
+    XRenderComp* cP = xGetCompPByEntity( sP, entity );
+    S32 ourBottom = cP->dstRectP->y + cP->dstRectP->h;
+    for ( XRenderComp* nextCP = cP + 1 ; nextCP < firstPausedCP && *nextCP->zHeightP == *cP->zHeightP ; ++nextCP ) {
+      // if their bottom is higher than mine, swap.
+      if ( ( nextCP->dstRectP->y + nextCP->dstRectP->h ) < ourBottom ) {
+        __xSwap( sP, nextCP - (XRenderComp*) sP->cF, cP - (XRenderComp*) sP->cF ); // converts to indices
+        cP = nextCP;  // steal destination pointer
+      }
+      else {
+        break;
+      }
+    }
+  }
+}
+
+#if 0
+static void raiseToZ( Key desiredZ ) {
+  myZ = desiredZ
+  ourBottom = our dest rect Y + our H
+  for each zhIdx in zHeightIdxA (starting at the end of mapA, going backwards):
+    theirZ = cF[zhIdx]
+    if theirZ == myZ:
+      if their dest rect Y + their dest rect H < ourBottom
+        /* Since we're starting from the right side of the Z section,
+           we have to lower instead of raise to correct spot. */
+        lowerWithinSameZ()  // starting from the right side
+    if theirZ > myZ:
+      __xSwap( &cF[zhIdx++], &cF[currIdx] );
+    assert( false );  // the Zs are out of order!
+    // Assume their Z is always greater than or equal to our Z
+}
+    
+static void zSortUpward( desiredZ ) {
+  myZ = desiredZ
+  ourBottom = our dest rect Y + our H
+  for each zhIdx in zHeightIdxA (starting at the end of mapA, going backwards):
+    theirZ = cF[zhIdx]
+    if theirZ == myZ:
+      if their dest rect Y + their dest rect H < ourBottom
+        /* Since we're starting from the left side of the Z section,
+           we have to raise instead of lower to correct spot. */
+        raiseWithinSameZ()  // starting from the right side
+    if theirZ > myZ:
+      __xSwap( &cF[zhIdx++], &cF[currIdx] );
+    assert( false );  // the Zs are out of order!
+    // Assume their Z is always greater than or equal to our Z
+}
+#endif 
+
+
 void xRenderProcessMessage(System *sP, Message *msgP) {
+  switch( msgP->cmd ) {
+    case MSG_MOVED_Y_UP:
+      raiseWithinSameZ( sP, msgP->attn );
+      break;
+    case MSG_MOVED_Y_DOWN:
+    case MSG_MOVED_Z_UP:
+    case MSG_MOVED_Z_DOWN:
+    default:
+      break;
+  }
+
   unused_(sP);
   unused_(msgP);
 }
@@ -267,7 +331,7 @@ XClrFuncDef_(Render) {
     mapDel(&xP->offsetRectMP);
   }
 
-  arrayDel( (void**) &xP->zHeightIdxA );
+  mapDel( &xP->zHeightIdxMP );
 }
 
 static void fillRectFromStripmap(const Image *imgP, const Rect_* rectP, Color_* atlasPixelA, const U32 ATLAS_WIDTH) {
@@ -493,6 +557,11 @@ void updateCmSrcRectIndices(Image **imgPF, Atlas *atlasP) {
 XPostprocessCompsDef_(Render) {
   XRender *xP = (XRender*) sP;
 
+  // Ensure we've grabbed our shared maps by this point.
+  assert( xP->srcRectMP );
+  assert( xP->dstRectMP );
+  assert( xP->zHeightMP );
+
   // Texture atlas
   Atlas* atlasP = atlasNew(xP->imgPF);
   atlasPlanPlacements(atlasP);
@@ -521,26 +590,35 @@ XPostprocessCompsDef_(Render) {
     assert (cP);
     cP->dstRectP = (Rect_*) mapGet(xP->dstRectMP, *entityP);
     assert (cP->dstRectP);
-    cP->dstRectP->rect.w = cP->srcRectP->w;
-    cP->dstRectP->rect.h = cP->srcRectP->h;
+    cP->dstRectP->w = cP->srcRectP->w;
+    cP->dstRectP->h = cP->srcRectP->h;
+    cP->zHeightP    = mapGet( xP->zHeightMP, *entityP );
+    assert( cP->zHeightP );
   }
 
   // Figure out what the highest Z-height is and create an array that can hold it.
-  ZRect* zrectP    = xP->dstRectMP->mapA;
-  ZRect* zrectEndP = zrectP + xP->dstRectMP->population;
+  Key* zHeightP    = xP->zHeightMP->mapA;
+  Key* zHeightEndP = zHeightP + xP->zHeightMP->population;
   Key maxZ = 0;
-  for ( ; zrectP < zrectEndP; ++zrectP ) {
-    if ( zrectP->z > maxZ ) {
-      maxZ = zrectP->z;
+  for ( ; zHeightP < zHeightEndP; ++zHeightP ) {
+    if ( *zHeightP > maxZ ) {
+      maxZ = *zHeightP;
     }
   }
-
   if ( maxZ ) {
-    xP->zHeightIdxA = arrayNew( sizeof( Key ), maxZ + 1 );  // +1 allows a maxZ of 1 to index array[1] without subtracting by 1 every time
-    memset( xP->zHeightIdxA, 0,  sizeof( Key ) * ( maxZ + 1 ) );
+    xP->zHeightMP = mapNew( RAW_DATA, sizeof( U8 ), maxZ + 1 );  // +1 allows a maxZ of 1 to index array[1] without subtracting by 1 every time
+    memset( xP->zHeightMP->mapA, 0,  sizeof( U8 ) * ( maxZ + 1 ) );
     // The good news is, we don't have to worry about sorting here since
     // everything starts out deactivated.
     // Nor do we have to locate where they are for the same reason.
+    // TODO pick an xRenderRun that uses z-height
+    // TODO pick an xRenderPostActivate that does stuff
+    // TODO pick an xRenderPostDeactivate that does stuff
+  }
+  else {
+    // TODO pick an xRenderRun that doesn't use z-height
+    // TODO pick an xRenderPostActivate that doesn't do anything
+    // TODO pick an xRenderPostDeactivate that doesn't do anything
   }
 
   // Clean up.
@@ -554,6 +632,7 @@ XPostActivateFuncDef_(Render) {
   // TODO re-sort the z-height fray here
   // First, get the Z-height of the newly activated component.
   XRenderComp* newlyActivatedCompP = &( (XRenderComp*) sP->cF )[ changesP->newIdx ];
+  
 }
 
 XPostDeactivateFuncDef_(Render) {
@@ -566,9 +645,10 @@ XGetShareFuncDef_(Render) {
   XRender *xP = (XRender*) sP;
   // Get renderer
   xP->guiP = (Gui*) mapGetNestedMapPElem(shareMPMP, GUI_GENE_TYPE, GUI_KEY_, NONMAP_POINTER);
-  // Get window
-  xP->dstRectMP = mapGetNestedMapP(shareMPMP, DST_RECT);  
+
   // Get source rect and rect offset maps. Give both a chance to run if we enter this block.
+  xP->dstRectMP = mapGetNestedMapP(shareMPMP, DST_RECT);  
+  xP->zHeightMP = mapGetNestedMapP(shareMPMP, Z_HEIGHT);  
   xP->srcRectMP = mapGetNestedMapP(shareMPMP, SRC_RECT);  
   // If there's no animation system, there won't be a source rect shared map in master.
   xP->offsetRectMP = mapGetNestedMapP(shareMPMP, RECT_OFFSET);  
@@ -578,7 +658,6 @@ XPostMutateFuncDef_(Render) {
   unused_(sP);
   unused_(cP);
 }
-
 //======================================================
 // Render activity
 //======================================================
@@ -591,7 +670,7 @@ void xRenderRun(System *sP) {
   Renderer_ *rendererP = xP->guiP->rendererP;
   clearScreen(rendererP);
   for (; cP < cEndP; cP++) {
-    copy_(rendererP, xP->atlasTextureP, cP->srcRectP, &cP->dstRectP->rect);
+    copy_(rendererP, xP->atlasTextureP, cP->srcRectP, cP->dstRectP);
   }
   present_(rendererP);
 }

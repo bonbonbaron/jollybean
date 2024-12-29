@@ -57,3 +57,110 @@ In tileD, i might be able to determine layer-ordering by the layer index in the 
 I hate to say this, but I think I need to add a post-de/activation function for all my systems. I knowwwww it sucks. Only other way is to check every frame, which seems a poor use of time. I don't see any other way around it.
 
 Another thing that sucks is that the Z-heights have to be a poitner, not a raw valuek, to a shared map. But mostly that's okay, because we're only ever going to access them either when 1) changing the Z-height of an entity, and/or 2) re-sorting the Z-height members.
+
+So now that I've got the zheight map set up, I need to arrange the activation algorithm:
+
+With e at the end of activated section,
+
+shouldSwap():
+  if cP == cF:
+    return false;  // don't swap again
+  if cP->zheight == cOtherP->zheight:
+    return false;
+  return true;
+
+I don't like the idea of having a zheight map anymore. By the time we've gotten the map's object and figured things out, we could've already landed in the right spot... But the alternative, updating TONS of entity-component mappings, is at least as nasty. 
+
+This assumes we're only comparing in the upward direction of the same Z layer.
+zRaiseWithinSameHeight(firstIdx, lastIdx, z ):
+  jumpAmt = ( lastIdx - firstIdx ) >> 1;
+  while ( jumpAmt && currZ == z ) {
+    nextCP = &cF[ currIdx + jumpAmt ]
+    if ( nextCP->dstRectP->y + *nextCP->dstRectP->h < ourBottom ) {
+      __xSwap( nextCP, currCP )
+    }
+  }
+}
+
+TODO: in render unit test, write a function to expect that one component's pointer is lower than the other's as well as its Z being <= the other's and (if Zs are the same) its bottom is higher than the other's... and the same for the reverse
+
+This assumes we're only comparing in the downward direction of the same Z layer.
+
+/*
+  Lowering within same Z looks like this:
+    
+    guy 1      <----- ME
+             guy 2
+                              guy 4
+                                      guy 5  
+*/
+
+lowerWithinSameZ( cP ) {
+  for ( prevCP = currCP - 1 ; prevCP >= cF && prevCP->z == cP->z ; --prevCP ) {
+    if ( ( prevCP->dstRectP->y + prevCP->dstRectP->h ) < ourBottom ) {
+      break;  // if their bottom is further up than me, stop swapping
+    }
+    else {
+      __xSwap( prevCP, currCP );
+    }
+  }
+}
+
+This assumes we're only comparing in the downward direction of the same Z layer.
+
+/*
+  Raising within same Z looks like this:
+    
+    guy 1
+             guy 2
+                              guy 4
+                       ME ------>     guy 5  
+*/
+
+raiseWithinSameZ( cP ) {
+  firstPaused = cF + frayGetFirstPaused(cF);
+  for ( nextCP = currCP + 1 ; nextCP < firstPaused && nextCP->z == cP->z ; ++nextCP ) {
+    if ( ( nextCP->dstRectP->y + nextCP->dstRectP->h ) < ourBottom ) {
+      __xSwap( nextCP, currCP ); // if their bottom is farther up than me, swap.
+    }
+    else {
+      break;
+    }
+  }
+}
+
+raiseToZ( desiredZ ) {
+  myZ = desiredZ
+  ourBottom = our dest rect Y + our H
+  for each zhIdx in zHeightIdxA (starting at the end of mapA, going backwards):
+    theirZ = cF[zhIdx]
+    if theirZ == myZ:
+      if their dest rect Y + their dest rect H < ourBottom
+        /* Since we're starting from the right side of the Z section,
+           we have to lower instead of raise to correct spot. */
+        lowerWithinSameZ()  // starting from the right side
+    if theirZ > myZ:
+      __xSwap( &cF[zhIdx++], &cF[currIdx] );
+    assert( false );  // the Zs are out of order!
+    // Assume their Z is always greater than or equal to our Z
+}
+    
+zSortUpward( desiredZ ) {
+  myZ = desiredZ
+  ourBottom = our dest rect Y + our H
+  for each zhIdx in zHeightIdxA (starting at the end of mapA, going backwards):
+    theirZ = cF[zhIdx]
+    if theirZ == myZ:
+      if their dest rect Y + their dest rect H < ourBottom
+        /* Since we're starting from the left side of the Z section,
+           we have to raise instead of lower to correct spot. */
+        raiseWithinSameZ()  // starting from the right side
+    if theirZ > myZ:
+      __xSwap( &cF[zhIdx++], &cF[currIdx] );
+    assert( false );  // the Zs are out of order!
+    // Assume their Z is always greater than or equal to our Z
+}
+
+
+
+TODO and then you're gonna have to handle the deactivation situation as well.

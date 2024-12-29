@@ -34,32 +34,30 @@ static void _printColormap(Colormap *cmP) {
   }
 }
 
-static void setColormapPath( char* dstPath, char* lastFolder, Colormap *cmP) {
+static void setColormapPath( char* dstPath, Colormap *cmP) {
   // Make target filepath to save this stripmap in.
-  const static char BASE_PATH[] = "Gene/Body/Image/Colormap/%s/%s";
+  const static char BASE_PATH[] = "Image/Colormap/%s";
   sprintf( dstPath, BASE_PATH, 
       cmP->bpp == 1 ? "1bpp" :
-      cmP->bpp == 2 ? "2bpp" : "4bpp",
-      lastFolder );
+      cmP->bpp == 2 ? "2bpp" : "4bpp" );
 }
 
-static void setColorPalettePath( char* dstPath, char* lastFolder, ColorPalette *cpP ) {
+static void setColorPalettePath( char* dstPath, ColorPalette *cpP ) {
   // Make target filepath to save this stripmap in.
-  const static char BASE_PATH[] = "Gene/Body/Image/ColorPalette/%s/%s";
+  const static char BASE_PATH[] = "Image/ColorPalette/%s";
   sprintf( dstPath, BASE_PATH, 
       cpP->nColors <=  2 ? "1bpp" :
-      cpP->nColors <=  4 ? "2bpp" : "4bpp",
-      lastFolder );
+      cpP->nColors <=  4 ? "2bpp" : "4bpp" );
 }
 
 
 static void writeColorPalette(char *imgNameA, ColorPalette *cpP, U8 verbose) {
   char directoryPath[500];
-  setColorPalettePath( directoryPath, "src", cpP ); 
-  FILE *fP = getBuildFile( directoryPath, imgNameA, "ColorPalette.c", verbose );
+  setColorPalettePath( directoryPath, cpP ); 
+  FILE *fP = getSrcFile( directoryPath, imgNameA, "ColorPalette.c", verbose );
   assert(fP);
   // Write header.
-  fprintf(fP, "#include \"xRender.h\"\n\n");
+  fprintf(fP, "#include \"x/xRender.h\"\n\n");
   // Palette Array
   fprintf(fP, "Color_ %sPaletteA[] = {\n", imgNameA);
   writeRawData8(fP, (U8*) cpP->colorA, cpP->nColors * sizeof(Color_));
@@ -72,39 +70,13 @@ static void writeColorPalette(char *imgNameA, ColorPalette *cpP, U8 verbose) {
   fclose(fP);
 }
 
-static void writeColormapHeader(char *imgNameA, Colormap *cmP, U8 verbose) {
-  char directoryPath[500];
-  setColormapPath( directoryPath, "include", cmP ); 
-  FILE *fP = getBuildFile(directoryPath, imgNameA, "Colormap.h", verbose);
-  assert(fP);
-  // Write header.
-  fprintf(fP, "#include \"xRender.h\"\n\n");
-  // Flip set
-  fprintf(fP, "extern Colormap %sColormap;\n\n", imgNameA);
-  // Close file.
-  fclose(fP);
-}
-
-static void writeColorPaletteHeader(char *imgNameA, ColorPalette* cpP, U8 verbose) {
-  char directoryPath[500];
-  setColorPalettePath( directoryPath, "include", cpP ); 
-  FILE *fP = getBuildFile(directoryPath, imgNameA, "ColorPalette.h", verbose);
-  assert(fP);
-  // Write header.
-  fprintf(fP, "#include \"xRender.h\"\n\n");
-  // Flip set
-  fprintf(fP, "extern ColorPalette %sColorPalette;\n", imgNameA);
-  // Close file.
-  fclose(fP);
-}
-
 static void writeColormap(char *imgNameA, Colormap *cmP, U8 verbose) {
   char directoryPath[500];
-  setColormapPath( directoryPath, "src", cmP ); 
-  FILE *fP = getBuildFile(directoryPath, imgNameA, "Colormap.c", verbose);
+  setColormapPath( directoryPath, cmP ); 
+  FILE *fP = getSrcFile(directoryPath, imgNameA, "Colormap.c", verbose);
   assert(fP);
   // Make Title format of image name.
-  fprintf(fP, "#include \"xRender.h\"\n\n");
+  fprintf(fP, "#include \"x/xRender.h\"\n\n");
   // Write stripmap and stripset data.
   writeStripDataInFile(fP, verbose, imgNameA, cmP->sdP);
   // Write colormap
@@ -134,12 +106,12 @@ void writeImage(char *imgNameA, U8 verbose) {
   if (verbose) {
     printf("writing image...\n");
   }
-  FILE *fP = getBuildFile("Gene/Body/Image/src", imgNameA, "Img.c", verbose);
+  FILE *fP = getSrcFile("Image/", imgNameA, "Img.c", verbose);
   assert(fP);
   // Make Title format of image name.
-  fprintf(fP, "#include \"xRender.h\"\n");
-  fprintf(fP, "#include \"%sColormap.h\"\n", imgNameA);
-  fprintf(fP, "#include \"%sColorPalette.h\"\n\n", imgNameA);
+  fprintf(fP, "#include \"x/xRender.h\"\n");
+  fprintf(fP, "extern Colormap %sColormap;\n", imgNameA);
+  fprintf(fP, "extern ColorPalette %sColorPalette;\n", imgNameA);
   // Write stripmap and stripset data.
   // Write colormap
   fprintf(fP, "Image %sImg = {\n", imgNameA);
@@ -150,17 +122,6 @@ void writeImage(char *imgNameA, U8 verbose) {
   fprintf(fP, "};\n\n");
   fclose(fP);
 }
-
-
-void writeImageHeader(char *imgNameA, U8 verbose) {
-  FILE *fP = getBuildFile("Gene/Body/Image/include", imgNameA, "Img.h", verbose);
-  // Write header.
-  fprintf(fP, "#include \"xRender.h\"\n\n");
-  fprintf(fP, "extern Image %sImg;\n", imgNameA);
-  // Close file.
-  fclose(fP);
-}
-
 
 // =========================================================================================
 // When you're building your color palette, this adds colors that don't already exist in it.
@@ -476,7 +437,7 @@ void img(char *entityNameP, AnimJsonData *animP, U8 verbose) {
   Colormap cm = {0};
 
   // Only supports PNG for now
-  char* imgFilePathP = getSrcFilePath("Body/Graybody/Colormap", entityNameP, ".png", verbose); 
+  char* imgFilePathP = getResourceFilePath("Image/", entityNameP, ".png", verbose); 
 
   // Rule them out one by one till you find the culprit!
   // Read PNG into colormap and color palette in one fell swoop.
@@ -495,11 +456,8 @@ void img(char *entityNameP, AnimJsonData *animP, U8 verbose) {
   //
   //
   writeColormap(entityNameP, &cm, verbose);  // this doesn't seem right. Lots of people can share a color palette.
-  writeColormapHeader(entityNameP, &cm, verbose);  // this doesn't seem right. Lots of people can share a color palette.
   writeColorPalette(entityNameP, &cp, verbose);  // this doesn't seem right. Lots of people can share a color palette.
-  writeColorPaletteHeader(entityNameP, &cp, verbose);  // this doesn't seem right. Lots of people can share a color palette.
   writeImage(entityNameP, verbose);
-  writeImageHeader(entityNameP, verbose);
 
   // Verify input independently of how the output treats it
   if (verbose) {

@@ -194,7 +194,7 @@ static void findCollisionRects(Colormap *cmP, AnimJsonData *animP, RectNode **re
 
 // Write a collision grid to a C file.
 void writeCollisionGridMap(char *entityName, Colormap *cmP, U8 verbose) {
-  FILE *fP = getBuildFile("Gene/Body/Collision/Grid/src", entityName, "CollGrid.c", verbose);
+  FILE *fP = getBuildFile("Collision/Grid/src", entityName, "CollGrid.c", verbose);
   assert(fP);
   writeStripDataInFile(fP, verbose, entityName, cmP->sdP);
   if (fP) {
@@ -205,11 +205,11 @@ void writeCollisionGridMap(char *entityName, Colormap *cmP, U8 verbose) {
 // Write a map of rectangle arrays to a C file.
 void writeCollisionRectMap(char *entityName, AnimJsonData *animP, RectNode *collTreeP, U8 verbose) {
   // char *filepath = NULL;
-  FILE *fP = getBuildFile("Gene/Body/Collision/Rect/src", entityName, "ColRect.c", verbose);
+  FILE *fP = getBuildFile("Collision/Rect/src", entityName, "ColRect.c", verbose);
   assert(fP);
 
   U32 nKeyValPairs = 0;
-  fprintf(fP, "#include \"xCollision.h\"\n\n");
+  fprintf(fP, "#include \"x/xCollision.h\"\n\n");
   // Write collision rect arrays.
   for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
     // Collision rect arrays

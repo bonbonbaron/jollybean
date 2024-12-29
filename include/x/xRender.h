@@ -5,6 +5,8 @@
 #include "data/bt.h"
 #include "jb.h"
 
+typedef enum { MSG_MOVED_Y_UP = N_XMAIL_BUILTIN_CMDS, MSG_MOVED_Y_DOWN, MSG_MOVED_Z_UP, MSG_MOVED_Z_DOWN } XRenderMsgCmd;
+
 // TODO is both being 1 a bug, or is that the *inner* key value?
 #define GUI_KEY_ (1)
 
@@ -54,7 +56,8 @@ typedef struct {
 
 typedef struct {
   Rect_ *srcRectP;
-  ZRect *dstRectP;
+  Rect_ *dstRectP;
+  Key   *zHeightP;
 } XRenderComp;
 
 typedef struct {} XRenderMutation;
@@ -69,8 +72,9 @@ typedef struct {
   Map           *offsetRectMP;
   Map           *srcRectMP;   // shortcut-pointer to shared array of source rectangles
   Map           *dstRectMP;   // shortcut-pointer to shared array of destination rectangles
+  Map           *zHeightMP;  // derived inner source rectangle map from parent system
   Map           *xRenderCompSourceMP;
-  Key           *zHeightIdxA;
+  Map           *zHeightIdxMP;
 } XRender;
 
 // Images

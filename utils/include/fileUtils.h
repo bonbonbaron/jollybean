@@ -26,8 +26,10 @@ void writeRawData16(FILE *fP, U16 *byteA, U16 nBytes);
 void writeRawData32(FILE *fP, U32 *byteA, U32 nBytes);
 char* getSrcFilePath(char *srcLocalDirName, char *srcFileName, char *srcFileSuffix, U8 verbose);
 char* getBuildFilePath(char *buildLocalDirName, char *buildFileName, char *buildFileSuffix, U8 verbose);
+char* getResourceFilePath(char *resourceLocalDirName, char *resourceFileName, char *resourceFileSuffix, U8 verbose);
 FILE* getSrcFile(char *srcLocalDirName, char *srcFileName, char *srcFileSuffix, U8 verbose);
 FILE* getBuildFile(char *buildLocalDirName, char *buildFileName, char *buildFileSuffix, U8 verbose);
+FILE* getResourceFile(char *resourceLocalDirName, char *resourceFileName, char *resourceFileSuffix, U8 verbose);
 
 extern char JB_DIR_NAME[];
 extern char SRC_DIR_NAME[];

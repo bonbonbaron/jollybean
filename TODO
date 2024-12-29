@@ -1,3 +1,30 @@
+  SUN: dev and unit test z-heights 
+       sell rest of the furniture
+       play 2d games
+       run with woody @ dog park
+  MON: dev tilemaps
+  TUE: unit test tilemaps
+  WED: dev & unit test collision system 
+  SAT: dev & unit test timer system
+  SUN: dev master system
+  NEXT WEEKEND: unit test master system
+  WEEKEND AFTER THAT: integration test master system
+  WEEKEND AFTER THAT: dev gene editor tool
+  WEEKEND AFTER THAT: dev tilemap pipeline
+  FEBRUARY: study sound production
+  MARCH: dev & unit test sound production
+  APRIL: study midi
+  MAY: dev & unit test midi
+  JUNE: integration & valgrind test the whole game engine
+
+
+COLLISION:
+  * shares z-height
+  * offsets from dstRect is exclusive. Nobody else needs it but coll system.
+
+RENDER:
+  * shares z-height
+
 Think of foolproofing actions in 3 steps:
 
   0. Gene's void* type-safety

@@ -79,8 +79,8 @@ XPostMutateFuncDef_(Anim) {
   assert( _cP->srcRectP != NULL );  // Make sure components can see the shared source rectangles.
   _cP->srcRectP->x    = _cP->currStrip.frameA[0].rect.x;  // mailbox should get "offset" changes to this beforehand
   _cP->srcRectP->y    = _cP->currStrip.frameA[0].rect.y;  // mailbox should get "offset" changes to this beforehand
-  _cP->srcRectP->w    = _cP->dstRectP->rect.w = _cP->currStrip.frameA[0].rect.w;
-  _cP->srcRectP->h    = _cP->dstRectP->rect.h = _cP->currStrip.frameA[0].rect.h;
+  _cP->srcRectP->w    = _cP->dstRectP->w = _cP->currStrip.frameA[0].rect.w;
+  _cP->srcRectP->h    = _cP->dstRectP->h = _cP->currStrip.frameA[0].rect.h;
   _cP->timeLeft       = _cP->currStrip.frameA[0].duration;
 }
 
@@ -140,8 +140,8 @@ void xAnimRun(System *sP) {
       // Advance the animation frame in whatever direction we're going.
       cP->timeLeft = cP->currStrip.frameA[cP->currFrameIdx].duration;
       *cP->srcRectP = cP->currStrip.frameA[cP->currFrameIdx].rect;
-      cP->dstRectP->rect.w = cP->srcRectP->w;
-      cP->dstRectP->rect.h = cP->srcRectP->h;
+      cP->dstRectP->w = cP->srcRectP->w;
+      cP->dstRectP->h = cP->srcRectP->h;
     }
   }
 }

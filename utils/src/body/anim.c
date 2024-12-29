@@ -274,7 +274,7 @@ FrameNode* getFrameNode(FrameNode *rootP, U32 idx) {
 }
 
 void writeAnimJsonData(char *entityName, AnimJsonData *animP, U8 verbose) {
-  FILE *fP = getBuildFile("Gene/Body/Animation/src", entityName, "Anim.c", verbose); 
+  FILE *fP = getSrcFile("Animation", entityName, "Anim.c", verbose); 
   assert(fP);
   Key nKeyValPairs = 0;
   fprintf(fP, "#include \"xAnim.h\"\n");
@@ -313,22 +313,12 @@ void writeAnimJsonData(char *entityName, AnimJsonData *animP, U8 verbose) {
   fclose(fP);
 }
 
-void writeAnimHeader(char *entityName, AnimJsonData *animP, U8 verbose) {
-  FILE *fP = getBuildFile("Gene/Body/Animation/include", entityName, "Anim.h", verbose); 
-  assert(fP);
-  fprintf(fP, "#include \"xAnim.h\"\n");
-  for (TagNode *tagP = animP->tagNodeA; tagP != NULL; tagP = tagP->nextP) {
-    fprintf(fP, "extern AnimStrip %sAnimStrip_%s;\n", entityName, tagP->name);
-  }
-  fclose(fP);
-}
-
 /* anim() outputs an AnimJsonData** in case the caller wants to use its 
    frame data to look for collision rectangles. */
 void anim (char *entityNameP, U8 verbose, AnimJsonData **animPP) {
   assert (entityNameP && animPP);
 
-  FILE *fP = getSrcFile("Body/Graybody/Animation", entityNameP, ".json", verbose); 
+  FILE *fP = getResourceFile("Animation", entityNameP, ".json", verbose); 
   assert(fP);
 
   // Get file size
@@ -336,7 +326,7 @@ void anim (char *entityNameP, U8 verbose, AnimJsonData **animPP) {
   int nBytes = ftell(fP);
   assert (nBytes > 0);
   if (verbose) {
-    printf("~/jb/src/Body/GrayBody/Animation/%s.json is %d bytes.\n", entityNameP, nBytes);
+    printf("~/jb/resource/Animation/%s.json is %d bytes.\n", entityNameP, nBytes);
   }
   fseek(fP, 0, SEEK_SET);
 
@@ -360,7 +350,6 @@ void anim (char *entityNameP, U8 verbose, AnimJsonData **animPP) {
     printResults(animP);
   }
   writeAnimJsonData(entityNameP, animP, verbose);
-  writeAnimHeader(entityNameP, animP, verbose);
 
   // Return animation if it's good; otherwise free it and return NULL.
   *animPP = animP;

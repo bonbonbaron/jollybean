@@ -1,16 +1,15 @@
 #include "tau.h"
 #include "x/xRender.h"
 // Images we're testing xRender with
-#include "blehColormap.h"
-#include "blehColorPalette.h"
-#include "heckColormap.h"
-#include "heckColorPalette.h"
-#include "redColormap.h"
-#include "redColorPalette.h"
 
-#define N_FRAMES 50
+extern Image redImg;
+extern Image blehImg;
+extern Image heckImg;
 
-Image imgA[] = {
+#define N_FRAMES (50)
+
+Image* imgA[] = {
+#if 0
   {
     .state = 0,
     .sortedRectIdx = 0,
@@ -29,7 +28,12 @@ Image imgA[] = {
     .cmP = &heckColormap,
     .cpP = &heckColorPalette
   }
+#else
+  &redImg,
+  &blehImg,
+  &heckImg
 };
+#endif
 
 void moveEntity( Entity entity, U32 x, U32 y ) {
 }
@@ -74,11 +78,12 @@ TEST_F_SETUP(Tau) {
   // 6) Send them into the system in the setup stage
   // 7) 
   // ************ SHARES **************
-  tau->shareMPMP = mapNew( MAP_POINTER, sizeof(Map*), 4);
+  tau->shareMPMP = mapNew( MAP_POINTER, sizeof(Map*), 5);
 
   // Make the share inner map. This maps entities to actual, raw data.
   Map* sharedSrcRectMP = mapNew( RAW_DATA, sizeof(Rect_), tau->nEntities);
   Map* sharedDstRectMP = mapNew( RAW_DATA, sizeof(Rect_), tau->nEntities);
+  Map* sharedZHeightMP = mapNew( RAW_DATA, sizeof(U8), tau->nEntities);
   // Map* sharedOffsetMP  = mapNew( RAW_DATA, sizeof(RectOffset), tau->nEntities);
   Map* sharedGuiMP     = mapNew( NONMAP_POINTER, sizeof(Gui*), 1);
 
@@ -88,16 +93,18 @@ TEST_F_SETUP(Tau) {
 
   // Now populate the entities' shared rectangles.
   // You don't know what your source rect is until you mutate.
+  const static U8 DEFAULT_Z = 2;
   forEachEntity_( tau->nEntities ) {
     Rect_ currSrcRect = { 0 };  // the post-mutate function will change this value before rendering
     mapSet(sharedSrcRectMP, entity, &currSrcRect);
     Rect_ currDstRect = { 0 };  // the post-mutate function will change this value before renderating
     mapSet(sharedDstRectMP, entity, &currDstRect);
-
+    mapSet(sharedZHeightMP, entity, &DEFAULT_Z );  // start everybody off at Z-height = 2
   }
   // Map the inner share map to key value "0" in the outer shared map.
   mapSet(tau->shareMPMP, SRC_RECT, &sharedSrcRectMP);
   mapSet(tau->shareMPMP, DST_RECT, &sharedDstRectMP);
+  mapSet(tau->shareMPMP, Z_HEIGHT, &sharedZHeightMP);
   //
   // mapSet(tau->shareMPMP, RECT_OFFSET, &sharedOffsetMP); 
   mapSet(tau->shareMPMP, GUI_KEY_, &sharedGuiMP);
@@ -106,7 +113,7 @@ TEST_F_SETUP(Tau) {
 
   // Set the stripsets and stripmaps up since xRender relies on that already being done by xMaster.
   for (int i = 0; i < tau->nEntities; ++i ) {
-    stripIni( imgA[i].cmP->sdP );
+    stripIni( imgA[i]->cmP->sdP );
   }
 
   // If ordering is sacred, then we need fixed functions that'll encapsulate this sacred ordering for us.
@@ -116,7 +123,7 @@ TEST_F_SETUP(Tau) {
     Image* imgP = &imgA[entity - 1];
     xAddEntityData(&tau->xP->system, entity, RENDER | IMAGE, &imgP );
 #else
-    xAddEntityData(&tau->xP->system, entity, RENDER | IMAGE, &imgA[ entity - 1 ]);
+    xAddEntityData(&tau->xP->system, entity, RENDER | IMAGE, imgA[ entity - 1 ]);
 #endif
   }
 
@@ -125,8 +132,8 @@ TEST_F_SETUP(Tau) {
 
 TEST_F_TEARDOWN(Tau) {
   for (int i = 0; i < tau->nEntities; ++i ) {
-    stripClr( imgA[i].cmP->sdP );
-    imgA[i].state = 0;
+    stripClr( imgA[i]->cmP->sdP );
+    imgA[i]->state = 0;
   }
   mapOfNestedMapsDel(&tau->shareMPMP );
   xClr( &tau->xP->system );
@@ -155,6 +162,12 @@ TEST_F(Tau, xRenderRun_heck) {
 }
 
 TEST_F(Tau, somethingfornow) {
+  for (int i = 0; i < N_FRAMES; ++i) {
+    xRun(&tau->xP->system);
+  }
+}
+
+TEST_F(Tau, moveUpWhileDeactivated) {
   for (int i = 0; i < N_FRAMES; ++i) {
     xRun(&tau->xP->system);
   }
