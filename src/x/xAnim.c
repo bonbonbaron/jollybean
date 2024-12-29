@@ -64,7 +64,7 @@ XGetShareFuncDef_(Anim) {
     entity = xGetEntityByVoidComponentPtr(sP, (void*) cP);
     assert (entity);
     cP->srcRectP = (Rect_*) mapGet(xP->srcRectMP, entity);
-    cP->dstRectP = (ZRect*) mapGet(xP->dstRectMP, entity);
+    cP->dstRectP = (Rect_*) mapGet(xP->dstRectMP, entity);
     assert (cP->srcRectP);
     assert (cP->dstRectP);
   }

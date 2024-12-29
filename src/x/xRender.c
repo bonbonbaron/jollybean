@@ -519,7 +519,7 @@ XPostprocessCompsDef_(Render) {
   for (; entityP < entityEndP; ++entityP) {
     cP = (XRenderComp*) xGetCompPByEntity(sP, *entityP);
     assert (cP);
-    cP->dstRectP = (ZRect*) mapGet(xP->dstRectMP, *entityP);
+    cP->dstRectP = (Rect_*) mapGet(xP->dstRectMP, *entityP);
     assert (cP->dstRectP);
     cP->dstRectP->rect.w = cP->srcRectP->w;
     cP->dstRectP->rect.h = cP->srcRectP->h;
