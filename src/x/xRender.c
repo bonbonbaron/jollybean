@@ -248,7 +248,7 @@ void xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void 
   }
 }
 
-static void raiseWithinSameZ( System* sP, Entity entity ) {
+static void raiseWithinZ( System* sP, Entity entity ) {
   if ( _frayElemIsActive( sP->cF, *_getCompIdxPByEntity(sP, entity) ) ) {
     XRenderComp* firstPausedCP = sP->cF + _frayGetFirstPausedIdx(sP->cF);
     XRenderComp* cP = xGetCompPByEntity( sP, entity );
@@ -266,7 +266,7 @@ static void raiseWithinSameZ( System* sP, Entity entity ) {
   }
 }
 
-static void lowerWithinSameZ( System* sP, Entity entity ) {
+static void lowerWithinZ( System* sP, Entity entity ) {
   if ( _frayElemIsActive( sP->cF, *_getCompIdxPByEntity(sP, entity) ) ) {
     XRenderComp* cP = xGetCompPByEntity( sP, entity );
     S32 ourBottom = cP->dstRectP->y + cP->dstRectP->h;
@@ -284,7 +284,7 @@ static void lowerWithinSameZ( System* sP, Entity entity ) {
 }
 
 #if 0
-static void raiseToZ( Key desiredZ ) {
+static void raiseZ( Key desiredZ ) {
   myZ = desiredZ
   ourBottom = our dest rect Y + our H
   for each zhIdx in zHeightIdxA (starting at the end of mapA, going backwards):
@@ -293,7 +293,7 @@ static void raiseToZ( Key desiredZ ) {
       if their dest rect Y + their dest rect H < ourBottom
         /* Since we're starting from the right side of the Z section,
            we have to lower instead of raise to correct spot. */
-        lowerWithinSameZ()  // starting from the right side
+        lowerWithinZ()  // starting from the right side
     if theirZ > myZ:
       __xSwap( &cF[zhIdx++], &cF[currIdx] );
     assert( false );  // the Zs are out of order!
@@ -309,7 +309,7 @@ static void zSortUpward( desiredZ ) {
       if their dest rect Y + their dest rect H < ourBottom
         /* Since we're starting from the left side of the Z section,
            we have to raise instead of lower to correct spot. */
-        raiseWithinSameZ()  // starting from the right side
+        raiseWithinZ()  // starting from the right side
     if theirZ > myZ:
       __xSwap( &cF[zhIdx++], &cF[currIdx] );
     assert( false );  // the Zs are out of order!
@@ -321,10 +321,10 @@ static void zSortUpward( desiredZ ) {
 void xRenderProcessMessage(System *sP, Message *msgP) {
   switch( msgP->cmd ) {
     case MSG_MOVED_Y_UP:
-      raiseWithinSameZ( sP, msgP->attn );
+      raiseWithinZ( sP, msgP->attn );
       break;
     case MSG_MOVED_Y_DOWN:
-      lowerWithinSameZ( sP, msgP->attn );
+      lowerWithinZ( sP, msgP->attn );
       break;
     case MSG_MOVED_Z_UP:
     case MSG_MOVED_Z_DOWN:

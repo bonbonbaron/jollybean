@@ -29,31 +29,54 @@ typedef struct Tau {
   XRenderComp *renderCompF;
 } Tau;
 
-void sendMsg( Tau* tau, Entity entity, S32 y ) {
+static void sendMovementMsg( Tau* tau, Entity entity, S32 y ) {
   if ( y < 0 ) {
     mailboxWrite( tau->xP->system.mailboxF, RENDER, entity, MSG_MOVED_Y_UP, 0, NULL );
   }
   else if ( y > 0 ) {
     mailboxWrite( tau->xP->system.mailboxF, RENDER, entity, MSG_MOVED_Y_DOWN, 0, NULL );
   }
+  // else, don't bother writing anything at all. We dgaf if it goes left or right.
 }
 
-void moveEntity( Tau* tau, Entity entity, S32 x, S32 y ) {
+static void sendElevationMsg( Tau* tau, Entity entity, S32 z ) {
+  if ( z < 0 ) {
+    mailboxWrite( tau->xP->system.mailboxF, RENDER, entity, MSG_MOVED_Z_DOWN, 0, NULL );
+  }
+  else if ( z > 0 ) {
+    mailboxWrite( tau->xP->system.mailboxF, RENDER, entity, MSG_MOVED_Z_UP, 0, NULL );
+  }
+  // else, don't bother writing anything at all. We dgaf if it goes left or right.
+}
+
+static void elevateEntity( Tau* tau, Entity entity, S32 z ) {
+  Map *sharedZHeightMP = mapGetNestedMapP( tau->shareMPMP, Z_HEIGHT );
+  assert( sharedZHeightMP );
+  U8* zP = (U8*) mapGet( sharedZHeightMP, entity );
+  assert( zP );
+  *zP += z;
+}
+
+static void moveEntity( Tau* tau, Entity entity, S32 x, S32 y ) {
   Map *sharedDstRectMP = mapGetNestedMapP( tau->shareMPMP, DST_RECT );
   assert( sharedDstRectMP );
   Rect_* rectP = (Rect_*) mapGet( sharedDstRectMP, entity );
   assert( rectP );
   rectP->x += x;
   rectP->y += y;
-  // else, don't bother writing anything at all. We dgaf if it goes left or right.
 }
 
-void moveAndSend( Tau* tau, Entity entity, S32 x, S32 y ) {
+static void moveAndSend( Tau* tau, Entity entity, S32 x, S32 y ) {
   moveEntity( tau, entity, x, y );
-  sendMsg( tau, entity, y );
+  sendMovementMsg( tau, entity, y );
 }
 
-void runAndCheckZOrder( Tau* tau ) {
+static void elevateAndSend( Tau* tau, Entity entity, S32 z ) {
+  elevateEntity( tau, entity, z );
+  sendElevationMsg( tau, entity, z );
+}
+
+static void runAndCheckZOrder( Tau* tau ) {
   xRun(&tau->xP->system);  
   System *sP = &tau->xP->system;
 
@@ -177,26 +200,45 @@ TEST_F(Tau, somethingfornow) {
 }
 
 TEST_F(Tau, moveUpWhileDeactivated) {
-  moveEntity( tau, 1, 0, -1 );
+  moveAndSend( tau, 1, 0, -1 );
   runAndCheckZOrder( tau );
 }
 
 TEST_F(Tau, moveUpWhileOneIsActivated) {
   xActivateComponentByEntity( tau->sP, 1 );
-  moveEntity( tau, 1, 0, -1 );
+  moveAndSend( tau, 1, 0, -1 );
   for (int i = 0; i < N_FRAMES; ++i) {
     runAndCheckZOrder( tau );
   }
 }
-#endif
 
 TEST_F(Tau, moveUpWhileMultipleAreActivated) {
   xActivateComponentByEntity( tau->sP, 1 );
   xActivateComponentByEntity( tau->sP, 2 );
   xActivateComponentByEntity( tau->sP, 3 );
-  moveEntity( tau, 3, 0, 10 );
+  moveAndSend( tau, 3, 0, 10 );
   for (int i = 0; i < N_FRAMES; ++i) {
-    moveEntity( tau, 2, 0, -1 );
+    moveAndSend( tau, 2, 0, -1 );
+    runAndCheckZOrder( tau );
+  }
+}
+
+TEST_F(Tau, moveDownWhileMultipleAreActivated) {
+  xActivateComponentByEntity( tau->sP, 1 );
+  xActivateComponentByEntity( tau->sP, 2 );
+  xActivateComponentByEntity( tau->sP, 3 );
+  moveAndSend( tau, 3, 0, 10 );
+  for (int i = 0; i < N_FRAMES; ++i) {
+    moveAndSend( tau, 2, 0, 1 );
+    runAndCheckZOrder( tau );
+  }
+}
+#endif
+
+TEST_F(Tau, elevateWhileOneIsActivated) {
+  elevateAndSend( tau, 1, 0, -1 );
+  xActivateComponentByEntity( tau->sP, 1 );
+  for (int i = 0; i < N_FRAMES; ++i) {
     runAndCheckZOrder( tau );
   }
 }
