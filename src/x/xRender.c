@@ -625,8 +625,8 @@ XPostprocessCompsDef_(Render) {
     }
   }
   if ( maxZ ) {
-    xP->zHeightMP = mapNew( RAW_DATA, sizeof( U8 ), maxZ + 1 );  // +1 allows a maxZ of 1 to index array[1] without subtracting by 1 every time
-    memset( xP->zHeightMP->mapA, 0,  sizeof( U8 ) * ( maxZ + 1 ) );
+    xP->zHeightIdxMP = mapNew( RAW_DATA, sizeof( U8 ), maxZ + 1 );  // +1 allows a maxZ of 1 to index array[1] without subtracting by 1 every time
+    memset( xP->zHeightIdxMP->mapA, 0,  sizeof( U8 ) * ( maxZ + 1 ) );
     // The good news is, we don't have to worry about sorting here since
     // everything starts out deactivated.
     // Nor do we have to locate where they are for the same reason.
