@@ -1,46 +1,21 @@
 #include "tau.h"
 #include "x/xRender.h"
-// Images we're testing xRender with
 
+// Images we're testing xRender with
 extern Image redImg;
 extern Image blehImg;
 extern Image heckImg;
 
-#define N_FRAMES (50)
 
 Image* imgA[] = {
-#if 0
-  {
-    .state = 0,
-    .sortedRectIdx = 0,
-    .cmP = &redColormap,
-    .cpP = &redColorPalette
-  },
-  {
-    .state = 0,
-    .sortedRectIdx = 0,
-    .cmP = &blehColormap,
-    .cpP = &blehColorPalette
-  },
-  {
-    .state = 0,
-    .sortedRectIdx = 0,
-    .cmP = &heckColormap,
-    .cpP = &heckColorPalette
-  }
-#else
   &redImg,
   &blehImg,
   &heckImg
 };
-#endif
-
-void moveEntity( Entity entity, U32 x, U32 y ) {
-}
 
 // We have to make these constants so the compiler doesn't cry about the array initializers not having constant sizes.
+#define N_FRAMES (50)
 #define N_MUTATIONS_PER_ENTITY (5)
-
 #define forEachEntity_(nEntities_) for (Entity entity = 1; entity <= nEntities_; ++entity)
 
 TAU_MAIN();
@@ -53,6 +28,47 @@ typedef struct Tau {
   System *sP;
   XRenderComp *renderCompF;
 } Tau;
+
+void sendMsg( Tau* tau, Entity entity, S32 y ) {
+  if ( y < 0 ) {
+    mailboxWrite( tau->xP->system.mailboxF, RENDER, entity, MSG_MOVED_Y_UP, 0, NULL );
+  }
+  else if ( y > 0 ) {
+    mailboxWrite( tau->xP->system.mailboxF, RENDER, entity, MSG_MOVED_Y_DOWN, 0, NULL );
+  }
+}
+
+void moveEntity( Tau* tau, Entity entity, S32 x, S32 y ) {
+  Map *sharedDstRectMP = mapGetNestedMapP( tau->shareMPMP, DST_RECT );
+  assert( sharedDstRectMP );
+  Rect_* rectP = (Rect_*) mapGet( sharedDstRectMP, entity );
+  assert( rectP );
+  rectP->x += x;
+  rectP->y += y;
+  // else, don't bother writing anything at all. We dgaf if it goes left or right.
+}
+
+void moveAndSend( Tau* tau, Entity entity, S32 x, S32 y ) {
+  moveEntity( tau, entity, x, y );
+  sendMsg( tau, entity, y );
+}
+
+void runAndCheckZOrder( Tau* tau ) {
+  xRun(&tau->xP->system);  
+  System *sP = &tau->xP->system;
+
+  XRenderComp* cP = (XRenderComp*) sP->cF;
+  XRenderComp* cEndP = cP + *_frayGetFirstInactiveIdxP( sP->cF );  // only care about active ones
+
+  ++cP;  // skip first so you can compare current to previous, only if more than one is active
+  for ( ; cP < cEndP; ++cP ) {
+     CHECK_GE( *cP->zHeightP, *(cP - 1)->zHeightP );
+  }
+}
+
+void test( Tau* tau ) {
+}
+
 
 TEST_F_SETUP(Tau) {
   extern XRender xRender;
@@ -140,35 +156,47 @@ TEST_F_TEARDOWN(Tau) {
   guiDel( &tau->xP->guiP );
 }
 
+#if 0
 TEST_F(Tau, xRenderRun_red) {
   xActivateComponentByEntity( tau->sP, 1 );
-  for (int i = 0; i < N_FRAMES; ++i) {
-    xRun(&tau->xP->system);
-  }
+  xRun(&tau->xP->system);
 }
 
 TEST_F(Tau, xRenderRun_bleh) {
   xActivateComponentByEntity( tau->sP, 2 );
-  for (int i = 0; i < N_FRAMES; ++i) {
-    xRun(&tau->xP->system);
-  }
+  xRun(&tau->xP->system);
 }
 
 TEST_F(Tau, xRenderRun_heck) {
   xActivateComponentByEntity( tau->sP, 3 );
-  for (int i = 0; i < N_FRAMES; ++i) {
-    xRun(&tau->xP->system);
-  }
+  xRun(&tau->xP->system);
 }
 
 TEST_F(Tau, somethingfornow) {
-  for (int i = 0; i < N_FRAMES; ++i) {
-    xRun(&tau->xP->system);
-  }
+  xRun(&tau->xP->system);
 }
 
 TEST_F(Tau, moveUpWhileDeactivated) {
+  moveEntity( tau, 1, 0, -1 );
+  runAndCheckZOrder( tau );
+}
+
+TEST_F(Tau, moveUpWhileOneIsActivated) {
+  xActivateComponentByEntity( tau->sP, 1 );
+  moveEntity( tau, 1, 0, -1 );
   for (int i = 0; i < N_FRAMES; ++i) {
-    xRun(&tau->xP->system);
+    runAndCheckZOrder( tau );
+  }
+}
+#endif
+
+TEST_F(Tau, moveUpWhileMultipleAreActivated) {
+  xActivateComponentByEntity( tau->sP, 1 );
+  xActivateComponentByEntity( tau->sP, 2 );
+  xActivateComponentByEntity( tau->sP, 3 );
+  moveEntity( tau, 3, 0, 10 );
+  for (int i = 0; i < N_FRAMES; ++i) {
+    moveEntity( tau, 2, 0, -1 );
+    runAndCheckZOrder( tau );
   }
 }

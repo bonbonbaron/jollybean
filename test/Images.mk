@@ -43,8 +43,9 @@ $(BUILD_DIR)/%.o: $(IMG_DIR)/%.c
 $(BUILD_DIR)/%.o: $(IMG_DIR)/%.c
 	$(CC) -c $< -I${HOME}/hack/jollybean/include $(SDL) -o $@
 
-$(CPI_SRCS): ${UTILS}/build/body
-	${UTILS}/build/body -v $(NAMES)
+# This stuff requires the repo's root Makefile to be included before this Makefile is included.
+$(CPI_SRCS): ${UTL_DIR}/build/body
+	${UTL_DIR}/build/body -v $(NAMES)
 
-${UTILS}/build/body:
-	make -C ${UTILS}
+${UTL_DIR}/build/body:
+	make -C ${UTL_DIR}

@@ -210,10 +210,10 @@ void checkAnimComp( Tau *tau, Entity entity, U32 currDuration, U32 expCurrFrameI
     CHECK_EQ( cP->srcRectP->y, RECT_Y_COEFF * ( cP->currFrameIdx ) + OFFSET_Y );
     CHECK_EQ( cP->srcRectP->w, entity * RECT_W_COEFF );
     CHECK_EQ( cP->srcRectP->h, entity * RECT_H_COEFF );
-    CHECK_EQ( cP->dstRectP->rect.x, 0 );
-    CHECK_EQ( cP->dstRectP->rect.y, 0 );
-    CHECK_EQ( cP->dstRectP->rect.w, cP->srcRectP->w );
-    CHECK_EQ( cP->dstRectP->rect.h, cP->srcRectP->h );
+    CHECK_EQ( cP->dstRectP->x, 0 );
+    CHECK_EQ( cP->dstRectP->y, 0 );
+    CHECK_EQ( cP->dstRectP->w, cP->srcRectP->w );
+    CHECK_EQ( cP->dstRectP->h, cP->srcRectP->h );
     // Check non-rect stuff too.
     CHECK_EQ( cP->incrDecrement, isGoingBackwards ? -1 : 1 );
     CHECK_EQ( cP->currFrameIdx, expCurrFrameIdx);

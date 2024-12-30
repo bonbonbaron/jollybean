@@ -1,26 +1,7 @@
-CC=gcc
+include ../x.mk
 
-RPO_DIR := $(shell git rev-parse --show-toplevel)
-LIB_DIR := $(RPO_DIR)/lib
-_INCS   := $(shell find ${RPO_DIR}/src -type d -name 'include') 
-INCS    := -I${JB}/include -I$(RPO_DIR)/test/include
+o: test.o $(LIBJB)
+	$(CC) --coverage -g test.o -L${LIB_DIR} $(SDL_LFLAGS) -ljb -o $@
 
-SRCS=$(shell find . -type f -name "*.c")
-OBJS=$(SRCS:%.c=%.o)
-
-all: o
-
-o: ${OBJS} 
-	$(CC) --coverage -g ${OBJS} -L${LIB_DIR} $(shell sdl2-config --libs) -ljb -o $@
-
-%.o: %.c
-	$(CC) --coverage -g $(INCS) $(shell sdl2-config --cflags) -c $< -o $@
-
-$(LIB_DIR)/libjb:
-	make -C ${RPO_DIR}
-
-.PHONY: clean
-clean:
-	rm -rf o 2>/dev/null
-	rm -rf coverage 2>/dev/null
-	rm -f ${OBJS} 2>/dev/null
+test.o: test.c
+	$(CC) --coverage -g $(INCS) $(SDL_CFLAGS) -c $< -o $@

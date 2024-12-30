@@ -1,9 +1,9 @@
 #include "test.h"
+#include "interface/interface.h"
 
-// Let's test on real images too.
-#include "blehColormap.h"
-#include "heckColormap.h"
-#include "redColormap.h"
+extern Image redImg; 
+extern Image blehImg; 
+extern Image heckImg;
 
 TAU_MAIN()
 
@@ -44,9 +44,9 @@ TEST_F_TEARDOWN(Tau) {
   stripDel(&tau->sd4bppP);
   arrayDel((void**) &tau->raw4bppA);
 
-  stripClr( blehColormap.sdP );
-  stripClr( redColormap.sdP );
-  stripClr( heckColormap.sdP );
+  stripClr( blehImg.cmP->sdP );
+  stripClr( redImg.cmP->sdP );
+  stripClr( heckImg.cmP->sdP );
 }
 
 
@@ -63,7 +63,7 @@ TEST_F(Tau, sdAssemble) {
 }
 
 TEST_F(Tau, bleh) {
-  stripIni( blehColormap.sdP );
+  stripIni( blehImg.cmP->sdP );
 }
 
 TEST_F(Tau, stripIni) {
@@ -73,16 +73,16 @@ TEST_F(Tau, stripIni) {
 }
 
 TEST_F(Tau, red) {
-  stripIni( redColormap.sdP );
+  stripIni( redImg.cmP->sdP );
 }
 
 TEST_F(Tau, heck) {
-  stripIni( heckColormap.sdP );
+  stripIni( heckImg.cmP->sdP );
 }
 
 TEST_F(Tau, heck_with_offset) {
-  heckColormap.sdP->ss.offset = 55;
-  stripIni( heckColormap.sdP );
+  heckImg.cmP->sdP->ss.offset = 55;
+  stripIni( heckImg.cmP->sdP );
 }
 
 TEST_F(Tau, stripIni_4bpp_expectOnlyInflation) {

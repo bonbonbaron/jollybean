@@ -266,6 +266,23 @@ static void raiseWithinSameZ( System* sP, Entity entity ) {
   }
 }
 
+static void lowerWithinSameZ( System* sP, Entity entity ) {
+  if ( _frayElemIsActive( sP->cF, *_getCompIdxPByEntity(sP, entity) ) ) {
+    XRenderComp* cP = xGetCompPByEntity( sP, entity );
+    S32 ourBottom = cP->dstRectP->y + cP->dstRectP->h;
+    for ( XRenderComp* prevCP = cP - 1 ; prevCP >= (XRenderComp*) sP->cF && *prevCP->zHeightP == *cP->zHeightP ; --prevCP ) {
+      // if their bottom is higher than mine, swap.
+      if ( ( prevCP->dstRectP->y + prevCP->dstRectP->h ) > ourBottom ) {
+        __xSwap( sP, prevCP - (XRenderComp*) sP->cF, cP - (XRenderComp*) sP->cF ); // converts to indices
+        cP = prevCP;  // steal destination pointer
+      }
+      else {
+        break;
+      }
+    }
+  }
+}
+
 #if 0
 static void raiseToZ( Key desiredZ ) {
   myZ = desiredZ
@@ -307,6 +324,8 @@ void xRenderProcessMessage(System *sP, Message *msgP) {
       raiseWithinSameZ( sP, msgP->attn );
       break;
     case MSG_MOVED_Y_DOWN:
+      lowerWithinSameZ( sP, msgP->attn );
+      break;
     case MSG_MOVED_Z_UP:
     case MSG_MOVED_Z_DOWN:
     default:
