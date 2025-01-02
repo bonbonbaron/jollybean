@@ -30,7 +30,7 @@ Gui* guiNew() {
   assert(guiP);
   // Init window
   guiP->windowP = SDL_CreateWindow("Hello world!", 100, 100, 512, 448, 
-      SDL_WINDOW_BORDERLESS | 
+      // SDL_WINDOW_BORDERLESS | 
       SDL_WINDOW_RESIZABLE | 
       SDL_WINDOW_OPENGL
   );
@@ -153,6 +153,7 @@ static void* _mtGenericLoop(ThreadFuncArg *thargP) {
   }
   return NULL;
 }
+#endif
 
 void guiProcessEvents(Gui *guiP) {
 	Event_ event;
@@ -254,5 +255,4 @@ void guiProcessEvents(Gui *guiP) {
     }
 	}
 }
-#endif
 #endif

@@ -1,4 +1,4 @@
-include ../data.mk
+include ../../common.mk
 
 o: test.o $(LIBJB)
 	$(CC) -g test.o -L${LIB_DIR} -ljb -lgcov -o $@

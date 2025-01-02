@@ -1,4 +1,4 @@
-include ../x.mk
+include ../../common.mk
 
 #~/jb/build/Seed/Genome/Gene/Body/Graybody/Colormap/src/I
 # Lesson learned: Linker searches from left to right for unresolved dependencies.

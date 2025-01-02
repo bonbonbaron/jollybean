@@ -1,4 +1,4 @@
-include ../data.mk
+include ../../common.mk
 
 o: test.o $(LIBJB)
 	$(CC) --coverage -g $< -L${LIB_DIR} -ljb -o $@

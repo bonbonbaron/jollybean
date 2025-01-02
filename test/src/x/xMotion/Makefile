@@ -1,4 +1,4 @@
-include ../x.mk
+include ../../common.mk
 
 o: test.o $(LIBJB)
 	$(CC) --coverage -g test.o -L${LIB_DIR} $(SDL_LFLAGS) -ljb -o $@

@@ -3,7 +3,7 @@ all: ./o
 include $(shell git rev-parse --show-toplevel)/Makefile
 include ${RPO_DIR}/test/Images.mk
 
-INCS   := -I${RPO_DIR}/include -I${RPO_DIR}/test/include -I${UTL_DIR}/include 
+INCS   := -I${UTL_DIR}/include -I${RPO_DIR}/include -I${RPO_DIR}/test/include
 
 .PHONY: clean
 clean:

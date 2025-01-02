@@ -1,33 +1,9 @@
-JB  := $(shell git rev-parse --show-toplevel)
-SRC := ${JB}/src
-INC := -I${JB}/include
-BLD := ${JB}/build/src
-OBJ := ${BLD}/interface/interface.o ${BLD}/x/x.o ${BLD}/data/fray.o ${BLD}/data/map.o ${BLD}/data/array.o ${BLD}/data/mem.o
-./o: ./test.o ${OBJ}
-	${CC} --coverage ./test.o ${OBJ} $(shell sdl2-config --libs) -lpthread -o $@ 
+include ../../common.mk
+
+./o: ./test.o ${JBLIB}
+	${CC} --coverage ./test.o -L${LIB_DIR} -ljb $(SDL_LFLAGS) -lpthread -o $@ 
 	touch $@
 
 ./%.o: %.c 
-	${CC} --coverage -g ${INC} -c $*.c $(shell sdl2-config --cflags) -o $@
+	${CC} --coverage -g ${INCS} -c $*.c $(SDL_CFLAGS) -o $@
 	touch $@
-
-${BLD}/data/%.o: ${SRC}/data/%.c ${SRC}/data/include/%.h
-	gcc --coverage -g -c $< ${INC} $(shell sdl2-config --cflags) -o $@
-	touch $@
-
-${BLD}/x/%.o: ${SRC}/x/%.c ${SRC}/x/include/%.h
-	gcc --coverage -g -c $< ${INC} $(shell sdl2-config --cflags) -o $@
-	touch $@
-
-${BLD}/interface/%.o: ${SRC}/data/interface/%.c ${SRC}/data/interface/include/%.h
-	gcc --coverage -g -c $< ${INC} $(shell sdl2-config --cflags) -o $@
-	touch $@
-
-
-.PHONY: clean
-clean:
-	rm -f ./o 2>/dev/null
-	rm -f ./*.o 2>/dev/null
-	rm -f ${BLD}/* 2>/dev/null
-	rm -rf ./coverage 2>/dev/null
-	rm *.gcda *.gcno *.gcov 2>/dev/null
