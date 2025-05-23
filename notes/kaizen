@@ -20,7 +20,6 @@
 
  lots of problems occur in:
  ==========================
-  not checking e in loops
   not iterating to fray's first empty element-- just got bitten again by this!
   not passing the address of a pointer to a map of pointers
   system's message command might equal an existing default one
