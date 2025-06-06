@@ -1,14 +1,9 @@
 I want tilemaps to have the following capabilities:
+  layers by numbers: >=0 background (scaled by a fixed point number, 0 <= n <= 1 (0 is stagnant, 1 is moves at same speed as layer 0). (8 bits)
+  self-moving or moves with camera (1 bit)
+  each tilemap has its own top-left cursor and size-- totally like a camera, which is why i went that road before, but i'm worried that'll rob the "true" camera of certain rights it enjoys, like primary collision detection, and its motion alerting various systems to do something.
 
-  animated elements
-  loop in any direction
-  hardstop when camera collides with boundary
-  parallax (scaling of camera position)
-  position elements onscreen dependent or independent of camera (text, menus, parallax BGs, etc)
-  move srcRect in-place, like dialogue or long menus
-  receive atlasTexture so it can convert each index from the subcomponent into an appropriate source rectangle
-  copy from atlas texture to component's own texture to save time copying on slight shifts 
 
 RENDERER:
-  render components need to tell you which texture they're drawing from now
+  render components need to tell you which texture they're drawing from now <-- hang on, i haven't agreed to this yet
   
