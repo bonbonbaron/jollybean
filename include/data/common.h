@@ -49,6 +49,7 @@ typedef union Generic {
 
 #define N_BITS_PER_BYTE (8)
 #define N_BITS_PER_WORD (N_BITS_PER_BYTE * sizeof(size_t))
+#define N_BYTES_PER_WORD (sizeof(size_t))
 
 // For-each macro, which allows per-element macro-processing on variadic arguments
 #define N_FLAG_BYTES ((1 << (sizeof(Key) * 8)) / 8)  // This times 8 is the number of items JB's hash map can hold. Increase as necessary. 
