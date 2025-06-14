@@ -23,7 +23,6 @@ XIniSubcompFuncDef_(Motion);
 XPostprocessCompsDef_(Motion);
 XProcMsgFuncDef_(Motion);
 XRunFuncDef_(Motion);
-XClrFuncDef_(Motion);
 XPostMutateFuncDef_(Motion);
 
 typedef struct {

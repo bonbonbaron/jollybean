@@ -148,7 +148,6 @@ void sdUnpack(StripDataS *sdP) {
 
   size_t *packedWordP;  
   // If the data was never compressed, then we're going to pull it from the "compressed" field.
-  // It's just a safe place to put data that otherwise would get deleted by stripClr().
   if ( sdP->flags & SD_SKIP_INFLATION_ ) {
     packedWordP = (size_t*) ssP->infP->compressedDataA;  // storing here is a trick to avoid new data fields
   }
@@ -191,7 +190,6 @@ void sdAssemble(StripDataS *sdP) {
 
   // Piece together strips
   // If the data was never compressed, then we're going to pull it from the "compressed" field.
-  // It's just a safe place to put data that otherwise would get deleted by stripClr().
 #if 0
   if ( sdP->flags & SD_SKIP_INFLATION_ ) {
     packedWordP = (size_t*) ssP->infP->compressedDataA;  // storing here is a trick to avoid new data fields

@@ -282,5 +282,4 @@ void coll(char *entityName, U8 isBg, AnimJsonData *animP, U8 verbose) {
     // Write collision rect map source file.
     writeCollisionRectMap(entityName, animP, rectListP, verbose);
   }
-  cmClr(&cm);
 }

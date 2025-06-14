@@ -54,8 +54,6 @@ void xMotionRun(System *sP) {
   }
 }
 
-XClrFuncDefUnused_(Motion);
-
 //======================================================
 // System definition
 //======================================================

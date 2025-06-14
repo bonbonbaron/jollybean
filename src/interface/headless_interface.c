@@ -26,16 +26,16 @@ static struct termios tty_attr;
 static FILE *file = NULL;
 
 Gui* guiNew() {
-  Gui* guiP = jbAlloc(sizeof(Gui), 1);
+  Gui* guiP = memAdd(sizeof(Gui), MAIN);
   assert(guiP);
   memset(guiP, 0, sizeof(Gui));
-  guiP->windowP = jbAlloc(  sizeof(Window), 1 );
+  guiP->windowP = memAdd(  sizeof(Window), MAIN );
   assert(guiP->windowP);
 
   // Init renderer
-  guiP->rendererP = jbAlloc(sizeof(Window), 1 );
+  guiP->rendererP = memAdd(sizeof(Window), MAIN );
   assert(guiP->rendererP);
-  guiP->rendererP->dstTextureP = arrayNew(sizeof(Texture_), 1 );
+  guiP->rendererP->dstTextureP = arrayNew(sizeof(Texture_), 1, MAIN );
 
   // open up the keyboard file in read binary mode so we can accept key presses.
   file = fopen(KEYFILE, "rb"); 
@@ -52,11 +52,6 @@ Gui* guiNew() {
 }
 
 void guiDel(Gui **guiPP) {
-  if (guiPP && *guiPP) {
-    jbFree((void**) &(*guiPP)->rendererP);
-    jbFree((void**) &(*guiPP)->windowP);
-    jbFree((void**) guiPP);
-  }
   if (file) {
     fclose(file);
   }
@@ -132,19 +127,12 @@ void present ( Renderer* rendererP ) {
 // Makes palette without setting its colors.
 Surface* surfaceNew(void *pixelDataA, U32 w, U32 h) {
   assert (pixelDataA && w && h);
-  Surface* surfaceP = jbAlloc(sizeof( Surface ), 1 );
-  surfaceP->pixelA = arrayNew( sizeof( Color_ ), w * h );
+  Surface* surfaceP = memAdd(sizeof( Surface ), TEMP );
+  surfaceP->pixelA = arrayNew( sizeof( Color_ ), w * h, TEMP );
   assert(surfaceP->pixelA);
   surfaceP->w = w;
   surfaceP->h = h;
   return surfaceP;
-}
-
-void surfaceDel(Surface_ **surfacePP) {
-  if (surfacePP && *surfacePP) {
-    arrayDel((void**) &(*surfacePP)->pixelA );
-    jbFree( (void**) surfacePP );
-  }
 }
 
 void appendAtlasPalette(Surface_ *atlasSurfaceP, ColorPalette *srcPaletteP) {
@@ -153,21 +141,14 @@ void appendAtlasPalette(Surface_ *atlasSurfaceP, ColorPalette *srcPaletteP) {
 
 Texture* textureNew(Renderer_ *rendererP, Surface_ *surfaceP) {
   assert(  rendererP && surfaceP );
-  Texture *textureP = jbAlloc(sizeof( Texture_ ), 1 );
+  Texture *textureP = memAdd(sizeof( Texture_ ), MAIN );
   assert(textureP);
-  textureP->pixelA = arrayNew( sizeof( Color_ ), surfaceP->w * surfaceP->h );
+  textureP->pixelA = arrayNew( sizeof( Color_ ), surfaceP->w * surfaceP->h, MAIN );
   assert(textureP->pixelA);
   textureP->w = surfaceP->w;
   textureP->h = surfaceP->h;
   memcpy( textureP->pixelA, surfaceP->pixelA, arrayGetElemSz( surfaceP->pixelA ) * arrayGetNElems( surfaceP->pixelA ) );
   return textureP;
-}
-
-void textureDel(Texture_ **texturePP) {
-  if (texturePP && *texturePP) {
-    arrayDel((void**) &(*texturePP)->pixelA );
-    jbFree( (void**) texturePP );
-  }
 }
 
 void clearScreen(Renderer_ *rendererP) {
@@ -214,7 +195,7 @@ void multiThread( CriticalFunc funcP, void *_array) {
   assert (_array &&  funcP);
 
   Thread threadA[N_CORES];
-  ThreadFuncArg* thArgA = arrayNew( sizeof(ThreadFuncArg), N_CORES);
+  ThreadFuncArg* thArgA = arrayNew( sizeof(ThreadFuncArg), N_CORES, TEMP);
 
   U32 nThreadsNeeded = N_CORES;
   // nThreadsNeeded gets updated to fewer than N_CORES if fewer elements than cores exist.
@@ -227,8 +208,6 @@ void multiThread( CriticalFunc funcP, void *_array) {
   for (int i = 0; i < nThreadsNeeded; ++i) {
     threadJoin_(threadA[i]);
   }
-
-  arrayDel((void**) &thArgA);
 }
 
 void guiProcessEvents(Gui *guiP) {

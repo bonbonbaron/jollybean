@@ -12,6 +12,5 @@ typedef struct Inflatable {
 } Inflatable;
 
 void inflatableIni(Inflatable *inflatableP);
-void inflatableClr(Inflatable *inflatableP);
 
 #endif  // #ifndef INFLATABLE_H

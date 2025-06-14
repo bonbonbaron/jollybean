@@ -586,7 +586,8 @@ static void tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_le
 */
 
 void inflatableIni(Inflatable *inflatableP) {
-  assert(inflatableP && !inflatableP->inflatedDataP);
+  // assert(inflatableP && !inflatableP->inflatedDataP);
+  assert(inflatableP);
   long long unsigned int expectedInflatedLen;
   expectedInflatedLen = inflatableP->inflatedLen;
   tinfl_decompress_mem_to_heap(

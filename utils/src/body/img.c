@@ -202,7 +202,6 @@ static void _makeColorPaletteAndColormap(U8 **colormapAP, ColorPalette *cpP, Col
         grayElem <<  8 | 
         0xff;  // alpha is 0xff
     }
-    arrayDel((void**) &cpP->colorA);
     cpP->colorA = (Color_*) tmpA;  
   }
 }
@@ -301,7 +300,6 @@ void readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *ani
       }
       printf("\n");
     }
-    arrayDel((void**) &srcPixelA);
   }
 
   if (pngP->warning_or_error) {
@@ -338,7 +336,6 @@ void readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *ani
   cmP->sdP = stripNew(colormapA, stripLen, cmP->bpp, SD_SKIP_ASSEMBLY_, verbose );
   // We're gonna cheat and preview the ground truth image here. 
   // We'll test stripIni properly in _validateWholeInput().
-  arrayDel((void**) &cmP->sdP->assembledDataA);
   cmP->sdP->assembledDataA = colormapA;
   // Sanity check before making strips
   if (verbose && SHOW_PREVIEW) {
@@ -413,8 +410,6 @@ static void _validateWholeInput(Colormap *cmP, ColorPalette *cpP) {
     previewImg(cmP, cpP, 1000);
 #endif
   }
-
-  arrayDel((void**) &cmOrigP);
 }
 
 //##########################################

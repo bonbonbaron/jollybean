@@ -87,7 +87,6 @@ typedef struct {
   EntityPersonalityPair *entityPersonalityPairF;
   EntityBlackboardPair  *entityBlackboardPairF;
 } XAction;
-XClrFuncDef_(Action);
 XIniSubcompFuncDef_(Action);
 XPostprocessCompsDef_(Action);
 

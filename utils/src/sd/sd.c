@@ -343,8 +343,6 @@ static void _validateInflatables(StripDataS *sdP, StripmapElem *smSrcA, U8 *pack
   assert (!memcmp(sdP->ss.infP->inflatedDataP, packedStripsetA, sdP->ss.infP->inflatedLen));
   assert(!memcmp(sdP->sm.infP->inflatedDataP, smSrcA, sdP->sm.infP->inflatedLen));
   printf("\nCONGRATS! We validated your stripset and stripmap inflatables!\n\n");
-  inflatableClr(sdP->ss.infP);
-  inflatableClr(sdP->sm.infP);
 }
 #endif
 
@@ -552,8 +550,7 @@ StripDataS* stripNew(U8 *srcA, const size_t nBytesPerUnpackedStrip, const U8 bpu
   // if using only packed data...
   if ( smallestSz == packedSz ) {
     assert( sdP->ss.infP != NULL );
-    inflatableClr( sdP->ss.infP );
-    free( sdP->ss.infP->compressedDataA );  // this is a raw array.. sigh
+    //free( sdP->ss.infP->compressedDataA );  // this is a raw array.. sigh
     sdP->ss.nUnits = arrayGetNElems( srcA );
     sdP->ss.infP->compressedDataA = memAdd( arrayGetElemSz( packedRawA ) * arrayGetNElems( packedRawA ), MAIN );
     memcpy( sdP->ss.infP->compressedDataA, packedRawA, arrayGetElemSz( packedRawA ) * arrayGetNElems( packedRawA ) );
@@ -565,8 +562,6 @@ StripDataS* stripNew(U8 *srcA, const size_t nBytesPerUnpackedStrip, const U8 bpu
   }
   // if using only zipped raw data...
   else if ( smallestSz == zippedSz ) {
-    stripClr( sdP );  // don't need any data in it
-                      // Stripset
     sdP->ss.bpu = bpu;
     sdP->ss.nUnits = arrayGetNElems( srcA );
     sdP->ss.infP = rawInfP;
@@ -597,9 +592,6 @@ StripDataS* stripNew(U8 *srcA, const size_t nBytesPerUnpackedStrip, const U8 bpu
   }
   // if using stripped packed data...
   else if ( smallestSz == pkStrpSz ) {
-    // Get rid of inflatables
-    inflatableClr( sdP->ss.infP ) ;
-    inflatableClr( sdP->sm.infP );
     // Populate uncompressed (yet packed) stripset.
     // Allocate stripset.
     sdP->ss.infP->compressedDataA = memAdd(  arrayGetElemSz( ssPackedA ) * arrayGetNElems( ssPackedA ), MAIN );

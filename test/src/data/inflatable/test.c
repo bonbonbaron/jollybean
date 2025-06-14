@@ -13,7 +13,7 @@ functions to test:
 TAU_MAIN()
 
 TEST(InflatableSuite, OnlyTest) {
-  memIni( 10000, MAIN );
+  memIni( 100000, MAIN );
   Inflatable *infP = NULL;
 
   // Make dummy data.
@@ -31,7 +31,7 @@ TEST(InflatableSuite, OnlyTest) {
 
     // Create inflatable.
     CHECK_NOT_NULL(dummyDataA);
-    infP = inflatableNew((void*) dummyDataA);  
+    infP = inflatableNew((void*) dummyDataA, MAIN);  
     REQUIRE_TRUE(infP != NULL);
     REQUIRE_TRUE(infP->inflatedDataP == NULL);
 
@@ -44,9 +44,7 @@ TEST(InflatableSuite, OnlyTest) {
     for (U32 i = 0; i < j; ++i) {
       CHECK_TRUE(((U32*) infP->inflatedDataP)[i] == i);
     }
-
-    // Clear inflatable.
-    CHECK_NULL(infP->inflatedDataP);
+    memRst( MAIN );
   }
   memClr( MAIN );
 }

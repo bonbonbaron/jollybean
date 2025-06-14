@@ -13,40 +13,27 @@ TAU_MAIN()
 const static U8 verbose = 0;
 
 TEST_F_SETUP(Tau) {
+  memIni( 100000, MAIN );
+  memIni( 100000, TEMP );
   // Make arrays, because inflatableNew() expects Jollybean arrays.
-  tau->raw1bppA = arrayNew(  sizeof(rawData1bpp[0]), sizeof(rawData1bpp) / sizeof(rawData1bpp[0]));
+  tau->raw1bppA = arrayNew(  sizeof(rawData1bpp[0]), sizeof(rawData1bpp) / sizeof(rawData1bpp[0]), MAIN);
   memcpy((void*) tau->raw1bppA, (void*) rawData1bpp, sizeof(rawData1bpp[0]) * sizeof(rawData1bpp) / sizeof(rawData1bpp[0]));
   if (verbose) printf("\e[91m1bpp data\e[0m\n");
   tau->sd1bppP = stripNew(tau->raw1bppA, 3, 1, 0, verbose);
 
-  tau->raw2bppA = arrayNew(  sizeof(rawData2bpp[0]), sizeof(rawData2bpp) / sizeof(rawData2bpp[0]));
+  tau->raw2bppA = arrayNew(  sizeof(rawData2bpp[0]), sizeof(rawData2bpp) / sizeof(rawData2bpp[0]), MAIN);
   memcpy((void*) tau->raw2bppA, (void*) rawData2bpp, sizeof(rawData2bpp[0]) * sizeof(rawData2bpp) / sizeof(rawData2bpp[0]));
   if (verbose) printf("\e[91m2bpp data\e[0m\n");
   tau->sd2bppP = stripNew(tau->raw2bppA, 3, 2, 0, verbose);
 
-  tau->raw4bppA = arrayNew(  sizeof(rawData4bpp[0]), sizeof(rawData4bpp) / sizeof(rawData4bpp[0]));
+  tau->raw4bppA = arrayNew(  sizeof(rawData4bpp[0]), sizeof(rawData4bpp) / sizeof(rawData4bpp[0]), MAIN);
   memcpy((void*) tau->raw4bppA, (void*) rawData4bpp, sizeof(rawData4bpp[0]) * sizeof(rawData4bpp) / sizeof(rawData4bpp[0]));
   if (verbose) printf("\e[91m4bpp data\e[0m\n");
   tau->sd4bppP = stripNew(tau->raw4bppA, 9, 4, 0, verbose);
-  
-  stripClr(tau->sd1bppP);
-  stripClr(tau->sd2bppP);
-  stripClr(tau->sd4bppP);
 }
 
 TEST_F_TEARDOWN(Tau) {
-  stripDel(&tau->sd1bppP);
-  arrayDel((void**) &tau->raw1bppA);
-
-  stripDel(&tau->sd2bppP);
-  arrayDel((void**) &tau->raw2bppA);
-
-  stripDel(&tau->sd4bppP);
-  arrayDel((void**) &tau->raw4bppA);
-
-  stripClr( blehImg.cmP->sdP );
-  stripClr( redImg.cmP->sdP );
-  stripClr( heckImg.cmP->sdP );
+  memClr( MAIN );
 }
 
 

@@ -2,7 +2,6 @@
 
 // Unused X functions
 XIniSysFuncDefUnused_(Anim);
-XClrFuncDefUnused_(Anim);
 XIniSubcompFuncDefUnused_(Anim);
 XPostprocessCompsDefUnused_(Anim);
 XPostActivateFuncDefUnused_(Anim);

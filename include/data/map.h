@@ -54,7 +54,6 @@ void  mapSetFlag(Map *mapP, const Key key);
 void mapCopyKeys(Map *dstMP, Map *srcMP);
 Map* mapGetNestedMapP(Map *mapP, Key mapKey);
 void* mapGetNestedMapPElem(Map *mapP, Key mapKey, Key elemKey, MapElemType expectedElemType);
-void  mapOfNestedMapsClr(Map **outerMapPP);
 
 
 #endif  // #ifndef MAP_H

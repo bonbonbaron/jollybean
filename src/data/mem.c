@@ -27,11 +27,22 @@ static void _jbFree(void **voidPP) {
 }
 
 static void _memIni ( MemoryArena* memP, const size_t numBytes ) {
+  size_t numActualBytes;
+#if (__WORDSIZE == 32 )
+  // The double ampersand prevents any branching logic for checking if addition is a multiple of word-size.
+  numActualBytes = ( ( N_BYTES_PER_WORD - ( numBytes & 3 ) ) & 3 ) + numBytes;
+#elif (__WORDSIZE == 64 )
+  // The double ampersand prevents any branching logic for checking if addition is a multiple of word-size.
+  numActualBytes = ( ( N_BYTES_PER_WORD - ( numBytes & 7 ) ) & 7 ) + numBytes;
+#else
+  static_assert( 0, "Jollybean supports only 32- and 64-bit systems.");
+#endif
 #ifndef NDEBUG
-  memP->memAllocated = numBytes;
+  printf("\e[91mAllocating %ld bytes.\e[0m\n", numActualBytes);
+  memP->memAllocated = numActualBytes;
   memP->memRemaining = memP->memAllocated;
 #endif
-  memP->memArenaP = _jbAlloc( numBytes );
+  memP->memArenaP = _jbAlloc( numActualBytes );
   memP->nextFreeP = memP->memArenaP;
 }
 
@@ -55,8 +66,9 @@ static void* _memAdd ( MemoryArena* memP, size_t numBytes ) {
 #endif
   size_t memTaken = (size_t) memP->nextFreeP - (size_t) allocatedAddress;
 #ifndef NDEBUG
-  assert( memTaken <= memP->memRemaining ); 
   memP->memRemaining -= memTaken;
+  printf("\e[91mTaking %ld bytes. Used up %ld / %ld.\e[0m\n", memTaken, memP->memAllocated - memP->memRemaining, memP->memAllocated);
+  assert( memTaken <= memP->memRemaining ); 
 #endif
   return allocatedAddress;
 }

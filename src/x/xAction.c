@@ -5,9 +5,9 @@ XIniSysFuncDef_(Action) {
   unused_(sParamsP);
   XAction *xActionP = (XAction*) sP;
   xActionP->nDistinctHivemindTriggers = 0;
-  xActionP->entityPersonalityPairF = frayNew( sizeof( EntityPersonalityPair ), xGetNComps(sP) );
-  xActionP->entityBlackboardPairF = frayNew( sizeof( EntityBlackboardPair ), xGetNComps(sP) );
-  xActionP->histoHivemindTriggerA = arrayNew( sizeof(U32), KEY_MAX );
+  xActionP->entityPersonalityPairF = frayNew( sizeof( EntityPersonalityPair ), xGetNComps(sP), TEMP );
+  xActionP->entityBlackboardPairF = frayNew( sizeof( EntityBlackboardPair ), xGetNComps(sP), TEMP );
+  xActionP->histoHivemindTriggerA = arrayNew( sizeof(U32), KEY_MAX, TEMP );
   memset( xActionP->histoHivemindTriggerA, 0, sizeof(U32) * KEY_MAX );
 }
 
@@ -42,30 +42,17 @@ XIniSubcompFuncDef_(Action) {
   }
 }
 
-XClrFuncDef_(Action) {
-  XAction *xActionP = (XAction*) sP;
-  XActionComp* cP = sP->cF;
-  XActionComp* cEndP = cP + xGetNComps( sP );
-  for ( ; cP < cEndP; ++cP ) {
-    mapDel( &cP->bbMP );
-  }
-  hivemindDel(&xActionP->hivemindMP);
-  arrayDel((void**) &xActionP->histoHivemindTriggerA);
-  frayDel((void**) &xActionP->entityPersonalityPairF );
-  frayDel((void**) &xActionP->entityBlackboardPairF );
-}
-
 static void _distributeHiveminds(XAction *xActionP) {
   // Histo the number of trees existing for each trigger.
   assert (xActionP && xActionP->histoHivemindTriggerA);
   Entity **hivemindEntitiesAP = NULL;
   // Allocate hivemind map
-  xActionP->hivemindMP = mapNew( ARRAY, sizeof(Entity*), xActionP->nDistinctHivemindTriggers);
+  xActionP->hivemindMP = mapNew( ARRAY, sizeof(Entity*), xActionP->nDistinctHivemindTriggers, MAIN);
   // Allocate empty hiveminds.
   U32 nElems = arrayGetNElems(xActionP->histoHivemindTriggerA);
   for (U32 trigger = 0; trigger < nElems; ++trigger) {
     if (xActionP->histoHivemindTriggerA[trigger]) {
-      Entity *entityA = arrayNew( sizeof(Entity), xActionP->histoHivemindTriggerA[trigger] );
+      Entity *entityA = arrayNew( sizeof(Entity), xActionP->histoHivemindTriggerA[trigger], MAIN );
       mapSet(xActionP->hivemindMP, trigger, &entityA);
     }
   }
@@ -84,8 +71,6 @@ static void _distributeHiveminds(XAction *xActionP) {
       }
     }
   }
-
-  arrayDel((void**) &xActionP->histoHivemindTriggerA);
 }
 
 XPostprocessCompsDef_(Action) {
@@ -106,20 +91,6 @@ XPostprocessCompsDef_(Action) {
     assert( cP );
     cP->bbMP = ebbPairP->bbMP;
   }
-}
-
-void hivemindDel(Map **hivemindMPP) {
-  if (hivemindMPP) {
-    Map *hivemindMP = *hivemindMPP;
-    if (hivemindMP && hivemindMP->mapA) {
-      Entity **entityAP = hivemindMP->mapA;
-      Entity **entityEndAP = entityAP + hivemindMP->population;
-      for (; entityAP < entityEndAP; entityAP++) {
-        arrayDel((void**) entityAP);
-      }
-    }
-  }
-  mapDel(hivemindMPP);
 }
 
 inline static U8 _isHigherPriority(U8 newPriority, U8 existingPriority) {

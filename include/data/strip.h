@@ -40,7 +40,6 @@ typedef struct {
   U8 *assembledDataA;  // destination of strip data's assembling step, if not skipped
 } StripDataS;
 
-void stripClr(StripDataS *sdP);
 void stripIni(StripDataS *sdP);
 U8* ssGetInput( StripDataS* sdP );
 U8* ssGetOutput( StripDataS* sdP );

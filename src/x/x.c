@@ -181,42 +181,22 @@ void xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP) 
 
 void xIniSys(System *sP, U32 nComps, void *miscP) {
   // Sytems with special parts need to initialize maps in sIniU().
-  sP->cF = frayNew(sP->compSz, nComps);
-  sP->cIdx2eA = arrayNew(sizeof(Entity), nComps);
-  sP->deactivateQueueF = frayNew(sizeof(Entity), nComps);
-  sP->pauseQueueF = frayNew( sizeof(Entity), nComps);
-  sP->e2cIdxMP = mapNew( RAW_DATA, sizeof(Key), nComps);
+  sP->cF = frayNew(sP->compSz, nComps, MAIN );
+  sP->cIdx2eA = arrayNew(sizeof(Entity), nComps, MAIN );
+  sP->e2cIdxMP = mapNew( RAW_DATA, sizeof(Key), nComps, MAIN );
+  sP->deactivateQueueF = frayNew(sizeof(Entity), nComps, MAIN );
+  sP->pauseQueueF = frayNew( sizeof(Entity), nComps, MAIN );
   if (!(sP->flags & FLG_NO_MUTATIONS_) && sP->mutationSz) {
-    sP->mutationMPMP = mapNew( MAP_POINTER, sizeof(Map*), nComps);
+    sP->mutationMPMP = mapNew( MAP_POINTER, sizeof(Map*), nComps, MAIN );
   }
 	// Only allocate one mailbox; it serves as input and output.
   // TODO make this smarter than a raw constant
   // Also, give it ample room to handle multiple messages per entity.
 #define MAILBOX_MULTIPLY_NUM_SLOTS (3)
-  sP->mailboxF = frayNew(sizeof(Message), nComps * MAILBOX_MULTIPLY_NUM_SLOTS );
-  sP->subcompOwnerMP = mapNew(RAW_DATA, sizeof(SubcompOwner), nComps);
+  sP->mailboxF = frayNew(sizeof(Message), nComps * MAILBOX_MULTIPLY_NUM_SLOTS, MAIN  );
+  sP->subcompOwnerMP = mapNew(RAW_DATA, sizeof(SubcompOwner), nComps, TEMP );
   // Finally, call the system's unique initializer.
   (*sP->iniSys)(sP, miscP);  // fail-assert if this bombs
-}
-
-// Don't erase everything in a system. Some things should be permanent.
-void xClr(System *sP) {
-  assert(sP);
-  sP->clr(sP);  // This MUST run first as it may rely on things we're about to erase
-  frayDel((void**) &sP->cF);
-  frayDel((void**) &sP->mailboxF);
-  frayDel((void**) &sP->deactivateQueueF);
-  frayDel((void**) &sP->pauseQueueF);
-  mapDel(&sP->subcompOwnerMP);
-  mapDel(&sP->e2cIdxMP);
-  // Don't delete inner maps as there may be multiple copies pointing at the same thing.
-  // You're required to have deleted or acquired pointers to its inner maps by this point.
-#if 1
-  mapOfNestedMapsDel(&sP->mutationMPMP);  // <-- don't do this. ( See if you can now with refs. )
-#else
-  mapDel(&sP->mutationMPMP);
-#endif
-  arrayDel((void**) &sP->cIdx2eA);
 }
 
 void xMutateComponent(System *sP, Entity entity, Key newCompKey) {

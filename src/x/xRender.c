@@ -73,10 +73,8 @@ Atlas* atlasNew( Image** imgPF) {
 
   const U32 N_ATLAS_ELEMS = *_frayGetFirstEmptyIdxP(imgPF);
 
-  Atlas* atlasP = jbAlloc(sizeof(Atlas), 1);
-  assert(atlasP);
-
-  atlasP->btP = btNew(sizeof(AtlasElem), N_ATLAS_ELEMS);
+  Atlas* atlasP = memAdd(sizeof(Atlas), TEMP );
+  atlasP->btP = btNew(sizeof(AtlasElem), N_ATLAS_ELEMS, TEMP );
   AtlasElem *atlasA = atlasP->btP;
   // Populate first element so the next one has something to sort against.
   _setRectData(&atlasA[0], imgPF[0]->cmP->w > imgPF[0]->cmP->h ?  imgPF[0]->cmP->w : imgPF[0]->cmP->h,
@@ -103,13 +101,6 @@ Atlas* atlasNew( Image** imgPF) {
     continue;
   }
   return atlasP;
-}
-
-void atlasDel(Atlas **atlasPP) {
-  if (atlasPP) {
-    _btDel((BtElHeader**) &(*atlasPP)->btP);
-    jbFree((void**) atlasPP);
-  }
 }
 
 // Texture atlas
@@ -214,8 +205,8 @@ void xRenderIniSys(System *sP, void *sParamsP) {
   XRender *xP = (XRender*) sP;
   // Components array should have already been allocated by this point, so it's safe to get its size.
   U32 nComponents = xGetNComps(sP);
-  xP->imgPF = frayNew(sizeof(Image*), nComponents);
-  xP->entityF = frayNew( sizeof(Entity), nComponents);
+  xP->imgPF = frayNew(sizeof(Image*), nComponents, TEMP);
+  xP->entityF = frayNew( sizeof(Entity), nComponents, TEMP);
 }
 
 //=========================================================================
@@ -336,23 +327,6 @@ void xRenderProcessMessage(System *sP, Message *msgP) {
   unused_(msgP);
 }
 
-// None of the render system's specials should be cleared as the main system owns them.
-XClrFuncDef_(Render) {
-  XRender *xP = (XRender*) sP;
-  for ( size_t i = 0; i < frayGetNElems_(xP->imgPF); ++i ) {
-    xP->imgPF[i]->state = 0;
-  }
-  frayDel((void**) &xP->imgPF);
-  frayDel((void**) &xP->entityF);
-  textureDel(&xP->atlasTextureP);
-  if (sP->flags & RENDER_SYS_OWNS_SRC_AND_OFFSET) {
-    mapDel(&xP->srcRectMP);
-    mapDel(&xP->offsetRectMP);
-  }
-
-  mapDel( &xP->zHeightIdxMP );
-}
-
 static void fillRectFromStripmap(const Image *imgP, const Rect_* rectP, Color_* atlasPixelA, const U32 ATLAS_WIDTH) {
   assert(imgP && imgP->cpP && imgP->cpP->colorA && rectP);
   // Figure out how to increment the destination pixel per row.
@@ -364,7 +338,7 @@ static void fillRectFromStripmap(const Image *imgP, const Rect_* rectP, Color_* 
   smElemP        = (StripmapElem*) imgP->cmP->sdP->sm.infP->inflatedDataP;
   // Colorize the stripset first 
   // To colorize the stripset, we need to first stretch it to 4 times its length.
-  Color_* colorizedStripsetP = arrayNew(sizeof(Color_), arrayGetNElems(imgP->cmP->sdP->ss.unpackedDataA));
+  Color_* colorizedStripsetP = arrayNew(sizeof(Color_), arrayGetNElems(imgP->cmP->sdP->ss.unpackedDataA), TEMP);
   Color_* colorP = colorizedStripsetP;
   Color_* colorEndP = colorP + arrayGetNElems(colorizedStripsetP);
   Color_ *colorPaletteP = imgP->cpP->colorA;
@@ -386,7 +360,6 @@ static void fillRectFromStripmap(const Image *imgP, const Rect_* rectP, Color_* 
           MEMCPY_SZ );
     }
   }
-  arrayDel((void**) &colorizedStripsetP);
 }
 
 #ifdef MULTITHREADED_
@@ -429,7 +402,7 @@ static void fillRect( U8* cmA, Color_* cpA, const Rect_* rectP, Color_* atlasPix
 #ifdef MULTITHREADED_
   const U32 N_THREADS = ( rectP->h < N_CORES ) ? rectP->h : N_CORES;
 
-  FillRectParamsMT* paramsA = arrayNew( sizeof( FillRectParamsMT ), N_THREADS );
+  FillRectParamsMT* paramsA = arrayNew( sizeof( FillRectParamsMT ), N_THREADS, TEMP );
   U32 heightSliver = rectP->h / N_THREADS;
   for ( U32 i = 0; i < N_THREADS; ++i ) {
     paramsA[i].dstP      = atlasPixelA + rectP->x + ( rectP->y + ( i * heightSliver) ) * ATLAS_WIDTH;
@@ -440,15 +413,13 @@ static void fillRect( U8* cmA, Color_* cpA, const Rect_* rectP, Color_* atlasPix
     paramsA[i].rectWidth = rectP->w;
     assert( paramsA[i].dstEndP > paramsA[i].dstP );
   }
-  FillRectParamsMT** ptrA = arrayNew( sizeof( FillRectParamsMT* ), N_THREADS );
+  FillRectParamsMT** ptrA = arrayNew( sizeof( FillRectParamsMT* ), N_THREADS, TEMP );
   for ( U32 i = 0; i < N_THREADS; ++i ) {
     ptrA[i] = &paramsA[i];
   }
   // Then finish off by giving the last thread a slightly more responsibility if the sections aren't divisible by N_THREADS.
   paramsA[ N_THREADS - 1 ].dstEndP += ( rectP->h % N_THREADS ) * ATLAS_WIDTH;
   multithread_( fillPortionOfRect, (void*) ptrA );
-  arrayDel( (void**) &paramsA );
-  arrayDel( (void**) &ptrA );
 #else
   Color_* dstP = atlasPixelA + rectP->x + ( rectP->y ) * ATLAS_WIDTH;
   Color_* dstEndP = dstP + ( rectP->h * ATLAS_WIDTH );
@@ -473,7 +444,7 @@ Color_* assembleTextureAtlas(Image** imgPF, Atlas *atlasP) {
   // Declare locals
   const U32 ATLAS_WIDTH = atlasP->btP[0].remW;
   // Make output atlas image
-  Color_* atlasPixelA = arrayNew(sizeof(Color_), atlasP->btP[0].remW * atlasP->btP[0].remH);
+  Color_* atlasPixelA = arrayNew(sizeof(Color_), atlasP->btP[0].remW * atlasP->btP[0].remH, TEMP);
   // Not even sure if memsetting the above array matters. Looks white to me either way.
   // memset( atlasPixelA, 0, arrayGetNElems( atlasPixelA ) * arrayGetElemSz( atlasPixelA ) );
 
@@ -595,7 +566,6 @@ XPostprocessCompsDef_(Render) {
   /* "Pixel data is not managed automatically with SDL_CreateRGBSurfaceWithFormatFrom().
      You must free the surface before you free the pixel data." */
   surfaceDel(&atlasSurfaceP);
-  arrayDel((void**) &atlasPixelA);
 
   // Update source rectangles. That way animation system knows where its frames are in texture atlas.
   _updateSrcRects(xP, atlasP);
@@ -625,7 +595,7 @@ XPostprocessCompsDef_(Render) {
     }
   }
   if ( maxZ ) {
-    xP->zHeightIdxMP = mapNew( RAW_DATA, sizeof( U8 ), maxZ + 1 );  // +1 allows a maxZ of 1 to index array[1] without subtracting by 1 every time
+    xP->zHeightIdxMP = mapNew( RAW_DATA, sizeof( U8 ), maxZ + 1, MAIN);  // +1 allows a maxZ of 1 to index array[1] without subtracting by 1 every time
     memset( xP->zHeightIdxMP->mapA, 0,  sizeof( U8 ) * ( maxZ + 1 ) );
     // The good news is, we don't have to worry about sorting here since
     // everything starts out deactivated.
@@ -639,23 +609,18 @@ XPostprocessCompsDef_(Render) {
     // TODO pick an xRenderPostActivate that doesn't do anything
     // TODO pick an xRenderPostDeactivate that doesn't do anything
   }
-
-  // Clean up.
-  atlasDel(&atlasP);
-  frayDel((void**) &xP->imgPF);
-  frayDel((void**) &xP->entityF);
 }
 
 XPostActivateFuncDef_(Render) {
-  XRender* xP = (XRender*) sP;
+  // XRender* xP = (XRender*) sP;
   // TODO re-sort the z-height fray here
   // First, get the Z-height of the newly activated component.
-  XRenderComp* newlyActivatedCompP = &( (XRenderComp*) sP->cF )[ changesP->newIdx ];
+  // XRenderComp* newlyActivatedCompP = &( (XRenderComp*) sP->cF )[ changesP->newIdx ];
   
 }
 
 XPostDeactivateFuncDef_(Render) {
-  XRender* xP = (XRender*) sP;
+  // XRender* xP = (XRender*) sP;
   // TODO re-sort the z-height fray here
 }
 

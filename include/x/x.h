@@ -59,7 +59,6 @@ typedef enum { INITIALIZED = 1 } SubcomponentState;
     .postMutate        = x##name_##PostMutate,\
     .postActivate      = x##name_##PostActivate,\
     .postDeactivate    = x##name_##PostDeactivate,\
-    .clr               = x##name_##Clr,\
     .getShare          = x##name_##GetShare,\
     .processMessage    = x##name_##ProcessMessage,\
     .run               = x##name_##Run, \
@@ -86,7 +85,6 @@ typedef enum { INITIALIZED = 1 } SubcomponentState;
     .postMutate        = x##name_##PostMutate,\
     .postActivate      = x##name_##PostActivate,\
     .postDeactivate    = x##name_##PostDeactivate,\
-    .clr               = x##name_##Clr,\
     .getShare          = x##name_##GetShare,\
     .processMessage    = x##name_##ProcessMessage,\
     .run               = x##name_##Run, \
@@ -98,7 +96,6 @@ struct _System;
 typedef void (*XIniSU)(struct _System *sP, void* sParamsP);
 typedef void (*XIniSubcompU)(struct _System *sP, const Entity entity, const Key subtype, void *dataP);
 typedef void (*XRunU)(struct _System *sP);
-typedef void (*XClrU)(struct _System *sP);
 typedef void (*XProcMsgU)(struct _System *sP, Message *messageP);
 typedef void (*XGetShareU)(struct _System *sP, Map* shareMPMP);
 typedef void (*XPostprocessCompsU)(struct _System *sP);
@@ -126,11 +123,6 @@ typedef void (*XPostDeactivateU)(struct _System *sP, FrayChanges *changesP);  //
   unused_(dataP);\
 }
 #define XIniSubcompFuncDef_(name_)  void x##name_##IniSubcomp(System *sP, const Entity entity, const Key subtype, void *dataP)
-
-#define XClrFuncDefUnused_(name_) XClrFuncDef_(name_) {\
-  unused_(sP);\
-}
-#define XClrFuncDef_(name_)      void x##name_##Clr(System *sP)
 
 #define XProcMsgFuncDefUnused_(name_)  XProcMsgFuncDef_(name_) {\
   unused_(sP);\
@@ -209,7 +201,6 @@ typedef struct _System {
   XIniSU       iniSys;               // System init function pointer 
   XIniSubcompU iniSubcomp;              // Some systems need to inflate components before using them. 
   XPostprocessCompsU postprocessComps;  // If components are composites, piece them together here.
-  XClrU        clr;                  // for system cleanup (not deleting system itself) 
   XGetShareU   getShare;             // Some systems' components share pointers to common data. This is how it retrieves them by a parent system's call. 
 } System;
 
@@ -235,7 +226,6 @@ void     xDeactivateComponentByIdx(System *sP, Key compOrigIdx);
 void     xQueuePause(System *sP, void *componentP);
 void     xQueueDeactivate(System *sP, void *componentP);
 Bln      xIsEntityActive( System  *sP, Entity entity );
-void     xClr(System *sP);
 void     xRun(System *sP);
 void     __xSwap(System *sP, S32 origIdx, S32 newIdx);
 
