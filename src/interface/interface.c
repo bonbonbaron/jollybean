@@ -51,7 +51,7 @@ void multiThread( CriticalFunc funcP, void *_array) {
   assert (_array && funcP);
 
   Thread threadA[N_CORES];
-  ThreadFuncArg *thArgA = arrayNew( sizeof(ThreadFuncArg), N_CORES);
+  ThreadFuncArg *thArgA = arrayNew( sizeof(ThreadFuncArg), N_CORES, TEMP);
 
   U32 nThreadsNeeded = N_CORES;
   // nThreadsNeeded gets updated to fewer than N_CORES if fewer elements than cores exist.
@@ -64,8 +64,6 @@ void multiThread( CriticalFunc funcP, void *_array) {
   for (int i = 0; i < nThreadsNeeded; ++i) {
     threadJoin_(threadA[i]);
   }
-
-  arrayDel((void**) &thArgA);
 }
 
 #endif //#ifdef MULTITHREADED_

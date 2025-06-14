@@ -4,10 +4,9 @@
  *  \1. Get incrementing pointer when you allocate in arena.
  *  \2. Word-align each allocation.
  *  3. Determine how much memory you need for a scene. <-- This can easily be done by allocating a huge block and seeing how much is used.
- *  4. Differentiate between perma-memory and temporary memory (latter allows holes).
- *        How do I do this?
- *        Either a new argument for every call, or a separate function for the two.
- *  5. Make the pool extern since there'll only ever be two of them. 
+ *  \4. Differentiate between perma-memory and temporary memory (latter allows holes).
+ *  \5. Make the pool extern since there'll only ever be two of them. 
+ *  6. Determine how to most easily implement the two memory allocations across all your code.
  */
 
 // Keep the definition of memory arena here since nobody else will need it.
@@ -75,7 +74,6 @@ static void _maReport( const MemoryArena* maP, const char* arenaName ) {
 #else
 #define maReport
 #endif
-
 
 // Public functions start here.
 void maIni ( const MemoryType memType, const size_t numBytes ) {

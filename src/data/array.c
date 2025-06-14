@@ -1,6 +1,6 @@
 #include "data/array.h"
 
-void* arrayNew( U32 elemSz, U32 nElems) {
+void* arrayNew( U32 elemSz, U32 nElems, ) {
 	assert (elemSz && nElems);
 	U32* ptr = (U32*) jbAlloc( (elemSz * nElems) + (2 * sizeof(U32)), 1);
   ptr[0] = elemSz;
