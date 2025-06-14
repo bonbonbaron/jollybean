@@ -1,16 +1,14 @@
 #include "data/fray.h"
 
-void* frayNew( U32 elemSz, U32 nElems) {
+void* frayNew( U32 elemSz, U32 nElems, const MemoryType memType) {
   assert (elemSz && nElems );
   // Add 1 more element for cache-friendly swaps.
-  U32* ptr = (U32*) jbAlloc( (elemSz * (nElems + 1)) + ((N_PREFRAY_ELEMS) * sizeof(U32)), 1);
+  U32* ptr = (U32*) memAdd( (elemSz * (nElems + 1)) + ((N_PREFRAY_ELEMS) * sizeof(U32)), memType);
   ptr[N_PREFRAY_ELEMS - OFFSET_1ST_INACTIVE]   = 0;       
   ptr[N_PREFRAY_ELEMS - OFFSET_N_PAUSED]   = 0;  
   ptr[N_PREFRAY_ELEMS - OFFSET_1ST_EMPTY]  = 0;       
   ptr[N_PREFRAY_ELEMS - OFFSET_ELEM_SZ]    = elemSz;
   ptr[N_PREFRAY_ELEMS - OFFSET_N_ELEMS]    = nElems;
-  // *fPP = (ptr + N_PREFRAY_ELEMS);
-  // memset(*fPP, 0, elemSz * nElems);  // TODO Can we get away without using this?
   return ptr + N_PREFRAY_ELEMS;
 }
 

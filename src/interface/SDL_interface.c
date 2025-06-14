@@ -26,7 +26,7 @@ Gui* guiNew() {
 	// Init SDL
 	int e = SDL_Init(SDL_INIT_VIDEO);
   assert(!e);
-  Gui* guiP = jbAlloc(sizeof(Gui), 1);
+  Gui* guiP = memAdd(sizeof(Gui), MAIN);
   assert(guiP);
   // Init window
   guiP->windowP = SDL_CreateWindow("Hello world!", 100, 100, 512, 448, 
@@ -61,7 +61,6 @@ void guiDel(Gui **guiPP) {
       SDL_DestroyWindow((*guiPP)->windowP);
       (*guiPP)->windowP = NULL;
     }
-    jbFree((void**) guiPP);
   }
   SDL_Quit();
 }

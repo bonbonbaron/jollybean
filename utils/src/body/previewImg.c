@@ -13,7 +13,7 @@ void previewImg(Colormap *cmP, ColorPalette *cpP, U32 preview_ms) {
   const U32 N_PIXELS = arrayGetNElems( output );
   const U8* cmElemEndP = cmElemP + N_PIXELS;
   const U8 MAX_COLORPAL_IDX = cpP->nColors - 1;
-  Color_* colorizedImg = arrayNew( sizeof(Color_), N_PIXELS );
+  Color_* colorizedImg = arrayNew( sizeof(Color_), N_PIXELS, MAIN );
   Color_* colorPixelP = colorizedImg;
   for ( ; cmElemP < cmElemEndP; ++cmElemP, ++colorPixelP ) {
     assert( *cmElemP <= MAX_COLORPAL_IDX );
@@ -29,5 +29,4 @@ void previewImg(Colormap *cmP, ColorPalette *cpP, U32 preview_ms) {
   SDL_Delay(preview_ms);  
   textureDel(&textureP);   // TODO why was this commented out?
   guiDel(&guiP);  // destroying the renderer deletes the texture as well.
-  arrayDel( (void**) &colorizedImg );
 }

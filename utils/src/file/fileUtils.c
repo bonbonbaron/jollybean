@@ -39,7 +39,7 @@ char* parseName(char *filepathP, char *extension, U8 verbose) {
     return NULL;
   }
 
-  char *outputNameP = (char*) jbAlloc(sizeof(char), (entityNameLen + 1) * sizeof(char));
+  char *outputNameP = (char*) memAdd((entityNameLen + 1) * sizeof(char), MAIN);
   memset(outputNameP, 0, (entityNameLen + 1) * sizeof(char));
   memcpy((void*) outputNameP, (void*) &filepathP[entityNameIdx], entityNameLen);
   return outputNameP;
@@ -90,7 +90,7 @@ static char* getSrcDir(U32 nExtraSpaces, char *srcLocalDirName, U8 verbose) {
                strlen(srcLocalDirName)   + strlen(SEP) + 
                nExtraSpaces + 1;
 
-  char* srcDirPath = jbAlloc(sizeof(char), nChars);  // extra spaces if you plan to append filename to dir path
+  char* srcDirPath = memAdd( sizeof(char) * nChars, MAIN );  // extra spaces if you plan to append filename to dir path
   memset(srcDirPath, 0, sizeof(char) * nChars);
 
   strcpy(srcDirPath, HOME);
@@ -116,7 +116,7 @@ static char* getResourceDir(U32 nExtraSpaces, char *resourceLocalDirName, U8 ver
                strlen(resourceLocalDirName)   + strlen(SEP) + 
                nExtraSpaces + 1;
 
-  char* resourceDirPath = jbAlloc(sizeof(char), nChars);  // extra spaces if you plan to append filename to dir path
+  char* resourceDirPath = memAdd(sizeof(char) * nChars, MAIN );  // extra spaces if you plan to append filename to dir path
   memset(resourceDirPath, 0, sizeof(char) * nChars);
 
   strcpy(resourceDirPath, HOME);
@@ -166,7 +166,7 @@ static char* getBuildDir(U32 nExtraSpaces, char *buildLocalDirName, U8 verbose) 
     strlen(buildLocalDirName)   + strlen(SEP) + 
     nExtraSpaces + 1;
 
-  char* buildDirPath = jbAlloc(sizeof(char), nChars);  // extra spaces if you plan to append filename to dir path
+  char* buildDirPath = memAdd(sizeof(char) * nChars, MAIN );  // extra spaces if you plan to append filename to dir path
   memset(buildDirPath, 0, sizeof(char) * nChars);
 
   strcpy(buildDirPath, HOME);
@@ -194,9 +194,6 @@ char* getBuildFilePath( char *buildLocalDirName, char *buildFileName, char *buil
       printf("final build file path: %s\n", buildFilePath);
     }
   }
-  else {
-    jbFree((void**) &buildFilePath);
-  }
   return buildFilePath;
 }
 
@@ -213,9 +210,6 @@ FILE* getBuildFile(char *buildLocalDirName, char *buildFileName, char *buildFile
   // Open file.
   fP = fopen(buildFilePath, "w");
   assert(fP);
-  if (buildFilePath) {
-    jbFree((void**) &buildFilePath);
-  }
   return fP;
 }
 
@@ -232,9 +226,6 @@ FILE* getSrcFile(char *srcLocalDirName, char *srcFileName, char *srcFileSuffix, 
   // Open file.
   fP = fopen(srcFilePath, "w");
   assert(fP);
-  if (srcFilePath) {
-    jbFree((void**) &srcFilePath);
-  }
   return fP;
 }
 
@@ -251,8 +242,5 @@ FILE* getResourceFile(char *resourceLocalDirName, char *resourceFileName, char *
   // Open file.
   fP = fopen(resourceFilePath, "r");
   assert(fP);
-  if (resourceFilePath) {
-    jbFree((void**) &resourceFilePath);
-  }
   return fP;
 }

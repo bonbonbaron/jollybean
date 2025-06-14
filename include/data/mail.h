@@ -21,7 +21,7 @@ typedef struct {
  * ... Okay, so I'm convinced.
  * Sounds like Message should be a little more complicated.
  */
-Message* mailboxNew( U32 maxNMsgs);
+Message* mailboxNew( U32 maxNMsgs, const MemoryType memType);
 void  mailboxDel(Message **mailboxPP);
 void mailboxWrite(Message *mailboxF, Key address, Key attn, Key cmd, Key arg, Generic* attachment);
 void mailboxForward(Message *mailboxF, Message *msgP);

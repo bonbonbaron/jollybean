@@ -12,9 +12,9 @@ typedef struct MemoryArena {
 
 static MemoryArena _arenaA[2];
 
-static void* _jbAlloc( U32 elemSz, U32 nElems) {
-	assert (elemSz && nElems);
-	void* voidP = memlloc(nElems * elemSz);
+static void* _jbAlloc( const U32 numBytes ) {
+	assert (numBytes);
+	void* voidP = malloc(numBytes);
 	assert( voidP != NULL);
   return voidP;
 }
@@ -31,7 +31,7 @@ static void _memIni ( MemoryArena* memP, const size_t numBytes ) {
   memP->memAllocated = numBytes;
   memP->memRemaining = memP->memAllocated;
 #endif
-  memP->memArenaP = _jbAlloc( sizeof( U8 ), numBytes );
+  memP->memArenaP = _jbAlloc( numBytes );
   memP->nextFreeP = memP->memArenaP;
 }
 
@@ -71,17 +71,17 @@ static void _memRst( MemoryArena* memP ) {
 #ifndef NDEBUG
 static void _memReport( const MemoryArena* memP, const char* arenaName ) {
   printf("%s memory arena stats:\n", arenaName);
-  printf( "\tmemAllocated: %16d\n", memP->memAllocated );
-  printf( "\tmemRemaining: %16d\n", memP->memRemaining );
-  printf( "\tnextFreeP:   0x%08x\n", (size_t) memP->nextFreeP );
-  printf( "\tmemArenaP:   0x%08x\n", (size_t) memP->memArenaP );
+  printf( "\tmemAllocated: %16ld\n", memP->memAllocated );
+  printf( "\tmemRemaining: %16ld\n", memP->memRemaining );
+  printf( "\tnextFreeP:   0x%08lx\n", (size_t) memP->nextFreeP );
+  printf( "\tmemArenaP:   0x%08lx\n", (size_t) memP->memArenaP );
 }
 #else
 #define memReport
 #endif
 
 // Public functions start here.
-void memIni ( const MemoryType memType, const size_t numBytes ) {
+void memIni ( const size_t numBytes, const MemoryType memType ) {
   _memIni( &_arenaA[ memType ], numBytes );
 }
 
@@ -90,7 +90,7 @@ void memClr ( const MemoryType memType ) {
 }
 
 // Allocate memory in the arena at a word-aligned address.
-void* memAdd ( const MemoryType memType, size_t numBytes ) {
+void* memAdd ( size_t numBytes, const MemoryType memType ) {
   return _memAdd( &_arenaA[ memType ], numBytes );
 }
 

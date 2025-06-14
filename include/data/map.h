@@ -45,8 +45,7 @@ typedef struct {
 	void  *mapA;  
 } Map;
 
-Map* mapNew( MapElemType elemType, const U8 elemSz, const Key nElems);
-void  mapDel(Map **mapPP);
+Map* mapNew( MapElemType elemType, const U8 elemSz, const Key nElems, const MemoryType memType);
 void mapSet(Map *mapP, const U8 key, const void *valP);
 void* mapGet(const Map *mapP, const U8 key);
 void mapRem(Map *mapP, const Key key);
@@ -55,7 +54,6 @@ void  mapSetFlag(Map *mapP, const Key key);
 void mapCopyKeys(Map *dstMP, Map *srcMP);
 Map* mapGetNestedMapP(Map *mapP, Key mapKey);
 void* mapGetNestedMapPElem(Map *mapP, Key mapKey, Key elemKey, MapElemType expectedElemType);
-void  mapOfNestedMapsDel(Map **outerMapPP);
 void  mapOfNestedMapsClr(Map **outerMapPP);
 
 

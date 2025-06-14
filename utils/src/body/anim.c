@@ -2,7 +2,7 @@
 
 // Frames ------------
 FrameNode* frameNodeNew() {
-  FrameNode* fnP = jbAlloc(sizeof(FrameNode), 1);
+  FrameNode* fnP = memAdd(sizeof(FrameNode), MAIN);
   memset(fnP, 0, sizeof(FrameNode));
   return fnP;
 }
@@ -18,15 +18,9 @@ void frameNodeGrow(FrameNode **nodePP) {
   }
 }
 
-void frameNodeDel(FrameNode **nodePP) {
-  if (nodePP && *nodePP) {
-    jbFree((void**) nodePP);
-  }
-}
-
 // Tags  ---------------
 TagNode* tagNodeNew() {
-  TagNode* tnP = jbAlloc(sizeof(TagNode), 1);
+  TagNode* tnP = memAdd(sizeof(TagNode), MAIN);
   memset(tnP, 0, sizeof(TagNode));
   return tnP;
 }
@@ -41,13 +35,6 @@ void tagNodeGrow(TagNode **nodePP) {
     *nodePP = (*nodePP)->nextP;
   }
 }
-
-void tagNodeDel(FrameNode **nodePP) {
-  if (nodePP && *nodePP) {
-    jbFree((void**) nodePP);
-  }
-}
-
 
 // At this point the caller has run into either a named object within the "frames" object, or
 // an anonymous object within the "frames" array.
@@ -342,7 +329,7 @@ void anim (char *entityNameP, U8 verbose, AnimJsonData **animPP) {
   fjson_object *topLevelObjP = fjson_tokener_parse(jsonFileContents);
 
   // Turn it into a C struct
-  AnimJsonData *animP = jbAlloc(sizeof(AnimJsonData), 1);
+  AnimJsonData *animP = memAdd(sizeof(AnimJsonData), MAIN);
 
   memset(animP, 0, sizeof(AnimJsonData));
   getJsonData(animP, topLevelObjP, verbose);

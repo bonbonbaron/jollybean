@@ -18,10 +18,11 @@ typedef struct Tau {
 } Tau;
 
 TEST_F_SETUP(Tau) {
+  memIni( 10000, MAIN );
   tau->nElems = 100;
   tau->btP = NULL;
 
-  tau->btP = btNew( sizeof(BattleStat), tau->nElems);
+  tau->btP = memAdd( sizeof(BattleStat) * tau->nElems, MAIN );
   REQUIRE_TRUE(tau->btP != NULL);
   BattleStat 
     *statP = tau->btP,
@@ -39,7 +40,7 @@ TEST_F_SETUP(Tau) {
 }
 
 TEST_F_TEARDOWN(Tau) {
-  _btDel((BtElHeader**) &tau->btP);
+  memClr( MAIN );
 }
 
 

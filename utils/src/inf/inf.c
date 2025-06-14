@@ -10,12 +10,8 @@ Inflatable* inflatableNew(void* voidA) {
   U32 szDataOrig = arrayGetNElems(voidA) * arrayGetElemSz(voidA);
   unsigned long szDataCompressed  = (szDataOrig * 1.1) + 12;
   U8 *dataOrigP = (U8*) voidA;
-  U8 *dataCompressed = (U8*)malloc( szDataCompressed );
-#if 1
+  U8 *dataCompressed = (U8*)memAdd( szDataCompressed, MAIN );
   int z_result = compress(dataCompressed, &szDataCompressed, dataOrigP, szDataOrig);    
-#else
-  int z_result = compress2(dataCompressed, &szDataCompressed, dataOrigP, szDataOrig, 6);    
-#endif
 
   switch(z_result) {
     case Z_OK:
@@ -28,7 +24,7 @@ Inflatable* inflatableNew(void* voidA) {
       break;
   }
 
-  infP = jbAlloc( sizeof(Inflatable), 1);
+  infP = memAdd( sizeof(Inflatable), MAIN );
 
   infP->compressedLen   = szDataCompressed;
   infP->inflatedLen     = szDataOrig;
@@ -36,21 +32,6 @@ Inflatable* inflatableNew(void* voidA) {
   infP->compressedDataA = dataCompressed;
 
   return infP;
-}
-
-// The reason data.c doesn't own this function is because inflatables are permanent in-game.
-void inflatableDel(Inflatable **infPP) {
-  if (infPP && *infPP) {
-    if ((*infPP)->compressedDataA) {
-      free((*infPP)->compressedDataA);
-      (*infPP)->compressedDataA = NULL;
-    }
-    if ((*infPP)->inflatedDataP) {
-      free((*infPP)->inflatedDataP);
-      (*infPP)->inflatedDataP = NULL;
-    }
-    jbFree((void**) infPP);
-  }
 }
 
 void inflatableWrite(Inflatable *infP, char *filepathA, char *inflatableNameA) {

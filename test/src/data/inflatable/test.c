@@ -13,6 +13,7 @@ functions to test:
 TAU_MAIN()
 
 TEST(InflatableSuite, OnlyTest) {
+  memIni( 10000, MAIN );
   Inflatable *infP = NULL;
 
   // Make dummy data.
@@ -20,7 +21,7 @@ TEST(InflatableSuite, OnlyTest) {
   static const U32 MAX_N_ELEMS = 1000;
   for (U32 j = 1; j < MAX_N_ELEMS; ++j) {
     //printf("%d\n", j);
-    dummyDataA = arrayNew(sizeof(U32), j);
+    dummyDataA = arrayNew(sizeof(U32), j, MAIN);
     CHECK_EQ(arrayGetNElems(dummyDataA), j);
     CHECK_EQ(arrayGetElemSz(dummyDataA), sizeof(U32));
 
@@ -34,9 +35,6 @@ TEST(InflatableSuite, OnlyTest) {
     REQUIRE_TRUE(infP != NULL);
     REQUIRE_TRUE(infP->inflatedDataP == NULL);
 
-    // Delete array inflatable comes from.
-    arrayDel((void**) &dummyDataA);
-    
     // Inflate inflatable.
     inflatableIni(infP);
     REQUIRE_TRUE(infP->inflatedDataP != NULL);
@@ -48,11 +46,7 @@ TEST(InflatableSuite, OnlyTest) {
     }
 
     // Clear inflatable.
-    inflatableClr(infP);
     CHECK_NULL(infP->inflatedDataP);
-
-    // Delete inflatable.
-    inflatableDel(&infP);
-    CHECK_NULL(infP);
   }
+  memClr( MAIN );
 }

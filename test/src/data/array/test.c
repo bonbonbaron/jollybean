@@ -2,21 +2,6 @@
 #include "data/array.h"
 
 
-/*
-functions to test:
-==================
-
-  \arrayNew
-  \arrayDel
-  arrayGetNElems
-  arrayGetElemSz
-  arrayGetVoidElemPtr
-  arraySetVoidElem
-  arrayIniPtrs
-
-==================
-*/
-
 struct Array { 
   U32 *P;
   U32 dummyNumber;
@@ -28,7 +13,8 @@ static const int N_ELEMS = 100;
 TAU_MAIN()
 
 TEST_F_SETUP(Array) {
-  tau->P = arrayNew( sizeof(U32), N_ELEMS);
+  memIni( 1000, MAIN );
+  tau->P = arrayNew( sizeof(U32), N_ELEMS, MAIN );
   CHECK_NOT_NULL(tau->P);
   REQUIRE_EQ(arrayGetNElems(tau->P), N_ELEMS);
   for (U32 i = 0; i < N_ELEMS; ++i) {
@@ -38,8 +24,7 @@ TEST_F_SETUP(Array) {
 }
 
 TEST_F_TEARDOWN(Array) {
-  arrayDel((void**) &tau->P);
-  CHECK_NULL(tau->P);
+  memClr( MAIN );
 }
 
 TEST_F(Array, RightNum) {

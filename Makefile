@@ -19,6 +19,7 @@ X := $(SRC_DIR)/x
 XI_SRCS := $(X)/x.c $(X)/xAnim.c $(X)/xMotion.c $(X)/xRender.c $(X)/xAction.c $(shell find $(SRC_DIR)/interface -type f -name "*.c")
 
 SRCS    := $(XI_SRCS) $(D_SRCS) 
+#SRCS    := $(D_SRCS) 
 
 OBJS    := $(SRCS:$(SRC_DIR)/%.c=$(BLD_DIR)/%.o)
 

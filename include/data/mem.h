@@ -6,12 +6,12 @@
 typedef enum { MAIN, TEMP } MemoryType;
 
 // Public functions start here.
-void memIni ( const MemoryType memType, const size_t numBytes );
+void memIni ( const size_t numBytes, const MemoryType memType);
 
 void memClr ( const MemoryType memType );
 
 // Allocate memory in the arena at a word-aligned address.
-void* memAdd ( const MemoryType memType, size_t numBytes );
+void* memAdd ( size_t numBytes, const MemoryType memType );
 
 void memRst( const MemoryType memType );
 

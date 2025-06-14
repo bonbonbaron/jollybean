@@ -1,23 +1,14 @@
 #include "data/map.h"
 
-Map* mapNew( MapElemType elemType, const U8 elemSz, const Key nElems) {
+Map* mapNew( MapElemType elemType, const U8 elemSz, const Key nElems, const MemoryType memType) {
 	assert (elemSz && nElems);
-  Map* mapP = jbAlloc(sizeof(Map), 1);
+  Map* mapP = memAdd(sizeof(Map), memType);
   memset(mapP->flagA, 0, sizeof(FlagInfo) * N_FLAG_BYTES);
-	mapP->mapA = arrayNew(elemSz, nElems);
+	mapP->mapA = arrayNew(elemSz, nElems, memType);
   mapP->population = 0;
   mapP->nestedRef = 0;  // number of times this is nested in an outer map
   mapP->elemType = elemType;
   return mapP;
-}
-
-void mapDel(Map **mapPP) {
-	if (mapPP != NULL && *mapPP != NULL) {
-    if ((*mapPP)->mapA != NULL) {
-      arrayDel(&(*mapPP)->mapA);
-    }
-    jbFree((void**) mapPP);
-	}
 }
 
 inline static U8 _isMapValid(const Map *mapP) {
@@ -215,21 +206,4 @@ void* mapGetNestedMapPElem(Map *mapP, Key mapKey, Key elemKey, MapElemType expec
     }
   }
   return NULL;
-}
-
-void mapOfNestedMapsDel(Map **outerMapPP) {
-  mapOfNestedMapsClr(outerMapPP);
-  mapDel(outerMapPP);
-}
-
-void mapOfNestedMapsClr(Map **outerMapPP) {
-  if (outerMapPP && *outerMapPP) {
-    Map **mapPP = (Map**) (*outerMapPP)->mapA;
-    Map **mapEndPP = mapPP + (*outerMapPP)->population;
-    for (; mapPP < mapEndPP; ++mapPP) {
-      if ( *mapPP && --(*mapPP)->nestedRef == 0 ) {
-        mapDel(mapPP);
-      }
-    }
-  }
 }

@@ -10,8 +10,9 @@
 
 int main(int argc, char **argv) {
   Gene **genePA = NULL;
+  memIni( 50000, MAIN );
 
-  Error e = arrayNew((void**) &genePA, sizeof(void*), 3);
+  Error e = arrayNew((void**) &genePA, sizeof(void*), 3, MAIN);
 
   // Mock up some genes.
   if (!e) {
@@ -34,7 +35,7 @@ int main(int argc, char **argv) {
   // Extract stripdata from each media gene into an array of contiguous strip data pointers.
   StripDataS **sdPA = NULL;
   if (!e) {
-    e = arrayNew((void**) &sdPA, sizeof(StripDataS*), arrayGetNElems(genePA));
+    e = arrayNew((void**) &sdPA, sizeof(StripDataS*), arrayGetNElems(genePA), MAIN );
   }
   if (!e) {
     for (int i = 0, iEnd = arrayGetNElems(sdPA); i < iEnd; ++i) {

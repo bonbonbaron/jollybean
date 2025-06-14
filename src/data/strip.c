@@ -56,16 +56,6 @@ U8* ssGetOutput( StripDataS* sdP ) {
   }
 }
 
-// Stripmapped Data
-void stripClr(StripDataS *sdP) {
-  if (sdP) {
-    inflatableClr(sdP->ss.infP);
-    inflatableClr(sdP->sm.infP);
-    arrayDel((void**) &sdP->ss.unpackedDataA);
-    arrayDel((void**) &sdP->assembledDataA);
-  }
-}
-
 // This is for when I vectorize (again) in the future for the IMPROVED stripset unpacking algorithm.
 #if 0
 // TODO delete everything below once bug is fixed
@@ -122,7 +112,7 @@ void sdUnpack(StripDataS *sdP) {
   const size_t nWhollyPackedWords      = ( ( ssP->nUnits * ssP->bpu ) >> FULLY_PACKED_WORD_COUNT_RSHIFT );
 
   // start copy
-  ssP->unpackedDataA = arrayNew(sizeof(U8), ssP->nUnits); // 9 bytes allocated here
+  ssP->unpackedDataA = arrayNew(sizeof(U8), ssP->nUnits, TEMP); 
 
   const size_t mask = 
     (ssP->bpu == 1) ? MASK_1BPP :
@@ -197,7 +187,7 @@ void sdAssemble(StripDataS *sdP) {
   assert (sdP->ss.unpackedDataA && sdP->sm.infP->inflatedDataP && !sdP->assembledDataA
       && sdP->ss.nUnitsPerStrip > 0);
 
-  sdP->assembledDataA = arrayNew( sizeof(U8), sdP->sm.nIndices * sdP->ss.nUnitsPerStrip);
+  sdP->assembledDataA = arrayNew( sizeof(U8), sdP->sm.nIndices * sdP->ss.nUnitsPerStrip, TEMP);
 
   // Piece together strips
   // If the data was never compressed, then we're going to pull it from the "compressed" field.

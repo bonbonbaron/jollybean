@@ -25,7 +25,7 @@ typedef struct {
   fc_.intermediateIdx = -1;\
   fc_.newIdx = -1;
 
-void* frayNew( U32 elemSz, U32 nElems);
+void* frayNew( U32 elemSz, U32 nElems, const MemoryType memType);
 void  frayDel(void **frayPP);
 void frayAdd(const void *frayP, void *elemP, U32 *elemNewIdxP);
 void frayAddEmpty(const void *frayP, U32 *elemNewIdxP);

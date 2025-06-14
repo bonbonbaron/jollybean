@@ -509,11 +509,9 @@ common_exit:
 
 // Higher depth helper functions.
 static void tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_len, void **ppDst_buf, size_t *pOut_len) {
-  // *ppDst_buf = jbAlloc(*pOut_len, 1);
-  *ppDst_buf = arrayNew( sizeof(U8), *pOut_len );
+  *ppDst_buf = arrayNew( sizeof(U8), *pOut_len, MAIN );
   tinfl_decompressor decomp; 
   void *pDst_buf = *ppDst_buf;
-  //void *pNew_buf; 
   size_t 
     src_buf_ofs = 0, 
     out_buf_capacity = 0;
@@ -549,15 +547,7 @@ static void tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_le
     if (new_out_buf_capacity < 128) {
       new_out_buf_capacity = 128;
     }
-    //pNew_buf = MZ_REALLOC(pDst_buf, new_out_buf_capacity);
 
-    //if (!pNew_buf) {
-      //MZ_FREE(pDst_buf); 
-      //*pOut_len = 0; 
-      //return E_INFLATION_FAILED;
-		//}
-
-    //pDst_buf = pNew_buf; 
     out_buf_capacity = new_out_buf_capacity;
 #endif
   }
@@ -606,11 +596,4 @@ void inflatableIni(Inflatable *inflatableP) {
      &inflatableP->inflatedLen
   ); 
   assert (inflatableP->inflatedLen == expectedInflatedLen);
-}
-
-void inflatableClr(Inflatable *inflatableP) {
-  if (inflatableP && inflatableP->inflatedDataP) {
-    // jbFree(&inflatableP->inflatedDataP);
-    arrayDel(&inflatableP->inflatedDataP);  // rename to xxxA if array-conversion works out.
-  }
 }

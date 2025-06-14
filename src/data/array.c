@@ -1,21 +1,11 @@
 #include "data/array.h"
 
-void* arrayNew( U32 elemSz, U32 nElems, ) {
+void* arrayNew( U32 elemSz, U32 nElems, const MemoryType memType ) {
 	assert (elemSz && nElems);
-	U32* ptr = (U32*) jbAlloc( (elemSz * nElems) + (2 * sizeof(U32)), 1);
+	U32* ptr = (U32*) memAdd( (elemSz * nElems) + (2 * sizeof(U32)), memType );
   ptr[0] = elemSz;
   ptr[1] = nElems;
-  // void *arryP = ptr + 2;
-  // memset(arryP, 0, elemSz * nElems);  // is there a consequence to leaving this out? 
 	return ptr + 2;
-}
-
-void arrayDel(void **arryPP) {
-	if (arryPP != NULL && *arryPP != NULL) {
-		U32 *ptr = *arryPP;
-		free((ptr) - 2);
-		*arryPP = NULL;
-	}
 }
 
 U32 arrayGetNElems(const void *arryP) {

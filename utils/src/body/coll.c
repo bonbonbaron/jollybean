@@ -8,7 +8,7 @@ typedef struct _RectNode {
 } RectNode;
 
 static RectNode* rectNodeNew() {
-  RectNode* rnP = jbAlloc(sizeof(RectNode), 1);
+  RectNode* rnP = memAdd(sizeof(RectNode), MAIN);
   rnP->x = -1;
   rnP->y = -1;
   rnP->w = -1;
@@ -26,24 +26,6 @@ static void rectNodeGrow(RectNode **nodePP) {
     *nodePP = (*nodePP)->nextP;
   }
 }
-
-#if 0 // unused function
-static void rectNodeDel(RectNode **nodePP) {
-  if (nodePP && *nodePP) {
-    jbFree((void**) nodePP);
-  }
-}
-
-static void rectListDel(RectNode **nodePP) {
-  if (nodePP && *nodePP) {
-    if ((*nodePP)->nextP) {
-      rectListDel(&(*nodePP)->nextP);
-    } else {
-      rectNodeDel(nodePP);
-    }
-  }
-}
-#endif
 
 RectNode* getRectNode(RectNode *rootP, U32 idx) {
   if (!rootP) {
@@ -301,6 +283,4 @@ void coll(char *entityName, U8 isBg, AnimJsonData *animP, U8 verbose) {
     writeCollisionRectMap(entityName, animP, rectListP, verbose);
   }
   cmClr(&cm);
-  arrayDel((void**) &cp.colorA);
-  jbFree((void**) &srcFilePath);
 }
