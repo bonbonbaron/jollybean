@@ -11,6 +11,6 @@ typedef struct Inflatable {
 	U8  *compressedDataA;
 } Inflatable;
 
-void inflatableIni(Inflatable *inflatableP);
+void inflatableIni(Inflatable *inflatableP, const PoolId poolId);
 
 #endif  // #ifndef INFLATABLE_H

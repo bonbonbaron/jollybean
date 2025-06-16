@@ -4,8 +4,6 @@
  * Passed-in arguments: name of bod[y|ies].
  */
 int main(int argc, char ** argv) {
-  memIni( 1000000, MAIN );
-  memIni( 1000000, TEMP );
   AnimJsonData *animP = NULL;
 
   // Verbose 
@@ -23,5 +21,7 @@ int main(int argc, char ** argv) {
     img(argv[i], animP, verbose);
     // Collision
     // coll(argv[i], 0, animP, verbose);
+    // memRst( GENERAL );
+    // memRst( TEMPORARY );
   }
 }

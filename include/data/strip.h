@@ -40,11 +40,11 @@ typedef struct {
   U8 *assembledDataA;  // destination of strip data's assembling step, if not skipped
 } StripDataS;
 
-void stripIni(StripDataS *sdP);
+void stripIni(StripDataS *sdP, const PoolId poolId);
 U8* ssGetInput( StripDataS* sdP );
 U8* ssGetOutput( StripDataS* sdP );
-void sdInflate(StripDataS *sdP);
-void sdUnpack(StripDataS *sdP);
-void sdAssemble(StripDataS *sdP);
+void sdInflate(StripDataS *sdP, const PoolId poolId);
+void sdUnpack(StripDataS *sdP, const PoolId poolId);
+void sdAssemble(StripDataS *sdP, const PoolId poolId);
 
 #endif  // #ifndef STRIP_H

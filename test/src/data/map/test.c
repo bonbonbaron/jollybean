@@ -26,35 +26,34 @@ typedef struct Tau {
 } Tau;
 
 TEST_F_SETUP(Tau) {
-  memIni(1000000, MAIN);
-  tau->nElems = 100;
+  tau->nElems = 80;
   tau->P = NULL;
   tau->cpP = NULL;
   tau->mapOfNestedMaps = NULL;
   tau->mapOfNestedPtrMaps = NULL;
 
   // Allocate simple map.
-  tau->P = mapNew( RAW_DATA, sizeof(U32), tau->nElems, MAIN);
+  tau->P = mapNew( RAW_DATA, sizeof(U32), tau->nElems, GENERAL);
   CHECK_NOT_NULL(tau->P);
   _popMap(tau->P, tau->nElems);
 
 #if 1
   // Allocate map to copy keys to.
-  tau->cpP = mapNew( RAW_DATA, sizeof(U32), tau->nElems, MAIN);
+  tau->cpP = mapNew( RAW_DATA, sizeof(U32), tau->nElems, GENERAL);
   CHECK_NOT_NULL(tau->cpP);
  
   // Allocate map of maps.
-  tau->mapOfNestedMaps = mapNew( MAP_POINTER, sizeof(Map*), tau->nElems, MAIN);
+  tau->mapOfNestedMaps = mapNew( MAP_POINTER, sizeof(Map*), tau->nElems, GENERAL);
   CHECK_NOT_NULL(tau->mapOfNestedMaps);
 
   // Allocate map of maps of pointer types.
-  tau->mapOfNestedPtrMaps = mapNew( MAP_POINTER, sizeof(Map*), tau->nElems, MAIN);
+  tau->mapOfNestedPtrMaps = mapNew( MAP_POINTER, sizeof(Map*), tau->nElems, GENERAL);
   CHECK_NOT_NULL(tau->mapOfNestedPtrMaps);
 
   // Populate map of maps of pointers
   for (Key i = 1; i <= tau->nElems; ++i) {
     Map *newMP = NULL;
-    newMP = mapNew( NONMAP_POINTER, sizeof(void*), tau->nElems, MAIN);
+    newMP = mapNew( NONMAP_POINTER, sizeof(void*), tau->nElems, GENERAL);
     CHECK_NOT_NULL(newMP);
     CHECK_NOT_NULL(newMP->mapA);
     // Populate inner map with 1...100
@@ -67,7 +66,7 @@ TEST_F_SETUP(Tau) {
   // Populate outer map with 100 inner maps
   for (Key i = 1; i <= tau->nElems; ++i) {
     Map *newMP = NULL;
-    newMP = mapNew( RAW_DATA, sizeof(U32), tau->nElems, MAIN);
+    newMP = mapNew( RAW_DATA, sizeof(U32), tau->nElems, GENERAL);
     CHECK_NOT_NULL(newMP);
     CHECK_NOT_NULL(newMP->mapA);
     // Populate inner map with 1...100
@@ -78,7 +77,7 @@ TEST_F_SETUP(Tau) {
 }
 
 TEST_F_TEARDOWN(Tau) {
-  memClr(MAIN);
+  memRst(GENERAL);
 }
 
 TEST_F(Tau, mapGetIndex) {

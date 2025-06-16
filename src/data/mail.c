@@ -1,9 +1,9 @@
 #include "data/mail.h"
 
 // There is no corresponding mailboxRead() function because that's specific to each implementer.
-Message* mailboxNew(U32 maxNMsgs, const MemoryType memType) {
+Message* mailboxNew(U32 maxNMsgs, const PoolId poolId) {
   assert (maxNMsgs);
-  return (Message*) frayNew( sizeof(Message), maxNMsgs, memType );
+  return (Message*) frayNew( sizeof(Message), maxNMsgs, poolId );
 }
 
 void mailboxWrite(Message *mailboxP, Key address, Key attn, Key cmd, Key arg, Generic* attachmentP) {

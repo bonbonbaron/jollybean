@@ -47,6 +47,6 @@ inline void _btLinkNodes(BtElHeader *parentHdrP, BtElHeader *childHdrP, Key pare
   childHdrP->parent = parentIdx;
 }
 
-void* btNew( U32 elemSz, U32 nElems, const MemoryType memType);
+void* btNew( U32 elemSz, U32 nElems, const PoolId poolId);
 
 #endif  // #ifndef BT_H

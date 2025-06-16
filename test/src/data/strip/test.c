@@ -13,27 +13,25 @@ TAU_MAIN()
 const static U8 verbose = 0;
 
 TEST_F_SETUP(Tau) {
-  memIni( 100000, MAIN );
-  memIni( 100000, TEMP );
   // Make arrays, because inflatableNew() expects Jollybean arrays.
-  tau->raw1bppA = arrayNew(  sizeof(rawData1bpp[0]), sizeof(rawData1bpp) / sizeof(rawData1bpp[0]), MAIN);
+  tau->raw1bppA = arrayNew(  sizeof(rawData1bpp[0]), sizeof(rawData1bpp) / sizeof(rawData1bpp[0]), GENERAL);
   memcpy((void*) tau->raw1bppA, (void*) rawData1bpp, sizeof(rawData1bpp[0]) * sizeof(rawData1bpp) / sizeof(rawData1bpp[0]));
   if (verbose) printf("\e[91m1bpp data\e[0m\n");
   tau->sd1bppP = stripNew(tau->raw1bppA, 3, 1, 0, verbose);
 
-  tau->raw2bppA = arrayNew(  sizeof(rawData2bpp[0]), sizeof(rawData2bpp) / sizeof(rawData2bpp[0]), MAIN);
+  tau->raw2bppA = arrayNew(  sizeof(rawData2bpp[0]), sizeof(rawData2bpp) / sizeof(rawData2bpp[0]), GENERAL);
   memcpy((void*) tau->raw2bppA, (void*) rawData2bpp, sizeof(rawData2bpp[0]) * sizeof(rawData2bpp) / sizeof(rawData2bpp[0]));
   if (verbose) printf("\e[91m2bpp data\e[0m\n");
   tau->sd2bppP = stripNew(tau->raw2bppA, 3, 2, 0, verbose);
 
-  tau->raw4bppA = arrayNew(  sizeof(rawData4bpp[0]), sizeof(rawData4bpp) / sizeof(rawData4bpp[0]), MAIN);
+  tau->raw4bppA = arrayNew(  sizeof(rawData4bpp[0]), sizeof(rawData4bpp) / sizeof(rawData4bpp[0]), GENERAL);
   memcpy((void*) tau->raw4bppA, (void*) rawData4bpp, sizeof(rawData4bpp[0]) * sizeof(rawData4bpp) / sizeof(rawData4bpp[0]));
   if (verbose) printf("\e[91m4bpp data\e[0m\n");
   tau->sd4bppP = stripNew(tau->raw4bppA, 9, 4, 0, verbose);
 }
 
 TEST_F_TEARDOWN(Tau) {
-  memClr( MAIN );
+  memRst( GENERAL );
 }
 
 
@@ -50,26 +48,26 @@ TEST_F(Tau, sdAssemble) {
 }
 
 TEST_F(Tau, bleh) {
-  stripIni( blehImg.cmP->sdP );
+  stripIni( blehImg.cmP->sdP, GENERAL );
 }
 
 TEST_F(Tau, stripIni) {
-  stripIni(tau->sd1bppP);
-  stripIni(tau->sd2bppP);
-  stripIni(tau->sd4bppP);
+  stripIni(tau->sd1bppP, GENERAL);
+  stripIni(tau->sd2bppP, GENERAL);
+  stripIni(tau->sd4bppP, GENERAL);
 }
 
 TEST_F(Tau, red) {
-  stripIni( redImg.cmP->sdP );
+  stripIni( redImg.cmP->sdP, GENERAL );
 }
 
 TEST_F(Tau, heck) {
-  stripIni( heckImg.cmP->sdP );
+  stripIni( heckImg.cmP->sdP, GENERAL );
 }
 
 TEST_F(Tau, heck_with_offset) {
   heckImg.cmP->sdP->ss.offset = 55;
-  stripIni( heckImg.cmP->sdP );
+  stripIni( heckImg.cmP->sdP, GENERAL );
 }
 
 TEST_F(Tau, stripIni_4bpp_expectOnlyInflation) {
@@ -79,7 +77,7 @@ TEST_F(Tau, stripIni_4bpp_expectOnlyInflation) {
   REQUIRE_TRUE(tau->sd4bppP != NULL);
   REQUIRE_TRUE(tau->sd4bppP->ss.infP != NULL);
   REQUIRE_TRUE(tau->sd4bppP->ss.infP->inflatedDataP == NULL);
-  stripIni(tau->sd4bppP);
+  stripIni(tau->sd4bppP, GENERAL);
   // Strip set should be non-empty, since that's where its data goes.
   CHECK_TRUE(tau->sd4bppP->ss.infP->inflatedDataP != NULL);
   // Shouldn't be unpacked or assembled.

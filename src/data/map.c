@@ -1,10 +1,10 @@
 #include "data/map.h"
 
-Map* mapNew( MapElemType elemType, const U8 elemSz, const Key nElems, const MemoryType memType) {
+Map* mapNew( MapElemType elemType, const U8 elemSz, const Key nElems, const PoolId poolId) {
 	assert (elemSz && nElems);
-  Map* mapP = memAdd(sizeof(Map), memType);
+  Map* mapP = memAdd(sizeof(Map), poolId );
   memset(mapP->flagA, 0, sizeof(FlagInfo) * N_FLAG_BYTES);
-	mapP->mapA = arrayNew(elemSz, nElems, memType);
+	mapP->mapA = arrayNew(elemSz, nElems, poolId );
   mapP->population = 0;
   mapP->nestedRef = 0;  // number of times this is nested in an outer map
   mapP->elemType = elemType;

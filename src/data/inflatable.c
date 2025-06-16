@@ -508,8 +508,8 @@ common_exit:
 }
 
 // Higher depth helper functions.
-static void tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_len, void **ppDst_buf, size_t *pOut_len) {
-  *ppDst_buf = arrayNew( sizeof(U8), *pOut_len, MAIN );
+static void tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_len, void **ppDst_buf, size_t *pOut_len, const PoolId poolId) {
+  *ppDst_buf = arrayNew( sizeof(U8), *pOut_len, poolId );
   tinfl_decompressor decomp; 
   void *pDst_buf = *ppDst_buf;
   size_t 
@@ -585,7 +585,7 @@ static void tinfl_decompress_mem_to_heap(const void *pSrc_buf, size_t src_buf_le
   For more information, please refer to <http://unlicense.org/>
 */
 
-void inflatableIni(Inflatable *inflatableP) {
+void inflatableIni(Inflatable *inflatableP, const PoolId poolId) {
   // assert(inflatableP && !inflatableP->inflatedDataP);
   assert(inflatableP);
   long long unsigned int expectedInflatedLen;
@@ -594,7 +594,8 @@ void inflatableIni(Inflatable *inflatableP) {
      (const void*) inflatableP->compressedDataA, 
      (size_t) inflatableP->compressedLen, 
      &inflatableP->inflatedDataP,
-     &inflatableP->inflatedLen
+     &inflatableP->inflatedLen,
+     poolId
   ); 
   assert (inflatableP->inflatedLen == expectedInflatedLen);
 }

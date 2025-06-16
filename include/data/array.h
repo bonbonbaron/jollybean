@@ -3,8 +3,8 @@
 
 #include "data/mem.h"
 
-void* arrayNew( U32 elemSz, U32 nElems, const MemoryType memType);
-void* array2dNew( U32 w, U32 h, U32 elemSz, U32 nElems, const MemoryType memType);
+void* arrayNew( U32 elemSz, U32 nElems, const PoolId poolId);
+void* array2dNew( U32 w, U32 h, U32 elemSz, U32 nElems, const PoolId poolId);
 void arrayDel(void **arryPP);
 U32 arrayGetNElems(const void *arryP);
 U32 arrayGetElemSz(const void *arryP);

@@ -137,7 +137,7 @@ S32 getColormapIdx(U8 *cpColorA, const U8 *colorQueryP, U8 verbose) {
 
 #if 0 // unused function
 static void mallocSanityCheck(char *msgDetails) {
-  U8 *memA = memAdd(sizeof(U8) * 100000, MAIN);
+  U8 *memA = memAdd(sizeof(U8) * 100000, GENERAL );
   printf("malloc works fine: %s\n", msgDetails);
 }
 #endif
@@ -153,10 +153,10 @@ static void _makeColorPaletteAndColormap(U8 **colormapAP, ColorPalette *cpP, Col
   // If we're dealing with 1-byte pixels, then the palette should already be updated.
   assert((srcPixelSz == 2 || srcPixelSz == 4) && cpP->colorA == NULL);
   // Allocate colormap (in a placeholder colormap array, not the proper location due to testing).
-  *colormapAP = arrayNew(sizeof(ColormapIdx) , srcImgDataP->width * srcImgDataP->height, MAIN );
+  *colormapAP = arrayNew(sizeof(ColormapIdx) , srcImgDataP->width * srcImgDataP->height, GENERAL  );
   // Allocate color palette.
   // TODO this is the problem.
-  cpP->colorA = arrayNew(srcPixelSz, N_COLORS_SUPPORTED_MAX_, MAIN ); 
+  cpP->colorA = arrayNew(srcPixelSz, N_COLORS_SUPPORTED_MAX_, GENERAL ); 
   memset(cpP->colorA, 0, arrayGetNElems(cpP->colorA) * arrayGetElemSz(cpP->colorA));
   // Set up pointers for looping through input image.
   U8 *srcPixelP = srcPixelA;
@@ -192,7 +192,7 @@ static void _makeColorPaletteAndColormap(U8 **colormapAP, ColorPalette *cpP, Col
     }
 
     U8 *grayPaletteA = (U8*) cpP->colorA;
-    U32 *tmpA = arrayNew(sizeof(U32), cpP->nColors, MAIN );
+    U32 *tmpA = arrayNew(sizeof(U32), cpP->nColors, GENERAL );
     register U8 grayElem = 0;
     // += 2 skips over alpha channels of gray-alpha image.
     for (int i = 0; i < cpP->nColors; i += 2) {
@@ -223,7 +223,7 @@ void readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *ani
   // png_color blackBg = {0}; // used to replace alpha pixels for 1-byte output pixel format
   U8 srcPixelSize = 0;
   // Allocate PNG image info
-  png_image *pngP = memAdd(sizeof(png_image), MAIN);
+  png_image *pngP = memAdd(sizeof(png_image), GENERAL);
   memset(pngP, 0, sizeof(png_image));  // bombed, seeing if this worked
   pngP->version = PNG_IMAGE_VERSION;
   // Set up PNG reader.
@@ -249,12 +249,12 @@ void readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *ani
   /**************************/
   if (srcPixelSize == 1) {
     // Output 1-byte pixel buffer
-    colormapA = arrayNew(sizeof(U8), bufferSz, MAIN );
+    colormapA = arrayNew(sizeof(U8), bufferSz, GENERAL );
     if ( pngP->colormap_entries ) {
       if (verbose) {
         printf("Allocating %d bytes for libpng to give us its color palette.\n", PNG_IMAGE_COLORMAP_SIZE(*pngP));
       }
-      cpP->colorA = arrayNew(sizeof(Color_), PNG_IMAGE_COLORMAP_SIZE(*pngP) / sizeof(Color_), MAIN );
+      cpP->colorA = arrayNew(sizeof(Color_), PNG_IMAGE_COLORMAP_SIZE(*pngP) / sizeof(Color_), GENERAL );
     }
     cpP->nColors = PNG_IMAGE_COLORMAP_SIZE(*pngP) / sizeof(Color_);
     assert ((cpP->nColors / sizeof(Color_)) <= N_COLORS_SUPPORTED_MAX_);
@@ -274,7 +274,7 @@ void readPng(char *imgPathA, Colormap *cmP, ColorPalette *cpP, AnimJsonData *ani
   // IF PNG IS NOT A COLORMAP, then read it like a normal image without getting a color palette.
   /**************************/
   else {
-    U8 *srcPixelA = arrayNew(srcPixelSize, bufferSz / srcPixelSize, MAIN);
+    U8 *srcPixelA = arrayNew(srcPixelSize, bufferSz / srcPixelSize, GENERAL);
     // row_stride param being 0 forces libpng to calculate the pitch for you.
     png_image_finish_read(pngP, NULL, srcPixelA, 0, NULL);
     // mallocSanityCheck("after finishing reeading PNG 2");
@@ -361,7 +361,7 @@ static void _validateWholeInput(Colormap *cmP, ColorPalette *cpP) {
 
   // Deflate colormap/palette and get rid of their resulting outputs to truly test strip-piecing.
   U8 *cmOrigP = NULL;
-  cmOrigP = arrayNew(arrayGetElemSz( outputA ), arrayGetNElems( outputA ), MAIN);
+  cmOrigP = arrayNew(arrayGetElemSz( outputA ), arrayGetNElems( outputA ), GENERAL);
   memcpy(cmOrigP, outputA, arrayGetElemSz( outputA ) * arrayGetNElems( outputA ));
   // Clear out old colormap
   printf("original input\n");
@@ -369,7 +369,7 @@ static void _validateWholeInput(Colormap *cmP, ColorPalette *cpP) {
 #if SHOW_PREVIEW
   previewImg(cmP, cpP, 1000);
 #endif
-  stripIni(cmP->sdP);
+  stripIni(cmP->sdP, TEMPORARY );
   outputA = ssGetOutput( cmP->sdP );  // Old pointer's dangling after deletion, so you have to reset it.
   printf("reconstructed input\n");
   printStripData(cmP->sdP);

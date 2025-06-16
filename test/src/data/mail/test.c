@@ -13,20 +13,19 @@ typedef struct Tau {
 } Tau;
 
 TEST_F_SETUP(Tau) {
-  memIni(1000, MAIN);
   tau->maxNMsgs = 50;
-  tau->mailboxF = mailboxNew( tau->maxNMsgs, MAIN);
+  tau->mailboxF = mailboxNew( tau->maxNMsgs, GENERAL);
   REQUIRE_EQ(frayGetNElems_(tau->mailboxF), tau->maxNMsgs);
   REQUIRE_EQ(frayGetElemSz_(tau->mailboxF), sizeof(Message));
   REQUIRE_EQ(_frayGetNActive(tau->mailboxF), 0);
-  tau->fwdMailboxF = mailboxNew(tau->maxNMsgs, MAIN);
+  tau->fwdMailboxF = mailboxNew(tau->maxNMsgs, GENERAL);
   REQUIRE_EQ(frayGetNElems_(tau->fwdMailboxF), tau->maxNMsgs);
   REQUIRE_EQ(frayGetElemSz_(tau->fwdMailboxF), sizeof(Message));
   REQUIRE_EQ(_frayGetNActive(tau->fwdMailboxF), 0);
 }
 
 TEST_F_TEARDOWN(Tau) {
-  memClr( MAIN );
+  memRst( GENERAL );
 }
 
 

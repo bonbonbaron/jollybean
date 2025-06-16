@@ -3,20 +3,18 @@
 
 #include "data/common.h"
 
-typedef enum { MAIN, TEMP } MemoryType;
+typedef enum PoolId { PERMANENT, GENERAL, TEXT, IMAGE, AUDIO, TEMPORARY, N_POOLS } PoolId;
 
 // Public functions start here.
-void memIni ( const size_t numBytes, const MemoryType memType);
-
-void memClr ( const MemoryType memType );
+void memClr ( const PoolId poolId );
 
 // Allocate memory in the arena at a word-aligned address.
-void* memAdd ( size_t numBytes, const MemoryType memType );
+void* memAdd ( const size_t numBytes, const PoolId poolId );
 
-void memRst( const MemoryType memType );
+void memRst( const PoolId poolId );
 
 #ifndef NDEBUG
-void memReport( const MemoryType memType );
+void memReport();
 #else
 #define memReport
 #endif

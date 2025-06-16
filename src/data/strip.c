@@ -86,24 +86,27 @@ __inline__ static void _unpackStrip4Bpu(size_t **srcStripPP, size_t **dstStripPP
 #endif
 #endif
 
-void sdInflate(StripDataS *sdP) {
+void sdInflate(StripDataS *sdP, const PoolId poolId) {
   if (sdP->flags & SD_SKIP_INFLATION_) {
     return;
   }
-  inflatableIni(sdP->ss.infP);
+  // Change local pool ID to TEMPORARY if this isn't the final step in the inflation process.
+  const PoolId localPoolId = (sdP->flags & SD_SKIP_UNPACKING_) && (sdP->flags & SD_SKIP_ASSEMBLY_) ? poolId : TEMPORARY;
+  inflatableIni(sdP->ss.infP, localPoolId);
   // Skipping assembly means no map is used.
   if (!(sdP->flags & SD_SKIP_ASSEMBLY_) )  {
-    inflatableIni(sdP->sm.infP);
+    inflatableIni(sdP->sm.infP, localPoolId);
   }
 }
 
 // Unpack bits to reconstruct original data (uesd for debugging img.c)
-void sdUnpack(StripDataS *sdP) {
+void sdUnpack(StripDataS *sdP, const PoolId poolId) {
   assert(sdP && (sdP->ss.infP && sdP->ss.infP->compressedDataA));
   if (sdP->flags & SD_SKIP_UNPACKING_) {
     return;
   }
 
+  const PoolId localPoolId = (sdP->flags & SD_SKIP_ASSEMBLY_) ? poolId : TEMPORARY;
   Stripset *ssP = &sdP->ss;
   // Packed data is all whole words. Unpacked may not be.
   // Only way to tell is by looking at the number of units.
@@ -112,7 +115,7 @@ void sdUnpack(StripDataS *sdP) {
   const size_t nWhollyPackedWords      = ( ( ssP->nUnits * ssP->bpu ) >> FULLY_PACKED_WORD_COUNT_RSHIFT );
 
   // start copy
-  ssP->unpackedDataA = arrayNew(sizeof(U8), ssP->nUnits, TEMP); 
+  ssP->unpackedDataA = arrayNew(sizeof(U8), ssP->nUnits, localPoolId ); 
 
   const size_t mask = 
     (ssP->bpu == 1) ? MASK_1BPP :
@@ -176,7 +179,7 @@ void sdUnpack(StripDataS *sdP) {
   }
 }  // sdUnpack() 
 
-void sdAssemble(StripDataS *sdP) {
+void sdAssemble(StripDataS *sdP, const PoolId poolId) {
   assert (sdP );
 
   if ( sdP->flags & SD_SKIP_ASSEMBLY_) {
@@ -186,7 +189,7 @@ void sdAssemble(StripDataS *sdP) {
   assert (sdP->ss.unpackedDataA && sdP->sm.infP->inflatedDataP && !sdP->assembledDataA
       && sdP->ss.nUnitsPerStrip > 0);
 
-  sdP->assembledDataA = arrayNew( sizeof(U8), sdP->sm.nIndices * sdP->ss.nUnitsPerStrip, TEMP);
+  sdP->assembledDataA = arrayNew( sizeof(U8), sdP->sm.nIndices * sdP->ss.nUnitsPerStrip, poolId );
 
   // Piece together strips
   // If the data was never compressed, then we're going to pull it from the "compressed" field.
@@ -209,10 +212,10 @@ void sdAssemble(StripDataS *sdP) {
 }
 
 // This is the single-threaded version of inflating stripd data.
-void stripIni(StripDataS *sdP) {
-  sdInflate(sdP);
-  sdUnpack(sdP);
-  sdAssemble(sdP);
+void stripIni(StripDataS *sdP, const PoolId poolId) {
+  sdInflate(sdP, poolId);
+  sdUnpack(sdP, poolId);
+  sdAssemble(sdP, poolId);
 }
 
 

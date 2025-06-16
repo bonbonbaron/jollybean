@@ -26,16 +26,16 @@ static struct termios tty_attr;
 static FILE *file = NULL;
 
 Gui* guiNew() {
-  Gui* guiP = memAdd(sizeof(Gui), MAIN);
+  Gui* guiP = memAdd(sizeof(Gui), GENERAL);
   assert(guiP);
   memset(guiP, 0, sizeof(Gui));
-  guiP->windowP = memAdd(  sizeof(Window), MAIN );
+  guiP->windowP = memAdd(  sizeof(Window), GENERAL );
   assert(guiP->windowP);
 
   // Init renderer
-  guiP->rendererP = memAdd(sizeof(Window), MAIN );
+  guiP->rendererP = memAdd(sizeof(Window), IMAGE );
   assert(guiP->rendererP);
-  guiP->rendererP->dstTextureP = arrayNew(sizeof(Texture_), 1, MAIN );
+  guiP->rendererP->dstTextureP = arrayNew(sizeof(Texture_), 1, IMAGE );
 
   // open up the keyboard file in read binary mode so we can accept key presses.
   file = fopen(KEYFILE, "rb"); 
@@ -127,8 +127,8 @@ void present ( Renderer* rendererP ) {
 // Makes palette without setting its colors.
 Surface* surfaceNew(void *pixelDataA, U32 w, U32 h) {
   assert (pixelDataA && w && h);
-  Surface* surfaceP = memAdd(sizeof( Surface ), TEMP );
-  surfaceP->pixelA = arrayNew( sizeof( Color_ ), w * h, TEMP );
+  Surface* surfaceP = memAdd(sizeof( Surface ), TEMPORARY );
+  surfaceP->pixelA = arrayNew( sizeof( Color_ ), w * h, TEMPORARY );
   assert(surfaceP->pixelA);
   surfaceP->w = w;
   surfaceP->h = h;
@@ -141,9 +141,9 @@ void appendAtlasPalette(Surface_ *atlasSurfaceP, ColorPalette *srcPaletteP) {
 
 Texture* textureNew(Renderer_ *rendererP, Surface_ *surfaceP) {
   assert(  rendererP && surfaceP );
-  Texture *textureP = memAdd(sizeof( Texture_ ), MAIN );
+  Texture *textureP = memAdd(sizeof( Texture_ ), IMAGE );
   assert(textureP);
-  textureP->pixelA = arrayNew( sizeof( Color_ ), surfaceP->w * surfaceP->h, MAIN );
+  textureP->pixelA = arrayNew( sizeof( Color_ ), surfaceP->w * surfaceP->h, IMAGE );
   assert(textureP->pixelA);
   textureP->w = surfaceP->w;
   textureP->h = surfaceP->h;
@@ -195,7 +195,7 @@ void multiThread( CriticalFunc funcP, void *_array) {
   assert (_array &&  funcP);
 
   Thread threadA[N_CORES];
-  ThreadFuncArg* thArgA = arrayNew( sizeof(ThreadFuncArg), N_CORES, TEMP);
+  ThreadFuncArg* thArgA = arrayNew( sizeof(ThreadFuncArg), N_CORES, TEMPORARY);
 
   U32 nThreadsNeeded = N_CORES;
   // nThreadsNeeded gets updated to fewer than N_CORES if fewer elements than cores exist.

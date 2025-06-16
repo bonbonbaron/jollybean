@@ -8,7 +8,7 @@ typedef struct _RectNode {
 } RectNode;
 
 static RectNode* rectNodeNew() {
-  RectNode* rnP = memAdd(sizeof(RectNode), MAIN);
+  RectNode* rnP = memAdd(sizeof(RectNode), GENERAL );
   rnP->x = -1;
   rnP->y = -1;
   rnP->w = -1;

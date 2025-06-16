@@ -39,7 +39,7 @@ char* parseName(char *filepathP, char *extension, U8 verbose) {
     return NULL;
   }
 
-  char *outputNameP = (char*) memAdd((entityNameLen + 1) * sizeof(char), MAIN);
+  char *outputNameP = (char*) memAdd((entityNameLen + 1) * sizeof(char), TEMPORARY);
   memset(outputNameP, 0, (entityNameLen + 1) * sizeof(char));
   memcpy((void*) outputNameP, (void*) &filepathP[entityNameIdx], entityNameLen);
   return outputNameP;
@@ -90,7 +90,7 @@ static char* getSrcDir(U32 nExtraSpaces, char *srcLocalDirName, U8 verbose) {
                strlen(srcLocalDirName)   + strlen(SEP) + 
                nExtraSpaces + 1;
 
-  char* srcDirPath = memAdd( sizeof(char) * nChars, MAIN );  // extra spaces if you plan to append filename to dir path
+  char* srcDirPath = memAdd( sizeof(char) * nChars, TEMPORARY );  // extra spaces if you plan to append filename to dir path
   memset(srcDirPath, 0, sizeof(char) * nChars);
 
   strcpy(srcDirPath, HOME);
@@ -116,7 +116,7 @@ static char* getResourceDir(U32 nExtraSpaces, char *resourceLocalDirName, U8 ver
                strlen(resourceLocalDirName)   + strlen(SEP) + 
                nExtraSpaces + 1;
 
-  char* resourceDirPath = memAdd(sizeof(char) * nChars, MAIN );  // extra spaces if you plan to append filename to dir path
+  char* resourceDirPath = memAdd(sizeof(char) * nChars, TEMPORARY );  // extra spaces if you plan to append filename to dir path
   memset(resourceDirPath, 0, sizeof(char) * nChars);
 
   strcpy(resourceDirPath, HOME);
@@ -166,7 +166,7 @@ static char* getBuildDir(U32 nExtraSpaces, char *buildLocalDirName, U8 verbose) 
     strlen(buildLocalDirName)   + strlen(SEP) + 
     nExtraSpaces + 1;
 
-  char* buildDirPath = memAdd(sizeof(char) * nChars, MAIN );  // extra spaces if you plan to append filename to dir path
+  char* buildDirPath = memAdd(sizeof(char) * nChars, TEMPORARY );  // extra spaces if you plan to append filename to dir path
   memset(buildDirPath, 0, sizeof(char) * nChars);
 
   strcpy(buildDirPath, HOME);

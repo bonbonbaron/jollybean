@@ -10,7 +10,7 @@ Inflatable* inflatableNew(void* voidA) {
   U32 szDataOrig = arrayGetNElems(voidA) * arrayGetElemSz(voidA);
   unsigned long szDataCompressed  = (szDataOrig * 1.1) + 12;
   U8 *dataOrigP = (U8*) voidA;
-  U8 *dataCompressed = (U8*)memAdd( szDataCompressed, MAIN );
+  U8 *dataCompressed = (U8*)memAdd( szDataCompressed, TEMPORARY );
   int z_result = compress(dataCompressed, &szDataCompressed, dataOrigP, szDataOrig);    
 
   switch(z_result) {
@@ -24,7 +24,7 @@ Inflatable* inflatableNew(void* voidA) {
       break;
   }
 
-  infP = memAdd( sizeof(Inflatable), MAIN );
+  infP = memAdd( sizeof(Inflatable), TEMPORARY );
 
   infP->compressedLen   = szDataCompressed;
   infP->inflatedLen     = szDataOrig;

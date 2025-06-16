@@ -1,23 +1,15 @@
 #include "data/fray.h"
 
-void* frayNew( U32 elemSz, U32 nElems, const MemoryType memType) {
+void* frayNew( U32 elemSz, U32 nElems, const PoolId poolId) {
   assert (elemSz && nElems );
   // Add 1 more element for cache-friendly swaps.
-  U32* ptr = (U32*) memAdd( (elemSz * (nElems + 1)) + ((N_PREFRAY_ELEMS) * sizeof(U32)), memType);
+  U32* ptr = (U32*) memAdd( (elemSz * (nElems + 1)) + ((N_PREFRAY_ELEMS) * sizeof(U32)), poolId );
   ptr[N_PREFRAY_ELEMS - OFFSET_1ST_INACTIVE]   = 0;       
   ptr[N_PREFRAY_ELEMS - OFFSET_N_PAUSED]   = 0;  
   ptr[N_PREFRAY_ELEMS - OFFSET_1ST_EMPTY]  = 0;       
   ptr[N_PREFRAY_ELEMS - OFFSET_ELEM_SZ]    = elemSz;
   ptr[N_PREFRAY_ELEMS - OFFSET_N_ELEMS]    = nElems;
   return ptr + N_PREFRAY_ELEMS;
-}
-
-void frayDel(void **frayPP) {
-  if (frayPP != NULL && *frayPP != NULL) {
-    U32 *ptr = *frayPP;
-    free((ptr) - N_PREFRAY_ELEMS);
-    *frayPP = NULL;
-  }
 }
 
 // Common functionality to both frayAdd() and frayAddEmpty()

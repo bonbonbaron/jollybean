@@ -2,7 +2,7 @@
 
 // Frames ------------
 FrameNode* frameNodeNew() {
-  FrameNode* fnP = memAdd(sizeof(FrameNode), MAIN);
+  FrameNode* fnP = memAdd(sizeof(FrameNode), GENERAL);
   memset(fnP, 0, sizeof(FrameNode));
   return fnP;
 }
@@ -20,7 +20,7 @@ void frameNodeGrow(FrameNode **nodePP) {
 
 // Tags  ---------------
 TagNode* tagNodeNew() {
-  TagNode* tnP = memAdd(sizeof(TagNode), MAIN);
+  TagNode* tnP = memAdd(sizeof(TagNode), GENERAL);
   memset(tnP, 0, sizeof(TagNode));
   return tnP;
 }
@@ -329,7 +329,7 @@ void anim (char *entityNameP, U8 verbose, AnimJsonData **animPP) {
   fjson_object *topLevelObjP = fjson_tokener_parse(jsonFileContents);
 
   // Turn it into a C struct
-  AnimJsonData *animP = memAdd(sizeof(AnimJsonData), MAIN);
+  AnimJsonData *animP = memAdd(sizeof(AnimJsonData), GENERAL);
 
   memset(animP, 0, sizeof(AnimJsonData));
   getJsonData(animP, topLevelObjP, verbose);

@@ -1,8 +1,10 @@
 #ifndef COMMON_H
 #define COMMON_H
 //#include <bits/pthreadtypes.h>
-#include <stdlib.h>
+// #include <stdlib.h>  // see if getting rid of malloc precludes this
+#ifndef NDEBUG
 #include <stdio.h>
+#endif
 #include <string.h>
 #if 0
 #define NDEBUG

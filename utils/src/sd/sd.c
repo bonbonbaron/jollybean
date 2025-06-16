@@ -164,7 +164,7 @@ static size_t* _packBits(U8 *ssUnpackedA, size_t nUnits, size_t bpu, U8 verbose)
    */
   size_t* ssPackedA = arrayNew(  
       sizeof(size_t), 
-      (nWhollyPackedWords + (( nUnitsInExtraPackedWord > 0 ? 1 : 0) )), MAIN); 
+      (nWhollyPackedWords + (( nUnitsInExtraPackedWord > 0 ? 1 : 0) )), TEMPORARY); 
   memset(ssPackedA, 0, arrayGetNElems( ssPackedA ) * arrayGetElemSz( ssPackedA ) );
 
   if (verbose) {
@@ -429,12 +429,12 @@ StripDataS* stripNew(U8 *srcA, const size_t nBytesPerUnpackedStrip, const U8 bpu
   memset(stripsLabelled, 0, sizeof(StripmapElem) * nStripsInOrigData);
 
   // Allocate output stripmap and stripset
-  StripDataS *sdP = memAdd(sizeof(StripDataS), MAIN );
+  StripDataS *sdP = memAdd(sizeof(StripDataS), TEMPORARY );
   memset(sdP, 0, sizeof(StripDataS));
-  U8* ssUnpackedA = arrayNew( sizeof(U8), nStripsInOrigData * nBytesPerUnpackedStrip, MAIN);
+  U8* ssUnpackedA = arrayNew( sizeof(U8), nStripsInOrigData * nBytesPerUnpackedStrip, TEMPORARY);
   memset(ssUnpackedA, 0, arrayGetNElems( ssUnpackedA ) * arrayGetElemSz( ssUnpackedA ) );
   // Strip map
-  StripmapElem* smDataA = arrayNew( sizeof(StripmapElem), nStripsInOrigData, MAIN);
+  StripmapElem* smDataA = arrayNew( sizeof(StripmapElem), nStripsInOrigData, TEMPORARY);
   sdP->flags = flags;
   if (verbose) {
     printf("Analyzing viability of breaking image into %ld strips of %ld units each...\n", nStripsInOrigData, nBytesPerUnpackedStrip);
@@ -496,23 +496,23 @@ StripDataS* stripNew(U8 *srcA, const size_t nBytesPerUnpackedStrip, const U8 bpu
   }
 #endif
   // Oh, and also compress the raw as well so we can compare that too.
-  Inflatable* rawInfP = inflatableNew( srcA, MAIN);
+  Inflatable* rawInfP = inflatableNew( srcA, TEMPORARY);
   // OH YEAH, annnnd compress the *packed* raw too.
-  Inflatable *packedInfP =  inflatableNew( packedRawA, MAIN );
+  Inflatable *packedInfP =  inflatableNew( packedRawA, TEMPORARY );
   // Go ahead and act like you're going to use stripset and stripmap for now.
   // We'll see if we really want them after we compare their sizes to the other compresion methods.
   // Stripset
   sdP->ss.nUnits = nUnitsInStripset;
   sdP->ss.nUnitsPerStrip = nBytesPerUnpackedStrip;
   sdP->ss.bpu = bpu;
-  sdP->ss.infP = inflatableNew((void*) ssPackedA, MAIN);
+  sdP->ss.infP = inflatableNew((void*) ssPackedA, TEMPORARY);
   if (verbose) {
     printf("[stripNew] SS Compressed size: %ld bytes\n", 
         sdP->ss.infP->compressedLen);
   }
   // Stripmap
   sdP->sm.nIndices = nStripsInOrigData;
-  sdP->sm.infP = inflatableNew((void*) smDataA, MAIN );
+  sdP->sm.infP = inflatableNew((void*) smDataA, TEMPORARY );
   // First, figure out what the best compression method to use is based on our results.
   /*
    * 5 contenders;
@@ -552,7 +552,7 @@ StripDataS* stripNew(U8 *srcA, const size_t nBytesPerUnpackedStrip, const U8 bpu
     assert( sdP->ss.infP != NULL );
     //free( sdP->ss.infP->compressedDataA );  // this is a raw array.. sigh
     sdP->ss.nUnits = arrayGetNElems( srcA );
-    sdP->ss.infP->compressedDataA = memAdd( arrayGetElemSz( packedRawA ) * arrayGetNElems( packedRawA ), MAIN );
+    sdP->ss.infP->compressedDataA = memAdd( arrayGetElemSz( packedRawA ) * arrayGetNElems( packedRawA ), TEMPORARY );
     memcpy( sdP->ss.infP->compressedDataA, packedRawA, arrayGetElemSz( packedRawA ) * arrayGetNElems( packedRawA ) );
     // Flags
     sdP->flags = SD_SKIP_INFLATION_ | SD_SKIP_ASSEMBLY_;
@@ -594,9 +594,9 @@ StripDataS* stripNew(U8 *srcA, const size_t nBytesPerUnpackedStrip, const U8 bpu
   else if ( smallestSz == pkStrpSz ) {
     // Populate uncompressed (yet packed) stripset.
     // Allocate stripset.
-    sdP->ss.infP->compressedDataA = memAdd(  arrayGetElemSz( ssPackedA ) * arrayGetNElems( ssPackedA ), MAIN );
+    sdP->ss.infP->compressedDataA = memAdd(  arrayGetElemSz( ssPackedA ) * arrayGetNElems( ssPackedA ), TEMPORARY );
     // Allocate stripmap.
-    sdP->sm.infP->compressedDataA = memAdd(  sizeof(StripmapElem) * sdP->sm.nIndices, MAIN);
+    sdP->sm.infP->compressedDataA = memAdd(  sizeof(StripmapElem) * sdP->sm.nIndices, TEMPORARY);
     // Copy into stripset.
     memcpy( sdP->ss.infP->compressedDataA, ssPackedA, arrayGetElemSz( ssPackedA ) * arrayGetNElems( ssPackedA ) );
     // Copy into stripmap.
@@ -627,7 +627,7 @@ StripDataS* stripNew(U8 *srcA, const size_t nBytesPerUnpackedStrip, const U8 bpu
     //_validateInflatables(sdP, smDataA, ssPackedA);
   }
 #endif
-  stripIni(sdP);  // Make sure it's fully populated after this point.
+  stripIni(sdP, TEMPORARY);  // Make sure it's fully populated after this point.
 #if DEBUG_
   if ( verbose && !( sdP->flags & SD_SKIP_ASSEMBLY_ ) ) {
     _validateAssembledData(sdP, srcA, verbose);
@@ -643,13 +643,13 @@ void writeStripDataInFile(FILE *fP, U8 verbose, char *objNameA, StripDataS *sdP)
   assert (fP && sdP && objNameA);
 
   const int smInfNameLen = strlen(objNameA) + strlen("Stripmap") + strlen("Inf") + 1;
-  char* smInfName = memAdd(sizeof(char) * smInfNameLen, MAIN);
+  char* smInfName = memAdd(sizeof(char) * smInfNameLen, TEMPORARY);
   memset(smInfName, 0, smInfNameLen);
   strcpy(smInfName, objNameA);
   strcat(smInfName, "Stripmap");
   strcat(smInfName, "Inf");
   const int ssInfNameLen = strlen(objNameA) + strlen("Stripset") + strlen("Inf") + 1;
-  char* ssInfName = memAdd(sizeof(char) * ssInfNameLen, MAIN);
+  char* ssInfName = memAdd(sizeof(char) * ssInfNameLen, TEMPORARY);
   memset(ssInfName, 0, strlen(ssInfName));
   strcpy(ssInfName, objNameA);
   strcat(ssInfName, "Stripset");

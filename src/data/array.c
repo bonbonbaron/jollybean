@@ -1,8 +1,8 @@
 #include "data/array.h"
 
-void* arrayNew( U32 elemSz, U32 nElems, const MemoryType memType ) {
+void* arrayNew( U32 elemSz, U32 nElems, const PoolId poolId) {
 	assert (elemSz && nElems);
-	U32* ptr = (U32*) memAdd( (elemSz * nElems) + (2 * sizeof(U32)), memType );
+	U32* ptr = (U32*) memAdd( (elemSz * nElems) + (2 * sizeof(U32)), poolId );
   ptr[0] = elemSz;
   ptr[1] = nElems;
 	return ptr + 2;

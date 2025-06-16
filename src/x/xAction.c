@@ -5,9 +5,9 @@ XIniSysFuncDef_(Action) {
   unused_(sParamsP);
   XAction *xActionP = (XAction*) sP;
   xActionP->nDistinctHivemindTriggers = 0;
-  xActionP->entityPersonalityPairF = frayNew( sizeof( EntityPersonalityPair ), xGetNComps(sP), TEMP );
-  xActionP->entityBlackboardPairF = frayNew( sizeof( EntityBlackboardPair ), xGetNComps(sP), TEMP );
-  xActionP->histoHivemindTriggerA = arrayNew( sizeof(U32), KEY_MAX, TEMP );
+  xActionP->entityPersonalityPairF = frayNew( sizeof( EntityPersonalityPair ), xGetNComps(sP), TEMPORARY );
+  xActionP->entityBlackboardPairF = frayNew( sizeof( EntityBlackboardPair ), xGetNComps(sP), TEMPORARY );
+  xActionP->histoHivemindTriggerA = arrayNew( sizeof(U32), KEY_MAX, TEMPORARY );
   memset( xActionP->histoHivemindTriggerA, 0, sizeof(U32) * KEY_MAX );
 }
 
@@ -47,12 +47,12 @@ static void _distributeHiveminds(XAction *xActionP) {
   assert (xActionP && xActionP->histoHivemindTriggerA);
   Entity **hivemindEntitiesAP = NULL;
   // Allocate hivemind map
-  xActionP->hivemindMP = mapNew( ARRAY, sizeof(Entity*), xActionP->nDistinctHivemindTriggers, MAIN);
+  xActionP->hivemindMP = mapNew( ARRAY, sizeof(Entity*), xActionP->nDistinctHivemindTriggers, GENERAL);
   // Allocate empty hiveminds.
   U32 nElems = arrayGetNElems(xActionP->histoHivemindTriggerA);
   for (U32 trigger = 0; trigger < nElems; ++trigger) {
     if (xActionP->histoHivemindTriggerA[trigger]) {
-      Entity *entityA = arrayNew( sizeof(Entity), xActionP->histoHivemindTriggerA[trigger], MAIN );
+      Entity *entityA = arrayNew( sizeof(Entity), xActionP->histoHivemindTriggerA[trigger], GENERAL );
       mapSet(xActionP->hivemindMP, trigger, &entityA);
     }
   }

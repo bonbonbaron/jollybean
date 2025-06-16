@@ -5,7 +5,8 @@
 TAU_MAIN()
 
 TEST(Tau, jbAlloc) {
-  memIni( sizeof(U32), MAIN);
-  U32* P = (U32*) memAdd( sizeof(U32), MAIN);
-  memClr( MAIN );
+  U32* P = (U32*) memAdd( sizeof(U32), GENERAL);
+  memReport();
+  memRst( GENERAL );
+  memReport();
 }

@@ -181,20 +181,20 @@ void xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP) 
 
 void xIniSys(System *sP, U32 nComps, void *miscP) {
   // Sytems with special parts need to initialize maps in sIniU().
-  sP->cF = frayNew(sP->compSz, nComps, MAIN );
-  sP->cIdx2eA = arrayNew(sizeof(Entity), nComps, MAIN );
-  sP->e2cIdxMP = mapNew( RAW_DATA, sizeof(Key), nComps, MAIN );
-  sP->deactivateQueueF = frayNew(sizeof(Entity), nComps, MAIN );
-  sP->pauseQueueF = frayNew( sizeof(Entity), nComps, MAIN );
+  sP->cF = frayNew(sP->compSz, nComps, GENERAL );
+  sP->cIdx2eA = arrayNew(sizeof(Entity), nComps, GENERAL );
+  sP->e2cIdxMP = mapNew( RAW_DATA, sizeof(Key), nComps, GENERAL );
+  sP->deactivateQueueF = frayNew(sizeof(Entity), nComps, GENERAL );
+  sP->pauseQueueF = frayNew( sizeof(Entity), nComps, GENERAL );
   if (!(sP->flags & FLG_NO_MUTATIONS_) && sP->mutationSz) {
-    sP->mutationMPMP = mapNew( MAP_POINTER, sizeof(Map*), nComps, MAIN );
+    sP->mutationMPMP = mapNew( MAP_POINTER, sizeof(Map*), nComps, GENERAL );
   }
 	// Only allocate one mailbox; it serves as input and output.
   // TODO make this smarter than a raw constant
   // Also, give it ample room to handle multiple messages per entity.
 #define MAILBOX_MULTIPLY_NUM_SLOTS (3)
-  sP->mailboxF = frayNew(sizeof(Message), nComps * MAILBOX_MULTIPLY_NUM_SLOTS, MAIN  );
-  sP->subcompOwnerMP = mapNew(RAW_DATA, sizeof(SubcompOwner), nComps, TEMP );
+  sP->mailboxF = frayNew(sizeof(Message), nComps * MAILBOX_MULTIPLY_NUM_SLOTS, GENERAL  );
+  sP->subcompOwnerMP = mapNew(RAW_DATA, sizeof(SubcompOwner), nComps, TEMPORARY );
   // Finally, call the system's unique initializer.
   (*sP->iniSys)(sP, miscP);  // fail-assert if this bombs
 }

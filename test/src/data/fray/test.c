@@ -16,7 +16,6 @@ typedef struct Tau {
 } Tau;
 
 TEST_F_SETUP(Tau) {
-  memIni( 1000, MAIN );
   memset(tau, 0, sizeof(Tau));
   tau->nElems = 50;
   tau->elemSz = sizeof(U32);
@@ -24,7 +23,7 @@ TEST_F_SETUP(Tau) {
   tau->iniPop = 20;
   tau->iniActive = 5;
 
-  tau->uF = frayNew( tau->elemSz, tau->nElems, MAIN);
+  tau->uF = frayNew( tau->elemSz, tau->nElems, GENERAL);
 
   REQUIRE_EQ(frayGetElemSz_(tau->uF), tau->elemSz);
   REQUIRE_EQ(frayGetNElems_(tau->uF), tau->nElems);
@@ -49,7 +48,7 @@ TEST_F_SETUP(Tau) {
 }
 
 TEST_F_TEARDOWN(Tau) {
-  memClr( MAIN );
+  memRst( GENERAL );
 }
 
 // Unit tests

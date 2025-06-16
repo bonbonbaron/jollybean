@@ -1,120 +1,163 @@
 #include "data/mem.h"
 
-// Keep the definition of memory arena here since nobody else will need it.
-typedef struct MemoryArena {
+#if (__WORDSIZE == 32 )
+#define MODULO_ (3)
+#elif (__WORDSIZE == 64 )
+#define MODULO_ (7)
+#else
+static_assert( 0, "Jollybean supports only 32- and 64-bit systems.");
+#endif
+
+#define wordAlign_(x_) ( ( ( N_BYTES_PER_WORD - ( x_ & MODULO_ ) ) & MODULO_ ) + x_ )
+
 #ifndef NDEBUG
-  size_t memAllocated;  // This can be done away with once we prove this out.
+static char* _poolNames[] = {
+  "Permament",
+  "General",
+  "Text",
+  "Image",
+  "Audio",
+  "Temporary"
+};
+#endif
+
+// TODO optimize these later
+// TODO make these easily configurable
+#define PRM_SZ wordAlign_(100000)
+#define GEN_SZ wordAlign_(100000)
+#define TXT_SZ wordAlign_(100000)
+#define IMG_SZ wordAlign_(100000)
+#define AUD_SZ wordAlign_(100000)
+#define TMP_SZ wordAlign_(100000)
+
+// Keep the definition of memory arena here since nobody else will need it.
+typedef struct MemPool {
+#ifndef NDEBUG
+  const size_t memAllocated;  // This can be done away with once we prove this out.
   size_t memRemaining;       // This can be done away with once we prove this out.
 #endif
   U8* nextFreeP;
-  U8* memArenaP;
-} MemoryArena;
+  const U8* originP;
+} MemPool;
 
-static MemoryArena _arenaA[2];
+// The double ampersand prevents any branching logic for checking if addition is a multiple of word-size.
+// numActualBytes =  + numBytes;
+// // The double ampersand prevents any branching logic for checking if addition is a multiple of word-size.
+// numActualBytes =  + numBytes;
+static unsigned char _data[
+  PRM_SZ +
+  GEN_SZ +
+  TXT_SZ +
+  IMG_SZ +
+  AUD_SZ +
+  TMP_SZ];
 
-static void* _jbAlloc( const U32 numBytes ) {
-	assert (numBytes);
-	void* voidP = malloc(numBytes);
-	assert( voidP != NULL);
-  return voidP;
-}
+#define PRM_ORIGIN_IDX (0)
+#define GEN_ORIGIN_IDX (PRM_ORIGIN_IDX + PRM_SZ)
+#define TXT_ORIGIN_IDX (GEN_ORIGIN_IDX + GEN_SZ)
+#define IMG_ORIGIN_IDX (TXT_ORIGIN_IDX + TXT_SZ)
+#define AUD_ORIGIN_IDX (IMG_ORIGIN_IDX + IMG_SZ)
+#define TMP_ORIGIN_IDX (AUD_ORIGIN_IDX + AUD_SZ)
 
-static void _jbFree(void **voidPP) {
-	if (voidPP != NULL) {
-		free(*voidPP);
-		*voidPP = NULL;
-	}
-}
+  typedef struct Mem {
+    const unsigned char* dataP;
+    MemPool poolA[N_POOLS];
+  } Mem;
 
-static void _memIni ( MemoryArena* memP, const size_t numBytes ) {
-  size_t numActualBytes;
-#if (__WORDSIZE == 32 )
-  // The double ampersand prevents any branching logic for checking if addition is a multiple of word-size.
-  numActualBytes = ( ( N_BYTES_PER_WORD - ( numBytes & 3 ) ) & 3 ) + numBytes;
-#elif (__WORDSIZE == 64 )
-  // The double ampersand prevents any branching logic for checking if addition is a multiple of word-size.
-  numActualBytes = ( ( N_BYTES_PER_WORD - ( numBytes & 7 ) ) & 7 ) + numBytes;
-#else
-  static_assert( 0, "Jollybean supports only 32- and 64-bit systems.");
-#endif
+static Mem _mem = {
+  .dataP = _data,
+  .poolA = {
+    // Permanent pool
+    {
 #ifndef NDEBUG
-  printf("\e[91mAllocating %ld bytes.\e[0m\n", numActualBytes);
-  memP->memAllocated = numActualBytes;
-  memP->memRemaining = memP->memAllocated;
+      .memAllocated = PRM_SZ,
+      .memRemaining = PRM_SZ,
 #endif
-  memP->memArenaP = _jbAlloc( numActualBytes );
-  memP->nextFreeP = memP->memArenaP;
-}
-
-// No point in clearing out the other stuff.
-static void _memClr ( MemoryArena* memP ) {
-  _jbFree( (void**)  &memP->memArenaP );
-}
+      .nextFreeP = &_data[PRM_ORIGIN_IDX],
+      .originP = &_data[PRM_ORIGIN_IDX]
+    },
+    // General pool
+    {
+#ifndef NDEBUG
+      .memAllocated = GEN_SZ,
+      .memRemaining = GEN_SZ,
+#endif
+      .nextFreeP = &_data[GEN_ORIGIN_IDX],
+      .originP = &_data[GEN_ORIGIN_IDX]
+    },
+    // Text pool
+    {
+#ifndef NDEBUG
+      .memAllocated = TXT_SZ,
+      .memRemaining = TXT_SZ,
+#endif
+      .nextFreeP = &_data[TXT_ORIGIN_IDX],
+      .originP = &_data[TXT_ORIGIN_IDX]
+    },
+    // Image pool
+    {
+#ifndef NDEBUG
+      .memAllocated = IMG_SZ,
+      .memRemaining = IMG_SZ,
+#endif
+      .nextFreeP = &_data[IMG_ORIGIN_IDX],
+      .originP = &_data[IMG_ORIGIN_IDX]
+    },
+    // Audio pool
+    {
+#ifndef NDEBUG
+      .memAllocated = AUD_SZ,
+      .memRemaining = AUD_SZ,
+#endif
+      .nextFreeP = &_data[AUD_ORIGIN_IDX],
+      .originP = &_data[AUD_ORIGIN_IDX]
+    },
+    // Temporary pool
+    {
+#ifndef NDEBUG
+      .memAllocated = TMP_SZ,
+      .memRemaining = TMP_SZ,
+#endif
+      .nextFreeP = &_data[TMP_ORIGIN_IDX],
+      .originP = &_data[TMP_ORIGIN_IDX]
+    }
+  }
+};  // static Mem _mem.
 
 // Allocate memory in the arena at a word-aligned address.
-static void* _memAdd ( MemoryArena* memP, size_t numBytes ) {
+void* memAdd ( size_t numBytes, const PoolId poolId ) {
   // Keep nextFreeP word-aligned.
-  void* allocatedAddress = memP->nextFreeP;
-  U8* normalNextP = (U8*) memP->nextFreeP + numBytes;
-#if (__WORDSIZE == 32 )
-  memP->nextFreeP = ( ( N_BYTES_PER_WORD - ( (size_t) normalNextP & 3 ) ) & 3 ) + (U8*) normalNextP;
-#elif (__WORDSIZE == 64 )
-  // The double ampersand prevents any branching logic for checking if addition is a multiple of word-size.
-  memP->nextFreeP = ( ( N_BYTES_PER_WORD - ( (size_t) normalNextP & 7 ) ) & 7 ) + (U8*) normalNextP;
-#else
-  static_assert( 0, "Jollybean supports only 32- and 64-bit systems.");
-#endif
-  size_t memTaken = (size_t) memP->nextFreeP - (size_t) allocatedAddress;
+  MemPool* poolP = &_mem.poolA[poolId];
+  void* allocatedAddress = poolP->nextFreeP;
+  poolP->nextFreeP += wordAlign_( numBytes );
 #ifndef NDEBUG
-  memP->memRemaining -= memTaken;
-  printf("\e[91mTaking %ld bytes. Used up %ld / %ld.\e[0m\n", memTaken, memP->memAllocated - memP->memRemaining, memP->memAllocated);
-  assert( memTaken <= memP->memRemaining ); 
+  size_t memTaken = (size_t) poolP->nextFreeP - (size_t) allocatedAddress;
+  poolP->memRemaining -= memTaken;
+  // printf("\e[91mTaking %ld bytes. Used up %ld / %ld.\e[0m\n", memTaken, poolP->memAllocated - poolP->memRemaining, poolP->memAllocated);
+  assert( memTaken <= poolP->memRemaining ); 
 #endif
   return allocatedAddress;
 }
 
-static void _memRst( MemoryArena* memP ) {
+void memRst( const PoolId poolId ) {
+  MemPool* poolP = &_mem.poolA[poolId];
 #ifndef NDEBUG
-  memP->memRemaining = memP->memAllocated;
+  poolP->memRemaining = poolP->memAllocated;
 #endif
-  memP->nextFreeP = memP->memArenaP;
+  poolP->nextFreeP = (U8*) poolP->originP;
 }
 
 #ifndef NDEBUG
-static void _memReport( const MemoryArena* memP, const char* arenaName ) {
-  printf("%s memory arena stats:\n", arenaName);
-  printf( "\tmemAllocated: %16ld\n", memP->memAllocated );
-  printf( "\tmemRemaining: %16ld\n", memP->memRemaining );
-  printf( "\tnextFreeP:   0x%08lx\n", (size_t) memP->nextFreeP );
-  printf( "\tmemArenaP:   0x%08lx\n", (size_t) memP->memArenaP );
+void memReport() {
+  for ( PoolId i = PERMANENT; i < N_POOLS; ++i ) {
+    printf("\e[91m%s\e[0m memory pool stats:\n", _poolNames[i]);
+    printf( "\tmemAllocated: %16ld\n", _mem.poolA[i].memAllocated );
+    printf( "\tmemRemaining: %16ld\n", _mem.poolA[i].memRemaining);
+    printf( "\tnextFreeP:   0x%08lx\n", (size_t) _mem.poolA[i].nextFreeP );
+    printf( "\tmemArenaP:   0x%08lx\n", (size_t) _mem.poolA[i].originP);
+  }
 }
 #else
 #define memReport
 #endif
 
-// Public functions start here.
-void memIni ( const size_t numBytes, const MemoryType memType ) {
-  _memIni( &_arenaA[ memType ], numBytes );
-}
-
-void memClr ( const MemoryType memType ) {
-  _memClr( &_arenaA[ memType ] );
-}
-
-// Allocate memory in the arena at a word-aligned address.
-void* memAdd ( size_t numBytes, const MemoryType memType ) {
-  return _memAdd( &_arenaA[ memType ], numBytes );
-}
-
-void memRst( const MemoryType memType ) {
-  _memRst( &_arenaA[ memType ] );
-}
-
-#ifndef NDEBUG
-void memReport( const MemoryType memType ) {
-  const static char* words[] = { "Main", "Temp" };
-  _memReport( &_arenaA[ memType ], words[ memType ] );
-}
-#else
-#define memReport
-#endif
