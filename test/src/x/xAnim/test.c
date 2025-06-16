@@ -53,7 +53,7 @@ TEST_F_SETUP(Tau) {
   tau->nFramesPerStrip = N_FRAMES_PER_STRIP;
   xIniSys(tau->sP, tau->nEntities, NULL);
   tau->animCompF = tau->sP->cF;
-  tau->frameAF = frayNew( sizeof( AnimFrame* ), tau->nEntities * tau->nMutationsPerEntity );
+  tau->frameAF = frayNew( sizeof( AnimFrame* ), tau->nEntities * tau->nMutationsPerEntity, GENERAL );
 
   REQUIRE_EQ(tau->sP->compSz, sizeof(XAnimComp));
   REQUIRE_EQ(xGetNComps(tau->sP), tau->nEntities);
@@ -62,11 +62,11 @@ TEST_F_SETUP(Tau) {
   forEachEntity_( tau->nEntities ) {
     // ************ MUTATIONS **************
     // Make a mutation map for the current entity.
-    Map *currEntitysMutationMP =  mapNew(RAW_DATA, sizeof(XAnimMutation), tau->nMutationsPerEntity);
+    Map *currEntitysMutationMP =  mapNew(RAW_DATA, sizeof(XAnimMutation), tau->nMutationsPerEntity, GENERAL);
 
     // Pre-populate the mutation maps with arbitrary values.
     for (Key i = 1; i <= tau->nMutationsPerEntity; ++i) {
-      AnimFrame *currAnimFrameA = arrayNew(sizeof(AnimFrame), tau->nFramesPerStrip);
+      AnimFrame *currAnimFrameA = arrayNew(sizeof(AnimFrame), tau->nFramesPerStrip, GENERAL);
       frayAdd( tau->frameAF, &currAnimFrameA, NULL );
 
       // populate the animation frames for this strip
@@ -99,12 +99,12 @@ TEST_F_SETUP(Tau) {
   }
 
   // ************ SHARES **************
-  tau->shareMPMP = mapNew(MAP_POINTER, sizeof(Map*), 3);
+  tau->shareMPMP = mapNew(MAP_POINTER, sizeof(Map*), 3, GENERAL);
 
   // Make the share inner map. This maps entities to actual, raw data.
-  Map* sharedSrcRectMP = mapNew(RAW_DATA, sizeof(Rect_), tau->nEntities);
-  Map* sharedDstRectMP = mapNew(RAW_DATA, sizeof(Rect_), tau->nEntities);
-  Map* sharedOffsetMP = mapNew(RAW_DATA, sizeof(RectOffset), tau->nEntities);
+  Map* sharedSrcRectMP = mapNew(RAW_DATA, sizeof(Rect_), tau->nEntities, GENERAL);
+  Map* sharedDstRectMP = mapNew(RAW_DATA, sizeof(Rect_), tau->nEntities, GENERAL);
+  Map* sharedOffsetMP = mapNew(RAW_DATA, sizeof(RectOffset), tau->nEntities, GENERAL);
 
   // Now populate the entities' shared rectangles.
   // You don't know what your source rect is until you mutate.
@@ -178,12 +178,7 @@ TEST_F_SETUP(Tau) {
 }
 
 TEST_F_TEARDOWN(Tau) {
-  xClr(&tau->xP->system);
-  for ( int i = 0; i < arrayGetNElems( tau->frameAF ); ++i ) {
-    arrayDel( (void**) &tau->frameAF[i] );
-  }
-  frayDel( (void**) &tau->frameAF );
-  mapOfNestedMapsDel( &tau->shareMPMP );
+  memRst( GENERAL );
 }
 
 void checkAnimComp( Tau *tau, Entity entity, U32 currDuration, U32 expCurrFrameIdx, Bln isGoingBackwards ) {

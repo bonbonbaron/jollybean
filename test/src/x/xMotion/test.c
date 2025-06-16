@@ -31,11 +31,11 @@ TEST_F_SETUP(Tau) {
   REQUIRE_EQ(tau->sP->compSz, sizeof(XMotionComp));
   REQUIRE_EQ(xGetNComps(tau->sP), tau->nEntities);
 
-  tau->shareMPMP = mapNew( MAP_POINTER, sizeof(Map*), 1);
+  tau->shareMPMP = mapNew( MAP_POINTER, sizeof(Map*), 1, GENERAL );
   // Map the inner share map to key value "MOTION" in the outer shared map.
   // ************ SHARES **************
   // Make the share inner map. This maps entities to actual, raw data.
-  Map* shareMP = mapNew(RAW_DATA, sizeof(Rect_), tau->nEntities);
+  Map* shareMP = mapNew(RAW_DATA, sizeof(Rect_), tau->nEntities, GENERAL );
   mapSet(tau->shareMPMP, MOTION, &shareMP);
 
   // Populate all the entities' subcomponents.
@@ -43,7 +43,7 @@ TEST_F_SETUP(Tau) {
     // ************ MUTATIONS **************
     // Make a mutation map for the current entity.
     Map *currEntitysMutationMP = NULL;
-    currEntitysMutationMP = mapNew(RAW_DATA, sizeof(XMotionMutation), tau->nMutationsPerEntity);
+    currEntitysMutationMP = mapNew(RAW_DATA, sizeof(XMotionMutation), tau->nMutationsPerEntity, GENERAL );
 
     // Pre-populate the mutation maps with arbitrary values.
     for (Key i = 1; i <= tau->nMutationsPerEntity; ++i) {
@@ -79,8 +79,7 @@ TEST_F_SETUP(Tau) {
 }
 
 TEST_F_TEARDOWN(Tau) {
-  xClr(&tau->xP->system);
-  mapOfNestedMapsDel( &tau->shareMPMP );
+  memRst( GENERAL );
 }
 
 TEST_F(Tau, xMotionRun) {

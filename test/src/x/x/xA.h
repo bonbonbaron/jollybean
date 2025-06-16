@@ -41,7 +41,6 @@ XIniSubcompFuncDef_(A);
 XPostprocessCompsDef_(A);
 XProcMsgFuncDef_(A);
 XRunFuncDef_(A);
-XClrFuncDef_(A);
 XPostMutateFuncDef_(A);
 
 typedef struct {

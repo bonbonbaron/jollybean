@@ -108,6 +108,7 @@ void sdUnpack(StripDataS *sdP, const PoolId poolId) {
 
   const PoolId localPoolId = (sdP->flags & SD_SKIP_ASSEMBLY_) ? poolId : TEMPORARY;
   Stripset *ssP = &sdP->ss;
+  ssP->unpackedDataA = NULL;
   // Packed data is all whole words. Unpacked may not be.
   // Only way to tell is by looking at the number of units.
   const size_t nPackedUnitsPerWord     = __WORDSIZE / ssP->bpu;  
@@ -213,6 +214,7 @@ void sdAssemble(StripDataS *sdP, const PoolId poolId) {
 
 // This is the single-threaded version of inflating stripd data.
 void stripIni(StripDataS *sdP, const PoolId poolId) {
+  sdP->assembledDataA = NULL;
   sdInflate(sdP, poolId);
   sdUnpack(sdP, poolId);
   sdAssemble(sdP, poolId);

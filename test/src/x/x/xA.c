@@ -28,9 +28,9 @@ XIniSysFuncDef_(A) {
 	unused_(sParamsP);
   XA *xP = (XA*) sP;
   xP->someSystemwideU32 = 100000;
-  xP->aMP = mapNew(RAW_DATA, sizeof(int), 255);
-  xP->dMP = mapNew(RAW_DATA, sizeof(double), 255);
-  xP->entityF = frayNew( sizeof(Entity), 255);
+  xP->aMP = mapNew(RAW_DATA, sizeof(int), 255, GENERAL);
+  xP->dMP = mapNew(RAW_DATA, sizeof(double), 255, GENERAL);
+  xP->entityF = frayNew( sizeof(Entity), 255, GENERAL);
 }
 #endif
 /* Let's think through the design a bit.
@@ -160,29 +160,6 @@ void xARun(System *sP) {
     cP->d = cP->a + 1;
   }
 }
-
-#if 0
-XClrFuncDefUnused_(A);
-#else
-XClrFuncDef_(A) {
-  if (sP) {
-    XA *xP = (XA*) sP;
-    if (xP->aMP) {
-      mapDel(&xP->aMP);
-    }
-    if (xP->dMP) {
-      mapDel(&xP->dMP);
-    }
-    if (xP->entityF) {
-      frayDel((void**) &xP->entityF);
-    }
-    xP->someSystemwideU32 = 0;
-    mapOfNestedMapsClr(&sP->mutationMPMP);  // THIS is where we properly clear the innards of a nested map, 
-                                           // in case more than one system has the same mutation map in their
-                                           // entity-to-mutations map.
-  }
-}
-#endif
 
 //======================================================
 // System definition

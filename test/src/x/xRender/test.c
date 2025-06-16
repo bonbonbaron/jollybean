@@ -39,22 +39,22 @@ static void sendMovementMsg( Tau* tau, Entity entity, S32 y ) {
   // else, don't bother writing anything at all. We dgaf if it goes left or right.
 }
 
-static void sendElevationMsg( Tau* tau, Entity entity, S32 z ) {
-  if ( z < 0 ) {
+static void sendElevationMsg( Tau* tau, Entity entity, S32 deltaZ ) {
+  if ( deltaZ < 0 ) {
     mailboxWrite( tau->xP->system.mailboxF, RENDER, entity, MSG_MOVED_Z_DOWN, 0, NULL );
   }
-  else if ( z > 0 ) {
+  else if ( deltaZ > 0 ) {
     mailboxWrite( tau->xP->system.mailboxF, RENDER, entity, MSG_MOVED_Z_UP, 0, NULL );
   }
   // else, don't bother writing anything at all. We dgaf if it goes left or right.
 }
 
-static void elevateEntity( Tau* tau, Entity entity, S32 z ) {
+static void elevateEntity( Tau* tau, Entity entity, S32 deltaZ ) {
   Map *sharedZHeightMP = mapGetNestedMapP( tau->shareMPMP, Z_HEIGHT );
   assert( sharedZHeightMP );
   U8* zP = (U8*) mapGet( sharedZHeightMP, entity );
   assert( zP );
-  *zP += z;
+  *zP += deltaZ;
 }
 
 static void moveEntity( Tau* tau, Entity entity, S32 x, S32 y ) {
@@ -71,9 +71,9 @@ static void moveAndSend( Tau* tau, Entity entity, S32 x, S32 y ) {
   sendMovementMsg( tau, entity, y );
 }
 
-static void elevateAndSend( Tau* tau, Entity entity, S32 z ) {
-  elevateEntity( tau, entity, z );
-  sendElevationMsg( tau, entity, z );
+static void elevateAndSend( Tau* tau, Entity entity, S32 deltaZ ) {
+  elevateEntity( tau, entity, deltaZ );
+  sendElevationMsg( tau, entity, deltaZ );
 }
 
 static void runAndCheckZOrder( Tau* tau ) {
@@ -98,7 +98,9 @@ TEST_F_SETUP(Tau) {
   tau->xP = &xRender;
   tau->sP = &tau->xP->system;
   // Make a new GUI.
+  printf("a\n");
   tau->xP->guiP = guiNew();
+  printf("b\n");
 
   // Initialize the system basics.
   tau->nEntities = sizeof( imgA ) / sizeof( imgA[0] );  // for lack of anything better for now
@@ -117,14 +119,14 @@ TEST_F_SETUP(Tau) {
   // 6) Send them into the system in the setup stage
   // 7) 
   // ************ SHARES **************
-  tau->shareMPMP = mapNew( MAP_POINTER, sizeof(Map*), 5);
+  tau->shareMPMP = mapNew( MAP_POINTER, sizeof(Map*), 5, GENERAL);
 
   // Make the share inner map. This maps entities to actual, raw data.
-  Map* sharedSrcRectMP = mapNew( RAW_DATA, sizeof(Rect_), tau->nEntities);
-  Map* sharedDstRectMP = mapNew( RAW_DATA, sizeof(Rect_), tau->nEntities);
-  Map* sharedZHeightMP = mapNew( RAW_DATA, sizeof(U8), tau->nEntities);
-  // Map* sharedOffsetMP  = mapNew( RAW_DATA, sizeof(RectOffset), tau->nEntities);
-  Map* sharedGuiMP     = mapNew( NONMAP_POINTER, sizeof(Gui*), 1);
+  Map* sharedSrcRectMP = mapNew( RAW_DATA, sizeof(Rect_), tau->nEntities, GENERAL);
+  Map* sharedDstRectMP = mapNew( RAW_DATA, sizeof(Rect_), tau->nEntities, GENERAL);
+  Map* sharedZHeightMP = mapNew( RAW_DATA, sizeof(U8), tau->nEntities, GENERAL);
+  // Map* sharedOffsetMP  = mapNew( RAW_DATA, sizeof(RectOffset), tau->nEntities, GENERAL);
+  Map* sharedGuiMP     = mapNew( NONMAP_POINTER, sizeof(Gui*), 1, GENERAL);
 
   // Set gui pointer in its map... 
   // TODO wouldn't it be nice to have SDL or whatever just be owned by the rendering system?
@@ -152,34 +154,28 @@ TEST_F_SETUP(Tau) {
 
   // Set the stripsets and stripmaps up since xRender relies on that already being done by xMaster.
   for (int i = 0; i < tau->nEntities; ++i ) {
-    stripIni( imgA[i]->cmP->sdP );
+    stripIni( imgA[i]->cmP->sdP, TEMPORARY );
   }
 
   // If ordering is sacred, then we need fixed functions that'll encapsulate this sacred ordering for us.
   // Now add the entity to the actual system itself.
   forEachEntity_( tau->nEntities ) {
-#if 0
-    Image* imgP = &imgA[entity - 1];
-    xAddEntityData(&tau->xP->system, entity, RENDER | IMAGE, &imgP );
-#else
     xAddEntityData(&tau->xP->system, entity, RENDER | IMAGE, imgA[ entity - 1 ]);
-#endif
   }
 
   tau->sP->postprocessComps( tau->sP );
+  memRst( TEMPORARY );
 }
 
 TEST_F_TEARDOWN(Tau) {
   for (int i = 0; i < tau->nEntities; ++i ) {
-    stripClr( imgA[i]->cmP->sdP );
     imgA[i]->state = 0;
   }
-  mapOfNestedMapsDel(&tau->shareMPMP );
-  xClr( &tau->xP->system );
   guiDel( &tau->xP->guiP );
+  memRst( GENERAL );
 }
 
-#if 0
+#if 1
 TEST_F(Tau, xRenderRun_red) {
   xActivateComponentByEntity( tau->sP, 1 );
   xRun(&tau->xP->system);
@@ -236,9 +232,10 @@ TEST_F(Tau, moveDownWhileMultipleAreActivated) {
 #endif
 
 TEST_F(Tau, elevateWhileOneIsActivated) {
-  elevateAndSend( tau, 1, 0, -1 );
+  elevateAndSend( tau, 1, -1 );
   xActivateComponentByEntity( tau->sP, 1 );
   for (int i = 0; i < N_FRAMES; ++i) {
     runAndCheckZOrder( tau );
   }
+  memReport();
 }

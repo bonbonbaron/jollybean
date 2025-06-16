@@ -23,12 +23,12 @@ static char* _poolNames[] = {
 
 // TODO optimize these later
 // TODO make these easily configurable
-#define PRM_SZ wordAlign_(100000)
-#define GEN_SZ wordAlign_(100000)
-#define TXT_SZ wordAlign_(100000)
-#define IMG_SZ wordAlign_(100000)
-#define AUD_SZ wordAlign_(100000)
-#define TMP_SZ wordAlign_(100000)
+#define PRM_SZ wordAlign_(1000000)
+#define GEN_SZ wordAlign_(1000000)
+#define TXT_SZ wordAlign_(1000000)
+#define IMG_SZ wordAlign_(1000000)
+#define AUD_SZ wordAlign_(1000000)
+#define TMP_SZ wordAlign_(1000000)
 
 // Keep the definition of memory arena here since nobody else will need it.
 typedef struct MemPool {

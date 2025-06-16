@@ -76,7 +76,6 @@ TEST_F(Tau, stripIni_4bpp_expectOnlyInflation) {
   // Because we need it there for the cases where we DO inflate it.
   REQUIRE_TRUE(tau->sd4bppP != NULL);
   REQUIRE_TRUE(tau->sd4bppP->ss.infP != NULL);
-  REQUIRE_TRUE(tau->sd4bppP->ss.infP->inflatedDataP == NULL);
   stripIni(tau->sd4bppP, GENERAL);
   // Strip set should be non-empty, since that's where its data goes.
   CHECK_TRUE(tau->sd4bppP->ss.infP->inflatedDataP != NULL);

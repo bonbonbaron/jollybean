@@ -55,7 +55,7 @@ TEST_F_SETUP(Tau) {
   double dA[N_ENTITIES] = {0};
 
   // Make the shared outer map. This maps datatypes to inner maps. We'll only store one map in there.
-  tau->sharedMPMP = mapNew(MAP_POINTER, sizeof(Map*), tau->nEntities);
+  tau->sharedMPMP = mapNew(MAP_POINTER, sizeof(Map*), tau->nEntities, GENERAL);
 
   // Populate all the entities' subcomponents.
   for (Entity entity = 1; entity <= tau->nEntities; ++entity) {
@@ -64,7 +64,7 @@ TEST_F_SETUP(Tau) {
     // ************ MUTATIONS **************
     // Make a mutation map for the current entity.
     Map *currEntitysMutationMP = NULL;
-    currEntitysMutationMP = mapNew(RAW_DATA, sizeof(XAMutation), tau->nMutationsPerEntity);
+    currEntitysMutationMP = mapNew(RAW_DATA, sizeof(XAMutation), tau->nMutationsPerEntity, GENERAL);
     // Pre-populate the mutation maps with arbitrary values.
     for (Key i = 1; i <= tau->nMutationsPerEntity; ++i) {
       XAMutation currMutation = {
@@ -79,7 +79,7 @@ TEST_F_SETUP(Tau) {
     // ************ SHARES **************
     // TODO make a share map for *intP here.
     // Make the shared inner map. This maps entities to actual, raw data.
-    Map* sharedMP = mapNew(RAW_DATA, sizeof(Map*), tau->nMutationsPerEntity);
+    Map* sharedMP = mapNew(RAW_DATA, sizeof(Map*), tau->nMutationsPerEntity, GENERAL );
     // Map the inner share map to key value "1" in the outer shared map.
     mapSet(tau->sharedMPMP, entity, &sharedMP);
     // Give the shared map to the system. (This particular system wants a pointer to the inner shared map.)
@@ -99,8 +99,7 @@ TEST_F_SETUP(Tau) {
 }
 
 TEST_F_TEARDOWN(Tau) {
-  mapOfNestedMapsDel(&tau->sharedMPMP);
-  xClr(&tau->xP->system);
+  memRst( GENERAL );
 }
 
 void validateProcessedMutation( Entity entity, Key mutationKey, XAComp *cP ) {

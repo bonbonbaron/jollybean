@@ -26,7 +26,7 @@ Gui* guiNew() {
 	// Init SDL
 	int e = SDL_Init(SDL_INIT_VIDEO);
   assert(!e);
-  Gui* guiP = memAdd(sizeof(Gui), GENERAL);
+  Gui* guiP = memAdd(sizeof(Gui), PERMANENT);
   assert(guiP);
   // Init window
   guiP->windowP = SDL_CreateWindow("Hello world!", 100, 100, 512, 448, 

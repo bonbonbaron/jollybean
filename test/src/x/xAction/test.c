@@ -76,8 +76,8 @@ int main(int argc, char **argv) {
   };
 
   // BLACKBOARDS ( one per entity )
-  Map* goodguyBbMP = mapNew( NONMAP_POINTER, sizeof( void* ), 2 );
-  Map* badguyBbMP = mapNew( NONMAP_POINTER, sizeof( void* ), 2 );
+  Map* goodguyBbMP = mapNew( NONMAP_POINTER, sizeof( void* ), 2, GENERAL );
+  Map* badguyBbMP = mapNew( NONMAP_POINTER, sizeof( void* ), 2, GENERAL );
   mapSet( goodguyBbMP, DANCE_SKILLS, &ggDanceSkillsP );
   mapSet( goodguyBbMP, STAT, &ggStatsP );
   mapSet( badguyBbMP, DANCE_SKILLS, &bgDanceSkillsP );
@@ -98,7 +98,7 @@ int main(int argc, char **argv) {
   }
   // Make the mutation maps and put them in the system's map of mutation maps.
   for (Entity entity = 1; entity <= N_ENTITIES; ++entity) {
-    Map *innerMP = mapNew(NONMAP_POINTER, sizeof(Quirk*), N_MUTATIONS_PER_ENTITY);
+    Map *innerMP = mapNew(NONMAP_POINTER, sizeof(Quirk*), N_MUTATIONS_PER_ENTITY, GENERAL);
     for (Key quirkIdx = 0; quirkIdx < N_MUTATIONS_PER_ENTITY; ++quirkIdx) {
       mapSet(
           innerMP, 
@@ -122,8 +122,6 @@ int main(int argc, char **argv) {
   // Then test hiveminds by letting everybody, even the dead guy, dance.
   mailboxWrite( sActionP->mailboxF, ACTION, 0, DANCE, 0, NULL );
   xRun(sActionP); 
-
-  xClr(sActionP);
 
   return 0;
 }
