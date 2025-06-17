@@ -243,12 +243,17 @@ static void raiseWithinZ( System* sP, Entity entity ) {
   if ( _frayElemIsActive( sP->cF, *_getCompIdxPByEntity(sP, entity) ) ) {
     XRenderComp* firstPausedCP = sP->cF + _frayGetFirstPausedIdx(sP->cF);
     XRenderComp* cP = xGetCompPByEntity( sP, entity );
-    S32 ourBottom = cP->dstRectP->y + cP->dstRectP->h;
+    S32 currEntityBottomYCoord = cP->dstRectP->y + cP->dstRectP->h;
     for ( XRenderComp* nextCP = cP + 1 ; nextCP < firstPausedCP && *nextCP->zHeightP == *cP->zHeightP ; ++nextCP ) {
       // if their bottom is higher than mine, swap.
-      if ( ( nextCP->dstRectP->y + nextCP->dstRectP->h ) < ourBottom ) {
+      if ( ( nextCP->dstRectP->y + nextCP->dstRectP->h ) < currEntityBottomYCoord ) {
         __xSwap( sP, nextCP - (XRenderComp*) sP->cF, cP - (XRenderComp*) sP->cF ); // converts to indices
-        cP = nextCP;  // steal destination pointer
+        // fracySwap() swaps actual data.
+        // It's safe to use in this case since everything to the left of an active element is also active.
+        // Therefore no bound-checking necessary.
+        fraySwap( sP->cF, (void*) nextCP, (void*) cP );  
+        cP = nextCP;  // steal destination pointer to double-increment (avoids comparing against self in new spot)
+                      // at this point, dest and src pointers are pointing at the same element
       }
       else {
         break;
@@ -260,14 +265,21 @@ static void raiseWithinZ( System* sP, Entity entity ) {
 static void lowerWithinZ( System* sP, Entity entity ) {
   if ( _frayElemIsActive( sP->cF, *_getCompIdxPByEntity(sP, entity) ) ) {
     XRenderComp* cP = xGetCompPByEntity( sP, entity );
-    S32 ourBottom = cP->dstRectP->y + cP->dstRectP->h;
+    S32 currEntityBottomYCoord = cP->dstRectP->y + cP->dstRectP->h;
     for ( XRenderComp* prevCP = cP - 1 ; prevCP >= (XRenderComp*) sP->cF && *prevCP->zHeightP == *cP->zHeightP ; --prevCP ) {
       // if their bottom is higher than mine, swap.
-      if ( ( prevCP->dstRectP->y + prevCP->dstRectP->h ) > ourBottom ) {
+      if ( ( prevCP->dstRectP->y + prevCP->dstRectP->h ) > currEntityBottomYCoord ) {
+        // __xSwap() just swaps metadata.
         __xSwap( sP, prevCP - (XRenderComp*) sP->cF, cP - (XRenderComp*) sP->cF ); // converts to indices
-        cP = prevCP;  // steal destination pointer
+        // fracySwap() swaps actual data.
+        // It's safe to use in this case since everything to the left of an active element is also active.
+        // Therefore no bound-checking necessary.
+        fraySwap( sP->cF, (void*) prevCP, (void*) cP );  
+        cP = prevCP;  // steal destination pointer to double-decrement (avoids comparing against self in new spot)
+                      // at this point, dest and src pointers are pointing at the same element
       }
       else {
+        // Break if everything else is higher than this.
         break;
       }
     }
@@ -277,11 +289,11 @@ static void lowerWithinZ( System* sP, Entity entity ) {
 #if 0
 static void raiseZ( Key desiredZ ) {
   myZ = desiredZ
-  ourBottom = our dest rect Y + our H
+  currEntityBottomYCoord = our dest rect Y + our H
   for each zhIdx in zHeightIdxA (starting at the end of mapA, going backwards):
     theirZ = cF[zhIdx]
     if theirZ == myZ:
-      if their dest rect Y + their dest rect H < ourBottom
+      if their dest rect Y + their dest rect H < currEntityBottomYCoord
         /* Since we're starting from the right side of the Z section,
            we have to lower instead of raise to correct spot. */
         lowerWithinZ()  // starting from the right side
@@ -293,11 +305,11 @@ static void raiseZ( Key desiredZ ) {
     
 static void zSortUpward( desiredZ ) {
   myZ = desiredZ
-  ourBottom = our dest rect Y + our H
+  currEntityBottomYCoord = our dest rect Y + our H
   for each zhIdx in zHeightIdxA (starting at the end of mapA, going backwards):
     theirZ = cF[zhIdx]
     if theirZ == myZ:
-      if their dest rect Y + their dest rect H < ourBottom
+      if their dest rect Y + their dest rect H < currEntityBottomYCoord
         /* Since we're starting from the left side of the Z section,
            we have to raise instead of lower to correct spot. */
         raiseWithinZ()  // starting from the right side
@@ -312,10 +324,10 @@ static void zSortUpward( desiredZ ) {
 void xRenderProcessMessage(System *sP, Message *msgP) {
   switch( msgP->cmd ) {
     case MSG_MOVED_Y_UP:
-      raiseWithinZ( sP, msgP->attn );
+      lowerWithinZ( sP, msgP->attn );
       break;
     case MSG_MOVED_Y_DOWN:
-      lowerWithinZ( sP, msgP->attn );
+      raiseWithinZ( sP, msgP->attn );
       break;
     case MSG_MOVED_Z_UP:
     case MSG_MOVED_Z_DOWN:
@@ -613,6 +625,9 @@ XPostprocessCompsDef_(Render) {
 
 XPostActivateFuncDef_(Render) {
   // XRender* xP = (XRender*) sP;
+  /* The problem with this algo is that everybody between the newcomer and its destination 
+   * has to shuffle with it, along with their metadata. That's gonna be a problem with 
+   * bigger games. */
   // TODO re-sort the z-height fray here
   // First, get the Z-height of the newly activated component.
   // XRenderComp* newlyActivatedCompP = &( (XRenderComp*) sP->cF )[ changesP->newIdx ];
@@ -632,7 +647,7 @@ XGetShareFuncDef_(Render) {
 
   // Get source rect and rect offset maps. Give both a chance to run if we enter this block.
   xP->dstRectMP = mapGetNestedMapP(shareMPMP, DST_RECT);  
-  xP->zHeightMP = mapGetNestedMapP(shareMPMP, Z_HEIGHT);  
+  xP->zHeightMP = mapGetNestedMapP(shareMPMP, Z_HEIGHT);  // Z-heights are shared since collision also needs them.
   xP->srcRectMP = mapGetNestedMapP(shareMPMP, SRC_RECT);  
   // If there's no animation system, there won't be a source rect shared map in master.
   xP->offsetRectMP = mapGetNestedMapP(shareMPMP, RECT_OFFSET);  

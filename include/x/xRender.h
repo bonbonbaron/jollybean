@@ -73,8 +73,16 @@ typedef struct {
   Map           *srcRectMP;   // shortcut-pointer to shared array of source rectangles
   Map           *dstRectMP;   // shortcut-pointer to shared array of destination rectangles
   Map           *zHeightMP;  // derived inner source rectangle map from parent system
-  Map           *xRenderCompSourceMP;
+  Map           *xRenderCompSourceMP;  // TODO uhhh what was this?
   Map           *zHeightIdxMP;
+                /* I think my intention with zHeightIdxMP was to keep track of where all the
+                 * z-height rises and drops were across the component fray -- especially for
+                 * large frays. How was it going to help though? I still have to swap with 
+                 * every intervening component, right? Well, maybe, but I know I can memcpy
+                 * the following:
+                 *
+                 *   1) cF
+                 *   2) cIdx2eA
 } XRender;
 
 // Images

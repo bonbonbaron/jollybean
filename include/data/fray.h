@@ -29,6 +29,8 @@ void* frayNew( U32 elemSz, U32 nElems, const PoolId poolId);
 void  frayDel(void **frayPP);
 void frayAdd(const void *frayP, void *elemP, U32 *elemNewIdxP);
 void frayAddEmpty(const void *frayP, U32 *elemNewIdxP);
+// This does NOT check active/paused/inactive boundaries, so use at your own risk.
+void fraySwap(const void *frayP, void* elem1P, void* elem2P); 
 void frayActivate(const void *frayP, U32 idx, FrayChanges *changesP);
 void frayDeactivate(const void *frayP, U32 idx, FrayChanges *changesP);
 void frayPause(const void *frayP, U32 idx, FrayChanges *changesP);
