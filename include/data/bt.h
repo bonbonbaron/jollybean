@@ -41,7 +41,7 @@ inline void _btHeaderClr(BtElHeader *btElHeaderP) {
 }
 
 // For both indices, just pass in the difference between the full element and the array address.
-inline void _btLinkNodes(BtElHeader *parentHdrP, BtElHeader *childHdrP, Key parentIdx, Key childIdx, Key child) {
+inline void _btLinkNodes(BtElHeader *parentHdrP, BtElHeader *childHdrP, Key parentIdx, Key childIdx, Child child) {
   parentHdrP->childA[child] = childIdx;
   _btHeaderClr(childHdrP);
   childHdrP->parent = parentIdx;

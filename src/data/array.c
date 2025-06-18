@@ -30,17 +30,8 @@ U32 arrayGetElemSz(const void *arryP) {
 
 /* Also provide an external copy of above function. */
 void* arrayGetVoidElemPtr(const void *arryP, S32 idx) {
-  const U32 nElems = arrayGetNElems(arryP);
-  /* If idx < 0, return void pointer past end of array. */
-  if ((U32) idx < nElems) {
-  /* If idx is valid, return void pointer to indexed element. */
-    return (void*) ((U8*) arryP + (idx * arrayGetElemSz(arryP)));
-  }
-  else if (idx < 0) {
-    return (void*) (((U8*) arryP) + (nElems * arrayGetElemSz(arryP)));
-  }
-  /* Index is invalid. */
-  return NULL;  
+  assert( idx < arrayGetNElems(arryP) );
+  return (void*) ((U8*) arryP + (idx * arrayGetElemSz(arryP)));
 }
 
 void arraySetVoidElem(void *arrayP, U32 idx, const void *elemSrcompP) {

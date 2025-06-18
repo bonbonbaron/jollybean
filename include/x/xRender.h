@@ -54,6 +54,26 @@ typedef struct {
   U16 *tileMapA;  // not to be confused with strip map
 } BgTilemap;
 
+/* Think this through:
+ *  Yes, you want rendering elements to be in a singly linked list.
+ *  But collisions don't need to be processed in the same order.
+ *  In fact, I want to mimimize collision processing to moving rectangles only.
+ *
+ *  You need two pieces of information:
+ *    1) The z-height group it's in (NO NEED TO WORRY ABOUT Y-MOTION)
+ *    2) Whether it's moving
+ *    
+ *  I want moving rects in the front of their groups so each successive rect has one less
+ *  rect to deal with (having already been tested with their predecessors). 
+ *
+ *  Shit, that means I have to keep track of the first and last moving rect in each Z-height.
+ *  
+ 
+  */
+typedef struct {
+  U8 zHeight;
+} ZHeight;
+
 typedef struct {
   Rect_ *srcRectP;
   Rect_ *dstRectP;
@@ -70,19 +90,11 @@ typedef struct {
   Gui           *guiP;   // derived from shared component 
   Texture_      *atlasTextureP;
   Map           *offsetRectMP;
-  Map           *srcRectMP;   // shortcut-pointer to shared array of source rectangles
-  Map           *dstRectMP;   // shortcut-pointer to shared array of destination rectangles
-  Map           *zHeightMP;  // derived inner source rectangle map from parent system
+  Map           *srcRectMP;    // shortcut-pointer to shared array of source rectangles
+  Map           *dstRectMP;    // shortcut-pointer to shared array of destination rectangles
+  Map           *zHeightMP;    // derived inner source rectangle map from parent system
   Map           *xRenderCompSourceMP;  // TODO uhhh what was this?
-  Map           *zHeightIdxMP;
-                /* I think my intention with zHeightIdxMP was to keep track of where all the
-                 * z-height rises and drops were across the component fray -- especially for
-                 * large frays. How was it going to help though? I still have to swap with 
-                 * every intervening component, right? Well, maybe, but I know I can memcpy
-                 * the following:
-                 *
-                 *   1) cF
-                 *   2) cIdx2eA
+  Map           *zHeightIdxMP; // tells you what index each new z-height starts at
 } XRender;
 
 // Images

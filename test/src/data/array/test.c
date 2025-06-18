@@ -40,11 +40,6 @@ TEST_F(Array, GetVoidElPtrWorks) {
   CHECK_EQ(*((U32*) voidP), 50);
 }
 
-TEST_F(Array, GetLastVoidElPtrWorks) {
-  void *voidP = arrayGetVoidElemPtr((void*) tau->P, -1);
-  CHECK_EQ ((U32*) voidP - tau->P, arrayGetNElems(tau->P));
-}
-
 TEST_F(Array, SetVoidElPtrWorks) {
   arraySetVoidElem(tau->P,  50, (void*) &tau->dummyNumber);
   CHECK_EQ(tau->P[50], tau->dummyNumber);
