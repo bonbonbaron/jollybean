@@ -1,6 +1,6 @@
 #include "data/array.h"
 
-#define UNSET_ (-1);
+#define UNSET_ (-1)
 
 // In the context of x, lists are usually going to be component frays.
 // Since we don't know what the sizes of those elements are, we won't venture into
@@ -20,6 +20,8 @@ typedef struct List {
   S16 head, tail;  // yes, we use different types for head/tail versus prev/next since the latter pair is more common.
   void* array;  // refers to a pre-existing array or fray (since both have the same elem sz and count locations)
 } List;
+
+void listIni( List* listP, void* array );
 
 // NOTE: This assumes the address of the header is the same as the address of the array element.
 void listRemoveNode( List* listP, ListNodeHeader* nodeP );
