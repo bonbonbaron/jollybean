@@ -35,7 +35,6 @@ TEST_F_TEARDOWN(Array) {
   memRst( GENERAL );
 }
 
-#if 0
 TEST_F(Array, listAppendWhenEmpty) {
   listAppend( &tau->list1, &tau->P[5].hdr );
   CHECK_EQ( tau->list1.head, 5);
@@ -77,18 +76,25 @@ TEST_F(Array, listPrependWhenNotEmpty) {
 }
 
 TEST_F(Array, listRemoveNodeWhenEmpty) {
-  listRemoveNode( &tau->list1, &tau->P[0].hdr );
+  listRemove( &tau->list1, &tau->P[0].hdr );
   CHECK_EQ( tau->list1.head, UNSET_);
   CHECK_EQ( tau->list1.tail, UNSET_);
-  CHECK_EQ( tau->P[0].hdr.next, 0);
-  CHECK_EQ( tau->P[0].hdr.prev, 0);
+}
+
+TEST_F(Array, listRemoveTheOnlyNode) {
+  listAppend( &tau->list1, &tau->P[0].hdr );
+  CHECK_EQ( tau->list1.head, 0);
+  CHECK_EQ( tau->list1.tail, 0);
+  listRemove( &tau->list1, &tau->P[0].hdr );
+  CHECK_EQ( tau->list1.head, UNSET_);
+  CHECK_EQ( tau->list1.tail, UNSET_);
 }
 
 TEST_F(Array, listRemoveNodeAfterAppends) {
   for (size_t i = 0; i < 20; ++i ) {
     listAppend( &tau->list1, &tau->P[i].hdr );
   }
-  listRemoveNode( &tau->list1, &tau->P[7].hdr );
+  listRemove( &tau->list1, &tau->P[7].hdr );
   Elem* elemP = &tau->P[ tau->list1.head ];
   Elem* lastElemP = &tau->P[ tau->list1.tail ];
   int correctVal = 0;
@@ -109,7 +115,7 @@ TEST_F(Array, listRemoveNodeAfterPrepends) {
   for (size_t i = 0; i < 20; ++i ) {
     listPrepend( &tau->list1, &tau->P[i].hdr );
   }
-  listRemoveNode( &tau->list1, &tau->P[7].hdr );
+  listRemove( &tau->list1, &tau->P[7].hdr );
   Elem* elemP = &tau->P[ tau->list1.head ];
   Elem* lastElemP = &tau->P[ tau->list1.tail ];
   int correctVal = 19;
@@ -124,6 +130,28 @@ start:
     }
     CHECK_EQ( elemP->i, correctVal );
   }
+}
+
+TEST_F(Array, listInsertBeforeHead ) {
+  listAppend( &tau->list1, &tau->P[0].hdr );
+  CHECK_EQ( tau->list1.head, 0 );
+  CHECK_EQ( tau->list1.tail, 0 );
+  listInsertBefore( &tau->list1, &tau->P[7].hdr, &tau->P[0].hdr );
+  CHECK_EQ( tau->list1.head, 7 );
+  CHECK_EQ( tau->list1.tail, 0 );
+  CHECK_EQ( tau->P[7].hdr.next, 0 );
+  CHECK_EQ( tau->P[0].hdr.prev, 7 );
+}
+
+TEST_F(Array, listInsertAfterTail ) {
+  listAppend( &tau->list1, &tau->P[0].hdr );
+  CHECK_EQ( tau->list1.head, 0 );
+  CHECK_EQ( tau->list1.tail, 0 );
+  listInsertAfter( &tau->list1, &tau->P[7].hdr, &tau->P[0].hdr );
+  CHECK_EQ( tau->list1.head, 0 );
+  CHECK_EQ( tau->list1.tail, 7 );
+  CHECK_EQ( tau->P[0].hdr.next, 7 );
+  CHECK_EQ( tau->P[7].hdr.prev, 0 );
 }
 
 TEST_F(Array, listInsertBeforeWhenNotEmpty ) {
@@ -151,7 +179,6 @@ TEST_F(Array, listInsertAfterWhenNotEmpty ) {
   CHECK_EQ( tau->P[12].hdr.prev, 31 );
   CHECK_EQ( tau->P[12].hdr.next, 13 );
 }
-#endif
 
 TEST_F(Array, appendMultipleListsIntoOneArray ) {
   for (size_t i = 0; i < 20; ++i ) {
@@ -161,5 +188,60 @@ TEST_F(Array, appendMultipleListsIntoOneArray ) {
     else {
       listAppend( &tau->list2, &tau->P[i].hdr );
     }
+  }
+  // CHECK LIST 1
+  Elem* elemP = &tau->P[ tau->list1.head ];
+  Elem* lastElemP = &tau->P[ tau->list1.tail ];
+  int correctVal = 1;
+  goto start1;
+  for ( ; elemP != lastElemP; correctVal += 2 ) {
+    // Hack for letting it get all the way to the last element before quitting.
+    elemP = &tau->P[ elemP->hdr.next ];
+start1:
+    CHECK_EQ( elemP->i, correctVal );
+  }
+  // CHECK LIST 1
+  elemP = &tau->P[ tau->list2.head ];
+  lastElemP = &tau->P[ tau->list2.tail ];
+  correctVal = 0;
+  goto start2;
+  for ( ; elemP != lastElemP; correctVal += 2 ) {
+    // Hack for letting it get all the way to the last element before quitting.
+    elemP = &tau->P[ elemP->hdr.next ];
+start2:
+    CHECK_EQ( elemP->i, correctVal );
+  }
+}
+
+TEST_F(Array, prependMultipleListsIntoOneArray ) {
+  for (size_t i = 0; i < 20; ++i ) {
+    if ( i & 1 ) {
+      listPrepend( &tau->list1, &tau->P[i].hdr );
+    }
+    else {
+      listPrepend( &tau->list2, &tau->P[i].hdr );
+    }
+  }
+  // CHECK LIST 1
+  Elem* elemP = &tau->P[ tau->list1.head ];
+  Elem* lastElemP = &tau->P[ tau->list1.tail ];
+  int correctVal = 19;
+  goto start1;
+  for ( ; elemP != lastElemP; correctVal -= 2 ) {
+    // Hack for letting it get all the way to the last element before quitting.
+    elemP = &tau->P[ elemP->hdr.next ];
+start1:
+    CHECK_EQ( elemP->i, correctVal );
+  }
+  // CHECK LIST 1
+  elemP = &tau->P[ tau->list2.head ];
+  lastElemP = &tau->P[ tau->list2.tail ];
+  correctVal = 18;
+  goto start2;
+  for ( ; elemP != lastElemP; correctVal -= 2 ) {
+    // Hack for letting it get all the way to the last element before quitting.
+    elemP = &tau->P[ elemP->hdr.next ];
+start2:
+    CHECK_EQ( elemP->i, correctVal );
   }
 }

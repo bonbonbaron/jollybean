@@ -24,7 +24,7 @@ typedef struct List {
 void listIni( List* listP, void* array );
 
 // NOTE: This assumes the address of the header is the same as the address of the array element.
-void listRemoveNode( List* listP, ListNodeHeader* nodeP );
+void listRemove( List* listP, ListNodeHeader* nodeP );
 
 void listInsertBefore( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* nextNodeP );
 
