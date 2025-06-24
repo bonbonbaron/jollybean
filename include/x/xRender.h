@@ -92,9 +92,8 @@ typedef struct {
   Map           *offsetRectMP;
   Map           *srcRectMP;    // shortcut-pointer to shared array of source rectangles
   Map           *dstRectMP;    // shortcut-pointer to shared array of destination rectangles
-  Map           *zHeightMP;    // derived inner source rectangle map from parent system
-  Map           *xRenderCompSourceMP;  // TODO uhhh what was this?
-  Map           *zHeightIdxMP; // tells you what index each new z-height starts at
+  Map           *zHeightMP;    // shortcut-pointer to shared array of Z-heights
+  // Map           *xRenderCompSourceMP;  // TODO uhhh what was this?
 } XRender;
 
 // Images

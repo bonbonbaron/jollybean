@@ -239,23 +239,66 @@ void xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void 
   }
 }
 
+/* I like this algo best thus far:
+ *
+ * For every overlapping member of the same Z-height layer (A), 
+ * sort rendering order by z-height. This is the beauty of doubly-
+ * linked lists: You never have to worry about mixing them up with
+ * with another layer. Because the head and tail tell you the bounds.
+ * Since you don't necessarily know how far apart they are, you can 
+ * just "move" them to the front of the list! Wow, that's beautiful.
+ *
+ * However, this still dictates that you sort the whole list out at
+ * load time. (B)
+ *
+ * A> The collision system will notify xRender of colliding entities
+ *    living on the same layer. Does it need to share the same z-list
+ *    as xRender's? Not necessarily; not every rendered entity has a
+ *    collision box. I'll flesh this answer out later after my bike ride.
+ *
+ * b> What're you going to do with deactivated list members?
+ *    Remove them. When I reactivate them, I'll look into the
+ *    map of lists with the z-height as the key. If they don't
+ *    collide with anybody, then, since the front of the list is
+ *    reserved for sorted overlapping members, they'll go to the
+ *    back.
+ *
+ * C> What'll you do for members who elevate to heights without any
+ *    other members? And what happens if a lot of other members join
+ *    them there too? Won't that warrant a list? Maybe make an outer
+ *    structure; I don't want to put too related items into too many
+ *    separate boxes just in the "spirit of ECS." Things accessed
+ *    together live together.
+ *
+ *    It's tempting to daisy-chain lists together for rapid processing,
+ *    but the [de]activation plan muddies that up quickly. So don't do
+ *    that. What about something like this:
+ *
+ *    typedef struct ZList {
+ *      LNodeHeader hdr;
+ *      List zList;
+ *    } Zlist;
+ *
+ *    The index of the above will be implied by the z-height. When 
+ *    any z-height loses its last member, it's removed from the list
+ *    of lists. But when a list gains its first member, we have no
+ *    idea who its neighboring lists should be. (D)
+ *
+ * D>
+ *
+ */
+
 static void raiseWithinZ( System* sP, Entity entity ) {
   if ( _frayElemIsActive( sP->cF, *_getCompIdxPByEntity(sP, entity) ) ) {
     XRenderComp* firstPausedCP = sP->cF + _frayGetFirstPausedIdx(sP->cF);
     XRenderComp* cP = xGetCompPByEntity( sP, entity );
     S32 currEntityBottomYCoord = cP->dstRectP->y + cP->dstRectP->h;
     for ( XRenderComp* nextCP = cP + 1 ; nextCP < firstPausedCP && *nextCP->zHeightP == *cP->zHeightP ; ++nextCP ) {
-      // if their bottom is higher than mine, swap.
+      // if their bottom is lower than mine, swap.
       if ( ( nextCP->dstRectP->y + nextCP->dstRectP->h ) < currEntityBottomYCoord ) {
-        __xSwap( sP, nextCP - (XRenderComp*) sP->cF, cP - (XRenderComp*) sP->cF ); // converts to indices
-        // fracySwap() swaps actual data.
-        // It's safe to use in this case since everything to the left of an active element is also active.
-        // Therefore no bound-checking necessary.
-        fraySwap( sP->cF, (void*) nextCP, (void*) cP );  
-        cP = nextCP;  // steal destination pointer to double-increment (avoids comparing against self in new spot)
-                      // at this point, dest and src pointers are pointing at the same element
       }
       else {
+        // Break if everything else is lower than this.
         break;
       }
     }
@@ -269,14 +312,6 @@ static void lowerWithinZ( System* sP, Entity entity ) {
     for ( XRenderComp* prevCP = cP - 1 ; prevCP >= (XRenderComp*) sP->cF && *prevCP->zHeightP == *cP->zHeightP ; --prevCP ) {
       // if their bottom is higher than mine, swap.
       if ( ( prevCP->dstRectP->y + prevCP->dstRectP->h ) > currEntityBottomYCoord ) {
-        // __xSwap() just swaps metadata.
-        __xSwap( sP, prevCP - (XRenderComp*) sP->cF, cP - (XRenderComp*) sP->cF ); // converts to indices
-        // fracySwap() swaps actual data.
-        // It's safe to use in this case since everything to the left of an active element is also active.
-        // Therefore no bound-checking necessary.
-        fraySwap( sP->cF, (void*) prevCP, (void*) cP );  
-        cP = prevCP;  // steal destination pointer to double-decrement (avoids comparing against self in new spot)
-                      // at this point, dest and src pointers are pointing at the same element
       }
       else {
         // Break if everything else is higher than this.
@@ -605,21 +640,6 @@ XPostprocessCompsDef_(Render) {
     if ( *zHeightP > maxZ ) {
       maxZ = *zHeightP;
     }
-  }
-  if ( maxZ ) {
-    xP->zHeightIdxMP = mapNew( RAW_DATA, sizeof( U8 ), maxZ + 1, GENERAL);  // + 1 prevents a maxZ of zero from breaking the assert in mapNew().
-    memset( xP->zHeightIdxMP->mapA, 0,  sizeof( U8 ) * ( maxZ + 1 ) );
-    // The good news is, we don't have to worry about sorting here since
-    // everything starts out deactivated.
-    // Nor do we have to locate where they are for the same reason.
-    // TODO pick an xRenderRun that uses z-height
-    // TODO pick an xRenderPostActivate that does stuff
-    // TODO pick an xRenderPostDeactivate that does stuff
-  }
-  else {
-    // TODO pick an xRenderRun that doesn't use z-height
-    // TODO pick an xRenderPostActivate that doesn't do anything
-    // TODO pick an xRenderPostDeactivate that doesn't do anything
   }
 }
 
