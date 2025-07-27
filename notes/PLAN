@@ -1,27 +1,30 @@
-
-We're now developing the renderer system. We want it to parse the colormaps into 4-channel color images, not just blindly copy everything. But what's the fastest way to do this? For now, just assume the simplest and worry about performance later.
-Give GUI-related systems ownership of GUI elements via ENGINE_START and ENGINE_SHUTDOWN messages and pointers preserved from sysClr().
-  That's how you can easily have a game with text and no music by simply taking that system out.
-Mission to clearing out error-handling:
-  /all of src/data: almost
-    /~ lingering strip unit test, which needs the strip util to be free from it as well
-  all of src/x
-  all of src/interface
-Make database process run after all game objects are processed; that way we insert in bulk.
-If new game object is created, make a table for it.
-Think up what your database structure should be. Preferably sqlite3.
-
 MVP 2D
 ~~~~~~
 \x
 \motion (2d)
 \animation (2d)
-rendering (2d)
+~rendering (2d) : Working on z-height stuff. Design seems solid. 
+                  What comes after z-height? 
+                  Something to do with parallax?
+                  Or... Yeah, what *was* it I was planning to do after?
+                  AH! Tilemaps. That's a big one. Was I planning a system?
+                  What would justify a tilemap system? Is it useful in more than 
+                  one context than rendering? 
+                  Well, I think it's all rendering, but it applies to more than just images;
+                  it has a lot to do with texts and menus as well. In fact, it's a key *component*
+                  to those things. I'll climb that fence when I get to it. For now, first things
+                  first: Z-Heights. Then I can be satisfied that the rendering system is 99% done.
+                  The only nuisance I'll have to go back into it for later is the fact that there
+                  is now more than one texture... or is there? Or is there a distinct texture
+                  for each layer? What's the fastest way to go about this?
+
+                  Again, don't spend mental energy on the above until you're actively working it.
+tilemap (2d)
+collision (2d)
 \action
 controller
-master
-collision (2d)
 timer
+master
 sound
 
 gene editor

@@ -244,9 +244,9 @@ void xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void 
  * For every overlapping member of the same Z-height layer (A), 
  * sort rendering order by z-height. This is the beauty of doubly-
  * linked lists: You never have to worry about mixing them up with
- * with another layer. Because the head and tail tell you the bounds.
- * Since you don't necessarily know how far apart they are, you can 
- * just "move" them to the front of the list! Wow, that's beautiful.
+ * with another layer; the head and tail tell you the bounds.
+ * Since you don't necessarily know how far apart in the list they are, 
+ * you can just "move" them to the front of the list! Beautiful!
  *
  * However, this still dictates that you sort the whole list out at
  * load time. (B)
@@ -256,7 +256,7 @@ void xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void 
  *    as xRender's? Not necessarily; not every rendered entity has a
  *    collision box. I'll flesh this answer out later after my bike ride.
  *
- * b> What're you going to do with deactivated list members?
+ * B> What're you going to do with deactivated list members?
  *    Remove them. When I reactivate them, I'll look into the
  *    map of lists with the z-height as the key. If they don't
  *    collide with anybody, then, since the front of the list is
@@ -286,92 +286,30 @@ void xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void 
  *
  * D>
  *
+ * Here's another thought I had much later: You don't need to z-order anything within a layer
+ * until it overlaps with another object. So long as everything is within the list, it's fine;
+ * each can just go into its respective list blind. Does the same thing apply for collisions? 
+ * I think so. 
+ *
+ * So what's the new algorithm? (First review the old one for forgotten nuggets of wisdom.)
+ *
+ * Initially put everything into its layer.
+ * When activating or unpausing, move it to the back of its list.
+ * When deactivating or pausing, remove it from its list.
+ * When collision is detected (assuming both are in the same layer-- how do we track that globally? (E)), if its Y-component is larger, move it to the front of its list.
+ * 
+ * 
  */
 
-static void raiseWithinZ( System* sP, Entity entity ) {
-  if ( _frayElemIsActive( sP->cF, *_getCompIdxPByEntity(sP, entity) ) ) {
-    XRenderComp* firstPausedCP = sP->cF + _frayGetFirstPausedIdx(sP->cF);
-    XRenderComp* cP = xGetCompPByEntity( sP, entity );
-    S32 currEntityBottomYCoord = cP->dstRectP->y + cP->dstRectP->h;
-    for ( XRenderComp* nextCP = cP + 1 ; nextCP < firstPausedCP && *nextCP->zHeightP == *cP->zHeightP ; ++nextCP ) {
-      // if their bottom is lower than mine, swap.
-      if ( ( nextCP->dstRectP->y + nextCP->dstRectP->h ) < currEntityBottomYCoord ) {
-      }
-      else {
-        // Break if everything else is lower than this.
-        break;
-      }
-    }
-  }
-}
-
-static void lowerWithinZ( System* sP, Entity entity ) {
-  if ( _frayElemIsActive( sP->cF, *_getCompIdxPByEntity(sP, entity) ) ) {
-    XRenderComp* cP = xGetCompPByEntity( sP, entity );
-    S32 currEntityBottomYCoord = cP->dstRectP->y + cP->dstRectP->h;
-    for ( XRenderComp* prevCP = cP - 1 ; prevCP >= (XRenderComp*) sP->cF && *prevCP->zHeightP == *cP->zHeightP ; --prevCP ) {
-      // if their bottom is higher than mine, swap.
-      if ( ( prevCP->dstRectP->y + prevCP->dstRectP->h ) > currEntityBottomYCoord ) {
-      }
-      else {
-        // Break if everything else is higher than this.
-        break;
-      }
-    }
-  }
-}
-
-#if 0
-static void raiseZ( Key desiredZ ) {
-  myZ = desiredZ
-  currEntityBottomYCoord = our dest rect Y + our H
-  for each zhIdx in zHeightIdxA (starting at the end of mapA, going backwards):
-    theirZ = cF[zhIdx]
-    if theirZ == myZ:
-      if their dest rect Y + their dest rect H < currEntityBottomYCoord
-        /* Since we're starting from the right side of the Z section,
-           we have to lower instead of raise to correct spot. */
-        lowerWithinZ()  // starting from the right side
-    if theirZ > myZ:
-      __xSwap( &cF[zhIdx++], &cF[currIdx] );
-    assert( false );  // the Zs are out of order!
-    // Assume their Z is always greater than or equal to our Z
-}
-    
-static void zSortUpward( desiredZ ) {
-  myZ = desiredZ
-  currEntityBottomYCoord = our dest rect Y + our H
-  for each zhIdx in zHeightIdxA (starting at the end of mapA, going backwards):
-    theirZ = cF[zhIdx]
-    if theirZ == myZ:
-      if their dest rect Y + their dest rect H < currEntityBottomYCoord
-        /* Since we're starting from the left side of the Z section,
-           we have to raise instead of lower to correct spot. */
-        raiseWithinZ()  // starting from the right side
-    if theirZ > myZ:
-      __xSwap( &cF[zhIdx++], &cF[currIdx] );
-    assert( false );  // the Zs are out of order!
-    // Assume their Z is always greater than or equal to our Z
-}
-#endif 
-
-
 void xRenderProcessMessage(System *sP, Message *msgP) {
+  unused_(sP);
+  unused_(msgP);
   switch( msgP->cmd ) {
-    case MSG_MOVED_Y_UP:
-      lowerWithinZ( sP, msgP->attn );
-      break;
-    case MSG_MOVED_Y_DOWN:
-      raiseWithinZ( sP, msgP->attn );
-      break;
-    case MSG_MOVED_Z_UP:
-    case MSG_MOVED_Z_DOWN:
+    case MSG_MOVE_UP_A_LAYER:
+    case MSG_MOVE_DOWN_A_LAYER:
     default:
       break;
   }
-
-  unused_(sP);
-  unused_(msgP);
 }
 
 static void fillRectFromStripmap(const Image *imgP, const Rect_* rectP, Color_* atlasPixelA, const U32 ATLAS_WIDTH) {
