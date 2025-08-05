@@ -1,5 +1,6 @@
 #ifndef SYS_RENDER
 #define SYS_RENDER
+#include "data/list.h"
 #include "x/x.h"
 #include "interface/interface.h"
 #include "data/bt.h"
@@ -54,33 +55,21 @@ typedef struct {
   U16 *tileMapA;  // not to be confused with strip map
 } BgTilemap;
 
-/* Think this through:
- *  Yes, you want rendering elements to be in a singly linked list.
- *  But collisions don't need to be processed in the same order.
- *  In fact, I want to mimimize collision processing to moving rectangles only.
- *
- *  You need two pieces of information:
- *    1) The z-height group it's in (NO NEED TO WORRY ABOUT Y-MOTION)
- *    2) Whether it's moving
- *    
- *  I want moving rects in the front of their groups so each successive rect has one less
- *  rect to deal with (having already been tested with their predecessors). 
- *
- *  Shit, that means I have to keep track of the first and last moving rect in each Z-height.
- *  
- 
-  */
 typedef struct {
   U8 zHeight;
 } ZHeight;
 
 typedef struct {
+  ListNodeHeader hdr;
   Rect_ *srcRectP;
   Rect_ *dstRectP;
-  Key   *zHeightP;
+  Key   *zHeightP;  
 } XRenderComp;
 
 typedef struct {} XRenderMutation;
+
+// Feel free to increment as needed. There's nothing *holy* about this number.
+#define N_LAYERS_SUPPORTED (16)  
 
 typedef struct {
   System         system;
@@ -88,6 +77,7 @@ typedef struct {
   Image        **imgPF;
   Entity        *entityF;  // components aren't added till postProcess(), so track entities here
   Gui           *guiP;   // derived from shared component 
+  List           layerListA[ N_LAYERS_SUPPORTED ];
   Texture_      *atlasTextureP;
   Map           *offsetRectMP;
   Map           *srcRectMP;    // shortcut-pointer to shared array of source rectangles

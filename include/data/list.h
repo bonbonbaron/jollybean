@@ -1,6 +1,6 @@
 #include "data/array.h"
 
-#define UNSET_ (-1)
+#define LIST_HAS_ELEMS (0x01)
 
 // In the context of x, lists are usually going to be component frays.
 // Since we don't know what the sizes of those elements are, we won't venture into
@@ -17,7 +17,8 @@ typedef struct ListNodeHeader {
 
 // Since lists are usually interwoven through a component fray, we need to know where their heads and tails are.
 typedef struct List {
-  S16 head, tail;  // yes, we use different types for head/tail versus prev/next since the latter pair is more common.
+  Key head, tail;  // yes, we use different types for head/tail versus prev/next since the latter pair is more common.
+  U16 flags;    // you can use whatever generic flags you want for your list, e.g. avoiding putting entity in BG layer in xRender
   void* array;  // refers to a pre-existing array or fray (since both have the same elem sz and count locations)
 } List;
 

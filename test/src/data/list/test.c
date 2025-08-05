@@ -16,23 +16,25 @@ static const int N_ELEMS = 100;
 
 TAU_MAIN()
 
-  TEST_F_SETUP(Array) {
-    tau->P = arrayNew( sizeof(Elem), N_ELEMS, GENERAL );
-    REQUIRE_EQ(arrayGetNElems(tau->P), N_ELEMS);
-    REQUIRE_EQ(arrayGetElemSz(tau->P), sizeof(Elem));
-    // Populate the array.
-    for (U32 i = 0; i < N_ELEMS; ++i) {
-      tau->P[i].i = i;
-    }
-    // Init the lists.
-    listIni( &tau->list1, tau->P );
-    listIni( &tau->list2, tau->P );
-    CHECK_EQ( tau->list1.head, UNSET_ );
-    CHECK_EQ( tau->list1.tail, UNSET_ );
+TEST_F_SETUP(Array) {
+  tau->P = arrayNew( sizeof(Elem), N_ELEMS, GENERAL );
+  REQUIRE_EQ(arrayGetNElems(tau->P), N_ELEMS);
+  REQUIRE_EQ(arrayGetElemSz(tau->P), sizeof(Elem));
+  // Populate the array.
+  for (U32 i = 0; i < N_ELEMS; ++i) {
+    tau->P[i].i = i;
   }
+  // Init the lists.
+  listIni( &tau->list1, tau->P );
+  listIni( &tau->list2, tau->P );
+  CHECK_FALSE( tau->list1.flags & LIST_HAS_ELEMS );
+  CHECK_FALSE( tau->list2.flags & LIST_HAS_ELEMS );
+}
 
 TEST_F_TEARDOWN(Array) {
   memRst( GENERAL );
+  tau->list1.flags = 0;
+  tau->list2.flags = 0;
 }
 
 TEST_F(Array, listAppendWhenEmpty) {
@@ -77,8 +79,8 @@ TEST_F(Array, listPrependWhenNotEmpty) {
 
 TEST_F(Array, listRemoveNodeWhenEmpty) {
   listRemove( &tau->list1, &tau->P[0].hdr );
-  CHECK_EQ( tau->list1.head, UNSET_);
-  CHECK_EQ( tau->list1.tail, UNSET_);
+  CHECK_FALSE( tau->list1.flags & LIST_HAS_ELEMS );
+  CHECK_FALSE( tau->list2.flags & LIST_HAS_ELEMS );
 }
 
 TEST_F(Array, listRemoveTheOnlyNode) {
@@ -86,8 +88,8 @@ TEST_F(Array, listRemoveTheOnlyNode) {
   CHECK_EQ( tau->list1.head, 0);
   CHECK_EQ( tau->list1.tail, 0);
   listRemove( &tau->list1, &tau->P[0].hdr );
-  CHECK_EQ( tau->list1.head, UNSET_);
-  CHECK_EQ( tau->list1.tail, UNSET_);
+  CHECK_FALSE( tau->list1.flags & LIST_HAS_ELEMS );
+  CHECK_FALSE( tau->list2.flags & LIST_HAS_ELEMS );
 }
 
 TEST_F(Array, listRemoveNodeAfterAppends) {

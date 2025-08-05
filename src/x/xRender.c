@@ -302,14 +302,39 @@ void xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void 
  */
 
 void xRenderProcessMessage(System *sP, Message *msgP) {
-  unused_(sP);
-  unused_(msgP);
+  XRender* xP = (XRender*) sP;
   switch( msgP->cmd ) {
     case MSG_COLLISION_DETECTED:
+      // Do it here first, and then move it to its own function after you prove it out.
+      Entity e1 = msgP->attn;
+      Entity e2 = msgP->arg;
+      // TODO everything below can go into its own *static* function. Above are args.
+      XRenderComp* e1CompP = xGetCompPByEntity( sP, e1 );
+      assert(e1CompP);
+      XRenderComp* e2CompP = xGetCompPByEntity( sP, e2 );
+      assert(e2CompP);
+      // Assert these collided components are even on the same layer in the first place.
+      assert( *e1CompP->zHeightP == *e2CompP->zHeightP );
+      // Move the component with the higher bottom-Y coordinate to the front of its list.
+      if ( ( e1CompP->dstRectP->y + e1CompP->dstRectP->h ) > ( e2CompP->dstRectP->y + e2CompP->dstRectP->h ) ) {
+        assert( *e1CompP->zHeightP < N_LAYERS_SUPPORTED );
+        listRemove( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr );
+        listPrepend( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr );
+      }
+      else {
+        assert( *e2CompP->zHeightP < N_LAYERS_SUPPORTED );
+        listRemove( &xP->layerListA[ *e2CompP->zHeightP ], &e2CompP->hdr );
+        listPrepend( &xP->layerListA[ *e2CompP->zHeightP ], &e2CompP->hdr );
+      }
       break;
     case MSG_MOVE_UP_A_LAYER:
+      // TODO make sure FG objects skip BG layers
       break;
     case MSG_MOVE_DOWN_A_LAYER:
+      // TODO make sure FG objects skip BG layers
+      break;
+    case MSG_MOVE_TO_LAYER:  // move to a specific layer
+      // TODO *assert* that you're never moving a FG object to a BG layer
       break;
     default:
       break;
@@ -572,6 +597,8 @@ XPostprocessCompsDef_(Render) {
     cP->dstRectP->h = cP->srcRectP->h;
     cP->zHeightP    = mapGet( xP->zHeightMP, *entityP );
     assert( cP->zHeightP );
+    assert( *cP->zHeightP < N_LAYERS_SUPPORTED );
+    listAppend( &xP->layerListA[ *cP->zHeightP ], &cP->hdr );
   }
 
   // Figure out what the highest Z-height is and create an array that can hold it.
@@ -624,14 +651,24 @@ XPostMutateFuncDef_(Render) {
 //======================================================
 void xRenderRun(System *sP) {
   XRender *xP = (XRender*) sP;
-
-  XRenderComp *cP = (XRenderComp*) sP->cF;
-  XRenderComp *cEndP = cP + *_frayGetFirstInactiveIdxP(sP->cF);
-
+  XRenderComp* cF = (XRenderComp*) sP->cF;
   Renderer_ *rendererP = xP->guiP->rendererP;
+
   clearScreen(rendererP);
-  for (; cP < cEndP; cP++) {
-    copy_(rendererP, xP->atlasTextureP, cP->srcRectP, cP->dstRectP);
+  // for each layer
+  for ( Key i = 0; i < N_LAYERS_SUPPORTED; ++i ) {
+    List* listP = &xP->layerListA[ i ];
+    if ( listP->flags & LIST_HAS_ELEMS ) {
+      XRenderComp* cP = &cF[ listP->head ];
+      XRenderComp* cEndP = &cF[ listP->tail ];
+      goto SKIP_FIRST_LISTHDR_INCREMENT;
+      // render each component on the current layer
+      for ( ; cP != cEndP ; ) {
+        cP = &cF[ cP->hdr.next ];  // Putting incrementer here so it happens after the for-loop check, not before.
+SKIP_FIRST_LISTHDR_INCREMENT:
+        copy_(rendererP, xP->atlasTextureP, cP->srcRectP, cP->dstRectP);
+      }
+    }
   }
   present_(rendererP);
 }
