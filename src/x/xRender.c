@@ -305,8 +305,12 @@ void xRenderProcessMessage(System *sP, Message *msgP) {
   unused_(sP);
   unused_(msgP);
   switch( msgP->cmd ) {
+    case MSG_COLLISION_DETECTED:
+      break;
     case MSG_MOVE_UP_A_LAYER:
+      break;
     case MSG_MOVE_DOWN_A_LAYER:
+      break;
     default:
       break;
   }

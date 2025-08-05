@@ -3,22 +3,7 @@ MVP 2D
 \x
 \motion (2d)
 \animation (2d)
-~rendering (2d) : Working on z-height stuff. Design seems solid. 
-                  What comes after z-height? 
-                  Something to do with parallax?
-                  Or... Yeah, what *was* it I was planning to do after?
-                  AH! Tilemaps. That's a big one. Was I planning a system?
-                  What would justify a tilemap system? Is it useful in more than 
-                  one context than rendering? 
-                  Well, I think it's all rendering, but it applies to more than just images;
-                  it has a lot to do with texts and menus as well. In fact, it's a key *component*
-                  to those things. I'll climb that fence when I get to it. For now, first things
-                  first: Z-Heights. Then I can be satisfied that the rendering system is 99% done.
-                  The only nuisance I'll have to go back into it for later is the fact that there
-                  is now more than one texture... or is there? Or is there a distinct texture
-                  for each layer? What's the fastest way to go about this?
-
-                  Again, don't spend mental energy on the above until you're actively working it.
+~rendering (2d) (z-heights)
 tilemap (2d)
 collision (2d)
 \action
