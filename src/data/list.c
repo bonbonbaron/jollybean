@@ -23,39 +23,61 @@ void listRemove( List* listP, ListNodeHeader* nodeP ) {
   if ( listP->tail == nodeIdx ) {
     listP->tail = UNSET_;
   }
-  ListNodeHeader* prevP = (ListNodeHeader*) arrayGetVoidElemPtr( listP->array, nodeP->prev );
-  ListNodeHeader* nextP = (ListNodeHeader*) arrayGetVoidElemPtr( listP->array, nodeP->next );
-  prevP->next = nodeP->next;
-  nextP->prev = nodeP->prev;
-  // Is it even worth changing the removed node's data if nobody connects to it?
-  // Maybe not if we make sure we set its relevant data when adding it back in.
+  // If the removed node has a previous node, then set the previous's next to the current's next.
+  if ( nodeP->prev != UNSET_ ) {
+    ListNodeHeader* prevP = (ListNodeHeader*) arrayGetVoidElemPtr( listP->array, nodeP->prev );
+    prevP->next = nodeP->next;  // valid even if next is UNSET_
+  }
+  // If the removed node has a next node, then set the next's previous to the current's previous.
+  if ( nodeP->next != UNSET_ ) {
+    ListNodeHeader* nextP = (ListNodeHeader*) arrayGetVoidElemPtr( listP->array, nodeP->next );
+    nextP->prev = nodeP->prev;  // valid even if prev is UNSET_
+  }
+  // Make it clear to the user this node is OUTSIDE the list now.
+  nodeP->next = nodeP->prev = UNSET_;  
 }
 
-void listInsertBefore( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* nextNodeP ) {
+void listInsertBefore( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* tgtNodeP ) {
   assert ( listP && listP->array && newNodeP );
   Key newIdx = listGetNodeIdx( listP, newNodeP );
-  Key oldIdx = listGetNodeIdx( listP, nextNodeP );
-  ListNodeHeader* oldNodesPreviousP = arrayGetVoidElemPtr( listP->array, nextNodeP->prev );
-  newNodeP->prev = nextNodeP->prev;
-  newNodeP->next = oldIdx;
-  nextNodeP->prev = newIdx;
-  oldNodesPreviousP->next = newIdx;
-  // TODO bug: previous's next is not the newNodeP yet.
-  if ( listP->head == oldIdx ) {
+  Key tgtIdx = listGetNodeIdx( listP, tgtNodeP );
+  if ( tgtNodeP->prev != UNSET_ ) {
+    // get pointer to node previously before target
+    ListNodeHeader* nodePreviouslyBeforeTgt = arrayGetVoidElemPtr( listP->array, tgtNodeP->prev );
+    // stick new node between target's previous and target
+    newNodeP->prev = tgtNodeP->prev;
+    newNodeP->next = tgtIdx;
+    tgtNodeP->prev = newIdx;
+    nodePreviouslyBeforeTgt->next = newIdx;
+  }
+  else {
+    // Same as the above, except there's nothing before target
+    newNodeP->prev = tgtNodeP->prev;
+    newNodeP->next = tgtIdx;
+    tgtNodeP->prev = newIdx;
+  }
+  if ( listP->head == tgtIdx ) {
     listP->head = newIdx;
   }
 }
 
-void listInsertAfter( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* prevNodeP ) {
-  assert ( listP && listP->array && newNodeP && prevNodeP );
+void listInsertAfter( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* tgtNodeP ) {
+  assert ( listP && listP->array && newNodeP && tgtNodeP );
   Key newIdx = listGetNodeIdx( listP, newNodeP );
-  Key oldIdx = listGetNodeIdx( listP, prevNodeP );
-  ListNodeHeader* oldNodesNextP = arrayGetVoidElemPtr( listP->array, prevNodeP->next );
-  newNodeP->next = prevNodeP->next;
-  newNodeP->prev = oldIdx;
-  prevNodeP->next = newIdx;
-  oldNodesNextP->prev = newIdx;
-  if ( listP->tail == oldIdx ) {
+  Key tgtIdx = listGetNodeIdx( listP, tgtNodeP );
+  if ( tgtNodeP->next != UNSET_ ) {
+    ListNodeHeader* nodePreviouslyAfterTgt = arrayGetVoidElemPtr( listP->array, tgtNodeP->next );
+    newNodeP->next = tgtNodeP->next;
+    newNodeP->prev = tgtIdx;
+    tgtNodeP->next = newIdx;
+    nodePreviouslyAfterTgt->prev = newIdx;
+  }
+  else {
+    newNodeP->next = tgtNodeP->next;
+    newNodeP->prev = tgtIdx;
+    tgtNodeP->next = newIdx;
+  }
+  if ( listP->tail == tgtIdx ) {
     listP->tail = newIdx;
   }
 }
@@ -63,28 +85,30 @@ void listInsertAfter( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* pre
 void listPrepend( List* listP, ListNodeHeader* newNodeP ) {
   assert ( listP && listP->array && newNodeP );
   Key newNodeIdx = listGetNodeIdx( listP, newNodeP );
-  if ( listP->head >= 0 ) {
+  if ( listP->head != UNSET_ ) {
     ListNodeHeader* oldHeadNodeP = arrayGetVoidElemPtr( listP->array, listP->head );
     oldHeadNodeP->prev = newNodeIdx;
     newNodeP->next = listP->head;
     listP->head = newNodeIdx;
   }
   else {
-    listP->head = listP->tail =  newNodeP->next = newNodeP->prev = newNodeIdx;
+    listP->head = listP->tail =  newNodeIdx;
+    newNodeP->next = newNodeP->prev = UNSET_;
   }
 }
 
 void listAppend( List* listP, ListNodeHeader* newNodeP ) {
   assert ( listP && listP->array && newNodeP );
   Key newNodeIdx = listGetNodeIdx( listP, newNodeP );
-  if ( listP->tail >= 0 ) {
+  if ( listP->tail != UNSET_ ) {
     ListNodeHeader* oldHeadNodeP = arrayGetVoidElemPtr( listP->array, listP->tail );
     oldHeadNodeP->next = newNodeIdx;
     newNodeP->prev = listP->tail;
     listP->tail = newNodeIdx;
   }
   else {
-    listP->head = listP->tail =  newNodeP->next = newNodeP->prev = newNodeIdx;
+    listP->head = listP->tail = newNodeIdx;
+    newNodeP->prev = newNodeP->next = UNSET_;  // There's nothing before or after this node.
   }
 }
 

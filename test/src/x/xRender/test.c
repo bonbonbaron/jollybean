@@ -48,7 +48,7 @@ static void checkForCollisions( Tau* tau ) {
   XRenderComp* cF = xP->system.cF;
   for ( Key i = 0; i < N_LAYERS_SUPPORTED; ++i ) {
     List* listP = &xP->layerListA[ i ];
-    if ( listP->flags & LIST_HAS_ELEMS ) {
+    if ( listP->head != UNSET_ ) {
       XRenderComp* cP = &cF[ listP->head ];
       XRenderComp* cEndP = &cF[ listP->tail ];
       goto SKIP_FIRST_LISTHDR_INCREMENT;
@@ -115,7 +115,7 @@ static void runAndCheckZOrder( Tau* tau ) {
 
   for ( Key i = 0; i < N_LAYERS_SUPPORTED; ++i ) {
     List* listP = &xP->layerListA[ i ];
-    if ( listP->flags & LIST_HAS_ELEMS ) {
+    if ( listP->head != UNSET_ ) {
       XRenderComp* cP = &cF[ listP->head ];
       XRenderComp* cEndP = &cF[ listP->tail ];
       goto SKIP_FIRST_LISTHDR_INCREMENT;
