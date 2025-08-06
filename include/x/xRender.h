@@ -6,7 +6,7 @@
 #include "data/bt.h"
 #include "jb.h"
 
-typedef enum { MSG_MOVE_UP_A_LAYER = N_XMAIL_BUILTIN_CMDS, MSG_MOVE_DOWN_A_LAYER } XRenderMsgCmd;
+//typedef enum {} XRenderMsgCmd;
 
 // TODO is both being 1 a bug, or is that the *inner* key value?
 #define GUI_KEY_ (1)

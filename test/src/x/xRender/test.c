@@ -32,22 +32,54 @@ typedef struct Tau {
   XRenderComp *renderCompF;
 } Tau;
 
-static void sendMovementMsg( Tau* tau, Entity entity, S32 y ) {
-  if ( y < 0 ) {
-    mailboxWrite( tau->xP->system.mailboxF, RENDER, entity, MSG_MOVED_Y_UP, 0, NULL );
+// from xCollision.c
+inline static Bln _collided(const register Rect_ *r1P, const register Rect_ *r2P) {
+  return r1P->y        < r2P->y + r2P->h &&  
+         r1P->y + r1P->h > r2P->y        && 
+         r1P->x        < r2P->x + r2P->w &&
+         r1P->x + r1P->w > r2P->x;        
+}
+
+// Make this unit test dumb; we're not worried about performance here.
+// n^2 testing is fine.
+static void checkForCollisions( Tau* tau ) {
+  XRender* xP = tau->xP;
+  System* sP = &xP->system;
+  XRenderComp* cF = xP->system.cF;
+  for ( Key i = 0; i < N_LAYERS_SUPPORTED; ++i ) {
+    List* listP = &xP->layerListA[ i ];
+    if ( listP->flags & LIST_HAS_ELEMS ) {
+      XRenderComp* cP = &cF[ listP->head ];
+      XRenderComp* cEndP = &cF[ listP->tail ];
+      goto SKIP_FIRST_LISTHDR_INCREMENT;
+      // render each component on the current layer
+      for ( ; cP != cEndP ; ) {
+        cP = &cF[ cP->hdr.next ];  // Putting incrementer here so it happens after the for-loop check, not before.
+SKIP_FIRST_LISTHDR_INCREMENT:
+        if ( cP != cEndP ) {
+          XRenderComp* cNextP = &cF[ cP->hdr.next ];
+          goto SKIP_FIRST_COMPARISON_INCREMENT;
+          while ( cNextP != cEndP ) {
+            cNextP = &cF[ cNextP->hdr.next ];  // Putting incrementer here so it happens after the for-loop check, not before.
+SKIP_FIRST_COMPARISON_INCREMENT:
+            if ( _collided( cP->dstRectP, cNextP->dstRectP ) ) {
+              Entity e1 = xGetEntityByVoidComponentPtr( sP, cP );
+              Entity e2 = xGetEntityByVoidComponentPtr( sP, cNextP );
+              mailboxWrite( tau->xP->system.mailboxF, RENDER, e1, MSG_SOFT_COLLISION_DETECTED, e2, NULL );
+            }
+          }
+        }
+      }
+    }
   }
-  else if ( y > 0 ) {
-    mailboxWrite( tau->xP->system.mailboxF, RENDER, entity, MSG_MOVED_Y_DOWN, 0, NULL );
-  }
-  // else, don't bother writing anything at all. We dgaf if it goes left or right.
 }
 
 static void sendElevationMsg( Tau* tau, Entity entity, S32 deltaZ ) {
   if ( deltaZ < 0 ) {
-    mailboxWrite( tau->xP->system.mailboxF, RENDER, entity, MSG_MOVED_Z_DOWN, 0, NULL );
+    mailboxWrite( tau->xP->system.mailboxF, RENDER, entity, MSG_MOVE_DOWN_A_LAYER, 0, NULL );
   }
   else if ( deltaZ > 0 ) {
-    mailboxWrite( tau->xP->system.mailboxF, RENDER, entity, MSG_MOVED_Z_UP, 0, NULL );
+    mailboxWrite( tau->xP->system.mailboxF, RENDER, entity, MSG_MOVE_UP_A_LAYER, 0, NULL );
   }
   // else, don't bother writing anything at all. We dgaf if it goes left or right.
 }
@@ -69,26 +101,42 @@ static void moveEntity( Tau* tau, Entity entity, S32 x, S32 y ) {
   rectP->y += y;
 }
 
-static void moveAndSend( Tau* tau, Entity entity, S32 x, S32 y ) {
-  moveEntity( tau, entity, x, y );
-  sendMovementMsg( tau, entity, y );
-}
-
 static void elevateAndSend( Tau* tau, Entity entity, S32 deltaZ ) {
   elevateEntity( tau, entity, deltaZ );
   sendElevationMsg( tau, entity, deltaZ );
 }
 
 static void runAndCheckZOrder( Tau* tau ) {
+  checkForCollisions( tau );
   xRun(&tau->xP->system);  
   System *sP = &tau->xP->system;
+  XRender* xP = tau->xP;
+  XRenderComp* cF = xP->system.cF;
 
-  XRenderComp* cP = (XRenderComp*) sP->cF;
-  XRenderComp* cEndP = cP + *_frayGetFirstInactiveIdxP( sP->cF );  // only care about active ones
-
-  ++cP;  // skip first so you can compare current to previous, only if more than one is active
-  for ( ; cP < cEndP; ++cP ) {
-     CHECK_GE( *cP->zHeightP, *(cP - 1)->zHeightP );
+  for ( Key i = 0; i < N_LAYERS_SUPPORTED; ++i ) {
+    List* listP = &xP->layerListA[ i ];
+    if ( listP->flags & LIST_HAS_ELEMS ) {
+      XRenderComp* cP = &cF[ listP->head ];
+      XRenderComp* cEndP = &cF[ listP->tail ];
+      goto SKIP_FIRST_LISTHDR_INCREMENT;
+      // render each component on the current layer
+      while ( cP != cEndP ) {
+        cP = &cF[ cP->hdr.next ];  // Putting incrementer here so it happens after the for-loop check, not before.
+SKIP_FIRST_LISTHDR_INCREMENT:
+        if ( cP != cEndP ) {
+          XRenderComp* cNextP = &cF[ cP->hdr.next ];
+          goto SKIP_FIRST_COMPARISON_INCREMENT;
+          while ( cNextP != cEndP ) {
+SKIP_FIRST_COMPARISON_INCREMENT:
+            cNextP = &cF[ cNextP->hdr.next ];  // Putting incrementer here so it happens after the for-loop check, not before.
+            if ( _collided( cP->dstRectP, cNextP->dstRectP ) ) {
+              REQUIRE_LE( cP->dstRectP->y + cP->dstRectP->h, cNextP->dstRectP->y + cNextP->dstRectP->h );
+            }
+            // else, if not collided, then z-height ordering doesn't matter WITHIN THIS LAYER
+          }
+        }
+      }
+    }
   }
 }
 
@@ -97,9 +145,7 @@ TEST_F_SETUP(Tau) {
   tau->xP = &xRender;
   tau->sP = &tau->xP->system;
   // Make a new GUI.
-  printf("a\n");
   tau->xP->guiP = guiNew();
-  printf("b\n");
 
   // Initialize the system basics.
   tau->nEntities = sizeof( imgA ) / sizeof( imgA[0] );  // for lack of anything better for now
@@ -195,7 +241,7 @@ TEST_F(Tau, somethingfornow) {
 }
 
 TEST_F(Tau, moveUpWhileDeactivated) {
-  moveAndSend( tau, 1, 0, -1 );
+  moveEntity( tau, 1, 0, -1 );
   for (int i = 0; i < N_FRAMES; ++i) {
     runAndCheckZOrder( tau );
   }
@@ -203,7 +249,7 @@ TEST_F(Tau, moveUpWhileDeactivated) {
 
 TEST_F(Tau, moveUpWhileOneIsActivated) {
   xActivateComponentByEntity( tau->sP, 1 );
-  moveAndSend( tau, 1, 0, -1 );
+  moveEntity( tau, 1, 0, -1 );
   for (int i = 0; i < N_FRAMES; ++i) {
     runAndCheckZOrder( tau );
   }
@@ -220,7 +266,7 @@ TEST_F(Tau, moveUpWhileMultipleAreActivated) {
     /* Make entity 2 scoot up each frame. 
      * It should fall beneath each entity as its bottom 
      * boundary crosses theirs. */
-    moveAndSend( tau, Entity2_Tan_Circle, 0, -1 );
+    moveEntity( tau, Entity2_Tan_Circle, 0, -1 );
     SDL_Delay(100);
     runAndCheckZOrder( tau );
   }
@@ -233,7 +279,7 @@ TEST_F(Tau, moveDownWhileMultipleAreActivated) {
   xActivateComponentByEntity( tau->sP, Entity3_Brown_Rect );
   moveEntity( tau, Entity2_Tan_Circle, 0, 25 );
   for (int i = 0; i < N_FRAMES; ++i) {
-    moveAndSend( tau, Entity1_Red_Guy, 0, 1 );
+    moveEntity( tau, Entity1_Red_Guy, 0, 1 );
     SDL_Delay(100);
     runAndCheckZOrder( tau );
   }

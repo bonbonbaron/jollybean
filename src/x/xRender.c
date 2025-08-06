@@ -517,6 +517,11 @@ XPostprocessCompsDef_(Render) {
      You must free the surface before you free the pixel data." */
   surfaceDel(&atlasSurfaceP);
 
+  // Initialize the linked lists
+  for ( size_t i = 0; i < N_LAYERS_SUPPORTED; ++i ) {
+    listIni( &xP->layerListA[ i ], (void*) sP->cF );
+  }
+
   // Update source rectangles. That way animation system knows where its frames are in texture atlas.
   _updateSrcRects(xP, atlasP);
   // TODO use subcomp map below
@@ -535,16 +540,6 @@ XPostprocessCompsDef_(Render) {
     assert( cP->zHeightP );
     assert( *cP->zHeightP < N_LAYERS_SUPPORTED );
     listAppend( &xP->layerListA[ *cP->zHeightP ], &cP->hdr );
-  }
-
-  // Figure out what the highest Z-height is and create an array that can hold it.
-  Key* zHeightP    = xP->zHeightMP->mapA;
-  Key* zHeightEndP = zHeightP + xP->zHeightMP->population;
-  Key maxZ = 0;
-  for ( ; zHeightP < zHeightEndP; ++zHeightP ) {
-    if ( *zHeightP > maxZ ) {
-      maxZ = *zHeightP;
-    }
   }
 }
 
@@ -599,7 +594,7 @@ void xRenderRun(System *sP) {
       XRenderComp* cEndP = &cF[ listP->tail ];
       goto SKIP_FIRST_LISTHDR_INCREMENT;
       // render each component on the current layer
-      for ( ; cP != cEndP ; ) {
+      while ( cP != cEndP ) {
         cP = &cF[ cP->hdr.next ];  // Putting incrementer here so it happens after the for-loop check, not before.
 SKIP_FIRST_LISTHDR_INCREMENT:
         copy_(rendererP, xP->atlasTextureP, cP->srcRectP, cP->dstRectP);
