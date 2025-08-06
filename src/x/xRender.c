@@ -252,11 +252,12 @@ void xRenderProcessMessage(System *sP, Message *msgP) {
       // Assert these collided components are even on the same layer in the first place.
       assert( *e1CompP->zHeightP == *e2CompP->zHeightP );
       // Move the component with the higher bottom-Y coordinate to the front of its list.
+      listRemove( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr );
       if ( ( e1CompP->dstRectP->y + e1CompP->dstRectP->h ) < ( e2CompP->dstRectP->y + e2CompP->dstRectP->h ) ) {
-        listMoveBefore( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr, &e2CompP->hdr );
+        listInsertBefore( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr, &e2CompP->hdr );
       }
       else {
-        listMoveAfter(  &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr, &e2CompP->hdr );
+        listInsertAfter(  &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr, &e2CompP->hdr );
       }
       break;
     case MSG_MOVE_UP_A_LAYER:  // move to a specific layer
@@ -589,7 +590,7 @@ void xRenderRun(System *sP) {
   // for each layer
   for ( Key i = 0; i < N_LAYERS_SUPPORTED; ++i ) {
     List* listP = &xP->layerListA[ i ];
-    if ( listP->flags & LIST_HAS_ELEMS ) {
+    if ( listP->head != UNSET_) {
       XRenderComp* cP = &cF[ listP->head ];
       XRenderComp* cEndP = &cF[ listP->tail ];
       goto SKIP_FIRST_LISTHDR_INCREMENT;
