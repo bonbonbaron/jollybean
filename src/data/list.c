@@ -18,14 +18,6 @@ void listIni( List* listP, void* array ) {
 // NOTE: This assumes the address of the header is the same as the address of the array element.
 void listRemove( List* listP, ListNodeHeader* nodeP ) {
   U32 nodeIdx = listGetNodeIdx( listP, nodeP );  // internal assertions guard against bad access
-#if 0  // TODO is this needed anymore?
-  if ( listP->head == nodeIdx ) {
-    listP->flags |= LIST_HAS_ELEMS;
-  }
-  if ( listP->tail == nodeIdx ) {
-    listP->flags |= LIST_HAS_ELEMS;
-  }
-#endif
   // If you're removing the last remaining element of a list, set its flag to NOT having any members.
   if (listP->head == listP->tail) {
     assert( listP->head == nodeIdx );  // make sure the last node is actually the one you're removing 
@@ -43,11 +35,11 @@ void listInsertBefore( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* ne
   assert ( listP && listP->array && newNodeP );
   Key newIdx = listGetNodeIdx( listP, newNodeP );
   Key oldIdx = listGetNodeIdx( listP, nextNodeP );
-  ListNodeHeader* oldNodesPreviousP = arrayGetVoidElemPtr( listP->array, nextNodeP->prev );
+  ListNodeHeader* nodePreviouslyBeforeIt = arrayGetVoidElemPtr( listP->array, nextNodeP->prev );
   newNodeP->prev = nextNodeP->prev;
   newNodeP->next = oldIdx;
   nextNodeP->prev = newIdx;
-  oldNodesPreviousP->next = newIdx;
+  nodePreviouslyBeforeIt->next = newIdx;
   // TODO bug: previous's next is not the newNodeP yet.
   if ( listP->head == oldIdx ) {
     listP->head = newIdx;
@@ -67,6 +59,19 @@ void listInsertAfter( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* pre
     listP->tail = newIdx;
   }
 }
+
+void listMoveBefore( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* nextNodeP ) {
+  assert ( listP && listP->array && newNodeP );
+  listRemove( listP, newNodeP );
+  listInsertBefore( listP, newNodeP, nextNodeP );
+}
+
+void listMoveAfter( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* prevNodeP ) {
+  assert ( listP && listP->array && newNodeP );
+  listRemove( listP, newNodeP );
+  listInsertAfter( listP, newNodeP, prevNodeP );
+}
+
 
 void listPrepend( List* listP, ListNodeHeader* newNodeP ) {
   assert ( listP && listP->array && newNodeP );

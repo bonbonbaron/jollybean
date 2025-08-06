@@ -239,102 +239,38 @@ void xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void 
   }
 }
 
-/* I like this algo best thus far:
- *
- * For every overlapping member of the same Z-height layer (A), 
- * sort rendering order by z-height. This is the beauty of doubly-
- * linked lists: You never have to worry about mixing them up with
- * with another layer; the head and tail tell you the bounds.
- * Since you don't necessarily know how far apart in the list they are, 
- * you can just "move" them to the front of the list! Beautiful!
- *
- * However, this still dictates that you sort the whole list out at
- * load time. (B)
- *
- * A> The collision system will notify xRender of colliding entities
- *    living on the same layer. Does it need to share the same z-list
- *    as xRender's? Not necessarily; not every rendered entity has a
- *    collision box. I'll flesh this answer out later after my bike ride.
- *
- * B> What're you going to do with deactivated list members?
- *    Remove them. When I reactivate them, I'll look into the
- *    map of lists with the z-height as the key. If they don't
- *    collide with anybody, then, since the front of the list is
- *    reserved for sorted overlapping members, they'll go to the
- *    back.
- *
- * C> What'll you do for members who elevate to heights without any
- *    other members? And what happens if a lot of other members join
- *    them there too? Won't that warrant a list? Maybe make an outer
- *    structure; I don't want to put too related items into too many
- *    separate boxes just in the "spirit of ECS." Things accessed
- *    together live together.
- *
- *    It's tempting to daisy-chain lists together for rapid processing,
- *    but the [de]activation plan muddies that up quickly. So don't do
- *    that. What about something like this:
- *
- *    typedef struct ZList {
- *      LNodeHeader hdr;
- *      List zList;
- *    } Zlist;
- *
- *    The index of the above will be implied by the z-height. When 
- *    any z-height loses its last member, it's removed from the list
- *    of lists. But when a list gains its first member, we have no
- *    idea who its neighboring lists should be. (D)
- *
- * D>
- *
- * Here's another thought I had much later: You don't need to z-order anything within a layer
- * until it overlaps with another object. So long as everything is within the list, it's fine;
- * each can just go into its respective list blind. Does the same thing apply for collisions? 
- * I think so. 
- *
- * So what's the new algorithm? (First review the old one for forgotten nuggets of wisdom.)
- *
- * Initially put everything into its layer.
- * When activating or unpausing, move it to the back of its list.
- * When deactivating or pausing, remove it from its list.
- * When collision is detected (assuming both are in the same layer-- how do we track that globally? (E)), if its Y-component is larger, move it to the front of its list.
- * 
- * 
- */
-
 void xRenderProcessMessage(System *sP, Message *msgP) {
   XRender* xP = (XRender*) sP;
+  XRenderComp* e1CompP = xGetCompPByEntity( sP, msgP->attn );
+  // Entity 1 is the entity that is being acted on.
+  assert(e1CompP);
+  assert( *e1CompP->zHeightP < N_LAYERS_SUPPORTED );
   switch( msgP->cmd ) {
-    case MSG_COLLISION_DETECTED:
-      // Do it here first, and then move it to its own function after you prove it out.
-      Entity e1 = msgP->attn;
-      Entity e2 = msgP->arg;
-      // TODO everything below can go into its own *static* function. Above are args.
-      XRenderComp* e1CompP = xGetCompPByEntity( sP, e1 );
-      assert(e1CompP);
-      XRenderComp* e2CompP = xGetCompPByEntity( sP, e2 );
+    case MSG_SOFT_COLLISION_DETECTED:
+      XRenderComp* e2CompP = xGetCompPByEntity( sP, msgP->arg );
       assert(e2CompP);
       // Assert these collided components are even on the same layer in the first place.
       assert( *e1CompP->zHeightP == *e2CompP->zHeightP );
       // Move the component with the higher bottom-Y coordinate to the front of its list.
-      if ( ( e1CompP->dstRectP->y + e1CompP->dstRectP->h ) > ( e2CompP->dstRectP->y + e2CompP->dstRectP->h ) ) {
-        assert( *e1CompP->zHeightP < N_LAYERS_SUPPORTED );
-        listRemove( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr );
-        listPrepend( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr );
+      if ( ( e1CompP->dstRectP->y + e1CompP->dstRectP->h ) < ( e2CompP->dstRectP->y + e2CompP->dstRectP->h ) ) {
+        listMoveBefore( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr, &e2CompP->hdr );
       }
       else {
-        assert( *e2CompP->zHeightP < N_LAYERS_SUPPORTED );
-        listRemove( &xP->layerListA[ *e2CompP->zHeightP ], &e2CompP->hdr );
-        listPrepend( &xP->layerListA[ *e2CompP->zHeightP ], &e2CompP->hdr );
+        listMoveAfter(  &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr, &e2CompP->hdr );
       }
       break;
-    case MSG_MOVE_UP_A_LAYER:
-      // TODO make sure FG objects skip BG layers
+    case MSG_MOVE_UP_A_LAYER:  // move to a specific layer
+      listRemove( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr );
+      listAppend( &xP->layerListA[ ++(*e1CompP->zHeightP) ], &e1CompP->hdr );
       break;
-    case MSG_MOVE_DOWN_A_LAYER:
-      // TODO make sure FG objects skip BG layers
+    case MSG_MOVE_DOWN_A_LAYER:  // move to a specific layer
+      listRemove( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr );
+      listAppend( &xP->layerListA[ --(*e1CompP->zHeightP) ], &e1CompP->hdr );
       break;
     case MSG_MOVE_TO_LAYER:  // move to a specific layer
-      // TODO *assert* that you're never moving a FG object to a BG layer
+      listRemove( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr );
+      *e1CompP->zHeightP = msgP->arg;
+      listAppend( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr );
       break;
     default:
       break;

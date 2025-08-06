@@ -35,3 +35,6 @@ void listPrepend( List* listP, ListNodeHeader* newNodeP );
 
 void listAppend( List* listP, ListNodeHeader* newNode );
 
+void listMoveBefore( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* nextNodeP );
+
+void listMoveAfter( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* prevNodeP );
