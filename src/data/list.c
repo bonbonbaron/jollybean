@@ -34,29 +34,37 @@ void listRemove( List* listP, ListNodeHeader* nodeP ) {
 void listInsertBefore( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* nextNodeP ) {
   assert ( listP && listP->array && newNodeP );
   Key newIdx = listGetNodeIdx( listP, newNodeP );
-  Key oldIdx = listGetNodeIdx( listP, nextNodeP );
-  ListNodeHeader* nodePreviouslyBeforeIt = arrayGetVoidElemPtr( listP->array, nextNodeP->prev );
-  newNodeP->prev = nextNodeP->prev;
-  newNodeP->next = oldIdx;
-  nextNodeP->prev = newIdx;
-  nodePreviouslyBeforeIt->next = newIdx;
-  // TODO bug: previous's next is not the newNodeP yet.
-  if ( listP->head == oldIdx ) {
-    listP->head = newIdx;
+  // If new node is already the one before current, avoid making it point at itself.
+  if ( newIdx != nextNodeP->prev) {
+    Key oldIdx = listGetNodeIdx( listP, nextNodeP );
+    newNodeP->prev = nextNodeP->prev;
+    newNodeP->next = oldIdx;
+    nextNodeP->prev = newIdx;
+    ListNodeHeader* nodePreviouslyBeforeIt = arrayGetVoidElemPtr( listP->array, nextNodeP->prev );
+    nodePreviouslyBeforeIt->next = newIdx;
+    // TODO bug: previous's next is not the newNodeP yet.
+    if ( listP->head == oldIdx ) {
+      listP->head = newIdx;
+    }
   }
 }
 
 void listInsertAfter( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* prevNodeP ) {
   assert ( listP && listP->array && newNodeP && prevNodeP );
   Key newIdx = listGetNodeIdx( listP, newNodeP );
-  Key oldIdx = listGetNodeIdx( listP, prevNodeP );
-  ListNodeHeader* oldNodesNextP = arrayGetVoidElemPtr( listP->array, prevNodeP->next );
-  newNodeP->next = prevNodeP->next;
-  newNodeP->prev = oldIdx;
-  prevNodeP->next = newIdx;
-  oldNodesNextP->prev = newIdx;
-  if ( listP->tail == oldIdx ) {
-    listP->tail = newIdx;
+  // If new node is already the one after current, avoid making it point at itself.
+  if ( newIdx != prevNodeP->next) {
+    Key oldIdx = listGetNodeIdx( listP, prevNodeP );
+    newNodeP->next = prevNodeP->next;
+    newNodeP->prev = oldIdx;
+    prevNodeP->next = newIdx;
+    if ( prevNodeP->next != newIdx ) {
+      ListNodeHeader* nodePreviouslyAfterIt = arrayGetVoidElemPtr( listP->array, prevNodeP->next );
+      nodePreviouslyAfterIt->prev = newIdx;
+    }
+    if ( listP->tail == oldIdx ) {
+      listP->tail = newIdx;
+    }
   }
 }
 

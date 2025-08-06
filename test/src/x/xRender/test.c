@@ -278,6 +278,7 @@ TEST_F(Tau, moveDownWhileMultipleAreActivated) {
   xActivateComponentByEntity( tau->sP, Entity2_Tan_Circle );
   xActivateComponentByEntity( tau->sP, Entity3_Brown_Rect );
   moveEntity( tau, Entity2_Tan_Circle, 0, 25 );
+  SDL_Delay(500);
   for (int i = 0; i < N_FRAMES; ++i) {
     moveEntity( tau, Entity1_Red_Guy, 0, 1 );
     SDL_Delay(100);
