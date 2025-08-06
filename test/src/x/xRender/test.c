@@ -74,9 +74,9 @@ SKIP_FIRST_COMPARISON_INCREMENT1:
             if ( _collided( cP->dstRectP, cNextP->dstRectP ) ) {
               Entity e1 = xGetEntityByVoidComponentPtr( sP, cP );
               Entity e2 = xGetEntityByVoidComponentPtr( sP, cNextP );
-#ifndef NDEBUG
+//#ifndef NDEBUG
               printf("found a collision between %d (%s) and %d (%s)\n", e1, *nameA[e1 - 1], e2, *nameA[e2 - 1]);
-#endif
+//#endif
               mailboxWrite( tau->xP->system.mailboxF, RENDER, e1, MSG_SOFT_COLLISION_DETECTED, e2, NULL );
             }
           }
@@ -132,14 +132,11 @@ static void sanityCheck( Tau* tau ) {
 
 static void runAndCheckZOrder( Tau* tau ) {
   checkForCollisions( tau );
-  printf("running...\n");
 #ifndef NDEBUG
-  printf("before run:\n");
   sanityCheck( tau );
 #endif
   xRun(&tau->xP->system);  
 #ifndef NDEBUG
-  printf("after run:\n");
   sanityCheck( tau );
 #endif
   System *sP = &tau->xP->system;
@@ -164,7 +161,6 @@ SKIP_FIRST_COMPARISON_INCREMENT2:
             if ( _collided( cP->dstRectP, cNextP->dstRectP ) ) {
               // If they're colliding, then current rectangle needs to be higher up than the next, which will be drawn over it.
               REQUIRE_LE( cP->dstRectP->y + cP->dstRectP->h, cNextP->dstRectP->y + cNextP->dstRectP->h );
-              // exit(0);
             }
             // else, if not collided, then z-height ordering doesn't matter WITHIN THIS LAYER
           }
@@ -254,7 +250,7 @@ TEST_F_TEARDOWN(Tau) {
   memRst( GENERAL );
 }
 
-#if 0
+#if 1
 TEST_F(Tau, xRenderRun_red) {
   xActivateComponentByEntity( tau->sP, 1 );
   xRun(&tau->xP->system);
@@ -274,13 +270,16 @@ TEST_F(Tau, somethingfornow) {
   xRun(&tau->xP->system);
 }
 
+// Failing, likely because we put red in the list before even activating him. In fact, activation alone should put somebody in a list.
 TEST_F(Tau, moveUpWhileDeactivated) {
-  moveEntity( tau, 1, 0, -1 );
+  moveEntity( tau, Entity1_Red_Guy, 0, -1 );
   for (int i = 0; i < N_FRAMES; ++i) {
     runAndCheckZOrder( tau );
   }
+  exit(0);
 }
 
+// Failing
 TEST_F(Tau, moveUpWhileOneIsActivated) {
   xActivateComponentByEntity( tau->sP, 1 );
   moveEntity( tau, 1, 0, -1 );
@@ -289,6 +288,7 @@ TEST_F(Tau, moveUpWhileOneIsActivated) {
   }
 }
 
+// Failing
 TEST_F(Tau, moveUpWhileMultipleAreActivated) {
   // All three entities are at height 2 because of setup function.
   xActivateComponentByEntity( tau->sP, Entity1_Red_Guy );
@@ -319,13 +319,12 @@ TEST_F(Tau, moveDownWhileMultipleAreActivated) {
   }
 }
 
-#if 0
+#if 1
 TEST_F(Tau, elevateWhileOneIsActivated) {
   elevateAndSend( tau, 1, -1 );
   xActivateComponentByEntity( tau->sP, 1 );
   for (int i = 0; i < N_FRAMES; ++i) {
     runAndCheckZOrder( tau );
   }
-  memReport();
 }
 #endif

@@ -1,3 +1,4 @@
+activation/unpausing alone should put somebody in a list. Also, make sure the unit test iterates over the list, not the component fray.
 fix broken list unit test
 figure out why z-height unit test is making one of the nodes <next=0, prev=0> while the other(s) seem healthy.
 add post pause and unpause generics

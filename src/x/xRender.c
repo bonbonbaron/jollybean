@@ -253,12 +253,10 @@ void xRenderProcessMessage(System *sP, Message *msgP) {
       assert( *e1CompP->zHeightP == *e2CompP->zHeightP );
       // Move the component with the higher bottom-Y coordinate to the front of its list.
       if ( ( e1CompP->dstRectP->y + e1CompP->dstRectP->h ) < ( e2CompP->dstRectP->y + e2CompP->dstRectP->h ) ) {
-        printf("putting %d before %d\n", msgP->attn, msgP->arg);
         listRemove( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr );
         listInsertBefore( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr, &e2CompP->hdr );
       }
       else {
-        printf("putting %d before %d\n", msgP->arg, msgP->attn);
         listRemove( &xP->layerListA[ *e1CompP->zHeightP ], &e2CompP->hdr );
         listInsertBefore( &xP->layerListA[ *e1CompP->zHeightP ], &e2CompP->hdr, &e1CompP->hdr );
       }
