@@ -212,6 +212,12 @@ TEST_F_SETUP(Tau) {
   memRst( TEMPORARY );
 }
 
+static void sanityCheck( Tau* tau ) {
+  forEachEntity_( tau->nEntities ) {
+    printf("entity %d: %d <--+--> %d\n", entity, ((XRenderComp*)tau->sP->cF)[entity].hdr.prev, ((XRenderComp*)tau->sP->cF)[entity].hdr.next);
+  }
+}
+
 TEST_F_TEARDOWN(Tau) {
   for (int i = 0; i < tau->nEntities; ++i ) {
     imgA[i]->state = 0;
@@ -277,10 +283,14 @@ TEST_F(Tau, moveDownWhileMultipleAreActivated) {
   xActivateComponentByEntity( tau->sP, Entity1_Red_Guy );
   xActivateComponentByEntity( tau->sP, Entity2_Tan_Circle );
   xActivateComponentByEntity( tau->sP, Entity3_Brown_Rect );
+  sanityCheck( tau );
   moveEntity( tau, Entity2_Tan_Circle, 0, 25 );
-  SDL_Delay(500);
+  sanityCheck( tau );
+  SDL_Delay(1000);
+  printf("WE'RE STARTING THE MOVE NOW\n");
   for (int i = 0; i < N_FRAMES; ++i) {
     moveEntity( tau, Entity1_Red_Guy, 0, 1 );
+    sanityCheck( tau );
     SDL_Delay(100);
     runAndCheckZOrder( tau );
   }

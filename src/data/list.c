@@ -36,11 +36,11 @@ void listInsertBefore( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* ne
   Key newIdx = listGetNodeIdx( listP, newNodeP );
   // If new node is already the one before current, avoid making it point at itself.
   if ( newIdx != nextNodeP->prev) {
+    ListNodeHeader* nodePreviouslyBeforeIt = arrayGetVoidElemPtr( listP->array, nextNodeP->prev );
     Key oldIdx = listGetNodeIdx( listP, nextNodeP );
     newNodeP->prev = nextNodeP->prev;
     newNodeP->next = oldIdx;
     nextNodeP->prev = newIdx;
-    ListNodeHeader* nodePreviouslyBeforeIt = arrayGetVoidElemPtr( listP->array, nextNodeP->prev );
     nodePreviouslyBeforeIt->next = newIdx;
     // TODO bug: previous's next is not the newNodeP yet.
     if ( listP->head == oldIdx ) {
@@ -54,14 +54,12 @@ void listInsertAfter( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* pre
   Key newIdx = listGetNodeIdx( listP, newNodeP );
   // If new node is already the one after current, avoid making it point at itself.
   if ( newIdx != prevNodeP->next) {
+    ListNodeHeader* nodePreviouslyAfterIt = arrayGetVoidElemPtr( listP->array, prevNodeP->next );
     Key oldIdx = listGetNodeIdx( listP, prevNodeP );
     newNodeP->next = prevNodeP->next;
     newNodeP->prev = oldIdx;
     prevNodeP->next = newIdx;
-    if ( prevNodeP->next != newIdx ) {
-      ListNodeHeader* nodePreviouslyAfterIt = arrayGetVoidElemPtr( listP->array, prevNodeP->next );
-      nodePreviouslyAfterIt->prev = newIdx;
-    }
+    nodePreviouslyAfterIt->prev = newIdx;
     if ( listP->tail == oldIdx ) {
       listP->tail = newIdx;
     }
