@@ -164,8 +164,7 @@ SKIP_FIRST_COMPARISON_INCREMENT2:
             if ( _collided( cP->dstRectP, cNextP->dstRectP ) ) {
               // If they're colliding, then current rectangle needs to be higher up than the next, which will be drawn over it.
               REQUIRE_LE( cP->dstRectP->y + cP->dstRectP->h, cNextP->dstRectP->y + cNextP->dstRectP->h );
-              SDL_Delay(500);
-              exit(0);
+              // exit(0);
             }
             // else, if not collided, then z-height ordering doesn't matter WITHIN THIS LAYER
           }
