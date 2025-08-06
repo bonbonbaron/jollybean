@@ -10,6 +10,16 @@ static Entity Entity1_Red_Guy = 1;
 static Entity Entity2_Tan_Circle = 2;
 static Entity Entity3_Brown_Rect = 3;
 
+static char* redName = "red";
+static char* tanCircleName = "tan circle";
+static char* brownRectName = "brown rect";
+
+char** nameA[] = {
+  &redName,
+  &tanCircleName,
+  &brownRectName
+};
+
 Image* imgA[] = {
   &redImg,   // Entity1_Red_Guy
   &blehImg,  // Entity2_Tan_Circle
@@ -50,21 +60,23 @@ static void checkForCollisions( Tau* tau ) {
     List* listP = &xP->layerListA[ i ];
     if ( listP->head != UNSET_ ) {
       XRenderComp* cP = &cF[ listP->head ];
-      XRenderComp* cEndP = &cF[ listP->tail ];
-      goto SKIP_FIRST_LISTHDR_INCREMENT;
+      goto SKIP_FIRST_LISTHDR_INCREMENT1;
       // render each component on the current layer
-      for ( ; cP != cEndP ; ) {
+      while ( cP->hdr.next != UNSET_ ) {
         cP = &cF[ cP->hdr.next ];  // Putting incrementer here so it happens after the for-loop check, not before.
-SKIP_FIRST_LISTHDR_INCREMENT:
-        if ( cP != cEndP ) {
+SKIP_FIRST_LISTHDR_INCREMENT1:
+        if ( cP->hdr.next != UNSET_ ) {
           XRenderComp* cNextP = &cF[ cP->hdr.next ];
-          goto SKIP_FIRST_COMPARISON_INCREMENT;
-          while ( cNextP != cEndP ) {
+          goto SKIP_FIRST_COMPARISON_INCREMENT1;
+          while ( cNextP->hdr.next != UNSET_ ) {
             cNextP = &cF[ cNextP->hdr.next ];  // Putting incrementer here so it happens after the for-loop check, not before.
-SKIP_FIRST_COMPARISON_INCREMENT:
+SKIP_FIRST_COMPARISON_INCREMENT1:
             if ( _collided( cP->dstRectP, cNextP->dstRectP ) ) {
               Entity e1 = xGetEntityByVoidComponentPtr( sP, cP );
               Entity e2 = xGetEntityByVoidComponentPtr( sP, cNextP );
+#ifndef NDEBUG
+              printf("found a collision between %d (%s) and %d (%s)\n", e1, *nameA[e1 - 1], e2, *nameA[e2 - 1]);
+#endif
               mailboxWrite( tau->xP->system.mailboxF, RENDER, e1, MSG_SOFT_COLLISION_DETECTED, e2, NULL );
             }
           }
@@ -106,9 +118,30 @@ static void elevateAndSend( Tau* tau, Entity entity, S32 deltaZ ) {
   sendElevationMsg( tau, entity, deltaZ );
 }
 
+#ifndef NDEBUG
+static void sanityCheck( Tau* tau ) {
+  forEachEntity_( tau->nEntities ) {
+    XRenderComp * cP = (XRenderComp*) xGetCompPByEntity( tau->sP, entity );
+    // Since we only have 3 elements, assuming list works right, let's just print out the list as-is.
+    if ( cP->hdr.prev != UNSET_ && cP->hdr.next != UNSET_ ) {
+      printf("%d <-- %d --> %d\n", cP->hdr.prev, cP - (XRenderComp*) tau->sP->cF, cP->hdr.next );
+    }
+  }
+}
+#endif
+
 static void runAndCheckZOrder( Tau* tau ) {
   checkForCollisions( tau );
+  printf("running...\n");
+#ifndef NDEBUG
+  printf("before run:\n");
+  sanityCheck( tau );
+#endif
   xRun(&tau->xP->system);  
+#ifndef NDEBUG
+  printf("after run:\n");
+  sanityCheck( tau );
+#endif
   System *sP = &tau->xP->system;
   XRender* xP = tau->xP;
   XRenderComp* cF = xP->system.cF;
@@ -117,20 +150,22 @@ static void runAndCheckZOrder( Tau* tau ) {
     List* listP = &xP->layerListA[ i ];
     if ( listP->head != UNSET_ ) {
       XRenderComp* cP = &cF[ listP->head ];
-      XRenderComp* cEndP = &cF[ listP->tail ];
-      goto SKIP_FIRST_LISTHDR_INCREMENT;
+      goto SKIP_FIRST_LISTHDR_INCREMENT2;
       // render each component on the current layer
-      while ( cP != cEndP ) {
+      while ( cP->hdr.next != UNSET_ ) {
         cP = &cF[ cP->hdr.next ];  // Putting incrementer here so it happens after the for-loop check, not before.
-SKIP_FIRST_LISTHDR_INCREMENT:
-        if ( cP != cEndP ) {
+SKIP_FIRST_LISTHDR_INCREMENT2:
+        if ( cP->hdr.next != UNSET_ ) {
           XRenderComp* cNextP = &cF[ cP->hdr.next ];
-          goto SKIP_FIRST_COMPARISON_INCREMENT;
-          while ( cNextP != cEndP ) {
-SKIP_FIRST_COMPARISON_INCREMENT:
+          goto SKIP_FIRST_COMPARISON_INCREMENT2;
+          while ( cNextP->hdr.next != UNSET_ ) {
             cNextP = &cF[ cNextP->hdr.next ];  // Putting incrementer here so it happens after the for-loop check, not before.
+SKIP_FIRST_COMPARISON_INCREMENT2:
             if ( _collided( cP->dstRectP, cNextP->dstRectP ) ) {
+              // If they're colliding, then current rectangle needs to be higher up than the next, which will be drawn over it.
               REQUIRE_LE( cP->dstRectP->y + cP->dstRectP->h, cNextP->dstRectP->y + cNextP->dstRectP->h );
+              SDL_Delay(500);
+              exit(0);
             }
             // else, if not collided, then z-height ordering doesn't matter WITHIN THIS LAYER
           }
@@ -212,12 +247,6 @@ TEST_F_SETUP(Tau) {
   memRst( TEMPORARY );
 }
 
-static void sanityCheck( Tau* tau ) {
-  forEachEntity_( tau->nEntities ) {
-    printf("entity %d: %d <--+--> %d\n", entity, ((XRenderComp*)tau->sP->cF)[entity].hdr.prev, ((XRenderComp*)tau->sP->cF)[entity].hdr.next);
-  }
-}
-
 TEST_F_TEARDOWN(Tau) {
   for (int i = 0; i < tau->nEntities; ++i ) {
     imgA[i]->state = 0;
@@ -283,15 +312,10 @@ TEST_F(Tau, moveDownWhileMultipleAreActivated) {
   xActivateComponentByEntity( tau->sP, Entity1_Red_Guy );
   xActivateComponentByEntity( tau->sP, Entity2_Tan_Circle );
   xActivateComponentByEntity( tau->sP, Entity3_Brown_Rect );
-  sanityCheck( tau );
   moveEntity( tau, Entity2_Tan_Circle, 0, 25 );
-  sanityCheck( tau );
-  SDL_Delay(1000);
-  printf("WE'RE STARTING THE MOVE NOW\n");
   for (int i = 0; i < N_FRAMES; ++i) {
     moveEntity( tau, Entity1_Red_Guy, 0, 1 );
-    sanityCheck( tau );
-    SDL_Delay(100);
+    SDL_Delay(50);
     runAndCheckZOrder( tau );
   }
 }

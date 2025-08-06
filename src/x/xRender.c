@@ -254,10 +254,12 @@ void xRenderProcessMessage(System *sP, Message *msgP) {
       // Move the component with the higher bottom-Y coordinate to the front of its list.
       listRemove( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr );
       if ( ( e1CompP->dstRectP->y + e1CompP->dstRectP->h ) < ( e2CompP->dstRectP->y + e2CompP->dstRectP->h ) ) {
+        printf("putting %d before %d\n", msgP->attn, msgP->arg);
         listInsertBefore( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr, &e2CompP->hdr );
       }
       else {
-        listInsertAfter(  &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr, &e2CompP->hdr );
+        printf("putting %d before %d\n", msgP->arg, msgP->attn);
+        listInsertBefore( &xP->layerListA[ *e1CompP->zHeightP ], &e2CompP->hdr, &e1CompP->hdr );
       }
       break;
     case MSG_MOVE_UP_A_LAYER:  // move to a specific layer
@@ -540,6 +542,7 @@ XPostprocessCompsDef_(Render) {
     cP->zHeightP    = mapGet( xP->zHeightMP, *entityP );
     assert( cP->zHeightP );
     assert( *cP->zHeightP < N_LAYERS_SUPPORTED );
+    listNodeIni( &cP->hdr );
     listAppend( &xP->layerListA[ *cP->zHeightP ], &cP->hdr );
   }
 }

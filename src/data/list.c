@@ -14,14 +14,19 @@ void listIni( List* listP, void* array ) {
   listP->array = array;
 }
 
+void listNodeIni( ListNodeHeader* nodeP ) {
+  assert( nodeP );
+  nodeP->next = nodeP->prev = UNSET_;
+}
+
 // NOTE: This assumes the address of the header is the same as the address of the array element.
 void listRemove( List* listP, ListNodeHeader* nodeP ) {
   U32 nodeIdx = listGetNodeIdx( listP, nodeP );
   if ( listP->head == nodeIdx ) {
-    listP->head = UNSET_;
+    listP->head = nodeP->next;
   }
   if ( listP->tail == nodeIdx ) {
-    listP->tail = UNSET_;
+    listP->tail = nodeP->prev;
   }
   // If the removed node has a previous node, then set the previous's next to the current's next.
   if ( nodeP->prev != UNSET_ ) {
