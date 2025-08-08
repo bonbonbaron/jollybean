@@ -29,6 +29,8 @@ TAU_MAIN()
     listIni( &tau->list2, tau->P );
     CHECK_EQ( tau->list1.head, UNSET_ );
     CHECK_EQ( tau->list1.tail, UNSET_ );
+    CHECK_EQ( tau->list2.head, UNSET_ );
+    CHECK_EQ( tau->list2.tail, UNSET_ );
   }
 
 TEST_F_TEARDOWN(Array) {
@@ -243,5 +245,29 @@ start1:
     elemP = &tau->P[ elemP->hdr.next ];
 start2:
     CHECK_EQ( elemP->i, correctVal );
+  }
+}
+
+TEST_F( Array, listMerge ) {
+  for (size_t i = 0; i < 20; ++i ) {
+    if ( i < 10 ) {
+      listAppend( &tau->list1, &tau->P[i].hdr );
+    }
+    else {
+      listAppend( &tau->list2, &tau->P[i].hdr );
+    }
+  }
+  listMerge( &tau->list2, &tau->list1 );
+
+  // Now let's check it.
+  Elem* elemP = &tau->P[ tau->list1.head ];
+  Elem* lastElemP = &tau->P[ tau->list1.tail ];
+  size_t i = 0;
+  goto start3;
+  for ( ; i < 20; ++i ) {
+    // Hack for letting it get all the way to the last element before quitting.
+    elemP = &tau->P[ elemP->hdr.next ];
+start3:
+    CHECK_EQ( elemP->i, i );
   }
 }

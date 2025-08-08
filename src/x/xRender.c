@@ -240,6 +240,13 @@ void xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void 
 }
 
 void xRenderProcessMessage(System *sP, Message *msgP) {
+  static const char* names[4] = {
+    "UNUSED",  // because entities are 1-based
+    "red",
+    "tan",
+    "rct"
+  };
+
   XRender* xP = (XRender*) sP;
   XRenderComp* e1CompP = xGetCompPByEntity( sP, msgP->attn );
   // Entity 1 is the entity that is being acted on.
@@ -255,22 +262,27 @@ void xRenderProcessMessage(System *sP, Message *msgP) {
       if ( ( e1CompP->dstRectP->y + e1CompP->dstRectP->h ) < ( e2CompP->dstRectP->y + e2CompP->dstRectP->h ) ) {
         listRemove( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr );
         listInsertBefore( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr, &e2CompP->hdr );
+        printf("[xRender] putting %s before %s\n", names[ msgP->attn ], names[ msgP->arg ] );
       }
       else {
         listRemove( &xP->layerListA[ *e1CompP->zHeightP ], &e2CompP->hdr );
         listInsertBefore( &xP->layerListA[ *e1CompP->zHeightP ], &e2CompP->hdr, &e1CompP->hdr );
+        printf("[xRender] putting %s before %s\n", names[ msgP->arg ], names[ msgP->attn ] );
       }
       break;
     case MSG_MOVE_UP_A_LAYER:  // move to a specific layer
+      assert( *e1CompP->zHeightP + 1 < N_LAYERS_SUPPORTED );
       listRemove( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr );
       listAppend( &xP->layerListA[ ++(*e1CompP->zHeightP) ], &e1CompP->hdr );
       break;
     case MSG_MOVE_DOWN_A_LAYER:  // move to a specific layer
+      assert( *e1CompP->zHeightP - 1 >= 0 );
       listRemove( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr );
       listAppend( &xP->layerListA[ --(*e1CompP->zHeightP) ], &e1CompP->hdr );
       break;
     case MSG_MOVE_TO_LAYER:  // move to a specific layer
       listRemove( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr );
+      assert( msgP->arg >= 0 && msgP->arg < N_LAYERS_SUPPORTED );
       *e1CompP->zHeightP = msgP->arg;
       listAppend( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr );
       break;
@@ -542,24 +554,31 @@ XPostprocessCompsDef_(Render) {
     assert( cP->zHeightP );
     assert( *cP->zHeightP < N_LAYERS_SUPPORTED );
     listNodeIni( &cP->hdr );
-    listAppend( &xP->layerListA[ *cP->zHeightP ], &cP->hdr );
+    // listAppend( &xP->layerListA[ *cP->zHeightP ], &cP->hdr );
   }
 }
 
+// #define XPostActivateFuncDef_(name_) void x##name_##PostActivate(System *sP, FrayChanges* changesP)
 XPostActivateFuncDef_(Render) {
-  // XRender* xP = (XRender*) sP;
-  /* The problem with this algo is that everybody between the newcomer and its destination 
-   * has to shuffle with it, along with their metadata. That's gonna be a problem with 
-   * bigger games. */
-  // TODO re-sort the z-height fray here
-  // First, get the Z-height of the newly activated component.
-  // XRenderComp* newlyActivatedCompP = &( (XRenderComp*) sP->cF )[ changesP->newIdx ];
-  
+  assert( sP );
+  assert( sP->cF );
+  assert( changesP );
+  XRender* xP = (XRender*) sP;
+  assert( xP->layerListA );
+  XRenderComp* cP = &((XRenderComp*) sP->cF)[ changesP->newIdx ];
+  assert( *cP->zHeightP < N_LAYERS_SUPPORTED );
+  listAppend( &xP->layerListA[ *cP->zHeightP ], &cP->hdr );
 }
 
 XPostDeactivateFuncDef_(Render) {
-  // XRender* xP = (XRender*) sP;
-  // TODO re-sort the z-height fray here
+  assert( sP );
+  assert( sP->cF );
+  assert( changesP );
+  XRender* xP = (XRender*) sP;
+  assert( xP->layerListA );
+  XRenderComp* cP = &((XRenderComp*) sP->cF)[ changesP->newIdx ];
+  assert( *cP->zHeightP < N_LAYERS_SUPPORTED );
+  listRemove( &xP->layerListA[ *cP->zHeightP ], &cP->hdr );
 }
 
 // Only get the render and window. Components' src & dst rects come from SCENE_START stimulus to XAction.

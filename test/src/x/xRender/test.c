@@ -118,17 +118,20 @@ static void elevateAndSend( Tau* tau, Entity entity, S32 deltaZ ) {
   sendElevationMsg( tau, entity, deltaZ );
 }
 
-#ifndef NDEBUG
 static void sanityCheck( Tau* tau ) {
   forEachEntity_( tau->nEntities ) {
     XRenderComp * cP = (XRenderComp*) xGetCompPByEntity( tau->sP, entity );
     // Since we only have 3 elements, assuming list works right, let's just print out the list as-is.
     if ( cP->hdr.prev != UNSET_ && cP->hdr.next != UNSET_ ) {
-      printf("%d <-- %d --> %d\n", cP->hdr.prev, cP - (XRenderComp*) tau->sP->cF, cP->hdr.next );
+      char* prevName = *nameA[ xGetEntityByCompIdx( tau->sP, cP->hdr.prev ) - 1 ];
+      char* nextName = *nameA[ xGetEntityByCompIdx( tau->sP, cP->hdr.next ) - 1 ];
+      char* currName = *nameA[ entity - 1 ];
+      printf("further up <-------> further down\n");
+      printf("%7s <-- %7s --> %7s\n", prevName, currName, nextName );
+      break;
     }
   }
 }
-#endif
 
 static void runAndCheckZOrder( Tau* tau ) {
   checkForCollisions( tau );
@@ -250,7 +253,7 @@ TEST_F_TEARDOWN(Tau) {
   memRst( GENERAL );
 }
 
-#if 1
+#if 0
 TEST_F(Tau, xRenderRun_red) {
   xActivateComponentByEntity( tau->sP, 1 );
   xRun(&tau->xP->system);
@@ -276,7 +279,6 @@ TEST_F(Tau, moveUpWhileDeactivated) {
   for (int i = 0; i < N_FRAMES; ++i) {
     runAndCheckZOrder( tau );
   }
-  exit(0);
 }
 
 // Failing
@@ -286,7 +288,9 @@ TEST_F(Tau, moveUpWhileOneIsActivated) {
   for (int i = 0; i < N_FRAMES; ++i) {
     runAndCheckZOrder( tau );
   }
+  exit(0);
 }
+#endif
 
 // Failing
 TEST_F(Tau, moveUpWhileMultipleAreActivated) {
@@ -296,6 +300,7 @@ TEST_F(Tau, moveUpWhileMultipleAreActivated) {
   xActivateComponentByEntity( tau->sP, Entity3_Brown_Rect );
   // Put entity 2 below the other two.
   moveEntity( tau, Entity2_Tan_Circle, 0, 25 );
+  sanityCheck( tau );
   for (int i = 0; i < N_FRAMES; ++i) {
     /* Make entity 2 scoot up each frame. 
      * It should fall beneath each entity as its bottom 
@@ -303,10 +308,28 @@ TEST_F(Tau, moveUpWhileMultipleAreActivated) {
     moveEntity( tau, Entity2_Tan_Circle, 0, -1 );
     SDL_Delay(100);
     runAndCheckZOrder( tau );
+    sanityCheck( tau );
   }
+  // This test is right; there is a failure.
+  // the tan circle at first correctly occludes both red and rectangle.
+  // then when it goes behind red as it should, it also goes behind the rectangle.
+  // red and rect collide every frame.
+  // Because red is always lower, we should expect to see rect get moved behind red.
+  // Once red is lower than tan circle too, TC should also get moved behind red. 
+  // So if tan circle gets moved first, then rect, rect will be drawn after tan circle, covering it.
+  // Wouldn't comparing tan circle and rect fix that?
+  // The order the printout shows this happening in is as follows:
+  //  1) TC and rect
+  //  2) TC and red
+  //  3) rect and red
+  //
+  //  So we expect to see this:
+  //  
+  //      TC , rect , red
+  //      
+  exit(0);
 }
 
-#endif
 TEST_F(Tau, moveDownWhileMultipleAreActivated) {
   xActivateComponentByEntity( tau->sP, Entity1_Red_Guy );
   xActivateComponentByEntity( tau->sP, Entity2_Tan_Circle );

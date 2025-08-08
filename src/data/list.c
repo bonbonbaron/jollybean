@@ -117,3 +117,21 @@ void listAppend( List* listP, ListNodeHeader* newNodeP ) {
   }
 }
 
+// NOTE: This assumes the lists you're merging use the same array. That means there can be no identical node indices.
+// listMerge() appends srcList to dstList.
+void listMerge( List* srcListP, List* dstListP ) {
+  assert ( srcListP && srcListP->head != UNSET_ && srcListP->tail != UNSET_ && dstListP && dstListP->head != UNSET_ && dstListP->tail != UNSET_ );
+  assert ( srcListP->array == dstListP->array );
+
+  ListNodeHeader* srcHeadP = (ListNodeHeader*) arrayGetVoidElemPtr( srcListP->array, srcListP->head );
+  ListNodeHeader* dstOriginalTailP = (ListNodeHeader*) arrayGetVoidElemPtr( dstListP->array, dstListP->tail );
+
+  // dest list's *new* tail
+  srcHeadP->prev = dstListP->tail;
+  dstOriginalTailP->next = srcListP->head;
+  dstListP->tail = srcListP->tail;
+
+  srcListP->head = srcListP->tail = UNSET_;
+  srcListP->array = NULL;
+}
+
