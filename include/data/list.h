@@ -37,3 +37,9 @@ void listPrepend( List* listP, ListNodeHeader* newNodeP );
 void listAppend( List* listP, ListNodeHeader* newNode );
 
 void listMerge( List* srcListP, List* dstListP );
+
+void* listGetHead( List* listP );
+
+void* listGetTail( List* listP );
+
+void* listNodeGetNext( List* listP, ListNodeHeader* nodeP );

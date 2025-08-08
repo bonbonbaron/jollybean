@@ -71,6 +71,13 @@ typedef struct {} XRenderMutation;
 // Feel free to increment as needed. There's nothing *holy* about this number.
 #define N_LAYERS_SUPPORTED (16)  
 
+typedef struct Collision {
+  ListNodeHeader hdr;
+  Entity entity;
+  Key blobIdIdx;
+  S16 bottomYCoord;
+} Collision;
+
 typedef struct {
   System         system;
   U8             atlasPaletteOffset;
@@ -83,7 +90,7 @@ typedef struct {
   Map           *srcRectMP;    // shortcut-pointer to shared array of source rectangles
   Map           *dstRectMP;    // shortcut-pointer to shared array of destination rectangles
   Map           *zHeightMP;    // shortcut-pointer to shared array of Z-heights
-  // Map           *xRenderCompSourceMP;  // TODO uhhh what was this?
+  List          *blobLF;    // list of blobs of overlaps (so we only sort within each blob)
 } XRender;
 
 // Images

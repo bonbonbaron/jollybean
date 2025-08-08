@@ -42,13 +42,6 @@ Image* imgA[] = {
 
 TAU_MAIN();
 
-typedef struct Collision {
-  ListNodeHeader hdr;
-  Entity entity;
-  Key blobIdIdx;
-  S32 bottomYCoord;
-} Collision;
-
 typedef struct Tau {
   XRender *xP;
   U32 nEntities;
@@ -123,8 +116,6 @@ SKIP_FIRST_COMPARISON_INCREMENT1:
               if ( blobIdIdxOf_( e1 ) != UNSET_ ) {
                 if ( blobIdIdxOf_( e2 ) == UNSET_ ) {
                   blobIdIdxOf_( e2 ) = blobIdIdxOf_( e1 );
-                  // TODO make a "construct in-place" feature for frays to avoid unnecessary copying,
-                  //      then use that feature in both mail and here
                   Collision* c2P = &tau->collisionA[ e2 ];
                   c2P->hdr = UNSET_HEADER;
                   c2P->entity = e2;
@@ -232,7 +223,7 @@ static void runAndCheckZOrder( Tau* tau ) {
 #ifndef NDEBUG
   sanityCheck( tau );
 #endif
-  // xRun(&tau->xP->system);  
+  xRun(&tau->xP->system);  
 #ifndef NDEBUG
   sanityCheck( tau );
 #endif

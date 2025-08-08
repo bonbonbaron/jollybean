@@ -19,6 +19,18 @@ Entity xGetEntityByCompIdx(System *sP, Key compIdx) {
   return _getEntityByCompIdx(sP, compIdx);
 }
 
+Key xGetCompIdxByEntity( System *sP, Entity entity ) {
+  assert( sP && entity );
+#ifndef NDEBUG
+  return *( _getCompIdxPByEntity( sP, entity ) );
+#else
+  Key* idxP = _getCompIdxPByEntity( sP, entity );
+  assert( idxP );
+  return *idxP;
+#endif
+}
+
+
 void __xSwap(System *sP, S32 origIdx, S32 newIdx) {
   assert (sP && newIdx >= 0 && origIdx >= 0);
   if (origIdx != newIdx) {

@@ -30,6 +30,7 @@ U32 arrayGetElemSz(const void *arryP) {
 
 /* Also provide an external copy of above function. */
 void* arrayGetVoidElemPtr(const void *arryP, S32 idx) {
+  assert( arryP );
   assert( idx < arrayGetNElems(arryP) );
   return (void*) ((U8*) arryP + (idx * arrayGetElemSz(arryP)));
 }

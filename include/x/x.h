@@ -233,4 +233,5 @@ inline  Key* _getCompIdxPByEntity(System *sP, Entity entity) {
   return (Key*) mapGet(sP->e2cIdxMP, entity);
 }
 
+Key xGetCompIdxByEntity( System *sP, Entity entity );
 #endif

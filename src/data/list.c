@@ -135,3 +135,21 @@ void listMerge( List* srcListP, List* dstListP ) {
   srcListP->array = NULL;
 }
 
+void* listGetHead( List* listP ) {
+  assert( listP );
+  assert( listP->head != UNSET_ );
+  return arrayGetVoidElemPtr( listP->array, listP->head );
+}
+
+void* listGetTail( List* listP ) {
+  assert( listP );
+  assert( listP->tail != UNSET_ );
+  return arrayGetVoidElemPtr( listP->array, listP->tail );
+}
+
+void* listNodeGetNext( List* listP, ListNodeHeader* nodeP ) {
+  assert( listP );
+  assert( nodeP );
+  assert( nodeP->next != UNSET_ );
+  return arrayGetVoidElemPtr( listP->array, nodeP->next );
+}

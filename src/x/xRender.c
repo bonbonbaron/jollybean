@@ -240,13 +240,17 @@ void xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void 
 }
 
 void xRenderProcessMessage(System *sP, Message *msgP) {
-  static const char* names[4] = {
+  static const char* names[] = {
     "UNUSED",  // because entities are 1-based
     "red",
     "tan",
-    "rct"
+    "rct",
+    "rctcp1",
+    "rctcp2",
+    "rctcp3"
   };
 
+  return;
   XRender* xP = (XRender*) sP;
   XRenderComp* e1CompP = xGetCompPByEntity( sP, msgP->attn );
   // Entity 1 is the entity that is being acted on.
@@ -599,6 +603,72 @@ XPostMutateFuncDef_(Render) {
   unused_(sP);
   unused_(cP);
 }
+
+typedef struct YIdxPair {
+  Key   frayIdx;
+  short bottomYCoord;
+} YIdxPair;
+
+static void zOrder( XRender* xP ) {
+  YIdxPair yip = {0};
+
+  YIdxPair sortedBlobMembers[255] = {0};
+  Key nBlobMembersSorted;
+
+  List *blobLP = xP->blobLF; 
+  List *blobEndLP = blobLP + frayGetNElems_( xP->blobLF );
+  Key i;
+  List *zLayerLP;
+  Collision *collP, *cEndP;
+  XRenderComp *cP, *anchorP, *pivotP;
+  ListNodeHeader* anchorHdrP;
+  ListNodeHeader* pivotHdrP;
+  XRenderComp* cF = xP->system.cF;
+
+  // For each blob
+  for ( ; blobLP < blobEndLP; ++blobLP ) {
+    collP = (Collision*) listGetHead( blobLP );
+    cEndP = (Collision*) listGetTail( blobLP );
+    nBlobMembersSorted = 0;
+    goto SKIP_FIRST_COLL_INCR;
+    // For each entity in current blob
+    for ( ; collP != cEndP; ++nBlobMembersSorted ) {
+      collP = (Collision*) listNodeGetNext( blobLP, &collP->hdr );
+SKIP_FIRST_COLL_INCR:
+      yip.bottomYCoord = collP->bottomYCoord;  // for sorting purposes
+      cP = (XRenderComp*) xGetCompPByEntity( &xP->system, collP->entity );
+      assert ( cP > cF );
+      assert ( cP >= cF && cP < ( cF + arrayGetNElems( cF ) ) );
+      yip.frayIdx = cP - cF;
+
+      // Insert-sort highest to lowest Y-coordinates
+      for ( i = 0; i < nBlobMembersSorted; ++i ) {
+        if ( yip.bottomYCoord < sortedBlobMembers[i].bottomYCoord ) {
+          memmove( &sortedBlobMembers[i + 1], &sortedBlobMembers[i], sizeof( YIdxPair ) * nBlobMembersSorted );
+          break;
+        }
+      }
+      sortedBlobMembers[ i ] = yip;
+    }  // for every member of current blob
+
+    // list of all active entities on current blob's Z-layer
+    assert( nBlobMembersSorted > 0 );
+    anchorP = &cF[ sortedBlobMembers[0].frayIdx ];
+    assert( anchorP );
+    assert( anchorP->zHeightP );
+    zLayerLP = &xP->layerListA[ *anchorP->zHeightP ];
+    anchorHdrP = &anchorP->hdr;
+
+    // Apply the sorting to the z-layer's list
+    for ( i = nBlobMembersSorted - 1; i >= 0; --i ) {
+      pivotP = &cF[ sortedBlobMembers[i].frayIdx ];
+      pivotHdrP = &pivotP->hdr;
+      listRemove( zLayerLP, pivotHdrP );
+      listInsertAfter( zLayerLP, pivotHdrP, anchorHdrP );
+    }  // for each member of current blob
+  }  // for each blob
+}  // zOrder()
+
 //======================================================
 // Render activity
 //======================================================
@@ -606,7 +676,11 @@ void xRenderRun(System *sP) {
   XRender *xP = (XRender*) sP;
   XRenderComp* cF = (XRenderComp*) sP->cF;
   Renderer_ *rendererP = xP->guiP->rendererP;
-
+  
+  // Z-order only for collisions/overlaps.
+  if ( xP->blobLF[0].head != UNSET_ ) { 
+    zOrder( xP );
+  }
   clearScreen(rendererP);
   // for each layer
   for ( Key i = 0; i < N_LAYERS_SUPPORTED; ++i ) {
