@@ -10,6 +10,7 @@
 
 // TODO is both being 1 a bug, or is that the *inner* key value?
 #define GUI_KEY_ (1)
+#define BLOB_KEY_ (2)
 
 #define RIGHT_RECT (LEFT_CHILD)
 #define LOWER_RECT (RIGHT_CHILD)

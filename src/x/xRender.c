@@ -559,8 +559,8 @@ XPostprocessCompsDef_(Render) {
     assert( *cP->zHeightP < N_LAYERS_SUPPORTED );
     listNodeIni( &cP->hdr );
     // listAppend( &xP->layerListA[ *cP->zHeightP ], &cP->hdr );
-  }
-}
+  }  // for each entity in this system
+}  // XRenderPostprocessComps()
 
 // #define XPostActivateFuncDef_(name_) void x##name_##PostActivate(System *sP, FrayChanges* changesP)
 XPostActivateFuncDef_(Render) {
@@ -589,7 +589,7 @@ XPostDeactivateFuncDef_(Render) {
 XGetShareFuncDef_(Render) {
   XRender *xP = (XRender*) sP;
   // Get renderer
-  xP->guiP = (Gui*) mapGetNestedMapPElem(shareMPMP, GUI_GENE_TYPE, GUI_KEY_, NONMAP_POINTER);
+  xP->guiP      = (Gui*) mapGetNestedMapPElem(shareMPMP, GUI_GENE_TYPE, GUI_KEY_, NONMAP_POINTER);
 
   // Get source rect and rect offset maps. Give both a chance to run if we enter this block.
   xP->dstRectMP = mapGetNestedMapP(shareMPMP, DST_RECT);  
@@ -597,6 +597,8 @@ XGetShareFuncDef_(Render) {
   xP->srcRectMP = mapGetNestedMapP(shareMPMP, SRC_RECT);  
   // If there's no animation system, there won't be a source rect shared map in master.
   xP->offsetRectMP = mapGetNestedMapP(shareMPMP, RECT_OFFSET);  
+  // TODO make it so a map can just have miscellaneous pointers so we don't need a "BLOB" map with one elem, same for GUI
+  xP->blobLF    = (List*) mapGetNestedMapPElem(shareMPMP, BLOB, BLOB_KEY_, NONMAP_POINTER);
 }
 
 XPostMutateFuncDef_(Render) {

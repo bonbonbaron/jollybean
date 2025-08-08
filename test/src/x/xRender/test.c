@@ -290,10 +290,12 @@ TEST_F_SETUP(Tau) {
   Map* sharedZHeightMP = mapNew( RAW_DATA, sizeof(U8), tau->nEntities, GENERAL);
   // Map* sharedOffsetMP  = mapNew( RAW_DATA, sizeof(RectOffset), tau->nEntities, GENERAL);
   Map* sharedGuiMP     = mapNew( NONMAP_POINTER, sizeof(Gui*), 1, GENERAL);
+  Map* sharedBlobMP    = mapNew( NONMAP_POINTER, sizeof(List*), 1, GENERAL);
 
   // Set gui pointer in its map... 
   // TODO wouldn't it be nice to have SDL or whatever just be owned by the rendering system?
   mapSet(sharedGuiMP, GUI_KEY_, &tau->xP->guiP);
+  mapSet(sharedBlobMP, BLOB_KEY_, &tau->xP->blobLF);
 
   // Now populate the entities' shared rectangles.
   // You don't know what your source rect is until you mutate.
@@ -312,6 +314,7 @@ TEST_F_SETUP(Tau) {
 
   // mapSet(tau->shareMPMP, RECT_OFFSET, &sharedOffsetMP); 
   mapSet(tau->shareMPMP, GUI_KEY_, &sharedGuiMP);
+  mapSet(tau->shareMPMP, BLOB_KEY_, &sharedBlobMP);
   // Give the shared map to the system. (This particular system wants a pointer to the inner shared map.)
   tau->xP->system.getShare(&tau->xP->system, tau->shareMPMP);
 
