@@ -9,15 +9,24 @@ extern Image heckImg;
 static Entity Entity1_Red_Guy = 1;
 static Entity Entity2_Tan_Circle = 2;
 static Entity Entity3_Brown_Rect = 3;
+static Entity Entity4_Brown_Rect = 4;
+static Entity Entity5_Brown_Rect = 5;
+static Entity Entity6_Brown_Rect = 6;
 
 static char* redName = "red";
 static char* tanCircleName = "tan circle";
 static char* brownRectName = "brown rect";
+static char* brownRectName_cp1 = "brown rect - copy 1";
+static char* brownRectName_cp2 = "brown rect - copy 2";
+static char* brownRectName_cp3 = "brown rect - copy 3";
 
 char** nameA[] = {
   &redName,
   &tanCircleName,
-  &brownRectName
+  &brownRectName,
+  &brownRectName_cp1,
+  &brownRectName_cp2,
+  &brownRectName_cp3
 };
 
 Image* imgA[] = {
@@ -33,15 +42,36 @@ Image* imgA[] = {
 
 TAU_MAIN();
 
+typedef struct Collision {
+  ListNodeHeader hdr;
+  Entity entity;
+  Key blobIdIdx;
+  S32 bottomYCoord;
+} Collision;
+
 typedef struct Tau {
   XRender *xP;
   U32 nEntities;
+  U32 nImgs;
   U32 nMutationsPerEntity;
   Map *shareMPMP;
   System *sP;
   XRenderComp *renderCompF;
+  Collision *collisionA;
+  List *blobListF;
+  U32 blobIdA[256];
+  U32 nCollisionAElems;
+  Key blobId;  // local substitute for incrementer that'll be in xCollisionRun()
+  // Collision collisionA[(sizeof(Key) << 8) - 1];  // local substitute for incrementer that'll be in xCollisionRun()
 } Tau;
 
+/* we need to simulate the following:
+ *
+ *  xCollision finds collisions
+ *  xCollision writes to a shared list of blob members for each collision
+ *  xRender gets this shared list at start-time
+ *  x
+ */
 // from xCollision.c
 inline static Bln _collided(const register Rect_ *r1P, const register Rect_ *r2P) {
   return r1P->y        < r2P->y + r2P->h &&  
@@ -50,9 +80,24 @@ inline static Bln _collided(const register Rect_ *r1P, const register Rect_ *r2P
          r1P->x + r1P->w > r2P->x;        
 }
 
+#define blobIdOf_(x_) tau->blobIdA[ tau->collisionA[ x_ ].blobIdIdx ]
+#define blobIdIdxOf_(x_) tau->collisionA[ x_ ].blobIdIdx 
+#define blobListOf_(x_) tau->blobListF[ blobIdOf_( x_ ) ]
+const ListNodeHeader UNSET_HEADER = {
+  .prev = UNSET_,
+  .next = UNSET_
+};
 // Make this unit test dumb; we're not worried about performance here.
 // n^2 testing is fine.
 static void checkForCollisions( Tau* tau ) {
+  _frayClr( tau->blobListF );
+  memset( tau->collisionA, 0, sizeof( Collision ) * tau->nCollisionAElems );
+  memset( tau->blobIdA, 0, sizeof( U32 ) * 256 );
+  tau->blobId = UNSET_;  // will increment to 0 on the first blob
+  for ( int i = 0; i < arrayGetNElems( tau->collisionA ); ++i ) {
+    listNodeIni( &tau->collisionA[i].hdr );
+    tau->collisionA[i].blobIdIdx = UNSET_;
+  }
   XRender* xP = tau->xP;
   System* sP = &xP->system;
   XRenderComp* cF = xP->system.cF;
@@ -71,19 +116,70 @@ SKIP_FIRST_LISTHDR_INCREMENT1:
           while ( cNextP->hdr.next != UNSET_ ) {
             cNextP = &cF[ cNextP->hdr.next ];  // Putting incrementer here so it happens after the for-loop check, not before.
 SKIP_FIRST_COMPARISON_INCREMENT1:
+            Entity e1 = xGetEntityByVoidComponentPtr( sP, cP );
+            Entity e2 = xGetEntityByVoidComponentPtr( sP, cNextP );
             if ( _collided( cP->dstRectP, cNextP->dstRectP ) ) {
-              Entity e1 = xGetEntityByVoidComponentPtr( sP, cP );
-              Entity e2 = xGetEntityByVoidComponentPtr( sP, cNextP );
+              if ( blobIdIdxOf_( e1 ) != UNSET_ ) {
+                if ( blobIdIdxOf_( e2 ) == UNSET_ ) {
+                  blobIdIdxOf_( e2 ) = blobIdIdxOf_( e1 );
+                  // TODO make a "construct in-place" feature for frays to avoid unnecessary copying,
+                  //      then use that feature in both mail and here
+                  Collision c2 = {
+                    .hdr = UNSET_HEADER,
+                    .entity = e2,
+                    .blobIdIdx = blobIdIdxOf_( e1 ),
+                    .bottomYCoord = cNextP->dstRectP->y + cNextP->dstRectP->h
+                  };
+                }
+                else if ( blobIdOf_( e1 ) < blobIdOf_( e2 ) ) {
+                  listMerge( &blobListOf_( e2 ), &blobListOf_( e1 ) );
+                  blobIdOf_( e2 ) = blobIdOf_( e1 );
+                }
+                else if ( tau->collisionA[ e2 ].blobIdIdx > tau->collisionA[ e1 ].blobIdIdx ) {
+                }
+                // else, if they're already in the same blob, ignore (SHOULD NEVER HAPPEN)
+              }
+              else {  // if e1 is UNSET_
+                // if  both e1 and e2 are unset
+                if ( blobIdIdxOf_( e2 ) == UNSET_ ) {
+                  Collision c1 = {
+                    .hdr = UNSET_HEADER,
+                    .entity = e1,
+                    .blobIdIdx = ++tau->blobId,
+                    .bottomYCoord = cP->dstRectP->y + cP->dstRectP->h
+                  };
+                  Collision c2 = {
+                    .hdr = UNSET_HEADER,
+                    .entity = e2,
+                    .blobIdIdx = c1.blobIdIdx,
+                    .bottomYCoord = cNextP->dstRectP->y + cNextP->dstRectP->h
+                  };
+                  tau->collisionA[ e1 ] = tau->collisionA[ e1 ];
+                }
+                // if  e1's unset but e2's set
+                else {
+                  Collision c1 = {
+                    .hdr = UNSET_HEADER,
+                    .entity = e1,
+                    .blobIdIdx = blobIdIdxOf_( e2 ),
+                    .bottomYCoord = cP->dstRectP->y + cP->dstRectP->h
+                  };
+                }
+              }
+
 //#ifndef NDEBUG
               printf("found a collision between %d (%s) and %d (%s)\n", e1, *nameA[e1 - 1], e2, *nameA[e2 - 1]);
 //#endif
-              mailboxWrite( tau->xP->system.mailboxF, RENDER, e1, MSG_SOFT_COLLISION_DETECTED, e2, NULL );
             }
           }
         }
       }
     }
   }
+  if ( tau->blobId != UNSET_ ) {
+    mailboxWrite( tau->xP->system.mailboxF, RENDER, 0, MSG_SOFT_COLLISIONS_DETECTED, 0, NULL );
+  }
+
 }
 
 static void sendElevationMsg( Tau* tau, Entity entity, S32 deltaZ ) {
@@ -180,22 +276,22 @@ TEST_F_SETUP(Tau) {
   // Make a new GUI.
   tau->xP->guiP = guiNew();
 
+  tau->nCollisionAElems = 255;
+  tau->blobListF = frayNew( sizeof(List), 255, GENERAL );
+  tau->collisionA = arrayNew( sizeof(Collision), tau->nCollisionAElems, GENERAL );
+  memset( tau->collisionA, UNSET_, (sizeof(Key) << 8) - 1 );
+  tau->blobId = UNSET_;
+
   // Initialize the system basics.
-  tau->nEntities = sizeof( imgA ) / sizeof( imgA[0] );  // for lack of anything better for now
+  tau->nEntities = sizeof( nameA ) / sizeof( nameA[0] );  // for lack of anything better for now
+  tau->nImgs = sizeof( imgA ) / sizeof( imgA[0] );  // for lack of anything better for now
+  U32 nEntities;
   tau->nMutationsPerEntity = N_MUTATIONS_PER_ENTITY;
   xIniSys(tau->sP, tau->nEntities, NULL);
   tau->renderCompF = tau->sP->cF;
   REQUIRE_EQ(tau->sP->compSz, sizeof(XRenderComp));
   REQUIRE_EQ(xGetNComps(tau->sP), tau->nEntities);
 
-  // FIRST: Gather a list of requirements you need so you don't need to sit here scratching your head too much.
-  // 1) source rects
-  // 2) dest rects 
-  // 3) colormaps
-  // 4) color palettes
-  // 5) body'ing the three test images you have in Makefile 
-  // 6) Send them into the system in the setup stage
-  // 7) 
   // ************ SHARES **************
   tau->shareMPMP = mapNew( MAP_POINTER, sizeof(Map*), 5, GENERAL);
 
@@ -224,21 +320,26 @@ TEST_F_SETUP(Tau) {
   mapSet(tau->shareMPMP, SRC_RECT, &sharedSrcRectMP);
   mapSet(tau->shareMPMP, DST_RECT, &sharedDstRectMP);
   mapSet(tau->shareMPMP, Z_HEIGHT, &sharedZHeightMP);
-  //
+
   // mapSet(tau->shareMPMP, RECT_OFFSET, &sharedOffsetMP); 
   mapSet(tau->shareMPMP, GUI_KEY_, &sharedGuiMP);
   // Give the shared map to the system. (This particular system wants a pointer to the inner shared map.)
   tau->xP->system.getShare(&tau->xP->system, tau->shareMPMP);
 
   // Set the stripsets and stripmaps up since xRender relies on that already being done by xMaster.
-  for (int i = 0; i < tau->nEntities; ++i ) {
+  for (int i = 0; i < tau->nImgs; ++i ) {
     stripIni( imgA[i]->cmP->sdP, TEMPORARY );
   }
 
   // If ordering is sacred, then we need fixed functions that'll encapsulate this sacred ordering for us.
   // Now add the entity to the actual system itself.
   forEachEntity_( tau->nEntities ) {
-    xAddEntityData(&tau->xP->system, entity, RENDER | IMAGE, imgA[ entity - 1 ]);
+    if ( entity <= 3 ) {
+      xAddEntityData(&tau->xP->system, entity, RENDER | IMAGE, imgA[ entity - 1 ]);
+    }
+    else {
+      xAddEntityData(&tau->xP->system, entity, RENDER | IMAGE, imgA[ 2 ]);
+    }
   }
 
   tau->sP->postprocessComps( tau->sP );
@@ -246,7 +347,7 @@ TEST_F_SETUP(Tau) {
 }
 
 TEST_F_TEARDOWN(Tau) {
-  for (int i = 0; i < tau->nEntities; ++i ) {
+  for (int i = 0; i < tau->nImgs; ++i ) {
     imgA[i]->state = 0;
   }
   guiDel( &tau->xP->guiP );

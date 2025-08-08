@@ -1,6 +1,4 @@
-activation/unpausing alone should put somebody in a list. Also, make sure the unit test iterates over the list, not the component fray.
-fix broken list unit test
-figure out why z-height unit test is making one of the nodes <next=0, prev=0> while the other(s) seem healthy.
+Added collision fray and fray of lists of collision blob IDs to the test. Need to implement populating them in the collsion checker fuction, then make xRender use them.
 add post pause and unpause generics
 add post pause and unpause to all systems till they compile
 add post pause and unpause to xRender

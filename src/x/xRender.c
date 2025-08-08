@@ -253,7 +253,7 @@ void xRenderProcessMessage(System *sP, Message *msgP) {
   assert(e1CompP);
   assert( *e1CompP->zHeightP < N_LAYERS_SUPPORTED );
   switch( msgP->cmd ) {
-    case MSG_SOFT_COLLISION_DETECTED:
+    case MSG_SOFT_COLLISIONS_DETECTED:
       XRenderComp* e2CompP = xGetCompPByEntity( sP, msgP->arg );
       assert(e2CompP);
       // Assert these collided components are even on the same layer in the first place.

@@ -26,7 +26,6 @@ typedef struct {
   fc_.newIdx = -1;
 
 void* frayNew( U32 elemSz, U32 nElems, const PoolId poolId);
-void  frayDel(void **frayPP);
 void frayAdd(const void *frayP, void *elemP, U32 *elemNewIdxP);
 void frayAddEmpty(const void *frayP, U32 *elemNewIdxP);
 // This does NOT check active/paused/inactive boundaries, so use at your own risk.
