@@ -3,15 +3,30 @@ MVP 2D
 \x
 \motion (2d)
 \animation (2d)
-~rendering (2d) (z-heights)
-tilemap (2d)
+~rendering (2d) (z-heights) -- ALMOST DONNNNE UGH CAN'T WAIT!
 collision (2d)
+  -- First, See if avoiding pivoting off stagnant entities is practical.
+  list hdr
+  z-height
+  dst rect  <-- for image overlap
+  coll rect <-- for collision-triggered logic
+  coll type <-- for collision-triggered logic
 \action
 controller
-timer
+timer  <-- any way to make this NOT entity-based? would be ideal for animation to hand off its timing logic to this
+  think through how you'll pause timers not entity-based... you'll need a *hive* of sorts if possible
+  timers should be time remaining rather than "signal at 7:00" so that we can query the milliseconds elapsed and subtract that from all the timers
+  it'd be great if timers could start on the same cycle too
+  so we should create a way for immediate processing so we can get the timer ID immediately; that way, pausing an entity's behaviors
+    can give a way for a non-entity-based timer ID to be paused as well
 master
+animated tilemap (2d)   <-- putting this off till last for more immediate reward from the other systems
+  grid with the following:
+    timer
+    collision type
+    tile index
 sound
-
+---
 gene editor
 level pipeline
 behavior pipeline
@@ -65,31 +80,3 @@ rotating
 text
 menus
 game's (jb's) build system
-
-PROBLEMS:
-=========
-  NEWER:
-  ======
-    * the GPU doesn't appear to support colormap-based rendering, so you may need to render the colors directly to the texture atlas yourself (if you haven't already).
-      you need to change all possible error checks to asserts. That way you can turn them off by defining NDEBUG before including assert.h in your baseline header file. 
-
-    * figure out why you're using stripmap elements to put together texture atlas. Shouldn't it be sd.assembledDataA?
-
-    * figure out how you're going to use sdP->assembledDataA in all decompression cases for xRender.
-
-    * Replace errors with assertions. Have a sleek engine with zero impurities.
-
-  DONE
-  ====
-    * Fix compiler warnings about unseen infUtil functions
-
-  OLDER:
-  ======
-  See if making animation a composite gene is what's causing master not to populate shared map of source rectangles.
-
-  Partial answer: Turns out anim strips are incrementing the src rect count to 6 instead of 2 (we want 2 for 2 entities). We need to let composite genes increment this count as well, which has to do with 
-                geneHistoP->histoXElemA[i].count);
-
-  Figure out how to make a composite gene, now called "Animation", contribute to the number of source rectangles and components in the Animation system. Then figure out how to make the shared gene called "Animation Strip" contribute to the number of mutations. Figure out how to generalize this.
-
-

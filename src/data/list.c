@@ -8,19 +8,32 @@ static U32 listGetNodeIdx( List* listP, ListNodeHeader* nodeP ) {
   return ( (size_t) nodeP - (size_t) listP->array ) / elSz;
 }
 
-void listIni( List* listP, void* array ) {
-  assert( listP && array );
-  listP->head = listP->tail = UNSET_;
-  listP->array = array;
+static void _listNodeIni( ListNodeHeader* nodeP) {
+  assert( nodeP );
+  nodeP->listId = UNSET_;
+  nodeP->next = nodeP->prev = UNSET_;
 }
 
-void listNodeIni( ListNodeHeader* nodeP ) {
-  assert( nodeP );
-  nodeP->next = nodeP->prev = UNSET_;
+// Make lists easier to use by initializing all the nodes for the user.
+void listIni( List* listP, const Key listId, void* array, Bln iniNodes ) {
+  assert( listP && array );
+  listP->id = listId;
+  listP->head = listP->tail = UNSET_;
+  listP->array = array;
+  if ( iniNodes ) {
+    const U32 ELEM_SZ = arrayGetElemSz( listP->array );
+    const U8* elemEndP = (U8*) listP->array + ( arrayGetNElems( listP->array ) * arrayGetElemSz( listP->array ) );
+    for ( U8* elemP = (U8*) listP->array; elemP < elemEndP; elemP += ELEM_SZ ) {
+      _listNodeIni ( (ListNodeHeader*) elemP );
+    }
+  }
 }
 
 // NOTE: This assumes the address of the header is the same as the address of the array element.
 void listRemove( List* listP, ListNodeHeader* nodeP ) {
+  if (nodeP->listId != listP->id) {
+    return;
+  }
   U32 nodeIdx = listGetNodeIdx( listP, nodeP );
   if ( listP->head == nodeIdx ) {
     listP->head = nodeP->next;
@@ -39,11 +52,15 @@ void listRemove( List* listP, ListNodeHeader* nodeP ) {
     nextP->prev = nodeP->prev;  // valid even if prev is UNSET_
   }
   // Make it clear to the user this node is OUTSIDE the list now.
-  nodeP->next = nodeP->prev = UNSET_;  
+  nodeP->next = nodeP->prev = nodeP->listId = UNSET_;  
 }
 
 void listInsertBefore( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* tgtNodeP ) {
   assert ( listP && listP->array && newNodeP );
+  if (newNodeP->listId != UNSET_ ) {
+    return;
+  }
+  newNodeP->listId = listP->id;
   Key newIdx = listGetNodeIdx( listP, newNodeP );
   Key tgtIdx = listGetNodeIdx( listP, tgtNodeP );
   if ( tgtNodeP->prev != UNSET_ ) {
@@ -68,6 +85,10 @@ void listInsertBefore( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* tg
 
 void listInsertAfter( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* tgtNodeP ) {
   assert ( listP && listP->array && newNodeP && tgtNodeP );
+  if (newNodeP->listId != UNSET_ ) {
+    return;
+  }
+  newNodeP->listId = listP->id;
   Key newIdx = listGetNodeIdx( listP, newNodeP );
   Key tgtIdx = listGetNodeIdx( listP, tgtNodeP );
   if ( tgtNodeP->next != UNSET_ ) {
@@ -89,6 +110,10 @@ void listInsertAfter( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* tgt
 
 void listPrepend( List* listP, ListNodeHeader* newNodeP ) {
   assert ( listP && listP->array && newNodeP );
+  if (newNodeP->listId != UNSET_ ) {
+    return;
+  }
+  newNodeP->listId = listP->id;
   Key newNodeIdx = listGetNodeIdx( listP, newNodeP );
   if ( listP->head != UNSET_ ) {
     ListNodeHeader* oldHeadNodeP = arrayGetVoidElemPtr( listP->array, listP->head );
@@ -104,6 +129,10 @@ void listPrepend( List* listP, ListNodeHeader* newNodeP ) {
 
 void listAppend( List* listP, ListNodeHeader* newNodeP ) {
   assert ( listP && listP->array && newNodeP );
+  if (newNodeP->listId != UNSET_ ) {
+    return;
+  }
+  newNodeP->listId = listP->id;
   Key newNodeIdx = listGetNodeIdx( listP, newNodeP );
   if ( listP->tail != UNSET_ ) {
     ListNodeHeader* oldHeadNodeP = arrayGetVoidElemPtr( listP->array, listP->tail );
@@ -118,9 +147,12 @@ void listAppend( List* listP, ListNodeHeader* newNodeP ) {
 }
 
 // NOTE: This assumes the lists you're merging use the same array. That means there can be no identical node indices.
+// TODO: is it okay to not change all the new nodes' list IDs to their new list's ID?
 // listMerge() appends srcList to dstList.
 void listMerge( List* srcListP, List* dstListP ) {
   assert ( srcListP && srcListP->head != UNSET_ && srcListP->tail != UNSET_ && dstListP && dstListP->head != UNSET_ && dstListP->tail != UNSET_ );
+  assert ( srcListP != dstListP );
+  assert ( srcListP->id != dstListP->id );
   assert ( srcListP->array == dstListP->array );
 
   ListNodeHeader* srcHeadP = (ListNodeHeader*) arrayGetVoidElemPtr( srcListP->array, srcListP->head );

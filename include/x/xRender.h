@@ -8,8 +8,7 @@
 
 //typedef enum {} XRenderMsgCmd;
 
-// TODO is both being 1 a bug, or is that the *inner* key value?
-#define GUI_KEY_ (1)
+// TODO move enums all to one file okay!? Geez they're everywhere
 #define BLOB_KEY_ (2)
 
 #define RIGHT_RECT (LEFT_CHILD)
@@ -82,9 +81,9 @@ typedef struct Collision {
 typedef struct {
   System         system;
   U8             atlasPaletteOffset;
+  Bln            collisionsDetected;
   Image        **imgPF;
   Entity        *entityF;  // components aren't added till postProcess(), so track entities here
-  Gui           *guiP;   // derived from shared component 
   List           layerListA[ N_LAYERS_SUPPORTED ];
   Texture_      *atlasTextureP;
   Map           *offsetRectMP;

@@ -12,18 +12,17 @@
 // We know we've completed node traversal when the next node is the list's head.
 
 typedef struct ListNodeHeader {
-  Key prev, next;
+  Key prev, next, listId;
 } ListNodeHeader;
 
 // Since lists are usually interwoven through a component fray, we need to know where their heads and tails are.
 typedef struct List {
+  Key id;  // the only way to prevent removing a node from a list it's not in and re-adding it to a list it's in
   Key head, tail;  // yes, we use different types for head/tail versus prev/next since the latter pair is more common.
   void* array;  // refers to a pre-existing array or fray (since both have the same elem sz and count locations)
 } List;
 
-void listIni( List* listP, void* array );
-
-void listNodeIni( ListNodeHeader* nodeP );
+void listIni( List* listP, Key id, void* array, Bln iniNodes );
 
 // NOTE: This assumes the address of the header is the same as the address of the array element.
 void listRemove( List* listP, ListNodeHeader* nodeP );

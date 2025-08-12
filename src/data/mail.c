@@ -7,19 +7,19 @@ Message* mailboxNew(U32 maxNMsgs, const PoolId poolId) {
 }
 
 void mailboxWrite(Message *mailboxP, Key address, Key attn, Key cmd, Key arg, Generic* attachmentP) {
-  Message msg = {
-    .address = address,
-    .attn = attn,
-    .cmd = cmd,
-    .arg = arg
-  };
+  U32 newIdx;
+  frayAddEmpty( (void*) mailboxP, &newIdx );
+  Message *msgP = &mailboxP[ newIdx ];
+  msgP->address = address;
+  msgP->attn = attn;
+  msgP->cmd = cmd;
+  msgP->arg = arg;
   if (attachmentP) {
-    msg.attachment = *attachmentP;
+    msgP->attachment = *attachmentP;
   }
   else {
-    msg.attachment.u32 = 0;
+    msgP->attachment.u32 = 0;
   }
-  frayAdd((void*) mailboxP, &msg, NULL);
 }
 
 void mailboxForward(Message *mailboxP, Message *msgP) {

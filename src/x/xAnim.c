@@ -141,9 +141,10 @@ void xAnimRun(System *sP) {
       *cP->srcRectP = cP->currStrip.frameA[cP->currFrameIdx].rect;
       cP->dstRectP->w = cP->srcRectP->w;
       cP->dstRectP->h = cP->srcRectP->h;
-    }
-  }
-}
+    }  // if time's run out, animate  // TODO this should be easy to move to its own function!!! xAnimRun() ought to do nothing, ought to be a completely mail-driven system
+       // TODO  but think through how you'll pause animations... in fact, component placement might mean nothing in the animation world
+  }  // for each active component
+}  // xAnimRun()
 
 //======================================================
 // System definition

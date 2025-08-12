@@ -1,5 +1,22 @@
 #include "x/xRender.h"
 
+// rendering system owns the graphical GUI. That way, excluding this system neatly excludes graphics.
+static Gui *_guiP = NULL; 
+typedef enum GuiSignal { GUI_CREATE = -1, GUI_DO_NOTHING, GUI_KILL } GuiSignal;
+static GuiSignal _guiSignal = GUI_CREATE;
+
+static void _manageGui() {
+  if ( _guiSignal == GUI_CREATE ) {
+    if ( !_guiP ) {
+      _guiSignal = GUI_DO_NOTHING;
+      _guiP = guiNew();
+    }
+  }
+  else if ( _guiSignal == GUI_KILL ) {
+    guiDel( &_guiP );
+  }
+}
+
 static inline void __atlasLinkNodes(
     Atlas *atlasP,
     Key parentIdx, 
@@ -23,36 +40,36 @@ static void _atlasLinkNodes(Atlas *atlasP, const Key parentIdx, const Key childI
   // rectHeight splits node to a shelf rightward and full width downward
   if (child == RIGHT_RECT) {
     __atlasLinkNodes(
-      atlasP,
-      parentIdx,
-      childIdx,
-      RIGHT_RECT, 
-      atlasP->btP[parentIdx].rect.x + atlasP->btP[parentIdx].rect.w,
-      atlasP->btP[parentIdx].rect.y,
-      atlasP->btP[parentIdx].remW - atlasP->btP[parentIdx].rect.w - atlasP->btP[childIdx].rect.w,
-      atlasP->btP[parentIdx].rect.h - atlasP->btP[childIdx].rect.h);  
+        atlasP,
+        parentIdx,
+        childIdx,
+        RIGHT_RECT, 
+        atlasP->btP[parentIdx].rect.x + atlasP->btP[parentIdx].rect.w,
+        atlasP->btP[parentIdx].rect.y,
+        atlasP->btP[parentIdx].remW - atlasP->btP[parentIdx].rect.w - atlasP->btP[childIdx].rect.w,
+        atlasP->btP[parentIdx].rect.h - atlasP->btP[childIdx].rect.h);  
   }
   else {  /* implicit "if child == LOWER_RECT */
     __atlasLinkNodes(
-      atlasP,
-      parentIdx,
-      childIdx,
-      LOWER_RECT, 
-      atlasP->btP[parentIdx].rect.x,
-      atlasP->btP[parentIdx].rect.y + atlasP->btP[parentIdx].rect.h,
-      atlasP->btP[parentIdx].remW - atlasP->btP[childIdx].rect.w,
-      atlasP->btP[parentIdx].remH - atlasP->btP[parentIdx].rect.h - atlasP->btP[childIdx].rect.h);
+        atlasP,
+        parentIdx,
+        childIdx,
+        LOWER_RECT, 
+        atlasP->btP[parentIdx].rect.x,
+        atlasP->btP[parentIdx].rect.y + atlasP->btP[parentIdx].rect.h,
+        atlasP->btP[parentIdx].remW - atlasP->btP[childIdx].rect.w,
+        atlasP->btP[parentIdx].remH - atlasP->btP[parentIdx].rect.h - atlasP->btP[childIdx].rect.h);
   }
 }
 
 static inline U32 _rectFitsToTheRight(Rect_ *orphanRectP, AtlasElem *parentElemP) {
   return (orphanRectP->w <=  parentElemP->remW 
-       && orphanRectP->h <= (parentElemP->remH + parentElemP->rect.h));
+      && orphanRectP->h <= (parentElemP->remH + parentElemP->rect.h));
 }
 
 static inline U32 _rectFitsBelow(Rect_ *orphanRectP, AtlasElem *parentElemP) {
   return (orphanRectP->w <= (parentElemP->remW + parentElemP->rect.w)
-       && orphanRectP->h <=  parentElemP->remH);
+      && orphanRectP->h <=  parentElemP->remH);
 }
 
 inline static void _setRectData(AtlasElem *elP, U32 _max, S32 w, S32 h, Key srcIdx) {
@@ -78,7 +95,7 @@ Atlas* atlasNew( Image** imgPF) {
   AtlasElem *atlasA = atlasP->btP;
   // Populate first element so the next one has something to sort against.
   _setRectData(&atlasA[0], imgPF[0]->cmP->w > imgPF[0]->cmP->h ?  imgPF[0]->cmP->w : imgPF[0]->cmP->h,
-               imgPF[0]->cmP->w, imgPF[0]->cmP->h, 0);
+      imgPF[0]->cmP->w, imgPF[0]->cmP->h, 0);
 
   atlasP->extremityA[0] = 0;
   atlasP->extremityA[1] = 0;
@@ -86,7 +103,7 @@ Atlas* atlasNew( Image** imgPF) {
   // Loop through the unsorted rectangles
   for (U32 i = 1; i < N_ATLAS_ELEMS; ++i) {
     U32 currRectMaxDim = imgPF[i]->cmP->w > imgPF[i]->cmP->h ?
-                         imgPF[i]->cmP->w : imgPF[i]->cmP->h;
+      imgPF[i]->cmP->w : imgPF[i]->cmP->h;
     // Loop through sorted rectangles to see where the current unsorted one should go.
     for (U32 j = 0; j < i; ++j) {
       if (currRectMaxDim > atlasA[j].maxDim) {
@@ -97,7 +114,7 @@ Atlas* atlasNew( Image** imgPF) {
     }
     // If loop ended without placing rect anywhere, it belongs in last element.
     _setRectData(&atlasA[i], currRectMaxDim, imgPF[i]->cmP->w, imgPF[i]->cmP->h, i);
-    nextUnsortedRect:
+nextUnsortedRect:
     continue;
   }
   return atlasP;
@@ -121,7 +138,7 @@ void atlasPlanPlacements(Atlas *atlasP) {
   // Loop through orphan elements
   for (parentEndIdx = arrayGetNElems(btP); orphanP < elemEndP; ++orphanP) {
     // Forward search in texture atlas
-    searchForward:  // moves only right and down till a fit or a dead-end is found
+searchForward:  // moves only right and down till a fit or a dead-end is found
     /* Since you're going to navigate rightward till you find nothing else to the right,
        you  may as well start your search there. */
     for (parentIdx = atlasP->extremityA[RIGHT_RECT]; parentIdx < parentEndIdx;) {
@@ -151,7 +168,7 @@ void atlasPlanPlacements(Atlas *atlasP) {
     }
 
     // Back out of dead ends
-    backOut:  // moves only up and left till an unexplored downward direction or root is found
+backOut:  // moves only up and left till an unexplored downward direction or root is found
     while (parentIdx) {
       // Avoid re-entering a path you just exited by only going up and left.
       cameFromRight = parentIdx == btP[parentIdx].header.childA[RIGHT_RECT];
@@ -166,7 +183,7 @@ void atlasPlanPlacements(Atlas *atlasP) {
 
     // If no suitable parent was found (parentIdx == 0 now), it's time to expand the atlas.
     U32 todoDeleteThis = 
-        ((orphanP->rect.h <= btP[0].remH))                              // can right
+      ((orphanP->rect.h <= btP[0].remH))                              // can right
       | ((btP[0].remH >= btP[0].remW  + orphanP->rect.w)  << 1)  // should right
       | ((orphanP->rect.w <= btP[0].remW)  << 2)                         // can down
       | ((btP[0].remW  >= btP[0].remH + orphanP->rect.h)  << 3); // should down
@@ -191,7 +208,7 @@ void atlasPlanPlacements(Atlas *atlasP) {
           btP[atlasP->extremityA[LOWER_RECT]].header.childA[LOWER_RECT];
         break;
     }
-    nextOrphan:
+nextOrphan:
     continue;
   }  // for each sorted rectangle
 }
@@ -201,7 +218,7 @@ void atlasPlanPlacements(Atlas *atlasP) {
 // Initialize xRender's system.
 //======================================================
 void xRenderIniSys(System *sP, void *sParamsP) {
-	unused_(sParamsP);
+  unused_(sParamsP);
   XRender *xP = (XRender*) sP;
   // Components array should have already been allocated by this point, so it's safe to get its size.
   U32 nComponents = xGetNComps(sP);
@@ -238,57 +255,45 @@ void xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void 
     frayAdd(xP->entityF, (void*) &entity, NULL);
   }
 }
+static const char* names[] = {
+  "UNUSED",  // because entities are 1-based
+  "red",
+  "tan",
+  "rct",
+  "rctcp1",
+  "rctcp2",
+  "rctcp3"
+};
 
+/* I want to make the 
+ * Before I handle this, here's a question:
+ *  Will collision system need the same z layer list the renderer has?
+ */
 void xRenderProcessMessage(System *sP, Message *msgP) {
-  static const char* names[] = {
-    "UNUSED",  // because entities are 1-based
-    "red",
-    "tan",
-    "rct",
-    "rctcp1",
-    "rctcp2",
-    "rctcp3"
-  };
-
-  return;
   XRender* xP = (XRender*) sP;
-  XRenderComp* e1CompP = xGetCompPByEntity( sP, msgP->attn );
-  // Entity 1 is the entity that is being acted on.
-  assert(e1CompP);
-  assert( *e1CompP->zHeightP < N_LAYERS_SUPPORTED );
   switch( msgP->cmd ) {
+    case MSG_KILL_GUI:
+      _guiSignal = GUI_KILL;
+      _manageGui();
+      break;
     case MSG_SOFT_COLLISIONS_DETECTED:
-      XRenderComp* e2CompP = xGetCompPByEntity( sP, msgP->arg );
-      assert(e2CompP);
-      // Assert these collided components are even on the same layer in the first place.
-      assert( *e1CompP->zHeightP == *e2CompP->zHeightP );
-      // Move the component with the higher bottom-Y coordinate to the front of its list.
-      if ( ( e1CompP->dstRectP->y + e1CompP->dstRectP->h ) < ( e2CompP->dstRectP->y + e2CompP->dstRectP->h ) ) {
-        listRemove( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr );
-        listInsertBefore( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr, &e2CompP->hdr );
-        printf("[xRender] putting %s before %s\n", names[ msgP->attn ], names[ msgP->arg ] );
+      printf("[xrendr] hearda bout collision\n");
+      xP->collisionsDetected = TRUE;
+      break;
+    case MSG_LAYER_CHANGED:  // move to a specific layer
+      printf("[xrendr] layer changed!\n");
+      XRenderComp* cP = xGetCompPByEntity( sP, msgP->attn );
+      assert(cP);
+      assert( *cP->zHeightP < N_LAYERS_SUPPORTED );
+      if ( _frayElemIsActive( sP->cF, cP - (XRenderComp*) sP->cF ) ) {
+        /* This is harmful in the following scenario:
+         *  1) activation already added this to list A
+         *  2) we pretend to move it out of B, even though it's just peeling it out of A
+         *  3) we re-add to to A, who thinks the head and tail are still there, and sets those to prev and next.
+         */
+        listRemove( &xP->layerListA[ msgP->arg ], &cP->hdr );
+        listAppend( &xP->layerListA[ *cP->zHeightP ], &cP->hdr );
       }
-      else {
-        listRemove( &xP->layerListA[ *e1CompP->zHeightP ], &e2CompP->hdr );
-        listInsertBefore( &xP->layerListA[ *e1CompP->zHeightP ], &e2CompP->hdr, &e1CompP->hdr );
-        printf("[xRender] putting %s before %s\n", names[ msgP->arg ], names[ msgP->attn ] );
-      }
-      break;
-    case MSG_MOVE_UP_A_LAYER:  // move to a specific layer
-      assert( *e1CompP->zHeightP + 1 < N_LAYERS_SUPPORTED );
-      listRemove( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr );
-      listAppend( &xP->layerListA[ ++(*e1CompP->zHeightP) ], &e1CompP->hdr );
-      break;
-    case MSG_MOVE_DOWN_A_LAYER:  // move to a specific layer
-      assert( *e1CompP->zHeightP - 1 >= 0 );
-      listRemove( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr );
-      listAppend( &xP->layerListA[ --(*e1CompP->zHeightP) ], &e1CompP->hdr );
-      break;
-    case MSG_MOVE_TO_LAYER:  // move to a specific layer
-      listRemove( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr );
-      assert( msgP->arg >= 0 && msgP->arg < N_LAYERS_SUPPORTED );
-      *e1CompP->zHeightP = msgP->arg;
-      listAppend( &xP->layerListA[ *e1CompP->zHeightP ], &e1CompP->hdr );
       break;
     default:
       break;
@@ -354,58 +359,58 @@ static void fillPortionOfRect( FillRectParamsMT* fillRectParamsP ) {
     const Color_* dstRowEndP = dstP + rectWidth;
     for ( ; dstP < dstRowEndP; ++dstP ) {
       assert( ( cmElemP - fillRectParams
-      *dstP = cpA[ *(cmElemP++) ];  
-    }
-  }
-}
+            *dstP = cpA[ *(cmElemP++) ];  
+            }
+            }
+            }
 
 #endif
 
 
-static void fillRect( U8* cmA, Color_* cpA, const Rect_* rectP, Color_* atlasPixelA, const U32 ATLAS_WIDTH ) {
-  assert( cmA && cpA && rectP && atlasPixelA );
+            static void fillRect( U8* cmA, Color_* cpA, const Rect_* rectP, Color_* atlasPixelA, const U32 ATLAS_WIDTH ) {
+            assert( cmA && cpA && rectP && atlasPixelA );
 
-  const U32 INCREMENT = ATLAS_WIDTH - rectP->w;
+            const U32 INCREMENT = ATLAS_WIDTH - rectP->w;
 
 #ifdef MULTITHREADED_
-  const U32 N_THREADS = ( rectP->h < N_CORES ) ? rectP->h : N_CORES;
+            const U32 N_THREADS = ( rectP->h < N_CORES ) ? rectP->h : N_CORES;
 
-  FillRectParamsMT* paramsA = arrayNew( sizeof( FillRectParamsMT ), N_THREADS, TEMPORARY );
-  U32 heightSliver = rectP->h / N_THREADS;
-  for ( U32 i = 0; i < N_THREADS; ++i ) {
-    paramsA[i].dstP      = atlasPixelA + rectP->x + ( rectP->y + ( i * heightSliver) ) * ATLAS_WIDTH;
-    paramsA[i].dstEndP   = paramsA[i].dstP + ( heightSliver * ATLAS_WIDTH );
-    paramsA[i].cmA       = cmA + ( i * heightSliver ) * rectP->w;  // rect is as wide as source colormap
-    paramsA[i].cpA       = cpA;
-    paramsA[i].INCREMENT = INCREMENT;
-    paramsA[i].rectWidth = rectP->w;
-    assert( paramsA[i].dstEndP > paramsA[i].dstP );
-  }
-  FillRectParamsMT** ptrA = arrayNew( sizeof( FillRectParamsMT* ), N_THREADS, TEMPORARY );
-  for ( U32 i = 0; i < N_THREADS; ++i ) {
-    ptrA[i] = &paramsA[i];
-  }
-  // Then finish off by giving the last thread a slightly more responsibility if the sections aren't divisible by N_THREADS.
-  paramsA[ N_THREADS - 1 ].dstEndP += ( rectP->h % N_THREADS ) * ATLAS_WIDTH;
-  multithread_( fillPortionOfRect, (void*) ptrA );
+            FillRectParamsMT* paramsA = arrayNew( sizeof( FillRectParamsMT ), N_THREADS, TEMPORARY );
+            U32 heightSliver = rectP->h / N_THREADS;
+            for ( U32 i = 0; i < N_THREADS; ++i ) {
+            paramsA[i].dstP      = atlasPixelA + rectP->x + ( rectP->y + ( i * heightSliver) ) * ATLAS_WIDTH;
+            paramsA[i].dstEndP   = paramsA[i].dstP + ( heightSliver * ATLAS_WIDTH );
+            paramsA[i].cmA       = cmA + ( i * heightSliver ) * rectP->w;  // rect is as wide as source colormap
+            paramsA[i].cpA       = cpA;
+            paramsA[i].INCREMENT = INCREMENT;
+            paramsA[i].rectWidth = rectP->w;
+            assert( paramsA[i].dstEndP > paramsA[i].dstP );
+            }
+            FillRectParamsMT** ptrA = arrayNew( sizeof( FillRectParamsMT* ), N_THREADS, TEMPORARY );
+            for ( U32 i = 0; i < N_THREADS; ++i ) {
+              ptrA[i] = &paramsA[i];
+            }
+            // Then finish off by giving the last thread a slightly more responsibility if the sections aren't divisible by N_THREADS.
+            paramsA[ N_THREADS - 1 ].dstEndP += ( rectP->h % N_THREADS ) * ATLAS_WIDTH;
+            multithread_( fillPortionOfRect, (void*) ptrA );
 #else
-  Color_* dstP = atlasPixelA + rectP->x + ( rectP->y ) * ATLAS_WIDTH;
-  Color_* dstEndP = dstP + ( rectP->h * ATLAS_WIDTH );
-  U8* cmElemP = cmA;
+            Color_* dstP = atlasPixelA + rectP->x + ( rectP->y ) * ATLAS_WIDTH;
+            Color_* dstEndP = dstP + ( rectP->h * ATLAS_WIDTH );
+            U8* cmElemP = cmA;
 
-  assert( arrayGetNElems( cmA ) == ( rectP->w * rectP->h ) );
-  // assert( ( dstEndP - dstP ) /  == rectP->h );
-  // assert( ( dstEndP - dstP ) / INCREMENT == rectP->h );
+            assert( arrayGetNElems( cmA ) == ( rectP->w * rectP->h ) );
+            // assert( ( dstEndP - dstP ) /  == rectP->h );
+            // assert( ( dstEndP - dstP ) / INCREMENT == rectP->h );
 
-  for ( ; dstP < dstEndP; dstP += INCREMENT ) {
-    const Color_* dstRowEndP = dstP + rectP->w;
-    for ( ; dstP < dstRowEndP; ++dstP ) {
-      assert( cmElemP < ( cmA + arrayGetNElems( cmA ) ) );
-      *dstP = cpA[ *(cmElemP++) ];
-    }
-  }
+            for ( ; dstP < dstEndP; dstP += INCREMENT ) {
+              const Color_* dstRowEndP = dstP + rectP->w;
+              for ( ; dstP < dstRowEndP; ++dstP ) {
+                assert( cmElemP < ( cmA + arrayGetNElems( cmA ) ) );
+                *dstP = cpA[ *(cmElemP++) ];
+              }
+            }
 #endif
-}
+            }
 
 // Texture atlas array
 Color_* assembleTextureAtlas(Image** imgPF, Atlas *atlasP) {
@@ -514,6 +519,9 @@ void updateCmSrcRectIndices(Image **imgPF, Atlas *atlasP) {
 // Rendering media genes are flagged to skip the strip-assembling stage; that's done here.
 XPostprocessCompsDef_(Render) {
   XRender *xP = (XRender*) sP;
+  
+  // Uncondtionally try to start the GUI. It's safe.
+  _manageGui();
 
   // Ensure we've grabbed our shared maps by this point.
   assert( xP->srcRectMP );
@@ -530,14 +538,14 @@ XPostprocessCompsDef_(Render) {
   Surface_* atlasSurfaceP = surfaceNew((void*) atlasPixelA, atlasP->btP[0].remW, atlasP->btP[0].remH);
   // NOTE: I got rid of the color palette appending loop. So this means every palette needs to be stored with its colormap in order to compose full texture atlas.
   // Texture
-  xP->atlasTextureP = textureNew(xP->guiP->rendererP, atlasSurfaceP);
+  xP->atlasTextureP = textureNew(_guiP->rendererP, atlasSurfaceP);
   /* "Pixel data is not managed automatically with SDL_CreateRGBSurfaceWithFormatFrom().
      You must free the surface before you free the pixel data." */
   surfaceDel(&atlasSurfaceP);
 
   // Initialize the linked lists
   for ( size_t i = 0; i < N_LAYERS_SUPPORTED; ++i ) {
-    listIni( &xP->layerListA[ i ], (void*) sP->cF );
+    listIni( &xP->layerListA[ i ], i, (void*) sP->cF, i == 0 );
   }
 
   // Update source rectangles. That way animation system knows where its frames are in texture atlas.
@@ -557,8 +565,6 @@ XPostprocessCompsDef_(Render) {
     cP->zHeightP    = mapGet( xP->zHeightMP, *entityP );
     assert( cP->zHeightP );
     assert( *cP->zHeightP < N_LAYERS_SUPPORTED );
-    listNodeIni( &cP->hdr );
-    // listAppend( &xP->layerListA[ *cP->zHeightP ], &cP->hdr );
   }  // for each entity in this system
 }  // XRenderPostprocessComps()
 
@@ -571,6 +577,8 @@ XPostActivateFuncDef_(Render) {
   assert( xP->layerListA );
   XRenderComp* cP = &((XRenderComp*) sP->cF)[ changesP->newIdx ];
   assert( *cP->zHeightP < N_LAYERS_SUPPORTED );
+  // just in case an elevation change already added him to the list, remove him again to prevent double-adding
+  // listRemove( &xP->layerListA[ *cP->zHeightP ], &cP->hdr );
   listAppend( &xP->layerListA[ *cP->zHeightP ], &cP->hdr );
 }
 
@@ -588,9 +596,6 @@ XPostDeactivateFuncDef_(Render) {
 // Only get the render and window. Components' src & dst rects come from SCENE_START stimulus to XAction.
 XGetShareFuncDef_(Render) {
   XRender *xP = (XRender*) sP;
-  // Get renderer
-  xP->guiP      = (Gui*) mapGetNestedMapPElem(shareMPMP, GUI_GENE_TYPE, GUI_KEY_, NONMAP_POINTER);
-
   // Get source rect and rect offset maps. Give both a chance to run if we enter this block.
   xP->dstRectMP = mapGetNestedMapP(shareMPMP, DST_RECT);  
   xP->zHeightMP = mapGetNestedMapP(shareMPMP, Z_HEIGHT);  // Z-heights are shared since collision also needs them.
@@ -598,7 +603,7 @@ XGetShareFuncDef_(Render) {
   // If there's no animation system, there won't be a source rect shared map in master.
   xP->offsetRectMP = mapGetNestedMapP(shareMPMP, RECT_OFFSET);  
   // TODO make it so a map can just have miscellaneous pointers so we don't need a "BLOB" map with one elem, same for GUI
-  xP->blobLF    = (List*) mapGetNestedMapPElem(shareMPMP, BLOB, BLOB_KEY_, NONMAP_POINTER);
+  xP->blobLF    = (List*) mapGetNestedMapPElem(shareMPMP, SINGLETON_TYPE, BLOB_KEY_, NONMAP_POINTER);
 }
 
 XPostMutateFuncDef_(Render) {
@@ -614,43 +619,52 @@ typedef struct YIdxPair {
 static void zOrder( XRender* xP ) {
   YIdxPair yip = {0};
 
-  YIdxPair sortedBlobMembers[255] = {0};
+  static YIdxPair sortedBlobMembers[255];  // TODO does this need to  be zeroed out?
   Key nBlobMembersSorted;
-
-  List *blobLP = xP->blobLF; 
-  List *blobEndLP = blobLP + frayGetNElems_( xP->blobLF );
-  Key i;
+  S32 i;
   List *zLayerLP;
-  Collision *collP, *cEndP;
+  Collision *collP, *collEndP;
   XRenderComp *cP, *anchorP, *pivotP;
   ListNodeHeader* anchorHdrP;
   ListNodeHeader* pivotHdrP;
   XRenderComp* cF = xP->system.cF;
+  List *blobLP = xP->blobLF; 
+  List *blobEndLP = blobLP + *_frayGetFirstEmptyIdxP( xP->blobLF );
 
   // For each blob
   for ( ; blobLP < blobEndLP; ++blobLP ) {
     collP = (Collision*) listGetHead( blobLP );
-    cEndP = (Collision*) listGetTail( blobLP );
+    collEndP = (Collision*) listGetTail( blobLP );
+    collP = (Collision*) listGetHead( blobLP );
+    printf("list head = %s, tail %s, next %s\n", names[blobLP->head], names[blobLP->tail], names[collP->hdr.next]);
     nBlobMembersSorted = 0;
     goto SKIP_FIRST_COLL_INCR;
     // For each entity in current blob
-    for ( ; collP != cEndP; ++nBlobMembersSorted ) {
+    for ( ; collP != collEndP; ++nBlobMembersSorted ) {
       collP = (Collision*) listNodeGetNext( blobLP, &collP->hdr );
 SKIP_FIRST_COLL_INCR:
+      printf("curr node's name: %s, next = %d\n", names[ collP->entity ], collP->hdr.next );
       yip.bottomYCoord = collP->bottomYCoord;  // for sorting purposes
       cP = (XRenderComp*) xGetCompPByEntity( &xP->system, collP->entity );
-      assert ( cP > cF );
+      assert ( cP >= cF );
       assert ( cP >= cF && cP < ( cF + arrayGetNElems( cF ) ) );
       yip.frayIdx = cP - cF;
 
       // Insert-sort highest to lowest Y-coordinates
       for ( i = 0; i < nBlobMembersSorted; ++i ) {
         if ( yip.bottomYCoord < sortedBlobMembers[i].bottomYCoord ) {
+          printf("moving %d members over one\n", nBlobMembersSorted);
           memmove( &sortedBlobMembers[i + 1], &sortedBlobMembers[i], sizeof( YIdxPair ) * nBlobMembersSorted );
           break;
         }
       }
+      printf("putting %s in sortedBlobMembers[ %d ]\n", names[ collP->entity ], i );
       sortedBlobMembers[ i ] = yip;
+      printf("sorted members = [ ");
+      for ( i = 0; i < nBlobMembersSorted + 1; ++i ) {
+        printf("%s ", names[ xGetEntityByCompIdx( &xP->system, sortedBlobMembers[i].frayIdx ) ]);
+      }
+      printf("]\n");
     }  // for every member of current blob
 
     // list of all active entities on current blob's Z-layer
@@ -662,8 +676,9 @@ SKIP_FIRST_COLL_INCR:
     anchorHdrP = &anchorP->hdr;
 
     // Apply the sorting to the z-layer's list
-    for ( i = nBlobMembersSorted - 1; i >= 0; --i ) {
+    for ( i = nBlobMembersSorted - 1; i > 0; --i ) {
       pivotP = &cF[ sortedBlobMembers[i].frayIdx ];
+      assert( *anchorP->zHeightP == *pivotP->zHeightP );
       pivotHdrP = &pivotP->hdr;
       listRemove( zLayerLP, pivotHdrP );
       listInsertAfter( zLayerLP, pivotHdrP, anchorHdrP );
@@ -677,10 +692,11 @@ SKIP_FIRST_COLL_INCR:
 void xRenderRun(System *sP) {
   XRender *xP = (XRender*) sP;
   XRenderComp* cF = (XRenderComp*) sP->cF;
-  Renderer_ *rendererP = xP->guiP->rendererP;
-  
+  Renderer_ *rendererP = _guiP->rendererP;
+
   // Z-order only for collisions/overlaps.
-  if ( xP->blobLF[0].head != UNSET_ ) { 
+  if ( xP->collisionsDetected ) {
+    xP->collisionsDetected = FALSE;
     zOrder( xP );
   }
   clearScreen(rendererP);

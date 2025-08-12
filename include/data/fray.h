@@ -5,6 +5,7 @@
 
 // Efficient Arrays (frays)
 #define N_PREFRAY_ELEMS (5)
+#define N_FRAY_SPECIFIC_ATTRS (3)
 #define OFFSET_1ST_INACTIVE (5)  /* ptr[0] */
 #define OFFSET_N_PAUSED     (4)  /* ptr[1] */
 #define OFFSET_1ST_EMPTY    (3)  /* ptr[2] */
@@ -64,7 +65,7 @@ inline U32* _frayGetFirstEmptyIdxP(const void *frayP) {
 }
 
 inline void _frayClr(void *fP) {
-  memset(((U32*) fP) - N_PREFRAY_ELEMS, 0, sizeof(U32) * 3);
+  memset(((U32*) fP) - N_PREFRAY_ELEMS, 0, sizeof(U32) * N_FRAY_SPECIFIC_ATTRS);
   /*  The above has this effect:
       *_frayGetFirstEmptyIdxP(fP) = 0;
       *_frayGetNPausedP(fP) = 0;
