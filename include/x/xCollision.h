@@ -2,7 +2,12 @@
 #define SYS_Collision
 #include "x/x.h"
 #include "interface/interface.h"
+#include "jb.h"
 
+/* Let's think through the mutation aspect here.
+ * We need something similar to animation: a map of arrays.
+ * But instead of timing, it relies on a message from animation system to tell it when.
+ */
 typedef struct {
   Entity entity;   // Collider
   Key    type;     // Colliding elements react according to each other's type.

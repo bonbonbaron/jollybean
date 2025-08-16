@@ -1,9 +1,18 @@
-Added collision fray and fray of lists of collision blob IDs to the test. Need to implement populating them in the collsion checker fuction, then make xRender use them.
+listMerge() should update all new members' list IDs so listRemove() works on them
+each blob should now have the pair of collisions, maybe without the blob ID in them (A?)
+xRender::zOrder() should iterate over this blob list's new type differently:
+  i sense the pairs should enhance sorting since it's list-based. 
+  Each pair item may use a boolean to tell if it's been sorted into the outgoing YIP array.
+    A B
+    B C
+    B E
+    D E
+    E F
+
+
+
 add post pause and unpause generics
 add post pause and unpause to all systems till they compile
 add post pause and unpause to xRender
   * remove from list post-pause
   * add to list post-unpause
-move up a layer
-move down a layer
-move to a layer

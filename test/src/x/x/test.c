@@ -1,5 +1,6 @@
 #include "tau.h"
 #include "xA.h"
+#include "data/share.h"
 
 /* STRUCTURE OF AN XA COMPONENT:
  *
@@ -43,6 +44,7 @@ static void _validateEntityPosition(Tau *tau, Entity entity, Key expectedIdx) {
 #define D_COEFF (4)
 
 TEST_F_SETUP(Tau) {
+  shareIni( 3 );  // Hope this is right!
   extern XA xA;
   tau->xP = &xA;
   tau->nEntities = N_ENTITIES;

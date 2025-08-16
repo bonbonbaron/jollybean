@@ -1,4 +1,5 @@
 #include "x/x.h"
+#include "data/share.h"
 
 inline static Entity _getEntityByCompIdx(System *sP, Key compIdx) {
   return sP->cIdx2eA[compIdx];
@@ -205,7 +206,7 @@ void xIniSys(System *sP, U32 nComps, void *miscP) {
   // TODO make this smarter than a raw constant
   // Also, give it ample room to handle multiple messages per entity.
 #define MAILBOX_MULTIPLY_NUM_SLOTS (3)
-  sP->mailboxF = frayNew(sizeof(Message), nComps * MAILBOX_MULTIPLY_NUM_SLOTS, GENERAL  );
+  sP->mailboxF = shareNewInbox( sP->id, nComps * MAILBOX_MULTIPLY_NUM_SLOTS );
   sP->subcompOwnerMP = mapNew(RAW_DATA, sizeof(SubcompOwner), nComps, TEMPORARY );
   // Finally, call the system's unique initializer.
   (*sP->iniSys)(sP, miscP);  // fail-assert if this bombs

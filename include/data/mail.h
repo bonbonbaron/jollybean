@@ -13,6 +13,7 @@ typedef struct {
   Generic attachment;  // e.g. "translate rectangle to/scale imatge by these XY coordinates"
 } Message;  
 
+
 /* Is it practical for arg to always be a unsigned byte?
  *
  * Giving damage: NO
@@ -24,7 +25,6 @@ typedef struct {
 Message* mailboxNew( U32 maxNMsgs, const PoolId poolId);
 void  mailboxDel(Message **mailboxPP);
 void mailboxWrite(Message *mailboxF, Key address, Key attn, Key cmd, Key arg, Generic* attachment);
-void mailboxForward(Message *mailboxF, Message *msgP);
 typedef void (*inboxRead)(Message *mailboxF);
 
 #endif  // #ifndef MAIL_H

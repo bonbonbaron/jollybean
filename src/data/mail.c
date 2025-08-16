@@ -21,7 +21,3 @@ void mailboxWrite(Message *mailboxP, Key address, Key attn, Key cmd, Key arg, Ge
     msgP->attachment.u32 = 0;
   }
 }
-
-void mailboxForward(Message *mailboxP, Message *msgP) {
-  frayAdd((void*) mailboxP, msgP, NULL);
-}
