@@ -1,0 +1,36 @@
+#!/bin/bash
+
+TROVE=${HOME}/jb
+
+# PURPOSE OF THIS FILE:
+#   generate Gene source code
+#
+#   First, we have raw data: image, animation, sound, action, etc. C and H files. 
+#   Second, we have to tell JB how those things come together to form an entity.
+#   This is a "genome," though we don't call it that. We call a genome a "root gene."
+#   The former is raw material. 
+#   Cool part is, the whole freaking game is a genome. :)
+#   
+#   We can automate some parts of this:
+#     When a material has any externs, those are automatic sub-genes. I wonder if those even need to  be added.
+#     When a material has mutations, it should have an indicator for this. Right now there's no real way to tell.
+#     How about adding a key mapping? That should be a give-away to the script.
+#
+
+# Composite and mutable genes' components are defined by all their nested folders.
+# We want to validate the following:
+#   gene type is correct
+#   gene source file exists
+#   generate source files for genes
+#   main will extern the game's root gene
+#   confirm that the folder's name matches an objects name
+
+#  What are some good gene commands to have?
+#   add *: adds a gene to a composite or mutable
+#   new *: new gene with flag to indicate which type
+#   rm  *: removes a gene from a composite or mutable
+#
+#   * (only valid for composites and mutables
+function add() {
+
+}

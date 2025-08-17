@@ -1,0 +1,166 @@
+#!/bin/bash
+
+JB=${HOME}/jb
+KEYRINGDIR=${JB}/resource/Keyring
+
+if [ ! -d "$KEYRINGDIR" ]; then
+  die "Can't find keyring directory $KEYRINGDIR."
+fi
+
+function die() {
+  echo $@ Exiting... 1>&2
+  exit 1
+}
+
+function validateName() {
+  if [ $# -ne 1 ]; then
+    die "expected use: validateName <some-key-name>."
+  fi 
+  if echo $1 | grep -q -E '^[^a-zA-Z_][^a-zA-Z0-9_]*'; then
+    die "Invalid name: $1 -- Alphanumeric and underscore characters only, and must not start with a number."
+  fi
+}
+
+function keyringExists() {
+  local keyringpath=$KEYRINGDIR/$1
+  test -f $keyringpath
+}
+
+function keyExists() {
+  if [ $# -ne 2 ]; then
+    die "Expected use: keyExists <keyring-name> <key-name>"
+  fi
+  local keyringpath=$KEYRINGDIR/$1
+  local key=$2
+  if [ ! -f $keyringpath ]; then
+    die "Keyring path $keyringpath doesn't exist!"
+  fi
+  grep -q -E "\<$key\>" $keyringpath
+}
+
+function ensureKeyringExists() {
+  if [ $# -ne 1 ]; then
+    die "expected use: ensureKeyringExists <some-keyring-name>"
+  fi
+  local keyring=$1
+  if ! keyringExists $keyring; then
+    die "Can't find keyring $KEYRINGDIR/$keyring."
+  fi
+}
+
+function upper() {
+  echo $1 | sed 's/.*/\U&/g'
+}
+
+function addKey () {
+  local key=$1
+  local keyring=$KEYRINGDIR/$2
+
+  ensureKeyringExists $keyring
+
+  if grep -s $key $keyring; then
+    die -e "Key \e[95m$key\e[0m is already in keyring \e[96m$keyring\e[0m."
+  fi
+
+  upper $key >> keyring
+}
+
+OPTIND=1
+cmd=$1  # require first argument to be a command name
+shift 1
+keyring=
+key=
+init_val=
+while getopts 'n:k:r:' opt; do
+  case $opt in
+    k) key=$OPTARG ;;
+    r) keyring=$OPTARG ;;
+    i) init_val=$OPTARG ;;
+    *) die "invalid option $opt" ;;
+  esac
+done
+
+shift $(( OPTIND - 1 ))
+
+case $cmd in
+  add-key) 
+    if test -z "$keyring"; then
+      die "You didn't provide a keyring to add a key to! Do so with the -r option."
+    elif test -z "$key"; then
+      die "You didn't provide a key to add to the ring! Do so with the -k option."
+    fi
+    ensureKeyringExists $keyring
+    validateName $key
+    if keyExists $keyring $key; then 
+      die "Key $key already exists in keyring $keyring!"
+    fi
+    echo $key >> $KEYRINGDIR/$keyring
+    ;;
+  add) 
+    arg=$keyring
+    if test -z "$arg"; then
+      arg=$1
+    fi
+    if test -z "$arg"; then
+      die "You didn't provide a keyring to add a key to! Do so with the -r option."
+    fi
+    if test -f "$KEYRINGDIR/$arg"; then
+      die "Keyring $arg already exists."
+    fi
+    echo "touching  $KEYRINGDIR/$arg"
+    touch $KEYRINGDIR/$arg
+    ;;
+  rm-key) 
+    arg=$keyring
+    if test -z "$arg"; then
+      arg=$1
+    fi
+    sed -i "/\<$key\>/d" $KEYRINGDIR/$keyring
+    ;;
+  rm) 
+    ensureKeyringExists $keyring
+    rm $KEYRINGDIR/$keyring
+    ;;
+  mv-key) 
+    ensureKeyringExists $keyring
+    rm $KEYRINGDIR/$keyring
+    ;;
+  mv)
+    ensureKeyringExists $keyring
+    newname=$1
+    if [ -f $KEYRINGDIR/$newname ]; then
+      die "You're trying to rename keyring $keyring to a ring that already exists ($newname)."
+    fi
+    validateName $newname
+    mv $KEYRINGDIR/$keyring $KEYRINGDIR/$newname
+    ;;
+  ls|list) ls $KEYRINGDIR;;
+  ls-keys|list-keys) 
+    # Try to grab keyring name from either -r option or unnamed parameter.
+    arg=$keyring
+    if test -z "$arg"; then
+      arg=$1
+    fi
+    # If argument is valid, then list its keys.
+    if [ -n "$arg" ]; then
+      ensureKeyringExists $arg
+      cat $KEYRINGDIR/$arg
+    # If there's no argument, then list all keyrings' keys.
+    else
+      for f in $(ls $KEYRINGDIR); do
+        filepath=$KEYRINGDIR/$f
+        numLines=$(wc -l $filepath | awk '{print $1}')
+        echo $f
+        if [ ${numLines:-0} -gt 0 ]; then
+          cat $filepath | sed -E 's/(.*)/\t\1/'
+        fi
+      done
+    fi
+    ;;
+  build-keyring)
+    ensureKeyringExists $keyring
+    echo "typedef enum $keyring { $(cat $KEYRINGDIR/$keyring | tr '\n' ',') } $keyring;" >> ${JB}/include/Keyring/$keyring.h
+    ;;
+  *) echo invalid key command: $cmd;;
+esac
+

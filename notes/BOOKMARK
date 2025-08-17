@@ -1,3 +1,10 @@
+Keyring interface
+  make it easy by putting a text file with key names in the resources folder, then generating a header file off of that, refreshing it every time
+KeyValPairArray for animations
+Mutation detection in Gene script by searching for KeyValPairArray
+Gene interface 
+  including circular gene detection, erroring out in such cases
+Gene C file for inflation, distribution, and initialization
 listMerge() should update all new members' list IDs so listRemove() works on them
 each blob should now have the pair of collisions, maybe without the blob ID in them (A?)
 xRender::zOrder() should iterate over this blob list's new type differently:
