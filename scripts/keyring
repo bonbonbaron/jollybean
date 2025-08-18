@@ -122,17 +122,29 @@ case $cmd in
     rm $KEYRINGDIR/$keyring
     ;;
   mv-key) 
-    ensureKeyringExists $keyring
-    rm $KEYRINGDIR/$keyring
+    kr=$keyring
+    if test -z "$kr"; then
+      kr=$1
+    fi
+    ensureKeyringExists $kr
+    if [ -z "$key" ]; then
+      die "You didn't provide a key to move!"
+    fi
+    sed -E -i "s/\<$key\>/$newname/" $KEYRINGDIR/$kr
     ;;
   mv)
-    ensureKeyringExists $keyring
-    newname=$1
-    if [ -f $KEYRINGDIR/$newname ]; then
-      die "You're trying to rename keyring $keyring to a ring that already exists ($newname)."
+    from=$keyring
+    if test -z "$arg"; then
+      from=$1
     fi
-    validateName $newname
-    mv $KEYRINGDIR/$keyring $KEYRINGDIR/$newname
+    if [ ! -f $KEYRINGDIR/$from ]; then
+      die "$KEYRINGDIR/$from doesn't exist!"
+    fi
+    to=$keyring
+    if test -z "$arg"; then
+      to=$1
+    fi
+    mv $KEYRINGDIR/$from $KEYRINGDIR/$to
     ;;
   ls|list) ls $KEYRINGDIR;;
   ls-keys|list-keys) 
