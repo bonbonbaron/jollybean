@@ -43,7 +43,7 @@ typedef struct {
 /******** GENE  *********/
 /************************/
 
-typedef enum {ROOT_GENE, EXCLUSIVE_GENE, MEDIA_GENE, SHARED_GENE, COMPOSITE_GENE, IMPLICIT_GENE} GeneClass;
+typedef enum {ROOT, EXCLUSIVE_IMMUATABLE, EXCLUSIVE_MUTABLE, MEDIA, SHARED, COMPOSITE, IMPLICIT} GeneClass;
 
 struct _Gene;
 
@@ -56,15 +56,15 @@ typedef struct {
 typedef struct _Gene {
 	GeneClass class;
   union {
-    struct {
-      U8 type;         // lower 6 bits hold system this belongs to, upper 2 is component subtype
+    struct unitary {
+      U8 systemId;     // system ID this gene belongs to 
       U8 size;         // sizeof destination component type (so we can memcpy the right size into the ECS target system/sharedPool/BB)
       Key key;         // key that lets you mutate a seed's gene to this one; 0 for immutable
       U8 isIngredient; // tells master whether to feed this into a system
       void *dataP;     // the location of the gene's actual data
     } unitary;
     Composite composite;
-    struct {
+    struct root {
       Composite composite;
       Key nGeneTypes;
       Key* geneTypeHistoA;  // has a histo of the entire genome so we don't have to calculate it at runtime

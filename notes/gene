@@ -1,0 +1,64 @@
+TODO
+  be able to chain together disparate genes of the same type to allow INHERITANCE And EXTENDABILITY
+    - the best way I can conceive of doing this is adding a layer between Personality and Quirk.
+    - Can I make this easy and relatively painless?
+    - Facets. That can be its name. I need to do the following:
+      1) Add it to xAction
+      2) Add it to 
+
+
+      WAIT!
+      Do Facets need to be an in-game type? I think not.
+      I think they can just be a composite gene whose contents unfold into quirks.
+      Then the only storage you need in-game is quirks.
+      This is solved by just consuming the gene as you're planning to do and 
+      distribute the contents.
+      Personalities are only handled at loadtime.
+
+      I want to DO AWAY WITH subcomponents. Break it down into genes; 
+      this is less confusing and lets you handle far more than 3 parts of a
+      component. This will be the only way to do systems of systems later on;
+      it'll let a system pass down "sub"-components to its children as well as
+      have normal non-system components itself.
+
+Gene script layout: 
+  Ahhhh... The nitty gritty.
+  MAKEFILE GENERATION (there can't be too many-- in fact, aim for only one that captures them all, pokemon-style)
+    this makefile should be regenerated if any new gene types appear or if the gene recipe file is updated
+
+  Consider how to express the following:
+    * Mapping KEYS to MUTABLES
+    * Mapping SYSTEMS to EXCLUSIVE [IM]MUTABLES
+    * COMPOSITE COMPOSITION
+    * TOP-LEVEL ONLY of COMPONENTS REQUIRED
+    * RESOURCE FILE STRUCTURE
+    * MAKEFILE generation
+    * BOUNDARIES between GENOMES
+    * What do do with genes where something like position is a
+      subset of another gene like rectangle?
+        - just use the rectangle index. Business as usual.
+          Don't complicate things for just one corner case.
+    * Minimal resource expression; things like implicit should be
+        expressed in the recipe only, and then you're free to
+        simply build each genome without worrying about that.
+
+  How to give something a different, say, position or text script
+    in each level
+      - That's the beauty of genes. You can store multiple vari-
+        ations of a gene without wasting too much extra space.
+      - Between Figaro burning down and Figaro at peace, there
+        should simply be an Action that chooses between different
+        genomes with similar genes.
+      - For elders telling Link of different things based on diff-
+        erent points in the game, it's cleaner to just have an 
+        action that chooses between different statements based on 
+        some game state.
+
+
+  How about we learn by exploration. Make Red's genome:
+ 
+  RED:
+    Body redBody
+    Personality mainCharacterPersonality
+    
+

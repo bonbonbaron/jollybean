@@ -2,8 +2,9 @@ MVP 2D
 ~~~~~~
 \x
 \motion (2d)
+\action
 \animation (2d)
-~rendering (2d) (z-heights) -- ALMOST DONNNNE UGH CAN'T WAIT!
+\rendering (2d)
 collision (2d)
   -- First, See if avoiding pivoting off stagnant entities is practical.
   list hdr
@@ -11,7 +12,6 @@ collision (2d)
   dst rect  <-- for image overlap
   coll rect <-- for collision-triggered logic
   coll type <-- for collision-triggered logic
-\action
 controller
 timer  <-- any way to make this NOT entity-based? would be ideal for animation to hand off its timing logic to this
   think through how you'll pause timers not entity-based... you'll need a *hive* of sorts if possible
@@ -19,15 +19,27 @@ timer  <-- any way to make this NOT entity-based? would be ideal for animation t
   it'd be great if timers could start on the same cycle too
   so we should create a way for immediate processing so we can get the timer ID immediately; that way, pausing an entity's behaviors
     can give a way for a non-entity-based timer ID to be paused as well
-master
+sound
 animated tilemap (2d)   <-- putting this off till last for more immediate reward from the other systems
   grid with the following:
     timer
     collision type
     tile index
-sound
 ---
 gene editor
+  extern = implicit part of recipe
+  every piece of game data needs gene data attached to it. 
+  a list that defines makeup of a genome:
+    Body redMichael
+      Image redMichael
+        Colormap michael
+        ColorPalette reddish
+      Collision
+        CollisionPalette reddish
+        Rect michaelCollRect
+      Animation michaelAnim
+  folders only nest exclusive child folders
+  
 level pipeline
 behavior pipeline
 sound pipeline

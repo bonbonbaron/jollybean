@@ -1,5 +1,10 @@
 #include "x/xAction.h"
 
+/* TODO
+ * I've added Facets for personality inheritance and extendability.
+ * I don't 
+ */
+
 //#define XIniSysFuncDef_(name_) Error x##name_##IniSys(System *sP, void *sParamsP)
 XIniSysFuncDef_(Action) {
   unused_(sParamsP);
@@ -16,8 +21,6 @@ XIniSubcompFuncDef_(Action) {
   XAction *xActionP = (XAction*) sP;
   if (subtype == PERSONALITY) {
     Personality *personalityP = (Personality*) dataP;
-    Quirk **quirkPP = personalityP->quirkPA;
-    Quirk **quirkEndPP = quirkPP + personalityP->nQuirks;
     EntityPersonalityPair epPair = {
       .entity = entity,
       .personalityP = personalityP
@@ -25,12 +28,20 @@ XIniSubcompFuncDef_(Action) {
     frayAdd(xActionP->entityPersonalityPairF, &epPair, NULL);
     // For each quirk in the personality, increment the number of distinct triggers
     // whenever you find one we've never encountered before.
-    for (; quirkPP < quirkEndPP; ++quirkPP) {
-      U32 *histoElemP = &xActionP->histoHivemindTriggerA[ (*quirkPP)->trigger ];
-      if ( *histoElemP  ) {
-        ++xActionP->nDistinctHivemindTriggers;
+    for (; epP < epEndP; ++epP) {
+      Facet **facetPP = epP->personalityP->facetPA; 
+      Facet **facetEndPP = facetPP + epP->personalityP->nFacets;
+      for (; facetPP < facetEndPP; ++facetPP) {
+        Quirk **quirkPP = (*facetPP)->quirkPA; 
+        Quirk **quirkEndPP = (*facetPP)->nQuirks;
+        for (; quirkPP < quirkEndPP; ++quirkPP) {
+          U32 *histoElemP = &xActionP->histoHivemindTriggerA[ (*quirkPP)->trigger ];
+          if ( *histoElemP  ) {
+            ++xActionP->nDistinctHivemindTriggers;
+          }
+          ++( *histoElemP );
+        }
       }
-      ++( *histoElemP );
     }
   }
   else if ( subtype == BLACKBOARD  ) {
@@ -60,14 +71,18 @@ static void _distributeHiveminds(XAction *xActionP) {
   EntityPersonalityPair *epP = xActionP->entityPersonalityPairF;
   EntityPersonalityPair *epEndP = epP + arrayGetNElems(epP);
   for (; epP < epEndP; ++epP) {
-    Quirk **quirkPP = epP->personalityP->quirkPA; 
-    Quirk **quirkEndPP = quirkPP + epP->personalityP->nQuirks;
-    for (; quirkPP < quirkEndPP; ++quirkPP) {
-      // Get pointer to array of entities out of hivemind map.
-      hivemindEntitiesAP = (Entity**) mapGet(xActionP->hivemindMP, (*quirkPP)->trigger);
-      // This is how we fill arrays without storing current index of each one's next empty slot.
-      if (hivemindEntitiesAP) {
-        (*hivemindEntitiesAP)[--xActionP->histoHivemindTriggerA[(*quirkPP)->trigger]] = epP->entity;
+    Facet **facetPP = epP->personalityP->facetPA; 
+    Facet **facetEndPP = facetPP + epP->personalityP->nFacets;
+    for (; facetPP < facetEndPP; ++facetPP) {
+      Quirk **quirkPP = (*facetPP)->quirkPA; 
+      Quirk **quirkEndPP = (*facetPP)->nQuirks;
+      for (; quirkPP < quirkEndPP; ++quirkPP) {
+        // Get pointer to array of entities out of hivemind map.
+        hivemindEntitiesAP = (Entity**) mapGet(xActionP->hivemindMP, (*quirkPP)->trigger);
+        // This is how we fill arrays without storing current index of each one's next empty slot.
+        if (hivemindEntitiesAP) {
+          (*hivemindEntitiesAP)[--xActionP->histoHivemindTriggerA[(*quirkPP)->trigger]] = epP->entity;
+        }
       }
     }
   }
@@ -137,9 +152,7 @@ static void _triggerHivemind(XAction *xActionSysP, Message *msgP) {
 }
 
 XGetShareFuncDefUnused_(Action);
-
 XPostMutateFuncDefUnused_(Action);
-
 XPostActivateFuncDefUnused_(Action);
 XPostDeactivateFuncDefUnused_(Action);
 
