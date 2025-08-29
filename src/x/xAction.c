@@ -1,9 +1,5 @@
 #include "x/xAction.h"
 
-/* TODO
- * I've added Facets for personality inheritance and extendability.
- * I don't 
- */
 XConsumeGeneFuncDefUnused_(Action);
 
 //#define XIniSysFuncDef_(name_) Error x##name_##IniSys(System *sP, void *sParamsP)
@@ -11,13 +7,16 @@ XIniSysFuncDef_(Action) {
   unused_(sParamsP);
   XAction *xActionP = (XAction*) sP;
   xActionP->nDistinctHivemindTriggers = 0;
-  xActionP->entityPersonalityPairF = frayNew( sizeof( EntityPersonalityPair ), xGetNComps(sP), TEMPORARY );
+  // TODO: figure out how to do away with EntityPersonalityPair
+  // xActionP->entityPersonalityPairF = frayNew( sizeof( EntityPersonalityPair ), xGetNComps(sP), TEMPORARY );
   xActionP->entityBlackboardPairF = frayNew( sizeof( EntityBlackboardPair ), xGetNComps(sP), TEMPORARY );
   xActionP->histoHivemindTriggerA = arrayNew( sizeof(U32), KEY_MAX, TEMPORARY );
   memset( xActionP->histoHivemindTriggerA, 0, sizeof(U32) * KEY_MAX );
 }
 
 //#define XIniSubcompFuncDef_(name_)  Error x##name_##IniSubcomp(System *sP, const Entity entity, const Key subtype, void *dataP)
+// TODO relocate logic and convert to Gene
+#if 0
 XIniSubcompFuncDef_(Action) {
   XAction *xActionP = (XAction*) sP;
   if (subtype == PERSONALITY) {
@@ -53,11 +52,12 @@ XIniSubcompFuncDef_(Action) {
     frayAdd( xActionP->entityBlackboardPairF, &ebbPair, NULL );
   }
 }
+#endif
 
 static void _distributeHiveminds(XAction *xActionP) {
   // Histo the number of trees existing for each trigger.
   assert (xActionP && xActionP->histoHivemindTriggerA);
-  Entity **hivemindEntitiesAP = NULL;
+  // /Entity **hivemindEntitiesAP = NULL;  TODO uncomment when ready
   // Allocate hivemind map
   xActionP->hivemindMP = mapNew( ARRAY, sizeof(Entity*), xActionP->nDistinctHivemindTriggers, GENERAL);
   // Allocate empty hiveminds.
@@ -69,6 +69,7 @@ static void _distributeHiveminds(XAction *xActionP) {
     }
   }
   // Fill the hiveminds.
+#if 0
   EntityPersonalityPair *epP = xActionP->entityPersonalityPairF;
   EntityPersonalityPair *epEndP = epP + arrayGetNElems(epP);
   for (; epP < epEndP; ++epP) {
@@ -87,6 +88,7 @@ static void _distributeHiveminds(XAction *xActionP) {
       }
     }
   }
+#endif
 }
 
 XPostprocessCompsDef_(Action) {

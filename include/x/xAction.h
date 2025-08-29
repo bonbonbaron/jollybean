@@ -78,11 +78,9 @@ typedef struct {
 	Map                   *hivemindMP; // maps triggers to arrays of 
   Key                    nDistinctHivemindTriggers;
   U32                   *histoHivemindTriggerA;
-  EntityPersonalityPair *entityPersonalityPairF;
+  // EntityPersonalityPair *entityPersonalityPairF;  // TODO get rid of this
   EntityBlackboardPair  *entityBlackboardPairF;
 } XAction;
-XIniSubcompFuncDef_(Action);
-XPostprocessCompsDef_(Action);
 
 extern System *sActionP;
 #endif

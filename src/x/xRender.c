@@ -1,4 +1,8 @@
 #include "x/xRender.h"
+#include "data/share.h"
+
+// TODO
+XConsumeGeneFuncDefUnused_(Render);
 
 // rendering system owns the graphical GUI. That way, excluding this system neatly excludes graphics.
 static Gui *_guiP = NULL; 
@@ -460,8 +464,9 @@ static void _updateSrcRects(XRender *xP, Atlas *atlasP) {
   // Get all the animation rectangles we need to update when building our texture atlas.
   // First count all the rectangles we're going to need.
   // At this point, empty components will already have been added by xAddComp().
-  XRenderComp* cP;
+  // XRenderComp* cP;  // TODO uncomment when ready to do below
 
+  /* TODO do away with subcomp owner nastiness
   SubcompOwner *scoP = xP->system.subcompOwnerMP->mapA;
   SubcompOwner *scoEndP = scoP + xP->system.subcompOwnerMP->population;
 
@@ -504,6 +509,7 @@ static void _updateSrcRects(XRender *xP, Atlas *atlasP) {
       mailboxWrite(xP->system.mailboxF, ANIMATION, scoP->owner, UPDATE_RECT, 0, NULL);
     }
   }
+  */
 }
 
 // Updates colormaps' indices to sorted rects so we can track their atlas XY offsets
@@ -520,6 +526,14 @@ void updateCmSrcRectIndices(Image **imgPF, Atlas *atlasP) {
 XPostprocessCompsDef_(Render) {
   XRender *xP = (XRender*) sP;
   
+  // Get source rect and rect offset maps. Give both a chance to run if we enter this block.
+  xP->dstRectMP = shareGetMap(DST_RECT);  
+  xP->zHeightMP = shareGetMap(Z_HEIGHT);  // Z-heights are shared since collision also needs them.
+  xP->srcRectMP = shareGetMap(SRC_RECT);  
+  // If there's no animation system, there won't be a source rect shared map in master.
+  xP->offsetRectMP = shareGetMap(RECT_OFFSET);  
+  // TODO make it so a map can just have miscellaneous pointers so we don't need a "BLOB" map with one elem, same for GUI
+  xP->blobLF    = (List*) shareGetPointer(BLOB_KEY_);
   // Uncondtionally try to start the GUI. It's safe.
   _manageGui();
 
@@ -591,19 +605,6 @@ XPostDeactivateFuncDef_(Render) {
   XRenderComp* cP = &((XRenderComp*) sP->cF)[ changesP->newIdx ];
   assert( *cP->zHeightP < N_LAYERS_SUPPORTED );
   listRemove( &xP->layerListA[ *cP->zHeightP ], &cP->hdr );
-}
-
-// Only get the render and window. Components' src & dst rects come from SCENE_START stimulus to XAction.
-XGetShareFuncDef_(Render) {
-  XRender *xP = (XRender*) sP;
-  // Get source rect and rect offset maps. Give both a chance to run if we enter this block.
-  xP->dstRectMP = mapGetNestedMapP(shareMPMP, DST_RECT);  
-  xP->zHeightMP = mapGetNestedMapP(shareMPMP, Z_HEIGHT);  // Z-heights are shared since collision also needs them.
-  xP->srcRectMP = mapGetNestedMapP(shareMPMP, SRC_RECT);  
-  // If there's no animation system, there won't be a source rect shared map in master.
-  xP->offsetRectMP = mapGetNestedMapP(shareMPMP, RECT_OFFSET);  
-  // TODO make it so a map can just have miscellaneous pointers so we don't need a "BLOB" map with one elem, same for GUI
-  xP->blobLF    = (List*) mapGetNestedMapPElem(shareMPMP, SINGLETON_TYPE, BLOB_KEY_, NONMAP_POINTER);
 }
 
 XPostMutateFuncDef_(Render) {

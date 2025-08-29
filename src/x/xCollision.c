@@ -1,6 +1,14 @@
 #include "x/xCollision.h"
 #include "jb.h"
 
+// TODO
+XConsumeGeneFuncDefUnused_(Collision);
+XPostprocessCompsDefUnused_(Collision);
+XPostMutateFuncDefUnused_(Collision);
+XPostActivateFuncDefUnused_(Collision);
+XPostDeactivateFuncDefUnused_(Collision);
+
+
 // Based on the "Performance Comparisons" link, we use brute force until
 // the number of moving elements exceeds 200. When it does, we switch to the box-
 // intersect algorithm found in link to the paper. 
@@ -56,13 +64,12 @@ void xCollisionProcessMessage(System *sP, Message *msgP) {
 
 #define RECT (1)  // TODO move to enum (call these "keychains")
 #define LAYER (2)  // TODO move to enum (call these "keychains")
+#if 0  // TODO move to postprocess
 XGetShareFuncDef_(Collision) {
   XCollision *xCollisionSysP = (XCollision*) sP;
   // Get system the rectangle array from master.
-  Map *rectMP = (Map*) mapGet(shareMPMP, RECT);
-  assert( rectMP );
-  Map *layerMP = (Map*) mapGet(shareMPMP, LAYER);
-  assert( layerMP );
+  Map *rectMP = shareGetMap( DST_RECT );
+  Map *layerMP = shareGetMap( LAYER );
   xCollisionSysP->rectA = rectMP->mapA;
   // Give each component the index to its rectangle.
   XCollisionComp *cP = sP->cF;
@@ -71,12 +78,13 @@ XGetShareFuncDef_(Collision) {
   U8 *layerP;
   for (; cP < cEndP; ++cP) {
     cP->entity = sP->cIdx2eA[cP - cStartP];
-    cP->rectIdx = mapGetIndex(rectMP, cP->entity);
+    cP->collRect.idx = mapGetIndex(rectMP, cP->entity);
     layerP = (U8*) mapGet(layerMP, cP->entity);
     assert( layerP );
     cP->layer = *layerP;
   }
 }
+#endif
 
 inline static Bln _collided(const register Rect_ *r1P, const register Rect_ *r2P) {
   return r1P->y        < r2P->y + r2P->h &&  
@@ -118,7 +126,7 @@ void xCollisionRun(System *sP) {
   Rect_ *rectA = xCollSysP->rectA;
   // Get camera.
   XCollisionComp *camCP = (XCollisionComp*) xGetCompPByEntity(sP, xCollSysP->cameraEntity);
-  Rect_ camRect = rectA[camCP->rectIdx];
+  Rect_ camRect = rectA[camCP->collRect.idx];
   Entity cameraEntity = camCP->entity;
   // You'll need this later.
   const U32 N_TILES_WIDE = xCollSysP->worldWidth >> TILE_DIM_LOG;
@@ -127,7 +135,7 @@ void xCollisionRun(System *sP) {
 
   // First check onscreen moving elems for anti-collisions in case someone left the screen.
   while (cP < cFirstPausedP) {
-    if (!_collided(&camRect, &rectA[cP->rectIdx])) {
+    if (!_collided(&camRect, &rectA[cP->collRect.idx])) {
       xPauseComponentByEntity(sP, cP->entity);
       _alertAntiCollision(sP, cP->entity, cameraEntity); // Active elems deactivate in two swaps
       --cFirstPausedP;                                       // when there are paused elems between. 
@@ -138,7 +146,7 @@ void xCollisionRun(System *sP) {
   // Second, if camera's in motion, check paused elems (if any) for anti-collisions. 
   if (xCollSysP->cameraIsMoving) {
     while (cP < cFirstInactiveP) {
-      if (!_collided(&camRect, &rectA[cP->rectIdx])) {
+      if (!_collided(&camRect, &rectA[cP->collRect.idx])) {
         xDeactivateComponentByEntity(sP, cP->entity);  // paused elems deactivate in one swap
         --cFirstInactiveP;
       }
@@ -147,7 +155,7 @@ void xCollisionRun(System *sP) {
     }
     // Then check everyone else for camera collisions.
     for (cP = cFirstInactiveP; cP < cEndP; ++cP)  {
-      if (_collided(&camRect, &rectA[cP->rectIdx])) {
+      if (_collided(&camRect, &rectA[cP->collRect.idx])) {
         _alertCollisions(sP, rectA, cP, camCP);
       }
     }
@@ -155,7 +163,7 @@ void xCollisionRun(System *sP) {
   // Always test onscreen moving entities for collisions with other onscreen entities.
   for (cP = cStartP; cP < cFirstPausedP; ++cP) {
     for (XCollisionComp *c2P = cFirstPausedP; c2P < cEndP; ++c2P) {
-      if (cP->layer == c2P->layer && _collided(&rectA[cP->rectIdx], &rectA[c2P->rectIdx])) {
+      if (cP->layer == c2P->layer && _collided(&rectA[cP->collRect.idx], &rectA[c2P->collRect.idx])) {
         _alertCollisions(sP, rectA, cP, c2P);
       }
     }
@@ -167,7 +175,7 @@ void xCollisionRun(System *sP) {
   Rect_ entityRect;
   // for each moving component, check for soft- and hard-collisions against all active comps
   for (cP = cStartP; cP < cFirstPausedP; ++cP) {
-    entityRect = rectA[cP->rectIdx];
+    entityRect = rectA[cP->collRect.idx];
     xStart = entityRect.x >> TILE_DIM_LOG;
     xEnd   = xStart + ((entityRect.w + HALF_TILE_DIM) >> TILE_DIM_LOG);
     xN     = xEnd - xStart;
@@ -190,5 +198,4 @@ void xCollisionRun(System *sP) {
 // System definition
 //======================================================
 #define FLAGS_HERE (0)
-#define X_(name_, id_, fieldToMutate_, flags_) \
-X_(Collision, COLLISION, FLAGS_HERE);
+X_(Collision, COLLISION, collRect, 0);

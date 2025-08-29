@@ -8,17 +8,26 @@
  * We need something similar to animation: a map of arrays.
  * But instead of timing, it relies on a message from animation system to tell it when.
  */
+
+typedef struct {
+  Key mapIdx;  // this'll allow fast switching between rects across animation frames
+  Key idx;
+} CollRect;
 typedef struct {
   Entity entity;   // Collider
   Key    type;     // Colliding elements react according to each other's type.
   Key    layer;
-  Key    rectIdx;  // Rect index of Collidee (i swear i don't talk like this)
+  CollRect collRect;
 } Collision;
 
 typedef struct {
   U8 nCollisionTypes;
   U8 *colissionA;
 } CollisionPalette;
+
+typedef struct XCollisionMutation {
+  int idkfornow;
+} XCollisionMutation;
 
 typedef Collision XCollisionComp;
 

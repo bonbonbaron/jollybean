@@ -41,4 +41,13 @@ Map* shareGetMap( const Key KEY ) {
 #endif
 }
 
+Map* shareGetPointer( const Key KEY ) {
+#ifndef NDEBUG
+  void* rawPtr = mapGetNestedMapP(_sharedMemRawPointerMapP, KEY);
+  assert( rawPtr );
+  return rawPtr;
+#else
+  return mapGetNestedMapP(_sharedMemRawPointerMapP, KEY);
+#endif
+}
 // void shareSetMapOfMapsElem()
