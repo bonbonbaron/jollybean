@@ -1,11 +1,9 @@
 TODO
   be able to chain together disparate genes of the same type to allow INHERITANCE And EXTENDABILITY
-    - the best way I can conceive of doing this is adding a layer between Personality and Quirk.
-    - Can I make this easy and relatively painless?
-    - Facets. That can be its name. I need to do the following:
-      1) Add it to xAction
-      2) Add it to 
-
+    Does this need to be done at the blackboard level too?
+    Remind me what those look liek:
+      GOOMBA_BATTLESTATS_KEY -> Gommba BattleStats struct pointer
+      
 
       WAIT!
       Do Facets need to be an in-game type? I think not.
@@ -20,6 +18,9 @@ TODO
       component. This will be the only way to do systems of systems later on;
       it'll let a system pass down "sub"-components to its children as well as
       have normal non-system components itself.
+
+      Existing systems' outmoded xIniSubcomp()s will serve as a good scaffold
+      for making xConsumeGene()'s.
 
 Gene script layout: 
   Ahhhh... The nitty gritty.

@@ -18,8 +18,7 @@ typedef struct {
 
 // Images
 XIniSysFuncDef_(Motion);
-XGetShareFuncDef_(Motion);
-XIniSubcompFuncDef_(Motion);
+XConsumeGeneFuncDef_(Motion);
 XPostprocessCompsDef_(Motion);
 XProcMsgFuncDef_(Motion);
 XRunFuncDef_(Motion);

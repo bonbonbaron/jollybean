@@ -51,15 +51,9 @@ typedef struct {
   Action actionU;
 } Quirk;
 
-typedef struct {
-  U32 nQuirks;
-  Quirk **quirkPA;
-} Personality;   // Gene-level data we expect to receive
-
-typedef struct {
-  Entity entity;
-  Personality *personalityP;
-} EntityPersonalityPair;
+// TODO do away with personality as a game type, because we want 
+//      to allow for quirks and facets on the same level to do
+//      away with unnecessary abstractions.
 
 typedef struct {
   Entity entity;

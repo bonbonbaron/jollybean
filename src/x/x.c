@@ -121,77 +121,6 @@ void xAddMutationMap(System *sP, Entity entity, Map *mutationMP) {
 }
 
 
-void xAddComp(System *sP, Entity entity, void *compDataP) {
-  assert (sP &&  entity);
-  // Skip entities who already have a component in this system.
-  if (!mapGet(sP->e2cIdxMP, entity)) {
-    // Put component in first empty slot. (Will be zeros if this is a map. That's okay.)
-    U32 cIdx; 
-    if (compDataP) {
-      frayAdd(sP->cF, compDataP, &cIdx); 
-    }
-    else {
-      frayAddEmpty(sP->cF, &cIdx);
-    }
-    // Add lookups from C -> E and E -> C.
-    mapSet(sP->e2cIdxMP, entity, &cIdx);
-    sP->cIdx2eA[cIdx] = entity;
-  }
-}
-
-void _xAddEmptyComp(System *sP, Entity entity) {
-  assert (sP &&  entity);
-  // Skip entities who already have a component in this system.
-  if (!mapGet(sP->e2cIdxMP, entity)) {
-    // Put component in first empty slot. (Will be zeros if this is a map. That's okay.)
-    U32 cIdx; 
-    frayAddEmpty(sP->cF, &cIdx);
-    // Add lookups from C -> E and E -> C.
-    mapSet(sP->e2cIdxMP, entity, &cIdx);
-    sP->cIdx2eA[cIdx] = entity;
-  }
-}
-
-inline static void _iniSubcompOwner(System *sP, Entity entity, Key subcompType, void *dataP) {
-  // If subcomponent type doesn't fall into subcomponent mask
-  assert ((subcompType & MASK_COMPONENT_SUBTYPE) == subcompType);
-  SubcompOwner newSubcompOwner = {0};
-  newSubcompOwner.owner = entity;
-  newSubcompOwner.subcompA[getSubcompIdx_(subcompType)] = dataP;
-  mapSet(sP->subcompOwnerMP, entity, &newSubcompOwner);
-}
-
-
-void xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP) {
-  assert (sP &&  entity &&  compType);   // entityDataP is allowed to be null so xAddComp() can call frayAddEmpty() in such a case.
-  // Make sure the component belongs to this system. This is only checked at load-time.
-  assert ((compType & MASK_COMPONENT_TYPE) == sP->id);
-  // If upper two bits are nonzero, this is a subcomponent. 
-  if (compType & MASK_COMPONENT_SUBTYPE) {
-    // If entity doesn't own any subcomponents yet, make a slot for it in subcomp ownership map.
-    SubcompOwner *subcompOwnerP = mapGet(sP->subcompOwnerMP, entity);
-    Key subcompType = compType & MASK_COMPONENT_SUBTYPE;
-    if (!subcompOwnerP) {
-      _iniSubcompOwner(sP, entity, subcompType, entityDataP);
-    }
-    // Otherwise, update its existing onwership record.
-    else {
-      subcompOwnerP->subcompA[getSubcompIdx_(subcompType)] = entityDataP;
-    }
-    // Now you can operate on the subcomponent in the system carefree.
-    sP->iniSubcomp(sP, entity, compType & MASK_COMPONENT_SUBTYPE, entityDataP);
-    /* Let's take the burden of adding components off our individual systems 
-     * (unless they insist otherwise with their flags) so they only have to 
-     * worry about mutations. */
-    // Entity needs a component even if it's not populated right now.
-    _xAddEmptyComp(sP, entity);
-  }
-  // Else it's the main component; feed it straight in baby.
-  else {
-    xAddComp(sP, entity, entityDataP);
-  }
-}
-
 void xIniSys(System *sP, U32 nComps, void *miscP) {
   // Sytems with special parts need to initialize maps in sIniU().
   sP->cF = frayNew(sP->compSz, nComps, GENERAL );
@@ -207,7 +136,6 @@ void xIniSys(System *sP, U32 nComps, void *miscP) {
   // Also, give it ample room to handle multiple messages per entity.
 #define MAILBOX_MULTIPLY_NUM_SLOTS (3)
   sP->mailboxF = shareNewInbox( sP->id, nComps * MAILBOX_MULTIPLY_NUM_SLOTS );
-  sP->subcompOwnerMP = mapNew(RAW_DATA, sizeof(SubcompOwner), nComps, TEMPORARY );
   // Finally, call the system's unique initializer.
   (*sP->iniSys)(sP, miscP);  // fail-assert if this bombs
 }
@@ -219,10 +147,6 @@ void xMutateComponent(System *sP, Entity entity, Key newCompKey) {
   if (!(sP->flags & FLG_NO_MUTATIONS_)) {
     // Get the nested map of mutations for this particular entity.
     Map *mutationMP = mapGetNestedMapP(sP->mutationMPMP, entity);
-#if 0  /* I don't think we need to guard against map element types. xAction uses Quirk pointers. */
-    // Ensure the nested map has raw data-- nothing funky like pointers or (more) inner maps.
-    assert(mutationMP->elemType == RAW_DATA);
-#endif
     // Get a pointer to the entity's component.
     void* cP = xGetCompPByEntity(sP, entity);
     if (cP) {

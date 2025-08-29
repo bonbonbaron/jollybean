@@ -1,0 +1,25 @@
+I really hate histos.
+I'd like to know how many things i need to make before i make them.
+Counting should be done at resource-processing time.
+Fortunately, the only system I have that does this now is Actino.
+How can I make life easier and faster there?
+  * hivemind needs to know how many triggers there are
+  * HM also needs to know how many members of each trigger there are
+  * damn, that seems ungeneralizable. But I can just say screw that and
+    go ahead and make a counter at generation time anyway.
+  * HOw does action receive that? It's not going to be stored in a gene,
+    and the gene histo is already mainly purposed for gene types for system
+    init.
+  * Okay, so if I want to not histo or anything, then the only other recourse
+    I cna think of is vector-like behavior. Best way to acheive this is to
+      1) make an array "too large"
+      2) resize it once it's copmlete
+      3) rewind the memory block
+    But that has to be done before I allocate anything else. That means
+      1) i still need to know how many distinct triggers there are.
+      2) Every element of the ... CRAP! I still have to allocate one.
+         I surrender. I'll histo in Action.
+
+         OR....
+
+         ... honsetly this battle isn't very important to win righ tnow

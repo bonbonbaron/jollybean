@@ -1,4 +1,5 @@
 #include "x/xMotion.h"
+#include "data/share.h"
 
 /* REQUIREMENTS
  *
@@ -10,18 +11,14 @@
 // Initialize Motion's system.
 //======================================================
 XIniSysFuncDefUnused_(Motion);
-XIniSubcompFuncDefUnused_(Motion);
+XConsumeGeneFuncDefUnused_(Motion);
 XPostActivateFuncDefUnused_(Motion);
 XPostDeactivateFuncDefUnused_(Motion);
-
-XGetShareFuncDef_(Motion) {
-  assert (sP && shareMPMP);
-  ((XMotion*) sP)->dstRectMP = mapGetNestedMapP(shareMPMP, DST_RECT);
-}
 
 XPostprocessCompsDef_(Motion) {
   assert(sP);
   XMotion *xP = (XMotion*) sP;
+  xP->dstRectMP = shareGetMap( DST_RECT );
   Entity *entityP = sP->cIdx2eA;
   Entity *entityEndP = entityP + arrayGetNElems(sP->cIdx2eA);
 

@@ -4,6 +4,7 @@
  * I've added Facets for personality inheritance and extendability.
  * I don't 
  */
+XConsumeGeneFuncDefUnused_(Action);
 
 //#define XIniSysFuncDef_(name_) Error x##name_##IniSys(System *sP, void *sParamsP)
 XIniSysFuncDef_(Action) {
@@ -151,7 +152,6 @@ static void _triggerHivemind(XAction *xActionSysP, Message *msgP) {
   }
 }
 
-XGetShareFuncDefUnused_(Action);
 XPostMutateFuncDefUnused_(Action);
 XPostActivateFuncDefUnused_(Action);
 XPostDeactivateFuncDefUnused_(Action);
@@ -179,4 +179,4 @@ void xActionRun(System *sP) {
   }
 }
 
-X_(Action, 2, quirkP, FLG_NO_CF_SRC_A_);
+X_(Action, 2, quirkP, 0);

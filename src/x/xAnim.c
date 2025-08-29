@@ -2,7 +2,7 @@
 
 // Unused X functions
 XIniSysFuncDefUnused_(Anim);
-XIniSubcompFuncDefUnused_(Anim);
+XConsumeGeneFuncDefUnused_(Anim);
 XPostprocessCompsDefUnused_(Anim);
 XPostActivateFuncDefUnused_(Anim);
 XPostDeactivateFuncDefUnused_(Anim);
@@ -46,6 +46,8 @@ XProcMsgFuncDef_(Anim) {
   }
 }
 
+// TODO move this to postprocess()
+#if 0
 XGetShareFuncDef_(Anim) {
   assert(sP);
   // Get shared inner maps of resources we need (offsets and source rects)
@@ -68,6 +70,7 @@ XGetShareFuncDef_(Anim) {
     assert (cP->dstRectP);
   }
 }
+#endif
 
 XPostMutateFuncDef_(Anim) {
   assert(sP && cP);

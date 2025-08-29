@@ -31,4 +31,14 @@ Message* shareGetInbox( const Key KEY ) {
 #endif
 }
 
+Map* shareGetMap( const Key KEY ) {
+#ifndef NDEBUG
+  Map* nestedMapP = mapGetNestedMapP(_sharedMemMapOfMapsP, KEY);
+  assert( nestedMapP );
+  return nestedMapP;
+#else
+  return mapGetNestedMapP(_sharedMemMapOfMapsP, KEY);
+#endif
+}
+
 // void shareSetMapOfMapsElem()
