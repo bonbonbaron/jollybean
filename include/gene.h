@@ -51,10 +51,7 @@ typedef struct {
   U8 nGenes;
 } Composite;
 
-typedef struct Subtree {   // Each subtree starts a new entity.
-  Composite composite;
-  Key nGenes;
-} Subtree;  // Only use root for a scene's top level.
+typedef Composite Subtree;  // Only use root for a scene's top level.
 
 typedef struct SysLevelGeneHisto {
   Key sysId;

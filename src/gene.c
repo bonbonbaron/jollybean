@@ -26,6 +26,9 @@ static void _distributeGene( Entity entity, Gene **genePP, StripDataS **sdPF ) {
 
   Gene* geneP = *genePP;
   switch (geneP->class) {
+    case SUBTREE:  // a subtree *is* a composite. "Subtree" just tells us the start of a new entity.
+      ++entity;
+      // fall through
     case COMPOSITE:  // recurse  back into this function
       Gene** compositeGenePP = geneP->u.composite.genePA;
       Gene** compositeGeneEndPP = compositeGenePP + geneP->u.composite.nGenes;
@@ -33,13 +36,18 @@ static void _distributeGene( Entity entity, Gene **genePP, StripDataS **sdPF ) {
         _distributeGene(entity, compositeGenePP, sdPF );
       }
       break;
+    case VARIANT:
+      // TODO
+      break;
     case MEDIA:
       // Defer inflation 
       if (!((*((StripDataS**) geneP->u.unitary.dataP))->flags & SD_SET_FOR_INFLATION_)) {
         (*((StripDataS**) geneP->u.unitary.dataP))->flags |= SD_SET_FOR_INFLATION_;
         frayAdd(sdPF, geneP->u.unitary.dataP, NULL);
       }
-    case EXCLUSIVE_MUTABLE:  // Whether mutable or immutable, each system will handle it.
+      // fall through
+    case EXCLUSIVE_MUTABLE:  
+      // fall through
     case EXCLUSIVE_IMMUTABLE:
       System* sysP = shareGetSystem( geneP->u.unitary.systemId );
       sysP->consumeGene(sysP, entity, geneP->u.unitary.dataP);
