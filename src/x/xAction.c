@@ -16,10 +16,11 @@ XIniSysFuncDef_(Action) {
 
 // void x##name_##ConsumeGene(System *sP, const Gene *geneP)
 XConsumeGeneFuncDef_(Action) {
-  XAction* xP = (XAction*) sP;
+  // XAction* xP = (XAction*) sP;
   assert( sP );
   assert( geneP );
   // Gene needs a geneFindNext( TYPE ) function.
+}
 
 
 //#define XIniSubcompFuncDef_(name_)  Error x##name_##IniSubcomp(System *sP, const Entity entity, const Key subtype, void *dataP)

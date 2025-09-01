@@ -1,5 +1,6 @@
 #include "data/map.h"
 #include "data/mail.h"
+#include "x/x.h"
 
 #define MAX_NUM_KEYS_ ( ( sizeof(Key) << 8 ) - 1 )
 

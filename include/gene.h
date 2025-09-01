@@ -42,15 +42,19 @@ typedef struct {
 /******** GENE  *********/
 /************************/
 
-typedef enum {ROOT, SUBTREE, COMPOSITE, MEDIA, SHARED, VARIANT, EXCLUSIVE_IMMUTABLE, EXCLUSIVE_MUTABLE, IMPLICIT} GeneClass;
+typedef enum GeneClass {ROOT, SUBTREE, COMPOSITE, MEDIA, SHARED, VARIANT, EXCLUSIVE_IMMUTABLE, EXCLUSIVE_MUTABLE, IMPLICIT} GeneClass;
 
 struct _Gene;
 
 typedef struct {
-  U8 nGenes;
-  U8 type;
   struct _Gene **genePA;   // pointers prevent multiple entities with same genes from reinitializing them
+  U8 nGenes;
 } Composite;
+
+typedef struct Subtree {   // Each subtree starts a new entity.
+  Composite composite;
+  Key nGenes;
+} Subtree;  // Only use root for a scene's top level.
 
 typedef struct SysLevelGeneHisto {
   Key sysId;
@@ -61,20 +65,17 @@ typedef struct _Gene {
 	U8 class;
   union {
     struct unitary {
+      void *dataP;     // the location of the gene's actual data
       U8 systemId;     // system ID this gene belongs to 
       U8 size;         // sizeof destination component type (so we can memcpy the right size into the ECS target system/sharedPool/BB)
       Key key;         // key that lets you mutate a seed's gene to this one; 0 for immutable
-      void *dataP;     // the location of the gene's actual data
-    } unitary;
-    struct variant {        // Variants allow you to "copy" a subtree many times while reading the tree only once. 
-      struct _Gene* geneP;  // Each variation's slight difference is expressed in variations A.
-      Composite variationsA;
-    } variant;
+    } unitary;  // 11 bytes
+    struct variant {          // Variants allow you to read a tree once and copy it mulitple times with 
+      Subtree subtree;       // small variations, indicated in variations A. Those get tacked on.
+      Composite variations;  // They can either add a new gene or override an existing one.
+    } variant;  // 17 bytes
     Composite composite;
-    struct subtree {   // Each subtree starts a new entity.
-      Composite composite;
-      Key nGenes;
-    } subtree;  // Only use root for a scene's top level.
+    Subtree subtree;
     struct root {
       Composite composite;
       Key nGeneTypes;

@@ -1,5 +1,5 @@
 #include "x/xRender.h"
-#include "data/share.h"
+#include "share.h"
 
 // TODO
 XConsumeGeneFuncDefUnused_(Render);

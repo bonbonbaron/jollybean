@@ -1,5 +1,6 @@
 #ifndef IMPLICIT_GENES_
 #include "jb.h"
+#include "interface/interface.h"
 
 // Implicit genes can go with exclusive genes, which must be masked by MASK_COMPONENT_TYPE.
 

@@ -1,5 +1,5 @@
 #include "x/x.h"
-#include "data/share.h"
+#include "share.h"
 
 inline static Entity _getEntityByCompIdx(System *sP, Key compIdx) {
   return sP->cIdx2eA[compIdx];

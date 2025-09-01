@@ -78,7 +78,7 @@ struct _System;
 
 // Function pointer types
 typedef void (*XIniSU)(struct _System *sP, void* sParamsP);
-typedef void (*XConsumeGeneU)(struct _System *sP, const Gene *geneP);
+typedef void (*XConsumeGeneU)(struct _System *sP, const Entity entity, const Gene *geneP);
 typedef void (*XRunU)(struct _System *sP);
 typedef void (*XProcMsgU)(struct _System *sP, Message *messageP);
 typedef void (*XPostprocessCompsU)(struct _System *sP);
@@ -97,7 +97,7 @@ typedef void (*XPostDeactivateU)(struct _System *sP, FrayChanges *changesP);  //
   unused_(sParamsP);\
 }
 
-#define XConsumeGeneFuncDef_(name_) void x##name_##ConsumeGene(System *sP, const Gene *geneP)
+#define XConsumeGeneFuncDef_(name_) void x##name_##ConsumeGene(System *sP, const Entity entity, const Gene *geneP)
 
 #define XIniSysFuncDef_(name_) void x##name_##IniSys(System *sP, void *sParamsP)
 
@@ -107,7 +107,7 @@ typedef void (*XPostDeactivateU)(struct _System *sP, FrayChanges *changesP);  //
 }
 #define XProcMsgFuncDef_(name_)  void x##name_##ProcessMessage(System *sP, Message *msgP)
 
-#define XConsumeGeneFuncDefUnused_(name_) void x##name_##ConsumeGene(System *sP, const Gene *geneP) {\
+#define XConsumeGeneFuncDefUnused_(name_) void x##name_##ConsumeGene(System *sP, const Entity entity, const Gene *geneP) {\
   unused_(sP);\
   unused_(geneP);\
 }
@@ -174,9 +174,7 @@ typedef struct _System {
 
 void    xMutateComponent(System *sP, Entity entity, Key newCompKey);
 void    xIniSys(System *sP, U32 nComps, void *miscP);
-void    xAddEntity(System *sP, Entity entity, Key compType, void *compDataP, Map *mutationMP);
 void    xAddMutationMap(System *sP, Entity entity, Map *mutationMP);
-//void*    xGetComp(System *sP, Entity entity);
 Entity   xGetEntityByVoidComponentPtr(System *sP, void *componentP);
 U32      xGetNComps(System *sP);
 void*    xGetCompValP(System *sP, Entity entity, Key key);

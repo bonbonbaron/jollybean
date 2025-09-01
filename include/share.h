@@ -1,11 +1,13 @@
 #ifndef SHARE_H
 #define SHARE_H
 #include "data/mail.h"
+#include "x/x.h"
 
 void shareIni( const Key N_SYSTEM_TYPES );
 Message* shareNewInbox( const Key SYSTEM_ID, const Key N_SLOTS );
 Message* shareGetInbox( const Key KEY );
 Map*     shareGetMap( const Key KEY );
 Map*     shareGetPointer( const Key KEY );
+System*  shareGetSystem( const Key KEY );
 
 #endif // SHARE_H
