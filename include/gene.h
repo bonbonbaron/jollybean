@@ -42,7 +42,7 @@ typedef struct {
 /******** GENE  *********/
 /************************/
 
-typedef enum {ROOT, EXCLUSIVE_IMMUATABLE, EXCLUSIVE_MUTABLE, MEDIA, SHARED, COMPOSITE, IMPLICIT} GeneClass;
+typedef enum {ROOT, SUBTREE, COMPOSITE, MEDIA, SHARED, VARIANT, EXCLUSIVE_IMMUTABLE, EXCLUSIVE_MUTABLE, IMPLICIT} GeneClass;
 
 struct _Gene;
 
@@ -58,25 +58,28 @@ typedef struct SysLevelGeneHisto {
 } SysLevelGeneHisto;
 
 typedef struct _Gene {
-	GeneClass class;
+	U8 class;
   union {
     struct unitary {
       U8 systemId;     // system ID this gene belongs to 
       U8 size;         // sizeof destination component type (so we can memcpy the right size into the ECS target system/sharedPool/BB)
       Key key;         // key that lets you mutate a seed's gene to this one; 0 for immutable
-      U8 isIngredient; // tells master whether to feed this into a system
       void *dataP;     // the location of the gene's actual data
     } unitary;
+    struct variant {        // Variants allow you to "copy" a subtree many times while reading the tree only once. 
+      struct _Gene* geneP;  // Each variation's slight difference is expressed in variations A.
+      Composite variationsA;
+    } variant;
     Composite composite;
-    struct Subtree {   // Each subtree starts a new entity.
+    struct subtree {   // Each subtree starts a new entity.
       Composite composite;
       Key nGenes;
-    } Subtree;  // Only use root for a scene's top level.
-    struct Root {
+    } subtree;  // Only use root for a scene's top level.
+    struct root {
       Composite composite;
       Key nGeneTypes;
       Key* geneTypeHistoA;  // has a histo of the entire genome so we don't have to calculate it at runtime
-    } Root;  // Only use root for a scene's top level.
+    } root;  // Only use root for a scene's top level.
   } u;
 } Gene;
 

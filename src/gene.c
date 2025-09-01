@@ -20,7 +20,7 @@ static void _inflateMedia(StripDataS **sdPF) {
 }
 
 static void _distributeGene( Entity entity, Gene **genePP, StripDataS **sdPF ) {
-  switch (gene.geneClass) {
+  switch (gene.class) {
     case COMPOSITE_GENE:  // recurse  back into this function
       Gene** compositeGenePP = gene.u.composite.genePA;
       Gene** compositeGeneEndPP = compositeGenePP + gene.u.composite.nGenes;
@@ -40,6 +40,7 @@ static void _distributeGene( Entity entity, Gene **genePP, StripDataS **sdPF ) {
       xAddEntityData(*childSysPP, entity, gene.u.unitary.type, gene.u.unitary.dataP);
       break;
     default:
+      assert(false); // gene has an incompatible gene class
       break;
   }
 }
