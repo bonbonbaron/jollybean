@@ -3,21 +3,12 @@
 #include "x/x.h"
 
 #define ACTION_ (2)
-#define PERSONALITY (0x40)
-#define BLACKBOARD (0x80)
 
 void hivemindDel(Map **hivemindMPP);
 void activityMPMPDel(Map **activityMPMPP);
-XPostMutateFuncDef_(Action);
 
-typedef enum { SET_TARGET = 1 } ActionMailCmdEnum;
-// Think params through really carefully.
-/* msgP can tell us WHOM to act on. 
- * But we need a way to write potentially mutlipel message to our mailbox.
- * You know what, though? We might considerable time by just passing in the
- * whole action component to the function rather than each painful part one by one. */
 struct Activity;
-typedef void (*Action)(Entity entity, struct Activity *activityP, Message* mailboxF );
+typedef void (*Action)(Entity entity, struct Activity *activityP );
 #define ActionFuncDef_( name_ ) void name_( Entity entity, Activity* activityP, Message* mailboxF )
 #define assertAction_ \
   assert ( entity ); \
@@ -51,10 +42,6 @@ typedef struct {
   Action actionU;
 } Quirk;
 
-// TODO do away with personality as a game type, because we want 
-//      to allow for quirks and facets on the same level to do
-//      away with unnecessary abstractions.
-
 typedef struct {
   Entity entity;
   Map *bbMP;
@@ -78,7 +65,6 @@ typedef struct {
 	Map                   *hivemindMP; // maps triggers to arrays of 
   Key                    nDistinctHivemindTriggers;
   U32                   *histoHivemindTriggerA;
-  // EntityPersonalityPair *entityPersonalityPairF;  // TODO get rid of this
   EntityBlackboardPair  *entityBlackboardPairF;
 } XAction;
 

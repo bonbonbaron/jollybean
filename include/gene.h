@@ -68,11 +68,15 @@ typedef struct _Gene {
       void *dataP;     // the location of the gene's actual data
     } unitary;
     Composite composite;
-    struct root {
+    struct Subtree {   // Each subtree starts a new entity.
+      Composite composite;
+      Key nGenes;
+    } Subtree;  // Only use root for a scene's top level.
+    struct Root {
       Composite composite;
       Key nGeneTypes;
       Key* geneTypeHistoA;  // has a histo of the entire genome so we don't have to calculate it at runtime
-    } root;  // Only use root for a scene's top level.
+    } Root;  // Only use root for a scene's top level.
   } u;
 } Gene;
 
