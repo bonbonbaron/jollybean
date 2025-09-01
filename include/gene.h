@@ -30,7 +30,6 @@
   };
 
 typedef struct {
-  U32 *nMutationsPerSpawnAA;  // X dimension: entity #s. Y dimension: system #s.
   // TODO finish designing so we know what to do about  mutable and immutable exclusives.
   U32 *nExclusivesA;          // determines each subsystem's number of components 
   U32 *nSharesA;              // determines share-maps' # of elements
@@ -52,6 +51,11 @@ typedef struct {
   U8 type;
   struct _Gene **genePA;   // pointers prevent multiple entities with same genes from reinitializing them
 } Composite;
+
+typedef struct SysLevelGeneHisto {
+  Key sysId;
+  Key n;
+} SysLevelGeneHisto;
 
 typedef struct _Gene {
 	GeneClass class;

@@ -1,10 +1,21 @@
 TODO
+
+  \ remove xAddSubcomponent and similar functions from every system
+  \ add xConsumeGene() to every system
+  \ get them all to compile
+  write gene.h
+  for each system:
+    receive gene.h for free from x.h
+    write the specific Gene header itself
+    write xConsumeGene()
+
+
+  
   be able to chain together disparate genes of the same type to allow INHERITANCE And EXTENDABILITY
     Does this need to be done at the blackboard level too?
     Remind me what those look liek:
       GOOMBA_BATTLESTATS_KEY -> Gommba BattleStats struct pointer
       
-
       WAIT!
       Do Facets need to be an in-game type? I think not.
       I think they can just be a composite gene whose contents unfold into quirks.
