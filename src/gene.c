@@ -1,6 +1,10 @@
 #include "implicitGenes.h"
 #include "x.h"  // to feed systems their components' genes
 
+/* DESIGN
+ *   It might be kinda nice if we lay out a raw array of media pointers in the gene tool.
+ */
+
 // Inflate a whole array of strip data.
 static void _inflateMedia(StripDataS **sdPF) {
   assert(sdPF);

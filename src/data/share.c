@@ -6,12 +6,14 @@
 static Map* _sharedMemMapOfMapsP = NULL;
 static Map* _sharedMemRawPointerMapP = NULL;
 static Map* _sharedMemInboxMapP = NULL;
+static Map* _sharedSystemMapP = NULL;
 // May add more types later
 
 void shareIni( const Key N_SYSTEM_TYPES ) {
   _sharedMemMapOfMapsP = mapNew( MAP_POINTER, sizeof(Map*), MAX_NUM_KEYS_, GENERAL );
   _sharedMemRawPointerMapP = mapNew( NONMAP_POINTER, sizeof(Map*), MAX_NUM_KEYS_, GENERAL );
   _sharedMemInboxMapP = mapNew( NONMAP_POINTER, sizeof(Map*), N_SYSTEM_TYPES, GENERAL );
+  _sharedSystemMapP = mapNew( NONMAP_POINTER, sizeof(System*), N_SYSTEM_TYPES, GENERAL );
 }
 
 Message* shareNewInbox( const Key SYSTEM_ID, const Key N_SLOTS ) {
@@ -43,11 +45,24 @@ Map* shareGetMap( const Key KEY ) {
 
 Map* shareGetPointer( const Key KEY ) {
 #ifndef NDEBUG
-  void* rawPtr = mapGetNestedMapP(_sharedMemRawPointerMapP, KEY);
-  assert( rawPtr );
-  return rawPtr;
+  void** rawPP = (void**) mapGet(_sharedMemRawPointerMapP, KEY);
+  assert( rawPP );
+  assert( *rawPP );
+  return *rawPP;
+#else
+  return mapGet(_sharedMemRawPointerMapP, KEY);
+#endif
+}
+
+System* shareGetSystem( const Key KEY ) {
+#ifndef NDEBUG
+  void** sysPP = (void**) mapGet(_sharedMemRawPointerMapP, KEY);
+  assert( sysPP );
+  assert( *sysPP );
+  return *sysPP;
 #else
   return mapGetNestedMapP(_sharedMemRawPointerMapP, KEY);
 #endif
 }
+
 // void shareSetMapOfMapsElem()
