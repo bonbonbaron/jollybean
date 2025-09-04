@@ -39,6 +39,14 @@ gene editor
         Rect michaelCollRect
       Animation michaelAnim
   folders only nest exclusive child folders
+
+  There are some genomes that behave the same way everywhere in the game: Shopping menus, townspeople, dialogues, etc. 
+  Therefore it would waste space to say that each townsperson behaves like a townsperson.
+  Therefore, the TP personality is an *implicit* part of the townsperson.
+  Before, I was letting my system handle implicits in its init function.
+  But now I need something to do that for real.
+  I can put the implicit keyword before a gene in a resource file to indicate I shouldn't store any gene for that genome.
+
   
 level pipeline
 behavior pipeline

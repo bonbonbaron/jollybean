@@ -1,0 +1,107 @@
+#ifndef GENE_
+#define GENE_
+
+#define geneName_(name_) name_##Gene
+#define compositeName_(name_) name_##Composite
+
+#define UnitaryGene_(name_, geneClass_, geneType_, key_, dataType_)\
+  Gene geneName_(name_) = {\
+    .geneClass = geneClass_,\
+    .u.unitary = {\
+      .dataP = &name_,\
+      .key = key_,\
+      .size = sizeof(dataType_),\
+      .type = geneType_\
+    }\
+  };
+
+#define CompositeGene_(name_, ...)\
+  /* Genome that's gonna act like a composite gene */\
+  Gene* name_##Components[] = {\
+    __VA_ARGS__\
+  };\
+  /* Composite gene */\
+  Gene geneName_(name_) = {\
+    .geneClass = COMPOSITE_GENE,\
+    .u.composite = {\
+      .genePA = name_##Components,\
+      .nGenes = nArgs_(Gene*, __VA_ARGS__)\
+    }\
+  };
+
+typedef struct {
+  // TODO finish designing so we know what to do about  mutable and immutable exclusives.
+  U32 *nExclusivesA;          // determines each subsystem's number of components 
+  U32 *nSharesA;              // determines share-maps' # of elements
+  U32  nDistinctShareTypes;   // determines number of maps of shared elements
+  U32 *nCompositesA;          // determines number of composites in case we need to know
+  U32  nDistinctMedia;        // determines # of strip data to inflate/unpack/assemble
+} GeneHisto;
+
+/************************/
+/******** GENE  *********/
+/************************/
+
+typedef enum GeneClass {ROOT, SUBTREE, COMPOSITE, MEDIA, SHARED, VARIANT, EXCLUSIVE_IMMUTABLE, EXCLUSIVE_MUTABLE, IMPLICIT} GeneClass;
+
+struct _Gene;
+typedef Composite Subtree;  // Only use root for a scene's top level.
+
+typedef struct SysLevelGeneHisto {
+  Key sysId;
+  Key n;
+} SysLevelGeneHisto;
+
+// There is no "Gene" struct.
+// The "Gene" is the thing that proceeds after GeneHdr; it's not a void pointer.
+// At system load time, the system takes/uses everything but the header.
+// This design is better since the compiler will detect whether we're really pointing at a GeneHdr or not.
+typedef struct GeneHdr {  // breaks down to 1 byte with -fshort-enums compiler flag
+  GeneClass class;
+  // This union is useful for the following:
+  //  1. Exclusives, which will use sysId to know where to go.
+  //  2. Composites, which will use nGenes to know how many genes to use
+  //  3. Variants, whose subtree (composite) and composite will use the same.
+  //  4. 
+  union {
+    SystemId  sysId;
+    U8 nGenes;
+  } u8;
+#ifndef NDEBUG
+  U8 size;  // when debugging size of expected type, this is handy       
+#endif
+} GeneHdr;  // Although it seems silly to wrap a byte in a struct, "header" makes clear where this goes, 
+            // and "class" makes clear what it's for.
+
+typedef struct CompositeGene {
+
+  struct _Gene **genePA;   // pointers prevent multiple entities with same genes from reinitializing them
+} CompositeGene;
+
+typedef struct VariantGene {          // Variants allow you to read a tree once and copy it mulitple times with 
+  Subtree subtree;       // small variations, indicated in variations A. Those get tacked on.
+  CompositeGene variations;  // They can either add a new gene or override an existing one.
+} VariantGene;  
+    Composite composite;
+    Subtree subtree;
+    struct root {
+      Composite composite;
+      Key* geneTypeHistoA;  // has a histo of the entire genome so we don't have to calculate it at runtime
+    } root;  // Only use root for a scene's top level.
+  } u;
+} Gene;
+
+/* Implicit genes are shared genes that start out empty, which would be a 
+   waste to store in ROM (not to mention annoying to have to remember to store).
+   Better to create them on startup. */
+typedef struct {
+  U8 type;
+  U8 size;
+} ImplicitGene;
+
+typedef struct {
+  U32 nGenes;
+  ImplicitGene *listA;
+} ImplicitGenesList;
+
+#endif

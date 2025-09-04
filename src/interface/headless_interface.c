@@ -232,7 +232,9 @@ void guiProcessEvents(Gui *guiP) {
 
     if ((ev.type == EV_KEY) && (ev.value != VAL_KEY_REPEAT))
     {
+#ifndef NDEBUG
       printf("type: %d, val: %d, code: %d\n", ev.type, ev.value, ev.code); // EV_KEY corresponds to key press events
+#endif
       if ( ev.value == VAL_KEY_UP ) {
         switch( ev.code ) {
           case KEY_a_:      guiP->buttonsPressed &= ~BTN_PRESSED_a; break;

@@ -1,6 +1,7 @@
 #include "data/map.h"
 #include "data/mail.h"
 #include "x/x.h"
+#include "jb.h"
 
 #define MAX_NUM_KEYS_ ( ( sizeof(Key) << 8 ) - 1 )
 
@@ -17,20 +18,20 @@ void shareIni( const Key N_SYSTEM_TYPES ) {
   _sharedSystemMapP = mapNew( NONMAP_POINTER, sizeof(System*), N_SYSTEM_TYPES, GENERAL );
 }
 
-Message* shareNewInbox( const Key SYSTEM_ID, const Key N_SLOTS ) {
+Message* shareNewInbox( const SystemId SYSTEM_ID, const Key N_SLOTS ) {
   assert( _sharedMemInboxMapP );
   Message* inboxP = mailboxNew( N_SLOTS, GENERAL );
   mapSet( _sharedMemInboxMapP, SYSTEM_ID, (void*) &inboxP );
   return inboxP;
 }
 
-Message* shareGetInbox( const Key KEY ) {
+Message* shareGetInbox( const SystemId SYSTEM_ID ) {
 #ifndef NDEBUG
-  Message** mailboxPP = (Message**) mapGet( _sharedMemInboxMapP, KEY );
+  Message** mailboxPP = (Message**) mapGet( _sharedMemInboxMapP, SYSTEM_ID );
   assert( mailboxPP && *mailboxPP );
   return *mailboxPP;
 #else
-  return *( (Message**) mapGet( _sharedMemInboxMapP, KEY );
+  return *( (Message**) mapGet( _sharedMemInboxMapP, SYSTEM_ID );
 #endif
 }
 
@@ -55,14 +56,14 @@ Map* shareGetPointer( const Key KEY ) {
 #endif
 }
 
-System* shareGetSystem( const Key KEY ) {
+System* shareGetSystem( const SystemId SYSTEM_ID ) {
 #ifndef NDEBUG
-  void** sysPP = (void**) mapGet(_sharedMemRawPointerMapP, KEY);
+  void** sysPP = (void**) mapGet(_sharedMemRawPointerMapP, SYSTEM_ID);
   assert( sysPP );
   assert( *sysPP );
   return *sysPP;
 #else
-  return mapGetNestedMapP(_sharedMemRawPointerMapP, KEY);
+  return mapGetNestedMapP(_sharedMemRawPointerMapP, SYSTEM_ID);
 #endif
 }
 

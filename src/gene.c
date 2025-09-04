@@ -3,6 +3,8 @@
 #include "data/fray.h"
 #include "share.h"
 
+#define FIRST_ENTITY ( 1 )
+
 // Inflate a whole array of strip data.
 static void _inflateMedia(StripDataS **sdPF) {
   assert(sdPF);
@@ -25,7 +27,7 @@ static void _distributeGene( Entity entity, Gene **genePP, StripDataS **sdPF ) {
   assert(*sdPF);
 
   Gene* geneP = *genePP;
-  switch (geneP->class) {
+ switch (geneP->class) {
     case SUBTREE:  // a subtree *is* a composite. "Subtree" just tells us the start of a new entity.
       ++entity;
       // fall through
@@ -61,15 +63,15 @@ static void _distributeGene( Entity entity, Gene **genePP, StripDataS **sdPF ) {
 // =====================================================================
 // Distribute all genes to their appropriate subsystems.
 // =====================================================================
-void distributeGenes( Gene* geneP ) {
-  assert( geneP );
-  assert( geneP->class == ROOT );
-  StripDataS** sdPF = frayNew( sizeof(StripDataS*), geneP->u.root.nGeneTypes, TEMPORARY);  
+void distributeGenes( RootGene* rootP ) {
+  assert( rootP );
+  assert( rootP->hdr.class == ROOT );
+  StripDataS** sdPF = frayNew( sizeof(StripDataS*), rootP->histo.nDistinctMedia, TEMPORARY);  
 
-  Gene** genePP = geneP->u.root.composite.genePA;
-  Gene** geneEndPP = genePP + geneP->u.root.composite.nGenes;
+  Gene** geneHdrPP = rootP->geneHdrPA;
+  Gene** geneHdrEndPP = geneHdrPP + rootHdrP->hdr.u.n;
   for (; genePP < geneEndPP; ++genePP) {  
-    _distributeGene( 1, genePP, sdPF );
+    _distributeGene( FIRST_ENTITY, genePP, sdPF );
   }
 
   _inflateMedia(sdPF);  

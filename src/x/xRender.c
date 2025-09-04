@@ -281,11 +281,9 @@ void xRenderProcessMessage(System *sP, Message *msgP) {
       _manageGui();
       break;
     case MSG_SOFT_COLLISIONS_DETECTED:
-      printf("[xrendr] hearda bout collision\n");
       xP->collisionsDetected = TRUE;
       break;
     case MSG_LAYER_CHANGED:  // move to a specific layer
-      printf("[xrendr] layer changed!\n");
       XRenderComp* cP = xGetCompPByEntity( sP, msgP->attn );
       assert(cP);
       assert( *cP->zHeightP < N_LAYERS_SUPPORTED );
@@ -637,14 +635,12 @@ static void zOrder( XRender* xP ) {
     collP = (Collision*) listGetHead( blobLP );
     collEndP = (Collision*) listGetTail( blobLP );
     collP = (Collision*) listGetHead( blobLP );
-    printf("list head = %s, tail %s, next %s\n", names[blobLP->head], names[blobLP->tail], names[collP->hdr.next]);
     nBlobMembersSorted = 0;
     goto SKIP_FIRST_COLL_INCR;
     // For each entity in current blob
     for ( ; collP != collEndP; ++nBlobMembersSorted ) {
       collP = (Collision*) listNodeGetNext( blobLP, &collP->hdr );
 SKIP_FIRST_COLL_INCR:
-      printf("curr node's name: %s, next = %d\n", names[ collP->entity ], collP->hdr.next );
       yip.bottomYCoord = collP->bottomYCoord;  // for sorting purposes
       cP = (XRenderComp*) xGetCompPByEntity( &xP->system, collP->entity );
       assert ( cP >= cF );
@@ -654,18 +650,11 @@ SKIP_FIRST_COLL_INCR:
       // Insert-sort highest to lowest Y-coordinates
       for ( i = 0; i < nBlobMembersSorted; ++i ) {
         if ( yip.bottomYCoord < sortedBlobMembers[i].bottomYCoord ) {
-          printf("moving %d members over one\n", nBlobMembersSorted);
           memmove( &sortedBlobMembers[i + 1], &sortedBlobMembers[i], sizeof( YIdxPair ) * nBlobMembersSorted );
           break;
         }
       }
-      printf("putting %s in sortedBlobMembers[ %d ]\n", names[ collP->entity ], i );
       sortedBlobMembers[ i ] = yip;
-      printf("sorted members = [ ");
-      for ( i = 0; i < nBlobMembersSorted + 1; ++i ) {
-        printf("%s ", names[ xGetEntityByCompIdx( &xP->system, sortedBlobMembers[i].frayIdx ) ]);
-      }
-      printf("]\n");
     }  // for every member of current blob
 
     // list of all active entities on current blob's Z-layer
