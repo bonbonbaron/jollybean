@@ -1,18 +1,15 @@
 #ifndef GENE_
 #define GENE_
+#include "data/strip.h"
 
 // Gene histo
 typedef struct GeneHisto {
-  // TODO finish designing so we know what to do about  mutable and immutable exclusives.
   U32 *nExclusivesA;          // determines each subsystem's number of components 
-  // /*MAYBE UNNEEDED*/ U32 *nSharesA;              // determines share-maps' # of elements
-  // /*MAYBE UNNEEDED*/ U32  nDistinctShareTypes;   // determines number of maps of shared elements
-  // /*MAYBE UNNEEDED*/ U32 *nCompositesA;          // determines number of composites in case we need to know
   U32  nDistinctMedia;        // determines # of strip data to inflate/unpack/assemble
 } GeneHisto;
 
 // Used to distinguish header pointers
-typedef enum GeneClass { ROOT, SUBTREE, COMPOSITE, MEDIA, SHARED, VARIANT, EXCLUSIVE_IMMUTABLE, EXCLUSIVE_MUTABLE, IMPLICIT, BLACKBOARD } GeneClass;
+typedef enum GeneClass { ROOT, SUBTREE, COMPOSITE, MEDIA, VARIANT, EXCLUSIVE_IMMUTABLE, EXCLUSIVE_MUTABLE, IMPLICIT, BLACKBOARD } GeneClass;
 
 // There is no "Gene" struct, strictly speaking.
 // The "Gene" is the thing that proceeds after GeneHdr; it's not a void pointer.
@@ -26,7 +23,7 @@ typedef struct GeneHdr {  // breaks down to 1 byte with -fshort-enums compiler f
   //  3. Variants, whose subtree (composite) and composite will use the same.
   //  4. 
   union {
-    const SystemId  sysId;
+    const SystemId  sysId;  // TODO this may better serve us as a TYPE ID, like IMAGE or BATTLESTATS.
     const U8 n;
   } u;
 #ifndef NDEBUG
@@ -35,8 +32,14 @@ typedef struct GeneHdr {  // breaks down to 1 byte with -fshort-enums compiler f
 #endif
 } GeneHdr;
 
+// Media gene
+typedef struct MediaGene {
+  GeneHdr hdr;
+  StripDataS sd;
+} MediaGene;
+
 // Exclusive mutable gene
-// Be sure to assert at tool-time that all mutables  have the same SystemId.
+// Be sure to assert at tool-time that all mutables have the same SystemId.
 typedef struct ExMutGene {
   GeneHdr hdr;  // let the header hold the count, and each individual element's header below will hold its sysId
   GeneHdr **geneHdrPA;   // pointers prevent multiple entities with same genes from reinitializing them

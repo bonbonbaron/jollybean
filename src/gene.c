@@ -19,40 +19,42 @@ static void _inflateMedia(StripDataS **sdPF) {
 #endif
 }
 
-static void _distributeGene( Entity entity, Gene **genePP, StripDataS **sdPF ) {
+static void _distributeGene( Entity entity, GeneHdr **geneHdrPP, StripDataS **sdPF ) {
   assert(entity);
-  assert(genePP);
-  assert(*genePP);
+  assert(geneHdrPP);
+  assert(*geneHdrPP);
   assert(sdPF);
   assert(*sdPF);
 
-  Gene* geneP = *genePP;
- switch (geneP->class) {
+  GeneHdr* geneHdrP = *geneHdrPP;
+  switch (geneHdrP->class) {
     case SUBTREE:  // a subtree *is* a composite. "Subtree" just tells us the start of a new entity.
       ++entity;
       // fall through
     case COMPOSITE:  // recurse  back into this function
-      Gene** compositeGenePP = geneP->u.composite.genePA;
-      Gene** compositeGeneEndPP = compositeGenePP + geneP->u.composite.nGenes;
-      for (; compositeGenePP < compositeGeneEndPP; ++compositeGenePP) {
-        _distributeGene(entity, compositeGenePP, sdPF );
+      CompositeGene* compGeneP = (CompositeGene*) geneHdrP;
+      GeneHdr** currGeneHdrPP = compGeneP->geneHdrPA;
+      GeneHdr** geneHdrEndPP = currGeneHdrPP + compGeneP->hdr.u.n;
+      for (; currGeneHdrPP < geneHdrEndPP; ++currGeneHdrPP) {
+        _distributeGene(entity, currGeneHdrPP, sdPF );
       }
       break;
     case VARIANT:
       // TODO
       break;
     case MEDIA:
+      MediaGene* mediaGeneP = (MediaGene*) geneHdrP;
       // Defer inflation 
-      if (!((*((StripDataS**) geneP->u.unitary.dataP))->flags & SD_SET_FOR_INFLATION_)) {
-        (*((StripDataS**) geneP->u.unitary.dataP))->flags |= SD_SET_FOR_INFLATION_;
-        frayAdd(sdPF, geneP->u.unitary.dataP, NULL);
+      if (!(mediaGeneP->sd.flags & SD_SET_FOR_INFLATION_)) {
+        mediaGeneP->sd.flags |= SD_SET_FOR_INFLATION_;
+        frayAdd(sdPF, &mediaGeneP->sd, NULL);
       }
       // fall through
     case EXCLUSIVE_MUTABLE:  
       // fall through
     case EXCLUSIVE_IMMUTABLE:
-      System* sysP = shareGetSystem( geneP->u.unitary.systemId );
-      sysP->consumeGene(sysP, entity, geneP->u.unitary.dataP);
+      System* sysP = shareGetSystem( geneHdrP->hdr.u.systemId );
+      sysP->consumeGene(sysP, entity, geneHdrP);
       break;
     default:
       assert(FALSE); // gene has an incompatible gene class
