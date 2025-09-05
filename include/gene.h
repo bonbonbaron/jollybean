@@ -24,8 +24,8 @@ typedef struct GeneHdr {  // breaks down to 1 byte with -fshort-enums compiler f
   //  3. Variants, whose subtree (composite) and composite will use the same.
   //  4. 
   union {
-    const U8  type;  // <--- honestly, every whole gene should be this instead of 
-    const U8  n;     // for counts
+    const U8  type;
+    const U8  n;
   } u;
 #ifndef NDEBUG
   const U8 size;  // when debugging size of expected type, this is handy       

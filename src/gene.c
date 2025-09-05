@@ -48,16 +48,20 @@ static void _distributeGene( Entity entity, GeneHdr **geneHdrPP, StripDataS **sd
     case MEDIA:
       MediaGene* mediaGeneP = (MediaGene*) geneHdrP;
       // Defer inflation 
+      // TODO colormap and color palette need to be inflated separately, but way more convenient to hand off to Render in Image.
       if (!(mediaGeneP->sd.flags & SD_SET_FOR_INFLATION_)) {
         mediaGeneP->sd.flags |= SD_SET_FOR_INFLATION_;
-        frayAdd(sdPF, &mediaGeneP->sd, NULL);
+        StripDataS* sdP = &mediaGeneP->sd;  // because you must pass a double-pointer
+        frayAdd(sdPF, &sdP, NULL);
       }
-      // fall through
+      // Don't pass raw media genes into systems. They should come bundled inside an outer struct.
+      // This is so xRender can receive color palette and colormap together inside a single Image structure.
+      break;
     case EXCLUSIVE_IMMUTABLE:
-      sysP = shareGetSystemFromType( geneHdrP->u.type );
+      sysP = shareGetSystemFromType( geneHdrP->u.type ); // type has to be separate from class for this reason
+                                                         // TODO so how then do you make a composite-class Image-type with n = 2?
       sysP->consumeGene(sysP, entity, geneHdrP);
       break;
-    // TODO where is key going to come from? Any Houdini tricks there?
     case EXCLUSIVE_MUTABLE:  
       ExclusiveMutableGene* exmutGeneP = (ExclusiveMutableGene*) geneHdrP;
       GeneHdr** mutationHdrPP = exmutGeneP->mutationPA;
