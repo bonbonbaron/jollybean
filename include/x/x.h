@@ -173,7 +173,7 @@ typedef struct _System {
 } System;
 
 void    xMutateComponent(System *sP, Entity entity, Key newCompKey);
-void    xIniSys(System *sP, U32 nComps, void *miscP);
+void    xIniSys(System *sP, U32 nComps);
 void    xAddMutationMap(System *sP, Entity entity, Map *mutationMP);
 Entity   xGetEntityByVoidComponentPtr(System *sP, void *componentP);
 U32      xGetNComps(System *sP);

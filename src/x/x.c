@@ -121,7 +121,7 @@ void xAddMutationMap(System *sP, Entity entity, Map *mutationMP) {
 }
 
 
-void xIniSys(System *sP, U32 nComps, void *miscP) {
+void xIniSys(System *sP, U32 nComps) {
   // Sytems with special parts need to initialize maps in sIniU().
   sP->cF = frayNew(sP->compSz, nComps, GENERAL );
   sP->cIdx2eA = arrayNew(sizeof(Entity), nComps, GENERAL );
@@ -139,7 +139,7 @@ void xIniSys(System *sP, U32 nComps, void *miscP) {
   sP->mailboxF = shareSetInbox( sP->id, nComps * MAILBOX_MULTIPLY_NUM_SLOTS );
   shareSetInbox( sP->id, nComps * MAILBOX_MULTIPLY_NUM_SLOTS );
   // Finally, call the system's unique initializer.
-  (*sP->iniSys)(sP, miscP);  // fail-assert if this bombs
+  (*sP->iniSys)(sP);  // fail-assert if this bombs
 }
 
 void xMutateComponent(System *sP, Entity entity, Key newCompKey) {
