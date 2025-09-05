@@ -3,7 +3,7 @@
 
 #include "data/common.h"
 
-typedef enum PoolId { PERMANENT, GENERAL, TEXT, IMAGE, AUDIO, TEMPORARY, N_POOLS } PoolId;
+typedef enum PoolId { PERMANENT, GENERAL, TEXT, GRAPHIC, AUDIO, TEMPORARY, N_POOLS } PoolId;
 
 // Public functions start here.
 void memClr ( const PoolId poolId );

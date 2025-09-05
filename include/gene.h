@@ -1,6 +1,7 @@
 #ifndef GENE_
 #define GENE_
 #include "data/strip.h"
+#include "jb.h"
 
 // Gene histo
 typedef struct GeneHisto {
@@ -16,15 +17,15 @@ typedef enum GeneClass { ROOT, SUBTREE, COMPOSITE, MEDIA, VARIANT, EXCLUSIVE_IMM
 // At system load time, the system takes/uses everything but the header.
 // This design is better since the compiler will detect whether we're really pointing at a GeneHdr or not.
 typedef struct GeneHdr {  // breaks down to 1 byte with -fshort-enums compiler flag
-  const GeneClass class;
+  const U8 class;  // For mutations, this is in the ExclusiveMutableGene's header.
   // This union is useful for the following:
   //  1. Exclusives, which will use sysId to know where to go.
   //  2. Composites, which will use nGenes to know how many genes to use
   //  3. Variants, whose subtree (composite) and composite will use the same.
   //  4. 
   union {
-    const SystemId  sysId;  // TODO this may better serve us as a TYPE ID, like IMAGE or BATTLESTATS.
-    const U8 n;
+    const U8  type;  // <--- honestly, every whole gene should be this instead of 
+    const U8  n;     // for counts
   } u;
 #ifndef NDEBUG
   const U8 size;  // when debugging size of expected type, this is handy       
@@ -39,15 +40,17 @@ typedef struct MediaGene {
 } MediaGene;
 
 // Exclusive mutable gene
+// exmut's header should use sysId.
+// Each 
 // Be sure to assert at tool-time that all mutables have the same SystemId.
-typedef struct ExMutGene {
-  GeneHdr hdr;  // let the header hold the count, and each individual element's header below will hold its sysId
-  GeneHdr **geneHdrPA;   // pointers prevent multiple entities with same genes from reinitializing them
-} ExMutGene;
+typedef struct ExclusiveMutableGene {
+  GeneHdr hdr;  // header will hold system ID and 
+  GeneHdr **mutationPA;   // pointers prevent multiple entities with same genes from reinitializing them
+} ExclusiveMutableGene;
 
 // Composite gene
-typedef struct CompositeGene {
-  GeneHdr hdr;
+typedef struct CompositeGene {  // Same information, different effect (see gene.c)
+  GeneHdr hdr;  // let the header hold the count, and each individual element's header below will hold its sysId
   GeneHdr **geneHdrPA;   // pointers prevent multiple entities with same genes from reinitializing them
 } CompositeGene;
 

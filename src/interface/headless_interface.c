@@ -33,9 +33,9 @@ Gui* guiNew() {
   assert(guiP->windowP);
 
   // Init renderer
-  guiP->rendererP = memAdd(sizeof(Window), IMAGE );
+  guiP->rendererP = memAdd(sizeof(Window), GRAPHIC );
   assert(guiP->rendererP);
-  guiP->rendererP->dstTextureP = arrayNew(sizeof(Texture_), 1, IMAGE );
+  guiP->rendererP->dstTextureP = arrayNew(sizeof(Texture_), 1, GRAPHIC );
 
   // open up the keyboard file in read binary mode so we can accept key presses.
   file = fopen(KEYFILE, "rb"); 
@@ -141,9 +141,9 @@ void appendAtlasPalette(Surface_ *atlasSurfaceP, ColorPalette *srcPaletteP) {
 
 Texture* textureNew(Renderer_ *rendererP, Surface_ *surfaceP) {
   assert(  rendererP && surfaceP );
-  Texture *textureP = memAdd(sizeof( Texture_ ), IMAGE );
+  Texture *textureP = memAdd(sizeof( Texture_ ), GRAPHIC );
   assert(textureP);
-  textureP->pixelA = arrayNew( sizeof( Color_ ), surfaceP->w * surfaceP->h, IMAGE );
+  textureP->pixelA = arrayNew( sizeof( Color_ ), surfaceP->w * surfaceP->h, GRAPHIC );
   assert(textureP->pixelA);
   textureP->w = surfaceP->w;
   textureP->h = surfaceP->h;

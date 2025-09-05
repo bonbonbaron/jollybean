@@ -1,5 +1,6 @@
 #include "x/xCollision.h"
 #include "jb.h"
+#include "share.h"
 
 // TODO
 XConsumeGeneFuncDefUnused_(Collision);
@@ -24,9 +25,10 @@ XPostDeactivateFuncDefUnused_(Collision);
 //======================================================
 // Initialize Collision's system.
 //======================================================
-void xCollisionIniSys(System *sP, void *sParamsP) {
-	unused_(sParamsP);
-  unused_(sP);
+void xCollisionIniSys(System *sP) {
+  // Register type-to-system mappings
+  shareSetSystemFromType( COLLISION_RECT, sP );
+  shareSetSystemFromType( COLLISION_TILEMAP, sP );
 }
 
 //======================================================

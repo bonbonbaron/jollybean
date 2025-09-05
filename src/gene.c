@@ -1,3 +1,4 @@
+#include "gene.h"
 #include "implicitGenes.h"
 #include "x/x.h"  // to feed systems their components' genes
 #include "data/fray.h"
@@ -27,6 +28,7 @@ static void _distributeGene( Entity entity, GeneHdr **geneHdrPP, StripDataS **sd
   assert(*sdPF);
 
   GeneHdr* geneHdrP = *geneHdrPP;
+  System *sysP;
   switch (geneHdrP->class) {
     case SUBTREE:  // a subtree *is* a composite. "Subtree" just tells us the start of a new entity.
       ++entity;
@@ -42,6 +44,7 @@ static void _distributeGene( Entity entity, GeneHdr **geneHdrPP, StripDataS **sd
     case VARIANT:
       // TODO
       break;
+    // TODO what if it's a mutable media gene? How do you tell the difference?
     case MEDIA:
       MediaGene* mediaGeneP = (MediaGene*) geneHdrP;
       // Defer inflation 
@@ -50,11 +53,19 @@ static void _distributeGene( Entity entity, GeneHdr **geneHdrPP, StripDataS **sd
         frayAdd(sdPF, &mediaGeneP->sd, NULL);
       }
       // fall through
-    case EXCLUSIVE_MUTABLE:  
-      // fall through
     case EXCLUSIVE_IMMUTABLE:
-      System* sysP = shareGetSystem( geneHdrP->hdr.u.systemId );
+      sysP = shareGetSystemFromType( geneHdrP->u.type );
       sysP->consumeGene(sysP, entity, geneHdrP);
+      break;
+    // TODO where is key going to come from? Any Houdini tricks there?
+    case EXCLUSIVE_MUTABLE:  
+      ExclusiveMutableGene* exmutGeneP = (ExclusiveMutableGene*) geneHdrP;
+      GeneHdr** mutationHdrPP = exmutGeneP->mutationPA;
+      GeneHdr** mutationEndPP = mutationHdrPP + exmutGeneP->hdr.u.n;
+      sysP = shareGetSystemFromType( geneHdrP->u.type );  // TODO Get idx from first elem in array.
+      for ( ; mutationHdrPP < mutationEndPP; ++mutationHdrPP ) {
+        sysP->consumeGene(sysP, entity, geneHdrP);
+      }
       break;
     default:
       assert(FALSE); // gene has an incompatible gene class
@@ -70,10 +81,10 @@ void distributeGenes( RootGene* rootP ) {
   assert( rootP->hdr.class == ROOT );
   StripDataS** sdPF = frayNew( sizeof(StripDataS*), rootP->histo.nDistinctMedia, TEMPORARY);  
 
-  Gene** geneHdrPP = rootP->geneHdrPA;
-  Gene** geneHdrEndPP = geneHdrPP + rootHdrP->hdr.u.n;
-  for (; genePP < geneEndPP; ++genePP) {  
-    _distributeGene( FIRST_ENTITY, genePP, sdPF );
+  GeneHdr** geneHdrPP = rootP->geneHdrPA;
+  GeneHdr** geneHdrEndPP = geneHdrPP + rootP->hdr.u.n;
+  for (; geneHdrPP < geneHdrEndPP; ++geneHdrPP) {  
+    _distributeGene( FIRST_ENTITY, geneHdrPP, sdPF );
   }
 
   _inflateMedia(sdPF);  

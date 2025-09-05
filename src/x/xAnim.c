@@ -1,7 +1,12 @@
 #include "x/xAnim.h"
+#include "share.h"
 
 // Unused X functions
-XIniSysFuncDefUnused_(Anim);
+XIniSysFuncDef_(Anim) {
+  // Register type-to-system mappings
+  shareSetSystemFromType( ANIMSTRIP, sP );
+}
+
 XConsumeGeneFuncDefUnused_(Anim);
 XPostprocessCompsDefUnused_(Anim);
 XPostActivateFuncDefUnused_(Anim);
@@ -77,7 +82,7 @@ XPostMutateFuncDef_(Anim) {
   XAnimComp *_cP = (XAnimComp*) cP;
   _cP->currFrameIdx   = 0;
   _cP->incrDecrement  = 1;  // assume we're going to start off animating forward
-  // TODO take advantage of the anim's flag to decide whether to anchor the changed image to a side, corner, or center.
+                            // TODO take advantage of the anim's flag to decide whether to anchor the changed image to a side, corner, or center.
   assert( _cP->srcRectP != NULL );  // Make sure components can see the shared source rectangles.
   _cP->srcRectP->x    = _cP->currStrip.frameA[0].rect.x;  // mailbox should get "offset" changes to this beforehand
   _cP->srcRectP->y    = _cP->currStrip.frameA[0].rect.y;  // mailbox should get "offset" changes to this beforehand
@@ -90,13 +95,13 @@ XPostMutateFuncDef_(Anim) {
 // Anim activity
 //======================================================
 void xAnimRun(System *sP) {
-	XAnimComp *cP = (XAnimComp*) sP->cF;
-	XAnimComp *cEndP = cP + _frayGetFirstInactiveIdx(sP->cF);
+  XAnimComp *cP = (XAnimComp*) sP->cF;
+  XAnimComp *cEndP = cP + _frayGetFirstInactiveIdx(sP->cF);
 
   // Animation
   for (; cP < cEndP; ++cP) {
     if ((cP->timeLeft -= 1) <= 0) {  // TODO figure out time decrement
-      // If we've reached the last frame, ask if this is a pingpong or repeating animation strip.
+                                     // If we've reached the last frame, ask if this is a pingpong or repeating animation strip.
       if (cP->currFrameIdx == (cP->currStrip.nFrames - 1)) {
         // If this is a repeating animation strip, reset index, time left, and srcRectP.
         if (cP->currStrip.pingPong) {

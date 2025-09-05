@@ -1,5 +1,6 @@
 #include "x/xMotion.h"
 #include "share.h"
+#include "jb.h"
 
 /* REQUIREMENTS
  *
@@ -10,7 +11,9 @@
 //======================================================
 // Initialize Motion's system.
 //======================================================
-XIniSysFuncDefUnused_(Motion);
+XIniSysFuncDef_(Motion) {
+  shareSetSystemFromType( VELOCITY, sP );
+}
 XConsumeGeneFuncDefUnused_(Motion);
 XPostActivateFuncDefUnused_(Motion);
 XPostDeactivateFuncDefUnused_(Motion);

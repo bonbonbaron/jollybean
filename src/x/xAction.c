@@ -1,17 +1,20 @@
 #include "x/xAction.h"
+#include "share.h"
 
 XPostMutateFuncDefUnused_(Action);
 XPostActivateFuncDefUnused_(Action);
 XPostDeactivateFuncDefUnused_(Action);
 
-//#define XIniSysFuncDef_(name_) Error x##name_##IniSys(System *sP, void *sParamsP)
+//#define XIniSysFuncDef_(name_) Error x##name_##IniSys(System *sP)
 XIniSysFuncDef_(Action) {
-  unused_(sParamsP);
   XAction *xActionP = (XAction*) sP;
   xActionP->nDistinctHivemindTriggers = 0;
   xActionP->entityBlackboardPairF = frayNew( sizeof( EntityBlackboardPair ), xGetNComps(sP), TEMPORARY );
   xActionP->histoHivemindTriggerA = arrayNew( sizeof(U32), KEY_MAX, TEMPORARY );
   memset( xActionP->histoHivemindTriggerA, 0, sizeof(U32) * KEY_MAX );
+  // Register type-to-system mappings
+  shareSetSystemFromType( BLACKBOARD_ITEM, sP );
+  shareSetSystemFromType( PERSONALITY, sP );
 }
 
 // void x##name_##ConsumeGene(System *sP, const Gene *geneP)

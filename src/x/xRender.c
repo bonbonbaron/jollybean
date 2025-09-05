@@ -221,13 +221,14 @@ nextOrphan:
 //======================================================
 // Initialize xRender's system.
 //======================================================
-void xRenderIniSys(System *sP, void *sParamsP) {
-  unused_(sParamsP);
+void xRenderIniSys(System *sP) {
   XRender *xP = (XRender*) sP;
   // Components array should have already been allocated by this point, so it's safe to get its size.
   U32 nComponents = xGetNComps(sP);
   xP->imgPF = frayNew(sizeof(Image*), nComponents, TEMPORARY);
   xP->entityF = frayNew( sizeof(Entity), nComponents, TEMPORARY);
+  shareSetSystemFromType( IMAGE, sP );
+  shareSetSystemFromType( TILESET, sP );
 }
 
 //=========================================================================
@@ -259,15 +260,6 @@ void xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void 
     frayAdd(xP->entityF, (void*) &entity, NULL);
   }
 }
-static const char* names[] = {
-  "UNUSED",  // because entities are 1-based
-  "red",
-  "tan",
-  "rct",
-  "rctcp1",
-  "rctcp2",
-  "rctcp3"
-};
 
 /* I want to make the 
  * Before I handle this, here's a question:

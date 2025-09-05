@@ -2,6 +2,7 @@
 #include "data/mail.h"
 #include "x/x.h"
 #include "jb.h"
+#include "share.h"
 
 #define MAX_NUM_KEYS_ ( ( sizeof(Key) << 8 ) - 1 )
 
@@ -9,6 +10,7 @@ static Map* _sharedMemMapOfMapsP = NULL;
 static Map* _sharedMemRawPointerMapP = NULL;
 static Map* _sharedMemInboxMapP = NULL;
 static Map* _sharedSystemMapP = NULL;
+static Map* _sharedTypeToSystemMapP = NULL;
 // May add more types later
 
 void shareIni( const Key N_SYSTEM_TYPES ) {
@@ -16,9 +18,10 @@ void shareIni( const Key N_SYSTEM_TYPES ) {
   _sharedMemRawPointerMapP = mapNew( NONMAP_POINTER, sizeof(Map*), MAX_NUM_KEYS_, GENERAL );
   _sharedMemInboxMapP = mapNew( NONMAP_POINTER, sizeof(Map*), N_SYSTEM_TYPES, GENERAL );
   _sharedSystemMapP = mapNew( NONMAP_POINTER, sizeof(System*), N_SYSTEM_TYPES, GENERAL );
+  _sharedTypeToSystemMapP = mapNew( NONMAP_POINTER, sizeof(System*), N_SYSTEM_TYPES, GENERAL );
 }
 
-Message* shareNewInbox( const SystemId SYSTEM_ID, const Key N_SLOTS ) {
+Message* shareSetInbox( const SystemId SYSTEM_ID, const Key N_SLOTS ) {
   assert( _sharedMemInboxMapP );
   Message* inboxP = mailboxNew( N_SLOTS, GENERAL );
   mapSet( _sharedMemInboxMapP, SYSTEM_ID, (void*) &inboxP );
@@ -56,15 +59,34 @@ Map* shareGetPointer( const Key KEY ) {
 #endif
 }
 
+void shareSetSystem( const System* sysP ) {
+  assert( sysP );
+  assert( sysP->id );
+  mapSet(_sharedSystemMapP, sysP->id, &sysP );
+}
+
 System* shareGetSystem( const SystemId SYSTEM_ID ) {
 #ifndef NDEBUG
-  void** sysPP = (void**) mapGet(_sharedMemRawPointerMapP, SYSTEM_ID);
+  void** sysPP = (void**) mapGet(_sharedSystemMapP, SYSTEM_ID);
   assert( sysPP );
   assert( *sysPP );
   return *sysPP;
 #else
-  return mapGetNestedMapP(_sharedMemRawPointerMapP, SYSTEM_ID);
+  return mapGetNestedMapP(_sharedSystemMapP, SYSTEM_ID);
 #endif
 }
 
-// void shareSetMapOfMapsElem()
+void shareSetSystemFromType( const Type TYPE, const System* sysP ) {
+  mapSet(_sharedTypeToSystemMapP, TYPE, &sysP );
+}
+
+System* shareGetSystemFromType( const Type TYPE ) {
+#ifndef NDEBUG
+  void** sysPP = (void**) mapGet(_sharedTypeToSystemMapP, TYPE);
+  assert( sysPP );
+  assert( *sysPP );
+  return *sysPP;
+#else
+  return mapGetNestedMapP(_sharedTypeToSystemMapP, TYPE);
+#endif
+}

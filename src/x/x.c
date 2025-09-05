@@ -135,7 +135,9 @@ void xIniSys(System *sP, U32 nComps, void *miscP) {
   // TODO make this smarter than a raw constant
   // Also, give it ample room to handle multiple messages per entity.
 #define MAILBOX_MULTIPLY_NUM_SLOTS (3)
-  sP->mailboxF = shareNewInbox( sP->id, nComps * MAILBOX_MULTIPLY_NUM_SLOTS );
+  shareSetSystem( sP );
+  sP->mailboxF = shareSetInbox( sP->id, nComps * MAILBOX_MULTIPLY_NUM_SLOTS );
+  shareSetInbox( sP->id, nComps * MAILBOX_MULTIPLY_NUM_SLOTS );
   // Finally, call the system's unique initializer.
   (*sP->iniSys)(sP, miscP);  // fail-assert if this bombs
 }

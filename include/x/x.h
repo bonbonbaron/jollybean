@@ -3,8 +3,9 @@
 #include "data/map.h"
 #include "data/fray.h"
 #include "data/mail.h"
-#include "gene.h"
+//#include "gene.h"
 
+struct GeneHdr;  // forward-declaration that'll resolve at link-time. Avoiding circular includes.
 typedef Key Entity;
 
 // System type flags
@@ -77,8 +78,8 @@ typedef enum { INITIALIZED = 1 } SubcomponentState;
 struct _System;
 
 // Function pointer types
-typedef void (*XIniSU)(struct _System *sP, void* sParamsP);
-typedef void (*XConsumeGeneU)(struct _System *sP, const Entity entity, const Gene *geneP);
+typedef void (*XIniSU)(struct _System *sP);
+typedef void (*XConsumeGeneU)(struct _System *sP, const Entity entity, const struct GeneHdr *geneP);
 typedef void (*XRunU)(struct _System *sP);
 typedef void (*XProcMsgU)(struct _System *sP, Message *messageP);
 typedef void (*XPostprocessCompsU)(struct _System *sP);
@@ -94,12 +95,11 @@ typedef void (*XPostDeactivateU)(struct _System *sP, FrayChanges *changesP);  //
 
 #define XIniSysFuncDefUnused_(name_) XIniSysFuncDef_(name_) {\
   unused_(sP);\
-  unused_(sParamsP);\
 }
 
-#define XConsumeGeneFuncDef_(name_) void x##name_##ConsumeGene(System *sP, const Entity entity, const Gene *geneP)
+#define XConsumeGeneFuncDef_(name_) void x##name_##ConsumeGene(System *sP, const Entity entity, const struct GeneHdr *geneP)
 
-#define XIniSysFuncDef_(name_) void x##name_##IniSys(System *sP, void *sParamsP)
+#define XIniSysFuncDef_(name_) void x##name_##IniSys(System *sP)
 
 #define XProcMsgFuncDefUnused_(name_)  XProcMsgFuncDef_(name_) {\
   unused_(sP);\
@@ -107,7 +107,7 @@ typedef void (*XPostDeactivateU)(struct _System *sP, FrayChanges *changesP);  //
 }
 #define XProcMsgFuncDef_(name_)  void x##name_##ProcessMessage(System *sP, Message *msgP)
 
-#define XConsumeGeneFuncDefUnused_(name_) void x##name_##ConsumeGene(System *sP, const Entity entity, const Gene *geneP) {\
+#define XConsumeGeneFuncDefUnused_(name_) void x##name_##ConsumeGene(System *sP, const Entity entity, const struct GeneHdr *geneP) {\
   unused_(sP);\
   unused_(geneP);\
 }
