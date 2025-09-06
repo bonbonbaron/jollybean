@@ -41,6 +41,12 @@ static void _distributeGene( Entity entity, GeneHdr **geneHdrPP, StripDataS **sd
         _distributeGene(entity, currGeneHdrPP, sdPF );
       }
       break;
+    // TODO potential case: ALTERNATIVE
+    //  cocnept: if you have a whole genome, but you onyl want to tweak one gene for another instance, 
+    //           should you really have to copy the whole genome again with that one change? Seems like
+    //           an inefficient way to vary singles. You can already do that with alternatives, but what's
+    //           not in place yet is the replacement mechanism. Then again, I haven't coded variants yet 
+    //           in the first place. 
     case VARIANT:
       // TODO
       break;
@@ -48,22 +54,18 @@ static void _distributeGene( Entity entity, GeneHdr **geneHdrPP, StripDataS **sd
     case MEDIA:
       MediaGene* mediaGeneP = (MediaGene*) geneHdrP;
       // Defer inflation 
-      // TODO colormap and color palette need to be inflated separately, but way more convenient to hand off to Render in Image.
       if (!(mediaGeneP->sd.flags & SD_SET_FOR_INFLATION_)) {
         mediaGeneP->sd.flags |= SD_SET_FOR_INFLATION_;
         StripDataS* sdP = &mediaGeneP->sd;  // because you must pass a double-pointer
         frayAdd(sdPF, &sdP, NULL);
       }
-      // Don't pass raw media genes into systems. They should come bundled inside an outer struct.
-      // This is so xRender can receive color palette and colormap together inside a single Image structure.
       break;
-    case EXCLUSIVE_IMMUTABLE:
-      sysP = shareGetSystemFromType( geneHdrP->u.type ); // type has to be separate from class for this reason
-                                                         // TODO so how then do you make a composite-class Image-type with n = 2?
+    case IMMUTABLE:
+      sysP = shareGetSystemFromType( geneHdrP->u.type ); 
       sysP->consumeGene(sysP, entity, geneHdrP);
       break;
-    case EXCLUSIVE_MUTABLE:  
-      ExclusiveMutableGene* exmutGeneP = (ExclusiveMutableGene*) geneHdrP;
+    case MUTABLE:  
+      MutableGene* exmutGeneP = (MutableGene*) geneHdrP;
       GeneHdr** mutationHdrPP = exmutGeneP->mutationPA;
       GeneHdr** mutationEndPP = mutationHdrPP + exmutGeneP->hdr.u.n;
       sysP = shareGetSystemFromType( geneHdrP->u.type );  // TODO Get idx from first elem in array.

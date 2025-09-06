@@ -1,5 +1,8 @@
 include ../../common.mk
 
+all: o 
+
+
 o: test.o $(LIBJB)
 	$(CC) -g test.o -L${LIB_DIR} -ljb -lgcov -o $@
 

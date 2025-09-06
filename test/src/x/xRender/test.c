@@ -272,7 +272,7 @@ TEST_F_SETUP(Tau) {
   tau->nImgs = sizeof( imgA ) / sizeof( imgA[0] );  // for lack of anything better for now
   U32 nEntities;
   tau->nMutationsPerEntity = N_MUTATIONS_PER_ENTITY;
-  xIniSys(tau->sP, tau->nEntities, NULL);
+  xIniSys(tau->sP, tau->nEntities);
   tau->renderCompF = tau->sP->cF;
   REQUIRE_EQ(tau->sP->compSz, sizeof(XRenderComp));
   REQUIRE_EQ(xGetNComps(tau->sP), tau->nEntities);

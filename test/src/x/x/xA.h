@@ -34,15 +34,6 @@ typedef struct {
   char cc;
 } XAMutation;
 
-// Images
-XIniSysFuncDef_(A);
-XGetShareFuncDef_(A);
-XIniSubcompFuncDef_(A);
-XPostprocessCompsDef_(A);
-XProcMsgFuncDef_(A);
-XRunFuncDef_(A);
-XPostMutateFuncDef_(A);
-
 typedef struct {
   System system;
   U32 someSystemwideU32;

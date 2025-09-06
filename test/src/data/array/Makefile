@@ -1,5 +1,8 @@
 include ../../common.mk
 
+all: o 
+
+
 o: test.o $(LIBJB)
 	$(CC) --coverage -g $< -L${LIB_DIR} -ljb -o $@
 

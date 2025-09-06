@@ -25,7 +25,7 @@ TEST_F_SETUP(Tau) {
   tau->sP = &tau->xP->system;
   tau->nEntities = N_ENTITIES;
   tau->nMutationsPerEntity = N_MUTATIONS_PER_ENTITY;
-  xIniSys(tau->sP, tau->nEntities, NULL);
+  xIniSys(tau->sP, tau->nEntities);
   tau->motionCompF = tau->sP->cF;
 
   REQUIRE_EQ(tau->sP->compSz, sizeof(XMotionComp));

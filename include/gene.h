@@ -10,7 +10,7 @@ typedef struct GeneHisto {
 } GeneHisto;
 
 // Used to distinguish header pointers
-typedef enum GeneClass { ROOT, SUBTREE, COMPOSITE, MEDIA, VARIANT, EXCLUSIVE_IMMUTABLE, EXCLUSIVE_MUTABLE, IMPLICIT, BLACKBOARD } GeneClass;
+typedef enum GeneClass { ROOT, SUBTREE, COMPOSITE, MEDIA, VARIANT, IMMUTABLE, MUTABLE, IMPLICIT, BLACKBOARD } GeneClass;
 
 // There is no "Gene" struct, strictly speaking.
 // The "Gene" is the thing that proceeds after GeneHdr; it's not a void pointer.
@@ -43,10 +43,10 @@ typedef struct MediaGene {
 // exmut's header should use sysId.
 // Each 
 // Be sure to assert at tool-time that all mutables have the same SystemId.
-typedef struct ExclusiveMutableGene {
+typedef struct MutableGene {
   GeneHdr hdr;  // header will hold system ID and 
   GeneHdr **mutationPA;   // pointers prevent multiple entities with same genes from reinitializing them
-} ExclusiveMutableGene;
+} MutableGene;
 
 // Composite gene
 typedef struct CompositeGene {  // Same information, different effect (see gene.c)

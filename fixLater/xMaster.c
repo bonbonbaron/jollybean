@@ -217,7 +217,7 @@ static Error _subsystemsIni(System *masterSysP, GeneHisto *geneHistoP) {
       XMasterComp *cP = (XMasterComp*) xGetCompPByEntity(masterSysP, histoElemP->geneType & MASK_COMPONENT_TYPE);
       if (cP) {
         // Assume no subsystems need extra parameters.
-        e = xIniSys(*cP, histoElemP->count, NULL);  
+        e = xIniSys(*cP, histoElemP->count);  
       }
     }
   }

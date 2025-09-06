@@ -1,5 +1,3 @@
-all: ./o
-
 include $(shell git rev-parse --show-toplevel)/Makefile
 include ${RPO_DIR}/test/Images.mk
 

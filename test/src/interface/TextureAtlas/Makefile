@@ -1,3 +1,5 @@
+all: ./o
+
 BODY_DIR = ${HOME}/jb/build/Seed/Genome/Gene/Body
 
 COLORMAP_DIR = ${BODY_DIR}/Image/Colormap

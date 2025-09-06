@@ -1,3 +1,5 @@
+all: ./o
+
 include ../../common.mk
 
 ./o: ./test.o ${JBLIB}

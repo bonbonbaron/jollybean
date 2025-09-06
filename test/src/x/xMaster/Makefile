@@ -1,5 +1,8 @@
 include ../../common.mk
 
+all: o 
+
+
 #~/jb/build/Seed/Genome/Gene/Body/Graybody/Colormap/src/I
 # Lesson learned: Linker searches from left to right for unresolved dependencies.
 ./o: ${CPI_OBJS} ./main.o ${LIB_DIR}/libjb.a 

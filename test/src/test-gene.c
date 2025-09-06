@@ -1,6 +1,6 @@
 #include "tau.h"
 #include "xA.h"
-#include "share.h"
+#include "data/share.h"
 
 /* STRUCTURE OF AN XA COMPONENT:
  *
