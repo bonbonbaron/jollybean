@@ -1,3 +1,12 @@
+LEFT OFF HERE:
+  I struggled to remember what was going on in the gene test.
+  So I renamed all the system's compoentns and took a stab at writing its consumeGene().
+  I got as far as realizing we need a mtuation map generator to save everybody time and sanity.
+  Compiler seems okay with it. We'll see how it actually runs.
+  So when I get back, I want to flesh out the rest of its gene consumption.
+  For instance, when it gets an immutable gene, it ought to populate that field right away.
+  Let's just try that, run it, and see how it goes.
+  Of course, in order to do that, I'll need to flesh out the rest of the test-gene.c too.
 MAIN FOCUS RIGHT NOW:
 ~~~~~~~~~~~~~~~~~~~~~
 Tight dev-and-test loop with genes
