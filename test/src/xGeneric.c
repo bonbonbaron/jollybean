@@ -26,11 +26,11 @@ XPostprocessCompsDef_(Generic) {
     assert (dP);
     // Turn it into a full-fledged component.
     XGenericComp component = {
-      .a = *aP,     // this is a pre-populated, immutable subcomponent
-      .b = 0,       // this is a share; you don't need to populate it yet. It'll be filled at runtime.
-      .c = 0,       // this is a share; you don't need to populate it yet. It'll be filled at runtime.
-      .d = *dP,     // this is a pre-populated, immutable subcomponent
-      .intP = NULL  // this is from an external share map
+//       .a = *aP,     // this is a pre-populated, immutable subcomponent
+//       .b = 0,       // this is a share; you don't need to populate it yet. It'll be filled at runtime.
+//       .c = 0,       // this is a share; you don't need to populate it yet. It'll be filled at runtime.
+//       .d = *dP,     // this is a pre-populated, immutable subcomponent
+//       .intP = NULL  // this is from an external share map
     };
     // Now the component's populated. Add it to the system.
     //printf("adding component with a = %d and d = %f to entity %d\n", *aP, *dP, *entityP);
@@ -60,11 +60,22 @@ XProcMsgFuncDef_(Generic) {
 }
 
 XConsumeGeneFuncDef_(Generic) {
+  XGeneric* xP = (XGeneric*) sP;
+  if ( geneP->class == MUTABLE ) {
+    MutableGene* mutableGeneP = (MutableGene*) geneP;
+    Map* entitysMutationMP = xNewMutationMap( sP, entity, geneP->u.n );
+
+    Mutation* mutationP = mutableGeneP->mutationPA;
+    Mutation* mutationEndP = mutationP + mutableGeneP->hdr.u.n;
+    for ( ; mutationP < mutationEndPP; ++mutationP ) {
+      mapSet(entitysMutationMP, mutationP->key, mutationP->val);
+    }
+  }
 }
 
 void xGenericRun(System *sP) {
-	XGenericComp *cP = (XGenericComp*) sP->cF;
-	XGenericComp *cEndP = cP + _frayGetFirstPausedIdx(sP->cF);
+  XGenericComp *cP = (XGenericComp*) sP->cF;
+  XGenericComp *cEndP = cP + _frayGetFirstPausedIdx(sP->cF);
 
   for (; cP < cEndP; cP++) {
     --cP->a;  // 30 becomes 29
@@ -75,4 +86,4 @@ void xGenericRun(System *sP) {
 }
 
 #define FLAGS_HERE (0)
-X_(Generic, 1, b, 0);
+X_(Generic, GENERIC, b, 0);

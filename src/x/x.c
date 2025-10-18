@@ -1,5 +1,6 @@
 #include "x/x.h"
 #include "share.h"
+#include "gene.h"
 
 inline static Entity _getEntityByCompIdx(System *sP, Key compIdx) {
   return sP->cIdx2eA[compIdx];
@@ -109,17 +110,37 @@ U32 xGetNComps(System *sP) {
 	return arrayGetNElems(sP->cF);
 }
 
-// Insert inner mutation map (maps trigger to mutation) into outer mutation map (maps Entity to Map*)
-void xAddMutationMap(System *sP, Entity entity, Map *mutationMP) {
-  assert(entity &&  sP);  // null mutation map is okay
-  assert (mutationMP && sP->mutationMPMP);
-  assert(arrayGetElemSz(mutationMP->mapA) == sP->mutationSz);
-  // If the component is immutable, that's fine, don't worry about it. 
-  // If the user intended to mutate the gene, ensure we have both pieces of data.
-  mapSet(sP->mutationMPMP, entity, &mutationMP);
-  // Otherwise just return successfully, assuming they never intended to mutate this entity's component in the first place.
+// This adds a mutation map for an entity to the system and returns a poitner to it.
+static Map* xNewMutationMap( const System* sP, const Entity entity, const Key nElems ) {
+  assert( sP );
+  assert( entity );
+  assert( nElems );
+  Map* mP = mapNew( RAW_DATA, sP->mutationSz, nElems, GENERAL );
+  assert( mP );
+  assert( sP->mutationMPMP );
+  // Add new map to the system's nested maps of mutations before returning it.
+  mapSet( sP->mutationMPMP, entity, &mP );
+  return mP;
 }
 
+void xMakeMutationMap( const System* sP, const Entity entity, const GeneHdr *geneP ) {
+  assert( sP );
+  assert( entity );
+  assert( geneP );
+  assert( geneP->class == MUTABLE );
+  assert( mapGet( sP->mutationMPMP, entity ) == NULL );
+
+  MutableGene* mutableGeneP = (MutableGene*) geneP;
+  Map* entitysMutationMP = xNewMutationMap( sP, entity, geneP->u.n );
+
+  Mutation* mutationP = mutableGeneP->mutationA;
+  Mutation* mutationEndP = mutationP + mutableGeneP->hdr.u.n;
+  for ( ; mutationP < mutationEndP; ++mutationP ) {
+    assert( mutationP->valP );
+    assert( mutationP->key );
+    mapSet(entitysMutationMP, mutationP->key, mutationP->valP);
+  }
+}
 
 void xIniSys(System *sP, U32 nComps) {
   // Sytems with special parts need to initialize maps in sIniU().
@@ -131,7 +152,7 @@ void xIniSys(System *sP, U32 nComps) {
   if (!(sP->flags & FLG_NO_MUTATIONS_) && sP->mutationSz) {
     sP->mutationMPMP = mapNew( MAP_POINTER, sizeof(Map*), nComps, GENERAL );
   }
-	// Only allocate one mailbox; it serves as input and output.
+  // Only allocate one mailbox; it serves as input and output.
   // TODO make this smarter than a raw constant
   // Also, give it ample room to handle multiple messages per entity.
 #define MAILBOX_MULTIPLY_NUM_SLOTS (3)

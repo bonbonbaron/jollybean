@@ -3,9 +3,8 @@
 #include "data/map.h"
 #include "data/fray.h"
 #include "data/mail.h"
-//#include "gene.h"
 
-struct GeneHdr;  // forward-declaration that'll resolve at link-time. Avoiding circular includes.
+struct GeneHdr;  // forward-declaration; gene.h already indirectly includes x.h
 typedef Key Entity;
 
 // System type flags
@@ -172,10 +171,10 @@ typedef struct _System {
   XPostprocessCompsU postprocessComps;  // If components are composites, piece them together here.
 } System;
 
-void    xMutateComponent(System *sP, Entity entity, Key newCompKey);
-void    xIniSys(System *sP, U32 nComps);
-void    xAddMutationMap(System *sP, Entity entity, Map *mutationMP);
+void     xMutateComponent(System *sP, Entity entity, Key newCompKey);
+void     xIniSys(System *sP, U32 nComps);
 Entity   xGetEntityByVoidComponentPtr(System *sP, void *componentP);
+void     xMakeMutationMap( const System* sP, const Entity entity, const struct GeneHdr *geneP );
 U32      xGetNComps(System *sP);
 void*    xGetCompValP(System *sP, Entity entity, Key key);
 Entity   xGetEntityByCompIdx(System *sP, Key compIdx);

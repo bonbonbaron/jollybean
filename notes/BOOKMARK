@@ -1,21 +1,27 @@
+MAIN FOCUS RIGHT NOW:
+~~~~~~~~~~~~~~~~~~~~~
+Tight dev-and-test loop with genes
+Gene tool 
+~~~~~~~~~~~~~~~~~~~~~
+
 Keys are now one byte with -fshort-enum. 
 I need to force the correct type if not in the engine, then at least in the game.
 
-KeyValPairArray for animations
-Mutation detection in Gene script by searching for KeyValPairArray
-Gene interface 
-  including circular gene detection, erroring out in such cases
-Gene C file for inflation, distribution, and initialization
-listMerge() should update all new members' list IDs so listRemove() works on them
-each blob should now have the pair of collisions, maybe without the blob ID in them (A?)
-xRender::zOrder() should iterate over this blob list's new type differently:
+* KeyValPairArray for animations
+* Mutation detection in Gene script by searching for KeyValPairArray
+* Gene interface 
+  - including circular gene detection, erroring out in such cases
+* Gene C file for inflation, distribution, and initialization
+* listMerge() should update all new members' list IDs so listRemove() works on them
+* each blob should now have the pair of collisions, maybe without the blob ID in them (A?)
+* xRender::zOrder() should iterate over this blob list's new type differently:
   i sense the pairs should enhance sorting since it's list-based. 
   Each pair item may use a boolean to tell if it's been sorted into the outgoing YIP array.
-    A B
-    B C
-    B E
-    D E
-    E F
+  -  A B
+  -  B C
+  -  B E
+  -  D E
+  -  E F
 
 
 

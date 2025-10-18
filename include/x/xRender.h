@@ -2,9 +2,9 @@
 #define SYS_RENDER
 #include "data/list.h"
 #include "x/x.h"
-#include "interface/interface.h"
 #include "data/bt.h"
 #include "jb.h"
+#include "gene/Image.h"
 
 //typedef enum {} XRenderMsgCmd;
 

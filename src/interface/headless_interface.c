@@ -11,7 +11,7 @@
 #include <sys/stat.h>
 #include <termios.h>
 
-
+#include "gene/Image.h"
 #define KEYFILE "/dev/input/event0" // Use your keyboard's event file
 #define VAL_KEY_UP (0)
 #define VAL_KEY_DOWN (1)

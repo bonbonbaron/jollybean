@@ -14,7 +14,7 @@ static void _inflateMedia(StripDataS **sdPF) {
   multithread_(sdUnpack, (void*) sdPF);
   multithread_(sdAssemble, (void*) sdPF);
 #else 
-  for (int i = 0; i < 255; ++i) {
+  for (int i = 0; i < 255; ++i) {  // TODO make this more pro bruh
     stripIni(sdPF[i], TEMPORARY);
   }
 #endif
@@ -27,8 +27,8 @@ static void _distributeGene( Entity entity, GeneHdr **geneHdrPP, StripDataS **sd
   assert(sdPF);
   assert(*sdPF);
 
-  GeneHdr* geneHdrP = *geneHdrPP;
   System *sysP;
+  GeneHdr* geneHdrP = *geneHdrPP;
   switch (geneHdrP->class) {
     case SUBTREE:  // a subtree *is* a composite. "Subtree" just tells us the start of a new entity.
       ++entity;
@@ -61,17 +61,9 @@ static void _distributeGene( Entity entity, GeneHdr **geneHdrPP, StripDataS **sd
       }
       break;
     case IMMUTABLE:
+    case MUTABLE:
       sysP = shareGetSystemFromType( geneHdrP->u.type ); 
       sysP->consumeGene(sysP, entity, geneHdrP);
-      break;
-    case MUTABLE:  
-      MutableGene* exmutGeneP = (MutableGene*) geneHdrP;
-      GeneHdr** mutationHdrPP = exmutGeneP->mutationPA;
-      GeneHdr** mutationEndPP = mutationHdrPP + exmutGeneP->hdr.u.n;
-      sysP = shareGetSystemFromType( geneHdrP->u.type );  // TODO Get idx from first elem in array.
-      for ( ; mutationHdrPP < mutationEndPP; ++mutationHdrPP ) {
-        sysP->consumeGene(sysP, entity, geneHdrP);
-      }
       break;
     default:
       assert(FALSE); // gene has an incompatible gene class
@@ -79,6 +71,7 @@ static void _distributeGene( Entity entity, GeneHdr **geneHdrPP, StripDataS **sd
   }
 }
 
+// TODO you need to make a function to init the systems based on the number of genes in each one.
 // =====================================================================
 // Distribute all genes to their appropriate subsystems.
 // =====================================================================

@@ -2,6 +2,7 @@
 #define INTERFACE_H
 #include "x/x.h"
 #include "data/strip.h"
+// #include "gene/Image.h"  // see if you can split genes from interface
 
 // Choose your interface!!
 #ifndef USE_HEADLESS_INTERFACE
@@ -68,25 +69,6 @@ typedef Position RectOffset;  // used for offsetting animation rectangles after 
 
 typedef U8 ColormapIdx;
 #define N_COLORS_SUPPORTED_MAX_ (16)
-typedef struct {
-  StripDataS *sdP;  // this element MUST come first in a media (hence inflatable) gene for casting
-  U8 state;         // prevents copies of this from being inflated
-  U8 bpp;
-  U16 w, h, pitch;  // in pixel units; determine actual step size by pixel format
-} Colormap;     
-
-typedef struct {
-  U8 nColors;
-  Color_ *colorA;
-} ColorPalette;
-
-typedef struct {
-  U8 state;  // prevents copies of images from being added to texture atlas
-  Key sortedRectIdx;  // Index of sorted rectangle so you can adjust src rect's XY offset in atlas
-  // We don't store raw image data in this struct. It actually winds up in a texture atlas in xRender.
-  Colormap* cmP;
-  ColorPalette* cpP;  
-} Image;
 
 // GUI
 typedef enum {

@@ -39,13 +39,20 @@ typedef struct MediaGene {
   StripDataS sd;
 } MediaGene;
 
+// Similar to GeneHdr, but the difference in some fields' names warrants a distinction.
+typedef struct Mutation {
+  Key key;
+#ifndef NDEBUG
+  const U8 size;  // when debugging size of expected type, this is handy       
+  const char* typeName;  // checks both at CREATION time and RUNtime
+#endif
+  void* valP;
+} Mutation;
+
 // Exclusive mutable gene
-// exmut's header should use sysId.
-// Each 
-// Be sure to assert at tool-time that all mutables have the same SystemId.
 typedef struct MutableGene {
   GeneHdr hdr;  // header will hold system ID and 
-  GeneHdr **mutationPA;   // pointers prevent multiple entities with same genes from reinitializing them
+  Mutation *mutationA;   // pointers prevent multiple entities with same genes from reinitializing them
 } MutableGene;
 
 // Composite gene
@@ -73,9 +80,7 @@ typedef struct RootGene {
 
 /* Implicit genes supply genes that're universal to all instances of a genome/subtree.
  * e.g. if every single townsperson randomly walks then randomly waits, I don't want to
- * waste space providing that Personality for every Townsperson instance.
- * Instead, I want to give each his 
-   waste to store in ROM (not to mention annoying to have to remember to store).
+ * waste space (or worse, having to remember) providing that Personality for every Townsperson.
    Better to create them on startup. */
 typedef struct {
   U8 type;
