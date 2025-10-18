@@ -42,6 +42,8 @@ typedef struct CompositeGene {  // Same information, different effect (see gene.
 // Composites are processed by looping through the array.
 // See how painful this is shaping up to be is HIGHLY justifying the gene tool.
 
+// GenericImmutableGene genImm... TODO 
+
 // Composite 1's header array
 struct GeneHdr* comp1HdrA[] = { };
 
@@ -63,11 +65,13 @@ RootGene root = {
     .size = sizeof(RootGene),
     .typeName = "RootGene"
   },
+  //GeneHisto histo;    // histo of the entire genome so we don't have to calculate it at runtime
+  //GeneHdr **geneHdrPA;   // pointers prevent multiple entities with same genes from reinitializing them
 
 };
+
 GeneHisto histo;    // histo of the entire genome so we don't have to calculate it at runtime
 struct GeneHdr **geneHdrPA;   // pointers prevent multiple entities with same genes from reinitializing them
-
 
 extern XGeneric xGeneric;  // generic system
 

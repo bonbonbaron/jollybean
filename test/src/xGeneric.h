@@ -21,7 +21,6 @@ typedef struct {
 typedef struct {
   System system;
   U32 someSystemwideU32;
-  Map *mutMP;  // mutation map for A component
   Map *sharedIntMP;
   Entity *entityF;
 } XGeneric;

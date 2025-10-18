@@ -4,24 +4,14 @@
 #include "gene.h"
 
 typedef struct GenericImmutableGene {
-  GeneHdr hdr = {
-    .class = IMMUTABLE,
-    .u.type = GENERIC,
-    .size = sizeof(ImmutableGene),
-    .name = "ImmutableGene"
-  },
+  GeneHdr hdr;
   int i;
-} ImmutableGene;
+} GenericImmutableGene;
 
 typedef struct GenericMutableGene {
-  GeneHdr hdr = {
-    .class = IMMUTABLE,
-    .u.type = GENERIC,
-    .size = sizeof(ImmutableGene),
-    .name = "ImmutableGene"
-  },
+  GeneHdr hdr;
   int i;
-} ImmutableGene;
+} GenericMutableGene;
     
 
 #endif // IMM_SYS_GENES_H
