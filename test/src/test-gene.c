@@ -56,7 +56,7 @@ CompositeGene comp1 = {
   .geneHdrPA = comp1HdrA
 };
 
-RootGene rootHdr = {
+RootGene root = {
   .hdr = {
     .class = ROOT,
     .u.n = 1,
@@ -78,7 +78,7 @@ typedef struct Tau {
 TEST_F_SETUP(Tau) {
   tau->xP = &xGeneric;
   shareIni( 2 );  // Let's test gene's ability to distribute across two systems.
-  distributeGenes( /* root gene */ );
+  distributeGenes( &root );
 }
 
 TEST_F_TEARDOWN(Tau) {

@@ -92,4 +92,6 @@ typedef struct {
   ImplicitGene *listA;
 } ImplicitGenesList;
 
+void distributeGenes( RootGene* rootP );
+
 #endif
