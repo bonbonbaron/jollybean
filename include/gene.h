@@ -17,7 +17,7 @@ typedef enum GeneClass { ROOT, SUBTREE, COMPOSITE, MEDIA, VARIANT, IMMUTABLE, MU
 // At system load time, the system takes/uses everything but the header.
 // This design is better since the compiler will detect whether we're really pointing at a GeneHdr or not.
 typedef struct GeneHdr {  // breaks down to 1 byte with -fshort-enums compiler flag
-  const U8 class;  // For mutations, this is in the ExclusiveMutableGene's header.
+  const U8 class;  // For mutations, this is in the Exclusiveint MutableGene's header.
   // This union is useful for the following:
   //  1. Exclusives, which will use sysId to know where to go.
   //  2. Composites, which will use nGenes to know how many genes to use
@@ -42,16 +42,13 @@ typedef struct MediaGene {
 // Similar to GeneHdr, but the difference in some fields' names warrants a distinction.
 typedef struct Mutation {
   Key key;
-#ifndef NDEBUG
-  const U8 size;  // when debugging size of expected type, this is handy       
-  const char* typeName;  // checks both at CREATION time and RUNtime
-#endif
-  void* valP;
+  void* mutationBodyP;
 } Mutation;
 
 // Exclusive mutable gene
 typedef struct MutableGene {
-  GeneHdr hdr;  // header will hold system ID and 
+  GeneHdr hdr;  // header will hold system ID. Otherwise we won't know its destination. N is separate.
+  Key n;
   Mutation *mutationA;   // pointers prevent multiple entities with same genes from reinitializing them
 } MutableGene;
 

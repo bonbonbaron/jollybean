@@ -136,9 +136,9 @@ void xMakeMutationMap( const System* sP, const Entity entity, const GeneHdr *gen
   Mutation* mutationP = mutableGeneP->mutationA;
   Mutation* mutationEndP = mutationP + mutableGeneP->hdr.u.n;
   for ( ; mutationP < mutationEndP; ++mutationP ) {
-    assert( mutationP->valP );
+    assert( mutationP->mutationBodyP );
     assert( mutationP->key );
-    mapSet(entitysMutationMP, mutationP->key, mutationP->valP);
+    mapSet(entitysMutationMP, mutationP->key, mutationP->mutationBodyP);
   }
 }
 

@@ -3,15 +3,15 @@
 
 #include "gene.h"
 
+typedef int GenericImmutableInt;
+typedef struct GenericMutableShortChar {
+  short s;
+  char c;
+} GenericMutableShortChar;
+
 typedef struct GenericImmutableGene {
   GeneHdr hdr;
-  int i;
+  GenericImmutableInt* geneBodyP;
 } GenericImmutableGene;
-
-typedef struct GenericMutableGene {
-  GeneHdr hdr;
-  int i;
-} GenericMutableGene;
-    
 
 #endif // IMM_SYS_GENES_H
