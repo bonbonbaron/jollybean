@@ -6,72 +6,32 @@
 
 TAU_MAIN();
 
-#if 0
-typedef struct GeneHdr {  // breaks down to 1 byte with -fshort-enums compiler flag
-  const U8 class;  // For mutations, this is in the ExclusiveMutableGene's header.
-                   // This union is useful for the following:
-                   //  1. Exclusives, which will use sysId to know where to go.
-                   //  2. Composites, which will use nGenes to know how many genes to use
-                   //  3. Variants, whose subtree (composite) and composite will use the same.
-                   //  4. 
-  union {
-    const U8  type;
-    const U8  n;
-  } u;
-#ifndef NDEBUG
-  const U8 size;  // when debugging size of expected type, this is handy       
-  const char* typeName;  // checks both at CREATION time and RUNtime; string's stored in gene type's header.
-#endif
-} GeneHdr;
-
-// for now, just make a dummy root gene here to grok what's going on.
-typedef struct RootGene {
-  GeneHdr hdr;
-  GeneHisto histo;    // histo of the entire genome so we don't have to calculate it at runtime
-  GeneHdr **geneHdrPA;   // pointers prevent multiple entities with same genes from reinitializing them
-} RootGene;
-//
-// Composite gene
-typedef struct CompositeGene {  // Same information, different effect (see gene.c)
-  GeneHdr hdr;  // let the header hold the count, and each individual element's header below will hold its sysId
-  GeneHdr **geneHdrPA;   // pointers prevent multiple entities with same genes from reinitializing them
-} CompositeGene;
-#endif
-
-// Now the deal is, I want to push just one thing into the system per entity, not a bunch of things. 
-// Ideally.
-// Composites are processed by looping through the array.
-// See how painful this is shaping up to be is HIGHLY justifying the gene tool.
-
-// Raw gene bodies
-GenericImmutableInt 
-genImm1 = 1,
-        genImm2 = 2;
+// Raw gene bodies - Only mutations need a separate declaration.
 GenericMutableShortChar 
-genMutBody1a = {
+mutBody1a = {
   .s = 1234,
   .c = 100
 },
-  genMutBody1b = {
+  mutBody1b = {
     .s = 1235,
     .c = 101
   },
-  genMutBody1c = {
+  mutBody1c = {
     .s = 1236,
     .c = 102
   },
-  genMutBody2a = {
+  mutBody2a = {
     .s = 123,
     .c = 10
   },
-  genMutBody2b = {
+  mutBody2b = {
     .s = 124,
     .c = 11
   };
 
 // Bundle above gene bodies into genes
 GenericImmutableGene 
-genImm1Gene = {
+imm1Gene = {
   .hdr = {
     .class = IMMUTABLE,
     .u.type = GENERIC
@@ -81,9 +41,9 @@ genImm1Gene = {
     .typeName = "GenericImmutableInt"
 #endif
   },
-  .geneBodyP = &genImm1
+  .body = 1,
 },
-  genImm2Gene = {
+  imm2Gene = {
     .hdr = {
       .class = IMMUTABLE,
       .u.type = GENERIC
@@ -93,37 +53,37 @@ genImm1Gene = {
       .typeName = "GenericImmutableInt"
 #endif
     },
-    .geneBodyP = &genImm2
+    .body = 2
   };
 
 // Immutables can be raw data beneath headers, but  mutables ought to use data pointers for reusability.
 Mutation mutations1A[] = {
   {
     .key = 1,
-    .mutationBodyP = &genMutBody1a
+    .mutationBodyP = &mutBody1a
   },
   {
     .key = 2,
-    .mutationBodyP = &genMutBody1b
+    .mutationBodyP = &mutBody1b
   },
   {
     .key = 3,
-    .mutationBodyP = &genMutBody1c
+    .mutationBodyP = &mutBody1c
   }
 };
 
 Mutation mutations2A[] = {
   {
     .key = 1,
-    .mutationBodyP = &genMutBody2a
+    .mutationBodyP = &mutBody2a
   },
   {
     .key = 2,
-    .mutationBodyP = &genMutBody2b
+    .mutationBodyP = &mutBody2b
   }
 };
 
-MutableGene mutGene1 = {
+MutableGene mut1Gene = {
   .hdr = {
     .class = MUTABLE,
     .u.type = GENERIC
@@ -137,7 +97,7 @@ MutableGene mutGene1 = {
   .mutationA = mutations1A
 };
 
-MutableGene mutGene2 = {
+MutableGene mut2Gene = {
   .hdr = {
     .class = MUTABLE,
     .u.type = GENERIC
@@ -151,19 +111,23 @@ MutableGene mutGene2 = {
   .mutationA = mutations2A
 };
 
-
-// Gotta make the mutations before I make the genes. Seems clunky. Maybe redesign this step.
-
-// Composite 1's header array
+// Intercomposite 1's header array
 // TODO put the immutable gene and mutable gene together here
-struct GeneHdr* comp1HdrA[] = { };
-struct GeneHdr* comp2HdrA[] = { };
+// I think i have a better understanding of how this should work out:
+//    The top-level ONLY should have type = system.
+//    Each sub-level will have class (esp. mutables) and sub-types.
+//    Sub-types, denoted by type, will tell the system what 
+//    However, the problemw ith that is that there's only ONE type that can go into a system if you
+//    hard-code the genes. It's almost like, for most systems, it should stay composite.
+//    Unless we can make a ready-made gene.c helper function.
+struct GeneHdr* comp1HdrA[] = { &imm1Gene.hdr, &mut1Gene.hdr };
+struct GeneHdr* comp2HdrA[] = { &imm2Gene.hdr, &mut2Gene.hdr  };
 
-// Composite for generic system
-CompositeGene comp1 = {
+// IntraCompositeGene for generic system
+IntraCompositeGene comp1 = {
   .hdr = {
-    .class = COMPOSITE,
-    .u.n = 2
+    .class = INTRACOMPOSITE,
+    .u.type = GENERIC
 #ifndef NDEBUG
       ,
     .size = sizeof(XGenericComp),
@@ -172,6 +136,20 @@ CompositeGene comp1 = {
   },
   .geneHdrPA = comp1HdrA
 };
+
+/* InterComposites should ALWAYS use u.n.
+ * distroGene() expects that.
+ * You need a new type of gene that lets you pass a composite into a system.
+ * Or rather, you need to distinguish between intersystem composites and intrasystem composites.
+ * The justification for intra composites is that entity 1 may provide a different set of sub-components
+ * as opposed to entity 2, which may have mutations or just not process certain fields altogether.
+ *
+ * TODO make a xGetNextGene() function in x.c to ease extracting genes per system with void pointers 
+ *      and eliminate boilerplate. That way each system only has to have a case structure for the type,
+ *      NOT the class. 
+ *     
+ *      Aim for something like while ( geneP = xGetNextGene() ) { ... }
+ */
 
 RootGene root = {
   .hdr = {

@@ -10,7 +10,7 @@ typedef struct GeneHisto {
 } GeneHisto;
 
 // Used to distinguish header pointers
-typedef enum GeneClass { ROOT, SUBTREE, COMPOSITE, MEDIA, VARIANT, IMMUTABLE, MUTABLE, IMPLICIT, BLACKBOARD } GeneClass;
+typedef enum GeneClass { ROOT, SUBTREE, INTERCOMPOSITE, INTRACOMPOSITE, MEDIA, VARIANT, IMMUTABLE, MUTABLE, IMPLICIT, BLACKBOARD } GeneClass;
 
 // There is no "Gene" struct, strictly speaking.
 // The "Gene" is the thing that proceeds after GeneHdr; it's not a void pointer.
@@ -52,20 +52,27 @@ typedef struct MutableGene {
   Mutation *mutationA;   // pointers prevent multiple entities with same genes from reinitializing them
 } MutableGene;
 
-// Composite gene
-typedef struct CompositeGene {  // Same information, different effect (see gene.c)
+// Composite genes:
+//   INTERcomposites have (sub-)components distributed across multiple systems. These use u.n.
+//   INTRAcomposites have sub-components distributed only to one system. These use u.type with an extra n.
+typedef struct InterCompositeGene {  // Same information, different effect (see gene.c)
   GeneHdr hdr;  // let the header hold the count, and each individual element's header below will hold its sysId
   GeneHdr **geneHdrPA;   // pointers prevent multiple entities with same genes from reinitializing them
-} CompositeGene;
+} InterCompositeGene;
 
+typedef struct IntraCompositeGene {  // Same information, different effect (see gene.c)
+  GeneHdr hdr;  // let the header hold the count, and each individual element's header below will hold its sysId
+  Key n;        // since hdr uses u.type to indicate system, this field is required. 
+  GeneHdr **geneHdrPA;   // pointers prevent multiple entities with same genes from reinitializing them
+} IntraCompositeGene;
 // Subtree gene
-typedef CompositeGene SubtreeGene;  // same information, with added effect of incrementing entity
+typedef InterCompositeGene SubtreeGene;  // same information, with added effect of incrementing entity
   
 // Variant gene
-typedef struct VariantGene {          // Variants allow you to read a tree once and copy it mulitple times with 
+typedef struct VariantGene { // Variants allow you to read a tree once and copy it mulitple times with 
   GeneHdr hdr;
   SubtreeGene subtree;       // small variations, indicated in variations A. Those get tacked on.
-  CompositeGene variations;  // They can either add a new gene or override an existing one.
+  InterCompositeGene variations;  // They can either add a new gene or override an existing one.
 } VariantGene;  
 
 // Root gene

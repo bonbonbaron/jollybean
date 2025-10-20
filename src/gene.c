@@ -33,8 +33,8 @@ static void _distributeGene( Entity entity, GeneHdr **geneHdrPP, StripDataS **sd
     case SUBTREE:  // a subtree *is* a composite. "Subtree" just tells us the start of a new entity.
       ++entity;
       // fall through
-    case COMPOSITE:  // recurse  back into this function
-      CompositeGene* compGeneP = (CompositeGene*) geneHdrP;
+    case INTERCOMPOSITE:  // recurse  back into this function
+      InterCompositeGene* compGeneP = (InterCompositeGene*) geneHdrP;
       GeneHdr** currGeneHdrPP = compGeneP->geneHdrPA;
       GeneHdr** geneHdrEndPP = currGeneHdrPP + compGeneP->hdr.u.n;
       for (; currGeneHdrPP < geneHdrEndPP; ++currGeneHdrPP) {
@@ -60,6 +60,7 @@ static void _distributeGene( Entity entity, GeneHdr **geneHdrPP, StripDataS **sd
         frayAdd(sdPF, &sdP, NULL);
       }
       break;
+    case INTRACOMPOSITE:
     case IMMUTABLE:
     case MUTABLE:
       sysP = shareGetSystemFromType( geneHdrP->u.type ); 
