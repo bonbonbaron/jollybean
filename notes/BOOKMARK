@@ -1,19 +1,29 @@
 LEFT OFF HERE:
-  I struggled to remember what was going on in the gene test.
-  So I renamed all the system's compoentns and took a stab at writing its consumeGene().
-  I got as far as realizing we need a mtuation map generator to save everybody time and sanity.
-  Compiler seems okay with it. We'll see how it actually runs.
-  So when I get back, I want to flesh out the rest of its gene consumption.
-  For instance, when it gets an immutable gene, it ought to populate that field right away.
-  Let's just try that, run it, and see how it goes.
-  Of course, in order to do that, I'll need to flesh out the rest of the test-gene.c too.
-MAIN FOCUS RIGHT NOW:
+==============
+  Got the gene test to run - finally!!!
+  Few more things left to do to make this initial test work:
+    xGenericConsumeGene() needs to handle an intracomposite.
+    Make an entity with a IMmutable short-char component.
+    Make xGenericRun() do something meaningful with the results an spit them into a shared pointer.
+  memory needs a reset ALL button (that implicitly excludes permanent); call that in test
+  make a tool to generate genes and load them via an INDEPENDENT, auto-generated Makefile.
+
+MACRO FOCUS RIGHT NOW:
 ~~~~~~~~~~~~~~~~~~~~~
-Tight dev-and-test loop with genes
+Tight dev-and-test loop with all gene types:
+  subtrees
+  immutables
+  mutables
+  intracomposites
+  \intercomposites
+  media
+  blackboard
+  implicit
+  variant (... and alternative?)
+
 Gene tool 
 ~~~~~~~~~~~~~~~~~~~~~
-
-Keys are now one byte with -fshort-enum. 
+Keys are now one byte with -fshort-enum if we can get SDL2 to STFU.
 I need to force the correct type if not in the engine, then at least in the game.
 
 * KeyValPairArray for animations
@@ -31,8 +41,6 @@ I need to force the correct type if not in the engine, then at least in the game
   -  B E
   -  D E
   -  E F
-
-
 
 add post pause and unpause generics
 add post pause and unpause to all systems till they compile

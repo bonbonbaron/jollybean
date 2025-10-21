@@ -8,16 +8,17 @@
 
 // Inflate a whole array of strip data.
 static void _inflateMedia(StripDataS **sdPF) {
-  assert(sdPF);
+  if ( sdPF ) {
 #if MULTITHREADED
-  multithread_(sdInflate, (void*) sdPF);
-  multithread_(sdUnpack, (void*) sdPF);
-  multithread_(sdAssemble, (void*) sdPF);
+    multithread_(sdInflate, (void*) sdPF);
+    multithread_(sdUnpack, (void*) sdPF);
+    multithread_(sdAssemble, (void*) sdPF);
 #else 
-  for (int i = 0; i < 255; ++i) {  // TODO make this more pro bruh
-    stripIni(sdPF[i], TEMPORARY);
-  }
+    for (int i = 0; i < 255; ++i) {  // TODO make this more pro bruh
+      stripIni(sdPF[i], TEMPORARY);
+    }
 #endif
+  }
 }
 
 // don't have to worry about intercomps, subtrees, 
@@ -53,13 +54,13 @@ static void _distributeGene( Entity entity, GeneHdr **geneHdrPP, StripDataS **sd
   assert(entity);
   assert(geneHdrPP);
   assert(*geneHdrPP);
-  assert(sdPF);
-  assert(*sdPF);
+  // assert(sdPF);  // No need for asserting these. Text-based games don't have media.
+  // assert(*sdPF);
 
   System *sP;
   GeneHdr* geneHdrP = *geneHdrPP;
   switch (geneHdrP->class) {
-    case SUBTREE:  // a subtree *is* a composite. "Subtree" just tells us the start of a new entity.
+    case SUBTREE:  // a subtree *is* an intercomposite. "Subtree" just tells us the start of a new entity.
       ++entity;
       // fall through
     case INTERCOMPOSITE:  // recurse  back into this function
@@ -86,7 +87,7 @@ static void _distributeGene( Entity entity, GeneHdr **geneHdrPP, StripDataS **sd
       if (!(mediaGeneP->sd.flags & SD_SET_FOR_INFLATION_)) {
         mediaGeneP->sd.flags |= SD_SET_FOR_INFLATION_;
         StripDataS* sdP = &mediaGeneP->sd;  // because you must pass a double-pointer
-        frayAdd(sdPF, &sdP, NULL);
+        frayAdd(sdPF, &sdP, NULL);  // this asserts frayP != NULL, so no need to do it above.
       }
       break;
     case INTRACOMPOSITE:
@@ -109,7 +110,10 @@ void distributeGenes( const RootGene* rootP ) {
   assert( rootP );
   assert( rootP->hdr.class == ROOT );
   _initSystems( &rootP->histo );
-  StripDataS** sdPF = frayNew( sizeof(StripDataS*), rootP->histo.nDistinctMedia, TEMPORARY);  
+  StripDataS** sdPF = NULL;
+  if ( rootP->histo.nDistinctMedia ) {
+    sdPF = frayNew( sizeof(StripDataS*), rootP->histo.nDistinctMedia, TEMPORARY);  
+  }
 
   GeneHdr** geneHdrPP = rootP->geneHdrPA;
   GeneHdr** geneHdrEndPP = geneHdrPP + rootP->hdr.u.n;

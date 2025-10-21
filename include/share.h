@@ -4,7 +4,7 @@
 #include "x/x.h"
 #include "jb.h"
 
-void shareIni( const Key N_SYSTEM_TYPES );
+void shareIni();
 
 Map*     shareGetMap( const Key KEY );
 

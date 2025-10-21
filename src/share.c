@@ -13,7 +13,7 @@ static Map* _sharedSystemMapP = NULL;
 static Map* _sharedInboxMapP = NULL;
 // May add more types later
 
-void shareIni( const Key N_SYSTEM_TYPES ) {
+void shareIni() {
   _sharedMapOfMapsP = mapNew( MAP_POINTER, sizeof(Map*), MAX_NUM_KEYS_, GENERAL );
   _sharedRawPointerMapP = mapNew( NONMAP_POINTER, sizeof(Map*), MAX_NUM_KEYS_, GENERAL );
   if ( ! _sharedSystemMapP ) {

@@ -21,6 +21,7 @@ XConsumeGeneFuncDef_(Generic) {
     GenericImmutableGene* immutableGeneP = (GenericImmutableGene*) geneP;
     cP->immutable = immutableGeneP->body;
   }
+  // TODO make an if-statement for an intracomposite
 }
 
 void xGenericRun(System *sP) {

@@ -112,14 +112,6 @@ MutableGene mut1Gene = {
   };
 
 // Intercomposite 1's header array
-// TODO put the immutable gene and mutable gene together here
-// I think i have a better understanding of how this should work out:
-//    The top-level ONLY should have type = system.
-//    Each sub-level will have class (esp. mutables) and sub-types.
-//    Sub-types, denoted by type, will tell the system what 
-//    However, the problemw ith that is that there's only ONE type that can go into a system if you
-//    hard-code the genes. It's almost like, for most systems, it should stay composite.
-//    Unless we can make a ready-made gene.c helper function.
 struct GeneHdr* comp1HdrA[] = { &imm1Gene.hdr, &mut1Gene.hdr };
 struct GeneHdr* comp2HdrA[] = { &imm2Gene.hdr, &mut2Gene.hdr  };
 
@@ -150,7 +142,9 @@ IntraCompositeGene intra1 = {
     .geneHdrPA = comp1HdrA
   };
 
-GeneHdr* geneHdrPA[] = { intra1, intra2 };
+struct GeneHdr* geneHdrPA[] = { &intra1.hdr, &intra2.hdr };
+
+U32 nExclusivesA[ N_SYSTEM_TYPES ] = {0};
 
 RootGene root = {
   .hdr = {
@@ -162,13 +156,12 @@ RootGene root = {
     .typeName = "RootGene"
 #endif
   },
-  //GeneHisto histo;    // histo of the entire genome so we don't have to calculate it at runtime
+  .histo = {
+    .nExclusivesA = nExclusivesA,
+    .nDistinctMedia = 0
+  },
   .geneHdrPA = geneHdrPA
-
 };
-
-GeneHisto histo;    // histo of the entire genome so we don't have to calculate it at runtime
-struct GeneHdr **geneHdrPA;   // pointers prevent multiple entities with same genes from reinitializing them
 
 extern XGeneric xGeneric;  // generic system
 
@@ -177,9 +170,16 @@ typedef struct Tau {
 } Tau;
 
 TEST_F_SETUP(Tau) {
+  shareIni();
+  nExclusivesA[GENERIC] = 2;
+  shareSetSystem( &xGeneric.system );
   tau->xP = &xGeneric;
-  shareIni( 2 );  // Let's test gene's ability to distribute across two systems.
+  shareIni();  // Let's test gene's ability to distribute across two systems.
   distributeGenes( &root );
+}
+
+TEST_F( Tau, FirstOneLezSeeHowItGoez ) {
+  REQUIRE_TRUE( 1 );
 }
 
 TEST_F_TEARDOWN(Tau) {
