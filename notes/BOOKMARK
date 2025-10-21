@@ -3,24 +3,26 @@ LEFT OFF HERE:
   Got the gene test to run - finally!!!
   Few more things left to do to make this initial test work:
     xGenericConsumeGene() needs to handle an intracomposite.
-    Make an entity with a IMmutable short-char component.
+    Make an entity with only an IMmutable component.
     Make xGenericRun() do something meaningful with the results an spit them into a shared pointer.
   memory needs a reset ALL button (that implicitly excludes permanent); call that in test
+  call xPostProcess() after distributeGenes()... if nothing else, it's how JB will do it.
+  get each of the test cases in the gene type list below done; cross them off as you complete them.
+    \root
+    subtrees
+    immutables
+    mutables
+    intracomposites
+    \intercomposites
+    media
+    blackboard
+    implicit
+    variant (... and alternative? what were alts supposed to be again?)
   make a tool to generate genes and load them via an INDEPENDENT, auto-generated Makefile.
 
 MACRO FOCUS RIGHT NOW:
 ~~~~~~~~~~~~~~~~~~~~~
-Tight dev-and-test loop with all gene types:
-  subtrees
-  immutables
-  mutables
-  intracomposites
-  \intercomposites
-  media
-  blackboard
-  implicit
-  variant (... and alternative?)
-
+Tight dev-and-test loop with all gene types
 Gene tool 
 ~~~~~~~~~~~~~~~~~~~~~
 Keys are now one byte with -fshort-enum if we can get SDL2 to STFU.
