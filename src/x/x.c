@@ -259,6 +259,7 @@ void xAddEntity( const System* sP, const Entity entity ) {
   assert( cIdx < arrayGetNElems( sP->cF ) );
   assert( cIdx < KEY_MAX );
   sP->cIdx2eA[ cIdx ] = entity;
+  assert( mapGet( sP->e2cIdxMP, entity ) ==  NULL );
   mapSet( sP->e2cIdxMP, entity, (Key*) &cIdx );
 }
   
