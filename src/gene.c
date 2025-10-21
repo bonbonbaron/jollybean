@@ -20,6 +20,35 @@ static void _inflateMedia(StripDataS **sdPF) {
 #endif
 }
 
+// don't have to worry about intercomps, subtrees, 
+// What about shares? 
+//
+// do worry about:
+//
+//  for inflation function:
+//    media
+//
+//  for system component frays:
+//    immutable (obviously only counts once)
+//    mutables (whole set only counts once)
+//    intracomposites (whole set only counts once)
+
+// histo def: 
+  // U32 *nExclusivesA;          // determines each subsystem's number of components 
+  // U32  nDistinctMedia;        // determines # of strip data to inflate/unpack/assemble
+static void _initSystems( const GeneHisto* histoP ) {
+  assert( histoP );
+  assert( histoP->nExclusivesA );
+  System* sP;
+  for (int i = 1; i < N_SYSTEM_TYPES; ++i) {
+    if ( histoP->nExclusivesA[i] ) {
+       sP = shareGetSystem( i );  // This will crash if gaps exist between impl'd system IDs. Good!
+       xIniSys( sP, histoP->nExclusivesA[i] );
+    }
+  }
+}
+
+
 static void _distributeGene( Entity entity, GeneHdr **geneHdrPP, StripDataS **sdPF ) {
   assert(entity);
   assert(geneHdrPP);
@@ -27,7 +56,7 @@ static void _distributeGene( Entity entity, GeneHdr **geneHdrPP, StripDataS **sd
   assert(sdPF);
   assert(*sdPF);
 
-  System *sysP;
+  System *sP;
   GeneHdr* geneHdrP = *geneHdrPP;
   switch (geneHdrP->class) {
     case SUBTREE:  // a subtree *is* a composite. "Subtree" just tells us the start of a new entity.
@@ -63,8 +92,8 @@ static void _distributeGene( Entity entity, GeneHdr **geneHdrPP, StripDataS **sd
     case INTRACOMPOSITE:
     case IMMUTABLE:
     case MUTABLE:
-      sysP = shareGetSystemFromType( geneHdrP->u.type ); 
-      sysP->consumeGene(sysP, entity, geneHdrP);
+      sP = shareGetSystem( geneHdrP->u.type ); 
+      sP->consumeGene(sP, entity, geneHdrP);
       break;
     default:
       assert(FALSE); // gene has an incompatible gene class
@@ -76,9 +105,10 @@ static void _distributeGene( Entity entity, GeneHdr **geneHdrPP, StripDataS **sd
 // =====================================================================
 // Distribute all genes to their appropriate subsystems.
 // =====================================================================
-void distributeGenes( RootGene* rootP ) {
+void distributeGenes( const RootGene* rootP ) {
   assert( rootP );
   assert( rootP->hdr.class == ROOT );
+  _initSystems( &rootP->histo );
   StripDataS** sdPF = frayNew( sizeof(StripDataS*), rootP->histo.nDistinctMedia, TEMPORARY);  
 
   GeneHdr** geneHdrPP = rootP->geneHdrPA;

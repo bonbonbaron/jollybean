@@ -87,52 +87,49 @@ typedef void (*XPostActivateU)(struct _System *sP, FrayChanges *changesP);  // c
 typedef void (*XPostDeactivateU)(struct _System *sP, FrayChanges *changesP);  // changes immutables alogn with mutables
 // TODO if these functions are unused, then should they be null? 
 // Or since they're only called at startup, does it really matter?
-#define XPostprocessCompsDefUnused_(name_) XPostprocessCompsDef_(name_) {\
-  unused_(sP);\
-}
-#define XPostprocessCompsDef_(name_) void x##name_##PostprocessComps(System *sP)
 
+#define XRunFuncDef_(name_) void x##name_##Run(System *sP)
+
+#define XIniSysFuncDef_(name_) void x##name_##IniSys(System *sP)
 #define XIniSysFuncDefUnused_(name_) XIniSysFuncDef_(name_) {\
   unused_(sP);\
 }
 
-#define XConsumeGeneFuncDef_(name_) void x##name_##ConsumeGene(System *sP, const Entity entity, const struct GeneHdr *geneP)
-
-#define XIniSysFuncDef_(name_) void x##name_##IniSys(System *sP)
-
-#define XProcMsgFuncDefUnused_(name_)  XProcMsgFuncDef_(name_) {\
+#define XPostprocessCompsDef_(name_) void x##name_##PostprocessComps(System *sP)
+#define XPostprocessCompsDefUnused_(name_) XPostprocessCompsDef_(name_) {\
   unused_(sP);\
-  unused_(msgP);\
 }
-#define XProcMsgFuncDef_(name_)  void x##name_##ProcessMessage(System *sP, Message *msgP)
 
+#define XConsumeGeneFuncDef_(name_) void x##name_##ConsumeGene(System *sP, const Entity entity, const struct GeneHdr *geneP)
 #define XConsumeGeneFuncDefUnused_(name_) void x##name_##ConsumeGene(System *sP, const Entity entity, const struct GeneHdr *geneP) {\
   unused_(sP);\
   unused_(geneP);\
 }
 
-#define XRunFuncDef_(name_) void x##name_##Run(System *sP)
+#define XProcMsgFuncDef_(name_)  void x##name_##ProcessMessage(System *sP, Message *msgP)
+#define XProcMsgFuncDefUnused_(name_)  XProcMsgFuncDef_(name_) {\
+  unused_(sP);\
+  unused_(msgP);\
+}
 
-#define XPostMutateFuncDefUnused_(name_) void x##name_##PostMutate(System *sP, void *cP) {\
+#define XPostMutateFuncDef_(name_) void x##name_##PostMutate(System *sP, void *cP)
+#define XPostMutateFuncDefUnused_(name_) XPostMutateFuncDef_(name_) { \
   unused_(sP);\
   unused_(cP);\
 }
 
-#define XPostMutateFuncDef_(name_) void x##name_##PostMutate(System *sP, void *cP)
-
+#define XPostActivateFuncDef_(name_) void x##name_##PostActivate(System *sP, FrayChanges* changesP)
 #define XPostActivateFuncDefUnused_(name_) void x##name_##PostActivate(System *sP, FrayChanges* changesP) {\
   unused_(sP);\
   unused_(changesP);\
 }
 
-#define XPostActivateFuncDef_(name_) void x##name_##PostActivate(System *sP, FrayChanges* changesP)
-
+#define XPostDeactivateFuncDef_(name_) void x##name_##PostDeactivate(System *sP, FrayChanges* changesP)
 #define XPostDeactivateFuncDefUnused_(name_) void x##name_##PostDeactivate(System *sP, FrayChanges* changesP) {\
   unused_(sP);\
   unused_(changesP);\
 }
 
-#define XPostDeactivateFuncDef_(name_) void x##name_##PostDeactivate(System *sP, FrayChanges* changesP)
 
 // Communcication
 typedef enum {

@@ -11,9 +11,7 @@
 //======================================================
 // Initialize Motion's system.
 //======================================================
-XIniSysFuncDef_(Motion) {
-  shareSetSystemFromType( VELOCITY, sP );
-}
+XIniSysFuncDefUnused_(Motion);
 XConsumeGeneFuncDefUnused_(Motion);
 XPostActivateFuncDefUnused_(Motion);
 XPostDeactivateFuncDefUnused_(Motion);

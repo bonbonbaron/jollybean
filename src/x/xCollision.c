@@ -2,8 +2,10 @@
 #include "jb.h"
 #include "share.h"
 
-// TODO
-XConsumeGeneFuncDefUnused_(Collision);
+// TODO  (this whole file)
+XConsumeGeneFuncDefUnused_(Collision);  // TODO
+
+XIniSysFuncDefUnused_(Collision);
 XPostprocessCompsDefUnused_(Collision);
 XPostMutateFuncDefUnused_(Collision);
 XPostActivateFuncDefUnused_(Collision);
@@ -21,15 +23,6 @@ XPostDeactivateFuncDefUnused_(Collision);
 // TODO: In the future, when I/we implement 16-bit keys, we'll make it switch between brute force
 //       and "loose grids" found on {TODO put URL here}.
 
-
-//======================================================
-// Initialize Collision's system.
-//======================================================
-void xCollisionIniSys(System *sP) {
-  // Register type-to-system mappings
-  shareSetSystemFromType( COLLISION_RECT, sP );
-  shareSetSystemFromType( COLLISION_TILEMAP, sP );
-}
 
 //======================================================
 // Initialize xCollision's components, which are Images.

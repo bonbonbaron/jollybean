@@ -123,6 +123,7 @@ static Map* xNewMutationMap( const System* sP, const Entity entity, const Key nE
   return mP;
 }
 
+// First makes a new mutation map that gets added to mutation map nest, then fills it with mutations
 void xMakeMutationMap( const System* sP, const Entity entity, const GeneHdr *geneP ) {
   assert( sP );
   assert( entity );

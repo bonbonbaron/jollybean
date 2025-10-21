@@ -227,8 +227,6 @@ void xRenderIniSys(System *sP) {
   U32 nComponents = xGetNComps(sP);
   xP->imgPF = frayNew(sizeof(Image*), nComponents, TEMPORARY);
   xP->entityF = frayNew( sizeof(Entity), nComponents, TEMPORARY);
-  shareSetSystemFromType( IMAGE, sP );
-  shareSetSystemFromType( TILESET, sP );
 }
 
 //=========================================================================

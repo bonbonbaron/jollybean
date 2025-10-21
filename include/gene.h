@@ -35,7 +35,7 @@ typedef struct GeneHdr {  // breaks down to 1 byte with -fshort-enums compiler f
 
 // Media gene
 typedef struct MediaGene {
-  GeneHdr hdr;
+  GeneHdr hdr;  // class = MEDIA, u.type = system ID
   StripDataS sd;
 } MediaGene;
 
@@ -96,6 +96,6 @@ typedef struct {
   ImplicitGene *listA;
 } ImplicitGenesList;
 
-void distributeGenes( RootGene* rootP );
+void distributeGenes( const RootGene* rootP );
 
 #endif

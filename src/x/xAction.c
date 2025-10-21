@@ -12,9 +12,6 @@ XIniSysFuncDef_(Action) {
   xActionP->entityBlackboardPairF = frayNew( sizeof( EntityBlackboardPair ), xGetNComps(sP), TEMPORARY );
   xActionP->histoHivemindTriggerA = arrayNew( sizeof(U32), KEY_MAX, TEMPORARY );
   memset( xActionP->histoHivemindTriggerA, 0, sizeof(U32) * KEY_MAX );
-  // Register type-to-system mappings
-  shareSetSystemFromType( BLACKBOARD_ITEM, sP );
-  shareSetSystemFromType( PERSONALITY, sP );
 }
 
 // void x##name_##ConsumeGene(System *sP, const Gene *geneP)

@@ -95,21 +95,21 @@ MutableGene mut1Gene = {
   },
   .n = sizeof(mutations1A) / sizeof(mutations1A[0]),
   .mutationA = mutations1A
-};
+},
 
-MutableGene mut2Gene = {
-  .hdr = {
-    .class = MUTABLE,
-    .u.type = GENERIC
+  mut2Gene = {
+    .hdr = {
+      .class = MUTABLE,
+      .u.type = GENERIC
 #ifndef NDEBUG
-      ,
-    .size = sizeof(mutations2A),
-    .typeName = "GenericMutation"
+        ,
+      .size = sizeof(mutations2A),
+      .typeName = "GenericMutation"
 #endif
-  },
-  .n = sizeof(mutations2A) / sizeof(mutations2A[0]),
-  .mutationA = mutations2A
-};
+    },
+    .n = sizeof(mutations2A) / sizeof(mutations2A[0]),
+    .mutationA = mutations2A
+  };
 
 // Intercomposite 1's header array
 // TODO put the immutable gene and mutable gene together here
@@ -124,7 +124,7 @@ struct GeneHdr* comp1HdrA[] = { &imm1Gene.hdr, &mut1Gene.hdr };
 struct GeneHdr* comp2HdrA[] = { &imm2Gene.hdr, &mut2Gene.hdr  };
 
 // IntraCompositeGene for generic system
-IntraCompositeGene comp1 = {
+IntraCompositeGene intra1 = {
   .hdr = {
     .class = INTRACOMPOSITE,
     .u.type = GENERIC
@@ -135,21 +135,22 @@ IntraCompositeGene comp1 = {
 #endif
   },
   .geneHdrPA = comp1HdrA
-};
+},
 
-/* InterComposites should ALWAYS use u.n.
- * distroGene() expects that.
- * You need a new type of gene that lets you pass a composite into a system.
- * Or rather, you need to distinguish between intersystem composites and intrasystem composites.
- * The justification for intra composites is that entity 1 may provide a different set of sub-components
- * as opposed to entity 2, which may have mutations or just not process certain fields altogether.
- *
- * TODO make a xGetNextGene() function in x.c to ease extracting genes per system with void pointers 
- *      and eliminate boilerplate. That way each system only has to have a case structure for the type,
- *      NOT the class. 
- *     
- *      Aim for something like while ( geneP = xGetNextGene() ) { ... }
- */
+  intra2 = {
+    .hdr = {
+      .class = INTRACOMPOSITE,
+      .u.type = GENERIC
+#ifndef NDEBUG
+        ,
+      .size = sizeof(XGenericComp),
+      .typeName = "XGeneric"
+#endif
+    },
+    .geneHdrPA = comp1HdrA
+  };
+
+GeneHdr* geneHdrPA[] = { intra1, intra2 };
 
 RootGene root = {
   .hdr = {
@@ -162,7 +163,7 @@ RootGene root = {
 #endif
   },
   //GeneHisto histo;    // histo of the entire genome so we don't have to calculate it at runtime
-  //GeneHdr **geneHdrPA;   // pointers prevent multiple entities with same genes from reinitializing them
+  .geneHdrPA = geneHdrPA
 
 };
 

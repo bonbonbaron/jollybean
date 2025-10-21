@@ -2,11 +2,7 @@
 #include "share.h"
 
 // Unused X functions
-XIniSysFuncDef_(Anim) {
-  // Register type-to-system mappings
-  shareSetSystemFromType( ANIMSTRIP, sP );
-}
-
+XIniSysFuncDefUnused_(Anim);
 XConsumeGeneFuncDefUnused_(Anim);
 XPostprocessCompsDefUnused_(Anim);
 XPostActivateFuncDefUnused_(Anim);
