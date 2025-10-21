@@ -168,10 +168,11 @@ typedef struct _System {
   XPostprocessCompsU postprocessComps;  // If components are composites, piece them together here.
 } System;
 
-void     xMutateComponent(System *sP, Entity entity, Key newCompKey);
 void     xIniSys(System *sP, U32 nComps);
+void     xAddEntity( const System* sP, const Entity entity );
 Entity   xGetEntityByVoidComponentPtr(System *sP, void *componentP);
 void     xMakeMutationMap( const System* sP, const Entity entity, const struct GeneHdr *geneP );
+void     xMutateComponent(System *sP, Entity entity, Key newCompKey);
 U32      xGetNComps(System *sP);
 void*    xGetCompValP(System *sP, Entity entity, Key key);
 Entity   xGetEntityByCompIdx(System *sP, Key compIdx);

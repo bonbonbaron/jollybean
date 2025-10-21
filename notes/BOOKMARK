@@ -9,7 +9,7 @@ LEFT OFF HERE:
   call xPostProcess() after distributeGenes()... if nothing else, it's how JB will do it.
   get each of the test cases in the gene type list below done; cross them off as you complete them.
     \root
-    subtrees
+    \subtrees
     immutables
     mutables
     intracomposites

@@ -246,6 +246,23 @@ static void _deactivateQueue(System *sP) {
   }
 }
 
+void xAddEntity( const System* sP, const Entity entity ) {
+  assert( sP );
+  assert( entity );
+  assert( sP->e2cIdxMP );
+  assert( sP->cIdx2eA );
+  //Map          *e2cIdxMP;            // insert entity to get component index 
+  //Key          *cIdx2eA;             // insert component index to get entity 
+  U32 cIdx = 0;
+  // Add empty component to fray. Get its index too so you know which belongs to this entity.
+  frayAddEmpty( sP->cF, &cIdx );
+  assert( cIdx < arrayGetNElems( sP->cF ) );
+  assert( cIdx < KEY_MAX );
+  sP->cIdx2eA[ cIdx ] = entity;
+  mapSet( sP->e2cIdxMP, entity, (Key*) &cIdx );
+}
+  
+
 Entity xGetEntityByVoidComponentPtr(System *sP, void *componentP) {
   assert (sP && componentP);
   Entity compIdx = ((void*) componentP - (void*) sP->cF) / sP->compSz;

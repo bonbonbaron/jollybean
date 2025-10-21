@@ -44,31 +44,29 @@ static void _initSystems( const GeneHisto* histoP ) {
   for (int i = 1; i < N_SYSTEM_TYPES; ++i) {
     if ( histoP->nExclusivesA[i] ) {
        sP = shareGetSystem( i );  // This will crash if gaps exist between impl'd system IDs. Good!
+       assert(sP);
        xIniSys( sP, histoP->nExclusivesA[i] );
     }
   }
 }
 
 
-static void _distributeGene( Entity entity, GeneHdr **geneHdrPP, StripDataS **sdPF ) {
+static void _distributeGene( Entity entity, GeneHdr* geneHdrP, StripDataS **sdPF ) {
+  assert(geneHdrP);
   assert(entity);
-  assert(geneHdrPP);
-  assert(*geneHdrPP);
-  // assert(sdPF);  // No need for asserting these. Text-based games don't have media.
-  // assert(*sdPF);
+  // No need for asserting sdPF. Text-based games don't have media, and frayAdd() prevents illegal adds.
 
   System *sP;
-  GeneHdr* geneHdrP = *geneHdrPP;
   switch (geneHdrP->class) {
     case SUBTREE:  // a subtree *is* an intercomposite. "Subtree" just tells us the start of a new entity.
-      ++entity;
       // fall through
     case INTERCOMPOSITE:  // recurse  back into this function
       InterCompositeGene* compGeneP = (InterCompositeGene*) geneHdrP;
       GeneHdr** currGeneHdrPP = compGeneP->geneHdrPA;
       GeneHdr** geneHdrEndPP = currGeneHdrPP + compGeneP->hdr.u.n;
       for (; currGeneHdrPP < geneHdrEndPP; ++currGeneHdrPP) {
-        _distributeGene(entity, currGeneHdrPP, sdPF );
+        assert(currGeneHdrPP);
+        _distributeGene(entity, *currGeneHdrPP, sdPF );
       }
       break;
     // TODO potential case: ALTERNATIVE
@@ -94,6 +92,8 @@ static void _distributeGene( Entity entity, GeneHdr **geneHdrPP, StripDataS **sd
     case IMMUTABLE:
     case MUTABLE:
       sP = shareGetSystem( geneHdrP->u.type ); 
+      assert(sP);
+      xAddEntity( sP, entity );
       sP->consumeGene(sP, entity, geneHdrP);
       break;
     default:
@@ -115,10 +115,10 @@ void distributeGenes( const RootGene* rootP ) {
     sdPF = frayNew( sizeof(StripDataS*), rootP->histo.nDistinctMedia, TEMPORARY);  
   }
 
-  GeneHdr** geneHdrPP = rootP->geneHdrPA;
-  GeneHdr** geneHdrEndPP = geneHdrPP + rootP->hdr.u.n;
-  for (; geneHdrPP < geneHdrEndPP; ++geneHdrPP) {  
-    _distributeGene( FIRST_ENTITY, geneHdrPP, sdPF );
+  Subtree** subtreePP = rootP->subtreePA;
+  Subtree** subtreeEndPP = subtreePP + rootP->hdr.u.n;
+  for (Entity entity = 0; subtreePP < subtreeEndPP; ++subtreePP) { // entity = because postincrement is slightly faster
+    _distributeGene( ++entity, &(*subtreePP)->hdr, sdPF );
   }
 
   _inflateMedia(sdPF);  

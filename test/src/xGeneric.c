@@ -12,16 +12,25 @@ XProcMsgFuncDefUnused_(Generic);
 
 XConsumeGeneFuncDef_(Generic) {
   XGeneric* xP = (XGeneric*) sP;
+  XGenericComp* cP;
   if ( geneP->class == MUTABLE ) {
     xMakeMutationMap( sP, entity, geneP ); // This is fine as not every system will need this.
   }
   else if ( geneP->class == IMMUTABLE ) {
-    XGenericComp* cP = (XGenericComp*) xGetCompPByEntity( sP, entity );
+    cP = (XGenericComp*) xGetCompPByEntity( sP, entity );
     assert( cP );
     GenericImmutableGene* immutableGeneP = (GenericImmutableGene*) geneP;
     cP->immutable = immutableGeneP->body;
   }
-  // TODO make an if-statement for an intracomposite
+  else if ( geneP->class == INTRACOMPOSITE ) {
+    IntraCompositeGene* intraP = (IntraCompositeGene*) geneP;
+    GeneHdr** currGeneHdrPP = intraP->geneHdrPA;
+    GeneHdr** geneHdrEndPP = currGeneHdrPP + intraP->n;
+    for (; currGeneHdrPP < geneHdrEndPP; ++currGeneHdrPP) {
+      assert(*currGeneHdrPP);
+      xGenericConsumeGene( sP, entity, *currGeneHdrPP );
+    }
+  }
 }
 
 void xGenericRun(System *sP) {

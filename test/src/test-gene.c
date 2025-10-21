@@ -126,6 +126,7 @@ IntraCompositeGene intra1 = {
     .typeName = "XGeneric"
 #endif
   },
+  .n = sizeof(comp1HdrA) / sizeof(comp1HdrA[0]),
   .geneHdrPA = comp1HdrA
 },
 
@@ -139,17 +140,37 @@ IntraCompositeGene intra1 = {
       .typeName = "XGeneric"
 #endif
     },
+    .n = sizeof(comp2HdrA) / sizeof(comp2HdrA[0]),
     .geneHdrPA = comp1HdrA
   };
 
-struct GeneHdr* geneHdrPA[] = { &intra1.hdr, &intra2.hdr };
+struct GeneHdr* geneHdr1PA[] = { &intra1.hdr };
+struct GeneHdr* geneHdr2PA[] = { &intra2.hdr };
+
+Subtree entity1Tree = {
+  .hdr = {
+    .class = SUBTREE,
+    .u.n = sizeof( geneHdr1PA ) / sizeof( geneHdr1PA[0] )
+  },
+  .geneHdrPA = geneHdr1PA
+},
+  entity2Tree = {
+    .hdr = {
+      .class = SUBTREE,
+      .u.n = sizeof( geneHdr2PA ) / sizeof( geneHdr2PA[0] )
+    },
+    .geneHdrPA = geneHdr2PA
+  };
+
+
+Subtree* subtreePA[] = { &entity1Tree, &entity2Tree };
 
 U32 nExclusivesA[ N_SYSTEM_TYPES ] = {0};
 
 RootGene root = {
   .hdr = {
     .class = ROOT,
-    .u.n = 1
+    .u.n = sizeof( subtreePA ) / sizeof( subtreePA[0] )
 #ifndef NDEBUG
       ,
     .size = sizeof(RootGene),
@@ -160,7 +181,7 @@ RootGene root = {
     .nExclusivesA = nExclusivesA,
     .nDistinctMedia = 0
   },
-  .geneHdrPA = geneHdrPA
+  .subtreePA = subtreePA
 };
 
 extern XGeneric xGeneric;  // generic system
@@ -171,17 +192,31 @@ typedef struct Tau {
 
 TEST_F_SETUP(Tau) {
   shareIni();
-  nExclusivesA[GENERIC] = 2;
+  nExclusivesA[GENERIC] = sizeof(subtreePA) / sizeof(subtreePA[0]);
   shareSetSystem( &xGeneric.system );
   tau->xP = &xGeneric;
-  shareIni();  // Let's test gene's ability to distribute across two systems.
   distributeGenes( &root );
-}
-
-TEST_F( Tau, FirstOneLezSeeHowItGoez ) {
-  REQUIRE_TRUE( 1 );
+  // TODO revamp mailboxes to no longer use addresses 
+  mailboxWrite( xGeneric.system.mailboxF, GENERIC, 1, MUTATE_AND_ACTIVATE, 1, NULL );
+  mailboxWrite( xGeneric.system.mailboxF, GENERIC, 2, MUTATE_AND_ACTIVATE, 1, NULL );
+  xRun( &tau->xP->system );
 }
 
 TEST_F_TEARDOWN(Tau) {
   memRst( GENERAL );
+  memRst( TEMPORARY );
+}
+
+TEST_F( Tau, CheckIntracomposites ) {
+  XGenericComp* cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, 1);
+  REQUIRE_TRUE( cP != NULL );
+  CHECK_EQ( cP->immutable, 1 );
+  CHECK_EQ( cP->mutableCompositePc1, 1234 );
+  CHECK_TRUE( cP->mutableCompositePc2 == 100 );
+  cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, 2);
+  REQUIRE_TRUE( cP != NULL );
+  // TODO figure out why the below are all failing.
+  CHECK_EQ( cP->immutable, 2 );
+  CHECK_EQ( cP->mutableCompositePc1, 123 );
+  CHECK_TRUE( cP->mutableCompositePc2 == 10 );
 }

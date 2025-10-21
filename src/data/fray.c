@@ -14,7 +14,7 @@ void* frayNew( U32 elemSz, U32 nElems, const PoolId poolId) {
 
 // Common functionality to both frayAdd() and frayAddEmpty()
 // returns a pointer to wherever the new item lands in the fray.
-static void* _frayGetFirstEmpty(const void *frayP, U32 *elemNewIdxP) {
+static void* _frayAddFirstEmpty(const void *frayP, U32 *elemNewIdxP) {
   assert (_frayHasRoom(frayP));
   U32 *firstEmptyIdxP = _frayGetFirstEmptyIdxP(frayP);
   if (elemNewIdxP) {
@@ -27,14 +27,15 @@ static void* _frayGetFirstEmpty(const void *frayP, U32 *elemNewIdxP) {
 // Returns index of added element
 void frayAdd(const void *frayP, void *srcElemP, U32 *elemNewIdxP) {
   assert(frayP && srcElemP);
-  void *dstP = _frayGetFirstEmpty(frayP, elemNewIdxP);
+  void *dstP = _frayAddFirstEmpty(frayP, elemNewIdxP);
   memcpy(dstP, srcElemP, arrayGetElemSz(frayP));
 }
 
 void frayAddEmpty(const void *frayP, U32 *elemNewIdxP) {
   assert(frayP);
-  void *dstP = _frayGetFirstEmpty(frayP, elemNewIdxP);
-  memset(dstP, 0, frayGetElemSz_(frayP));
+  void *dstP = _frayAddFirstEmpty(frayP, elemNewIdxP);
+  memset(dstP, 0, frayGetElemSz_(frayP));  // TODO is this necessary?
+                                           //
 }
 
 // This does NOT check active/paused/inactive boundaries, so use at your own risk.

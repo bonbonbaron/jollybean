@@ -65,13 +65,14 @@ typedef struct IntraCompositeGene {  // Same information, different effect (see 
   Key n;        // since hdr uses u.type to indicate system, this field is required. 
   GeneHdr **geneHdrPA;   // pointers prevent multiple entities with same genes from reinitializing them
 } IntraCompositeGene;
+
 // Subtree gene
-typedef InterCompositeGene SubtreeGene;  // same information, with added effect of incrementing entity
+typedef InterCompositeGene Subtree;  // u.class = SUBTREE, then u.n = # of intercomposites
   
 // Variant gene
 typedef struct VariantGene { // Variants allow you to read a tree once and copy it mulitple times with 
   GeneHdr hdr;
-  SubtreeGene subtree;       // small variations, indicated in variations A. Those get tacked on.
+  Subtree subtree;       // small variations, indicated in variations A. Those get tacked on.
   InterCompositeGene variations;  // They can either add a new gene or override an existing one.
 } VariantGene;  
 
@@ -79,7 +80,7 @@ typedef struct VariantGene { // Variants allow you to read a tree once and copy 
 typedef struct RootGene {
   GeneHdr hdr;
   GeneHisto histo;    // histo of the entire genome so we don't have to calculate it at runtime
-  GeneHdr **geneHdrPA;   // pointers prevent multiple entities with same genes from reinitializing them
+  Subtree **subtreePA;   // pointers prevent multiple entities with same genes from reinitializing them
 } RootGene;
 
 /* Implicit genes supply genes that're universal to all instances of a genome/subtree.
