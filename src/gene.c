@@ -109,7 +109,8 @@ static void _distributeGene( Entity entity, GeneHdr* geneHdrP, StripDataS **sdPF
 void distributeGenes( const RootGene* rootP ) {
   assert( rootP );
   assert( rootP->hdr.class == ROOT );
-  _initSystems( &rootP->histo );
+  shareIni();   // TODO this is a surprising side-effect of this function. Move it out elsewhere.
+  _initSystems( &rootP->histo );   // TODO this is a surprising side-effect of this function. Move it out elsewhere.
   StripDataS** sdPF = NULL;
   if ( rootP->histo.nDistinctMedia ) {
     sdPF = frayNew( sizeof(StripDataS*), rootP->histo.nDistinctMedia, TEMPORARY);  
@@ -117,7 +118,7 @@ void distributeGenes( const RootGene* rootP ) {
 
   Subtree** subtreePP = rootP->subtreePA;
   Subtree** subtreeEndPP = subtreePP + rootP->hdr.u.n;
-  for (Entity entity = 0; subtreePP < subtreeEndPP; ++subtreePP) { // entity = because postincrement is slightly faster
+  for (Entity entity = 0; subtreePP < subtreeEndPP; ++subtreePP) { // entity = 0, because postincrement is slightly faster
     _distributeGene( ++entity, &(*subtreePP)->hdr, sdPF );
   }
 

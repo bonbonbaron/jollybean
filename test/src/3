@@ -191,8 +191,9 @@ typedef struct Tau {
 } Tau;
 
 TEST_F_SETUP(Tau) {
-  // TODO hide away shareIni() in a function wrapping both it and distributeGenes().
-  nExclusivesA[GENERIC] = sizeof(subtreePA) / sizeof(subtreePA[0]);  // spoof the histo for now.
+  shareIni();
+  nExclusivesA[GENERIC] = sizeof(subtreePA) / sizeof(subtreePA[0]);
+  shareSetSystem( &xGeneric.system );
   tau->xP = &xGeneric;
   distributeGenes( &root );
   // TODO revamp mailboxes to no longer use addresses 
@@ -231,12 +232,11 @@ TEST_F( Tau, MutationWorks ) {
   cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, 1);
   for ( ; mutationP < mutationEndP ; ++mutationP ) {
     // Then mutate them.
-    printf("mutating with key %d\n\n\n\n\n", mutationP->key );   /// mutating with key 1 works
+    printf("mutating with key %d\n\n\n\n\n", mutationP->key );
     mailboxWrite( tau->xP->system.mailboxF, GENERIC, 1, MUTATE_AND_ACTIVATE, mutationP->key, NULL );
     xRun( &tau->xP->system );
     cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, 1);
     REQUIRE_TRUE( cP != NULL );
-    // This fails on the second mutation because it's not in the map.
     CHECK_EQ( cP->mutableCompositePc1, ( (GenericMutableShortChar*) mutationP->mutationBodyP)->s );
     //CHECK_TRUE( cP->mutableCompositePc2 == ( (GenericMutableShortChar*) mutationP->mutationBodyP)->c );  // tau.h can't do CHECK_EQ on chars for some reason
   }

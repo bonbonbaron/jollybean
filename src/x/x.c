@@ -251,8 +251,7 @@ void xAddEntity( const System* sP, const Entity entity ) {
   assert( entity );
   assert( sP->e2cIdxMP );
   assert( sP->cIdx2eA );
-  //Map          *e2cIdxMP;            // insert entity to get component index 
-  //Key          *cIdx2eA;             // insert component index to get entity 
+
   U32 cIdx = 0;
   // Add empty component to fray. Get its index too so you know which belongs to this entity.
   frayAddEmpty( sP->cF, &cIdx );
