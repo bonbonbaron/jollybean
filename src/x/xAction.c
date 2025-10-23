@@ -1,5 +1,5 @@
 #include "x/xAction.h"
-#include "share.h"
+#include "data/share.h"
 
 XPostMutateFuncDefUnused_(Action);
 XPostActivateFuncDefUnused_(Action);

@@ -1,6 +1,5 @@
 #include "x/x.h"
-#include "share.h"
-#include "gene.h"
+#include "data/share.h"
 
 inline static Entity _getEntityByCompIdx(System *sP, Key compIdx) {
   return sP->cIdx2eA[compIdx];
@@ -143,7 +142,7 @@ void xMakeMutationMap( const System* sP, const Entity entity, const GeneHdr *gen
   }
 }
 
-void xIniSys(System *sP, U32 nComps) {
+static void _xIniSystem(System *sP, U32 nComps) {
   // Sytems with special parts need to initialize maps in sIniU().
   sP->cF = frayNew(sP->compSz, nComps, GENERAL );
   sP->cIdx2eA = arrayNew(sizeof(Entity), nComps, GENERAL );
@@ -157,11 +156,22 @@ void xIniSys(System *sP, U32 nComps) {
   // TODO make this smarter than a raw constant
   // Also, give it ample room to handle multiple messages per entity.
 #define MAILBOX_MULTIPLY_NUM_SLOTS (3)
-  shareSetSystem( sP );
-  sP->mailboxF = shareSetInbox( sP->id, nComps * MAILBOX_MULTIPLY_NUM_SLOTS );
-  shareSetInbox( sP->id, nComps * MAILBOX_MULTIPLY_NUM_SLOTS );
+  sP->mailboxF = mailboxNew( sP->id, nComps * MAILBOX_MULTIPLY_NUM_SLOTS );
   // Finally, call the system's unique initializer.
   (*sP->iniSys)(sP);  // fail-assert if this bombs
+}
+
+// Hold up. YOu need to init systems every scene, so this is not a one-time deal. 
+// Because this depends on th
+void xIniSystems( const System* sPA[], const GeneHisto* geneHisto, const Key nSystems ) {
+  assert( sPA );
+  assert( geneHisto->nExclusivesA );
+  assert( nSystems );
+  for ( Key i = 0; i < nSystems; ++i ) {
+    if ( geneHisto[i].nExclusivesA[i] ) {
+      _xIniSystem( (System*) sPA[i], geneHisto[i].nExclusivesA[i] );
+    }
+  }
 }
 
 void xMutateComponent(System *sP, Entity entity, Key newCompKey) {
@@ -292,3 +302,148 @@ void xRun(System *sP) {
   _deactivateQueue(sP);
   _pauseQueue(sP);
 }
+
+// We don't need to share systems.
+// We don't need to share inboxes either. Only systems need each other's inboxes.
+static Map* _sysMP =  NULL;  // used strictly when distributing genes
+static Map* _inboxMP =  NULL;  // used for inter-system communication
+
+static System* _getSystem( const SystemId sysId ) {
+  assert( _sysMP );
+  return (System*) mapGet( _sysMP, sysId );
+}
+
+Message* xGetInbox( const SystemId sysId ) {
+  assert( _sysMP );
+  return (Message*) mapGet( _sysMP, sysId );
+}
+
+
+// ================================================================================
+// TODO MAKE GENE ON SAME HIERARCHICAL LEVEL AS X. IT SHOULDN'T FEIGN INDEPENDENCE.
+// ================================================================================
+#define FIRST_ENTITY ( 1 )
+
+// Inflate a whole array of strip data.
+static void _inflateMedia(StripDataS **sdPF) {
+  if ( sdPF ) {
+#if MULTITHREADED
+    multithread_(sdInflate, (void*) sdPF);
+    multithread_(sdUnpack, (void*) sdPF);
+    multithread_(sdAssemble, (void*) sdPF);
+#else 
+    for (int i = 0; i < 255; ++i) {  // TODO make this more pro bruh
+      stripIni(sdPF[i], TEMPORARY);
+    }
+#endif
+  }
+}
+
+static void _distributeGene( Entity entity, GeneHdr* geneHdrP, StripDataS **sdPF ) {
+  assert(geneHdrP);
+  assert(entity);
+  // No need for asserting sdPF. Text-based games don't have media, and frayAdd() prevents illegal adds.
+
+  System *sP;
+  switch (geneHdrP->class) {
+    case SUBTREE:  // a subtree *is* an intercomposite. "Subtree" just tells us the start of a new entity.
+      // fall through
+    case INTERCOMPOSITE:  // recurse  back into this function
+      InterCompositeGene* compGeneP = (InterCompositeGene*) geneHdrP;
+      GeneHdr** currGeneHdrPP = compGeneP->geneHdrPA;
+      GeneHdr** geneHdrEndPP = currGeneHdrPP + compGeneP->hdr.u.n;
+      for (; currGeneHdrPP < geneHdrEndPP; ++currGeneHdrPP) {
+        assert(currGeneHdrPP);
+        _distributeGene(entity, *currGeneHdrPP, sdPF );
+      }
+      break;
+    // TODO potential case: ALTERNATIVE
+    //  cocnept: if you have a whole genome, but you onyl want to tweak one gene for another instance, 
+    //           should you really have to copy the whole genome again with that one change? Seems like
+    //           an inefficient way to vary singles. You can already do that with alternatives, but what's
+    //           not in place yet is the replacement mechanism. Then again, I haven't coded variants yet 
+    //           in the first place. 
+    case VARIANT:
+      // TODO
+      break;
+    // TODO what if it's a mutable media gene? How do you tell the difference?
+    case MEDIA:
+      MediaGene* mediaGeneP = (MediaGene*) geneHdrP;
+      // Defer inflation 
+      if (!(mediaGeneP->sd.flags & SD_SET_FOR_INFLATION_)) {
+        mediaGeneP->sd.flags |= SD_SET_FOR_INFLATION_;
+        StripDataS* sdP = &mediaGeneP->sd;  // because you must pass a double-pointer
+        frayAdd(sdPF, &sdP, NULL);  // this asserts frayP != NULL, so no need to do it above.
+      }
+      break;
+    case INTRACOMPOSITE:
+    case IMMUTABLE:
+    case MUTABLE:
+      sP = _getSystem( geneHdrP->u.type ); 
+      assert(sP);
+      xAddEntity( sP, entity );
+      sP->consumeGene(sP, entity, geneHdrP);
+      break;
+    default:
+      assert(FALSE); // gene has an incompatible gene class
+      break;
+  }
+}
+
+// TODO you need to make a function to init the systems based on the number of genes in each one.
+// =====================================================================
+// Distribute all genes to their appropriate subsystems.
+// =====================================================================
+static void _distributeGenes( const RootGene* rootP ) {
+  assert( rootP );
+  assert( rootP->hdr.class == ROOT );
+
+  StripDataS** sdPF = NULL;
+  if ( rootP->histo.nDistinctMedia ) {
+    sdPF = frayNew( sizeof(StripDataS*), rootP->histo.nDistinctMedia, TEMPORARY);  
+  }
+
+  Subtree** subtreePP = rootP->subtreePA;
+  Subtree** subtreeEndPP = subtreePP + rootP->hdr.u.n;
+  for (Entity entity = 0; subtreePP < subtreeEndPP; ++subtreePP) { // entity = 0, because postincrement is slightly faster
+    _distributeGene( ++entity, &(*subtreePP)->hdr, sdPF );
+  }
+
+  _inflateMedia(sdPF);  
+}
+
+
+// =================================================================
+// TODO MIGRATE THE BELOW FROM SHARE TO LOWER SHARE IN THE HIERARCHY
+// =================================================================
+
+// \0. Give x control over where it shares things.
+// 1. Let xIni() create the PERMANENT map of systems.
+// 2. Let xIni() create the PERMANENT map of inboxes.
+// 3. Let x call xIniSys() on each system (via xIniSystems()).
+// 4. Let each system share itself.
+// 5. Let each system share its inbox.
+// 6. Let x distribute the genes.
+static U32 isFirstInit = TRUE;
+typedef enum SharedType { SHARED_SYSTEM = 1, SHARED_INBOX, N_SHARED_TYPES } SharedType;
+void xIni( const System* sysPA[],  const Key nSystems, const RootGene* rootP ) {
+  // Reset memory
+  memRstAll();
+  // init permanent system memory
+  if ( isFirstInit ) {
+    _sysMP = mapNew( NONMAP_POINTER, sizeof(System*), N_SYSTEM_TYPES, PERMANENT );
+    _inboxMP = mapNew( NONMAP_POINTER, sizeof(System*), N_SYSTEM_TYPES, PERMANENT );
+    for ( Key i = 0; i < nSystems; ++i ) {
+      mapSet( _sysMP, sysPA[i]->id, &sysPA[i] );
+      mapSet( _inboxMP, sysPA[i]->id, &sysPA[i]->mailboxF );
+    }
+    isFirstInit = FALSE;
+  }
+  _distributeGenes( rootP );
+}
+
+// TODO Wait... What's the point of shared systems if gene and x are now fused?
+//      Inboxes are still shared, but I see no reason to share systems anymore.
+//      That's all in HERE.
+//      So do this;
+

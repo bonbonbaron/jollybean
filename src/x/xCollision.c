@@ -1,6 +1,6 @@
 #include "x/xCollision.h"
 #include "jb.h"
-#include "share.h"
+#include "data/share.h"
 
 // TODO  (this whole file)
 XConsumeGeneFuncDefUnused_(Collision);  // TODO

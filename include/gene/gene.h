@@ -1,7 +1,7 @@
 #ifndef GENE_
 #define GENE_
+
 #include "data/strip.h"
-#include "jb.h"
 
 // Gene histo
 typedef struct GeneHisto {
@@ -96,7 +96,5 @@ typedef struct {
   U32 nGenes;
   ImplicitGene *listA;
 } ImplicitGenesList;
-
-void distributeGenes( const RootGene* rootP );
 
 #endif

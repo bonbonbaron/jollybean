@@ -170,11 +170,10 @@ void mapCopyKeys(Map *dstMP, Map *srcMP) {
 
 Map* mapGetNestedMapP(Map *outerMP, Key mapKey) {
   assert (outerMP && mapKey && outerMP->elemType == MAP_POINTER);
-  Map **_innerMapPP = (Map**) mapGet(outerMP, mapKey);
-  if (_innerMapPP && *_innerMapPP) {
-    return *_innerMapPP;
-  }
-  return NULL;
+  Map **innerMapPP = (Map**) mapGet(outerMP, mapKey);
+  assert( innerMapPP );
+  assert( *innerMapPP );
+  return *innerMapPP;
 }
 
 void* mapGetNestedMapPElem(Map *mapP, Key mapKey, Key elemKey, MapElemType expectedElemType) {

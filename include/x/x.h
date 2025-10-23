@@ -3,8 +3,9 @@
 #include "data/map.h"
 #include "data/fray.h"
 #include "data/mail.h"
+#include "gene/gene.h"
+#include "keyring/system.h"
 
-struct GeneHdr;  // forward-declaration; gene.h already indirectly includes x.h
 typedef Key Entity;
 
 // System type flags
@@ -78,7 +79,7 @@ struct _System;
 
 // Function pointer types
 typedef void (*XIniSU)(struct _System *sP);
-typedef void (*XConsumeGeneU)(struct _System *sP, const Entity entity, const struct GeneHdr *geneP);
+typedef void (*XConsumeGeneU)(struct _System *sP, const Entity entity, const GeneHdr *geneP);
 typedef void (*XRunU)(struct _System *sP);
 typedef void (*XProcMsgU)(struct _System *sP, Message *messageP);
 typedef void (*XPostprocessCompsU)(struct _System *sP);
@@ -100,8 +101,8 @@ typedef void (*XPostDeactivateU)(struct _System *sP, FrayChanges *changesP);  //
   unused_(sP);\
 }
 
-#define XConsumeGeneFuncDef_(name_) void x##name_##ConsumeGene(System *sP, const Entity entity, const struct GeneHdr *geneP)
-#define XConsumeGeneFuncDefUnused_(name_) void x##name_##ConsumeGene(System *sP, const Entity entity, const struct GeneHdr *geneP) {\
+#define XConsumeGeneFuncDef_(name_) void x##name_##ConsumeGene(System *sP, const Entity entity, const GeneHdr *geneP)
+#define XConsumeGeneFuncDefUnused_(name_) void x##name_##ConsumeGene(System *sP, const Entity entity, const GeneHdr *geneP) {\
   unused_(sP);\
   unused_(geneP);\
 }
@@ -168,10 +169,10 @@ typedef struct _System {
   XPostprocessCompsU postprocessComps;  // If components are composites, piece them together here.
 } System;
 
-void     xIniSys(System *sP, U32 nComps);
+void     xIniSystems( const System* sysPA[], const GeneHisto* geneHisto, const Key nSystems );
 void     xAddEntity( const System* sP, const Entity entity );
 Entity   xGetEntityByVoidComponentPtr(System *sP, void *componentP);
-void     xMakeMutationMap( const System* sP, const Entity entity, const struct GeneHdr *geneP );
+void     xMakeMutationMap( const System* sP, const Entity entity, const GeneHdr *geneP );
 void     xMutateComponent(System *sP, Entity entity, Key newCompKey);
 U32      xGetNComps(System *sP);
 void*    xGetCompValP(System *sP, Entity entity, Key key);
@@ -192,6 +193,7 @@ void     __xSwap(System *sP, S32 origIdx, S32 newIdx);
 inline  Key* _getCompIdxPByEntity(System *sP, Entity entity) {
   return (Key*) mapGet(sP->e2cIdxMP, entity);
 }
+Message* xGetInbox( const SystemId sysId );
 
 Key xGetCompIdxByEntity( System *sP, Entity entity );
 #endif

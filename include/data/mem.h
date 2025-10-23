@@ -11,6 +11,7 @@ void memClr ( const PoolId poolId );
 // Allocate memory in the arena at a word-aligned address.
 void* memAdd ( const size_t numBytes, const PoolId poolId );
 
+void memRstAll();  // resets all but permanent
 void memRst( const PoolId poolId );
 
 #ifndef NDEBUG

@@ -139,6 +139,13 @@ void* memAdd ( size_t numBytes, const PoolId poolId ) {
   return allocatedAddress;
 }
 
+void memRstAll() {
+  // Reset everything but permanent memory.
+  for ( int i = GENERAL; i < N_POOLS; ++i ) {
+    memRst( i );
+  }
+}
+
 void memRst( const PoolId poolId ) {
   MemPool* poolP = &_mem.poolA[poolId];
 #ifndef NDEBUG

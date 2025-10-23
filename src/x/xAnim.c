@@ -1,5 +1,5 @@
 #include "x/xAnim.h"
-#include "share.h"
+#include "data/share.h"
 
 // Unused X functions
 XIniSysFuncDefUnused_(Anim);
