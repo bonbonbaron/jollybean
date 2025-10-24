@@ -238,9 +238,9 @@ TEST_F( Tau, MutationWorks ) {
     REQUIRE_TRUE( cP != NULL );
     // This fails on the second mutation because it's not in the map.
     CHECK_EQ( cP->mutableCompositePc1, ( (GenericMutableShortChar*) mutationP->mutationBodyP)->s );
-    //CHECK_TRUE( cP->mutableCompositePc2 == ( (GenericMutableShortChar*) mutationP->mutationBodyP)->c );  // tau.h can't do CHECK_EQ on chars for some reason
+    CHECK_TRUE( cP->mutableCompositePc2 == ( (GenericMutableShortChar*) mutationP->mutationBodyP)->c );  // tau.h can't do CHECK_EQ on chars for some reason
   }
-#if 0
+#if 1
   // Entity 2
   mutationP = mutations2A;
   mutationEndP = mutationP + sizeof(mutations2A) / sizeof(mutations2A[0]);
@@ -249,8 +249,8 @@ TEST_F( Tau, MutationWorks ) {
     xRun( &tau->xP->system );
     cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, 2);
     REQUIRE_TRUE( cP != NULL );
-    //CHECK_EQ( cP->mutableCompositePc1, ( (GenericMutableShortChar*) mutationP->mutationBodyP)->s );
-    //CHECK_TRUE( cP->mutableCompositePc2 == ( (GenericMutableShortChar*) mutationP->mutationBodyP)->c );
+    CHECK_EQ( cP->mutableCompositePc1, ( (GenericMutableShortChar*) mutationP->mutationBodyP)->s );
+    CHECK_TRUE( cP->mutableCompositePc2 == ( (GenericMutableShortChar*) mutationP->mutationBodyP)->c );
   }
 #endif
 }
