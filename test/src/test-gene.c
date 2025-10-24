@@ -231,7 +231,6 @@ TEST_F( Tau, MutationWorks ) {
   cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, 1);
   for ( ; mutationP < mutationEndP ; ++mutationP ) {
     // Then mutate them.
-    printf("mutating with key %d\n\n\n\n\n", mutationP->key );   /// mutating with key 1 works
     mailboxWrite( tau->xP->system.mailboxF, GENERIC, 1, MUTATE_AND_ACTIVATE, mutationP->key, NULL );
     xRun( &tau->xP->system );
     cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, 1);
