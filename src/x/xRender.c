@@ -511,7 +511,7 @@ void updateCmSrcRectIndices(Image **imgPF, Atlas *atlasP) {
 
 // Post-processing of components is done AFTER media genes are inflated and unpacked.
 // Rendering media genes are flagged to skip the strip-assembling stage; that's done here.
-XPostprocessCompsDef_(Render) {
+XMakeComponentsDef_(Render) {
   XRender *xP = (XRender*) sP;
 
   // Get source rect and rect offset maps. Give both a chance to run if we enter this block.

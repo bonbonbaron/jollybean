@@ -1,7 +1,6 @@
 #include "tau.h"
 #include "xGeneric.h"
-#include "share.h"
-#include "gene.h"
+#include "gene/gene.h"
 #include "genericSysGenes.h"
 
 TAU_MAIN();
@@ -165,14 +164,17 @@ Subtree entity1Tree = {
 
 Subtree* subtreePA[] = { &entity1Tree, &entity2Tree };
 
-U32 nExclusivesA[ N_SYSTEM_TYPES ] = {0};
+extern XGeneric xGeneric;  // generic system
+const System* sysPA[] = { &xGeneric.system };
+#define NSYSTEMS (sizeof( sysPA ) / sizeof( sysPA[0] ))   // because C compilers cry if you size an array by a variable, even if it's const
+const Key NENTITIES = sizeof(subtreePA) / sizeof(subtreePA[0]);
+U32 nExclusivesA[ NSYSTEMS ] = { NENTITIES };
 
 RootGene root = {
   .hdr = {
     .class = ROOT,
-    .u.n = sizeof( subtreePA ) / sizeof( subtreePA[0] )
+    .u.n = NENTITIES,
 #ifndef NDEBUG
-      ,
     .size = sizeof(RootGene),
     .typeName = "RootGene"
 #endif
@@ -184,37 +186,25 @@ RootGene root = {
   .subtreePA = subtreePA
 };
 
-extern XGeneric xGeneric;  // generic system
 
 typedef struct Tau {
   XGeneric *xP;
 } Tau;
 
-const System* sysPA[] = { &xGeneric.system };
-const Key NSYSTEMS = sizeof( sysPA ) / sizeof( sysPA[0] );
-
 // This simulates what may happen in the finished engine.
-static void _init( const System* sysPA[], const Key nSystems ) { 
-  // The below path leads to the least surprising functions:
-  // =======================================================
-  // \0. We must have a histo of component populations from a histo.
-  // \1. systems must be initialized with their inboxes with entity populations from (0).
-  // 2. share memory must be filled with system pointers and INBOX POINTERS FROM (1).
-  // 3. genome must populate the systems with (2).
-  memRstAll();
-  xIniSystems( sysPA, &root.histo, nSystems );
-  shareIni( sysPA, nSystems );
-  distributeGenes( &root );
-}
 
 TEST_F_SETUP(Tau) {
-  nExclusivesA[GENERIC] = sizeof(subtreePA) / sizeof(subtreePA[0]);
-  tau->xP = &xGeneric;
+  xIni( sysPA, NSYSTEMS, &root );
+
   // TODO revamp mailboxes to no longer use addresses 
-  mailboxWrite( xGeneric.system.mailboxF, GENERIC, 1, MUTATE_AND_ACTIVATE, 1, NULL );
-  mailboxWrite( xGeneric.system.mailboxF, GENERIC, 2, MUTATE_AND_ACTIVATE, 1, NULL );
+  tau->xP = &xGeneric;
+  mailboxWrite( tau->xP->system.mailboxF, GENERIC, 1, MUTATE_AND_ACTIVATE, 1, NULL );
+  mailboxWrite( tau->xP->system.mailboxF, GENERIC, 2, MUTATE_AND_ACTIVATE, 1, NULL );
+
   xRun( &tau->xP->system );
 }
+
+TEST_F_TEARDOWN(Tau) {}
 
 TEST_F( Tau, CheckIntracomposites ) {
   XGenericComp* cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, 1);

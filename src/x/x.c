@@ -1,6 +1,9 @@
 #include "x/x.h"
 #include "data/share.h"
 
+static Map* _sysMP =  NULL;  // used strictly when distributing genes
+static Map* _inboxMP =  NULL;  // used for inter-system communication
+
 inline static Entity _getEntityByCompIdx(System *sP, Key compIdx) {
   return sP->cIdx2eA[compIdx];
 }
@@ -131,10 +134,10 @@ void xMakeMutationMap( const System* sP, const Entity entity, const GeneHdr *gen
   assert( mapGet( sP->mutationMPMP, entity ) == NULL );
 
   MutableGene* mutableGeneP = (MutableGene*) geneP;
-  Map* entitysMutationMP = xNewMutationMap( sP, entity, geneP->u.n );
+  Map* entitysMutationMP = xNewMutationMap( sP, entity, mutableGeneP->n );
 
   Mutation* mutationP = mutableGeneP->mutationA;
-  Mutation* mutationEndP = mutationP + mutableGeneP->hdr.u.n;
+  Mutation* mutationEndP = mutationP + mutableGeneP->n;
   for ( ; mutationP < mutationEndP; ++mutationP ) {
     assert( mutationP->mutationBodyP );
     assert( mutationP->key );
@@ -149,6 +152,10 @@ static void _xIniSystem(System *sP, U32 nComps) {
   sP->e2cIdxMP = mapNew( RAW_DATA, sizeof(Key), nComps, GENERAL );
   sP->deactivateQueueF = frayNew(sizeof(Entity), nComps, GENERAL );
   sP->pauseQueueF = frayNew( sizeof(Entity), nComps, GENERAL );
+  assert( _sysMP );
+  assert( _inboxMP );
+  mapSet( _sysMP, sP->id, &sP );
+  mapSet( _inboxMP, sP->id, &sP->mailboxF );
   if (!(sP->flags & FLG_NO_MUTATIONS_) && sP->mutationSz) {
     sP->mutationMPMP = mapNew( MAP_POINTER, sizeof(Map*), nComps, GENERAL );
   }
@@ -156,14 +163,12 @@ static void _xIniSystem(System *sP, U32 nComps) {
   // TODO make this smarter than a raw constant
   // Also, give it ample room to handle multiple messages per entity.
 #define MAILBOX_MULTIPLY_NUM_SLOTS (3)
-  sP->mailboxF = mailboxNew( sP->id, nComps * MAILBOX_MULTIPLY_NUM_SLOTS );
+  sP->mailboxF = mailboxNew( nComps * MAILBOX_MULTIPLY_NUM_SLOTS, GENERAL );
   // Finally, call the system's unique initializer.
   (*sP->iniSys)(sP);  // fail-assert if this bombs
 }
 
-// Hold up. YOu need to init systems every scene, so this is not a one-time deal. 
-// Because this depends on th
-void xIniSystems( const System* sPA[], const GeneHisto* geneHisto, const Key nSystems ) {
+static void _xIniSystems( const System* sPA[], const GeneHisto* geneHisto, const Key nSystems ) {
   assert( sPA );
   assert( geneHisto->nExclusivesA );
   assert( nSystems );
@@ -305,12 +310,13 @@ void xRun(System *sP) {
 
 // We don't need to share systems.
 // We don't need to share inboxes either. Only systems need each other's inboxes.
-static Map* _sysMP =  NULL;  // used strictly when distributing genes
-static Map* _inboxMP =  NULL;  // used for inter-system communication
 
 static System* _getSystem( const SystemId sysId ) {
   assert( _sysMP );
-  return (System*) mapGet( _sysMP, sysId );
+  System** sPP = mapGet( _sysMP, sysId );
+  assert( sPP );
+  assert( *sPP );
+  return *sPP;
 }
 
 Message* xGetInbox( const SystemId sysId ) {
@@ -357,14 +363,8 @@ static void _distributeGene( Entity entity, GeneHdr* geneHdrP, StripDataS **sdPF
         _distributeGene(entity, *currGeneHdrPP, sdPF );
       }
       break;
-    // TODO potential case: ALTERNATIVE
-    //  cocnept: if you have a whole genome, but you onyl want to tweak one gene for another instance, 
-    //           should you really have to copy the whole genome again with that one change? Seems like
-    //           an inefficient way to vary singles. You can already do that with alternatives, but what's
-    //           not in place yet is the replacement mechanism. Then again, I haven't coded variants yet 
-    //           in the first place. 
     case VARIANT:
-      // TODO
+      // TODO unit test everything else first.
       break;
     // TODO what if it's a mutable media gene? How do you tell the difference?
     case MEDIA:
@@ -390,10 +390,6 @@ static void _distributeGene( Entity entity, GeneHdr* geneHdrP, StripDataS **sdPF
   }
 }
 
-// TODO you need to make a function to init the systems based on the number of genes in each one.
-// =====================================================================
-// Distribute all genes to their appropriate subsystems.
-// =====================================================================
 static void _distributeGenes( const RootGene* rootP ) {
   assert( rootP );
   assert( rootP->hdr.class == ROOT );
@@ -412,38 +408,25 @@ static void _distributeGenes( const RootGene* rootP ) {
   _inflateMedia(sdPF);  
 }
 
+static void _xMakeComponents( const System* sPA[], const Key nSystems ) {
+  assert( sPA );
+  assert( nSystems );
+  for ( Key i = 0; i < nSystems; ++i ) {
+    sPA[i]->makeComponents( (System*) sPA[i] );
+  }
+}
 
-// =================================================================
-// TODO MIGRATE THE BELOW FROM SHARE TO LOWER SHARE IN THE HIERARCHY
-// =================================================================
-
-// \0. Give x control over where it shares things.
-// 1. Let xIni() create the PERMANENT map of systems.
-// 2. Let xIni() create the PERMANENT map of inboxes.
-// 3. Let x call xIniSys() on each system (via xIniSystems()).
-// 4. Let each system share itself.
-// 5. Let each system share its inbox.
-// 6. Let x distribute the genes.
-static U32 isFirstInit = TRUE;
-typedef enum SharedType { SHARED_SYSTEM = 1, SHARED_INBOX, N_SHARED_TYPES } SharedType;
-void xIni( const System* sysPA[],  const Key nSystems, const RootGene* rootP ) {
+void xIni( const System* sPA[],  const Key nSystems, const RootGene* rootP ) {
   // Reset memory
   memRstAll();
   // init permanent system memory
-  if ( isFirstInit ) {
+  if ( !_sysMP && !_inboxMP ) {
     _sysMP = mapNew( NONMAP_POINTER, sizeof(System*), N_SYSTEM_TYPES, PERMANENT );
-    _inboxMP = mapNew( NONMAP_POINTER, sizeof(System*), N_SYSTEM_TYPES, PERMANENT );
-    for ( Key i = 0; i < nSystems; ++i ) {
-      mapSet( _sysMP, sysPA[i]->id, &sysPA[i] );
-      mapSet( _inboxMP, sysPA[i]->id, &sysPA[i]->mailboxF );
-    }
-    isFirstInit = FALSE;
+    _inboxMP = mapNew( NONMAP_POINTER, sizeof(Message*), N_SYSTEM_TYPES, PERMANENT );
   }
-  _distributeGenes( rootP );
-}
 
-// TODO Wait... What's the point of shared systems if gene and x are now fused?
-//      Inboxes are still shared, but I see no reason to share systems anymore.
-//      That's all in HERE.
-//      So do this;
+  _xIniSystems( sPA, &rootP->histo, nSystems );
+  _distributeGenes( rootP );
+  _xMakeComponents( sPA, nSystems );
+}
 

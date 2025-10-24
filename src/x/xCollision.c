@@ -6,7 +6,7 @@
 XConsumeGeneFuncDefUnused_(Collision);  // TODO
 
 XIniSysFuncDefUnused_(Collision);
-XPostprocessCompsDefUnused_(Collision);
+XMakeComponentsDefUnused_(Collision);
 XPostMutateFuncDefUnused_(Collision);
 XPostActivateFuncDefUnused_(Collision);
 XPostDeactivateFuncDefUnused_(Collision);
@@ -59,7 +59,7 @@ void xCollisionProcessMessage(System *sP, Message *msgP) {
 
 #define RECT (1)  // TODO move to enum (call these "keychains")
 #define LAYER (2)  // TODO move to enum (call these "keychains")
-#if 0  // TODO move to postprocess
+#if 0  // TODO move to makecomponents
 XGetShareFuncDef_(Collision) {
   XCollision *xCollisionSysP = (XCollision*) sP;
   // Get system the rectangle array from master.

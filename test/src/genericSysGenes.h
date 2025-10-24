@@ -1,7 +1,7 @@
 #ifndef IMM_SYS_GENES_H
 #define IMM_SYS_GENES_H
 
-#include "gene.h"
+#include "gene/gene.h"
 
 // Bodies
 typedef int GenericImmutableInt;

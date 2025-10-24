@@ -10,7 +10,8 @@ typedef struct GeneHisto {
 } GeneHisto;
 
 // Used to distinguish header pointers
-typedef enum GeneClass { ROOT, SUBTREE, INTERCOMPOSITE, INTRACOMPOSITE, MEDIA, VARIANT, IMMUTABLE, MUTABLE, IMPLICIT, BLACKBOARD } GeneClass;
+// IMPLICIT: "What da hail is dis?" Rather than being stored, it's data created as a *side effect* of consuming a gene. May be  unnecessary. 
+typedef enum GeneClass { ROOT, SUBTREE, INTERCOMPOSITE, INTRACOMPOSITE, MEDIA, VARIANT, IMMUTABLE, MUTABLE, BLACKBOARD, N_GENE_CLASSES } GeneClass;
 
 // There is no "Gene" struct, strictly speaking.
 // The "Gene" is the thing that proceeds after GeneHdr; it's not a void pointer.

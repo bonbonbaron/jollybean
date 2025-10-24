@@ -16,7 +16,7 @@ XConsumeGeneFuncDefUnused_(Motion);
 XPostActivateFuncDefUnused_(Motion);
 XPostDeactivateFuncDefUnused_(Motion);
 
-XPostprocessCompsDef_(Motion) {
+XMakeComponentsDef_(Motion) {
   assert(sP);
   XMotion *xP = (XMotion*) sP;
   xP->dstRectMP = shareGetMap( DST_RECT );

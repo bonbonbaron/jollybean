@@ -1,10 +1,9 @@
 #include "xGeneric.h"
-#include "share.h"
-#include "gene.h"
+#include "gene/gene.h"
 #include "genericSysGenes.h"
 
 XIniSysFuncDefUnused_(Generic);
-XPostprocessCompsDefUnused_(Generic);
+XMakeComponentsDefUnused_(Generic);
 XPostActivateFuncDefUnused_(Generic);
 XPostDeactivateFuncDefUnused_(Generic);
 XPostMutateFuncDefUnused_(Generic);

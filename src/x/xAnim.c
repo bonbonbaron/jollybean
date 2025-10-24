@@ -4,7 +4,7 @@
 // Unused X functions
 XIniSysFuncDefUnused_(Anim);
 XConsumeGeneFuncDefUnused_(Anim);
-XPostprocessCompsDefUnused_(Anim);
+XMakeComponentsDefUnused_(Anim);
 XPostActivateFuncDefUnused_(Anim);
 XPostDeactivateFuncDefUnused_(Anim);
 

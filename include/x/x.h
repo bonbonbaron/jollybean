@@ -43,7 +43,7 @@ typedef enum { INITIALIZED = 1 } SubcomponentState;
     .pauseQueueF       = NULL,\
     .iniSys            = x##name_##IniSys,\
     .consumeGene       = x##name_##ConsumeGene,\
-    .postprocessComps  = x##name_##PostprocessComps,\
+    .makeComponents    = x##name_##MakeComponents,\
     .postMutate        = x##name_##PostMutate,\
     .postActivate      = x##name_##PostActivate,\
     .postDeactivate    = x##name_##PostDeactivate,\
@@ -67,7 +67,7 @@ typedef enum { INITIALIZED = 1 } SubcomponentState;
     .pauseQueueF       = NULL,\
     .iniSys            = x##name_##IniSys,\
     .consumeGene       = x##name_##ConsumeGene,\
-    .postprocessComps  = x##name_##PostprocessComps,\
+    .MakeComponents    = x##name_##MakeComponents,\
     .postMutate        = x##name_##PostMutate,\
     .postActivate      = x##name_##PostActivate,\
     .postDeactivate    = x##name_##PostDeactivate,\
@@ -82,7 +82,7 @@ typedef void (*XIniSU)(struct _System *sP);
 typedef void (*XConsumeGeneU)(struct _System *sP, const Entity entity, const GeneHdr *geneP);
 typedef void (*XRunU)(struct _System *sP);
 typedef void (*XProcMsgU)(struct _System *sP, Message *messageP);
-typedef void (*XPostprocessCompsU)(struct _System *sP);
+typedef void (*MakeComponentsU)( struct _System *sP );
 typedef void (*XPostMutateU)(struct _System *sP, void *cP);  // changes immutables alogn with mutables
 typedef void (*XPostActivateU)(struct _System *sP, FrayChanges *changesP);  // changes immutables alogn with mutables
 typedef void (*XPostDeactivateU)(struct _System *sP, FrayChanges *changesP);  // changes immutables alogn with mutables
@@ -96,8 +96,8 @@ typedef void (*XPostDeactivateU)(struct _System *sP, FrayChanges *changesP);  //
   unused_(sP);\
 }
 
-#define XPostprocessCompsDef_(name_) void x##name_##PostprocessComps(System *sP)
-#define XPostprocessCompsDefUnused_(name_) XPostprocessCompsDef_(name_) {\
+#define XMakeComponentsDef_(name_) void x##name_##MakeComponents(System *sP)
+#define XMakeComponentsDefUnused_(name_) XMakeComponentsDef_(name_) {\
   unused_(sP);\
 }
 
@@ -166,10 +166,10 @@ typedef struct _System {
   XIniSU       iniSys;               // System init function pointer 
   XConsumeGeneU consumeGene;         // feed system its genes here; it'll turn
                                      // those into components, mutations, etc.
-  XPostprocessCompsU postprocessComps;  // If components are composites, piece them together here.
+  MakeComponentsU makeComponents; // If components are composites, piece them together here.
 } System;
 
-void     xIniSystems( const System* sysPA[], const GeneHisto* geneHisto, const Key nSystems );
+void     xIni( const System* sysPA[], const Key NSYSTEMS, const RootGene* root );
 void     xAddEntity( const System* sP, const Entity entity );
 Entity   xGetEntityByVoidComponentPtr(System *sP, void *componentP);
 void     xMakeMutationMap( const System* sP, const Entity entity, const GeneHdr *geneP );

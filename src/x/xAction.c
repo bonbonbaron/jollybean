@@ -100,7 +100,7 @@ static void _distributeHiveminds(XAction *xActionP) {
 #endif
 }
 
-XPostprocessCompsDef_(Action) {
+XMakeComponentsDef_(Action) {
   // XAction doesn't need system mailboxes since actions will grab other systems' mailboxes internally.
   // That way you don't have to include an ugly mailbox argument across all your actions.
   _distributeHiveminds((XAction*) sP);

@@ -94,8 +94,6 @@ typedef struct {
 Atlas* atlasNew( Image **imgPF);
 void atlasDel(Atlas **atlasPP);
 void atlasPlanPlacements(Atlas *atlasP);
-void xRenderIniS(System *sP, void *sParamsP);
-void xRenderProcessMessage(System *sP, Message *msgP);
 typedef void (*XRenderPresentU)(Renderer_ *rendererP);  // TODO uh.. what was this for again?
 // extern XPostprocessCompsDef_(Render);
 void updateCmSrcRectIndices(Image **imgPF, Atlas *atlasP);
