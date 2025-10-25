@@ -3,6 +3,8 @@
 #include "gene/gene.h"
 #include "genericSysGenes.h"
 
+#define nElems_(x_) ( sizeof( x_ ) / sizeof( x_[0] ) )
+
 TAU_MAIN();
 
 // Raw gene bodies - Only mutations need a separate declaration.
@@ -92,7 +94,7 @@ MutableGene mut1Gene = {
     .typeName = "GenericMutation"
 #endif
   },
-  .n = sizeof(mutations1A) / sizeof(mutations1A[0]),
+  .n = nElems_(mutations1A),
   .mutationA = mutations1A
 },
 
@@ -106,7 +108,7 @@ MutableGene mut1Gene = {
       .typeName = "GenericMutation"
 #endif
     },
-    .n = sizeof(mutations2A) / sizeof(mutations2A[0]),
+    .n = nElems_(mutations2A),
     .mutationA = mutations2A
   };
 
@@ -125,7 +127,7 @@ IntraCompositeGene intra1 = {
     .typeName = "XGeneric"
 #endif
   },
-  .n = sizeof(comp1HdrA) / sizeof(comp1HdrA[0]),
+  .n = nElems_(comp1HdrA),
   .geneHdrPA = comp1HdrA
 },
 
@@ -139,35 +141,52 @@ IntraCompositeGene intra1 = {
       .typeName = "XGeneric"
 #endif
     },
-    .n = sizeof(comp2HdrA) / sizeof(comp2HdrA[0]),
+    .n = nElems_(comp2HdrA),
     .geneHdrPA = comp2HdrA
   };
 
 struct GeneHdr* geneHdr1PA[] = { &intra1.hdr };
 struct GeneHdr* geneHdr2PA[] = { &intra2.hdr };
+struct GeneHdr* geneHdr3PA[] = { &mut1Gene.hdr };  // entity with just mutable
+struct GeneHdr* geneHdr4PA[] = { &imm1Gene.hdr };  // entity with just immutable
 
 Subtree entity1Tree = {
   .hdr = {
     .class = SUBTREE,
-    .u.n = sizeof( geneHdr1PA ) / sizeof( geneHdr1PA[0] )
+    .u.n = nElems_(geneHdr1PA)
   },
   .geneHdrPA = geneHdr1PA
 },
   entity2Tree = {
     .hdr = {
       .class = SUBTREE,
-      .u.n = sizeof( geneHdr2PA ) / sizeof( geneHdr2PA[0] )
+      .u.n = nElems_( geneHdr2PA ),
     },
     .geneHdrPA = geneHdr2PA
+  },
+  entity3Tree = {
+    .hdr = {
+      .class = SUBTREE,
+      .u.n = nElems_( geneHdr3PA ),
+    },
+    .geneHdrPA = geneHdr3PA
+  },
+  entity4Tree = {
+    .hdr = {
+      .class = SUBTREE,
+      .u.n = nElems_( geneHdr4PA ),
+    },
+    .geneHdrPA = geneHdr4PA
   };
 
 
-Subtree* subtreePA[] = { &entity1Tree, &entity2Tree };
+
+Subtree* subtreePA[] = { &entity1Tree, &entity2Tree, &entity3Tree, &entity4Tree };
 
 extern XGeneric xGeneric;  // generic system
 const System* sysPA[] = { &xGeneric.system };
-#define NSYSTEMS (sizeof( sysPA ) / sizeof( sysPA[0] ))   // because C compilers cry if you size an array by a variable, even if it's const
-const Key NENTITIES = sizeof(subtreePA) / sizeof(subtreePA[0]);
+#define NSYSTEMS ( nElems_( sysPA ) )  // because C compilers cry if you size an array by a variable, even if it's const
+const Key NENTITIES = nElems_( subtreePA );
 U32 nExclusivesA[ NSYSTEMS ] = { NENTITIES };
 
 RootGene root = {
@@ -200,13 +219,15 @@ TEST_F_SETUP(Tau) {
   tau->xP = &xGeneric;
   mailboxWrite( tau->xP->system.mailboxF, GENERIC, 1, MUTATE_AND_ACTIVATE, 1, NULL );
   mailboxWrite( tau->xP->system.mailboxF, GENERIC, 2, MUTATE_AND_ACTIVATE, 1, NULL );
+  mailboxWrite( tau->xP->system.mailboxF, GENERIC, 3, MUTATE_AND_ACTIVATE, 1, NULL );
+  mailboxWrite( tau->xP->system.mailboxF, GENERIC, 4, ACTIVATE, 0, NULL );
 
   xRun( &tau->xP->system );
 }
 
-TEST_F_TEARDOWN(Tau) {}
+TEST_F_TEARDOWN(Tau) {}  // tau forces us to declare this
 
-TEST_F( Tau, CheckIntracomposites ) {
+TEST_F( Tau, Intracomposites ) {
   XGenericComp* cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, 1);
   REQUIRE_TRUE( cP != NULL );
   CHECK_EQ( cP->immutable, 1 );
@@ -220,36 +241,37 @@ TEST_F( Tau, CheckIntracomposites ) {
   CHECK_TRUE( cP->mutableCompositePc2 == 10 );
 }
 
-TEST_F( Tau, MutationWorks ) {
-  // Entity 1
-  Mutation *mutationP = mutations1A;
-  Mutation *mutationEndP = mutationP + sizeof(mutations1A) / sizeof(mutations1A[0]);
-  // First, prove the initial conditions.
-  XGenericComp* cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, 1);
-  CHECK_EQ( cP->mutableCompositePc1, mutBody1a.s );
-  CHECK_EQ( (int) cP->mutableCompositePc2, (int) mutBody1a.c );
-  cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, 1);
+static void _testMutations( Tau* tau, Mutation* mutationA, const U32 nMutations, Entity entity ) {
+  XGenericComp* cP;
+  Mutation* mutationP = mutationA;
+  Mutation* mutationEndP = mutationP + nMutations;
   for ( ; mutationP < mutationEndP ; ++mutationP ) {
-    // Then mutate them.
-    mailboxWrite( tau->xP->system.mailboxF, GENERIC, 1, MUTATE_AND_ACTIVATE, mutationP->key, NULL );
+    mailboxWrite( tau->xP->system.mailboxF, GENERIC, entity, MUTATE_AND_ACTIVATE, mutationP->key, NULL );
     xRun( &tau->xP->system );
-    cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, 1);
-    REQUIRE_TRUE( cP != NULL );
-    // This fails on the second mutation because it's not in the map.
-    CHECK_EQ( cP->mutableCompositePc1, ( (GenericMutableShortChar*) mutationP->mutationBodyP)->s );
-    CHECK_TRUE( cP->mutableCompositePc2 == ( (GenericMutableShortChar*) mutationP->mutationBodyP)->c );  // tau.h can't do CHECK_EQ on chars for some reason
-  }
-#if 1
-  // Entity 2
-  mutationP = mutations2A;
-  mutationEndP = mutationP + sizeof(mutations2A) / sizeof(mutations2A[0]);
-  for ( ; mutationP < mutationEndP ; ++mutationP ) {
-    mailboxWrite( tau->xP->system.mailboxF, GENERIC, 2, MUTATE_AND_ACTIVATE, mutationP->key, NULL );
-    xRun( &tau->xP->system );
-    cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, 2);
+    cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, entity);
     REQUIRE_TRUE( cP != NULL );
     CHECK_EQ( cP->mutableCompositePc1, ( (GenericMutableShortChar*) mutationP->mutationBodyP)->s );
     CHECK_TRUE( cP->mutableCompositePc2 == ( (GenericMutableShortChar*) mutationP->mutationBodyP)->c );
   }
-#endif
+}
+
+
+TEST_F( Tau, Mutations ) {
+  _testMutations( tau, mutations1A, nElems_( mutations1A ), 1 );
+  _testMutations( tau, mutations2A, nElems_( mutations2A ), 2 );
+  _testMutations( tau, mutations1A, nElems_( mutations2A ), 3 );  // entity 3 uses entity 1's mutations
+}
+
+// I go ahead and test immutables of entities derived from both intracomposite genes and strictly immutable.
+TEST_F( Tau, Immutables ) {
+  // Entity 1
+  XGenericComp* cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, 1);
+  CHECK_EQ( cP->immutable, imm1Gene.body );
+  // Entity 2
+  cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, 2);
+  CHECK_EQ( cP->immutable, imm2Gene.body );
+  // Skipping entity 3, who lacks immutables
+  // Entity 4
+  cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, 4);
+  CHECK_EQ( cP->immutable, imm1Gene.body );
 }
