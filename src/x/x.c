@@ -342,13 +342,13 @@ static void _inflateMedia() {
   }
 }
 
-void xRegisterMediaGene( MediaGene* mediaGeneP ) {
+void xRegisterForInflation( StripDataS* sdP ) {
   // We use a static array in order to allow all systems to put stuff into it without passing it everywhere.
   assert( _sdPF );  
+  assert( sdP );  
   // Defer inflation to optimize icache and for multithreaded inflation.
-  if (!(mediaGeneP->sd.flags & SD_SET_FOR_INFLATION_)) {
-    mediaGeneP->sd.flags |= SD_SET_FOR_INFLATION_;
-    StripDataS* sdP = &mediaGeneP->sd;  // because you must pass a double-pointer
+  if (!(sdP->flags & SD_SET_FOR_INFLATION_)) {
+    sdP->flags |= SD_SET_FOR_INFLATION_;
     frayAdd(_sdPF, &sdP, NULL);  // this asserts frayP != NULL, so no need to do it above.
   }
 }

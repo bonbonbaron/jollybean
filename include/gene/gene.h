@@ -11,7 +11,7 @@ typedef struct GeneHisto {
 
 // Used to distinguish header pointers
 // IMPLICIT: "What da hail is dis?" Rather than being stored, it's data created as a *side effect* of consuming a gene. May be  unnecessary. 
-typedef enum GeneClass { ROOT, SUBTREE, INTERCOMPOSITE, INTRACOMPOSITE, MEDIA, VARIANT, IMMUTABLE, MUTABLE, BLACKBOARD, N_GENE_CLASSES } GeneClass;
+typedef enum GeneClass { ROOT, SUBTREE, INTERCOMPOSITE, INTRACOMPOSITE, VARIANT, IMMUTABLE, MUTABLE, BLACKBOARD, N_GENE_CLASSES } GeneClass;
 
 // There is no "Gene" struct, strictly speaking.
 // The "Gene" is the thing that proceeds after GeneHdr; it's not a void pointer.
@@ -34,11 +34,7 @@ typedef struct GeneHdr {  // breaks down to 1 byte with -fshort-enums compiler f
 #endif
 } GeneHdr;
 
-// Media gene
-typedef struct MediaGene {
-  GeneHdr hdr;  // class = MEDIA, u.type = system ID
-  StripDataS sd;
-} MediaGene;
+// NOTE: There is no explicit media gene. Anything needing inflation will be registered by each system.
 
 // Similar to GeneHdr, but the difference in some fields' names warrants a distinction.
 typedef struct Mutation {

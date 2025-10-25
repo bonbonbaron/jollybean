@@ -188,8 +188,7 @@ void     xQueuePause(System *sP, void *componentP);
 void     xQueueDeactivate(System *sP, void *componentP);
 Bln      xIsEntityActive( System  *sP, Entity entity );
 void     xRun(System *sP);
-void     __xSwap(System *sP, S32 origIdx, S32 newIdx);
-void     xRegisterMediaGene( MediaGene* mediaGeneP );
+void     xRegisterForInflation( StripDataS* sdP );
 
 inline  Key* _getCompIdxPByEntity(System *sP, Entity entity) {
   return (Key*) mapGet(sP->e2cIdxMP, entity);
