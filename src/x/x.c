@@ -345,7 +345,7 @@ static void _inflateMedia() {
 void xRegisterMediaGene( MediaGene* mediaGeneP ) {
   // We use a static array in order to allow all systems to put stuff into it without passing it everywhere.
   assert( _sdPF );  
-  // Defer inflation 
+  // Defer inflation to optimize icache and for multithreaded inflation.
   if (!(mediaGeneP->sd.flags & SD_SET_FOR_INFLATION_)) {
     mediaGeneP->sd.flags |= SD_SET_FOR_INFLATION_;
     StripDataS* sdP = &mediaGeneP->sd;  // because you must pass a double-pointer
@@ -374,29 +374,7 @@ static void _distributeGene( Entity entity, GeneHdr* geneHdrP ) {
       // TODO unit test everything else first.
       //      Variants will be GREAT for characters that exist in multiple positions across a level.
       break;
-    // TODO what if it's a mutable media gene? How do you tell the difference?
-    // TODO in order to proc t hem, yohave to separate media out from the genes using them.
-    //      So media gene, and then a gene that references it.
-    //      I don't like that; it leaves too much room for forgetting something.
-    //      How does a tool safeguard against that?
-    //      I don't want to have to remember to include the image if I stick it in a gene.
-    //
-    //      Let's explore the other potential path first. What if I were to somehow inserrt a media intoa  system.
-    //      Then said system will be able to stick its pointer where it belongs.
-    //      It'd be able to bend the rule of "only one thing per system."
-    //
-    //      But how will it know its entity has already entered the system, and it's not the first?
-    //      How do we know for sure the system wants it in the first place?
-    //      It'll either go before or after. If it goes before, tough luck; we don't circle back to it later.
-    //
-    //      For that reason we should figure out the media pointer problem. 
-    //      You'll first make a renderer intracomposite or whatever that contains a pointer to imgA.
-    //      Then you'll have to add imgA-- but how will you know to do that?
-    //
-    //      How about if the child system knows how to add its media pieces to the media fray themselves?
-    //      That removes the media gene type altogether. Then we just know.
-    //
-    //
+    // case MEDIA:  <-- Systems registering MEDIA genes instead of direct distribution allows for keeping them in intercomposites.
     case INTRACOMPOSITE:
     case IMMUTABLE:
     case MUTABLE:

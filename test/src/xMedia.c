@@ -1,6 +1,6 @@
 #include "xMedia.h"
 #include "gene/gene.h"
-#include "genericSysGenes.h"
+#include "mediaSysGenes.h"
 
 XIniSysFuncDefUnused_(Media);
 XMakeComponentsDefUnused_(Media);
@@ -21,9 +21,17 @@ XConsumeGeneFuncDef_(Media) {
       xMediaConsumeGene( sP, entity, *currGeneHdrPP );
     }
   }
+  // I'm getting tired of coding. I'll save this for Sunday evening or so.
+  else if ( geneP->class == MEDIA  ) {
+    xRegisterMediaGene( geneP );
+    // TODO stick the image pointer into the component.
+  }
+  else if ( geneP->class == IMMUTABLE ) {
+    // TODO stick the int into the component.
+  }
 }
 
-XRunFuncDef_(Generic);
+XRunFuncDef_(Media);
   XMediaComp *cP = (XMediaComp*) sP->cF;
   XMediaComp *cEndP = cP + _frayGetFirstPausedIdx(sP->cF);
 
