@@ -260,6 +260,7 @@ TEST_F( Tau, Mutations ) {
   _testMutations( tau, mutations1A, nElems_( mutations1A ), 1 );
   _testMutations( tau, mutations2A, nElems_( mutations2A ), 2 );
   _testMutations( tau, mutations1A, nElems_( mutations2A ), 3 );  // entity 3 uses entity 1's mutations
+  // Skipping entity 4, who lacks mutables
 }
 
 // I go ahead and test immutables of entities derived from both intracomposite genes and strictly immutable.
