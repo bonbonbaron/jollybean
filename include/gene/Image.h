@@ -6,6 +6,8 @@
 
 // typedef struct Color_ Color_;  // pray to the compiler that this works LOL
 
+typedef U32 Color;
+
 typedef struct Colormap {
   StripDataS *sdP;  // this element MUST come first in a media (hence inflatable) gene for casting
   U8 state;         // prevents copies of this from being inflated
@@ -15,7 +17,7 @@ typedef struct Colormap {
 
 typedef struct ColorPalette{
   U8 nColors;
-  Color_ *colorA;
+  Color *colorA;   // TODO see if we can get away without Color_ for now. That dependency to SDL sucks.
 } ColorPalette;
 
 typedef struct Image {

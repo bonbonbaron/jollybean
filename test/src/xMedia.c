@@ -10,6 +10,9 @@ XPostMutateFuncDefUnused_(Media);
 XProcMsgFuncDefUnused_(Media);
 
 XConsumeGeneFuncDef_(Media) {
+  assert( sP );
+  assert( geneP );
+  assert( entity );
   XMedia* xP = (XMedia*) sP;
   XMediaComp* cP;
   if ( geneP->class == INTRACOMPOSITE ) {
@@ -23,11 +26,16 @@ XConsumeGeneFuncDef_(Media) {
   }
   // I'm getting tired of coding. I'll save this for Sunday evening or so.
   else if ( geneP->class == MEDIA  ) {
+    assert( geneP->u.type == IMAGE );
     xRegisterMediaGene( geneP );
-    // TODO stick the image pointer into the component.
+    cP = xGetCompPByEntity( sP, entity );
+    assert( cP );
+    cP->imgP = ((MediaImageGene*) geneP)->imgP;
   }
   else if ( geneP->class == IMMUTABLE ) {
-    // TODO stick the int into the component.
+    cP = xGetCompPByEntity( sP, entity );
+    assert( cP );
+    cP->i = geneP->body;
   }
 }
 

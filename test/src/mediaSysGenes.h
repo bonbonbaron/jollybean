@@ -3,21 +3,11 @@
 
 #include "gene/gene.h"
 
-// Bodies
-typedef int MediaImmutableInt;
-typedef Image MediaImg;
-
 // Genes
-// This gene only populates the immutable int, leaves out the rest.
-typedef struct MediaImmutableGene {
-  GeneHdr hdr;
-  MediaImmutableInt body;
-} MediaImmutableGene;
-
 // This gene only populates the mutable short-char, leaves out the rest.
-typedef struct MediaMutableGene {
+typedef struct MediaImageGene {
   GeneHdr hdr;
-  MediaMutableShortChar body;
-} MediaMutableGene;
+  Image* imgP;
+} MediaImageGene;
 
 #endif // MED_SYS_GENES_H

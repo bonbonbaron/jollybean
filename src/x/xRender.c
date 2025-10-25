@@ -306,7 +306,7 @@ static void fillRectFromStripmap(const Image *imgP, const Rect_* rectP, Color_* 
   Color_* colorizedStripsetP = arrayNew(sizeof(Color_), arrayGetNElems(imgP->cmP->sdP->ss.unpackedDataA), TEMPORARY);
   Color_* colorP = colorizedStripsetP;
   Color_* colorEndP = colorP + arrayGetNElems(colorizedStripsetP);
-  Color_ *colorPaletteP = imgP->cpP->colorA;
+  Color_ *colorPaletteP = (Color_*) imgP->cpP->colorA;
   U8* stripSetElemP = imgP->cmP->sdP->ss.unpackedDataA;
   for (; colorP < colorEndP; ++stripSetElemP, ++colorP) {
     *colorP = colorPaletteP[ *stripSetElemP ];
@@ -428,7 +428,7 @@ Color_* assembleTextureAtlas(Image** imgPF, Atlas *atlasP) {
     // Otherwise, it's a grayscale image that's ready to go.
     else {
       U8* cmP = ssGetOutput( imgP->cmP->sdP );
-      fillRect( cmP, imgP->cpP->colorA, dstRectP, atlasPixelA, ATLAS_WIDTH );
+      fillRect( cmP, (Color_*) imgP->cpP->colorA, dstRectP, atlasPixelA, ATLAS_WIDTH );
     }
   }
   return atlasPixelA;
