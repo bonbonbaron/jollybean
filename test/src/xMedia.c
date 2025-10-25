@@ -12,16 +12,7 @@ XProcMsgFuncDefUnused_(Media);
 XConsumeGeneFuncDef_(Media) {
   XMedia* xP = (XMedia*) sP;
   XMediaComp* cP;
-  if ( geneP->class == MUTABLE ) {
-    xMakeMutationMap( sP, entity, geneP ); // This is fine as not every system will need this.
-  }
-  else if ( geneP->class == IMMUTABLE ) {
-    cP = (XMediaComp*) xGetCompPByEntity( sP, entity );
-    assert( cP );
-    MediaImmutableGene* immutableGeneP = (MediaImmutableGene*) geneP;
-    cP->immutable = immutableGeneP->body;
-  }
-  else if ( geneP->class == INTRACOMPOSITE ) {
+  if ( geneP->class == INTRACOMPOSITE ) {
     IntraCompositeGene* intraP = (IntraCompositeGene*) geneP;
     GeneHdr** currGeneHdrPP = intraP->geneHdrPA;
     GeneHdr** geneHdrEndPP = currGeneHdrPP + intraP->n;
@@ -32,7 +23,7 @@ XConsumeGeneFuncDef_(Media) {
   }
 }
 
-void xMediaRun(System *sP) {
+XRunFuncDef_(Generic);
   XMediaComp *cP = (XMediaComp*) sP->cF;
   XMediaComp *cEndP = cP + _frayGetFirstPausedIdx(sP->cF);
 
@@ -41,4 +32,4 @@ void xMediaRun(System *sP) {
 }
 
 #define FLAGS_HERE (0)
-X_(Media, GENERIC, mutableCompositePc1, 0);
+X_(Media, MEDIA_SYS_ID, mutableCompositePc1, 0);

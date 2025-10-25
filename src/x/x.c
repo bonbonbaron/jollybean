@@ -365,8 +365,20 @@ static void _distributeGene( Entity entity, GeneHdr* geneHdrP, StripDataS **sdPF
       break;
     case VARIANT:
       // TODO unit test everything else first.
+      //      Variants will be GREAT for characters that exist in multiple positions across a level.
       break;
     // TODO what if it's a mutable media gene? How do you tell the difference?
+    // TODO in order to proc t hem, yohave to separate media out from the genes using them.
+    //      So media gene, and then a gene that references it.
+    //      I don't like that; it leaves too much room for forgetting something.
+    //      How does a tool safeguard against that?
+    //      I don't want to have to remember to include the image if I stick it in a gene.
+    //
+    //      Let's explore the other potential path first. What if I were to somehow inserrt a media intoa  system.
+    //      Then said system will be able to stick its pointer where it belongs.
+    //      It'd be able to bend the rule of "only one thing per system."
+    //
+    //
     case MEDIA:
       MediaGene* mediaGeneP = (MediaGene*) geneHdrP;
       // Defer inflation 
@@ -401,7 +413,7 @@ static void _distributeGenes( const RootGene* rootP ) {
 
   Subtree** subtreePP = rootP->subtreePA;
   Subtree** subtreeEndPP = subtreePP + rootP->hdr.u.n;
-  for (Entity entity = 0; subtreePP < subtreeEndPP; ++subtreePP) { // entity = 0, because postincrement is slightly faster
+  for (Entity entity = 0; subtreePP < subtreeEndPP; ++subtreePP) { // entity = 0 -> postincrement is slightly faster lol
     _distributeGene( ++entity, &(*subtreePP)->hdr, sdPF );
   }
 
