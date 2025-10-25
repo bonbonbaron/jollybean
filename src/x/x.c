@@ -266,6 +266,7 @@ void xAddEntity( const System* sP, const Entity entity ) {
   assert( entity );
   assert( sP->e2cIdxMP );
   assert( sP->cIdx2eA );
+  assert( mapGet( sP->e2cIdxMP, entity ) ==  NULL ); // prevents double-adding entity
 
   U32 cIdx = 0;
   // Add empty component to fray. Get its index too so you know which belongs to this entity.
@@ -273,7 +274,6 @@ void xAddEntity( const System* sP, const Entity entity ) {
   assert( cIdx < arrayGetNElems( sP->cF ) );
   assert( cIdx < KEY_MAX );
   sP->cIdx2eA[ cIdx ] = entity;
-  assert( mapGet( sP->e2cIdxMP, entity ) ==  NULL );
   mapSet( sP->e2cIdxMP, entity, (Key*) &cIdx );
 }
   
@@ -325,30 +325,37 @@ Message* xGetInbox( const SystemId sysId ) {
 }
 
 
-// ================================================================================
-// TODO MAKE GENE ON SAME HIERARCHICAL LEVEL AS X. IT SHOULDN'T FEIGN INDEPENDENCE.
-// ================================================================================
-#define FIRST_ENTITY ( 1 )
+static StripDataS** _sdPF;
 
 // Inflate a whole array of strip data.
-static void _inflateMedia(StripDataS **sdPF) {
-  if ( sdPF ) {
+static void _inflateMedia() {
+  if ( _sdPF ) {
 #if MULTITHREADED
-    multithread_(sdInflate, (void*) sdPF);
-    multithread_(sdUnpack, (void*) sdPF);
-    multithread_(sdAssemble, (void*) sdPF);
+    multithread_(sdInflate, (void*) _sdPF);
+    multithread_(sdUnpack, (void*) _sdPF);
+    multithread_(sdAssemble, (void*) _sdPF);
 #else 
     for (int i = 0; i < 255; ++i) {  // TODO make this more pro bruh
-      stripIni(sdPF[i], TEMPORARY);
+      stripIni(_sdPF[i], TEMPORARY);
     }
 #endif
   }
 }
 
-static void _distributeGene( Entity entity, GeneHdr* geneHdrP, StripDataS **sdPF ) {
+void xRegisterMediaGene( MediaGene* mediaGeneP ) {
+  // We use a static array in order to allow all systems to put stuff into it without passing it everywhere.
+  assert( _sdPF );  
+  // Defer inflation 
+  if (!(mediaGeneP->sd.flags & SD_SET_FOR_INFLATION_)) {
+    mediaGeneP->sd.flags |= SD_SET_FOR_INFLATION_;
+    StripDataS* sdP = &mediaGeneP->sd;  // because you must pass a double-pointer
+    frayAdd(_sdPF, &sdP, NULL);  // this asserts frayP != NULL, so no need to do it above.
+  }
+}
+
+static void _distributeGene( Entity entity, GeneHdr* geneHdrP ) {
   assert(geneHdrP);
   assert(entity);
-  // No need for asserting sdPF. Text-based games don't have media, and frayAdd() prevents illegal adds.
 
   System *sP;
   switch (geneHdrP->class) {
@@ -360,7 +367,7 @@ static void _distributeGene( Entity entity, GeneHdr* geneHdrP, StripDataS **sdPF
       GeneHdr** geneHdrEndPP = currGeneHdrPP + compGeneP->hdr.u.n;
       for (; currGeneHdrPP < geneHdrEndPP; ++currGeneHdrPP) {
         assert(currGeneHdrPP);
-        _distributeGene(entity, *currGeneHdrPP, sdPF );
+        _distributeGene(entity, *currGeneHdrPP );
       }
       break;
     case VARIANT:
@@ -378,16 +385,18 @@ static void _distributeGene( Entity entity, GeneHdr* geneHdrP, StripDataS **sdPF
     //      Then said system will be able to stick its pointer where it belongs.
     //      It'd be able to bend the rule of "only one thing per system."
     //
+    //      But how will it know its entity has already entered the system, and it's not the first?
+    //      How do we know for sure the system wants it in the first place?
+    //      It'll either go before or after. If it goes before, tough luck; we don't circle back to it later.
     //
-    case MEDIA:
-      MediaGene* mediaGeneP = (MediaGene*) geneHdrP;
-      // Defer inflation 
-      if (!(mediaGeneP->sd.flags & SD_SET_FOR_INFLATION_)) {
-        mediaGeneP->sd.flags |= SD_SET_FOR_INFLATION_;
-        StripDataS* sdP = &mediaGeneP->sd;  // because you must pass a double-pointer
-        frayAdd(sdPF, &sdP, NULL);  // this asserts frayP != NULL, so no need to do it above.
-      }
-      break;
+    //      For that reason we should figure out the media pointer problem. 
+    //      You'll first make a renderer intracomposite or whatever that contains a pointer to imgA.
+    //      Then you'll have to add imgA-- but how will you know to do that?
+    //
+    //      How about if the child system knows how to add its media pieces to the media fray themselves?
+    //      That removes the media gene type altogether. Then we just know.
+    //
+    //
     case INTRACOMPOSITE:
     case IMMUTABLE:
     case MUTABLE:
@@ -406,18 +415,18 @@ static void _distributeGenes( const RootGene* rootP ) {
   assert( rootP );
   assert( rootP->hdr.class == ROOT );
 
-  StripDataS** sdPF = NULL;
+  _sdPF = NULL;
   if ( rootP->histo.nDistinctMedia ) {
-    sdPF = frayNew( sizeof(StripDataS*), rootP->histo.nDistinctMedia, TEMPORARY);  
+    _sdPF = frayNew( sizeof(StripDataS*), rootP->histo.nDistinctMedia, TEMPORARY);  
   }
 
   Subtree** subtreePP = rootP->subtreePA;
   Subtree** subtreeEndPP = subtreePP + rootP->hdr.u.n;
   for (Entity entity = 0; subtreePP < subtreeEndPP; ++subtreePP) { // entity = 0 -> postincrement is slightly faster lol
-    _distributeGene( ++entity, &(*subtreePP)->hdr, sdPF );
+    _distributeGene( ++entity, &(*subtreePP)->hdr );
   }
 
-  _inflateMedia(sdPF);  
+  _inflateMedia();  
 }
 
 static void _xMakeComponents( const System* sPA[], const Key nSystems ) {
