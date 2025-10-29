@@ -15,31 +15,16 @@ XConsumeGeneFuncDef_(Media) {
   assert( entity );
   XMedia* xP = (XMedia*) sP;
   XMediaComp* cP;
-  if ( geneP->class == INTRACOMPOSITE ) {
-    IntraCompositeGene* intraP = (IntraCompositeGene*) geneP;
-    GeneHdr** currGeneHdrPP = intraP->geneHdrPA;
-    GeneHdr** geneHdrEndPP = currGeneHdrPP + intraP->n;
-    for (; currGeneHdrPP < geneHdrEndPP; ++currGeneHdrPP) {
-      assert(*currGeneHdrPP);
-      xMediaConsumeGene( sP, entity, *currGeneHdrPP );
-    }
-  }
-  // I'm getting tired of coding. I'll save this for Sunday evening or so.
-  else if ( geneP->class == MEDIA  ) {
-    assert( geneP->u.type == IMAGE );
-    xRegisterMediaGene( geneP );
-    cP = xGetCompPByEntity( sP, entity );
-    assert( cP );
-    cP->imgP = ((MediaImageGene*) geneP)->imgP;
-  }
-  else if ( geneP->class == IMMUTABLE ) {
-    cP = xGetCompPByEntity( sP, entity );
-    assert( cP );
-    cP->i = geneP->body;
-  }
+  assert ( geneP->class == IMMUTABLE );
+  assert ( geneP->u.type == MEDIA_SYS_ID );
+  cP = xGetCompPByEntity( sP, entity );
+  assert( cP );
+  MediaGene* mediaGeneP = (MediaGene*) geneP;
+  xRegisterForInflation( &mediaGeneP->sd );
+  cP->sdP = &mediaGeneP->sd;  
 }
 
-XRunFuncDef_(Media);
+XRunFuncDef_(Media) {
   XMediaComp *cP = (XMediaComp*) sP->cF;
   XMediaComp *cEndP = cP + _frayGetFirstPausedIdx(sP->cF);
 
@@ -48,4 +33,4 @@ XRunFuncDef_(Media);
 }
 
 #define FLAGS_HERE (0)
-X_(Media, MEDIA_SYS_ID, mutableCompositePc1, 0);
+X_no_mutations_(Media, MEDIA_SYS_ID, 0);

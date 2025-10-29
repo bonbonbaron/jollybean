@@ -5,9 +5,9 @@
 
 // Genes
 // This gene only populates the mutable short-char, leaves out the rest.
-typedef struct MediaImageGene {
+typedef struct MediaGene {
   GeneHdr hdr;
-  Image* imgP;
-} MediaImageGene;
+  StripDataS sd;
+} MediaGene;
 
 #endif // MED_SYS_GENES_H

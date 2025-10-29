@@ -10,13 +10,10 @@ LEFT OFF HERE:
   get each of the test cases in the gene type list below done; cross them off as you complete them.
     \root
     \subtrees
-    immutables
-    mutables
-    intracomposites
-    \intercomposites
-    media
-    blackboard
-    implicit
+    \immutables
+    \mutables
+    \intracomposites
+    intercomposites
     variant (... and alternative? what were alts supposed to be again?)
   make a tool to generate genes and load them via an INDEPENDENT, auto-generated Makefile.
 

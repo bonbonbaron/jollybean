@@ -67,7 +67,7 @@ typedef enum { INITIALIZED = 1 } SubcomponentState;
     .pauseQueueF       = NULL,\
     .iniSys            = x##name_##IniSys,\
     .consumeGene       = x##name_##ConsumeGene,\
-    .MakeComponents    = x##name_##MakeComponents,\
+    .makeComponents    = x##name_##MakeComponents,\
     .postMutate        = x##name_##PostMutate,\
     .postActivate      = x##name_##PostActivate,\
     .postDeactivate    = x##name_##PostDeactivate,\
@@ -96,10 +96,10 @@ typedef void (*XPostDeactivateU)(struct _System *sP, FrayChanges *changesP);  //
   unused_(sP);\
 }
 
-#define XMakeComponentsDef_(name_) void x##name_##MakeComponents(System *sP)
 #define XMakeComponentsDefUnused_(name_) XMakeComponentsDef_(name_) {\
   unused_(sP);\
 }
+#define XMakeComponentsDef_(name_) void x##name_##MakeComponents(System *sP)
 
 #define XConsumeGeneFuncDef_(name_) void x##name_##ConsumeGene(System *sP, const Entity entity, const GeneHdr *geneP)
 #define XConsumeGeneFuncDefUnused_(name_) void x##name_##ConsumeGene(System *sP, const Entity entity, const GeneHdr *geneP) {\
