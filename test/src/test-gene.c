@@ -74,14 +74,15 @@ RootGene root = {
   },
   .histo = {
     .nExclusivesA = nExclusivesA,
-    .nDistinctMedia = 0
+    .nDistinctMedia = 2
   },
   .subtreePA = subtreePA
 };
 
 
 typedef struct Tau {
-  XGeneric *xP;
+  XGeneric *xGenericP;
+  XMedia *xMediaP;
 } Tau;
 
 // This simulates what may happen in the finished engine.
@@ -90,24 +91,28 @@ TEST_F_SETUP(Tau) {
   xIni( sysPA, NSYSTEMS, &root );
 
   // TODO revamp mailboxes to no longer use addresses 
-  tau->xP = &xGeneric;
-  mailboxWrite( tau->xP->system.mailboxF, GENERIC, 1, MUTATE_AND_ACTIVATE, 1, NULL );
-  mailboxWrite( tau->xP->system.mailboxF, GENERIC, 2, MUTATE_AND_ACTIVATE, 1, NULL );
-  mailboxWrite( tau->xP->system.mailboxF, GENERIC, 3, MUTATE_AND_ACTIVATE, 1, NULL );
-  mailboxWrite( tau->xP->system.mailboxF, GENERIC, 4, ACTIVATE, 0, NULL );
+  tau->xGenericP = &xGeneric;
+  tau->xMediaP = &xMedia;
+  mailboxWrite( tau->xGenericP->system.mailboxF, GENERIC, 1, MUTATE_AND_ACTIVATE, 1, NULL );
+  mailboxWrite( tau->xGenericP->system.mailboxF, GENERIC, 2, MUTATE_AND_ACTIVATE, 1, NULL );
+  mailboxWrite( tau->xGenericP->system.mailboxF, GENERIC, 3, MUTATE_AND_ACTIVATE, 1, NULL );
+  mailboxWrite( tau->xGenericP->system.mailboxF, GENERIC, 4, ACTIVATE, 0, NULL );
+  mailboxWrite( tau->xMediaP->system.mailboxF, MEDIA_SYS_ID, 1, ACTIVATE, 1, NULL );
+  mailboxWrite( tau->xMediaP->system.mailboxF, MEDIA_SYS_ID, 2, ACTIVATE, 1, NULL );
 
-  xRun( &tau->xP->system );
+  xRun( &tau->xGenericP->system );
+  xRun( &tau->xMediaP->system );
 }
 
 TEST_F_TEARDOWN(Tau) {}  // tau forces us to declare this
 
 TEST_F( Tau, Intracomposites ) {
-  XGenericComp* cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, 1);
+  XGenericComp* cP = (XGenericComp*) xGetCompPByEntity( &tau->xGenericP->system, 1);
   REQUIRE_TRUE( cP != NULL );
   CHECK_EQ( cP->immutable, 1 );
   CHECK_EQ( cP->mutableCompositePc1, 1234 );
   CHECK_TRUE( cP->mutableCompositePc2 == 100 );
-  cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, 2);
+  cP = (XGenericComp*) xGetCompPByEntity( &tau->xGenericP->system, 2);
   REQUIRE_TRUE( cP != NULL );
   // TODO figure out why the below are all failing.
   CHECK_EQ( cP->immutable, 2 );
@@ -120,9 +125,9 @@ static void _testMutations( Tau* tau, Mutation* mutationA, const U32 nMutations,
   Mutation* mutationP = mutationA;
   Mutation* mutationEndP = mutationP + nMutations;
   for ( ; mutationP < mutationEndP ; ++mutationP ) {
-    mailboxWrite( tau->xP->system.mailboxF, GENERIC, entity, MUTATE_AND_ACTIVATE, mutationP->key, NULL );
-    xRun( &tau->xP->system );
-    cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, entity);
+    mailboxWrite( tau->xGenericP->system.mailboxF, GENERIC, entity, MUTATE_AND_ACTIVATE, mutationP->key, NULL );
+    xRun( &tau->xGenericP->system );
+    cP = (XGenericComp*) xGetCompPByEntity( &tau->xGenericP->system, entity);
     REQUIRE_TRUE( cP != NULL );
     CHECK_EQ( cP->mutableCompositePc1, ( (GenericMutableShortChar*) mutationP->mutationBodyP)->s );
     CHECK_TRUE( cP->mutableCompositePc2 == ( (GenericMutableShortChar*) mutationP->mutationBodyP)->c );
@@ -140,13 +145,13 @@ TEST_F( Tau, Mutations ) {
 // I go ahead and test immutables of entities derived from both intracomposite genes and strictly immutable.
 TEST_F( Tau, Immutables ) {
   // Entity 1
-  XGenericComp* cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, 1);
+  XGenericComp* cP = (XGenericComp*) xGetCompPByEntity( &tau->xGenericP->system, 1);
   CHECK_EQ( cP->immutable, imm1Gene.body );
   // Entity 2
-  cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, 2);
+  cP = (XGenericComp*) xGetCompPByEntity( &tau->xGenericP->system, 2);
   CHECK_EQ( cP->immutable, imm2Gene.body );
   // Skipping entity 3, who lacks immutables
   // Entity 4
-  cP = (XGenericComp*) xGetCompPByEntity( &tau->xP->system, 4);
+  cP = (XGenericComp*) xGetCompPByEntity( &tau->xGenericP->system, 4);
   CHECK_EQ( cP->immutable, imm1Gene.body );
 }

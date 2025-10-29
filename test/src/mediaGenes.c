@@ -62,7 +62,7 @@ Inflatable redStripmapInf = {
 };
 
 StripDataS blehStripData = {
-	.flags = 16,
+	.flags = 8,
 	.sm = {
 		.nIndices = 0,
 		.infP = NULL
@@ -107,7 +107,7 @@ med1Gene = {
 #endif
   },
   .sd = {
-    .flags = 16,
+    .flags = 8,
     .sm = {
       .nIndices = 0,
       .infP = NULL

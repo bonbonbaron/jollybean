@@ -1,5 +1,5 @@
-#ifndef X_GENERIC
-#define X_GENERIC
+#ifndef X_MEDIA
+#define X_MEDIA
 #include "x/x.h"
 #include "data/inflatable.h"
 
@@ -16,4 +16,4 @@ typedef struct XMedia {
 } XMedia;
 
 extern System *sAP;
-#endif  // X_GENERIC
+#endif  // X_MEDIA

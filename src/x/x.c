@@ -335,8 +335,10 @@ static void _inflateMedia() {
     multithread_(sdUnpack, (void*) _sdPF);
     multithread_(sdAssemble, (void*) _sdPF);
 #else 
-    for (int i = 0; i < 255; ++i) {  // TODO make this more pro bruh
-      stripIni(_sdPF[i], TEMPORARY);
+    StripDataS** sdPP = _sdPF;
+    StripDataS** sdEndPP = sdPP + frayGetNElems_(_sdPF);
+    for ( ;  sdPP < sdEndPP; ++sdPP ) {  // TODO make this more pro bruh
+      stripIni(*sdPP, TEMPORARY);
     }
 #endif
   }
@@ -400,7 +402,7 @@ static void _distributeGenes( const RootGene* rootP ) {
 
   Subtree** subtreePP = rootP->subtreePA;
   Subtree** subtreeEndPP = subtreePP + rootP->hdr.u.n;
-  for (Entity entity = 0; subtreePP < subtreeEndPP; ++subtreePP) { // entity = 0 -> postincrement is slightly faster lol
+  for (Entity entity = 0; subtreePP < subtreeEndPP; ++subtreePP) { // entity = 0 -> preincrement is slightly faster lol
     _distributeGene( ++entity, &(*subtreePP)->hdr );
   }
 

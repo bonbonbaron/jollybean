@@ -1,6 +1,7 @@
 #include "xMedia.h"
 #include "gene/gene.h"
 #include "mediaSysGenes.h"
+#include <stdio.h>
 
 XIniSysFuncDefUnused_(Media);
 XMakeComponentsDefUnused_(Media);
@@ -29,6 +30,7 @@ XRunFuncDef_(Media) {
   XMediaComp *cEndP = cP + _frayGetFirstPausedIdx(sP->cF);
 
   for (; cP < cEndP; cP++) {
+    assert( ssGetOutput( cP->sdP ) != NULL );
   }
 }
 
