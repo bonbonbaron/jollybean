@@ -10,7 +10,7 @@ typedef struct XMediaComp {
 } XMediaComp;
 
 
-typedef struct {
+typedef struct XMedia {
   System system;
   // who cares
 } XMedia;

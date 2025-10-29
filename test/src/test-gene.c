@@ -1,7 +1,11 @@
 #include "tau.h"
-#include "xGeneric.h"
 #include "gene/gene.h"
+// Systems
+#include "xGeneric.h"
+#include "xMedia.h"
+// Gene data structure definitions
 #include "genericSysGenes.h"
+#include "mediaSysGenes.h"
 
 #define nElems_(x_) ( sizeof( x_ ) / sizeof( x_[0] ) )
 
@@ -10,14 +14,16 @@ extern MutableGene mut1Gene, mut2Gene;
 extern GenericImmutableGene imm1Gene, imm2Gene;
 extern Mutation mutations1A[], mutations2A[];
 extern int nMuts1, nMuts2;
+extern MediaGene med1Gene, med2Gene;
 
 TAU_MAIN();
 extern XGeneric xGeneric;  // generic system
-const System* sysPA[] = { &xGeneric.system };
+extern XMedia xMedia;  // media system
+const System* sysPA[] = { &xGeneric.system, &xMedia.system };
 #define NSYSTEMS ( nElems_( sysPA ) )  // because C compilers cry if you size an array by a variable, even if it's const
 
-struct GeneHdr* geneHdr1PA[] = { &intra1.hdr };
-struct GeneHdr* geneHdr2PA[] = { &intra2.hdr };
+struct GeneHdr* geneHdr1PA[] = { &intra1.hdr, &med1Gene.hdr };
+struct GeneHdr* geneHdr2PA[] = { &intra2.hdr, &med2Gene.hdr };
 struct GeneHdr* geneHdr3PA[] = { &mut1Gene.hdr };  // entity with just mutable
 struct GeneHdr* geneHdr4PA[] = { &imm1Gene.hdr };  // entity with just immutable
 
