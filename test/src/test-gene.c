@@ -27,30 +27,30 @@ struct GeneHdr* geneHdr2PA[] = { &intra2.hdr, &med2Gene.hdr };
 struct GeneHdr* geneHdr3PA[] = { &mut1Gene.hdr };  // entity with just mutable
 struct GeneHdr* geneHdr4PA[] = { &imm1Gene.hdr };  // entity with just immutable
 
-Subtree entity1Tree = {
+InterCompositeGene entity1Tree = {
   .hdr = {
-    .class = SUBTREE,
+    .class = INTERCOMPOSITE,
     .u.n = nElems_(geneHdr1PA)
   },
   .geneHdrPA = geneHdr1PA
 },
   entity2Tree = {
     .hdr = {
-      .class = SUBTREE,
+      .class = INTERCOMPOSITE,
       .u.n = nElems_( geneHdr2PA ),
     },
     .geneHdrPA = geneHdr2PA
   },
   entity3Tree = {
     .hdr = {
-      .class = SUBTREE,
+      .class = INTERCOMPOSITE,
       .u.n = nElems_( geneHdr3PA ),
     },
     .geneHdrPA = geneHdr3PA
   },
   entity4Tree = {
     .hdr = {
-      .class = SUBTREE,
+      .class = INTERCOMPOSITE,
       .u.n = nElems_( geneHdr4PA ),
     },
     .geneHdrPA = geneHdr4PA
@@ -58,9 +58,9 @@ Subtree entity1Tree = {
 
 
 
-Subtree* subtreePA[] = { &entity1Tree, &entity2Tree, &entity3Tree, &entity4Tree };
-int N_GENERIC_COMPS = sizeof (subtreePA ) / sizeof( subtreePA[0] );
-const Key NENTITIES = nElems_( subtreePA );
+GeneHdr* genomePA[] = { &entity1Tree.hdr, &entity2Tree.hdr, &entity3Tree.hdr, &entity4Tree.hdr };
+int N_GENERIC_COMPS = sizeof (genomePA ) / sizeof( genomePA[0] );
+const Key NENTITIES = nElems_( genomePA );
 U32 nExclusivesA[ NSYSTEMS ] = { NENTITIES };
 
 RootGene root = {
@@ -76,7 +76,7 @@ RootGene root = {
     .nExclusivesA = nExclusivesA,
     .nDistinctMedia = 2
   },
-  .subtreePA = subtreePA
+  .genomePA = genomePA
 };
 
 

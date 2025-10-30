@@ -361,8 +361,6 @@ static void _distributeGene( Entity entity, GeneHdr* geneHdrP ) {
 
   System *sP;
   switch (geneHdrP->class) {
-    case SUBTREE:  // a subtree *is* an intercomposite. "Subtree" just tells us the start of a new entity.
-      // fall through
     case INTERCOMPOSITE:  // recurse  back into this function
       InterCompositeGene* compGeneP = (InterCompositeGene*) geneHdrP;
       GeneHdr** currGeneHdrPP = compGeneP->geneHdrPA;
@@ -373,8 +371,19 @@ static void _distributeGene( Entity entity, GeneHdr* geneHdrP ) {
       }
       break;
     case VARIANT:
-      // TODO unit test everything else first.
-      //      Variants will be GREAT for characters that exist in multiple positions across a level.
+      //  So I want to be able to vary multiple aspects of a genome, not just one.
+      //  I should be able to do this for one or many.
+      //  So I'll take the original Genome...
+      //       Genome Townsperson
+      //  And give each townsperson a different:
+      //      Image
+      //      Position
+      //      Speech
+      //  The number of variations equals the number of Townsperson instances.
+      //  And maybe only one of them has:
+      //      Sound (because he's whistling)
+      //
+      //  The substitute gene MUST have a header that explains what it's replacing.
       break;
     // case MEDIA:  <-- Systems registering MEDIA genes instead of direct distribution allows for keeping them in intercomposites.
     case INTRACOMPOSITE:
@@ -400,10 +409,10 @@ static void _distributeGenes( const RootGene* rootP ) {
     _sdPF = frayNew( sizeof(StripDataS*), rootP->histo.nDistinctMedia, TEMPORARY);  
   }
 
-  Subtree** subtreePP = rootP->subtreePA;
-  Subtree** subtreeEndPP = subtreePP + rootP->hdr.u.n;
-  for (Entity entity = 0; subtreePP < subtreeEndPP; ++subtreePP) { // entity = 0 -> preincrement is slightly faster lol
-    _distributeGene( ++entity, &(*subtreePP)->hdr );
+  GeneHdr** genomePP = rootP->genomePA;
+  GeneHdr** genomeEndPP = genomePP + rootP->hdr.u.n;
+  for (Entity entity = 0; genomePP < genomeEndPP; ++genomePP) { // entity = 0 -> preincrement is slightly faster lol
+    _distributeGene( ++entity, *genomePP );
   }
 
   _inflateMedia();  

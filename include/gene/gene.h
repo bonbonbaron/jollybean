@@ -11,7 +11,7 @@ typedef struct GeneHisto {
 
 // Used to distinguish header pointers
 // IMPLICIT: "What da hail is dis?" Rather than being stored, it's data created as a *side effect* of consuming a gene. May be  unnecessary. 
-typedef enum GeneClass { ROOT, SUBTREE, INTERCOMPOSITE, INTRACOMPOSITE, VARIANT, IMMUTABLE, MUTABLE, N_GENE_CLASSES } GeneClass;
+typedef enum GeneClass { ROOT, INTERCOMPOSITE, INTRACOMPOSITE, VARIANT, IMMUTABLE, MUTABLE, N_GENE_CLASSES } GeneClass;
 
 // There is no "Gene" struct, strictly speaking.
 // The "Gene" is the thing that proceeds after GeneHdr; it's not a void pointer.
@@ -63,13 +63,10 @@ typedef struct IntraCompositeGene {  // Same information, different effect (see 
   GeneHdr **geneHdrPA;   // pointers prevent multiple entities with same genes from reinitializing them
 } IntraCompositeGene;
 
-// Subtree gene
-typedef InterCompositeGene Subtree;  // u.class = SUBTREE, then u.n = # of intercomposites
-  
 // Variant gene
 typedef struct VariantGene { // Variants allow you to read a tree once and copy it mulitple times with 
   GeneHdr hdr;
-  Subtree subtree;       // small variations, indicated in variations A. Those get tacked on.
+  GeneHdr* keyGeneP;       // small variations, indicated in variations A. Those get tacked on.
   InterCompositeGene variations;  // They can either add a new gene or override an existing one.
 } VariantGene;  
 
@@ -77,7 +74,7 @@ typedef struct VariantGene { // Variants allow you to read a tree once and copy 
 typedef struct RootGene {
   GeneHdr hdr;
   GeneHisto histo;    // histo of the entire genome so we don't have to calculate it at runtime
-  Subtree **subtreePA;   // pointers prevent multiple entities with same genes from reinitializing them
+  GeneHdr **genomePA;   // pointers prevent multiple entities with same genes from reinitializing them
 } RootGene;
 
 /* Implicit genes supply genes that're universal to all instances of a genome/subtree.
