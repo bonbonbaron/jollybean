@@ -1,15 +1,5 @@
 #include "data/mem.h"
 
-#if (__WORDSIZE == 32 )
-#define MODULO_ (3)
-#elif (__WORDSIZE == 64 )
-#define MODULO_ (7)
-#else
-static_assert( 0, "Jollybean supports only 32- and 64-bit systems.");
-#endif
-
-#define wordAlign_(x_) ( ( ( N_BYTES_PER_WORD - ( x_ & MODULO_ ) ) & MODULO_ ) + x_ )
-
 #ifndef NDEBUG
 static char* _poolNames[] = {
   "Permament",
@@ -20,26 +10,6 @@ static char* _poolNames[] = {
   "Temporary"
 };
 #endif
-
-// TODO optimize these later
-// TODO make these easily configurable
-#define PRM_SZ wordAlign_(1000000)
-#define GEN_SZ wordAlign_(1000000)
-#define TXT_SZ wordAlign_(1000000)
-#define IMG_SZ wordAlign_(1000000)
-#define AUD_SZ wordAlign_(1000000)
-#define TMP_SZ wordAlign_(1000000)
-
-// Keep the definition of memory arena here since nobody else will need it.
-typedef struct MemPool {
-#ifndef NDEBUG
-  const size_t memAllocated;  // This can be done away with once we prove this out.
-  size_t memRemaining;       // This can be done away with once we prove this out.
-#endif
-  U8* nextFreeP;
-  const U8* originP;
-} MemPool;
-
 // The double ampersand prevents any branching logic for checking if addition is a multiple of word-size.
 // numActualBytes =  + numBytes;
 // // The double ampersand prevents any branching logic for checking if addition is a multiple of word-size.
@@ -51,6 +21,8 @@ static unsigned char _data[
   IMG_SZ +
   AUD_SZ +
   TMP_SZ];
+
+static size_t lastAllocatedSz = 0;
 
 #define PRM_ORIGIN_IDX (0)
 #define GEN_ORIGIN_IDX (PRM_ORIGIN_IDX + PRM_SZ)
@@ -129,7 +101,7 @@ void* memAdd ( size_t numBytes, const PoolId poolId ) {
   // Keep nextFreeP word-aligned.
   MemPool* poolP = &_mem.poolA[poolId];
   void* allocatedAddress = poolP->nextFreeP;
-  poolP->nextFreeP += wordAlign_( numBytes );
+  poolP->nextFreeP += ( lastAllocatedSz = wordAlign_( numBytes ) );
 #ifndef NDEBUG
   size_t memTaken = (size_t) poolP->nextFreeP - (size_t) allocatedAddress;
   poolP->memRemaining -= memTaken;
@@ -154,7 +126,23 @@ void memRst( const PoolId poolId ) {
   poolP->nextFreeP = (U8*) poolP->originP;
 }
 
+// This can only rewind ONE allocation. Once rewound, last allocated size if reset to 0.
+void memRewind( const PoolId poolId ) {
+  MemPool* poolP = &_mem.poolA[poolId];
+  poolP->nextFreeP -= wordAlign_( lastAllocatedSz );
 #ifndef NDEBUG
+  poolP->memRemaining += wordAlign_( lastAllocatedSz );
+  assert( poolP->memRemaining <= poolP->memAllocated );
+#endif
+  lastAllocatedSz = 0;
+}
+
+#ifndef NDEBUG
+MemPool* memGetPoolP( const PoolId poolId) {
+  assert( poolId >= 0 && poolId < N_POOLS );
+  return &_mem.poolA[poolId];
+}
+
 void memReport() {
   for ( PoolId i = PERMANENT; i < N_POOLS; ++i ) {
     printf("\e[91m%s\e[0m memory pool stats:\n", _poolNames[i]);

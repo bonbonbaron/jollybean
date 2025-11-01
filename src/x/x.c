@@ -359,54 +359,36 @@ static void _distributeGene( Entity entity, GeneHdr* geneHdrP ) {
   assert(geneHdrP);
   assert(entity);
 
+  GeneHdr** currGeneHdrPP;
+  GeneHdr** geneHdrEndPP;
   System *sP;
   switch (geneHdrP->class) {
     case INTERCOMPOSITE:  // recurse  back into this function
       InterCompositeGene* compGeneP = (InterCompositeGene*) geneHdrP;
-      GeneHdr** currGeneHdrPP = compGeneP->geneHdrPA;
-      GeneHdr** geneHdrEndPP = currGeneHdrPP + compGeneP->hdr.u.n;
+      currGeneHdrPP = compGeneP->geneHdrPA;
+      geneHdrEndPP = currGeneHdrPP + compGeneP->hdr.u.n;
       for (; currGeneHdrPP < geneHdrEndPP; ++currGeneHdrPP) {
         assert(currGeneHdrPP);
         _distributeGene(entity, *currGeneHdrPP );
       }
       break;
-    case VARIANT:
-      //  So I want to be able to vary multiple aspects of a genome, not just one.
-      //  I should be able to do this for one or many.
-      //  So I'll take the original Genome...
-      //       Genome Townsperson
-      //  And give each townsperson a different:
-      //      Image
-      //      Position
-      //      Speech
-      //  The number of variations equals the number of Townsperson instances.
-      //  And maybe only one of them has:
-      //      Sound (because he's whistling)
-      //  And another has:
-      //      Velocity (crazy fast, because he's hyper)
-      //
-      //  The substitute gene MUST have a header that explains what it's replacing.
-      //
-      //  A few things become obvious from the above:
-      //    * giving the townsperson genome its own "default" image, position, or speech "patch" is wasteful
-      //    * and thus the Townsperson genome ought to alert "INCOMPLETE" without that patch
-      //    * it should be a different kind of gene that's *not* listed here, because it's never top-level
-      //    * something like:
-      //        typedef struct CommonGene {...}
-      //        typedef struct UniqueGene {...}
-      //    *   typedef struct VariantGene {
-      //          CommonGene* commonP;
-      //          UniqueGene** uniquePA;
-      //          U32          nVariations;
-      //        } VariantGene;
-      //
-      //    * So it'll be like:
-      //      =================
-      //      For each common gene, for "nVariations"-number of times,
-      //        xAddEntity(...)
-      //        ... i'm too tired to think. Bedtime
-      //          ... for which systems?
-      //      
+    case ADD_DERIVED:
+      AppendedDerivedGene* appGeneP = (AppendedDerivedGene*) geneHdrP;
+      currGeneHdrPP = appGeneP->additivePA;
+      geneHdrEndPP = currGeneHdrPP + appGeneP->hdr.u.n;
+      for (; currGeneHdrPP < geneHdrEndPP; ++currGeneHdrPP) {
+        assert(currGeneHdrPP);
+        _distributeGene(entity, *currGeneHdrPP );
+      }
+      break;
+    case OVRD_DERIVED:
+      OverriddenDerivedGene* ovrdGeneP = (OverriddenDerivedGene*) geneHdrP;
+      currGeneHdrPP = ovrdGeneP->substitutePA;
+      geneHdrEndPP = currGeneHdrPP + ovrdGeneP->hdr.u.n;
+      for (; currGeneHdrPP < geneHdrEndPP; ++currGeneHdrPP) {
+        assert(currGeneHdrPP);
+        _distributeGene(entity, *currGeneHdrPP );
+      }
       break;
     // case MEDIA:  <-- Systems registering MEDIA genes instead of direct distribution allows for keeping them in intercomposites.
     case INTRACOMPOSITE:

@@ -11,7 +11,7 @@ typedef struct GeneHisto {
 
 // Used to distinguish header pointers
 // IMPLICIT: "What da hail is dis?" Rather than being stored, it's data created as a *side effect* of consuming a gene. May be  unnecessary. 
-typedef enum GeneClass { ROOT, INTERCOMPOSITE, INTRACOMPOSITE, VARIANT, IMMUTABLE, MUTABLE, N_GENE_CLASSES } GeneClass;
+typedef enum GeneClass { ROOT, INTERCOMPOSITE, INTRACOMPOSITE, ADD_DERIVED, OVRD_DERIVED, IMMUTABLE, MUTABLE, N_GENE_CLASSES } GeneClass;
 
 // There is no "Gene" struct, strictly speaking.
 // The "Gene" is the thing that proceeds after GeneHdr; it's not a void pointer.
@@ -50,8 +50,10 @@ typedef struct MutableGene {
 } MutableGene;
 
 // Composite genes:
-//   INTERcomposites have (sub-)components distributed across multiple systems. These use u.n.
-//   INTRAcomposites have sub-components distributed only to one system. These use u.type with an extra n.
+//   INTERcomposites have (sub-)components distributed across multiple systems. 
+//                   These use u.n for count.
+//   INTRAcomposites have sub-components distributed only to one system. 
+//                   These use geneP->u.type and geneP->n for count.
 typedef struct InterCompositeGene {  // Same information, different effect (see gene.c)
   GeneHdr hdr;  // let the header hold the count, and each individual element's header below will hold its sysId
   GeneHdr **geneHdrPA;   // pointers prevent multiple entities with same genes from reinitializing them
@@ -64,11 +66,17 @@ typedef struct IntraCompositeGene {  // Same information, different effect (see 
 } IntraCompositeGene;
 
 // Variant gene
-typedef struct VariantGene { // Variants allow you to read a tree once and copy it mulitple times with 
-  GeneHdr hdr;
-  GeneHdr* keyGeneP;       // small variations, indicated in variations A. Those get tacked on.
-  InterCompositeGene variations;  // They can either add a new gene or override an existing one.
-} VariantGene;  
+typedef struct AppendedDerivedGene { // Variant genes allow you to reuse a genome with small changes without wasting space.
+  GeneHdr hdr;  // u.n will be number of variations (and hence the number of entities produced from this)
+  GeneHdr* pivotGeneP;       // small variations, indicated in variations A. Those get tacked on.
+  GeneHdr** additivePA;  // They can either add a new gene or override an existing one.
+} AppendedDerivedGene;
+
+typedef struct OverriddenDerivedGene { // Variant genes allow you to reuse a genome with small changes without wasting space.
+  GeneHdr hdr;  // u.n will be number of variations (and hence the number of entities produced from this)
+  GeneHdr* pivotGeneP;       // small variations, indicated in variations A. Those get tacked on.
+  GeneHdr** substitutePA;  // 
+} OverriddenDerivedGene;
 
 // Root gene
 typedef struct RootGene {
