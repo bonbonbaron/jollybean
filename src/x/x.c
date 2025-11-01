@@ -374,6 +374,11 @@ static void _distributeGene( Entity entity, GeneHdr* geneHdrP ) {
       break;
     // This takes care of giving the same genome a different position in various scenes.
     // TODO make rendering system handle positioning.
+    //
+    // Now the question is... how do we reliably fuse the pivots with the additives and substitutes?
+    // A pivot data structure should tell us how many fields are missing in a composite.
+    // But that leaves out hwo many can be added.This is where fixed-size arrays becomes unwieldy.
+    // Eh... I'll figure thsi out later.
     case DERIVATIVE:
       DerivativeGene* appGeneP = (DerivativeGene*) geneHdrP;
       currGeneHdrPP = appGeneP->tweakPA;
