@@ -11,7 +11,7 @@ typedef struct GeneHisto {
 
 // Used to distinguish header pointers
 // IMPLICIT: "What da hail is dis?" Rather than being stored, it's data created as a *side effect* of consuming a gene. May be  unnecessary. 
-typedef enum GeneClass { ROOT, INTERCOMPOSITE, INTRACOMPOSITE, ADD_DERIVED, OVRD_DERIVED, IMMUTABLE, MUTABLE, N_GENE_CLASSES } GeneClass;
+typedef enum GeneClass { ROOT, INTERCOMPOSITE, INTRACOMPOSITE, DERIVATIVE, DERIVATIVE_VECTOR, IMMUTABLE, MUTABLE, N_GENE_CLASSES } GeneClass;
 
 // There is no "Gene" struct, strictly speaking.
 // The "Gene" is the thing that proceeds after GeneHdr; it's not a void pointer.
@@ -65,18 +65,30 @@ typedef struct IntraCompositeGene {  // Same information, different effect (see 
   GeneHdr **geneHdrPA;   // pointers prevent multiple entities with same genes from reinitializing them
 } IntraCompositeGene;
 
-// Variant gene
-typedef struct AppendedDerivedGene { // Variant genes allow you to reuse a genome with small changes without wasting space.
-  GeneHdr hdr;  // u.n will be number of variations (and hence the number of entities produced from this)
-  GeneHdr* pivotGeneP;       // small variations, indicated in variations A. Those get tacked on.
-  GeneHdr** additivePA;  // They can either add a new gene or override an existing one.
-} AppendedDerivedGene;
+// TODO
+//  1. Allow overrides of immutables with mutatables.
+//  2. Allow overrides of mutables with immutables.
+//  3. Allow overrides of immutables with intracomposites.
+//  4. Allow overrides of mutables with intracomposites.
+//  5. Allow overrides of intracomposites with mutables.
+//  6. Allow overrides of intracomposites with immutables.
+// Derivative gene
+typedef struct Tweak {
+  GeneHdr** additivePA;  // These genes DON'T exist in parent; they override them.
+  GeneHdr** substitutivePA;  // These genes override ones existing in parent (aka pivot).
+} Tweak;
 
-typedef struct OverriddenDerivedGene { // Variant genes allow you to reuse a genome with small changes without wasting space.
+typedef struct DerivativeGene { // Variant genes allow you to reuse a genome with small changes without wasting space.
   GeneHdr hdr;  // u.n will be number of variations (and hence the number of entities produced from this)
   GeneHdr* pivotGeneP;       // small variations, indicated in variations A. Those get tacked on.
-  GeneHdr** substitutePA;  // 
-} OverriddenDerivedGene;
+  Tweak* tweakP;  // Each set of tweaks makes one new entity.
+} DerivativeGene;
+
+typedef struct DerivativeVectorGene {
+  GeneHdr hdr;  // u.n will be number of variations (and hence the number of entities produced from this)
+  GeneHdr* pivotGeneP;       // small variations, indicated in variations A. Those get tacked on.
+  Tweak** tweakPA;  // Each set of tweaks makes one new entity.
+} DerivativeVectorGene;
 
 // Root gene
 typedef struct RootGene {

@@ -363,7 +363,7 @@ static void _distributeGene( Entity entity, GeneHdr* geneHdrP ) {
   GeneHdr** geneHdrEndPP;
   System *sP;
   switch (geneHdrP->class) {
-    case INTERCOMPOSITE:  // recurse  back into this function
+    case INTERCOMPOSITE:  // recurses
       InterCompositeGene* compGeneP = (InterCompositeGene*) geneHdrP;
       currGeneHdrPP = compGeneP->geneHdrPA;
       geneHdrEndPP = currGeneHdrPP + compGeneP->hdr.u.n;
@@ -372,19 +372,21 @@ static void _distributeGene( Entity entity, GeneHdr* geneHdrP ) {
         _distributeGene(entity, *currGeneHdrPP );
       }
       break;
-    case ADD_DERIVED:
-      AppendedDerivedGene* appGeneP = (AppendedDerivedGene*) geneHdrP;
-      currGeneHdrPP = appGeneP->additivePA;
+    // This takes care of giving the same genome a different position in various scenes.
+    // TODO make rendering system handle positioning.
+    case DERIVATIVE:
+      DerivativeGene* appGeneP = (DerivativeGene*) geneHdrP;
+      currGeneHdrPP = appGeneP->tweakPA;
       geneHdrEndPP = currGeneHdrPP + appGeneP->hdr.u.n;
       for (; currGeneHdrPP < geneHdrEndPP; ++currGeneHdrPP) {
         assert(currGeneHdrPP);
         _distributeGene(entity, *currGeneHdrPP );
       }
       break;
-    case OVRD_DERIVED:
-      OverriddenDerivedGene* ovrdGeneP = (OverriddenDerivedGene*) geneHdrP;
-      currGeneHdrPP = ovrdGeneP->substitutePA;
-      geneHdrEndPP = currGeneHdrPP + ovrdGeneP->hdr.u.n;
+    case DERIVATIVE_VECTOR:
+      DerivativeVectorGene* appGeneP = (DerivativeVectorGene*) geneHdrP;
+      currGeneHdrPP = appGeneP->tweakPA;
+      geneHdrEndPP = currGeneHdrPP + appGeneP->hdr.u.n;
       for (; currGeneHdrPP < geneHdrEndPP; ++currGeneHdrPP) {
         assert(currGeneHdrPP);
         _distributeGene(entity, *currGeneHdrPP );

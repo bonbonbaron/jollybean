@@ -85,3 +85,7 @@ TEST_F(Tau, memRewind) {
   // Rewind after no adds. Shouldn't do anything.
   checkMemory( GENERAL, ODD_NUMBER );
 }
+
+TEST_F(Tau, memReportForFullCoverage) {
+  memReport();
+}

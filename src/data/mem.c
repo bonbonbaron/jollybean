@@ -118,6 +118,7 @@ void memRstAll() {
   }
 }
 
+// Okay, you can TECHINCALLY reset the permanent pool... if you *really* want to.
 void memRst( const PoolId poolId ) {
   MemPool* poolP = &_mem.poolA[poolId];
 #ifndef NDEBUG
