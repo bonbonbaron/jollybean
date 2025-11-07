@@ -53,6 +53,7 @@ void  mapSetFlag(Map *mapP, const Key key);
 void mapCopyKeys(Map *dstMP, Map *srcMP);
 Map* mapGetNestedMapP(Map *mapP, Key mapKey);
 void* mapGetNestedMapPElem(Map *mapP, Key mapKey, Key elemKey, MapElemType expectedElemType);
+U32 mapHasKey(const Map* mP, const Key key );
 
 
 #endif  // #ifndef MAP_H

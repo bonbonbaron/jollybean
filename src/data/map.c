@@ -43,10 +43,10 @@ inline static U32 _getElemIdx(const FlagInfo f, const Key key) {
 	return f.prevBitCount + _countBits(f.flags & (bitFlag_(key) - 1));
 }
 
-Key mapGetIndex(const Map *mapP, const Key key) {
-	const register Key keyMinus1 = key - 1;
-	const register FlagInfo f = mapP->flagA[keyMinus1 >> 3];  // Divide N by 8 for byte with Nth bit.
-	const register Key bitFlag = 1 << (keyMinus1 & 0x07);     // 0x07 keeps bit inside 8-bit bounds.
+Key mapGetIndex(const Map *mapP, Key key) {
+  --key;
+	const register FlagInfo f = mapP->flagA[key >> 3];  // Divide N by 8 for byte with Nth bit.
+	const register Key bitFlag = 1 << (key & 0x07);     // 0x07 keeps bit inside 8-bit bounds.
 	assert (f.flags & bitFlag);
   return _getElemIdx(f, key);
 }
@@ -59,11 +59,17 @@ inline static U32 _getMapElemSz(const Map *mapP) {
   return arrayGetElemSz(mapP->mapA);
 }
 
-void* mapGet(const Map *mapP, const Key key) {
+U32 mapHasKey(const Map* mP, Key key ) {
+  assert (mP);
+  assert (key);  // key has to be 1 or greater.
+  --key;  // Compiler warns that decrementing below may produce undefined behavior.
+  return mP->flagA[key >> 3].flags & (key & 0x07); // return key's bit
+}
+
+void* mapGet(const Map *mapP, Key key) {
   assert (mapP && key);  // key has to be 1 or greater.
-	const register U32 keyMinus1 = key - 1;
-	const register FlagInfo f = mapP->flagA[keyMinus1 >> 3];
-	const register U32 bitFlag = 1 << (keyMinus1 & 0x07);
+	const FlagInfo f = mapP->flagA[--key >> 3];
+	const U32 bitFlag = 1 << (key & 0x07);
 	// If the bit flag in question is set, that means a value exists for the input key.
 	if (f.flags & bitFlag) {
     register U32 count = f.flags & (bitFlag - 1);  // initialize count with the bits we're counting

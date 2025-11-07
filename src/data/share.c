@@ -12,7 +12,7 @@ void shareIni( ) {
 
 void shareAddMap( const Key KEY, MapElemType mapElemType, const U32 elemSz, const Key nElems, const PoolId poolId ) {
   assert( _sharedMapOfMapsP );
-  if ( poolId == PERMANENT && mapGet( _sharedMapOfMapsP, KEY ) != NULL ) {
+  if ( poolId == PERMANENT && mapHasKey( _sharedMapOfMapsP, KEY ) ) {
     return;
   }
   Map *mP = mapNew( mapElemType, elemSz, nElems, poolId );

@@ -131,7 +131,7 @@ void xMakeMutationMap( const System* sP, const Entity entity, const GeneHdr *gen
   assert( entity );
   assert( geneP );
   assert( geneP->class == MUTABLE );
-  assert( mapGet( sP->mutationMPMP, entity ) == NULL );
+  // Don't assert the map not having the key. Instead, allow overrides (and thus *little* waste). 
 
   MutableGene* mutableGeneP = (MutableGene*) geneP;
   Map* entitysMutationMP = xNewMutationMap( sP, entity, mutableGeneP->n );
@@ -190,10 +190,10 @@ void xMutateComponent(System *sP, Entity entity, Key newCompKey) {
     void* cP = xGetCompPByEntity(sP, entity);
     if (cP) {
       // Get a pointer to the mutation.
-      void *tmpP = mapGet(mutationMP, newCompKey);
-      if (tmpP) {
+      void *mutationP = mapGet(mutationMP, newCompKey);
+      if (mutationP) {
         // Mutate the only part of the component that should change.
-        memcpy((U8*) cP + sP->mutationOffset, tmpP, arrayGetElemSz(mutationMP->mapA));
+        memcpy((U8*) cP + sP->mutationOffset, mutationP, arrayGetElemSz(mutationMP->mapA));
         return sP->postMutate(sP, cP);
       }
       // It's a design decision to not error out when mutation doesn't exist. 
@@ -267,7 +267,7 @@ static void _xAddEntity( const System* sP, const Entity entity ) {
   assert( sP->e2cIdxMP );
   assert( sP->cIdx2eA );
   // This is okay, given devs can minimize the number of re-entries with intracomposites.
-  if ( mapGet( sP->e2cIdxMP, entity ) ==  NULL ) { // prevents double-adding entity
+  if ( !mapHasKey( sP->e2cIdxMP, entity ) ) {
     U32 cIdx = 0;
     // Add empty component to fray. Get its index too so you know which belongs to this entity.
     frayAddEmpty( sP->cF, &cIdx );
