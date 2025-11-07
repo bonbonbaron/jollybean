@@ -1,12 +1,5 @@
 LEFT OFF HERE:
 ==============
-    \root
-    \subtrees
-    \immutables
-    \mutables
-    \intracomposites
-    \intercomposites
-    variant 
   make a tool to generate genes and load them via an INDEPENDENT, auto-generated Makefile.
 
 * listMerge() should update all new members' list IDs so listRemove() works on them
