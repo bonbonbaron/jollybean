@@ -11,7 +11,7 @@ typedef struct GeneHisto {
 
 // Used to distinguish header pointers
 // IMPLICIT: "What da hail is dis?" Rather than being stored, it's data created as a *side effect* of consuming a gene. May be  unnecessary. 
-typedef enum GeneClass { ROOT, INTERCOMPOSITE, INTRACOMPOSITE, DERIVATIVE, DERIVATIVE_VECTOR, IMMUTABLE, MUTABLE, N_GENE_CLASSES } GeneClass;
+typedef enum GeneClass { ROOT, INTERCOMPOSITE, INTRACOMPOSITE, IMMUTABLE, MUTABLE, N_GENE_CLASSES } GeneClass;
 
 // There is no "Gene" struct, strictly speaking.
 // The "Gene" is the thing that proceeds after GeneHdr; it's not a void pointer.
@@ -73,10 +73,17 @@ typedef struct IntraCompositeGene {  // Same information, different effect (see 
 //  5. Allow overrides of intracomposites with mutables.
 //  6. Allow overrides of intracomposites with immutables.
 // Derivative gene
-typedef struct Tweak {
-  GeneHdr** additivePA;  // These genes DON'T exist in parent; they override them.
-  GeneHdr** substitutivePA;  // These genes override ones existing in parent (aka pivot).
-} Tweak;
+#if 0
+typedef struct OverridingTweak {
+  GeneHdr additivePA;  // These genes DON'T exist in parent; they override them.
+} OverridingTweak;
+typedef struct SubstitutingTweak {
+  GeneHdr substitutivePA;  // These genes override ones existing in parent (aka pivot).
+} SubstitutingTweak;
+typedef struct OvrdSubstTweak {
+  GeneHdr additivePA;  // These genes DON'T exist in parent; they override them.
+  GeneHdr substitutivePA;  // These genes override ones existing in parent (aka pivot).
+} OvrdSubstTweak;
 
 typedef struct DerivativeGene { // Variant genes allow you to reuse a genome with small changes without wasting space.
   GeneHdr hdr;  // u.n will be number of variations (and hence the number of entities produced from this)
@@ -89,6 +96,7 @@ typedef struct DerivativeVectorGene {
   GeneHdr* pivotGeneP;       // small variations, indicated in variations A. Those get tacked on.
   Tweak** tweakPA;  // Each set of tweaks makes one new entity.
 } DerivativeVectorGene;
+#endif
 
 // Root gene
 typedef struct RootGene {

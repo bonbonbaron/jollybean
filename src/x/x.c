@@ -261,20 +261,21 @@ static void _deactivateQueue(System *sP) {
   }
 }
 
-void xAddEntity( const System* sP, const Entity entity ) {
+static void _xAddEntity( const System* sP, const Entity entity ) {
   assert( sP );
   assert( entity );
   assert( sP->e2cIdxMP );
   assert( sP->cIdx2eA );
-  assert( mapGet( sP->e2cIdxMP, entity ) ==  NULL ); // prevents double-adding entity
-
-  U32 cIdx = 0;
-  // Add empty component to fray. Get its index too so you know which belongs to this entity.
-  frayAddEmpty( sP->cF, &cIdx );
-  assert( cIdx < arrayGetNElems( sP->cF ) );
-  assert( cIdx < KEY_MAX );
-  sP->cIdx2eA[ cIdx ] = entity;
-  mapSet( sP->e2cIdxMP, entity, (Key*) &cIdx );
+  // This is okay, given devs can minimize the number of re-entries with intracomposites.
+  if ( mapGet( sP->e2cIdxMP, entity ) ==  NULL ) { // prevents double-adding entity
+    U32 cIdx = 0;
+    // Add empty component to fray. Get its index too so you know which belongs to this entity.
+    frayAddEmpty( sP->cF, &cIdx );
+    assert( cIdx < arrayGetNElems( sP->cF ) );
+    assert( cIdx < KEY_MAX );
+    sP->cIdx2eA[ cIdx ] = entity;
+    mapSet( sP->e2cIdxMP, entity, (Key*) &cIdx );
+  }
 }
   
 
@@ -372,38 +373,12 @@ static void _distributeGene( Entity entity, GeneHdr* geneHdrP ) {
         _distributeGene(entity, *currGeneHdrPP );
       }
       break;
-    // This takes care of giving the same genome a different position in various scenes.
-    // TODO make rendering system handle positioning.
-    //
-    // Now the question is... how do we reliably fuse the pivots with the additives and substitutes?
-    // A pivot data structure should tell us how many fields are missing in a composite.
-    // But that leaves out hwo many can be added.This is where fixed-size arrays becomes unwieldy.
-    // Eh... I'll figure thsi out later.
-    case DERIVATIVE:
-      DerivativeGene* appGeneP = (DerivativeGene*) geneHdrP;
-      currGeneHdrPP = appGeneP->tweakPA;
-      geneHdrEndPP = currGeneHdrPP + appGeneP->hdr.u.n;
-      for (; currGeneHdrPP < geneHdrEndPP; ++currGeneHdrPP) {
-        assert(currGeneHdrPP);
-        _distributeGene(entity, *currGeneHdrPP );
-      }
-      break;
-    case DERIVATIVE_VECTOR:
-      DerivativeVectorGene* appGeneP = (DerivativeVectorGene*) geneHdrP;
-      currGeneHdrPP = appGeneP->tweakPA;
-      geneHdrEndPP = currGeneHdrPP + appGeneP->hdr.u.n;
-      for (; currGeneHdrPP < geneHdrEndPP; ++currGeneHdrPP) {
-        assert(currGeneHdrPP);
-        _distributeGene(entity, *currGeneHdrPP );
-      }
-      break;
-    // case MEDIA:  <-- Systems registering MEDIA genes instead of direct distribution allows for keeping them in intercomposites.
     case INTRACOMPOSITE:
     case IMMUTABLE:
     case MUTABLE:
       sP = _getSystem( geneHdrP->u.type ); 
       assert(sP);
-      xAddEntity( sP, entity );
+      _xAddEntity( sP, entity );
       sP->consumeGene(sP, entity, geneHdrP);
       break;
     default:
