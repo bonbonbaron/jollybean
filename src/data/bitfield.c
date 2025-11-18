@@ -13,14 +13,20 @@ Bitfield* bfNew( const U32 nBits, const PoolId poolId ) {
 }
 
 Bitfield* bfArrayNew( const U32 nBits, const PoolId poolId ) {
-  return (Bitfield*) arrayNew( sizeof( Bitfield ), nBits >> BITS_PER_INT, poolId );
+  BitfieldArray* bfaP = (BitfieldArray*) memAdd( sizeof( BitfieldArray ), 1, poolId );
+  bfaP->bfA = arrayNew( sizeof( Bitfield ), ( nBits >> 5 ) + 1, poolId );
+  bfaP->maxBitIdx = nBits - 1;
+  return bfaP;
 }
 
 void bfArraySetBit(Bitfield* bfP, const U32 bitIdx ) {
-  U32 byteIdx = byteIdx_(key);
-  mapP->flagA[byteIdx].flags |= bitFlag_(key);  /* flagNum & 0x07 gives you # of bits in the Nth byte */
+  assert( bfP );
+  assert( bitIdx < N_BITS_PER_WORD * arrayGetNElems( bfP ) );
+  U32 bfIdx = bfIdx_(key);
+  assert( bfIdx < arrayGetNElems( bfP ) );
+  bfP[bfIdx]flags |= bitFlag_(key);  /* flagNum & 0x07 gives you # of bits in the Nth byte */
   /* Increment all prevBitCounts in bytes above affected one. */
-  // TODO vectorize the below if it's available
+  const U32 nBitfields = arrayGetNElems( bfA );
   while (++byteIdx < N_FLAG_BYTES) {
     ++mapP->flagA[byteIdx].prevBitCount;
   }
@@ -35,4 +41,7 @@ void bfArrayUnsetBit(Bitfield* bfP, const U32 bitIdx ) {
     ++mapP->flagA[byteIdx].prevBitCount;
   }
 }
-Bln bfArrayIsBitSet( const Bitfield* bP, const bitIdx ) {}
+
+U32 bfArrayIsBitSet( const Bitfield* bP, const bitIdx ) {
+
+}

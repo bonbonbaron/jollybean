@@ -10,8 +10,10 @@ typedef struct Bitfield {
   U32 base;
 } Bitfield;
 
-U32 bfGetFirstZero( U32* bfA);
-U32 bfGetFirstOne( U32* bfA);
+typedef struct BitfieldArray {
+  Bitfield* bfA;
+  U32 maxBitIdx;
+} BitfieldArray;
 
 inline void bfSetBit(Bitfield* bfP, const U32 bitIdx ) {
   assert( bitIdx < BITS_PER_INT );
@@ -23,7 +25,7 @@ inline void bfUnsetBit(Bitfield* bfP, const U32 bitIdx ) {
   bfP->bits &= ~( 1 << bitIdx );
 }
 
-inline U32 bfIsBitSet( const Bitfield* bP, const U32 bitIdx ) {
+inline U32 bfIsBitSet( const Bitfield* bfP, const U32 bitIdx ) {
   assert( bitIdx < BITS_PER_INT );
   return bfP->bits & ( 1 << bitIdx );
 }
