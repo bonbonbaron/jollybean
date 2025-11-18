@@ -12,7 +12,7 @@
 // We know we've completed node traversal when the next node is the list's head.
 
 typedef struct ListNodeHeader {
-  Key prev, next, listId;
+  Key prev, next, listIdIdx;
 } ListNodeHeader;
 
 // Although it's a separate array, metalist impacts caching performance negligibly.
@@ -20,6 +20,7 @@ typedef struct ListNodeHeader {
 typedef struct MetaList {
   Key maxId;
   Key *idA;
+  U32 *idBitfieldA;  // 0s are available IDs
 } MetaList;
 
 // Since lists are usually interwoven through a component fray, we need to know where their heads and tails are.
@@ -30,7 +31,7 @@ typedef struct List {
   MetaList* metaP;
 } List;
 
-void listIni( List* listP, Key id, void* array, Bln iniNodes );
+void listIni( List* listP, Key id, void* array, const List* leaderListP );
 
 // NOTE: This assumes the address of the header is the same as the address of the array element.
 void listRemove( List* listP, ListNodeHeader* nodeP );

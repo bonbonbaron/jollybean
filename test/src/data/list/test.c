@@ -25,8 +25,8 @@ TAU_MAIN()
       tau->P[i].i = i;
     }
     // Init the lists.
-    listIni( &tau->list1, tau->P, TRUE );
-    listIni( &tau->list2, tau->P, TRUE );
+    listIni( &tau->list1, 1, tau->P, NULL );
+    listIni( &tau->list2, 2, tau->P, &tau->list1 );
     CHECK_EQ( tau->list1.head, UNSET_ );
     CHECK_EQ( tau->list1.tail, UNSET_ );
     CHECK_EQ( tau->list2.head, UNSET_ );

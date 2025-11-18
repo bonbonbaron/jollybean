@@ -546,8 +546,9 @@ XMakeComponentsDef_(Render) {
   surfaceDel(&atlasSurfaceP);
 
   // Initialize the linked lists
-  for ( size_t i = 0; i < N_LAYERS_SUPPORTED; ++i ) {
-    listIni( &xP->layerListA[ i ], i, (void*) sP->cF, i == 0 );
+  listIni( &xP->layerListA[ 0 ], 0, (void*) sP->cF, NULL );
+  for ( size_t i = 1; i < N_LAYERS_SUPPORTED; ++i ) {
+    listIni( &xP->layerListA[ i ], i, (void*) sP->cF, &xP->layerListA[0] );
   }
 
   // Update source rectangles. That way animation system knows where its frames are in texture atlas.
