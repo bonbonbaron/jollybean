@@ -3,7 +3,7 @@
 Map* mapNew( MapElemType elemType, const U8 elemSz, const Key nElems, const PoolId poolId) {
 	assert (elemSz && nElems);
   Map* mapP = memAdd(sizeof(Map), poolId );
-  memset(mapP->flagA, 0, sizeof(FlagInfo) * N_FLAG_BYTES);
+  memset(mapP->bfA, 0, sizeof(FlagInfo) * N_FLAG_BYTES);
 	mapP->mapA = arrayNew(elemSz, nElems, poolId );
   mapP->population = 0;
   mapP->elemType = elemType;
@@ -14,38 +14,9 @@ inline static U8 _isMapValid(const Map *mapP) {
 	return (mapP != NULL && mapP->mapA != NULL); 
 }	
 
-/* Map GETTING functions */
-inline static U8 _countBits(Key bitfield) {
-#ifdef __ARM_NEON__
-  asm("vmov.8 d21[0], %0\n\t"
-      "vcnt.i8 d20, d21\n\t"
-      "vmov.u8 %0, d20[0]"
-      : "+r" (bitfield));
-	return bitfield;
-#else
-	register Key count = bitfield - ((bitfield >> 1) & 0x55555555);
-	count = (count & 0x33333333) + ((count >> 2) & 0x33333333);
-	count = (count + (count >> 4)) & 0x0f0f0f0f;
-	return (count * 0x01010101) >> 24;
-#endif
-}
-inline static FlagInfo _getFlagInfo(const Map *mapP, const Key key) {
-  return mapP->flagA[byteIdx_(key)];
-}
-
-#if 0
-inline static U8 _isFlagSet(const U8 flags, const Key key) {
-	return flags & (1 << ((key - 1) & 0x07));
-}
-#endif
-
-inline static U32 _getElemIdx(const FlagInfo f, const Key key) {
-	return f.prevBitCount + _countBits(f.flags & (bitFlag_(key) - 1));
-}
-
 Key mapGetIndex(const Map *mapP, Key key) {
   --key;
-	const register FlagInfo f = mapP->flagA[key >> 3];  // Divide N by 8 for byte with Nth bit.
+	const register FlagInfo f = mapP->bfA[key >> 3];  // Divide N by 8 for byte with Nth bit.
 	const register Key bitFlag = 1 << (key & 0x07);     // 0x07 keeps bit inside 8-bit bounds.
 	assert (f.flags & bitFlag);
   return _getElemIdx(f, key);
@@ -63,12 +34,12 @@ U32 mapHasKey(const Map* mP, Key key ) {
   assert (mP);
   assert (key);  // key has to be 1 or greater.
   --key;  // Compiler warns that decrementing below may produce undefined behavior.
-  return mP->flagA[key >> 3].flags & (key & 0x07); // return key's bit
+  return mP->bfA[key >> 3].flags & (key & 0x07); // return key's bit
 }
 
 void* mapGet(const Map *mapP, Key key) {
   assert (mapP && key);  // key has to be 1 or greater.
-	const FlagInfo f = mapP->flagA[--key >> 3];
+	const FlagInfo f = mapP->bfA[--key >> 3];
 	const U32 bitFlag = 1 << (key & 0x07);
 	// If the bit flag in question is set, that means a value exists for the input key.
 	if (f.flags & bitFlag) {
@@ -115,11 +86,11 @@ static void _preMapSet(const Map *mapP, const Key key, void **elemPP, void **nex
 
 void mapSetFlag(Map *mapP, const Key key) {
   Key byteIdx = byteIdx_(key);
-  mapP->flagA[byteIdx].flags |= bitFlag_(key);  /* flagNum & 0x07 gives you # of bits in the Nth byte */
+  mapP->bfA[byteIdx].flags |= bitFlag_(key);  /* flagNum & 0x07 gives you # of bits in the Nth byte */
   /* Increment all prevBitCounts in bytes above affected one. */
   // TODO vectorize the below if it's available
   while (++byteIdx < N_FLAG_BYTES) {
-    ++mapP->flagA[byteIdx].prevBitCount;
+    ++mapP->bfA[byteIdx].prevBitCount;
   }
 }
 
@@ -161,17 +132,17 @@ void mapRem(Map *mapP, const Key key) {
   }
   /* Unset flag. */
   U8 byteIdx = byteIdx_(key);
-  mapP->flagA[byteIdx].flags &= ~bitFlag_(key);  /* key's bit position byteIdx'th byte */
+  mapP->bfA[byteIdx].flags &= ~bitFlag_(key);  /* key's bit position byteIdx'th byte */
   /* Increment all prevBitCounts in bytes above affected one. */
   while (++byteIdx < N_FLAG_BYTES) {
-    --mapP->flagA[byteIdx].prevBitCount;
+    --mapP->bfA[byteIdx].prevBitCount;
   }
   --mapP->population;
 }
 
 void mapCopyKeys(Map *dstMP, Map *srcMP) {
   assert (dstMP &&  srcMP);
-  memcpy(dstMP->flagA, srcMP->flagA, N_FLAG_BYTES * sizeof(FlagInfo));
+  memcpy(dstMP->bfA, srcMP->bfA, N_FLAG_BYTES * sizeof(FlagInfo));
 }
 
 Map* mapGetNestedMapP(Map *outerMP, Key mapKey) {

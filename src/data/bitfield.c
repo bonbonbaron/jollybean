@@ -1,244 +1,38 @@
-#include "data/list.h"
-
-// Redirect list IDs to a separate list so splitting and merging lists 
-// only results in updating the list ID in one place, rather than updating
-// the list ID of every member in the merged/split list.
-
-// Returns the index of the node in the raw array it's in.
-static U32 _listGetNodeIdx( List* listP, ListNodeHeader* nodeP ) {
-  assert( listP && listP->array && nodeP );
-  U32 elSz = arrayGetElemSz( listP->array );
-  assert( (size_t) nodeP >= (size_t) listP->array );
-  assert( (size_t) nodeP <= ( (size_t) listP->array + ( ( arrayGetNElems( listP->array ) - 1 ) * elSz ) ) );
-  return ( (size_t) nodeP - (size_t) listP->array ) / elSz;
-}
-
-static void _listNodeIni( ListNodeHeader* nodeP) {
-  assert( nodeP );
-  nodeP->listIdIdx = UNSET_;
-  nodeP->next = nodeP->prev = UNSET_;
-}
-
+#include "data/bitfield.h"
+#include "data/array.h"
 
 #define SATURATED_INT (0xffffffff)
-#define BITS_PER_INT (sizeof(U32) << 3)
 
-Key _getFirstAvailableListId( const List* listP ) {
-  U32* bitfieldP = &listP->metaP->idBitfieldA[0]; 
-  const U32* bitfieldEndP = bitfieldP + arrayGetNElems( listP->metaP->idBitfieldA );
-  for ( ; (const U32*) bitfieldP < bitfieldEndP; ++bitfieldP ) {
-    if ( *bitfieldP != SATURATED_INT ) {
-      // __builtin_ctz requires GCC, Clang, or ICC compiler.
-      return __builtin_ctz(~(*bitfieldP)) + ( ( bitfieldP - listP->metaP->idBitfieldA ) * BITS_PER_INT );
-    }
-  }
-  return UNSET_;
+static_assert( sizeof(U32) == 4, "Woah, ints aren't 4 bytes. That'll break bitfield.c." );
+
+#define bfIdx_(bitIdx) (bitIdx >> 5)  // ">> 5" is the same as "/ 32"
+#define bitFlag_(key) (1 << ((key - 1) & 0x07))
+
+Bitfield* bfNew( const U32 nBits, const PoolId poolId ) {
+  return (Bitfield*) memAdd( sizeof( Bitfield ), poolId );
 }
 
-static void _listMetaIni( List* listP ) {
-  assert( listP );
-  assert( listP->array );
-  assert( !listP->metaP );
-  // Allocate & init list's metadata
-  listP->metaP = memAdd( sizeof(MetaList), GENERAL );
-  listP->metaP->maxId = UNSET_;
-  // Allocate & init metalist's array of list IDs
-  listP->metaP->idA = arrayNew( sizeof(Key), arrayGetNElems( listP->array ), GENERAL );
-  memset( listP->metaP->idA, UNSET_, arrayGetElemSz( listP->metaP->idA ) * arrayGetNElems( listP->metaP->idA ) );
-  // Allocate and init bitfield (only allocating as many words as are required to hold all possible list IDs).
-  listP->metaP->idBitfieldA = arrayNew( 
-      sizeof(U32), 
-      ( sizeof( Key ) * arrayGetNElems( listP->array ) / sizeof(U32) ) + 1, GENERAL );
-  memset( listP->metaP->idBitfieldA, 0, arrayGetElemSz( listP->metaP->idBitfieldA ) * arrayGetNElems( listP->metaP->idBitfieldA ) );
+Bitfield* bfArrayNew( const U32 nBits, const PoolId poolId ) {
+  return (Bitfield*) arrayNew( sizeof( Bitfield ), nBits >> BITS_PER_INT, poolId );
 }
 
-// Make lists easier to use by initializing all the nodes for the user.
-void listIni( List* listP, const Key listId, void* array, const List* leaderListP ) {
-  assert( listP && array );
-  listP->id = listId;
-  listP->head = listP->tail = UNSET_;
-  listP->array = array;
-  listP->metaP = NULL;
-  // If this is the first list in the array to be initialized, we need to init its metadata and nodes.
-  if ( !leaderListP ) {
-    _listMetaIni( listP );
-    const U32 ELEM_SZ = arrayGetElemSz( listP->array );
-    const U8* elemEndP = (U8*) listP->array + ( arrayGetNElems( listP->array ) * arrayGetElemSz( listP->array ) );
-    for ( U8* elemP = (U8*) listP->array; elemP < elemEndP; elemP += ELEM_SZ ) {
-      _listNodeIni ( (ListNodeHeader*) elemP );
-    }
-  }
-  else {
-    listP->metaP = leaderListP->metaP;
+void bfArraySetBit(Bitfield* bfP, const U32 bitIdx ) {
+  U32 byteIdx = byteIdx_(key);
+  mapP->flagA[byteIdx].flags |= bitFlag_(key);  /* flagNum & 0x07 gives you # of bits in the Nth byte */
+  /* Increment all prevBitCounts in bytes above affected one. */
+  // TODO vectorize the below if it's available
+  while (++byteIdx < N_FLAG_BYTES) {
+    ++mapP->flagA[byteIdx].prevBitCount;
   }
 }
 
-static inline Bln _isInList( const ListNodeHeader* nodeP, const List* listP ) {
-  return listP->metaP->idA[nodeP->listIdIdx] != listP->id;
-}
-
-// NOTE: This assumes the address of the header is the same as the address of the array element.
-void listRemove( List* listP, ListNodeHeader* nodeP ) {
-  if ( !_isInList( (const ListNodeHeader*) nodeP, (const List*) listP )) {
-    return;
-  }
-  U32 nodeIdx = _listGetNodeIdx( listP, nodeP );
-  if ( listP->head == nodeIdx ) {
-    listP->head = nodeP->next;
-  }
-  if ( listP->tail == nodeIdx ) {
-    listP->tail = nodeP->prev;
-  }
-  // If the removed node has a previous node, then set the previous's next to the current's next.
-  if ( nodeP->prev != UNSET_ ) {
-    ListNodeHeader* prevP = (ListNodeHeader*) arrayGetVoidElemPtr( listP->array, nodeP->prev );
-    prevP->next = nodeP->next;  // valid even if next is UNSET_
-  }
-  // If the removed node has a next node, then set the next's previous to the current's previous.
-  if ( nodeP->next != UNSET_ ) {
-    ListNodeHeader* nextP = (ListNodeHeader*) arrayGetVoidElemPtr( listP->array, nodeP->next );
-    nextP->prev = nodeP->prev;  // valid even if prev is UNSET_
-  }
-  // Make it clear to the user this node is OUTSIDE the list now.
-  nodeP->next = nodeP->prev = nodeP->listIdIdx = UNSET_;  
-}
-
-void listInsertBefore( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* tgtNodeP ) {
-  assert ( listP && listP->array && newNodeP );
-  if (newNodeP->listIdIdx != UNSET_ ) {
-    return;
-  }
-  newNodeP->listIdIdx = tgtNodeP->listIdIdx;
-  Key newIdx = _listGetNodeIdx( listP, newNodeP );
-  Key tgtIdx = _listGetNodeIdx( listP, tgtNodeP );
-  if ( tgtNodeP->prev != UNSET_ ) {
-    // get pointer to node previously before target
-    ListNodeHeader* nodePreviouslyBeforeTgt = arrayGetVoidElemPtr( listP->array, tgtNodeP->prev );
-    // stick new node between target's previous and target
-    newNodeP->prev = tgtNodeP->prev;
-    newNodeP->next = tgtIdx;
-    tgtNodeP->prev = newIdx;
-    nodePreviouslyBeforeTgt->next = newIdx;
-  }
-  else {
-    // Same as the above, except there's nothing before target
-    newNodeP->prev = tgtNodeP->prev;
-    newNodeP->next = tgtIdx;
-    tgtNodeP->prev = newIdx;
-  }
-  if ( listP->head == tgtIdx ) {
-    listP->head = newIdx;
+void bfArrayUnsetBit(Bitfield* bfP, const U32 bitIdx ) {
+  U32 byteIdx = byteIdx_(key);
+  mapP->flagA[byteIdx].flags |= bitFlag_(key);  /* flagNum & 0x07 gives you # of bits in the Nth byte */
+  /* Increment all prevBitCounts in bytes above affected one. */
+  // TODO vectorize the below if it's available
+  while (++byteIdx < N_FLAG_BYTES) {
+    ++mapP->flagA[byteIdx].prevBitCount;
   }
 }
-
-void listInsertAfter( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* tgtNodeP ) {
-  assert ( listP && listP->array && newNodeP && tgtNodeP );
-  if (newNodeP->listIdIdx != UNSET_ ) {
-    return;
-  }
-  newNodeP->listIdIdx = tgtNodeP->listIdIdx;
-  Key newIdx = _listGetNodeIdx( listP, newNodeP );
-  Key tgtIdx = _listGetNodeIdx( listP, tgtNodeP );
-  if ( tgtNodeP->next != UNSET_ ) {
-    ListNodeHeader* nodePreviouslyAfterTgt = arrayGetVoidElemPtr( listP->array, tgtNodeP->next );
-    newNodeP->next = tgtNodeP->next;
-    newNodeP->prev = tgtIdx;
-    tgtNodeP->next = newIdx;
-    nodePreviouslyAfterTgt->prev = newIdx;
-  }
-  else {
-    newNodeP->next = tgtNodeP->next;
-    newNodeP->prev = tgtIdx;
-    tgtNodeP->next = newIdx;
-  }
-  if ( listP->tail == tgtIdx ) {
-    listP->tail = newIdx;
-  }
-}
-
-void listPrepend( List* listP, ListNodeHeader* newNodeP ) {
-  assert ( listP && listP->array && newNodeP );
-  if (newNodeP->listIdIdx != UNSET_ ) {
-    return;
-  }
-  Key newNodeIdx = _listGetNodeIdx( listP, newNodeP );
-  if ( listP->head != UNSET_ ) {
-    ListNodeHeader* oldHeadNodeP = arrayGetVoidElemPtr( listP->array, listP->head );
-    oldHeadNodeP->prev = newNodeIdx;
-    newNodeP->next = listP->head;
-    listP->head = newNodeIdx;
-    newNodeP->listIdIdx = oldHeadNodeP->listIdIdx;
-  }
-  else {
-    listP->head = listP->tail =  newNodeIdx;
-    newNodeP->next = newNodeP->prev = UNSET_;
-    listP->id = _getFirstAvailableListId( (const List*) listP );
-  }
-}
-
-void listAppend( List* listP, ListNodeHeader* newNodeP ) {
-  assert ( listP && listP->array && newNodeP );
-  if (newNodeP->listIdIdx != UNSET_ ) {
-    return;
-  }
-  Key newNodeIdx = _listGetNodeIdx( listP, newNodeP );
-  if ( listP->tail != UNSET_ ) {
-    ListNodeHeader* oldTailNodeP = arrayGetVoidElemPtr( listP->array, listP->tail );
-    oldTailNodeP->next = newNodeIdx;
-    newNodeP->prev = listP->tail;
-    listP->tail = newNodeIdx;
-    newNodeP->listIdIdx = oldTailNodeP->listIdIdx;
-  }
-  else {
-    listP->head = listP->tail = newNodeIdx;
-    newNodeP->prev = newNodeP->next = UNSET_;  // There's nothing before or after this node.
-    listP->id = _getFirstAvailableListId( (const List*) listP );
-  }
-}
-
-// NOTE: This assumes the lists you're merging use the same array. That means there can be no identical node indices.
-// listMerge() appends srcList to dstList.
-void listMerge( List* srcListP, List* dstListP ) {
-  assert ( srcListP && srcListP->head != UNSET_ && srcListP->tail != UNSET_ && dstListP && dstListP->head != UNSET_ && dstListP->tail != UNSET_ );
-  assert ( srcListP != dstListP );
-  assert ( srcListP->id != dstListP->id );
-  assert ( srcListP->array == dstListP->array );
-  assert ( srcListP->metaP );
-  assert ( dstListP->metaP );
-  assert ( srcListP->metaP == dstListP->metaP );  // These BETTER be in the same!
-  assert ( dstListP->metaP->idA );  // don't need to check src if prev line is true
-
-
-  ListNodeHeader* srcHeadP = (ListNodeHeader*) arrayGetVoidElemPtr( srcListP->array, srcListP->head );
-  ListNodeHeader* dstOriginalTailP = (ListNodeHeader*) arrayGetVoidElemPtr( dstListP->array, dstListP->tail );
-
-  // Once assertions are made, it's safe to change the list ID that the source list nodes belong to.
-  srcListP->metaP->idA[ srcHeadP->listIdIdx ] = dstListP->metaP->idA[ dstOriginalTailP->listIdIdx ];
-
-  // dest list's *new* tail
-  srcHeadP->prev = dstListP->tail;
-  dstOriginalTailP->next = srcListP->head;
-  dstListP->tail = srcListP->tail;
-
-  srcListP->head = srcListP->tail = UNSET_;
-  srcListP->array = NULL;
-}
-
-void* listGetHead( List* listP ) {
-  assert( listP );
-  assert( listP->head != UNSET_ );
-  return arrayGetVoidElemPtr( listP->array, listP->head );
-}
-
-void* listGetTail( List* listP ) {
-  assert( listP );
-  assert( listP->tail != UNSET_ );
-  return arrayGetVoidElemPtr( listP->array, listP->tail );
-}
-
-void* listNodeGetNext( List* listP, ListNodeHeader* nodeP ) {
-  assert( listP );
-  assert( nodeP );
-  assert( nodeP->next != UNSET_ );
-  return arrayGetVoidElemPtr( listP->array, nodeP->next );
-}
+Bln bfArrayIsBitSet( const Bitfield* bP, const bitIdx ) {}

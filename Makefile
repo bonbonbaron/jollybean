@@ -12,7 +12,7 @@ SDL_CFLAGS := $(shell sdl2-config --cflags)
 LIBJB := $(LIB_DIR)/libjb.a
 
 D=$(SRC_DIR)/data
-D_SRCS  := $(D)/strip.c $(D)/inflatable.c $(D)/bt.c $(D)/share.c $(D)/map.c $(D)/mail.c $(D)/list.c $(D)/fray.c $(D)/array.c  $(D)/mem.c
+D_SRCS  := $(D)/strip.c $(D)/inflatable.c $(D)/bt.c $(D)/share.c $(D)/map.c $(D)/mail.c $(D)/list.c $(D)/fray.c $(D)/bitfield.c $(D)/array.c  $(D)/mem.c
 
 # Implemented systems must come before their dependency, x.c.
 #XI_SRCS := $(shell find $(SRC_DIR)/x -type f -name "x[^.]*.c") $(shell find $(SRC_DIR)/x -type f -name "x.c") $(shell find $(SRC_DIR)/interface -type f -name "*.c")

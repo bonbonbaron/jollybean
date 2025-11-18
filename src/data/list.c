@@ -46,6 +46,7 @@ static void _listMetaIni( List* listP ) {
   listP->metaP->idA = arrayNew( sizeof(Key), arrayGetNElems( listP->array ), GENERAL );
   memset( listP->metaP->idA, UNSET_, arrayGetElemSz( listP->metaP->idA ) * arrayGetNElems( listP->metaP->idA ) );
   // Allocate and init bitfield (only allocating as many words as are required to hold all possible list IDs).
+  // TODO replace this with bfArrayNew() so we can use it in map.c too.
   listP->metaP->idBitfieldA = arrayNew( 
       sizeof(U32), 
       ( sizeof( Key ) * arrayGetNElems( listP->array ) / sizeof(U32) ) + 1, GENERAL );
