@@ -15,11 +15,19 @@ typedef struct ListNodeHeader {
   Key prev, next, listId;
 } ListNodeHeader;
 
+// Although it's a separate array, metalist impacts caching performance negligibly.
+// We only interact with it when merging or splitting lists. (TODO: impl splitting only when you find a  need.)
+typedef struct MetaList {
+  Key maxId;
+  Key *idA;
+} MetaList;
+
 // Since lists are usually interwoven through a component fray, we need to know where their heads and tails are.
 typedef struct List {
   Key id;  // the only way to prevent removing a node from a list it's not in and re-adding it to a list it's in
   Key head, tail;  // yes, we use different types for head/tail versus prev/next since the latter pair is more common.
   void* array;  // refers to a pre-existing array or fray (since both have the same elem sz and count locations)
+  MetaList* metaP;
 } List;
 
 void listIni( List* listP, Key id, void* array, Bln iniNodes );

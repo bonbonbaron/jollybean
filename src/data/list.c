@@ -1,5 +1,9 @@
 #include "data/list.h"
 
+// Redirect list IDs to a separate list so splitting and merging lists 
+// only results in updating the list ID in one place, rather than updating
+// the list ID of every member in the merged/split list.
+
 static U32 listGetNodeIdx( List* listP, ListNodeHeader* nodeP ) {
   assert( listP && listP->array && nodeP );
   U32 elSz = arrayGetElemSz( listP->array );
@@ -14,13 +18,28 @@ static void _listNodeIni( ListNodeHeader* nodeP) {
   nodeP->next = nodeP->prev = UNSET_;
 }
 
+static void _listMetaIni( List* listP ) {
+  assert( listP );
+  assert( listP->array );
+  assert( !listP->metaP );
+  // Allocate & init list's metadata
+  listP->metaP = memAdd( sizeof(MetaList), GENERAL );
+  listP->metaP->maxId = UNSET_;
+  // Allocate & init metalist's array of list IDs
+  listP->metaP->idA = arrayNew( sizeof(Key), arrayGetNElems( listP->array ), GENERAL );
+  memset( listP->metaP->idA, UNSET_, arrayGetElemSz( listP->metaP->idA ) * arrayGetNElems( listP->metaP->idA ) );
+}
+
 // Make lists easier to use by initializing all the nodes for the user.
-void listIni( List* listP, const Key listId, void* array, Bln iniNodes ) {
+void listIni( List* listP, const Key listId, void* array, const Bln isFirstListInArray ) {
   assert( listP && array );
   listP->id = listId;
   listP->head = listP->tail = UNSET_;
   listP->array = array;
-  if ( iniNodes ) {
+  listP->metaP = NULL;
+  // If this is the first list in the array to be initialized, we need to init its metadata and nodes.
+  if ( isFirstListInArray ) {
+    _listMetaIni( listP );
     const U32 ELEM_SZ = arrayGetElemSz( listP->array );
     const U8* elemEndP = (U8*) listP->array + ( arrayGetNElems( listP->array ) * arrayGetElemSz( listP->array ) );
     for ( U8* elemP = (U8*) listP->array; elemP < elemEndP; elemP += ELEM_SZ ) {
@@ -147,7 +166,6 @@ void listAppend( List* listP, ListNodeHeader* newNodeP ) {
 }
 
 // NOTE: This assumes the lists you're merging use the same array. That means there can be no identical node indices.
-// TODO: is it okay to not change all the new nodes' list IDs to their new list's ID?
 // listMerge() appends srcList to dstList.
 void listMerge( List* srcListP, List* dstListP ) {
   assert ( srcListP && srcListP->head != UNSET_ && srcListP->tail != UNSET_ && dstListP && dstListP->head != UNSET_ && dstListP->tail != UNSET_ );

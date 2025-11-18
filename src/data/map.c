@@ -97,6 +97,7 @@ inline static U8 _idxIsPopulated(const U32 nBitsSet, U32 idx) {
   return (idx < nBitsSet);
 }
 
+// If something's already in the target index, move everything over one. 
 static void _preMapSet(const Map *mapP, const Key key, void **elemPP, void **nextElemPP, U32 *nBytesTMoveP) {
   *nBytesTMoveP = 0;
   FlagInfo f;
@@ -104,7 +105,6 @@ static void _preMapSet(const Map *mapP, const Key key, void **elemPP, void **nex
   *elemPP = _getElemP(mapP, f, key);
   if (*elemPP) {  /* Side-stepping mapGet() to avoid NULL pointers and double-calling _isMapValid() */
     U32 keyElemIdx = _getElemIdx(f, key);
-    /* If something's already in the target index, move everything over one. */
     if (_idxIsPopulated(mapP->population, keyElemIdx)) {
       U32 mapElemSz = _getMapElemSz(mapP);
       *nBytesTMoveP = (mapP->population - keyElemIdx) * mapElemSz;

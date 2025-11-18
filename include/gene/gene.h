@@ -36,6 +36,11 @@ typedef struct GeneHdr {  // breaks down to 1 byte with -fshort-enums compiler f
 
 // NOTE: There is no explicit media gene. Anything needing inflation will be registered by each system.
 
+typedef struct ImmutableGene {
+  GeneHdr hdr;
+  void* bodyP;
+} ImmutableGene;
+
 // Similar to GeneHdr, but the difference in some fields' names warrants a distinction.
 typedef struct Mutation {
   Key key;

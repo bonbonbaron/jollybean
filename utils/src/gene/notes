@@ -1,0 +1,51 @@
+immutable gene
+  void pointer to RAW DATA
+
+mutable gene
+  array of mutations (pairs of keys and void pointers to RAW DATA)
+
+intracomposite gene
+  array of pointers to other mutable, immutable, and intracomposite genes
+
+intercomposite gene
+  array of pointers to other mutable, immutable, intracomposite, and intercomposite genes
+
+hopefully, the main development you do for the game are the actual raw data, logic, and math.
+Minimize devs' concern about genes.
+
+The steps should be thus:
+  1. Make raw data
+  2. Make a gene
+      - should know how to include the proper header for raw data's [T]ype
+      - you specify which (T) it is, so that should be easy
+      - and in the file, it'll look for the first variable of type (T)
+      - enable tab-complete for every step of terminal input
+  3. Add gene to genome
+  4. Build from game's root genome on down as though it were a project
+      - Make the makefile flexible enough to not require tinkering on every new data structure
+
+The abilities should be thus:
+  1. info about a gene 
+      - unfold for composites
+      - fold  composites
+      - brevity (acronyms instead of verbose labels)
+      - labels (instead of trees, useful when trees spread off-screen)
+  2. make a gene
+  3. remove a gene (but alert player about all composites affected by it-- remove them too or no?)
+  4. switch a gene
+  5. modify a gene (open in editor)
+  6. list all gene types
+  7. list all gene classes
+      - with their descriptions
+      - without their descriptions
+  8. make a mutable gene with keys
+      - autocomplete [K]eyring names
+      - autocomplete keys in (K)
+      - autocomplete [D]atatypes
+      - autocomplete existing (D) instances 
+  9. make an immutable gene
+      - autocomplete [D]atatypes
+      - autocomplete existing (D) instances 
+  10. make an intr[A]composite gene
+      - may hold (8), (9), and nested (A)'s
+      -  
