@@ -54,9 +54,6 @@ typedef union Generic {
 #define N_BYTES_PER_WORD (sizeof(size_t))
 
 // For-each macro, which allows per-element macro-processing on variadic arguments
-#define N_FLAG_BYTES ((1 << (sizeof(Key) * 8)) / 8)  // This times 8 is the number of items JB's hash map can hold. Increase as necessary. 
-#define LAST_FLAG_BYTE_IDX (N_FLAG_BYTES - 1)
-#define N_FLAG_BITS (8 * N_FLAG_BYTES)
 #define inline __attribute__((always_inline)) __inline
 #define unused_(x) (void)(x)
 #define enumKeys_(first, ...) typedef enum {first = 1, __VA_ARGS__} 

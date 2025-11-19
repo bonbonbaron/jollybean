@@ -1,4 +1,5 @@
 CC=gcc
+OPT=-O0
 
 RPO_DIR := $(shell git rev-parse --show-toplevel)
 SRC_DIR := $(RPO_DIR)/src
@@ -43,17 +44,17 @@ $(TGT): $(OBJS)
 	ar rcs $(TGT) $(OBJS) 
 
 $(BLD_DIR)/%.o: ${SRC_DIR}/%.c ${INC_DIR}/%.h $(DEP_DIR)/%.d | ${BLD_SEN} ${DEP_SEN}
-	$(CC) -Wall --coverage -g $(SDL_CFLAGS) $(DEPFLGS) $(DEP_DIR)/$*.d -I${RPO_DIR}/include -c $< -o $@
+	$(CC) $(OPT) -Wall --coverage -g $(SDL_CFLAGS) $(DEPFLGS) $(DEP_DIR)/$*.d -I${RPO_DIR}/include -c $< -o $@
 
 $(BLD_DIR)/interface/%.o: ${SRC_DIR}/interface/%.c ${INC_DIR}/interface/%.h
 $(BLD_DIR)/interface/%.o: ${SRC_DIR}/interface/%.c $(DEP_DIR)/interface/%.d | ${BLD_SEN} ${DEP_SEN}
-	$(CC) -Wall --coverage -g $(SDL_CFLAGS) $(DEPFLGS) $(DEP_DIR)/interface/$*.d -I${RPO_DIR}/include -c $< -o $@
+	$(CC) $(OPT) -Wall --coverage -g $(SDL_CFLAGS) $(DEPFLGS) $(DEP_DIR)/interface/$*.d -I${RPO_DIR}/include -c $< -o $@
 
 $(BLD_DIR)/x/%.o: ${SRC_DIR}/x/%.c ${INC_DIR}/x/%.h $(DEP_DIR)/x/%.d | ${BLD_SEN} ${DEP_SEN}
-	$(CC) -Wall --coverage -g $(SDL_CFLAGS) $(DEPFLGS) $(DEP_DIR)/x/$*.d -I${RPO_DIR}/include -c $< -o $@
+	$(CC) $(OPT) -Wall --coverage -g $(SDL_CFLAGS) $(DEPFLGS) $(DEP_DIR)/x/$*.d -I${RPO_DIR}/include -c $< -o $@
 
 $(BLD_DIR)/data/%.o: ${SRC_DIR}/data/%.c ${INC_DIR}/data/%.h $(DEP_DIR)/data/%.d | ${BLD_SEN} ${DEP_SEN}
-	$(CC) -Wall --coverage -g $(DEPFLGS) $(DEP_DIR)/data/$*.d -I${RPO_DIR}/include -c $< -o $@
+	$(CC) $(OPT) -Wall --coverage -g $(DEPFLGS) $(DEP_DIR)/data/$*.d -I${RPO_DIR}/include -c $< -o $@
 
 # Mention each dependency as a target so Make doesn't fail above if it doesn't exist.
 $(DEPS):

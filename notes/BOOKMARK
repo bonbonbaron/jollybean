@@ -1,6 +1,9 @@
 LEFT OFF HERE:
 ==============
-  make a tool to generate genes and load them via an INDEPENDENT, auto-generated Makefile.
+* realized I need bitfields for list, map, and xColl. 
+  Implemented them today, refactored it into map.c, and started its unit test.
+
+* make a tool to generate genes and load them via an INDEPENDENT, auto-generated Makefile.
 
 * listMerge() should update all new members' list IDs so listRemove() works on them
 * each blob should now have the pair of collisions, maybe without the blob ID in them (A?)

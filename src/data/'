@@ -88,7 +88,7 @@ void mapSet(Map *mapP, const Key key, const void *valP) {
 void mapRem(Map *mapP, const Key key) {
   assert (mapP && key);
 	void *elemP, *nextElemP;
-  U32 nBytesToMove = countBytesToShiftOver( mapP, key, &elemP, &nextElemP );
+  U32 nBytesToMove = _preMapSet( mapP, key, &elemP, &nextElemP );
   if (nBytesToMove) {
     nBytesToMove -= _getMapElemSz(mapP);
     memmove(elemP, (const void*) nextElemP, nBytesToMove);
@@ -98,7 +98,7 @@ void mapRem(Map *mapP, const Key key) {
 
 void mapCopyKeys(Map *dstMP, Map *srcMP) {
   assert (dstMP &&  srcMP);
-  bfaCopy(srcMP->bfaP, dstMP->bfaP);
+  memcpy(dstMP->bfaP, srcMP->bfaP, N_FLAG_BYTES * sizeof(FlagInfo));
 }
 
 Map* mapGetNestedMapP(Map *outerMP, Key mapKey) {
