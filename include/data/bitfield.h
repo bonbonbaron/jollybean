@@ -1,3 +1,4 @@
+// TODO make volatile bitfields whose prefix sums change too frequently for updates to be practical.
 #ifndef BITFIELD_H
 #define BITFIELD_H
 #include "data/mem.h"
@@ -81,6 +82,11 @@ inline U32 bfGetFirstZero( const Bitfield* bfP ) {
 
 inline U32 bfGetFirstOne( const Bitfield* bfP ) {
   return __builtin_ctz(bfP->bits) + bfP->base;
+}
+
+// This allows flexible sums of the local and base fields.
+inline U32 bfSum( const U32 localBits, const U32 base ) {
+  return __builtin_popcount(localBits) + base;
 }
 
 

@@ -20,6 +20,7 @@ TEST_F_SETUP(Bitfields) {
   tau->bf2P = bfNew( tau->nBits2, GENERAL );
   tau->bfa3P = bfaNew( tau->nBits3, GENERAL );
   tau->bfa4P = bfaNew( tau->nBits4, GENERAL );
+  // TODO init bitfields so you can do some intelligent testing on them... write helpers as needed
 }
 
 TEST_F_TEARDOWN(Bitfields) {

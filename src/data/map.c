@@ -46,7 +46,7 @@ void* mapGet(const Map *mapP, const Key key) {
   Bitfield* bfP;
   // This "Ex" function lets us see if a bit is set without having to reload its bitfield afterward.
 	if ( bfaIsBitSetEx( mapP->bfaP, key, &bfP ) ) {
-    U32 popcount = __builtin_popcount( bfP->bits & BITCOUNT_MASK[ key ] ) + bfP->base;
+    U32 popcount = bfSum( bfP->bits & BITCOUNT_MASK[ key ], bfP->base);
 		return _fast_arrayGetElemByIdx(mapP->mapA, popcount);
 	}
 	return NULL;
