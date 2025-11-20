@@ -11,6 +11,8 @@ static const int N_ELEMS = 100;
 
 TAU_MAIN()
 
+const U32 CORRECT_WORD_VAL =  (1 << 3) | (1 << 7) | (1 << 28);
+
 TEST_F_SETUP(Bitfields) {
   tau->nBits1 = 10;
   tau->nBits2 = 20;
@@ -20,13 +22,53 @@ TEST_F_SETUP(Bitfields) {
   tau->bf2P = bfNew( tau->nBits2, GENERAL );
   tau->bfa3P = bfaNew( tau->nBits3, GENERAL );
   tau->bfa4P = bfaNew( tau->nBits4, GENERAL );
-  // TODO init bitfields so you can do some intelligent testing on them... write helpers as needed
+
+  const U32 BITS_PER_BITFIELD = 32;
+  // Iterate word by word.
+  for ( int i = 0; i <= tau->nBits1 / (sizeof(U32) * 8); ++i ) {
+    bfSetBit( tau->bf1P, BITS_PER_BITFIELD * i + 3 );
+    bfSetBit( tau->bf1P, BITS_PER_BITFIELD * i + 7 );
+    bfSetBit( tau->bf1P, BITS_PER_BITFIELD * i + 28 );
+  }
+  for ( int i = 0; i <= tau->nBits2 / (sizeof(U32) * 8); ++i ) {
+    bfSetBit( tau->bf2P, BITS_PER_BITFIELD * i + 3 );
+    bfSetBit( tau->bf2P, BITS_PER_BITFIELD * i + 7 );
+    bfSetBit( tau->bf2P, BITS_PER_BITFIELD * i + 28 );
+  }
+  // TODO guard against overflowing wiht maxBitIdx in bitfield.
+  //      Tried to do 220 when i allowed it to only have 200 bits.
+  for ( int i = 0; i <= tau->nBits3 / (sizeof(U32) * 8); ++i ) {
+    bfaSetBit( tau->bfa3P, BITS_PER_BITFIELD * i + 3 );
+    bfaSetBit( tau->bfa3P, BITS_PER_BITFIELD * i + 7 );
+    bfaSetBit( tau->bfa3P, BITS_PER_BITFIELD * i + 28 );
+  }
+  for ( int i = 0; i <= tau->nBits4 / (sizeof(U32) * 8); ++i ) {
+    bfaSetBit( tau->bfa4P, BITS_PER_BITFIELD * i + 3 );
+    bfaSetBit( tau->bfa4P, BITS_PER_BITFIELD * i + 7 );
+    bfaSetBit( tau->bfa4P, BITS_PER_BITFIELD * i + 28 );
+  }
 }
 
 TEST_F_TEARDOWN(Bitfields) {
   memRst( GENERAL );
 }
 
-TEST_F(Bitfields, listAppendWhenEmpty) {
+TEST_F(Bitfields, getBitfield) {
+  // Bitfield from bitfield array 3
+  Bitfield* bfPa = bfaGetBitfield( tau->bfa3P, 14 );
+  CHECK_EQ( bfPa->bits, CORRECT_WORD_VAL );
 
+  // Bitfield from bitfield array 4
+  Bitfield* bfPb = bfaGetBitfield( tau->bfa4P, 40 );
+  CHECK_EQ( bfPb->bits, CORRECT_WORD_VAL );
+}
+
+TEST_F(Bitfields, getBits) {
+  // Bitfield from bitfield array 3
+  U32 bits1 = bfaGetBits( tau->bfa3P, 14 );
+  CHECK_EQ( bits1, CORRECT_WORD_VAL );
+
+  // Bitfield from bitfield array 4
+  U32 bits2 = bfaGetBits( tau->bfa4P, 14 );
+  CHECK_EQ( bits2, CORRECT_WORD_VAL );
 }
