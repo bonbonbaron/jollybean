@@ -16,8 +16,8 @@ const U32 CORRECT_WORD_VAL =  (1 << 3) | (1 << 7) | (1 << 28);
 TEST_F_SETUP(Bitfields) {
   tau->nBits1 = 10;
   tau->nBits2 = 20;
-  tau->nBits3 = 200;
-  tau->nBits4 = 100;
+  tau->nBits3 = 255;
+  tau->nBits4 = 127;
   tau->bf1P = bfNew( tau->nBits1, GENERAL );
   tau->bf2P = bfNew( tau->nBits2, GENERAL );
   tau->bfa3P = bfaNew( tau->nBits3, GENERAL );
@@ -25,27 +25,27 @@ TEST_F_SETUP(Bitfields) {
 
   const U32 BITS_PER_BITFIELD = 32;
   // Iterate word by word.
-  for ( int i = 0; i <= tau->nBits1 / (sizeof(U32) * 8); ++i ) {
-    bfSetBit( tau->bf1P, BITS_PER_BITFIELD * i + 3 );
-    bfSetBit( tau->bf1P, BITS_PER_BITFIELD * i + 7 );
-    bfSetBit( tau->bf1P, BITS_PER_BITFIELD * i + 28 );
+  for ( int bfIdx = 0; bfIdx <= tau->nBits1 / (sizeof(U32) * 8); ++bfIdx ) {
+    bfSetBit( tau->bf1P, BITS_PER_BITFIELD * bfIdx + 3 );
+    bfSetBit( tau->bf1P, BITS_PER_BITFIELD * bfIdx + 7 );
+    bfSetBit( tau->bf1P, BITS_PER_BITFIELD * bfIdx + 28 );
   }
-  for ( int i = 0; i <= tau->nBits2 / (sizeof(U32) * 8); ++i ) {
-    bfSetBit( tau->bf2P, BITS_PER_BITFIELD * i + 3 );
-    bfSetBit( tau->bf2P, BITS_PER_BITFIELD * i + 7 );
-    bfSetBit( tau->bf2P, BITS_PER_BITFIELD * i + 28 );
+  for ( int bfIdx = 0; bfIdx <= tau->nBits2 / (sizeof(U32) * 8); ++bfIdx ) {
+    bfSetBit( tau->bf2P, BITS_PER_BITFIELD * bfIdx + 3 );
+    bfSetBit( tau->bf2P, BITS_PER_BITFIELD * bfIdx + 7 );
+    bfSetBit( tau->bf2P, BITS_PER_BITFIELD * bfIdx + 28 );
   }
   // TODO guard against overflowing wiht maxBitIdx in bitfield.
-  //      Tried to do 220 when i allowed it to only have 200 bits.
-  for ( int i = 0; i <= tau->nBits3 / (sizeof(U32) * 8); ++i ) {
-    bfaSetBit( tau->bfa3P, BITS_PER_BITFIELD * i + 3 );
-    bfaSetBit( tau->bfa3P, BITS_PER_BITFIELD * i + 7 );
-    bfaSetBit( tau->bfa3P, BITS_PER_BITFIELD * i + 28 );
+  //      Tried to do 220 when bfIdx allowed it to only have 200 bits.
+  for ( int bfIdx = 0; bfIdx <= tau->nBits3 / (sizeof(U32) * 8); ++bfIdx ) {
+    bfaSetBit( tau->bfa3P, BITS_PER_BITFIELD * bfIdx + 3 );
+    bfaSetBit( tau->bfa3P, BITS_PER_BITFIELD * bfIdx + 7 );
+    bfaSetBit( tau->bfa3P, BITS_PER_BITFIELD * bfIdx + 28 );
   }
-  for ( int i = 0; i <= tau->nBits4 / (sizeof(U32) * 8); ++i ) {
-    bfaSetBit( tau->bfa4P, BITS_PER_BITFIELD * i + 3 );
-    bfaSetBit( tau->bfa4P, BITS_PER_BITFIELD * i + 7 );
-    bfaSetBit( tau->bfa4P, BITS_PER_BITFIELD * i + 28 );
+  for ( int bfIdx = 0; bfIdx <= tau->nBits4 / (sizeof(U32) * 8); ++bfIdx ) {
+    bfaSetBit( tau->bfa4P, BITS_PER_BITFIELD * bfIdx + 3 );
+    bfaSetBit( tau->bfa4P, BITS_PER_BITFIELD * bfIdx + 7 );
+    bfaSetBit( tau->bfa4P, BITS_PER_BITFIELD * bfIdx + 28 );
   }
 }
 
