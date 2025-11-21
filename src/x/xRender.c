@@ -613,7 +613,7 @@ static void zOrder( XRender* xP ) {
   Key nBlobMembersSorted;
   S32 i;
   List *zLayerLP;
-  Collision *collP, *collEndP;
+  CollisionBlob *collP, *collEndP;
   XRenderComp *cP, *anchorP, *pivotP;
   ListNodeHeader* anchorHdrP;
   ListNodeHeader* pivotHdrP;
@@ -623,14 +623,14 @@ static void zOrder( XRender* xP ) {
 
   // For each blob
   for ( ; blobLP < blobEndLP; ++blobLP ) {
-    collP = (Collision*) listGetHead( blobLP );
-    collEndP = (Collision*) listGetTail( blobLP );
-    collP = (Collision*) listGetHead( blobLP );
+    collP = (CollisionBlob*) listGetHead( blobLP );
+    collEndP = (CollisionBlob*) listGetTail( blobLP );
+    collP = (CollisionBlob*) listGetHead( blobLP );
     nBlobMembersSorted = 0;
     goto SKIP_FIRST_COLL_INCR;
     // For each entity in current blob
     for ( ; collP != collEndP; ++nBlobMembersSorted ) {
-      collP = (Collision*) listNodeGetNext( blobLP, &collP->hdr );
+      collP = (CollisionBlob*) listNodeGetNext( blobLP, &collP->hdr );
 SKIP_FIRST_COLL_INCR:
       yip.bottomYCoord = collP->bottomYCoord;  // for sorting purposes
       cP = (XRenderComp*) xGetCompPByEntity( &xP->system, collP->entity );

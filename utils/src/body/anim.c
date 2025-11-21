@@ -313,7 +313,7 @@ void anim (char *entityNameP, U8 verbose, AnimJsonData **animPP) {
   int nBytes = ftell(fP);
   assert (nBytes > 0);
   if (verbose) {
-    printf("~/jb/resource/Animation/%s.json is %d bytes.\n", entityNameP, nBytes);
+    printf("~/.jb/resource/Animation/%s.json is %d bytes.\n", entityNameP, nBytes);
   }
   fseek(fP, 0, SEEK_SET);
 

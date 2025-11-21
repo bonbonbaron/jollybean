@@ -8,4 +8,4 @@ clean:
 	rm -f ./*.o 
 	rm -f ./o
 	rm -f *.gcno
-	rm -f ${HOME}/jb/build/*.o
+	rm -f ${HOME}/.jb/build/*.o

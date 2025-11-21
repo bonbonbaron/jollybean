@@ -1,4 +1,5 @@
 #include "test.h"
+#include "gene/Image.h"
 #include "interface/interface.h"
 
 extern Image redImg; 
@@ -14,7 +15,8 @@ const static U8 verbose = 0;
 
 TEST_F_SETUP(Tau) {
   // Make arrays, because inflatableNew() expects Jollybean arrays.
-  tau->raw1bppA = arrayNew(  sizeof(rawData1bpp[0]), sizeof(rawData1bpp) / sizeof(rawData1bpp[0]), GENERAL);
+  // These "rawData[x]bpp" arrays are just dummy data from the header file.
+  tau->raw1bppA = arrayNew(  sizeof(rawData1bpp[0]), sizeof(rawData1bpp) / sizeof(rawData1bpp[0]), GENERAL);  // raw1bpp has 9 elems. Check that.
   memcpy((void*) tau->raw1bppA, (void*) rawData1bpp, sizeof(rawData1bpp[0]) * sizeof(rawData1bpp) / sizeof(rawData1bpp[0]));
   if (verbose) printf("\e[91m1bpp data\e[0m\n");
   tau->sd1bppP = stripNew(tau->raw1bppA, 3, 1, 0, verbose);

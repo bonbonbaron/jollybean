@@ -58,7 +58,7 @@ static void _fraySwapByIdx(const void *frayP, U32 oldIdx, U32 newIdx) {
   // We want to preserve the speed of memcpy over memmove. 
   // The latter has to copy to an empty array first.
   assert(frayP);
-  if (oldIdx != newIdx ) {
+  if (oldIdx == newIdx ) {   // don't swap an element with itself
     return;
   }
   void *elem1P       = frayGetElemByIdx_(frayP, oldIdx);

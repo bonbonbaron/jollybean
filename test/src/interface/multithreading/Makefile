@@ -1,6 +1,6 @@
 all: ./o
 
-BODY_DIR = ${HOME}/jb/build/Seed/Genome/Gene/Body
+BODY_DIR = ${HOME}/.jb/build/Seed/Genome/Gene/Body
 
 COLORMAP_DIR = ${BODY_DIR}/Graybody/Colormap
 CM_SRC_DIR = ${COLORMAP_DIR}/src
@@ -13,9 +13,9 @@ CP_INC_DIR = ${COLOR_PALETTE_DIR}/include
 CP_OBJ_DIR = ${COLOR_PALETTE_DIR}/obj
 
 JB_DIR = ${HOME}/hack/jollybean
-KR_DIR = ${HOME}/jb/src/Keyring
+KR_DIR = ${HOME}/.jb/src/Keyring
 
-#~/jb/build/Seed/Genome/Gene/Body/Graybody/Colormap/src/I
+#~/.jb/build/Seed/Genome/Gene/Body/Graybody/Colormap/src/I
 ./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./main.o ${JB_DIR}/build/xRender.o ${JB_DIR}/build/x.o ${JB_DIR}/build/data.o ${JB_DIR}/build/interface.o
 	cc ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./main.o ${JB_DIR}/build/interface.o $(shell sdl2-config --libs) ${JB_DIR}/build/xRender.o ${JB_DIR}/build/x.o ${JB_DIR}/build/data.o -lpthread -o $@
 	touch $@

@@ -1,7 +1,7 @@
 LEFT OFF HERE:
 ==============
-* realized I need bitfields for list, map, and xColl. 
-  Implemented them today, refactored it into map.c, and started its unit test.
+* finished bitfield unit test. Now I need to go fix all my other unit tests, especially maps.
+* Give lists a way to grab the first available ID. Meta, if we need it may need a bitfield.
 
 * make a tool to generate genes and load them via an INDEPENDENT, auto-generated Makefile.
 

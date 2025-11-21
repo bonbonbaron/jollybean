@@ -68,12 +68,12 @@ typedef struct {} XRenderMutation;
 // Feel free to increment as needed. There's nothing *holy* about this number.
 #define N_LAYERS_SUPPORTED (16)  
 
-typedef struct Collision {
+typedef struct CollisionBlob {
   ListNodeHeader hdr;
   Entity entity;
   Key blobIdIdx;
   S16 bottomYCoord;
-} Collision;
+} CollisionBlob;
 
 typedef struct {
   System         system;

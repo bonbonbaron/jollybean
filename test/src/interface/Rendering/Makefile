@@ -1,6 +1,6 @@
 all: ./o
 
-BODY_DIR = ${HOME}/jb/build/Seed/Genome/Gene/Body
+BODY_DIR = ${HOME}/.jb/build/Seed/Genome/Gene/Body
 
 JB  = $(shell git rev-parse --show-toplevel)
 SRC = ${JB}/src
