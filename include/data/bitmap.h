@@ -45,17 +45,17 @@ inline UWord sbmGetBits( const StableBitmap* sbmP, const U32 globalBitIdx ) {
   return sbmGetBasedWord( sbmP, globalBitIdx )->bits;
 }
 
-inline void bmSetBit(UWord *wordP, const U32 bitIdx ) {
+inline void wordSetBit(UWord *wordP, const U32 bitIdx ) {
   assert( bitIdx < N_BITS_PER_WORD );
   *wordP |= ( 1ULL << bitIdx );
 }
 
-inline void bmUnsetBit(UWord *wordP, const U32 bitIdx ) {
+inline void wordUnsetBit(UWord *wordP, const U32 bitIdx ) {
   assert( bitIdx < N_BITS_PER_WORD );
   *wordP &= ~( 1ULL << bitIdx );
 }
 
-inline U32 bmIsBitSet( const UWord* wordP, const U32 bitIdx ) {
+inline U32 wordIsBitSet( const UWord* wordP, const U32 bitIdx ) {
   assert( bitIdx < N_BITS_PER_WORD );
   return *wordP & ( 1ULL << bitIdx );
 }

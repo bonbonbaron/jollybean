@@ -99,7 +99,7 @@ S32 vbmSetFirstZero( const VolatileBitmap* vbmA ) {
   for( ; (const UWord*) wordP < bmEndP; ++wordP ) {
     if ( *wordP != SATURATED_WORD ) {
       U32 localBit = bmGetFirstZero( *wordP );
-      bmSetBit( wordP, localBit );
+      wordSetBit( wordP, localBit );
       return localBit + N_BITS_PER_WORD * ( wordP - vbmA );
     }
   }
@@ -112,7 +112,7 @@ S32 vbmUnsetFirstOne( const VolatileBitmap* vbmA ) {
   for( ; (const UWord*) wordP < bmEndP; ++wordP ) {
     if ( *wordP != 0 ) {
       U32 localBit = bmGetFirstOne( *wordP );
-      bmUnsetBit( wordP, localBit );
+      wordUnsetBit( wordP, localBit );
       return localBit + N_BITS_PER_WORD * ( wordP - vbmA );
     }
   }

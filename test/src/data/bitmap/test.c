@@ -4,8 +4,8 @@
 static const UWord SATURATED_WORD = -1;
 
 struct Bitmaps { 
-  StableBitmap *bm1P, *bm2P;
-  StableBitmapArray *bma3P, *bma4P;  // weird numbering to reflect # bits below
+  BasedWord *basedWord1P, *basedWord2P;
+  StableBitmap *sbm3P, *sbm4P;  // weird numbering to reflect # bits below
   VolatileBitmap *vbmA;
   UWord nBits1, nBits2, nBits3, nBits4;
 };
@@ -24,10 +24,10 @@ TEST_F_SETUP(Bitmaps) {
   tau->nBits2 = 20;
   tau->nBits3 = 255;
   tau->nBits4 = 127;
-  tau->bm1P = bmNew( GENERAL );
-  tau->bm2P = bmNew( GENERAL );
-  tau->bma3P = bmaNew( tau->nBits3, GENERAL );
-  tau->bma4P = bmaNew( tau->nBits4, GENERAL );
+  tau->basedWord1P = bmNew( GENERAL );
+  tau->basedWord2P = bmNew( GENERAL );
+  tau->sbm3P = sbmNew( tau->nBits3, GENERAL );
+  tau->sbm4P = sbmNew( tau->nBits4, GENERAL );
   tau->vbmA = arrayNew( sizeof(UWord), 10, GENERAL );
   tau->vbmA[0] = SATURATED_WORD;  // <-- first 1
   tau->vbmA[1] = SATURATED_WORD;
@@ -43,24 +43,24 @@ TEST_F_SETUP(Bitmaps) {
   const UWord BITS_PER_BITFIELD = __WORDSIZE;
   // Iterate word by word.
   for ( int bmIdx = 0; bmIdx <= tau->nBits1 / (sizeof(UWord) * 8); ++bmIdx ) {
-    bmSetBit( tau->bm1P, BITS_PER_BITFIELD * bmIdx + 3 );
-    bmSetBit( tau->bm1P, BITS_PER_BITFIELD * bmIdx + 7 );
-    bmSetBit( tau->bm1P, BITS_PER_BITFIELD * bmIdx + 28 );
+    wordSetBit( &tau->basedWord1P->bits, BITS_PER_BITFIELD * bmIdx + 3 );
+    wordSetBit( &tau->basedWord1P->bits, BITS_PER_BITFIELD * bmIdx + 7 );
+    wordSetBit( &tau->basedWord1P->bits, BITS_PER_BITFIELD * bmIdx + 28 );
   }
   for ( int bmIdx = 0; bmIdx <= tau->nBits2 / (sizeof(UWord) * 8); ++bmIdx ) {
-    bmSetBit( tau->bm2P, BITS_PER_BITFIELD * bmIdx + 3 );
-    bmSetBit( tau->bm2P, BITS_PER_BITFIELD * bmIdx + 7 );
-    bmSetBit( tau->bm2P, BITS_PER_BITFIELD * bmIdx + 28 );
+    wordSetBit( &tau->basedWord2P->bits, BITS_PER_BITFIELD * bmIdx + 3 );
+    wordSetBit( &tau->basedWord2P->bits, BITS_PER_BITFIELD * bmIdx + 7 );
+    wordSetBit( &tau->basedWord2P->bits, BITS_PER_BITFIELD * bmIdx + 28 );
   }
   for ( int bmIdx = 0; bmIdx <= tau->nBits3 / (sizeof(UWord) * 8); ++bmIdx ) {
-    bmaSetBit( tau->bma3P, BITS_PER_BITFIELD * bmIdx + 3 );
-    bmaSetBit( tau->bma3P, BITS_PER_BITFIELD * bmIdx + 7 );
-    bmaSetBit( tau->bma3P, BITS_PER_BITFIELD * bmIdx + 28 );
+    sbmSetBit( tau->sbm3P, BITS_PER_BITFIELD * bmIdx + 3 );
+    sbmSetBit( tau->sbm3P, BITS_PER_BITFIELD * bmIdx + 7 );
+    sbmSetBit( tau->sbm3P, BITS_PER_BITFIELD * bmIdx + 28 );
   }
   for ( int bmIdx = 0; bmIdx <= tau->nBits4 / (sizeof(UWord) * 8); ++bmIdx ) {
-    bmaSetBit( tau->bma4P, BITS_PER_BITFIELD * bmIdx + 3 );
-    bmaSetBit( tau->bma4P, BITS_PER_BITFIELD * bmIdx + 7 );
-    bmaSetBit( tau->bma4P, BITS_PER_BITFIELD * bmIdx + 28 );
+    sbmSetBit( tau->sbm4P, BITS_PER_BITFIELD * bmIdx + 3 );
+    sbmSetBit( tau->sbm4P, BITS_PER_BITFIELD * bmIdx + 7 );
+    sbmSetBit( tau->sbm4P, BITS_PER_BITFIELD * bmIdx + 28 );
   }
 }
 
@@ -69,54 +69,54 @@ TEST_F_TEARDOWN(Bitmaps) {
 }
 
 TEST_F(Bitmaps, getBitmap) {
-  // StableBitmap from bitmap array 3
-  StableBitmap* bmPa = bmaGetBitmap( tau->bma3P, 14 );
+  // BasedWord from bitmap array 3
+  BasedWord* bmPa = sbmGetBasedWord( tau->sbm3P, 14 );
   CHECK_EQ( bmPa->bits, CORRECT_WORD_VAL );
 
-  // StableBitmap from bitmap array 4
-  StableBitmap* bmPb = bmaGetBitmap( tau->bma4P, 40 );
+  // BasedWord from bitmap array 4
+  BasedWord* bmPb = sbmGetBasedWord( tau->sbm4P, 40 );
   CHECK_EQ( bmPb->bits, CORRECT_WORD_VAL );
 }
 
 TEST_F(Bitmaps, getBits) {
-  // StableBitmap from bitmap array 3
-  UWord bits1 = bmaGetBits( tau->bma3P, 14 );
+  // BasedWord from bitmap array 3
+  UWord bits1 = sbmGetBits( tau->sbm3P, 14 );
   CHECK_EQ( bits1, CORRECT_WORD_VAL );
 
-  // StableBitmap from bitmap array 4
-  UWord bits2 = bmaGetBits( tau->bma4P, 14 );
+  // BasedWord from bitmap array 4
+  UWord bits2 = sbmGetBits( tau->sbm4P, 14 );
   CHECK_EQ( bits2, CORRECT_WORD_VAL );
 }
 
 TEST_F(Bitmaps, setBitBothWays) {
-  StableBitmap* bmP = bmaGetBitmap( tau->bma3P, 14 );
-  bmSetBit( bmP, 1 );
-  bmaSetBit( tau->bma3P, 31 );
+  BasedWord* bwP = sbmGetBasedWord( tau->sbm3P, 14 );
+  wordSetBit( &bwP->bits, 1 );
+  sbmSetBit( tau->sbm3P, 31 );
   const static UWord EXPECTED_ANSWER = CORRECT_WORD_VAL | ( 1 << 31 ) | (1 << 1);
-  CHECK_EQ( bmaGetBits( tau->bma3P, 0 ), EXPECTED_ANSWER );
-  CHECK_EQ( bmP->bits, EXPECTED_ANSWER );
+  CHECK_EQ( sbmGetBits( tau->sbm3P, 0 ), EXPECTED_ANSWER );
+  CHECK_EQ( bwP->bits, EXPECTED_ANSWER );
 }
 
-TEST_F(Bitmaps, bmUnsetBit) {
-  StableBitmap* bmP = bmaGetBitmap( tau->bma3P, 14 );
-  bmUnsetBit( bmP, 7 );
+TEST_F(Bitmaps, wordUnsetBit) {
+  BasedWord* bwP = sbmGetBasedWord( tau->sbm3P, 14 );
+  wordUnsetBit( &bwP->bits, 7 );
   const static UWord EXPECTED_ANSWER = CORRECT_WORD_VAL & ~BIT7; // <-- this is correct
-  CHECK_EQ( bmP->bits, EXPECTED_ANSWER );
-  CHECK_EQ( bmaGetBits( tau->bma3P, 14 ), EXPECTED_ANSWER );
+  CHECK_EQ( bwP->bits, EXPECTED_ANSWER );
+  CHECK_EQ( sbmGetBits( tau->sbm3P, 14 ), EXPECTED_ANSWER );
 }
 
-TEST_F(Bitmaps, bmIsBitSet ) {
+TEST_F(Bitmaps, wordIsBitSet ) {
   for ( int i = 0; i < 32; ++i ) {
     if ( i == 3 || i == 7 || i == 28 ) {
-      CHECK_NE( bmIsBitSet( tau->bm1P, i ), 0 );
+      CHECK_NE( wordIsBitSet( &tau->basedWord1P->bits, i ), 0 );
     }
     else {
-      CHECK_EQ( bmIsBitSet( tau->bm1P, i ), 0 );
+      CHECK_EQ( wordIsBitSet( &tau->basedWord1P->bits, i ), 0 );
     }
   }
 }
 
-TEST_F(Bitmaps, bmaIsBitSet ) {
+TEST_F(Bitmaps, sbmIsBitSet ) {
   for ( int i = 0; i < 8; ++i ) {
     for (int j = 0; j < 32; ++j ) {
       // Because I don't want to do extra work:
@@ -125,18 +125,18 @@ TEST_F(Bitmaps, bmaIsBitSet ) {
         goto leaveTestCase1;
       }
       if ( j == 3 || j == 7 || j == 28 ) {
-        CHECK_NE( bmaIsBitSet( tau->bma3P, expVal), 0 );
+        CHECK_NE( sbmIsBitSet( tau->sbm3P, expVal), 0 );
       }
       else {
-        CHECK_EQ( bmaIsBitSet( tau->bma3P, expVal), 0 );
+        CHECK_EQ( sbmIsBitSet( tau->sbm3P, expVal), 0 );
       }
     }
   }
 leaveTestCase1:
 }
 
-TEST_F(Bitmaps, bmaIsBitSetEx ) {
-  StableBitmap* bmP;
+TEST_F(Bitmaps, sbmIsBitSetEx ) {
+  BasedWord* bwP;
   for ( int i = 0; i < 8; ++i ) {
     for (int j = 0; j < 32; ++j ) {
       // Because I don't want to do extra work:
@@ -145,10 +145,10 @@ TEST_F(Bitmaps, bmaIsBitSetEx ) {
         goto leaveTestCase2;
       }
       if ( j == 3 || j == 7 || j == 28 ) {
-        CHECK_NE( bmaIsBitSetEx( tau->bma3P, expVal, &bmP ), 0 );
+        CHECK_NE( sbmIsBitSetEx( tau->sbm3P, expVal, &bwP ), 0 );
       }
       else {
-        CHECK_EQ( bmaIsBitSetEx( tau->bma3P, expVal, &bmP ), 0 );
+        CHECK_EQ( sbmIsBitSetEx( tau->sbm3P, expVal, &bwP ), 0 );
       }
     }
   }
@@ -156,35 +156,35 @@ leaveTestCase2:
 }
 
 TEST_F(Bitmaps, bmGetFirstZero) {
-  CHECK_EQ( bmGetFirstZero( tau->bm1P->bits ), 0 );
-  bmSetBit( tau->bm1P, 0 );
-  CHECK_EQ( bmGetFirstZero( tau->bm1P->bits ), 1 );
+  CHECK_EQ( bmGetFirstZero( tau->basedWord1P->bits ), 0 );
+  wordSetBit( &tau->basedWord1P->bits, 0 );
+  CHECK_EQ( bmGetFirstZero( tau->basedWord1P->bits ), 1 );
 }
 
 TEST_F(Bitmaps, bmGetFirstOne) {
-  CHECK_EQ( bmGetFirstOne( tau->bm1P->bits ), 3 );
-  bmUnsetBit( tau->bm1P, 3 );
-  CHECK_EQ( bmGetFirstOne( tau->bm1P->bits ), 7 );
+  CHECK_EQ( bmGetFirstOne( tau->basedWord1P->bits ), 3 );
+  wordUnsetBit( &tau->basedWord1P->bits, 3 );
+  CHECK_EQ( bmGetFirstOne( tau->basedWord1P->bits ), 7 );
 }
 
 TEST_F(Bitmaps, bmSum) {
-  CHECK_EQ( bmSum( tau->bm1P->bits, tau->bm1P->base ), 3 );
-  tau->bm1P->base = 100;
-  CHECK_EQ( bmSum( tau->bm1P->bits, tau->bm1P->base ), 103 );
+  CHECK_EQ( bmSum( tau->basedWord1P->bits, tau->basedWord1P->base ), 3 );
+  tau->basedWord1P->base = 100;
+  CHECK_EQ( bmSum( tau->basedWord1P->bits, tau->basedWord1P->base ), 103 );
 }
 
-TEST_F(Bitmaps, bmaUnsetBit) {
-  CHECK_TRUE( bmaIsBitSet( tau->bma3P, 35) );
-  bmaUnsetBit( tau->bma3P, 35 );
-  CHECK_FALSE( bmaIsBitSet( tau->bma3P, 35) );
+TEST_F(Bitmaps, sbmUnsetBit) {
+  CHECK_TRUE( sbmIsBitSet( tau->sbm3P, 35) );
+  sbmUnsetBit( tau->sbm3P, 35 );
+  CHECK_FALSE( sbmIsBitSet( tau->sbm3P, 35) );
 }
 
 
-TEST_F(Bitmaps, bmaClone ) {
-  StableBitmapArray* newBfaP = bmaClone( tau->bma3P, GENERAL );
-  for (int i = 0; i < arrayGetNElems( tau->bma3P->bmA ); ++i ) {
-    CHECK_EQ( newBfaP->bmA[i].bits, tau->bma3P->bmA[i].bits );
-    CHECK_EQ( newBfaP->bmA[i].base, tau->bma3P->bmA[i].base );
+TEST_F(Bitmaps, sbmClone ) {
+  StableBitmap* newBfaP = sbmClone( tau->sbm3P, GENERAL );
+  for (int i = 0; i < arrayGetNElems( tau->sbm3P->bmA ); ++i ) {
+    CHECK_EQ( newBfaP->bmA[i].bits, tau->sbm3P->bmA[i].bits );
+    CHECK_EQ( newBfaP->bmA[i].base, tau->sbm3P->bmA[i].base );
   }
 }
 
