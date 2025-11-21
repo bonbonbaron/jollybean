@@ -4,8 +4,8 @@
 static const UWord SATURATED_WORD = -1;
 
 struct Bitmaps { 
-  StaticBitmap *bm1P, *bm2P;
-  StaticBitmapArray *bma3P, *bma4P;  // weird numbering to reflect # bits below
+  StableBitmap *bm1P, *bm2P;
+  StableBitmapArray *bma3P, *bma4P;  // weird numbering to reflect # bits below
   VolatileBitmap *vbmA;
   UWord nBits1, nBits2, nBits3, nBits4;
 };
@@ -69,27 +69,27 @@ TEST_F_TEARDOWN(Bitmaps) {
 }
 
 TEST_F(Bitmaps, getBitmap) {
-  // StaticBitmap from bitmap array 3
-  StaticBitmap* bmPa = bmaGetBitmap( tau->bma3P, 14 );
+  // StableBitmap from bitmap array 3
+  StableBitmap* bmPa = bmaGetBitmap( tau->bma3P, 14 );
   CHECK_EQ( bmPa->bits, CORRECT_WORD_VAL );
 
-  // StaticBitmap from bitmap array 4
-  StaticBitmap* bmPb = bmaGetBitmap( tau->bma4P, 40 );
+  // StableBitmap from bitmap array 4
+  StableBitmap* bmPb = bmaGetBitmap( tau->bma4P, 40 );
   CHECK_EQ( bmPb->bits, CORRECT_WORD_VAL );
 }
 
 TEST_F(Bitmaps, getBits) {
-  // StaticBitmap from bitmap array 3
+  // StableBitmap from bitmap array 3
   UWord bits1 = bmaGetBits( tau->bma3P, 14 );
   CHECK_EQ( bits1, CORRECT_WORD_VAL );
 
-  // StaticBitmap from bitmap array 4
+  // StableBitmap from bitmap array 4
   UWord bits2 = bmaGetBits( tau->bma4P, 14 );
   CHECK_EQ( bits2, CORRECT_WORD_VAL );
 }
 
 TEST_F(Bitmaps, setBitBothWays) {
-  StaticBitmap* bmP = bmaGetBitmap( tau->bma3P, 14 );
+  StableBitmap* bmP = bmaGetBitmap( tau->bma3P, 14 );
   bmSetBit( bmP, 1 );
   bmaSetBit( tau->bma3P, 31 );
   const static UWord EXPECTED_ANSWER = CORRECT_WORD_VAL | ( 1 << 31 ) | (1 << 1);
@@ -98,7 +98,7 @@ TEST_F(Bitmaps, setBitBothWays) {
 }
 
 TEST_F(Bitmaps, bmUnsetBit) {
-  StaticBitmap* bmP = bmaGetBitmap( tau->bma3P, 14 );
+  StableBitmap* bmP = bmaGetBitmap( tau->bma3P, 14 );
   bmUnsetBit( bmP, 7 );
   const static UWord EXPECTED_ANSWER = CORRECT_WORD_VAL & ~BIT7; // <-- this is correct
   CHECK_EQ( bmP->bits, EXPECTED_ANSWER );
@@ -136,7 +136,7 @@ leaveTestCase1:
 }
 
 TEST_F(Bitmaps, bmaIsBitSetEx ) {
-  StaticBitmap* bmP;
+  StableBitmap* bmP;
   for ( int i = 0; i < 8; ++i ) {
     for (int j = 0; j < 32; ++j ) {
       // Because I don't want to do extra work:
@@ -181,7 +181,7 @@ TEST_F(Bitmaps, bmaUnsetBit) {
 
 
 TEST_F(Bitmaps, bmaClone ) {
-  StaticBitmapArray* newBfaP = bmaClone( tau->bma3P, GENERAL );
+  StableBitmapArray* newBfaP = bmaClone( tau->bma3P, GENERAL );
   for (int i = 0; i < arrayGetNElems( tau->bma3P->bmA ); ++i ) {
     CHECK_EQ( newBfaP->bmA[i].bits, tau->bma3P->bmA[i].bits );
     CHECK_EQ( newBfaP->bmA[i].base, tau->bma3P->bmA[i].base );
@@ -203,7 +203,6 @@ TEST_F(Bitmaps, vbmSetBit) {
   CHECK_EQ( tau->vbmA[2], SATURATED_WORD );
 }
 
-#if 1
 TEST_F(Bitmaps, vbmUnsetBit) {
   CHECK_EQ( tau->vbmA[7], SATURATED_WORD );
   vbmUnsetBit( tau->vbmA, 7 * __WORDSIZE );
@@ -225,4 +224,3 @@ TEST_F(Bitmaps, vbmGetFirstOne) {
   }
   CHECK_EQ( vbmGetFirstOne( (const VolatileBitmap*) tau->vbmA ), -1);
 }
-#endif

@@ -29,7 +29,7 @@ typedef enum {
 } MapElemType;
 
 typedef struct {
-	StaticBitmapArray* bmaP;  // this holds the bits representing which keys have been set 
+	StableBitmapArray* bmaP;  // this holds the bits representing which keys have been set 
   MapElemType elemType;  // is element a pointer? Double pointer? Raw data?
   Key    population;
 	void  *mapA;  

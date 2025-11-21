@@ -19,44 +19,72 @@ static void _listNodeIni( ListNodeHeader* nodeP) {
   nodeP->next = nodeP->prev = UNSET_;
 }
 
-static Key _getFirstAvailableListId( const List* listP ) {
-  S32 firstZeroBitIdx = vbmGetFirstZero( listP->metaP->availableIdBitmapA );
-  if ( firstZeroBitIdx >= 0 ) {
-    assert ( firstZeroBitIdx <= (KEY_MAX ) );
-    return firstZeroBitIdx;
-  }
-  return UNSET_;
+static Key _claimListId( List* listP ) {
+  assert( listP );
+  assert( listP->metaP );
+  assert( listP->metaP->availableIdBitmapA );
+  assert( listP->metaP->availableIdIndexBitmapA );
+  assert( listP->id == UNSET_ );  // This function is only called when the list is empty.
+
+  S32 firstAvailListId = vbmSetFirstZero( listP->metaP->availableIdBitmapA );
+  S32 firstAvailListIdIdx = vbmSetFirstZero( listP->metaP->availableIdIndexBitmapA );
+
+  assert (firstAvailListId >= 0);
+  assert (firstAvailListIdIdx >= 0);
+  assert (firstAvailListId < UNSET_);
+  assert (firstAvailListIdIdx < UNSET_);
+
+  listP->metaP->idA[ firstAvailListIdIdx ] = firstAvailListId;
+  listP->id = firstAvailListId;
+
+  return firstAvailListIdIdx;
 }
 
-static void _listMetaIni( List* listP ) {
+static void _releaseListId( List* listP ) {
+  assert( listP );
+  assert( listP->metaP );
+  assert( listP->metaP->availableIdBitmapA );
+  assert( listP->id != UNSET_ );  // This function is only called when the list is empty.
+
+  vbmUnsetBit( listP->metaP->availableIdBitmapA, listP->id );
+  listP->id = UNSET_;
+}
+
+static void _releaseListIdIdx( List* listP, ListNodeHeader* nodeP ) {
+  assert( listP );
+  assert( listP->metaP );
+  assert( listP->metaP->availableIdIndexBitmapA );
+
+  assert( nodeP );
+  assert( nodeP->listIdIdx != UNSET_ );
+
+  vbmUnsetBit( listP->metaP->availableIdIndexBitmapA, nodeP->listIdIdx );
+  nodeP->listIdIdx = UNSET_;
+}
+
+static void _metadataNew( List* listP, const PoolId poolId ) {
   assert( listP );
   assert( listP->array );
-  assert( !listP->metaP->idA );
-  assert( !listP->metaP->availableIdBitmapA );
   // Allocate & init list's metadata
-  listP->metaP = memAdd( sizeof(ListMetadata), GENERAL );
-  listP->metaP->maxId = UNSET_;
+  listP->metaP = memAdd( sizeof(ListMetadata), poolId );
   // Make room for as many possible list IDs as there are array elements.
-  listP->metaP->idA = arrayNew( sizeof(Key), arrayGetNElems( listP->array ), GENERAL );
+  listP->metaP->idA = arrayNew( sizeof(Key), arrayGetNElems( listP->array ), poolId );
   memset( listP->metaP->idA, UNSET_, arrayGetElemSz( listP->metaP->idA ) * arrayGetNElems( listP->metaP->idA ) );
   // Allocate and init bitmap (only allocating as many words as are required to hold all possible list IDs).
-  // TODO replace this with bmArrayNew() so we can use it in map.c too.
-  listP->metaP->availableIdBitmapA = arrayNew( 
-      sizeof(VolatileBitmap), 
-      ( sizeof( Key ) * arrayGetNElems( listP->array ) / sizeof(U32) ) + 1, GENERAL );
-  memset( listP->metaP->availableIdBitmapA, 0, arrayGetElemSz( listP->metaP->availableIdBitmapA ) * arrayGetNElems( listP->metaP->availableIdBitmapA ) );
+  listP->metaP->availableIdBitmapA = vbmNew( arrayGetNElems(listP->array), poolId );
+  listP->metaP->availableIdIndexBitmapA = vbmNew( arrayGetNElems(listP->array), poolId );
 }
 
 // Make lists easier to use by initializing all the nodes for the user.
-void listIni( List* listP, const Key listId, void* array, const List* leaderListP ) {
+void listIni( List* listP, void* array, const List* leaderListP, const PoolId poolId ) {
   assert( listP && array );
-  listP->id = listId;
+  listP->id = UNSET_;
   listP->head = listP->tail = UNSET_;
   listP->array = array;
   listP->metaP = NULL;
   // All lists for the same array need to point at the same metadata. Leader will initialize it for us.
   if ( !leaderListP ) {
-    _listMetaIni( listP );
+    _metadataNew( listP, poolId );
     const U32 ELEM_SZ = arrayGetElemSz( listP->array );
     const U8* elemEndP = (U8*) listP->array + ( arrayGetNElems( listP->array ) * arrayGetElemSz( listP->array ) );
     for ( U8* elemP = (U8*) listP->array; elemP < elemEndP; elemP += ELEM_SZ ) {
@@ -69,7 +97,9 @@ void listIni( List* listP, const Key listId, void* array, const List* leaderList
 }
 
 static inline Bln _isInList( const ListNodeHeader* nodeP, const List* listP ) {
-  return listP->metaP->idA[nodeP->listIdIdx] != listP->id;
+  assert( listP );
+  assert( listP->metaP );
+  return nodeP->listIdIdx != UNSET_ && listP->metaP->idA[nodeP->listIdIdx] == listP->id;
 }
 
 // NOTE: This assumes the address of the header is the same as the address of the array element.
@@ -95,7 +125,12 @@ void listRemove( List* listP, ListNodeHeader* nodeP ) {
     nextP->prev = nodeP->prev;  // valid even if prev is UNSET_
   }
   // Make it clear to the user this node is OUTSIDE the list now.
-  nodeP->next = nodeP->prev = nodeP->listIdIdx = UNSET_;  
+  nodeP->next = nodeP->prev = UNSET_;  
+  _releaseListIdIdx( listP, nodeP );
+  // If list is empty now, release its ID.
+  if ( listP->head == UNSET_ && listP->tail == UNSET_ ) {
+    _releaseListId( listP );
+  }
 }
 
 void listInsertBefore( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* tgtNodeP ) {
@@ -168,7 +203,7 @@ void listPrepend( List* listP, ListNodeHeader* newNodeP ) {
   else {  // if list is empty (has no tail), add new elem as both head and tail with no next or prev. Give it the list's ID.
     listP->head = listP->tail =  newNodeIdx;
     newNodeP->next = newNodeP->prev = UNSET_;
-    listP->id = _getFirstAvailableListId( (const List*) listP );
+    newNodeP->listIdIdx = _claimListId( listP );  // sets list ID internally.
   }
 }
 
@@ -189,8 +224,7 @@ void listAppend( List* listP, ListNodeHeader* newNodeP ) {
   else {  // if list is empty (has no tail), add new elem as both head and tail with no next or prev. Give it the list's ID.
     listP->head = listP->tail = newNodeIdx;
     newNodeP->prev = newNodeP->next = UNSET_;  // There's nothing before or after this node.
-    listP->id = _getFirstAvailableListId( (const List*) listP );
-    newNodeP->listIdIdx = listP->id;
+    newNodeP->listIdIdx = _claimListId( listP );  // sets list ID internally.
   }
 }
 
@@ -219,7 +253,8 @@ void listMerge( List* srcListP, List* dstListP ) {
   dstListP->tail = srcListP->tail;
 
   srcListP->head = srcListP->tail = UNSET_;
-  srcListP->array = NULL;
+  // srcListP->array = NULL;   // <-- Should I even do this if I'm not necessarily deleting the array yet?
+  _releaseListId( srcListP );
 }
 
 void* listGetHead( List* listP ) {
@@ -240,3 +275,10 @@ void* listNodeGetNext( List* listP, ListNodeHeader* nodeP ) {
   assert( nodeP->next != UNSET_ );
   return arrayGetVoidElemPtr( listP->array, nodeP->next );
 }
+
+VolatileBitmap* vbmNew( U32 maxBitIdx, const PoolId poolId ) {
+  VolatileBitmap* vbmA = arrayNew( sizeof(VolatileBitmap), globalBitToBfIdx_( maxBitIdx ) + 1, poolId );
+  memset(vbmA, 0, arrayGetNElems( vbmA ) * arrayGetElemSz( vbmA ) );
+  return vbmA;
+}
+

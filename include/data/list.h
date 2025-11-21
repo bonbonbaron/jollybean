@@ -57,11 +57,11 @@ typedef struct ListMetadata {
 typedef struct List {
   Key id;  // the only way to prevent removing a node from a list it's not in and re-adding it to a list it's in
   Key head, tail;  // yes, we use different types for head/tail versus prev/next since the latter pair is more common.
-  ListMetadata* metaP;
+  ListMetadata* metaP;  // common metadata that all lists from the same array point to
   void* array;  // refers to a pre-existing array or fray (since both have the same elem sz and count locations)
 } List;
 
-void listIni( List* listP, Key id, void* array, const List* leaderListP );
+void listIni( List* listP, void* array, const List* leaderListP, const PoolId poolId );
 
 // NOTE: This assumes the address of the header is the same as the address of the array element.
 void listRemove( List* listP, ListNodeHeader* nodeP );
@@ -81,3 +81,6 @@ void* listGetHead( List* listP );
 void* listGetTail( List* listP );
 
 void* listNodeGetNext( List* listP, ListNodeHeader* nodeP );
+
+VolatileBitmap* vbmNew( U32 maxBitIdx, const PoolId poolId );
+

@@ -23,7 +23,7 @@ Map* mapNew( MapElemType elemType, const U8 elemSz, const Key nElems, const Pool
 }
 
 Key mapGetIndex(const Map *mapP, const Key key) {
-	const StaticBitmap* bmP = bmaGetBitmap( mapP->bmaP, key );
+	const StableBitmap* bmP = bmaGetBitmap( mapP->bmaP, key );
   return __builtin_popcount( bmP->bits & BITCOUNT_MASK[ key & LOCAL_BIT_MASK ] ) + bmP->base;
 }
 
@@ -43,7 +43,7 @@ U32 mapHasKey(const Map* mP, const Key key ) {
 
 void* mapGet(const Map *mapP, const Key key) {
   assert (mapP );
-  StaticBitmap* bmP;
+  StableBitmap* bmP;
   // This "Ex" function lets us see if a bit is set without having to reload its bitfield afterward.
 	if ( bmaIsBitSetEx( mapP->bmaP, key, &bmP ) ) {
     U32 popcount = bmSum( bmP->bits & BITCOUNT_MASK[ key ], bmP->base);
