@@ -77,7 +77,7 @@ S32 vbmGetFirstZero( const VolatileBitmap* vbmA ) {
     if ( *bmP == SATURATED_WORD ) {
       continue;
     }
-    return bmGetFirstZero( *bmP ) + N_BITS_PER_INT * ( bmP - vbmA );
+    return bmGetFirstZero( *bmP ) + N_BITS_PER_WORD * ( bmP - vbmA );
   }
   return -1;
 }
@@ -89,7 +89,7 @@ S32 vbmGetFirstOne( const VolatileBitmap* vbmA ) {
     if ( *bmP == 0 ) {
       continue;
     }
-    return bmGetFirstOne( *bmP ) + N_BITS_PER_INT * ( bmP - vbmA );
+    return bmGetFirstOne( *bmP ) + N_BITS_PER_WORD * ( bmP - vbmA );
   }
   return -1;
 }

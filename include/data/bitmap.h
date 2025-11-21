@@ -4,9 +4,16 @@
 #include "data/mem.h"
 #include "data/array.h"
 
-#define LOCAL_BIT_MASK (0x1f)
-#define N_BITS_PER_INT (32)
+#if __WORDSIZE == 32
 #define globalBitToBfIdx_(bitIdx) (bitIdx >> 5)  // ">> 5" is the same as "/ 32"
+#define LOCAL_BIT_MASK (0x1f)
+#elif __WORDSIZE == 64
+#define globalBitToBfIdx_(bitIdx) (bitIdx >> 6)  // ">> 5" is the same as "/ 32"
+#define LOCAL_BIT_MASK (0x3f)
+#else
+  static_assert("Jollybean only supports 32- and 64-bit architectures.");
+#endif
+
 #define globalBitIdxToLocalBit_(bitIdx) (1 << (bitIdx & LOCAL_BIT_MASK))  // transforms a global bit (bit in an array of fields) to a local one (bit within its specific field)
 
 typedef UWord VolatileBitmap; // This doesn't get a special array struct since it can have a raw array.
@@ -39,17 +46,17 @@ inline UWord bmaGetBits( const StaticBitmapArray* bmaP, const U32 globalBitIdx )
 }
 
 inline void bmSetBit(StaticBitmap* bmP, const U32 bitIdx ) {
-  assert( bitIdx < N_BITS_PER_INT );
+  assert( bitIdx < N_BITS_PER_WORD );
   bmP->bits |= ( 1ul << bitIdx );
 }
 
 inline void bmUnsetBit(StaticBitmap* bmP, const U32 bitIdx ) {
-  assert( bitIdx < N_BITS_PER_INT );
+  assert( bitIdx < N_BITS_PER_WORD );
   bmP->bits &= ~( 1ul << bitIdx );
 }
 
 inline U32 bmIsBitSet( const StaticBitmap* bmP, const U32 bitIdx ) {
-  assert( bitIdx < N_BITS_PER_INT );
+  assert( bitIdx < N_BITS_PER_WORD );
   return bmP->bits & ( 1ul << bitIdx );
 }
 
@@ -91,30 +98,30 @@ inline U32 bmGetFirstOne( const U32 bits ) {
 #endif
 }
 
-#define rawBitCount __builtin_popcount
-
-// This allows flexible sums of the local and base fields.
-inline U32 bmSum( const UWord bits, const U32 base ) {
 #if __WORDSIZE == 32
-  return __builtin_popcount(bits) + base;
+#define rawBitCount __builtin_popcount
 #elif __WORDSIZE == 64
-  return __builtin_popcountll(bits) + base;
+#define rawBitCount __builtin_popcountll
 #else 
   static_assert("Jollybean only supports 32- and 64-bit architectures.");
 #endif
+
+// This allows flexible sums of the local and base fields.
+inline U32 bmSum( const UWord bits, const U32 base ) {
+  return rawBitCount(bits) + base;
 }
 
 inline void vbmSetBit( VolatileBitmap* vbmA, const U32 globalBitIdx ) {
   assert( vbmA );
   assert( globalBitToBfIdx_( globalBitIdx ) < arrayGetNElems( vbmA ) );
-  assert( globalBitIdx < N_BITS_PER_INT * arrayGetNElems( vbmA ) ); 
+  assert( globalBitIdx < N_BITS_PER_WORD * arrayGetNElems( vbmA ) ); 
   vbmA[ globalBitToBfIdx_( globalBitIdx ) ] |= globalBitIdxToLocalBit_( globalBitIdx );
 }
 
 inline void vbmUnsetBit( VolatileBitmap* vbmA, const U32 globalBitIdx ) {
   assert( vbmA );
   assert( globalBitToBfIdx_( globalBitIdx ) < arrayGetNElems( vbmA ) );
-  assert( globalBitIdx < N_BITS_PER_INT * arrayGetNElems( vbmA ) ); 
+  assert( globalBitIdx < N_BITS_PER_WORD * arrayGetNElems( vbmA ) ); 
   vbmA[ globalBitToBfIdx_( globalBitIdx ) ] &= ~globalBitIdxToLocalBit_( globalBitIdx );
 }
 

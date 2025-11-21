@@ -1,223 +1,228 @@
 #include "tau.h"
-#include "data/bitfield.h"
+#include "data/bitmap.h"
 
-struct Bitfields { 
-  StaticBitfield *bf1P, *bf2P;
-  StaticBitfieldArray *bfa3P, *bfa4P;  // weird numbering to reflect # bits below
-  VolatileBitfield *vbfA;
-  U32 nBits1, nBits2, nBits3, nBits4;
+static const UWord SATURATED_WORD = -1;
+
+struct Bitmaps { 
+  StaticBitmap *bm1P, *bm2P;
+  StaticBitmapArray *bma3P, *bma4P;  // weird numbering to reflect # bits below
+  VolatileBitmap *vbmA;
+  UWord nBits1, nBits2, nBits3, nBits4;
 };
 
 static const int N_ELEMS = 100;
 
 TAU_MAIN()
 
-const U32 BIT3 = 1 << 3;
-const U32 BIT7 = 1 << 7;
-const U32 BIT28 = 1 << 28;
-const U32 CORRECT_WORD_VAL =  (1 << 3) | (1 << 7) | (1 << 28);
+const UWord BIT3 = 1 << 3;
+const UWord BIT7 = 1 << 7;
+const UWord BIT28 = 1 << 28;
+const UWord CORRECT_WORD_VAL =  BIT3 | BIT7 | BIT28;
 
-TEST_F_SETUP(Bitfields) {
+TEST_F_SETUP(Bitmaps) {
   tau->nBits1 = 10;
   tau->nBits2 = 20;
   tau->nBits3 = 255;
   tau->nBits4 = 127;
-  tau->bf1P = bfNew( GENERAL );
-  tau->bf2P = bfNew( GENERAL );
-  tau->bfa3P = bfaNew( tau->nBits3, GENERAL );
-  tau->bfa4P = bfaNew( tau->nBits4, GENERAL );
-  tau->vbfA = arrayNew( sizeof(U32), 10, GENERAL );
-  tau->vbfA[0] = 0xffffffff;  // <-- first 1
-  tau->vbfA[1] = 0xffffffff;
-  tau->vbfA[2] = 0xfffffffe;  // <-- first 0 (at bit 64)
-  tau->vbfA[3] = 0xffffffff;
-  tau->vbfA[4] = 0xffffffff;
-  tau->vbfA[5] = 0xffffffff;
-  tau->vbfA[6] = 0xffffffff;
-  tau->vbfA[7] = 0xffffffff;
-  tau->vbfA[8] = 0xffffffff;
-  tau->vbfA[9] = 0xffffffff;
+  tau->bm1P = bmNew( GENERAL );
+  tau->bm2P = bmNew( GENERAL );
+  tau->bma3P = bmaNew( tau->nBits3, GENERAL );
+  tau->bma4P = bmaNew( tau->nBits4, GENERAL );
+  tau->vbmA = arrayNew( sizeof(UWord), 10, GENERAL );
+  tau->vbmA[0] = SATURATED_WORD;  // <-- first 1
+  tau->vbmA[1] = SATURATED_WORD;
+  tau->vbmA[2] = SATURATED_WORD & ~1;  // <-- first 0 (at bit 64)
+  tau->vbmA[3] = SATURATED_WORD;
+  tau->vbmA[4] = SATURATED_WORD;
+  tau->vbmA[5] = SATURATED_WORD;
+  tau->vbmA[6] = SATURATED_WORD;
+  tau->vbmA[7] = SATURATED_WORD;
+  tau->vbmA[8] = SATURATED_WORD;
+  tau->vbmA[9] = SATURATED_WORD;
 
-  const U32 BITS_PER_BITFIELD = 32;
+  const UWord BITS_PER_BITFIELD = __WORDSIZE;
   // Iterate word by word.
-  for ( int bfIdx = 0; bfIdx <= tau->nBits1 / (sizeof(U32) * 8); ++bfIdx ) {
-    bfSetBit( tau->bf1P, BITS_PER_BITFIELD * bfIdx + 3 );
-    bfSetBit( tau->bf1P, BITS_PER_BITFIELD * bfIdx + 7 );
-    bfSetBit( tau->bf1P, BITS_PER_BITFIELD * bfIdx + 28 );
+  for ( int bmIdx = 0; bmIdx <= tau->nBits1 / (sizeof(UWord) * 8); ++bmIdx ) {
+    bmSetBit( tau->bm1P, BITS_PER_BITFIELD * bmIdx + 3 );
+    bmSetBit( tau->bm1P, BITS_PER_BITFIELD * bmIdx + 7 );
+    bmSetBit( tau->bm1P, BITS_PER_BITFIELD * bmIdx + 28 );
   }
-  for ( int bfIdx = 0; bfIdx <= tau->nBits2 / (sizeof(U32) * 8); ++bfIdx ) {
-    bfSetBit( tau->bf2P, BITS_PER_BITFIELD * bfIdx + 3 );
-    bfSetBit( tau->bf2P, BITS_PER_BITFIELD * bfIdx + 7 );
-    bfSetBit( tau->bf2P, BITS_PER_BITFIELD * bfIdx + 28 );
+  for ( int bmIdx = 0; bmIdx <= tau->nBits2 / (sizeof(UWord) * 8); ++bmIdx ) {
+    bmSetBit( tau->bm2P, BITS_PER_BITFIELD * bmIdx + 3 );
+    bmSetBit( tau->bm2P, BITS_PER_BITFIELD * bmIdx + 7 );
+    bmSetBit( tau->bm2P, BITS_PER_BITFIELD * bmIdx + 28 );
   }
-  for ( int bfIdx = 0; bfIdx <= tau->nBits3 / (sizeof(U32) * 8); ++bfIdx ) {
-    bfaSetBit( tau->bfa3P, BITS_PER_BITFIELD * bfIdx + 3 );
-    bfaSetBit( tau->bfa3P, BITS_PER_BITFIELD * bfIdx + 7 );
-    bfaSetBit( tau->bfa3P, BITS_PER_BITFIELD * bfIdx + 28 );
+  for ( int bmIdx = 0; bmIdx <= tau->nBits3 / (sizeof(UWord) * 8); ++bmIdx ) {
+    bmaSetBit( tau->bma3P, BITS_PER_BITFIELD * bmIdx + 3 );
+    bmaSetBit( tau->bma3P, BITS_PER_BITFIELD * bmIdx + 7 );
+    bmaSetBit( tau->bma3P, BITS_PER_BITFIELD * bmIdx + 28 );
   }
-  for ( int bfIdx = 0; bfIdx <= tau->nBits4 / (sizeof(U32) * 8); ++bfIdx ) {
-    bfaSetBit( tau->bfa4P, BITS_PER_BITFIELD * bfIdx + 3 );
-    bfaSetBit( tau->bfa4P, BITS_PER_BITFIELD * bfIdx + 7 );
-    bfaSetBit( tau->bfa4P, BITS_PER_BITFIELD * bfIdx + 28 );
+  for ( int bmIdx = 0; bmIdx <= tau->nBits4 / (sizeof(UWord) * 8); ++bmIdx ) {
+    bmaSetBit( tau->bma4P, BITS_PER_BITFIELD * bmIdx + 3 );
+    bmaSetBit( tau->bma4P, BITS_PER_BITFIELD * bmIdx + 7 );
+    bmaSetBit( tau->bma4P, BITS_PER_BITFIELD * bmIdx + 28 );
   }
 }
 
-TEST_F_TEARDOWN(Bitfields) {
+TEST_F_TEARDOWN(Bitmaps) {
   memRst( GENERAL );
 }
 
-TEST_F(Bitfields, getBitfield) {
-  // StaticBitfield from bitfield array 3
-  StaticBitfield* bfPa = bfaGetBitfield( tau->bfa3P, 14 );
-  CHECK_EQ( bfPa->bits, CORRECT_WORD_VAL );
+TEST_F(Bitmaps, getBitmap) {
+  // StaticBitmap from bitmap array 3
+  StaticBitmap* bmPa = bmaGetBitmap( tau->bma3P, 14 );
+  CHECK_EQ( bmPa->bits, CORRECT_WORD_VAL );
 
-  // StaticBitfield from bitfield array 4
-  StaticBitfield* bfPb = bfaGetBitfield( tau->bfa4P, 40 );
-  CHECK_EQ( bfPb->bits, CORRECT_WORD_VAL );
+  // StaticBitmap from bitmap array 4
+  StaticBitmap* bmPb = bmaGetBitmap( tau->bma4P, 40 );
+  CHECK_EQ( bmPb->bits, CORRECT_WORD_VAL );
 }
 
-TEST_F(Bitfields, getBits) {
-  // StaticBitfield from bitfield array 3
-  U32 bits1 = bfaGetBits( tau->bfa3P, 14 );
+TEST_F(Bitmaps, getBits) {
+  // StaticBitmap from bitmap array 3
+  UWord bits1 = bmaGetBits( tau->bma3P, 14 );
   CHECK_EQ( bits1, CORRECT_WORD_VAL );
 
-  // StaticBitfield from bitfield array 4
-  U32 bits2 = bfaGetBits( tau->bfa4P, 14 );
+  // StaticBitmap from bitmap array 4
+  UWord bits2 = bmaGetBits( tau->bma4P, 14 );
   CHECK_EQ( bits2, CORRECT_WORD_VAL );
 }
 
-TEST_F(Bitfields, setBitBothWays) {
-  StaticBitfield* bfP = bfaGetBitfield( tau->bfa3P, 14 );
-  bfSetBit( bfP, 1 );
-  bfaSetBit( tau->bfa3P, 31 );
-  const static U32 EXPECTED_ANSWER = CORRECT_WORD_VAL | ( 1 << 31 ) | (1 << 1);
-  CHECK_EQ( bfaGetBits( tau->bfa3P, 0 ), EXPECTED_ANSWER );
-  CHECK_EQ( bfP->bits, EXPECTED_ANSWER );
+TEST_F(Bitmaps, setBitBothWays) {
+  StaticBitmap* bmP = bmaGetBitmap( tau->bma3P, 14 );
+  bmSetBit( bmP, 1 );
+  bmaSetBit( tau->bma3P, 31 );
+  const static UWord EXPECTED_ANSWER = CORRECT_WORD_VAL | ( 1 << 31 ) | (1 << 1);
+  CHECK_EQ( bmaGetBits( tau->bma3P, 0 ), EXPECTED_ANSWER );
+  CHECK_EQ( bmP->bits, EXPECTED_ANSWER );
 }
 
-TEST_F(Bitfields, bfUnsetBit) {
-  StaticBitfield* bfP = bfaGetBitfield( tau->bfa3P, 14 );
-  bfUnsetBit( bfP, 7 );
-  const static U32 EXPECTED_ANSWER = CORRECT_WORD_VAL & ~BIT7; // <-- this is correct
-  CHECK_EQ( bfP->bits, EXPECTED_ANSWER );
-  CHECK_EQ( bfaGetBits( tau->bfa3P, 14 ), EXPECTED_ANSWER );
+TEST_F(Bitmaps, bmUnsetBit) {
+  StaticBitmap* bmP = bmaGetBitmap( tau->bma3P, 14 );
+  bmUnsetBit( bmP, 7 );
+  const static UWord EXPECTED_ANSWER = CORRECT_WORD_VAL & ~BIT7; // <-- this is correct
+  CHECK_EQ( bmP->bits, EXPECTED_ANSWER );
+  CHECK_EQ( bmaGetBits( tau->bma3P, 14 ), EXPECTED_ANSWER );
 }
 
-TEST_F(Bitfields, bfIsBitSet ) {
+TEST_F(Bitmaps, bmIsBitSet ) {
   for ( int i = 0; i < 32; ++i ) {
     if ( i == 3 || i == 7 || i == 28 ) {
-      CHECK_NE( bfIsBitSet( tau->bf1P, i ), 0 );
+      CHECK_NE( bmIsBitSet( tau->bm1P, i ), 0 );
     }
     else {
-      CHECK_EQ( bfIsBitSet( tau->bf1P, i ), 0 );
+      CHECK_EQ( bmIsBitSet( tau->bm1P, i ), 0 );
     }
   }
 }
 
-TEST_F(Bitfields, bfaIsBitSet ) {
+TEST_F(Bitmaps, bmaIsBitSet ) {
   for ( int i = 0; i < 8; ++i ) {
     for (int j = 0; j < 32; ++j ) {
       // Because I don't want to do extra work:
-      U32 expVal = 32 * i + j;
+      UWord expVal = 32 * i + j;
       if ( expVal >= 255 ) {
         goto leaveTestCase1;
       }
       if ( j == 3 || j == 7 || j == 28 ) {
-        CHECK_NE( bfaIsBitSet( tau->bfa3P, expVal), 0 );
+        CHECK_NE( bmaIsBitSet( tau->bma3P, expVal), 0 );
       }
       else {
-        CHECK_EQ( bfaIsBitSet( tau->bfa3P, expVal), 0 );
+        CHECK_EQ( bmaIsBitSet( tau->bma3P, expVal), 0 );
       }
     }
   }
 leaveTestCase1:
 }
 
-TEST_F(Bitfields, bfaIsBitSetEx ) {
-  StaticBitfield* bfP;
+TEST_F(Bitmaps, bmaIsBitSetEx ) {
+  StaticBitmap* bmP;
   for ( int i = 0; i < 8; ++i ) {
     for (int j = 0; j < 32; ++j ) {
       // Because I don't want to do extra work:
-      U32 expVal = 32 * i + j;
+      UWord expVal = 32 * i + j;
       if ( expVal >= 255 ) {
         goto leaveTestCase2;
       }
       if ( j == 3 || j == 7 || j == 28 ) {
-        CHECK_NE( bfaIsBitSetEx( tau->bfa3P, expVal, &bfP ), 0 );
+        CHECK_NE( bmaIsBitSetEx( tau->bma3P, expVal, &bmP ), 0 );
       }
       else {
-        CHECK_EQ( bfaIsBitSetEx( tau->bfa3P, expVal, &bfP ), 0 );
+        CHECK_EQ( bmaIsBitSetEx( tau->bma3P, expVal, &bmP ), 0 );
       }
     }
   }
 leaveTestCase2:
 }
 
-TEST_F(Bitfields, bfGetFirstZero) {
-  CHECK_EQ( bfGetFirstZero( tau->bf1P->bits ), 0 );
-  bfSetBit( tau->bf1P, 0 );
-  CHECK_EQ( bfGetFirstZero( tau->bf1P->bits ), 1 );
+TEST_F(Bitmaps, bmGetFirstZero) {
+  CHECK_EQ( bmGetFirstZero( tau->bm1P->bits ), 0 );
+  bmSetBit( tau->bm1P, 0 );
+  CHECK_EQ( bmGetFirstZero( tau->bm1P->bits ), 1 );
 }
 
-TEST_F(Bitfields, bfGetFirstOne) {
-  CHECK_EQ( bfGetFirstOne( tau->bf1P->bits ), 3 );
-  bfUnsetBit( tau->bf1P, 3 );
-  CHECK_EQ( bfGetFirstOne( tau->bf1P->bits ), 7 );
+TEST_F(Bitmaps, bmGetFirstOne) {
+  CHECK_EQ( bmGetFirstOne( tau->bm1P->bits ), 3 );
+  bmUnsetBit( tau->bm1P, 3 );
+  CHECK_EQ( bmGetFirstOne( tau->bm1P->bits ), 7 );
 }
 
-TEST_F(Bitfields, bfSum) {
-  CHECK_EQ( bfSum( tau->bf1P->bits, tau->bf1P->base ), 3 );
-  tau->bf1P->base = 100;
-  CHECK_EQ( bfSum( tau->bf1P->bits, tau->bf1P->base ), 103 );
+TEST_F(Bitmaps, bmSum) {
+  CHECK_EQ( bmSum( tau->bm1P->bits, tau->bm1P->base ), 3 );
+  tau->bm1P->base = 100;
+  CHECK_EQ( bmSum( tau->bm1P->bits, tau->bm1P->base ), 103 );
 }
 
-TEST_F(Bitfields, bfaUnsetBit) {
-  CHECK_TRUE( bfaIsBitSet( tau->bfa3P, 35) );
-  bfaUnsetBit( tau->bfa3P, 35 );
-  CHECK_FALSE( bfaIsBitSet( tau->bfa3P, 35) );
+TEST_F(Bitmaps, bmaUnsetBit) {
+  CHECK_TRUE( bmaIsBitSet( tau->bma3P, 35) );
+  bmaUnsetBit( tau->bma3P, 35 );
+  CHECK_FALSE( bmaIsBitSet( tau->bma3P, 35) );
 }
 
 
-TEST_F(Bitfields, bfaClone ) {
-  StaticBitfieldArray* newBfaP = bfaClone( tau->bfa3P, GENERAL );
-  for (int i = 0; i < arrayGetNElems( tau->bfa3P->bfA ); ++i ) {
-    CHECK_EQ( newBfaP->bfA[i].bits, tau->bfa3P->bfA[i].bits );
-    CHECK_EQ( newBfaP->bfA[i].base, tau->bfa3P->bfA[i].base );
+TEST_F(Bitmaps, bmaClone ) {
+  StaticBitmapArray* newBfaP = bmaClone( tau->bma3P, GENERAL );
+  for (int i = 0; i < arrayGetNElems( tau->bma3P->bmA ); ++i ) {
+    CHECK_EQ( newBfaP->bmA[i].bits, tau->bma3P->bmA[i].bits );
+    CHECK_EQ( newBfaP->bmA[i].base, tau->bma3P->bmA[i].base );
   }
 }
 
-TEST_F(Bitfields, rawBitCount ) {
-  for ( U32 bf = 0, i = 0; i < 32; ++i ) {
-    CHECK_EQ( rawBitCount(bf), i );
-    bf |= 1 << i;
-    CHECK_EQ( rawBitCount(bf), i + 1);
+TEST_F(Bitmaps, rawBitCount ) {
+  for ( UWord bm = 0, i = 0; i < 31; ++i ) {
+    CHECK_EQ( rawBitCount(bm), i );
+    bm |= 1 << i;
+    CHECK_EQ( rawBitCount(bm), i + 1);
   }
 }
 
-TEST_F(Bitfields, vbfSetBit) {
-  CHECK_EQ( tau->vbfA[2], 0xfffffffe );
-  vbfSetBit( tau->vbfA, 64 );
-  CHECK_EQ( tau->vbfA[2], 0xffffffff );
+TEST_F(Bitmaps, vbmSetBit) {
+  static const U32 BIT_NUMBER = 2 * __WORDSIZE;
+  CHECK_EQ( tau->vbmA[2], SATURATED_WORD & ~(1ULL) );  // 0xf...fe  for both 32- and 64-bit
+  vbmSetBit( tau->vbmA, BIT_NUMBER );
+  CHECK_EQ( tau->vbmA[2], SATURATED_WORD );
 }
 
-TEST_F(Bitfields, vbfUnsetBit) {
-  CHECK_EQ( tau->vbfA[7], 0xffffffff );
-  vbfUnsetBit( tau->vbfA, 255 );
-  CHECK_EQ( tau->vbfA[7], 0x7fffffff );
+#if 1
+TEST_F(Bitmaps, vbmUnsetBit) {
+  CHECK_EQ( tau->vbmA[7], SATURATED_WORD );
+  vbmUnsetBit( tau->vbmA, 7 * __WORDSIZE );
+  CHECK_EQ( tau->vbmA[7], SATURATED_WORD - 1 );
 }
 
-TEST_F(Bitfields, vbfGetFirstZero) {
-  CHECK_EQ( vbfGetFirstZero( (const VolatileBitfield*) tau->vbfA ), 64);
-  vbfSetBit( tau->vbfA, 64 );
-  CHECK_EQ( vbfGetFirstZero( (const VolatileBitfield*) tau->vbfA ), -1);
+TEST_F(Bitmaps, vbmGetFirstZero) {
+  CHECK_EQ( vbmGetFirstZero( (const VolatileBitmap*) tau->vbmA ), 2 * __WORDSIZE);
+  vbmSetBit( tau->vbmA, 2 * __WORDSIZE);
+  CHECK_EQ( vbmGetFirstZero( (const VolatileBitmap*) tau->vbmA ), -1);
 }
 
-TEST_F(Bitfields, vbfGetFirstOne) {
-  CHECK_EQ( vbfGetFirstOne( (const VolatileBitfield*) tau->vbfA ), 0);
-  tau->vbfA[0] = 0;
-  CHECK_EQ( vbfGetFirstOne( (const VolatileBitfield*) tau->vbfA ), 32);
+TEST_F(Bitmaps, vbmGetFirstOne) {
+  CHECK_EQ( vbmGetFirstOne( (const VolatileBitmap*) tau->vbmA ), 0);
+  tau->vbmA[0] = 0;
+  CHECK_EQ( vbmGetFirstOne( (const VolatileBitmap*) tau->vbmA ), __WORDSIZE);
   for (int i = 0; i < 10; ++i ) {
-    tau->vbfA[i] = 0;
+    tau->vbmA[i] = 0;
   }
-  CHECK_EQ( vbfGetFirstOne( (const VolatileBitfield*) tau->vbfA ), -1);
+  CHECK_EQ( vbmGetFirstOne( (const VolatileBitmap*) tau->vbmA ), -1);
 }
+#endif
