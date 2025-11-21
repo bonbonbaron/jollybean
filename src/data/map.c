@@ -15,16 +15,15 @@ const static U32 BITCOUNT_MASK[32] = {
 Map* mapNew( MapElemType elemType, const U8 elemSz, const Key nElems, const PoolId poolId) {
 	assert (elemSz && nElems);
   Map* mapP = memAdd(sizeof(Map), poolId );
-  mapP->bmaP = bmaNew( nElems /* assume max bit == nElems for now */, poolId );
+  mapP->sbmP = sbmNew( nElems /* assume max bit == nElems for now */, poolId );
 	mapP->mapA = arrayNew(elemSz, nElems, poolId );
-  mapP->population = 0;
   mapP->elemType = elemType;
   return mapP;
 }
 
 Key mapGetIndex(const Map *mapP, const Key key) {
-	const StableBitmap* bmP = bmaGetBitmap( mapP->bmaP, key );
-  return __builtin_popcount( bmP->bits & BITCOUNT_MASK[ key & LOCAL_BIT_MASK ] ) + bmP->base;
+	const BasedWord* basedWordP = sbmGetBasedWord( mapP->sbmP, key );
+  return __builtin_popcount( basedWordP->bits & BITCOUNT_MASK[ key & LOCAL_BIT_MASK ] ) + basedWordP->base;
 }
 
 inline static void* _getElemP(const Map *mapP, const Key key) {
@@ -38,15 +37,15 @@ inline static U32 _getMapElemSz(const Map *mapP) {
 
 U32 mapHasKey(const Map* mP, const Key key ) {
   assert (mP);
-  return bmaIsBitSet( mP->bmaP, key );
+  return sbmIsBitSet( mP->sbmP, key );
 }
 
 void* mapGet(const Map *mapP, const Key key) {
   assert (mapP );
-  StableBitmap* bmP;
+  BasedWord* basedWordP;
   // This "Ex" function lets us see if a bit is set without having to reload its bitfield afterward.
-	if ( bmaIsBitSetEx( mapP->bmaP, key, &bmP ) ) {
-    U32 popcount = bmSum( bmP->bits & BITCOUNT_MASK[ key ], bmP->base);
+	if ( sbmIsBitSetEx( mapP->sbmP, key, &basedWordP ) ) {
+    U32 popcount = bmSum( basedWordP->bits & BITCOUNT_MASK[ key ], basedWordP->base);
 		return _fast_arrayGetElemByIdx(mapP->mapA, popcount);
 	}
 	return NULL;
@@ -63,44 +62,45 @@ static U32 countBytesToShiftOver(const Map *mapP, const Key key, void **elemPP, 
   *elemPP = _getElemP(mapP, key);
   if (*elemPP) {
     U32 keyElemIdx = mapGetIndex( mapP, key );
-    if (_idxIsPopulated(mapP->population, keyElemIdx)) {
+    if (_idxIsPopulated(mapP->sbmP->population, keyElemIdx)) {
       U32 mapElemSz = _getMapElemSz(mapP);
       *nextElemPP = (U8*) *elemPP + mapElemSz;
-      return (mapP->population - keyElemIdx) * mapElemSz;
+      return (mapP->sbmP->population - keyElemIdx) * mapElemSz;
     }
   }
   return 0;
 }
 
 void mapSet(Map *mapP, const Key key, const void *valP) {
-  assert (mapP && key && valP);
-  assert (mapP->population < arrayGetNElems(mapP->mapA));
+  assert (mapP && valP);
+  assert (mapP->sbmP->population < arrayGetNElems(mapP->mapA));
 	void *elemP, *nextElemP;
   U32 nBytesToMove = countBytesToShiftOver(mapP, key, &elemP, &nextElemP);
   if (nBytesToMove) {
     memmove(nextElemP, (const void*) elemP, nBytesToMove);
+    printf("moving %d bytes for key %d and val %d\n", nBytesToMove, key, *((U32*)valP));
   }
   /* Write value in array. */
   memcpy(elemP, valP, _getMapElemSz(mapP));
-  bmaSetBit( mapP->bmaP, key );
+  sbmSetBit( mapP->sbmP, key );
 }
 
 void mapRem(Map *mapP, const Key key) {
-  assert (mapP && key);
+  assert (mapP);
 	void *elemP, *nextElemP;
   U32 nBytesToMove = countBytesToShiftOver( mapP, key, &elemP, &nextElemP );
   if (nBytesToMove) {
     nBytesToMove -= _getMapElemSz(mapP);
     memmove(elemP, (const void*) nextElemP, nBytesToMove);
   }
-  bmaUnsetBit( mapP->bmaP, key );
+  sbmUnsetBit( mapP->sbmP, key );
 }
 
 void mapCopyKeys(Map *dstMP, Map *srcMP) {
   assert (srcMP);
   assert (dstMP);
-  assert( !dstMP->bmaP );  // Don't want to leak memory.
-  dstMP->bmaP = bmaClone(srcMP->bmaP, GENERAL);
+  assert( !dstMP->sbmP );  // Don't want to leak memory.
+  dstMP->sbmP = sbmClone(srcMP->sbmP, GENERAL);
 }
 
 Map* mapGetNestedMapP(Map *outerMP, Key mapKey) {

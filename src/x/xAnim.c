@@ -30,7 +30,7 @@ XProcMsgFuncDef_(Anim) {
     // Avoid offsetting any animation more than once.
     if (!(animStripP->flags & IS_OFFSET)) {
       animStripP->flags |= IS_OFFSET;
-      animStripEndP = animStripP + animMP->population;
+      animStripEndP = animStripP + animMP->sbmP->population;
       // Offset all the frames' rectangles in this strip to reflect their texture atlas offsets.
       for (; animStripP < animStripEndP; ++animStripP) {
         frameP = animStripP->frameA;

@@ -456,7 +456,7 @@ static void _updateSrcRects(XRender *xP, Atlas *atlasP) {
 
   /* TODO do away with subcomp owner nastiness
      SubcompOwner *scoP = xP->system.subcompOwnerMP->mapA;
-     SubcompOwner *scoEndP = scoP + xP->system.subcompOwnerMP->population;
+     SubcompOwner *scoEndP = scoP + xP->system.subcompOwnerMP->sbmP->population;
 
      RectOffset rectOffset = {0};
      Image *imgP;
@@ -465,7 +465,7 @@ static void _updateSrcRects(XRender *xP, Atlas *atlasP) {
   if (xP->system.flags & RENDER_SYS_OWNS_SRC_AND_OFFSET) {
   // Copy the flags from one map to another. It's a cheat code.
   mapCopyKeys(xP->srcRectMP, xP->dstRectMP);
-  assert(xP->srcRectMP->population == xP->dstRectMP->population); 
+  assert(xP->srcRectMP->sbmP->population == xP->dstRectMP->sbmP->population); 
   assert(arrayGetElemSz(xP->srcRectMP->mapA) == arrayGetElemSz(xP->dstRectMP->mapA)); 
   }
   // Update all source rectangles' XY coordinates to their global positions in texture atlas.

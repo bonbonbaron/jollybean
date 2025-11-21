@@ -1,65 +1,65 @@
 #include "data/bitmap.h"
 
-StableBitmap* bmNew( const PoolId poolId ) {
-  StableBitmap* bmP = memAdd( sizeof( StableBitmap ), poolId );
+BasedWord* bmNew( const PoolId poolId ) {
+  BasedWord* bmP = memAdd( sizeof( BasedWord ), poolId );
   bmP->bits = bmP->base = 0;
   return bmP;
 }
 
-StableBitmapArray* bmaNew( const U32 nBits, const PoolId poolId ) {
-  StableBitmapArray* bmaP = (StableBitmapArray*) memAdd( sizeof( StableBitmapArray ), poolId );
+StableBitmap* sbmNew( const U32 nBits, const PoolId poolId ) {
+  StableBitmap* sbmP = (StableBitmap*) memAdd( sizeof( StableBitmap ), poolId );
   U32 nBitmaps = globalBitToBfIdx_( (nBits - 1) ) + 1;
-  bmaP->bmA = arrayNew( sizeof( StableBitmap ), nBitmaps, poolId );
-  memset( bmaP->bmA, 0, sizeof( StableBitmap ) * nBitmaps );
-  bmaP->maxBitIdx = nBits - 1;
-  bmaP->population = 0;
-  return bmaP;
+  sbmP->bmA = arrayNew( sizeof( BasedWord ), nBitmaps, poolId );
+  memset( sbmP->bmA, 0, sizeof( BasedWord ) * nBitmaps );
+  sbmP->maxBitIdx = nBits - 1;
+  sbmP->population = 0;
+  return sbmP;
 }
 
-void bmaSetBit(StableBitmapArray* bmaP, const U32 bitIdx ) {
-  assert( bmaP );
-  assert( bmaP->bmA );
-  assert( bitIdx < N_BITS_PER_WORD * arrayGetNElems( bmaP->bmA ) );
-  assert( bitIdx <= bmaP->maxBitIdx );
+void sbmSetBit(StableBitmap* sbmP, const U32 bitIdx ) {
+  assert( sbmP );
+  assert( sbmP->bmA );
+  assert( bitIdx < N_BITS_PER_WORD * arrayGetNElems( sbmP->bmA ) );
+  assert( bitIdx <= sbmP->maxBitIdx );
   // Actual logic
   U32 bmIdx = globalBitToBfIdx_( bitIdx );
-  assert( bmIdx < arrayGetNElems( bmaP->bmA ) );
-  bmaP->bmA[bmIdx].bits |= globalBitIdxToLocalBit_(bitIdx);
+  assert( bmIdx < arrayGetNElems( sbmP->bmA ) );
+  sbmP->bmA[bmIdx].bits |= globalBitIdxToLocalBit_(bitIdx);
   // Increment the bases of all the bitfields above ours. 
-  const U32 nBitmaps = arrayGetNElems( bmaP->bmA );
+  const U32 nBitmaps = arrayGetNElems( sbmP->bmA );
   while (++bmIdx < nBitmaps ) {
-    ++bmaP->bmA[bmIdx].base;
+    ++sbmP->bmA[bmIdx].base;
   }
-  ++bmaP->population;
-  assert(bmaP->population <= ( bmaP->maxBitIdx + 1 ));
+  ++sbmP->population;
+  assert(sbmP->population <= ( sbmP->maxBitIdx + 1 ));
 }
 
-void bmaUnsetBit( StableBitmapArray* bmaP, const U32 bitIdx ) {
-  assert( bmaP );
-  assert( bmaP->bmA );
-  assert( bitIdx < N_BITS_PER_WORD * arrayGetNElems( bmaP->bmA ) );
-  assert( bitIdx <= bmaP->maxBitIdx );
-  assert( bmaP->population );
+void sbmUnsetBit( StableBitmap* sbmP, const U32 bitIdx ) {
+  assert( sbmP );
+  assert( sbmP->bmA );
+  assert( bitIdx < N_BITS_PER_WORD * arrayGetNElems( sbmP->bmA ) );
+  assert( bitIdx <= sbmP->maxBitIdx );
+  assert( sbmP->population );
   // Actual logic
   U32 bmIdx = globalBitToBfIdx_( bitIdx );
-  assert( bmIdx < arrayGetNElems( bmaP->bmA ) );
-  bmaP->bmA[bmIdx].bits &= ~globalBitIdxToLocalBit_(bitIdx);
+  assert( bmIdx < arrayGetNElems( sbmP->bmA ) );
+  sbmP->bmA[bmIdx].bits &= ~globalBitIdxToLocalBit_(bitIdx);
   // Increment the bases of all the bitfields above ours. 
-  const U32 nBitmaps = arrayGetNElems( bmaP->bmA );
+  const U32 nBitmaps = arrayGetNElems( sbmP->bmA );
   while (++bmIdx < nBitmaps ) {
-    --bmaP->bmA[bmIdx].base;
+    --sbmP->bmA[bmIdx].base;
   }
-  --bmaP->population;
+  --sbmP->population;
 }
 
 // The reason we don't allocate the bitfield array for the developer is because they must 
-// be responsible for which memory pool their destinaton BFA is in.
-StableBitmapArray* bmaClone( const StableBitmapArray* srcBfaP, const PoolId poolId ) {
-  assert (srcBfaP);
-  assert (srcBfaP->bmA);
-  StableBitmapArray* newBfaP = bmaNew( srcBfaP->maxBitIdx, poolId );
-  memcpy(newBfaP->bmA, srcBfaP->bmA, arrayGetNElems( srcBfaP->bmA ) * arrayGetElemSz( srcBfaP->bmA ) );
-  return newBfaP;
+// be responsible for which memory pool their destinaton SBM is in.
+StableBitmap* sbmClone( const StableBitmap* srcSbmP, const PoolId poolId ) {
+  assert (srcSbmP);
+  assert (srcSbmP->bmA);
+  StableBitmap* newSbmP = sbmNew( srcSbmP->maxBitIdx, poolId );
+  memcpy(newSbmP->bmA, srcSbmP->bmA, arrayGetNElems( srcSbmP->bmA ) * arrayGetElemSz( srcSbmP->bmA ) );
+  return newSbmP;
 }
 
 #if __WORDSIZE == 32
@@ -71,49 +71,49 @@ static_assert(0, "Jollybean only supports 32- and 64-bit architectures.");
 #endif
 
 S32 vbmGetFirstZero( const VolatileBitmap* vbmA ) {
-  VolatileBitmap* bmP = (VolatileBitmap*) vbmA;
-  const VolatileBitmap* bmEndP = bmP + arrayGetNElems( vbmA );
-  for( ; (const VolatileBitmap*) bmP < bmEndP; ++bmP ) {
-    if ( *bmP != SATURATED_WORD ) {
-      return bmGetFirstZero( *bmP ) + N_BITS_PER_WORD * ( bmP - vbmA );
+  UWord* wordP = (UWord*) vbmA;
+  const UWord* bmEndP = wordP + arrayGetNElems( vbmA );
+  for( ; (const UWord*) wordP < bmEndP; ++wordP ) {
+    if ( *wordP != SATURATED_WORD ) {
+      return bmGetFirstZero( *wordP ) + N_BITS_PER_WORD * ( wordP - vbmA );
     }
   }
   return -1;
 }
 
-S32 vbmGetFirstOne( const VolatileBitmap* vbmA ) {
-  VolatileBitmap* bmP = (VolatileBitmap*) vbmA;
-  const VolatileBitmap* bmEndP = bmP + arrayGetNElems( vbmA );
-  for( ; (const VolatileBitmap*) bmP < bmEndP; ++bmP ) {
-    if ( *bmP == 0 ) {
+S32 vbmGetFirstOne( const UWord* vbmA ) {
+  UWord* wordP = (UWord*) vbmA;
+  const UWord* bmEndP = wordP + arrayGetNElems( vbmA );
+  for( ; (const UWord*) wordP < bmEndP; ++wordP ) {
+    if ( *wordP == 0 ) {
       continue;
     }
-    return bmGetFirstOne( *bmP ) + N_BITS_PER_WORD * ( bmP - vbmA );
+    return bmGetFirstOne( *wordP ) + N_BITS_PER_WORD * ( wordP - vbmA );
   }
   return -1;
 }
 
 S32 vbmSetFirstZero( const VolatileBitmap* vbmA ) {
-  VolatileBitmap* bmP = (VolatileBitmap*) vbmA;
-  const VolatileBitmap* bmEndP = bmP + arrayGetNElems( vbmA );
-  for( ; (const VolatileBitmap*) bmP < bmEndP; ++bmP ) {
-    if ( *bmP != SATURATED_WORD ) {
-      U32 localBit = bmGetFirstZero( *bmP );
-      bmSetBit( bmP, localBit );
-      return localBit + N_BITS_PER_WORD * ( bmP - vbmA );
+  UWord* wordP = (UWord*) vbmA;
+  const UWord* bmEndP = wordP + arrayGetNElems( vbmA );
+  for( ; (const UWord*) wordP < bmEndP; ++wordP ) {
+    if ( *wordP != SATURATED_WORD ) {
+      U32 localBit = bmGetFirstZero( *wordP );
+      bmSetBit( wordP, localBit );
+      return localBit + N_BITS_PER_WORD * ( wordP - vbmA );
     }
   }
   return -1;
 }
 
 S32 vbmUnsetFirstOne( const VolatileBitmap* vbmA ) {
-  VolatileBitmap* bmP = (VolatileBitmap*) vbmA;
-  const VolatileBitmap* bmEndP = bmP + arrayGetNElems( vbmA );
-  for( ; (const VolatileBitmap*) bmP < bmEndP; ++bmP ) {
-    if ( *bmP != 0 ) {
-      U32 localBit = bmGetFirstOne( *bmP );
-      bmUnsetBit( bmP, localBit );
-      return localBit + N_BITS_PER_WORD * ( bmP - vbmA );
+  UWord* wordP = (UWord*) vbmA;
+  const UWord* bmEndP = wordP + arrayGetNElems( vbmA );
+  for( ; (const UWord*) wordP < bmEndP; ++wordP ) {
+    if ( *wordP != 0 ) {
+      U32 localBit = bmGetFirstOne( *wordP );
+      bmUnsetBit( wordP, localBit );
+      return localBit + N_BITS_PER_WORD * ( wordP - vbmA );
     }
   }
   return -1;

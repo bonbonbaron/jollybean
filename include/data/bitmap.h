@@ -19,63 +19,63 @@
 typedef UWord VolatileBitmap; // This doesn't get a special array struct since it can have a raw array.
 
 // Static bitmaps are those which you set once, and then you *at least _almost_* never touch it again.
-typedef struct StableBitmap {
+typedef struct BasedWord {
   UWord bits;
   UWord base;
-} StableBitmap;
+} BasedWord;
 
-typedef struct StableBitmapArray {
-  StableBitmap* bmA;
+typedef struct StableBitmap {
+  BasedWord* bmA;
   U32 maxBitIdx;
   U32 population;
-} StableBitmapArray;
+} StableBitmap;
 
-StableBitmap* bmNew( const PoolId poolId );
-StableBitmapArray* bmaNew( const U32 nBits, const PoolId poolId );
+BasedWord* bmNew( const PoolId poolId );
+StableBitmap* sbmNew( const U32 nBits, const PoolId poolId );
 
-inline StableBitmap* bmaGetBitmap( const StableBitmapArray* bmaP, const U32 globalBitIdx ) {
-  assert( bmaP );
-  assert( bmaP->bmA );
-  assert( globalBitIdx <= bmaP->maxBitIdx );
-  assert( globalBitToBfIdx_( globalBitIdx ) < arrayGetNElems( bmaP->bmA ) );
-  return &bmaP->bmA[ globalBitToBfIdx_( globalBitIdx ) ];
+inline BasedWord* sbmGetBasedWord( const StableBitmap* sbmP, const U32 globalBitIdx ) {
+  assert( sbmP );
+  assert( sbmP->bmA );
+  assert( globalBitIdx <= sbmP->maxBitIdx );
+  assert( globalBitToBfIdx_( globalBitIdx ) < arrayGetNElems( sbmP->bmA ) );
+  return &sbmP->bmA[ globalBitToBfIdx_( globalBitIdx ) ];
 }
 
-inline UWord bmaGetBits( const StableBitmapArray* bmaP, const U32 globalBitIdx ) {
-  return bmaGetBitmap( bmaP, globalBitIdx )->bits;
+inline UWord sbmGetBits( const StableBitmap* sbmP, const U32 globalBitIdx ) {
+  return sbmGetBasedWord( sbmP, globalBitIdx )->bits;
 }
 
-inline void bmSetBit(StableBitmap* bmP, const U32 bitIdx ) {
+inline void bmSetBit(UWord *wordP, const U32 bitIdx ) {
   assert( bitIdx < N_BITS_PER_WORD );
-  bmP->bits |= ( 1ULL << bitIdx );
+  *wordP |= ( 1ULL << bitIdx );
 }
 
-inline void bmUnsetBit(StableBitmap* bmP, const U32 bitIdx ) {
+inline void bmUnsetBit(UWord *wordP, const U32 bitIdx ) {
   assert( bitIdx < N_BITS_PER_WORD );
-  bmP->bits &= ~( 1ULL << bitIdx );
+  *wordP &= ~( 1ULL << bitIdx );
 }
 
-inline U32 bmIsBitSet( const StableBitmap* bmP, const U32 bitIdx ) {
+inline U32 bmIsBitSet( const UWord* wordP, const U32 bitIdx ) {
   assert( bitIdx < N_BITS_PER_WORD );
-  return bmP->bits & ( 1ULL << bitIdx );
+  return *wordP & ( 1ULL << bitIdx );
 }
 
-inline U32 bmaIsBitSet( const StableBitmapArray* bmaP, const U32 globalBitIdx ) {
-  assert( bmaP );
-  assert( bmaP->bmA );
-  assert( globalBitIdx <= bmaP->maxBitIdx );
-  assert( globalBitToBfIdx_( globalBitIdx ) < arrayGetNElems( bmaP->bmA ) );
-  return bmaGetBitmap( bmaP, globalBitIdx )->bits & globalBitIdxToLocalBit_( globalBitIdx );
+inline U32 sbmIsBitSet( const StableBitmap* sbmP, const U32 globalBitIdx ) {
+  assert( sbmP );
+  assert( sbmP->bmA );
+  assert( globalBitIdx <= sbmP->maxBitIdx );
+  assert( globalBitToBfIdx_( globalBitIdx ) < arrayGetNElems( sbmP->bmA ) );
+  return sbmGetBasedWord( sbmP, globalBitIdx )->bits & globalBitIdxToLocalBit_( globalBitIdx );
 }
 
-inline U32 bmaIsBitSetEx( const StableBitmapArray* bmaP,  const U32 globalBitIdx, StableBitmap** bmPP) {
-  assert( bmaP );
-  assert( bmPP );
-  assert( bmaP->bmA );
-  assert( globalBitIdx <= bmaP->maxBitIdx );
-  assert( globalBitToBfIdx_( globalBitIdx ) < arrayGetNElems( bmaP->bmA ) );
-  *bmPP = &bmaP->bmA[ globalBitToBfIdx_( globalBitIdx ) ];
-  return (*bmPP)->bits & globalBitIdxToLocalBit_( globalBitIdx );
+inline U32 sbmIsBitSetEx( const StableBitmap* sbmP,  const U32 globalBitIdx, BasedWord** basedWordPP) {
+  assert( sbmP );
+  assert( basedWordPP );
+  assert( sbmP->bmA );
+  assert( globalBitIdx <= sbmP->maxBitIdx );
+  assert( globalBitToBfIdx_( globalBitIdx ) < arrayGetNElems( sbmP->bmA ) );
+  *basedWordPP = &sbmP->bmA[ globalBitToBfIdx_( globalBitIdx ) ];
+  return (*basedWordPP)->bits & globalBitIdxToLocalBit_( globalBitIdx );
 }
 
 inline U32 bmGetFirstZero( const UWord bits ) {
@@ -124,9 +124,9 @@ inline void vbmUnsetBit( VolatileBitmap* vbmA, const U32 globalBitIdx ) {
   assert( globalBitIdx < N_BITS_PER_WORD * arrayGetNElems( vbmA ) ); 
   vbmA[ globalBitToBfIdx_( globalBitIdx ) ] &= ~globalBitIdxToLocalBit_( globalBitIdx );
 }
-void bmaSetBit(StableBitmapArray* bmaP, const U32 bitIdx );
-void bmaUnsetBit(StableBitmapArray* bmaP, const U32 bitIdx );
-StableBitmapArray* bmaClone( const StableBitmapArray* srcBfaP, const PoolId poolId );
+void sbmSetBit(StableBitmap* sbmP, const U32 bitIdx );
+void sbmUnsetBit(StableBitmap* sbmP, const U32 bitIdx );
+StableBitmap* sbmClone( const StableBitmap* srcBfaP, const PoolId poolId );
 S32 vbmGetFirstZero( const VolatileBitmap* vbmA );
 S32 vbmGetFirstOne( const VolatileBitmap* vbmA );
 S32 vbmSetFirstZero( const VolatileBitmap* vbmA );
