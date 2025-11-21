@@ -29,7 +29,7 @@ typedef enum {
 } MapElemType;
 
 typedef struct {
-	BitfieldArray* bfaP;  // "A" means "Array" for JB's naming standards 
+	StaticBitfieldArray* bfaP;  // this holds the bits representing which keys have been set 
   MapElemType elemType;  // is element a pointer? Double pointer? Raw data?
   Key    population;
 	void  *mapA;  

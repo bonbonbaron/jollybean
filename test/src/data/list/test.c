@@ -14,24 +14,24 @@ struct Array {
 
 static const int N_ELEMS = 100;
 
-TAU_MAIN()
+TAU_MAIN();
 
-  TEST_F_SETUP(Array) {
-    tau->P = arrayNew( sizeof(Elem), N_ELEMS, GENERAL );
-    REQUIRE_EQ(arrayGetNElems(tau->P), N_ELEMS);
-    REQUIRE_EQ(arrayGetElemSz(tau->P), sizeof(Elem));
-    // Populate the array.
-    for (U32 i = 0; i < N_ELEMS; ++i) {
-      tau->P[i].i = i;
-    }
-    // Init the lists.
-    listIni( &tau->list1, 1, tau->P, NULL );
-    listIni( &tau->list2, 2, tau->P, &tau->list1 );
-    CHECK_EQ( tau->list1.head, UNSET_ );
-    CHECK_EQ( tau->list1.tail, UNSET_ );
-    CHECK_EQ( tau->list2.head, UNSET_ );
-    CHECK_EQ( tau->list2.tail, UNSET_ );
+TEST_F_SETUP(Array) {
+  tau->P = arrayNew( sizeof(Elem), N_ELEMS, GENERAL );
+  REQUIRE_EQ(arrayGetNElems(tau->P), N_ELEMS);
+  REQUIRE_EQ(arrayGetElemSz(tau->P), sizeof(Elem));
+  // Populate the array.
+  for (U32 i = 0; i < N_ELEMS; ++i) {
+    tau->P[i].i = i;
   }
+  // Init the lists.
+  listIni( &tau->list1, 1, tau->P, NULL );
+  listIni( &tau->list2, 2, tau->P, &tau->list1 );
+  CHECK_EQ( tau->list1.head, UNSET_ );
+  CHECK_EQ( tau->list1.tail, UNSET_ );
+  CHECK_EQ( tau->list2.head, UNSET_ );
+  CHECK_EQ( tau->list2.tail, UNSET_ );
+}
 
 TEST_F_TEARDOWN(Array) {
   memRst( GENERAL );

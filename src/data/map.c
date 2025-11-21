@@ -23,7 +23,7 @@ Map* mapNew( MapElemType elemType, const U8 elemSz, const Key nElems, const Pool
 }
 
 Key mapGetIndex(const Map *mapP, const Key key) {
-	const Bitfield* bfP = bfaGetBitfield( mapP->bfaP, key );
+	const StaticBitfield* bfP = bfaGetBitfield( mapP->bfaP, key );
   return __builtin_popcount( bfP->bits & BITCOUNT_MASK[ key & LOCAL_BIT_MASK ] ) + bfP->base;
 }
 
@@ -43,7 +43,7 @@ U32 mapHasKey(const Map* mP, const Key key ) {
 
 void* mapGet(const Map *mapP, const Key key) {
   assert (mapP );
-  Bitfield* bfP;
+  StaticBitfield* bfP;
   // This "Ex" function lets us see if a bit is set without having to reload its bitfield afterward.
 	if ( bfaIsBitSetEx( mapP->bfaP, key, &bfP ) ) {
     U32 popcount = bfSum( bfP->bits & BITCOUNT_MASK[ key ], bfP->base);
@@ -97,8 +97,10 @@ void mapRem(Map *mapP, const Key key) {
 }
 
 void mapCopyKeys(Map *dstMP, Map *srcMP) {
-  assert (dstMP &&  srcMP);
-  bfaCopy(srcMP->bfaP, dstMP->bfaP);
+  assert (srcMP);
+  assert (dstMP);
+  assert( !dstMP->bfaP );  // Don't want to leak memory.
+  dstMP->bfaP = bfaClone(srcMP->bfaP, GENERAL);
 }
 
 Map* mapGetNestedMapP(Map *outerMP, Key mapKey) {
