@@ -1,0 +1,126 @@
+// TODO make volatile bitmaps whose prefix sums change too frequently for updates to be practical.
+#ifndef BITMAP_H
+#define BITMAP_H
+#include "data/mem.h"
+#include "data/array.h"
+
+#define LOCAL_BIT_MASK (0x1f)
+#define N_BITS_PER_INT (32)
+#define globalBitToBfIdx_(bitIdx) (bitIdx >> 5)  // ">> 5" is the same as "/ 32"
+#define globalBitIdxToLocalBit_(bitIdx) (1 << (bitIdx & LOCAL_BIT_MASK))  // transforms a global bit (bit in an array of fields) to a local one (bit within its specific field)
+
+typedef UWord VolatileBitmap; // This doesn't get a special array struct since it can have a raw array.
+
+// Static bitmaps are those which you set once, and then you *at least _almost_* never touch it again.
+typedef struct StaticBitmap {
+  UWord bits;
+  UWord base;
+} StaticBitmap;
+
+typedef struct StaticBitmapArray {
+  StaticBitmap* bmA;
+  U32 maxBitIdx;
+  U32 population;
+} StaticBitmapArray;
+
+StaticBitmap* bmNew( const PoolId poolId );
+StaticBitmapArray* bmaNew( const U32 nBits, const PoolId poolId );
+
+inline StaticBitmap* bmaGetBitmap( const StaticBitmapArray* bmaP, const U32 globalBitIdx ) {
+  assert( bmaP );
+  assert( bmaP->bmA );
+  assert( globalBitIdx <= bmaP->maxBitIdx );
+  assert( globalBitToBfIdx_( globalBitIdx ) < arrayGetNElems( bmaP->bmA ) );
+  return &bmaP->bmA[ globalBitToBfIdx_( globalBitIdx ) ];
+}
+
+inline UWord bmaGetBits( const StaticBitmapArray* bmaP, const U32 globalBitIdx ) {
+  return bmaGetBitmap( bmaP, globalBitIdx )->bits;
+}
+
+inline void bmSetBit(StaticBitmap* bmP, const U32 bitIdx ) {
+  assert( bitIdx < N_BITS_PER_INT );
+  bmP->bits |= ( 1ul << bitIdx );
+}
+
+inline void bmUnsetBit(StaticBitmap* bmP, const U32 bitIdx ) {
+  assert( bitIdx < N_BITS_PER_INT );
+  bmP->bits &= ~( 1ul << bitIdx );
+}
+
+inline U32 bmIsBitSet( const StaticBitmap* bmP, const U32 bitIdx ) {
+  assert( bitIdx < N_BITS_PER_INT );
+  return bmP->bits & ( 1ul << bitIdx );
+}
+
+inline U32 bmaIsBitSet( const StaticBitmapArray* bmaP, const U32 globalBitIdx ) {
+  assert( bmaP );
+  assert( bmaP->bmA );
+  assert( globalBitIdx <= bmaP->maxBitIdx );
+  assert( globalBitToBfIdx_( globalBitIdx ) < arrayGetNElems( bmaP->bmA ) );
+  return bmaGetBitmap( bmaP, globalBitIdx )->bits & globalBitIdxToLocalBit_( globalBitIdx );
+}
+
+inline U32 bmaIsBitSetEx( const StaticBitmapArray* bmaP,  const U32 globalBitIdx, StaticBitmap** bmPP) {
+  assert( bmaP );
+  assert( bmPP );
+  assert( bmaP->bmA );
+  assert( globalBitIdx <= bmaP->maxBitIdx );
+  assert( globalBitToBfIdx_( globalBitIdx ) < arrayGetNElems( bmaP->bmA ) );
+  *bmPP = &bmaP->bmA[ globalBitToBfIdx_( globalBitIdx ) ];
+  return (*bmPP)->bits & globalBitIdxToLocalBit_( globalBitIdx );
+}
+
+inline U32 bmGetFirstZero( const U32 bits ) {
+#if __WORDSIZE == 32
+  return __builtin_ctz(~bits);
+#elif __WORDSIZE == 64
+  return __builtin_ctzll(~bits);
+#else 
+  static_assert("Jollybean only supports 32- and 64-bit architectures.");
+#endif
+}
+
+inline U32 bmGetFirstOne( const U32 bits ) {
+#if __WORDSIZE == 32
+  return __builtin_ctz(bits);
+#elif __WORDSIZE == 64
+  return __builtin_ctzll(bits);
+#else 
+  static_assert("Jollybean only supports 32- and 64-bit architectures.");
+#endif
+}
+
+#define rawBitCount __builtin_popcount
+
+// This allows flexible sums of the local and base fields.
+inline U32 bmSum( const UWord bits, const U32 base ) {
+#if __WORDSIZE == 32
+  return __builtin_popcount(bits) + base;
+#elif __WORDSIZE == 64
+  return __builtin_popcountll(bits) + base;
+#else 
+  static_assert("Jollybean only supports 32- and 64-bit architectures.");
+#endif
+}
+
+inline void vbmSetBit( VolatileBitmap* vbmA, const U32 globalBitIdx ) {
+  assert( vbmA );
+  assert( globalBitToBfIdx_( globalBitIdx ) < arrayGetNElems( vbmA ) );
+  assert( globalBitIdx < N_BITS_PER_INT * arrayGetNElems( vbmA ) ); 
+  vbmA[ globalBitToBfIdx_( globalBitIdx ) ] |= globalBitIdxToLocalBit_( globalBitIdx );
+}
+
+inline void vbmUnsetBit( VolatileBitmap* vbmA, const U32 globalBitIdx ) {
+  assert( vbmA );
+  assert( globalBitToBfIdx_( globalBitIdx ) < arrayGetNElems( vbmA ) );
+  assert( globalBitIdx < N_BITS_PER_INT * arrayGetNElems( vbmA ) ); 
+  vbmA[ globalBitToBfIdx_( globalBitIdx ) ] &= ~globalBitIdxToLocalBit_( globalBitIdx );
+}
+
+void bmaSetBit(StaticBitmapArray* bmaP, const U32 bitIdx );
+void bmaUnsetBit(StaticBitmapArray* bmaP, const U32 bitIdx );
+StaticBitmapArray* bmaClone( const StaticBitmapArray* srcBfaP, const PoolId poolId );
+S32 vbmGetFirstZero( const VolatileBitmap* vbmA );
+S32 vbmGetFirstOne( const VolatileBitmap* vbmA );
+#endif

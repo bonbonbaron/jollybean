@@ -19,18 +19,11 @@ static void _listNodeIni( ListNodeHeader* nodeP) {
   nodeP->next = nodeP->prev = UNSET_;
 }
 
-
-#define SATURATED_INT (0xffffffff)
-#define BITS_PER_INT (sizeof(U32) << 3)
-
-Key _getFirstAvailableListId( const List* listP ) {
-  U32* bitfieldP = &listP->metaP->idBitfieldA[0]; 
-  const U32* bitfieldEndP = bitfieldP + arrayGetNElems( listP->metaP->idBitfieldA );
-  for ( ; (const U32*) bitfieldP < bitfieldEndP; ++bitfieldP ) {
-    if ( *bitfieldP != SATURATED_INT ) {
-      // __builtin_ctz requires GCC, Clang, or ICC compiler.
-      return __builtin_ctz(~(*bitfieldP)) + ( ( bitfieldP - listP->metaP->idBitfieldA ) * BITS_PER_INT );
-    }
+static Key _getFirstAvailableListId( const List* listP ) {
+  S32 firstZeroBitIdx = vbmGetFirstZero( listP->metaP->availableIdBitmapA );
+  if ( firstZeroBitIdx >= 0 ) {
+    assert ( firstZeroBitIdx <= (KEY_MAX ) );
+    return firstZeroBitIdx;
   }
   return UNSET_;
 }
@@ -38,19 +31,20 @@ Key _getFirstAvailableListId( const List* listP ) {
 static void _listMetaIni( List* listP ) {
   assert( listP );
   assert( listP->array );
-  assert( !listP->metaP );
+  assert( !listP->metaP->idA );
+  assert( !listP->metaP->availableIdBitmapA );
   // Allocate & init list's metadata
-  listP->metaP = memAdd( sizeof(MetaList), GENERAL );
+  listP->metaP = memAdd( sizeof(ListMetadata), GENERAL );
   listP->metaP->maxId = UNSET_;
-  // Allocate & init metalist's array of list IDs
+  // Make room for as many possible list IDs as there are array elements.
   listP->metaP->idA = arrayNew( sizeof(Key), arrayGetNElems( listP->array ), GENERAL );
   memset( listP->metaP->idA, UNSET_, arrayGetElemSz( listP->metaP->idA ) * arrayGetNElems( listP->metaP->idA ) );
-  // Allocate and init bitfield (only allocating as many words as are required to hold all possible list IDs).
-  // TODO replace this with bfArrayNew() so we can use it in map.c too.
-  listP->metaP->idBitfieldA = arrayNew( 
-      sizeof(U32), 
+  // Allocate and init bitmap (only allocating as many words as are required to hold all possible list IDs).
+  // TODO replace this with bmArrayNew() so we can use it in map.c too.
+  listP->metaP->availableIdBitmapA = arrayNew( 
+      sizeof(VolatileBitmap), 
       ( sizeof( Key ) * arrayGetNElems( listP->array ) / sizeof(U32) ) + 1, GENERAL );
-  memset( listP->metaP->idBitfieldA, 0, arrayGetElemSz( listP->metaP->idBitfieldA ) * arrayGetNElems( listP->metaP->idBitfieldA ) );
+  memset( listP->metaP->availableIdBitmapA, 0, arrayGetElemSz( listP->metaP->availableIdBitmapA ) * arrayGetNElems( listP->metaP->availableIdBitmapA ) );
 }
 
 // Make lists easier to use by initializing all the nodes for the user.
@@ -60,7 +54,7 @@ void listIni( List* listP, const Key listId, void* array, const List* leaderList
   listP->head = listP->tail = UNSET_;
   listP->array = array;
   listP->metaP = NULL;
-  // If this is the first list in the array to be initialized, we need to init its metadata and nodes.
+  // All lists for the same array need to point at the same metadata. Leader will initialize it for us.
   if ( !leaderListP ) {
     _listMetaIni( listP );
     const U32 ELEM_SZ = arrayGetElemSz( listP->array );
@@ -159,6 +153,7 @@ void listInsertAfter( List* listP, ListNodeHeader* newNodeP, ListNodeHeader* tgt
 
 void listPrepend( List* listP, ListNodeHeader* newNodeP ) {
   assert ( listP && listP->array && newNodeP );
+  assert ( !_isInList( newNodeP, listP ) );
   if (newNodeP->listIdIdx != UNSET_ ) {
     return;
   }
@@ -170,7 +165,7 @@ void listPrepend( List* listP, ListNodeHeader* newNodeP ) {
     listP->head = newNodeIdx;
     newNodeP->listIdIdx = oldHeadNodeP->listIdIdx;
   }
-  else {
+  else {  // if list is empty (has no tail), add new elem as both head and tail with no next or prev. Give it the list's ID.
     listP->head = listP->tail =  newNodeIdx;
     newNodeP->next = newNodeP->prev = UNSET_;
     listP->id = _getFirstAvailableListId( (const List*) listP );
@@ -179,6 +174,7 @@ void listPrepend( List* listP, ListNodeHeader* newNodeP ) {
 
 void listAppend( List* listP, ListNodeHeader* newNodeP ) {
   assert ( listP && listP->array && newNodeP );
+  assert ( !_isInList( newNodeP, listP ) );
   if (newNodeP->listIdIdx != UNSET_ ) {
     return;
   }
@@ -190,10 +186,11 @@ void listAppend( List* listP, ListNodeHeader* newNodeP ) {
     listP->tail = newNodeIdx;
     newNodeP->listIdIdx = oldTailNodeP->listIdIdx;
   }
-  else {
+  else {  // if list is empty (has no tail), add new elem as both head and tail with no next or prev. Give it the list's ID.
     listP->head = listP->tail = newNodeIdx;
     newNodeP->prev = newNodeP->next = UNSET_;  // There's nothing before or after this node.
     listP->id = _getFirstAvailableListId( (const List*) listP );
+    newNodeP->listIdIdx = listP->id;
   }
 }
 

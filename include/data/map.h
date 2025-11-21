@@ -2,10 +2,10 @@
 #define MAP_H
 
 #include "data/array.h"
-#include "data/bitfield.h"
+#include "data/bitmap.h"
 
 // Maps 
-// A bit's position in a bitfield is the Key to the map. The number of high bits behind it is
+// A bit's position in a bitmap is the Key to the map. The number of high bits behind it is
 // the index of the key's value in the array.
 
 typedef struct {
@@ -29,7 +29,7 @@ typedef enum {
 } MapElemType;
 
 typedef struct {
-	StaticBitfieldArray* bfaP;  // this holds the bits representing which keys have been set 
+	StaticBitmapArray* bmaP;  // this holds the bits representing which keys have been set 
   MapElemType elemType;  // is element a pointer? Double pointer? Raw data?
   Key    population;
 	void  *mapA;  

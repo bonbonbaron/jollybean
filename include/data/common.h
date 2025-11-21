@@ -17,6 +17,8 @@ typedef unsigned short U16;
 typedef signed short S16;
 typedef unsigned int U32;
 typedef signed int S32;
+typedef unsigned long UWord;
+typedef unsigned long SWord;
 typedef U8 Key;
 typedef U8 Bln;   // Boolean
 

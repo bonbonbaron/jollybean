@@ -15,7 +15,7 @@ const static U32 BITCOUNT_MASK[32] = {
 Map* mapNew( MapElemType elemType, const U8 elemSz, const Key nElems, const PoolId poolId) {
 	assert (elemSz && nElems);
   Map* mapP = memAdd(sizeof(Map), poolId );
-  mapP->bfaP = bfaNew( nElems /* assume max bit == nElems for now */, poolId );
+  mapP->bmaP = bmaNew( nElems /* assume max bit == nElems for now */, poolId );
 	mapP->mapA = arrayNew(elemSz, nElems, poolId );
   mapP->population = 0;
   mapP->elemType = elemType;
@@ -23,8 +23,8 @@ Map* mapNew( MapElemType elemType, const U8 elemSz, const Key nElems, const Pool
 }
 
 Key mapGetIndex(const Map *mapP, const Key key) {
-	const StaticBitfield* bfP = bfaGetBitfield( mapP->bfaP, key );
-  return __builtin_popcount( bfP->bits & BITCOUNT_MASK[ key & LOCAL_BIT_MASK ] ) + bfP->base;
+	const StaticBitmap* bmP = bmaGetBitmap( mapP->bmaP, key );
+  return __builtin_popcount( bmP->bits & BITCOUNT_MASK[ key & LOCAL_BIT_MASK ] ) + bmP->base;
 }
 
 inline static void* _getElemP(const Map *mapP, const Key key) {
@@ -38,15 +38,15 @@ inline static U32 _getMapElemSz(const Map *mapP) {
 
 U32 mapHasKey(const Map* mP, const Key key ) {
   assert (mP);
-  return bfaIsBitSet( mP->bfaP, key );
+  return bmaIsBitSet( mP->bmaP, key );
 }
 
 void* mapGet(const Map *mapP, const Key key) {
   assert (mapP );
-  StaticBitfield* bfP;
+  StaticBitmap* bmP;
   // This "Ex" function lets us see if a bit is set without having to reload its bitfield afterward.
-	if ( bfaIsBitSetEx( mapP->bfaP, key, &bfP ) ) {
-    U32 popcount = bfSum( bfP->bits & BITCOUNT_MASK[ key ], bfP->base);
+	if ( bmaIsBitSetEx( mapP->bmaP, key, &bmP ) ) {
+    U32 popcount = bmSum( bmP->bits & BITCOUNT_MASK[ key ], bmP->base);
 		return _fast_arrayGetElemByIdx(mapP->mapA, popcount);
 	}
 	return NULL;
@@ -82,7 +82,7 @@ void mapSet(Map *mapP, const Key key, const void *valP) {
   }
   /* Write value in array. */
   memcpy(elemP, valP, _getMapElemSz(mapP));
-  bfaSetBit( mapP->bfaP, key );
+  bmaSetBit( mapP->bmaP, key );
 }
 
 void mapRem(Map *mapP, const Key key) {
@@ -93,14 +93,14 @@ void mapRem(Map *mapP, const Key key) {
     nBytesToMove -= _getMapElemSz(mapP);
     memmove(elemP, (const void*) nextElemP, nBytesToMove);
   }
-  bfaUnsetBit( mapP->bfaP, key );
+  bmaUnsetBit( mapP->bmaP, key );
 }
 
 void mapCopyKeys(Map *dstMP, Map *srcMP) {
   assert (srcMP);
   assert (dstMP);
-  assert( !dstMP->bfaP );  // Don't want to leak memory.
-  dstMP->bfaP = bfaClone(srcMP->bfaP, GENERAL);
+  assert( !dstMP->bmaP );  // Don't want to leak memory.
+  dstMP->bmaP = bmaClone(srcMP->bmaP, GENERAL);
 }
 
 Map* mapGetNestedMapP(Map *outerMP, Key mapKey) {
