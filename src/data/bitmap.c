@@ -42,12 +42,16 @@ void sbmUnsetBit( StableBitmap* sbmP, const U32 bitIdx ) {
   assert( sbmP->population );
   // Actual logic
   U32 bmIdx = globalBitToBfIdx_( bitIdx );
+  printf("bit idx %d              at memory 0x%016lx\n", bitIdx, (UWord) &bitIdx);
   assert( bmIdx < arrayGetNElems( sbmP->bmA ) );
   sbmP->bmA[bmIdx].bits &= ~globalBitIdxToLocalBit_(bitIdx);
+  printf("bits 0x%016lx at memory 0x%016lx\n", sbmP->bmA[bmIdx].bits, (UWord) &sbmP->bmA[bmIdx].bits);
   // Increment the bases of all the bitfields above ours. 
   const U32 nBitmaps = arrayGetNElems( sbmP->bmA );
-  while (++bmIdx < nBitmaps ) {
+  ++bmIdx;
+  while (bmIdx < nBitmaps ) {
     --sbmP->bmA[bmIdx].base;
+    ++bmIdx;
   }
   --sbmP->population;
 }

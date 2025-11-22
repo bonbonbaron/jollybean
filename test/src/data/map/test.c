@@ -91,7 +91,6 @@ TEST_F(Tau, mapGet) {
     if (key >  0) break;
   }
 }
-#if 0
 
 TEST_F(Tau, mapGetNestedMapP) {
   Map *mP = NULL;
@@ -126,8 +125,11 @@ TEST_F(Tau, mapGet_Overreach) {
 TEST_F(Tau, mapRem) {
   mapRem(tau->P, 50);
   U32* valP;
+  valP = (U32*) mapGet(tau->P, 50);
+  CHECK_NULL(valP);
   for (Key i = 0; i <= tau->nElems; ++i) {
     valP = (U32*) mapGet(tau->P, i);
+    printf("key %d gets %d\n", i, *valP);
     if (i == 50) {
       CHECK_NULL(valP);
     }
@@ -140,4 +142,3 @@ TEST_F(Tau, mapRem) {
 TEST_F(Tau, mapCopyKeys) {
   mapCopyKeys(tau->cpP, tau->P);
 }
-#endif

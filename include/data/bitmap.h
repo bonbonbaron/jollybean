@@ -72,10 +72,12 @@ inline U32 sbmIsBitSetEx( const StableBitmap* sbmP,  const U32 globalBitIdx, Bas
   assert( sbmP );
   assert( basedWordPP );
   assert( sbmP->bmA );
-  assert( globalBitIdx <= sbmP->maxBitIdx );
   assert( globalBitToBfIdx_( globalBitIdx ) < arrayGetNElems( sbmP->bmA ) );
-  *basedWordPP = &sbmP->bmA[ globalBitToBfIdx_( globalBitIdx ) ];
-  return (*basedWordPP)->bits & globalBitIdxToLocalBit_( globalBitIdx );
+  if( globalBitIdx <= sbmP->maxBitIdx ) {
+    *basedWordPP = &sbmP->bmA[ globalBitToBfIdx_( globalBitIdx ) ];
+    return (*basedWordPP)->bits & globalBitIdxToLocalBit_( globalBitIdx );
+  }
+  return FALSE;
 }
 
 inline U32 bmGetFirstZero( const UWord bits ) {
