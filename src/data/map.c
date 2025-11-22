@@ -14,6 +14,7 @@ const static UWord BITCOUNT_MASK[] = {
 #elif __WORDSIZE == 64
 // AIN'T IT BEAUTIFUL!!!
 const static UWord BITCOUNT_MASK[] = {
+  // First 32 bits
   0x0000000000000000, 0x0000000000000001, 0x0000000000000003, 0x0000000000000007, 
   0x000000000000000f, 0x000000000000001f, 0x000000000000003f, 0x000000000000007f, 
   0x00000000000000ff, 0x00000000000001ff, 0x00000000000003ff, 0x00000000000007ff, 
@@ -22,6 +23,7 @@ const static UWord BITCOUNT_MASK[] = {
   0x00000000000fffff, 0x00000000001fffff, 0x00000000003fffff, 0x00000000007fffff, 
   0x0000000000ffffff, 0x0000000001ffffff, 0x0000000003ffffff, 0x0000000007ffffff, 
   0x000000000fffffff, 0x000000001fffffff, 0x000000003fffffff, 0x000000007fffffff, 
+  // Last 32 bits
   0x00000000ffffffff, 0x00000001ffffffff, 0x00000003ffffffff, 0x00000007ffffffff, 
   0x0000000fffffffff, 0x0000001fffffffff, 0x0000003fffffffff, 0x0000007fffffffff, 
   0x000000ffffffffff, 0x000001ffffffffff, 0x000003ffffffffff, 0x000007ffffffffff, 
@@ -69,7 +71,7 @@ void* mapGet(const Map *mapP, const Key key) {
   BasedWord* basedWordP;
   // This "Ex" function lets us see if a bit is set without having to reload its bitfield afterward.
 	if ( sbmIsBitSetEx( mapP->sbmP, key, &basedWordP ) ) {
-    U32 popcount = bmSum( basedWordP->bits & BITCOUNT_MASK[ key ], basedWordP->base);
+     UWord popcount = bmSum( basedWordP->bits & BITCOUNT_MASK[ key & LOCAL_BIT_MASK ], basedWordP->base);
 		return _fast_arrayGetElemByIdx(mapP->mapA, popcount);
 	}
 	return NULL;
@@ -112,11 +114,9 @@ void mapRem(Map *mapP, const Key key) {
   assert (mapP);
 	void *elemP, *nextElemP;
   U32 nBytesToMove = countBytesToShiftOver( mapP, key, &elemP, &nextElemP );
-  printf("including overwritten mem, moving %d bytes for key %d\n", nBytesToMove, key);
   if (nBytesToMove) {
     nBytesToMove -= _getMapElemSz(mapP);
     memmove(elemP, (const void*) nextElemP, nBytesToMove);
-    printf("excluding overwritten mem, moving %d bytes for key %d\n", nBytesToMove, key);
   }
   sbmUnsetBit( mapP->sbmP, key );
 }

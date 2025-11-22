@@ -8,13 +8,13 @@
 #define globalBitToBfIdx_(bitIdx) (bitIdx >> 5)  // ">> 5" is the same as "/ 32"
 #define LOCAL_BIT_MASK (0x1f)
 #elif __WORDSIZE == 64
-#define globalBitToBfIdx_(bitIdx) (bitIdx >> 6)  // ">> 5" is the same as "/ 32"
+#define globalBitToBfIdx_(bitIdx) (bitIdx >> 6)  // ">> 6" is the same as "/ 64"
 #define LOCAL_BIT_MASK (0x3f)
 #else
   static_assert("Jollybean only supports 32- and 64-bit architectures.");
 #endif
 
-#define globalBitIdxToLocalBit_(bitIdx) (1 << (bitIdx & LOCAL_BIT_MASK))  // transforms a global bit (bit in an array of fields) to a local one (bit within its specific field)
+#define globalBitIdxToLocalBit_(bitIdx) (1ULL << (bitIdx & LOCAL_BIT_MASK))  // transforms a global bit (bit in an array of fields) to a local one (bit within its specific field)
 
 typedef UWord VolatileBitmap; // This doesn't get a special array struct since it can have a raw array.
 
@@ -55,29 +55,19 @@ inline void wordUnsetBit(UWord *wordP, const U32 bitIdx ) {
   *wordP &= ~( 1ULL << bitIdx );
 }
 
-inline U32 wordIsBitSet( const UWord* wordP, const U32 bitIdx ) {
+inline UWord wordIsBitSet( const UWord* wordP, const U32 bitIdx ) {
   assert( bitIdx < N_BITS_PER_WORD );
   return *wordP & ( 1ULL << bitIdx );
 }
 
-inline U32 sbmIsBitSet( const StableBitmap* sbmP, const U32 globalBitIdx ) {
+UWord sbmIsBitSetEx( const StableBitmap* sbmP,  const U32 globalBitIdx, BasedWord** basedWordPP);
+
+inline UWord sbmIsBitSet( const StableBitmap* sbmP, const U32 globalBitIdx ) {
   assert( sbmP );
   assert( sbmP->bmA );
   assert( globalBitIdx <= sbmP->maxBitIdx );
   assert( globalBitToBfIdx_( globalBitIdx ) < arrayGetNElems( sbmP->bmA ) );
   return sbmGetBasedWord( sbmP, globalBitIdx )->bits & globalBitIdxToLocalBit_( globalBitIdx );
-}
-
-inline U32 sbmIsBitSetEx( const StableBitmap* sbmP,  const U32 globalBitIdx, BasedWord** basedWordPP) {
-  assert( sbmP );
-  assert( basedWordPP );
-  assert( sbmP->bmA );
-  assert( globalBitToBfIdx_( globalBitIdx ) < arrayGetNElems( sbmP->bmA ) );
-  if( globalBitIdx <= sbmP->maxBitIdx ) {
-    *basedWordPP = &sbmP->bmA[ globalBitToBfIdx_( globalBitIdx ) ];
-    return (*basedWordPP)->bits & globalBitIdxToLocalBit_( globalBitIdx );
-  }
-  return FALSE;
 }
 
 inline U32 bmGetFirstZero( const UWord bits ) {
@@ -109,7 +99,7 @@ inline U32 bmGetFirstOne( const UWord bits ) {
 #endif
 
 // This allows flexible sums of the local and base fields.
-inline U32 bmSum( const UWord bits, const U32 base ) {
+inline UWord bmSum( const UWord bits, const UWord base ) {
   return rawBitCount(bits) + base;
 }
 

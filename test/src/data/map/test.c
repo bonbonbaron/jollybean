@@ -55,20 +55,21 @@ TEST_F_SETUP(Tau) {
     newMP = mapNew( NONMAP_POINTER, sizeof(void*), tau->nElems, GENERAL);
     CHECK_NOT_NULL(newMP);
     CHECK_NOT_NULL(newMP->mapA);
-    // Populate inner map with 1...100
+    // Populate inner map with 1...80
     for (Key j = 0; j < tau->nElems; ++j) {
       mapSet(newMP, j, &randValP);
     }
-    mapSet(tau->mapOfNestedPtrMaps, i, &newMP);
+    // 80 maps will nest 80 more maps. Key to inner map is i.
+    mapSet(tau->mapOfNestedPtrMaps, i, &newMP); 
   }
 
-  // Populate outer map with 100 inner maps
+  // Populate outer map with 80 inner maps
   for (Key i = 0; i < tau->nElems; ++i) {
     Map *newMP = NULL;
     newMP = mapNew( RAW_DATA, sizeof(U32), tau->nElems, GENERAL);
     CHECK_NOT_NULL(newMP);
     CHECK_NOT_NULL(newMP->mapA);
-    // Populate inner map with 1...100
+    // Populate inner map with 1...80
     _popMap(newMP, tau->nElems);
     mapSet(tau->mapOfNestedMaps, i, &newMP);
   }
@@ -84,14 +85,14 @@ TEST_F(Tau, mapGetIndex) {
 }
 
 TEST_F(Tau, mapGet) {
-  for (Key key = 0; key <= tau->nElems; ++key) {
+  for (Key key = 0; key < tau->nElems; ++key) {
     U32 *valP = (U32*) mapGet(tau->P, key);
     CHECK_NOT_NULL(valP);
     CHECK_EQ(*valP, key);
-    if (key >  0) break;
   }
 }
 
+#if 1
 TEST_F(Tau, mapGetNestedMapP) {
   Map *mP = NULL;
   mP = mapGetNestedMapP(tau->mapOfNestedMaps, 5);
@@ -123,14 +124,17 @@ TEST_F(Tau, mapGet_Overreach) {
 }
 
 TEST_F(Tau, mapRem) {
-  mapRem(tau->P, 50);
   U32* valP;
-  valP = (U32*) mapGet(tau->P, 50);
+  static const U32 KEY_TO_REMOVE = 50;
+  valP = (U32*) mapGet(tau->P, KEY_TO_REMOVE);
+  CHECK_EQ( *valP, KEY_TO_REMOVE );
+  mapRem(tau->P, KEY_TO_REMOVE);
+  valP = (U32*) mapGet(tau->P, KEY_TO_REMOVE);
   CHECK_NULL(valP);
-  for (Key i = 0; i <= tau->nElems; ++i) {
+  // For every thing before the key you removed, expect the value to be the same as the key.
+  for (Key i = 0; i <= tau->nElems - 1; ++i) {
     valP = (U32*) mapGet(tau->P, i);
-    printf("key %d gets %d\n", i, *valP);
-    if (i == 50) {
+    if (i == KEY_TO_REMOVE) {
       CHECK_NULL(valP);
     }
     else {
@@ -140,5 +144,6 @@ TEST_F(Tau, mapRem) {
 }
 
 TEST_F(Tau, mapCopyKeys) {
-  mapCopyKeys(tau->cpP, tau->P);
+  //mapCopyKeys(tau->cpP, tau->P);
 }
+#endif

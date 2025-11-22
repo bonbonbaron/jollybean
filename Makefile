@@ -18,7 +18,8 @@ D_SRCS  := $(D)/strip.c $(D)/inflatable.c $(D)/bt.c $(D)/share.c $(D)/map.c $(D)
 # Implemented systems must come before their dependency, x.c.
 #XI_SRCS := $(shell find $(SRC_DIR)/x -type f -name "x[^.]*.c") $(shell find $(SRC_DIR)/x -type f -name "x.c") $(shell find $(SRC_DIR)/interface -type f -name "*.c")
 X := $(SRC_DIR)/x
-XI_SRCS := $(X)/x.c $(X)/xAnim.c $(X)/xMotion.c $(X)/xRender.c $(X)/xAction.c $(X)/xCollision.c $(shell find $(SRC_DIR)/interface -type f -name "*.c")
+#XI_SRCS := $(X)/x.c $(X)/xAnim.c $(X)/xMotion.c $(X)/xRender.c $(X)/xAction.c $(X)/xCollision.c $(shell find $(SRC_DIR)/interface -type f -name "*.c")
+XI_SRCS := 
 
 SRCS    := $(XI_SRCS) $(D_SRCS) 
 
