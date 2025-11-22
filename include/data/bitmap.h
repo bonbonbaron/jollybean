@@ -14,7 +14,7 @@
   static_assert("Jollybean only supports 32- and 64-bit architectures.");
 #endif
 
-#define globalBitIdxToLocalBit_(bitIdx) (1ULL << (bitIdx & LOCAL_BIT_MASK))  // transforms a global bit (bit in an array of fields) to a local one (bit within its specific field)
+#define globalBitIdxToLocalBit_(bitIdx) (1UL << (bitIdx & LOCAL_BIT_MASK))  // transforms a global bit (bit in an array of fields) to a local one (bit within its specific field)
 
 typedef UWord VolatileBitmap; // This doesn't get a special array struct since it can have a raw array.
 
@@ -67,7 +67,6 @@ inline UWord sbmIsBitSet( const StableBitmap* sbmP, const U32 globalBitIdx ) {
   assert( sbmP->bmA );
   assert( globalBitIdx <= sbmP->maxBitIdx );
   assert( globalBitToBfIdx_( globalBitIdx ) < arrayGetNElems( sbmP->bmA ) );
-  // printf(" %016lx & 0x%016lx = 0x%016lx\n", sbmGetBasedWord( sbmP, globalBitIdx )->bits, globalBitIdxToLocalBit_( globalBitIdx ), sbmGetBasedWord( sbmP, globalBitIdx )->bits & globalBitIdxToLocalBit_( globalBitIdx ) );
   return sbmGetBasedWord( sbmP, globalBitIdx )->bits & globalBitIdxToLocalBit_( globalBitIdx );
 }
 
