@@ -55,6 +55,7 @@ void sbmUnsetBit( StableBitmap* sbmP, const U32 bitIdx ) {
   // Actual logic
   U32 bmIdx = globalBitToBfIdx_( bitIdx );
   assert( bmIdx < arrayGetNElems( sbmP->bmA ) );
+  // printf(" %016lx & 0x%016llx = 0x%016lx\n", sbmP->bmA[bmIdx].bits, ~globalBitIdxToLocalBit_(bitIdx), sbmP->bmA[bmIdx].bits & ~globalBitIdxToLocalBit_(bitIdx));
   sbmP->bmA[bmIdx].bits &= ~globalBitIdxToLocalBit_(bitIdx);
   // Increment the bases of all the bitfields above ours. 
   const U32 nBitmaps = arrayGetNElems( sbmP->bmA );

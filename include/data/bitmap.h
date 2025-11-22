@@ -67,6 +67,7 @@ inline UWord sbmIsBitSet( const StableBitmap* sbmP, const U32 globalBitIdx ) {
   assert( sbmP->bmA );
   assert( globalBitIdx <= sbmP->maxBitIdx );
   assert( globalBitToBfIdx_( globalBitIdx ) < arrayGetNElems( sbmP->bmA ) );
+  // printf(" %016lx & 0x%016lx = 0x%016lx\n", sbmGetBasedWord( sbmP, globalBitIdx )->bits, globalBitIdxToLocalBit_( globalBitIdx ), sbmGetBasedWord( sbmP, globalBitIdx )->bits & globalBitIdxToLocalBit_( globalBitIdx ) );
   return sbmGetBasedWord( sbmP, globalBitIdx )->bits & globalBitIdxToLocalBit_( globalBitIdx );
 }
 
