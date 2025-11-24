@@ -5,30 +5,30 @@
 
 // Raw gene bodies - Only mutations need a separate declaration.
 GenericMutableShortChar 
-mutBody1a = {
+mutBody0a = {
   .s = 1234,
   .c = 100
 },
-  mutBody1b = {
+  mutBody0b = {
     .s = 1235,
     .c = 101
   },
-  mutBody1c = {
+  mutBody0c = {
     .s = 1236,
     .c = 102
   },
-  mutBody2a = {
+  mutBody1a = {
     .s = 123,
     .c = 10
   },
-  mutBody2b = {
+  mutBody1b = {
     .s = 124,
     .c = 11
   };
 
 // Bundle above gene bodies into genes
 GenericImmutableGene 
-imm1Gene = {
+imm0Gene = {
   .hdr = {
     .class = IMMUTABLE,
     .u.type = GENERIC
@@ -40,7 +40,7 @@ imm1Gene = {
   },
   .body = 1,
 },
-  imm2Gene = {
+  imm1Gene = {
     .hdr = {
       .class = IMMUTABLE,
       .u.type = GENERIC
@@ -54,69 +54,69 @@ imm1Gene = {
   };
 
 // Immutables can be raw data beneath headers, but  mutables ought to use data pointers for reusability.
-Mutation mutations1A[] = {
+Mutation mutations0A[] = {
+  {
+    .key = 0,
+    .mutationBodyP = &mutBody0a
+  },
   {
     .key = 1,
+    .mutationBodyP = &mutBody0b
+  },
+  {
+    .key = 2,
+    .mutationBodyP = &mutBody0c
+  }
+};
+
+Mutation mutations1A[] = {
+  {
+    .key = 0,
     .mutationBodyP = &mutBody1a
   },
   {
-    .key = 2,
-    .mutationBodyP = &mutBody1b
-  },
-  {
-    .key = 3,
-    .mutationBodyP = &mutBody1c
-  }
-};
-
-Mutation mutations2A[] = {
-  {
     .key = 1,
-    .mutationBodyP = &mutBody2a
-  },
-  {
-    .key = 2,
-    .mutationBodyP = &mutBody2b
+    .mutationBodyP = &mutBody1b
   }
 };
 
-MutableGene mut1Gene = {
+MutableGene mut0Gene = {
   .hdr = {
     .class = MUTABLE,
     .u.type = GENERIC
 #ifndef NDEBUG
       ,
-    .size = sizeof(mutations1A),
+    .size = sizeof(mutations0A),
     .typeName = "GenericMutation"
 #endif
   },
-  .n = nElems_(mutations1A),
-  .mutationA = mutations1A
+  .n = nElems_(mutations0A),
+  .mutationA = mutations0A
 },
 
-  mut2Gene = {
+  mut1Gene = {
     .hdr = {
       .class = MUTABLE,
       .u.type = GENERIC
 #ifndef NDEBUG
         ,
-      .size = sizeof(mutations2A),
+      .size = sizeof(mutations1A),
       .typeName = "GenericMutation"
 #endif
     },
-    .n = nElems_(mutations2A),
-    .mutationA = mutations2A
+    .n = nElems_(mutations1A),
+    .mutationA = mutations1A
   };
 
+int nMuts0 = sizeof( mutations0A ) / sizeof( mutations0A[0] );
 int nMuts1 = sizeof( mutations1A ) / sizeof( mutations1A[0] );
-int nMuts2 = sizeof( mutations2A ) / sizeof( mutations2A[0] );
 
-// Intracomposite 1's header array
-struct GeneHdr* comp1HdrA[] = { &imm1Gene.hdr, &mut1Gene.hdr };
-struct GeneHdr* comp2HdrA[] = { &imm2Gene.hdr, &mut2Gene.hdr  };
+// Intracomposite 0's header array
+struct GeneHdr* comp0HdrA[] = { &imm0Gene.hdr, &mut0Gene.hdr };
+struct GeneHdr* comp1HdrA[] = { &imm1Gene.hdr, &mut1Gene.hdr  };
 
 // IntraCompositeGene for generic system
-IntraCompositeGene intra1 = {
+IntraCompositeGene intra0 = {
   .hdr = {
     .class = INTRACOMPOSITE,
     .u.type = GENERIC
@@ -126,11 +126,11 @@ IntraCompositeGene intra1 = {
     .typeName = "XGeneric"
 #endif
   },
-  .n = nElems_(comp1HdrA),
-  .geneHdrPA = comp1HdrA
+  .n = nElems_(comp0HdrA),
+  .geneHdrPA = comp0HdrA
 },
 
-  intra2 = {
+  intra1 = {
     .hdr = {
       .class = INTRACOMPOSITE,
       .u.type = GENERIC
@@ -140,7 +140,7 @@ IntraCompositeGene intra1 = {
       .typeName = "XGeneric"
 #endif
     },
-    .n = nElems_(comp2HdrA),
-    .geneHdrPA = comp2HdrA
+    .n = nElems_(comp1HdrA),
+    .geneHdrPA = comp1HdrA
   };
 

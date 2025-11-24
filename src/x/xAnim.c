@@ -64,7 +64,6 @@ XGetShareFuncDef_(Anim) {
   XAnimComp *cEndP = cP + *_frayGetFirstEmptyIdxP(sP->cF);
   for (Entity entity; cP < cEndP; ++cP) {
     entity = xGetEntityByVoidComponentPtr(sP, (void*) cP);
-    assert (entity);
     cP->srcRectP = (Rect_*) mapGet(xP->srcRectMP, entity);
     cP->dstRectP = (Rect_*) mapGet(xP->dstRectMP, entity);
     assert (cP->srcRectP);

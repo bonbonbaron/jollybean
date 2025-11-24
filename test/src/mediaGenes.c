@@ -96,7 +96,7 @@ StripDataS redStripData = {
 
 
 MediaGene
-med1Gene = {
+med0Gene = {
   .hdr = {
     .class = IMMUTABLE,
     .u.type = MEDIA_SYS_ID
@@ -121,7 +121,7 @@ med1Gene = {
     .assembledDataA = NULL
   }
 },
-  med2Gene = {
+  med1Gene = {
     .hdr = {
       .class = IMMUTABLE,
       .u.type = MEDIA_SYS_ID

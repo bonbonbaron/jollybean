@@ -11,7 +11,6 @@ struct Activity;
 typedef void (*Action)(Entity entity, struct Activity *activityP );
 #define ActionFuncDef_( name_ ) void name_( Entity entity, Activity* activityP, Message* mailboxF )
 #define assertAction_ \
-  assert ( entity ); \
   assert ( activityP ); \
   assert ( activityP->quirkP ); \
   assert ( activityP->quirkP->actionU ); \

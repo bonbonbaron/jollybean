@@ -233,7 +233,7 @@ void xRenderIniSys(System *sP) {
 // Initialize xRender's components' elements (images and tilemaps)
 //=========================================================================
 void xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void *dataP) {
-  assert (sP && entity && dataP && subtype);
+  assert (sP && dataP && subtype);
 
   Image* imgP;
   XRender *xP = (XRender*) sP;

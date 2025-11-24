@@ -9,7 +9,7 @@ inline static Entity _getEntityByCompIdx(System *sP, Key compIdx) {
 }
 
 void* xGetCompPByEntity(System *sP, Entity entity) {
-  if (!sP || !entity) {
+  if (!sP) {
     return NULL;
   }
   Key *elemIdxP = _getCompIdxPByEntity(sP, entity);
@@ -24,7 +24,7 @@ Entity xGetEntityByCompIdx(System *sP, Key compIdx) {
 }
 
 Key xGetCompIdxByEntity( System *sP, Entity entity ) {
-  assert( sP && entity );
+  assert( sP );
 #ifndef NDEBUG
   return *( _getCompIdxPByEntity( sP, entity ) );
 #else
@@ -65,7 +65,7 @@ static void _xSwap(System *sP, FrayChanges *changesP) {
 }
 
 void xActivateComponentByEntity(System *sP, Entity entity) {
-  assert (sP && entity);
+  assert (sP);
   // We use a pointer instead of a new one to swap its actual location later.
   FrayChanges changes;
   Key *compOrigIdxP = _getCompIdxPByEntity(sP, entity);
@@ -77,7 +77,7 @@ void xActivateComponentByEntity(System *sP, Entity entity) {
 }
 
 void xDeactivateComponentByEntity(System *sP, Entity entity) {
-  assert (sP && entity);
+  assert (sP);
   FrayChanges changes;
   Key *compOrigIdxP = _getCompIdxPByEntity(sP, entity);
   assert (compOrigIdxP);
@@ -88,7 +88,7 @@ void xDeactivateComponentByEntity(System *sP, Entity entity) {
 }
 
 void xPauseComponentByEntity(System *sP, Entity entity) {
-  assert (sP && entity);
+  assert (sP);
   FrayChanges changes;
   Key *compOrigIdxP = _getCompIdxPByEntity(sP, entity);
   assert (compOrigIdxP);
@@ -98,7 +98,7 @@ void xPauseComponentByEntity(System *sP, Entity entity) {
 }
 
 void xUnpauseComponentByEntity(System *sP, Entity entity) {
-  assert (sP && entity);
+  assert (sP);
   FrayChanges changes;
   Key *compOrigIdxP = _getCompIdxPByEntity(sP, entity);
   assert (compOrigIdxP);
@@ -115,7 +115,6 @@ U32 xGetNComps(System *sP) {
 // This adds a mutation map for an entity to the system and returns a poitner to it.
 static Map* xNewMutationMap( const System* sP, const Entity entity, const Key nElems ) {
   assert( sP );
-  assert( entity );
   assert( nElems );
   Map* mP = mapNew( RAW_DATA, sP->mutationSz, nElems, GENERAL );
   assert( mP );
@@ -128,7 +127,6 @@ static Map* xNewMutationMap( const System* sP, const Entity entity, const Key nE
 // First makes a new mutation map that gets added to mutation map nest, then fills it with mutations
 void xMakeMutationMap( const System* sP, const Entity entity, const GeneHdr *geneP ) {
   assert( sP );
-  assert( entity );
   assert( geneP );
   assert( geneP->class == MUTABLE );
   // Don't assert the map not having the key. Instead, allow overrides (and thus *little* waste). 
@@ -140,7 +138,6 @@ void xMakeMutationMap( const System* sP, const Entity entity, const GeneHdr *gen
   Mutation* mutationEndP = mutationP + mutableGeneP->n;
   for ( ; mutationP < mutationEndP; ++mutationP ) {
     assert( mutationP->mutationBodyP );
-    assert( mutationP->key );
     mapSet(entitysMutationMP, mutationP->key, mutationP->mutationBodyP);
   }
 }
@@ -181,7 +178,7 @@ static void _xIniSystems( const System* sPA[], const GeneHisto* geneHisto, const
 
 void xMutateComponent(System *sP, Entity entity, Key newCompKey) {
   // Make sure entity, system, and the key to the new component are all valid parameters.
-  assert (sP &&  entity &&  newCompKey);
+  assert (sP);
   // Make sure the system was set up for mutations in the first place.
   if (!(sP->flags & FLG_NO_MUTATIONS_)) {
     // Get the nested map of mutations for this particular entity.
@@ -263,7 +260,6 @@ static void _deactivateQueue(System *sP) {
 
 static void _xAddEntity( const System* sP, const Entity entity ) {
   assert( sP );
-  assert( entity );
   assert( sP->e2cIdxMP );
   assert( sP->cIdx2eA );
   // This is okay, given devs can minimize the number of re-entries with intracomposites.
@@ -358,7 +354,6 @@ void xRegisterForInflation( StripDataS* sdP ) {
 
 static void _distributeGene( Entity entity, GeneHdr* geneHdrP ) {
   assert(geneHdrP);
-  assert(entity);
 
   GeneHdr** currGeneHdrPP;
   GeneHdr** geneHdrEndPP;
@@ -398,7 +393,7 @@ static void _distributeGenes( const RootGene* rootP ) {
 
   GeneHdr** genomePP = rootP->genomePA;
   GeneHdr** genomeEndPP = genomePP + rootP->hdr.u.n;
-  for (Entity entity = 0; genomePP < genomeEndPP; ++genomePP) { // entity = 0 -> preincrement is slightly faster lol
+  for (Entity entity = -1; genomePP < genomeEndPP; ++genomePP) { // entity = -1 -> preincrement is slightly faster lol
     _distributeGene( ++entity, *genomePP );
   }
 

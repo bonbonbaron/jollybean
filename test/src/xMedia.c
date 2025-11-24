@@ -13,7 +13,6 @@ XProcMsgFuncDefUnused_(Media);
 XConsumeGeneFuncDef_(Media) {
   assert( sP );
   assert( geneP );
-  assert( entity );
   XMedia* xP = (XMedia*) sP;
   XMediaComp* cP;
   assert ( geneP->class == IMMUTABLE );
