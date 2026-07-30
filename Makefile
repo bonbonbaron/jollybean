@@ -36,7 +36,7 @@ BLD_SEN := $(BLD_SUB:%=%.sentinel.bldsnl)
 DEP_SUB := $(BLD_SUB:$(BLD_DIR)%=$(DEP_DIR)%)
 DEP_SEN := $(DEP_SUB:%=%.sentinel.depsnl)
 
-TGT=${LIB_DIR}/libjb.a
+TGT=${LIBJB}
 
 #all: ; echo ${OBJS}
 all: $(TGT)

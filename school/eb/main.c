@@ -66,7 +66,7 @@ void inflatableDel(Inflatable **inflatablePP) {
       free((*inflatablePP)->inflatedDataP);
       (*inflatablePP)->inflatedDataP = NULL;
     }
-    jbFree((void**) inflatablePP);
+    memRstAll();
   }
 }
 
@@ -84,8 +84,7 @@ void extractVec2Array( XmlResult *resultP ) {
   resultP->max.vec2.s = FLT_MIN;
   resultP->max.vec2.t = FLT_MIN;
 
-  arrayNew( (void**) &resultP->u.vec2A, sizeof( Vec2 ), resultP->count / 2 );  // TODO fix w/o division
-  assert( resultP->u.vec2A );
+  void** &resultP->u.vec2A = arrayNew(  sizeof( Vec2 ), resultP->count / 2, GENERAL );  // TODO fix w/o division
 
   // Extract string into array here.
   char* cPtr = resultP->valString;
@@ -148,8 +147,7 @@ void extractVec3Array( XmlResult *resultP ) {
   resultP->max.vec3.y = FLT_MIN;
   resultP->max.vec3.z = FLT_MIN;
 
-  arrayNew( (void**) &resultP->u.vec3A, sizeof( Vec3 ), resultP->count / 3 );   // TODO fix without division
-  assert( resultP->u.vec3A );
+  void** &resultP->u.vec3A = arrayNew(  sizeof( Vec3 ), resultP->count / 3, GENERAL );   // TODO fix without division
 
   // Extract string into array here.
   char* cPtr = resultP->valString;
@@ -231,8 +229,7 @@ void extractVec4Array( XmlResult *resultP ) {
   resultP->max.vec4.b = FLT_MIN;
   resultP->max.vec4.a = FLT_MIN;
 
-  arrayNew( (void**) &resultP->u.vec4A, sizeof( Vec4 ), resultP->count );
-  assert( resultP->u.vec4A );
+  void** &resultP->u.vec4A = arrayNew(  sizeof( Vec4 ), resultP->count, GENERAL );
 
   // Extract string into arrag here.
   char* cPtr = resultP->valString;
@@ -425,8 +422,7 @@ void getTriangles( Mesh* meshP, xmlXPathContextPtr context, xmlXPathObjectPtr tr
   // printf("total number of triangles: %d\n", meshP->tri.count );
 
   // Then allocate your triangle array.
-  arrayNew( (void**) &meshP->tri.u.triA, sizeof(Triangle), meshP->tri.count );
-  assert( meshP->tri.u.triA );
+  void* meshP->tri.u.triA = arrayNew(  sizeof(Triangle), meshP->tri.count, GENERAL );
 
   // Next, figure out what kind of triangle data we're dealing with.
   meshP->triElemsPresent = 0;
@@ -524,20 +520,20 @@ void pack(U16* array, int bits, U8** result) {
   int result_index = 0;
 
   U32 nInputElems = arrayGetNElems( array );
-  arrayNew( (void**) result, sizeof( U8 ), ( nInputElems * bits + 7 ) / 8); 
+  void* result = arrayNew( sizeof( U8 ), ( nInputElems * bits + 7 ) / 8, GENERAL); 
   for(int idx = 0; idx < nInputElems; idx++) {
     buffer |= (array[idx] << buffer_bits);
     buffer_bits += bits;
 
     while(buffer_bits >= 8) {
-      (*result)[result_index++] = buffer & 0xFF;
+      result[result_index++] = buffer & 0xFF;
       buffer >>= 8;
       buffer_bits -= 8;
     }
   }
 
   if(buffer_bits > 0) {
-    (*result)[result_index++] = buffer;
+    result[result_index++] = buffer;
   }
 }
 
@@ -598,8 +594,7 @@ int main ( int argc, char **argv ) {
 #if 0
     // Raw quantization
     U16* qPosA = NULL;
-    arrayNew( (void**) &qPosA, sizeof(U16), mesh.pos.count * 3 );
-    assert( qPosA );
+    void** &qPosA = arrayNew(  sizeof(U16), mesh.pos.count * 3, GENERAL );
     // TODO macro-out 1024 so we tweak the number of bits and all its dependencies with one single parameter.
     const float convX = 1024.0 / fabs( mesh.pos.max.vec3.x - mesh.pos.min.vec3.x );
     const float convY = 1024.0 / fabs( mesh.pos.max.vec3.y - mesh.pos.min.vec3.y );

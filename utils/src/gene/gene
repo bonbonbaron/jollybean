@@ -6,7 +6,7 @@ TROVE=${HOME}/.jb
 # 1. Every gene ultimately boils down to:
 #     a. MUTABLE: header + an array of key-pointer pairs
 #     b. IMMUTABLE: header + pointer
-# 2. And because they're pointers, game data is ultimately PLAIN DATA, easing development.
+# 2. And because they're pointers, immutables are ultimately PLAIN DATA, easing development.
 # 
 #
 # So let's spitball:
@@ -15,7 +15,16 @@ TROVE=${HOME}/.jb
 # ===============
 # I can just write Cyan's battle stats straight off the bat without having to even think about genes.
 # Then say I want to assign these stats to Cyan.
-# I do jb gene add -t cyan -i cyanBattleStats
+# I do jb gene add -t cyan [-i] cyanBattleStats   # "-i" is implied here.
+
+# Okay, fine. Break it down into even smaller problems:
+#     1) How do I reliably figure out the input's type?
+#            - reason 1: you'd want to know the type of something you're externing to stick into an object in order to a) declare it properly and b) include the type's header file.
+#            - reason 2: even for things below gene-level, it'd help to autocomplete from the command line what types you're putting in,
+#                        like what colormap or palette to use for an image.
+#            - reason 3: say i want to give red koopa a fire-type collision (OH! note to self: consider not relying on aseprite for this).
+#                        I can say "Give redKoopa CollisionType..." (press tab twice) "... FIRE_COLLISION." 
+#     2) 
 
 function add() {
 

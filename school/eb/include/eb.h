@@ -4,7 +4,7 @@
 #include "vec2.h"
 #include "vec3.h"
 #include "vec4.h"
-#include "fray.h"
+#include "data/fray.h"
 #include <assert.h>
 #include <math.h>
 #include <limits.h>

@@ -8,7 +8,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include "array.h"
+#include "data/array.h"
 
 typedef struct {
   unsigned char r, g, b;

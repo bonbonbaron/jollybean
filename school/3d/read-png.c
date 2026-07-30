@@ -17,7 +17,7 @@ unsigned char readPng(char *imgPathA, Image *imgP, int verbose) {
 #endif
 
   // Allocate PNG image info
-  png_image *pngP =  jbAlloc(sizeof(png_image), 1);
+  png_image *pngP =  memAdd(sizeof(png_image), GENERAL);
   // Set up PNG reader.
   memset(pngP, 0, sizeof(png_image));  // bombed, seeing if this worked
   pngP->version = PNG_IMAGE_VERSION;
@@ -47,7 +47,7 @@ unsigned char readPng(char *imgPathA, Image *imgP, int verbose) {
     printf("src img pixel size: %d\n", imgP->pixelSz);
   }
 
-  imgP->dataP = arrayNew(sizeof(Color), imgP->w * imgP->h);
+  imgP->dataP = arrayNew(sizeof(Color), imgP->w * imgP->h, GENERAL);
   assert(bufferSz == imgP->w * imgP->h * sizeof(Color));
   // In PNGs that're already colormaps, we go ahead and populate the color palette here.
   // Actual read happens here. row_stride param being 0 forces libpng to calculate the pitch for you.
@@ -75,7 +75,7 @@ unsigned char readPng(char *imgPathA, Image *imgP, int verbose) {
     printf("PNG image load success: %d x %d \n", pngP->width, pngP->height);
   }
 
-  jbFree((void**) &pngP);
+  memRst( GENERAL );
 
   return e;  // libpng errors are weird.
 }
