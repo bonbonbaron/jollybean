@@ -362,8 +362,8 @@ static inline BoundaryMeasOutcome measureBoundaryLengthRight( HalfEdge *heP ) {
 #define hasLeftNeighbor  (g->p->o && !g->p->o->t->m)
 #define goRight g = g->n->o
 #define goLeft g = g->p->o
-#define slideRight g = g->P;
-#define slideLeft g = g->N;
+#define slideRight g = g->N;
+#define slideLeft g = g->P;
 #define markAllAsSeen(h) \
   markTriangleAsSeen(h);\
   markVertexAsSeen(h, s);\
@@ -374,11 +374,11 @@ static inline BoundaryMeasOutcome measureBoundaryLengthRight( HalfEdge *heP ) {
 #define link( a, b ) a->N = b; b->P = a;
 
 static inline int chooseHoleAdvanceDirection( HalfEdge *g ) {
-  // A hole pinch point must not slide back into a triangle already processed.
-  // If one side would revisit a seen triangle, prefer the other side even if it
-  // is the longer loop. That is the condition that causes the observed F/G oscillation.
-  HalfEdge *rightGate = g->P;
-  HalfEdge *leftGate = g->N;
+  // The boundary orientation is consistent with measureBoundaryLengthRight():
+  // N is the right side, P is the left side. The previous code used these in
+  // reverse, which caused the F/G oscillation between the same two hole gates.
+  HalfEdge *rightGate = g->N;
+  HalfEdge *leftGate = g->P;
 
   if ( rightGate && rightGate->t && rightGate->t->m && !(leftGate && leftGate->t && !leftGate->t->m) ) {
     return 0;
@@ -398,6 +398,8 @@ static inline int chooseHoleAdvanceDirection( HalfEdge *g ) {
 }
 
 // TODO look at first edgebreaker paper for deets on changing active boundary
+/* markTriangle: C/L/R only. Consumes one unvisited triangle and records it
+ * in triangleTraversalOrderA for later attribute coding. */
 #if DBG_EDGEBREAKER
 #define markTriangle(clrgfChar_)\
   assert( nTrianglesRemaining-- >= 0 );\
@@ -412,7 +414,19 @@ static inline int chooseHoleAdvanceDirection( HalfEdge *g ) {
   (triTravP++)->g = g;\
   ++clrgfHisto[clrgfChar_];
 #endif
+/* emitGateMove: G/F only. Relocates the active gate. Does not mark the
+ * current triangle visited and does not occupy a traversal-order slot. */
+#if DBG_EDGEBREAKER
+#define emitGateMove(clrgfChar_)\
+  ++clrgfHisto[clrgfChar_];\
+  echoTriangleLabel(clrgfChar_)
+#else
+#define emitGateMove(clrgfChar_)\
+  ++clrgfHisto[clrgfChar_];
+#endif
 #define echoTriangleLabel(label) printf( "\e[32m" #label "\e[0m\n");
+#define tipIsNextOnRight ( g->v == g->N->s || g->v == g->N->e )
+#define tipIsNextOnLeft  ( g->v == g->P->s || g->v == g->P->e )
 
 #if DBG_EDGEBREAKER
 static void dispBoundary( const HalfEdge *firstGate, HalfEdge *g ) {
@@ -489,31 +503,49 @@ skipNewIslandLogic:
       // ?2: Is the boundary properly shrinking?
       // ?3: Are we sliding to the right place?
       // ?4: Is the boundary properly formed along each N and P?
+      {
+      HalfEdge *pinchOrigin = NULL;
+      int pinchHops = 0;
       while ( g ) {
 #if DBG_EDGEBREAKER
         assert( g->N );
         assert( g->P );
 #endif
+        /* Already-encoded face: the gate is stale. Step along the loop. */
+        if ( g->t->m ) {
+          if ( g->N && g->N != g && !g->N->t->m ) {
+            slideRight;
+          }
+          else if ( g->P && g->P != g && !g->P->t->m ) {
+            slideLeft;
+          }
+          else {
+            break;
+          }
+          continue;
+        }
 #if DBG_EDGEBREAKER
         printf("\niter # %5d ( @ tri %5ld, he %5ld )\n", ++nIters, g->t - meshP->tri.u.triA, g - meshP->initialGate );
-        // dispBoundary( meshP->initialGate->o, g );
         printf( "\e[95msev = { %d, %d, %d }\e[0m\n", 
           g->s->posIdx,
           g->e->posIdx,
           g->v->posIdx );
 #endif
-        // If v is not on boundary, we're lucky; it's an easy C.
-        if ( !g->v->m ) {            // BUG: g->v->m should be nonzero if on a boundary.
+        /* C: tip vertex has never been on the active boundary. */
+        if ( !g->v->m ) {
+          pinchOrigin = NULL;
+          pinchHops = 0;
           markTriangle(C);
           link( g->P, g->p->o );  
           link( g->p->o, g->n->o );
           link( g->n->o, g->N );
           goRight;
         }
-        // if opp vertex IS on the boundary or has been met, then we gotta figure out what kind this is.
-        // { 6, 2, 4} should be an R triangle, not G.
-
-        else if ( !hasRightNeighbor ){
+        /* R or E: tip is the next vertex along the right boundary, or there
+         * is no unvisited face across the right edge. */
+        else if ( tipIsNextOnRight || !hasRightNeighbor ) {
+          pinchOrigin = NULL;
+          pinchHops = 0;
           markTriangle(R);
           link( g->p->o, g->N->N );
           link( g->P, g->p->o );
@@ -527,33 +559,51 @@ skipNewIslandLogic:
             break;  
           }
         }
-        else if ( !hasLeftNeighbor ) {
+        /* L: tip is the next vertex along the left boundary, or there is no
+         * unvisited face across the left edge. */
+        else if ( tipIsNextOnLeft || !hasLeftNeighbor ) {
+          pinchOrigin = NULL;
+          pinchHops = 0;
           markTriangle(L);
           link( g->P->P, g->n->o );
           link( g->n->o, g->N );
           goRight;
         }
-        // Otherwise, you've reached a pinch point.
-        // There's a boundary loop to the left and the right.
-        // Whichever one's shorter is the direction you go in.
+        /* Pinch / former S. G and F only move the gate. The triangle stays
+         * unencoded until a later C, L, or R visit. If a full lap of the
+         * loop produces only G/F, enter the right pocket as a real split
+         * so the interior is consumed. */
         else {
-          // This is the hole case: both sides are valid boundary continuations.
-          // The current triangle still needs to be emitted and marked as seen before
-          // sliding to the next gate; otherwise the boundary walk never shrinks and
-          // the remaining-triangle assertion fires.
-          if ( chooseHoleAdvanceDirection( g ) ) {
-            markTriangle(G);
-            slideRight;
+          if ( !pinchOrigin ) {
+            pinchOrigin = g;
+            pinchHops = 0;
+          }
+          if ( g == pinchOrigin && pinchHops > 0 ) {
+            pinchOrigin = NULL;
+            pinchHops = 0;
+            markTriangle(R);
+            link( g->P, g->p->o );
+            link( g->p->o, g->n->o );
+            link( g->n->o, g->N );
+            goRight;
           }
           else {
-            markTriangle(F);
-            slideLeft;
+            ++pinchHops;
+            if ( chooseHoleAdvanceDirection( g ) ) {
+              emitGateMove(G);
+              slideRight;
+            }
+            else {
+              emitGateMove(F);
+              slideLeft;
+            }
           }
         }
 #if DBG_EDGEBREAKER
         printf( "\e[0m" );
 #endif
-      }  // literating over one island's triangles
+      }  /* triangles of one island */
+      }
     }   // if we haven't met this half-edge's triangle yet
     if ( hP->nextStartingGate ) {  // TODO is this right?
       printf("going to next bounding loop\n");
@@ -574,7 +624,9 @@ skipNewIslandLogic:
       clrgfHisto[R],  
       clrgfHisto[G],  
       clrgfHisto[F] );
-  assert( ( triTravP - meshP->triangleTraversalOrderA ) == arrayGetNElems( meshP->tri.u.triA ) + clrgfHisto[G] + clrgfHisto[F] );
+  /* G/F are gate moves, not triangles, so they are not stored in
+   * triangleTraversalOrderA and must not appear in this count. */
+  assert( ( triTravP - meshP->triangleTraversalOrderA ) == arrayGetNElems( meshP->tri.u.triA ) );
 #endif
 }
 
