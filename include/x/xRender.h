@@ -2,9 +2,9 @@
 #define SYS_RENDER
 #include "data/list.h"
 #include "x/x.h"
-#include "interface/interface.h"
 #include "data/bt.h"
 #include "jb.h"
+#include "gene/Image.h"
 
 //typedef enum {} XRenderMsgCmd;
 
@@ -22,9 +22,6 @@
 #define SHOULD_RIGHT_CAN_DOWN (SHOULD_RIGHT | CAN_DOWN)
 #define CAN_RIGHT_SHOULD_DOWN (SHOULD_DOWN | CAN_RIGHT)
 #define SHOULD_RIGHT_DOWN  (SHOULD_RIGHT | SHOULD_DOWN)
-
-#define IMAGE      (0x40)
-#define TILEMAP    (0x80)
 
 #define FRAME_TIME_UP (N_XMAIL_BUILTIN_CMDS + 1)
 
@@ -71,12 +68,12 @@ typedef struct {} XRenderMutation;
 // Feel free to increment as needed. There's nothing *holy* about this number.
 #define N_LAYERS_SUPPORTED (16)  
 
-typedef struct Collision {
+typedef struct CollisionBlob {
   ListNodeHeader hdr;
   Entity entity;
   Key blobIdIdx;
   S16 bottomYCoord;
-} Collision;
+} CollisionBlob;
 
 typedef struct {
   System         system;
@@ -97,8 +94,6 @@ typedef struct {
 Atlas* atlasNew( Image **imgPF);
 void atlasDel(Atlas **atlasPP);
 void atlasPlanPlacements(Atlas *atlasP);
-void xRenderIniS(System *sP, void *sParamsP);
-void xRenderProcessMessage(System *sP, Message *msgP);
 typedef void (*XRenderPresentU)(Renderer_ *rendererP);  // TODO uh.. what was this for again?
 // extern XPostprocessCompsDef_(Render);
 void updateCmSrcRectIndices(Image **imgPF, Atlas *atlasP);

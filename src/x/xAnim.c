@@ -1,9 +1,10 @@
 #include "x/xAnim.h"
+#include "data/share.h"
 
 // Unused X functions
 XIniSysFuncDefUnused_(Anim);
-XIniSubcompFuncDefUnused_(Anim);
-XPostprocessCompsDefUnused_(Anim);
+XConsumeGeneFuncDefUnused_(Anim);
+XMakeComponentsDefUnused_(Anim);
 XPostActivateFuncDefUnused_(Anim);
 XPostDeactivateFuncDefUnused_(Anim);
 
@@ -29,7 +30,7 @@ XProcMsgFuncDef_(Anim) {
     // Avoid offsetting any animation more than once.
     if (!(animStripP->flags & IS_OFFSET)) {
       animStripP->flags |= IS_OFFSET;
-      animStripEndP = animStripP + animMP->population;
+      animStripEndP = animStripP + animMP->sbmP->population;
       // Offset all the frames' rectangles in this strip to reflect their texture atlas offsets.
       for (; animStripP < animStripEndP; ++animStripP) {
         frameP = animStripP->frameA;
@@ -46,6 +47,8 @@ XProcMsgFuncDef_(Anim) {
   }
 }
 
+// TODO move this to postprocess()
+#if 0
 XGetShareFuncDef_(Anim) {
   assert(sP);
   // Get shared inner maps of resources we need (offsets and source rects)
@@ -61,20 +64,20 @@ XGetShareFuncDef_(Anim) {
   XAnimComp *cEndP = cP + *_frayGetFirstEmptyIdxP(sP->cF);
   for (Entity entity; cP < cEndP; ++cP) {
     entity = xGetEntityByVoidComponentPtr(sP, (void*) cP);
-    assert (entity);
     cP->srcRectP = (Rect_*) mapGet(xP->srcRectMP, entity);
     cP->dstRectP = (Rect_*) mapGet(xP->dstRectMP, entity);
     assert (cP->srcRectP);
     assert (cP->dstRectP);
   }
 }
+#endif
 
 XPostMutateFuncDef_(Anim) {
   assert(sP && cP);
   XAnimComp *_cP = (XAnimComp*) cP;
   _cP->currFrameIdx   = 0;
   _cP->incrDecrement  = 1;  // assume we're going to start off animating forward
-  // TODO take advantage of the anim's flag to decide whether to anchor the changed image to a side, corner, or center.
+                            // TODO take advantage of the anim's flag to decide whether to anchor the changed image to a side, corner, or center.
   assert( _cP->srcRectP != NULL );  // Make sure components can see the shared source rectangles.
   _cP->srcRectP->x    = _cP->currStrip.frameA[0].rect.x;  // mailbox should get "offset" changes to this beforehand
   _cP->srcRectP->y    = _cP->currStrip.frameA[0].rect.y;  // mailbox should get "offset" changes to this beforehand
@@ -87,13 +90,13 @@ XPostMutateFuncDef_(Anim) {
 // Anim activity
 //======================================================
 void xAnimRun(System *sP) {
-	XAnimComp *cP = (XAnimComp*) sP->cF;
-	XAnimComp *cEndP = cP + _frayGetFirstInactiveIdx(sP->cF);
+  XAnimComp *cP = (XAnimComp*) sP->cF;
+  XAnimComp *cEndP = cP + _frayGetFirstInactiveIdx(sP->cF);
 
   // Animation
   for (; cP < cEndP; ++cP) {
     if ((cP->timeLeft -= 1) <= 0) {  // TODO figure out time decrement
-      // If we've reached the last frame, ask if this is a pingpong or repeating animation strip.
+                                     // If we've reached the last frame, ask if this is a pingpong or repeating animation strip.
       if (cP->currFrameIdx == (cP->currStrip.nFrames - 1)) {
         // If this is a repeating animation strip, reset index, time left, and srcRectP.
         if (cP->currStrip.pingPong) {

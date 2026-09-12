@@ -55,10 +55,9 @@
 //
 //
 // Velllcommme.... tooooo HELLLL!!!!!
-static void hellNew( HeLinkListNode** hellFP, unsigned int nElems ) {
-  assert(hellFP && nElems);
-  Error e = frayNew(  (void**) &(*hellFP), sizeof( HeLinkListNode ), nElems );
-  assert( !e );
+static HeLinkListNode* hellNew( unsigned int nElems ) {
+  HeLinkListNode* hellF = frayNew( sizeof( HeLinkListNode ), nElems, GENERAL );
+  return hellF;
 }
 
 static inline int hellIsHead (HeLinkListNode *hellF, int idx) {
@@ -73,23 +72,19 @@ static HeLinkListNode* hellAdd( HeLinkListNode* hellF, HeLinkListNode* headP, Ha
     .head = headP,
     .tail = 0
   };
-  // head node of 0 means "this should be a new head"
-  Error e = SUCCESS;
   // If either the user is trying to start a new list or... 
   if ( !headP ) {
     U32 newHeadIdx;
-    e = frayAdd( (void**) hellF, (void*) &heNewNode, &newHeadIdx ); 
+    frayAdd( (void**) hellF, (void*) &heNewNode, &newHeadIdx ); 
     hellF[newHeadIdx].head = &hellF[ newHeadIdx ];
     hellF[newHeadIdx].tail = &hellF[ newHeadIdx ];
-    assert( !e );
     return &hellF[newHeadIdx];
   }
   else {
     // If you're adding to an existing linked list, update the former tail's "next" to point to new tail.
     unsigned newTailIdx;
     HeLinkListNode* origTailP = headP->tail;
-    e = frayAdd( (void**) hellF, (void*) &heNewNode, &newTailIdx); 
-    assert( !e );
+    frayAdd( (void**) hellF, (void*) &heNewNode, &newTailIdx); 
     // Head's tail and orig tail's next are new tail
     origTailP->next = headP->tail = &hellF[newTailIdx];
     headP->tail->head = headP;
@@ -120,7 +115,9 @@ void dispList( HeLinkListNode* hellF, unsigned headIdx ) {
     printf("\n\n");
   }
 }
+#endif
 
+#if DBG_BOUNDARY_MARKER
 static void dispBoundaryLink( Vec3* v1, Vec3 *v2 ) {
   printf( "\t\e[34m{ %f, %f, %f } -> { %f, %f, %f }\e[0m\n", 
       v1->x,
@@ -231,16 +228,12 @@ void getEdges( Mesh *meshP ) {
   Triangle* triangleA = meshP->tri.u.triA;  // convenience pointer
   HalfEdge *heA;  // convenience pointer
   // Half-edge array
-  Error e = arrayNew( (void**) &meshP->heA, sizeof(HalfEdge), 3 * arrayGetNElems(triangleA) );
-  assert( !e && meshP->heA );
+  meshP->heA = arrayNew( sizeof(HalfEdge), 3 * arrayGetNElems(triangleA), GENERAL );
   heA = meshP->heA;
   // Vertex-met array
-  e = arrayNew( (void**) &meshP->vstatA, sizeof(VertexStatus), arrayGetNElems( meshP->pos.u.vec3A ) );
-  assert( !e && meshP->vstatA );
+  meshP->vstatA = arrayNew( sizeof(VertexStatus), arrayGetNElems( meshP->pos.u.vec3A ), GENERAL );
   // Half-edge linked list
-  HeLinkListNode *hellF = NULL;
-  hellNew( &hellF, 3 * arrayGetNElems( triangleA ) );
-  assert( hellF );
+  HeLinkListNode *hellF = hellNew( 3 * arrayGetNElems( triangleA ) );
   // Iterate through triangles
   int nHalfEdges = 0;
   HalfEdge *hcP, *hnP, *hpP;  // current, next, and previous (corresponds to CCW in triangle, starting at gate)
@@ -340,10 +333,6 @@ void getEdges( Mesh *meshP ) {
 
   markBoundaries( meshP );
   assert( meshP->initialGate );
-
-
-  // free hell
-  frayDel( (void**) &hellF );
 }
 
 typedef enum { LEFT_IS_SHORTER, RIGHT_IS_SHORTER } BoundaryMeasOutcome;
@@ -353,10 +342,10 @@ static inline BoundaryMeasOutcome measureBoundaryLengthRight( HalfEdge *heP ) {
   HalfEdge *g;
   // Count to the right until you hit the gate's opposite vertex (the pinch point between two regions).
   for ( g = heP->N; 
-        g->s != heP->v &&  g != heP;
+        g && g->s != heP->v && g != heP;
         g = g->N, ++rBoundaryLen );
   for ( g = heP->P; 
-        g->e != heP->v && g != heP; 
+        g && g->e != heP->v && g != heP; 
         g = g->P, ++lBoundaryLen );
   printf("\e[33mright boundary: %d\nleft boundary:  %d\n\e[0m", rBoundaryLen, lBoundaryLen );
   if ( lBoundaryLen >= rBoundaryLen ) {
@@ -373,8 +362,8 @@ static inline BoundaryMeasOutcome measureBoundaryLengthRight( HalfEdge *heP ) {
 #define hasLeftNeighbor  (g->p->o && !g->p->o->t->m)
 #define goRight g = g->n->o
 #define goLeft g = g->p->o
-#define slideRight g = g->P;
-#define slideLeft g = g->N;
+#define slideRight g = g->N;
+#define slideLeft g = g->P;
 #define markAllAsSeen(h) \
   markTriangleAsSeen(h);\
   markVertexAsSeen(h, s);\
@@ -383,9 +372,37 @@ static inline BoundaryMeasOutcome measureBoundaryLengthRight( HalfEdge *heP ) {
 #define markVertexAsSeen(h, d) h->d->m = 1
 #define markTriangleAsSeen(h) h->t->m = 1
 #define link( a, b ) a->N = b; b->P = a;
+
+static inline int chooseHoleAdvanceDirection( HalfEdge *g ) {
+  // The boundary orientation is consistent with measureBoundaryLengthRight():
+  // N is the right side, P is the left side. The previous code used these in
+  // reverse, which caused the F/G oscillation between the same two hole gates.
+  HalfEdge *rightGate = g->N;
+  HalfEdge *leftGate = g->P;
+
+  if ( rightGate && rightGate->t && rightGate->t->m && !(leftGate && leftGate->t && !leftGate->t->m) ) {
+    return 0;
+  }
+  if ( leftGate && leftGate->t && leftGate->t->m && !(rightGate && rightGate->t && !rightGate->t->m) ) {
+    return 1;
+  }
+
+  if ( hasRightNeighbor && !hasLeftNeighbor ) {
+    return 1;
+  }
+  if ( hasLeftNeighbor && !hasRightNeighbor ) {
+    return 0;
+  }
+
+  return measureBoundaryLengthRight( g ) == RIGHT_IS_SHORTER;
+}
+
 // TODO look at first edgebreaker paper for deets on changing active boundary
+/* markTriangle: C/L/R only. Consumes one unvisited triangle and records it
+ * in triangleTraversalOrderA for later attribute coding. */
 #if DBG_EDGEBREAKER
 #define markTriangle(clrgfChar_)\
+  assert( nTrianglesRemaining-- >= 0 );\
   triTravP->clrgfChar = clrgfChar_; markAllAsSeen(g)\
   (triTravP++)->g = g;\
   ++clrgfHisto[clrgfChar_];\
@@ -397,7 +414,19 @@ static inline BoundaryMeasOutcome measureBoundaryLengthRight( HalfEdge *heP ) {
   (triTravP++)->g = g;\
   ++clrgfHisto[clrgfChar_];
 #endif
+/* emitGateMove: G/F only. Relocates the active gate. Does not mark the
+ * current triangle visited and does not occupy a traversal-order slot. */
+#if DBG_EDGEBREAKER
+#define emitGateMove(clrgfChar_)\
+  ++clrgfHisto[clrgfChar_];\
+  echoTriangleLabel(clrgfChar_)
+#else
+#define emitGateMove(clrgfChar_)\
+  ++clrgfHisto[clrgfChar_];
+#endif
 #define echoTriangleLabel(label) printf( "\e[32m" #label "\e[0m\n");
+#define tipIsNextOnRight ( g->v == g->N->s || g->v == g->N->e )
+#define tipIsNextOnLeft  ( g->v == g->P->s || g->v == g->P->e )
 
 #if DBG_EDGEBREAKER
 static void dispBoundary( const HalfEdge *firstGate, HalfEdge *g ) {
@@ -427,14 +456,12 @@ void getConnectivity( Mesh *meshP ) {
   // Make a stack pointer point to it for faster than "getLastElement()".
   // Allocate an array of traversal order of triangles.
   // Make a pointer to it for speed too.
-  Error e = arrayNew( (void**) &meshP->triangleTraversalOrderA, sizeof( TriangleTraversalNode ), arrayGetNElems( meshP->tri.u.triA ) );
-  assert( !e );
+  meshP->triangleTraversalOrderA = arrayNew( sizeof( TriangleTraversalNode ), arrayGetNElems( meshP->tri.u.triA ), GENERAL );
   TriangleTraversalNode* triTravP = meshP->triangleTraversalOrderA;
   int clrgfHisto[5] = {0};
   // Allocate an array of traversal order of unmet vertices.
   // Make a pointer to it for speed too.
-  e = arrayNew( (void**) &meshP->vertexTraversalOrderA, sizeof( VertexTraversalNode ), arrayGetNElems( meshP->pos.u.vec3A ) + 1 );
-  assert( !e );
+  meshP->vertexTraversalOrderA = arrayNew( sizeof( VertexTraversalNode ), arrayGetNElems( meshP->pos.u.vec3A ) + 1, GENERAL );
 #if DBG_EDGEBREAKER
   int nTrianglesRemaining = arrayGetNElems( meshP->tri.u.triA );
   printf("num tris: %d; num verts: %d\n", arrayGetNElems( meshP->tri.u.triA ), arrayGetNElems( meshP->pos.u.vec3A ) );
@@ -466,7 +493,6 @@ skipNewIslandLogic:
           g->t->v[0].nml->y,
           g->t->v[0].nml->z
           );
-        --nTrianglesRemaining;
 #endif
         markTriangle(C);
         goRight;
@@ -477,32 +503,49 @@ skipNewIslandLogic:
       // ?2: Is the boundary properly shrinking?
       // ?3: Are we sliding to the right place?
       // ?4: Is the boundary properly formed along each N and P?
+      {
+      HalfEdge *pinchOrigin = NULL;
+      int pinchHops = 0;
       while ( g ) {
 #if DBG_EDGEBREAKER
-        assert( nTrianglesRemaining-- >= 0 );  // keeps it from going forever on bad bugs
         assert( g->N );
         assert( g->P );
 #endif
+        /* Already-encoded face: the gate is stale. Step along the loop. */
+        if ( g->t->m ) {
+          if ( g->N && g->N != g && !g->N->t->m ) {
+            slideRight;
+          }
+          else if ( g->P && g->P != g && !g->P->t->m ) {
+            slideLeft;
+          }
+          else {
+            break;
+          }
+          continue;
+        }
 #if DBG_EDGEBREAKER
-        printf("\niter # %5d ( @ tri %5d, he %5d )\n", ++nIters, g->t - meshP->tri.u.triA, g - meshP->initialGate );
-        // dispBoundary( meshP->initialGate->o, g );
+        printf("\niter # %5d ( @ tri %5ld, he %5ld )\n", ++nIters, g->t - meshP->tri.u.triA, g - meshP->initialGate );
         printf( "\e[95msev = { %d, %d, %d }\e[0m\n", 
           g->s->posIdx,
           g->e->posIdx,
           g->v->posIdx );
 #endif
-        // If v is not on boundary, we're lucky; it's an easy C.
-        if ( !g->v->m ) {            // BUG: g->v->m should be nonzero if on a boundary.
+        /* C: tip vertex has never been on the active boundary. */
+        if ( !g->v->m ) {
+          pinchOrigin = NULL;
+          pinchHops = 0;
           markTriangle(C);
           link( g->P, g->p->o );  
           link( g->p->o, g->n->o );
           link( g->n->o, g->N );
           goRight;
         }
-        // if opp vertex IS on the boundary or has been met, then we gotta figure out what kind this is.
-        // { 6, 2, 4} should be an R triangle, not G.
-
-        else if ( !hasRightNeighbor ){
+        /* R or E: tip is the next vertex along the right boundary, or there
+         * is no unvisited face across the right edge. */
+        else if ( tipIsNextOnRight || !hasRightNeighbor ) {
+          pinchOrigin = NULL;
+          pinchHops = 0;
           markTriangle(R);
           link( g->p->o, g->N->N );
           link( g->P, g->p->o );
@@ -516,43 +559,51 @@ skipNewIslandLogic:
             break;  
           }
         }
-        else if ( !hasLeftNeighbor ) {
+        /* L: tip is the next vertex along the left boundary, or there is no
+         * unvisited face across the left edge. */
+        else if ( tipIsNextOnLeft || !hasLeftNeighbor ) {
+          pinchOrigin = NULL;
+          pinchHops = 0;
           markTriangle(L);
           link( g->P->P, g->n->o );
           link( g->n->o, g->N );
           goRight;
         }
-        // Otherwise, you've reached a pinch point.
-        // There's a boundary loop to the left and the right.
-        // Whichever one's shorter is the direction you go in.
+        /* Pinch / former S. G and F only move the gate. The triangle stays
+         * unencoded until a later C, L, or R visit. If a full lap of the
+         * loop produces only G/F, enter the right pocket as a real split
+         * so the interior is consumed. */
         else {
-          // This means the current triangle bounds two holes.
-          // TODO hypothesis: this means we're at a through-hole. This causes infinite slides.
-          if ( g->v->nGatesPointingAtMe == 1 ) {  // I'm no longer convinced this is the right way to approach it. It can spread out after a few triangles and yield an eventual C. 
-                                                  // We gotta figure out a better way to do this.
-            // TODO
-            if ( hasRightNeighbor ) {
-              // TODO
+          if ( !pinchOrigin ) {
+            pinchOrigin = g;
+            pinchHops = 0;
+          }
+          if ( g == pinchOrigin && pinchHops > 0 ) {
+            pinchOrigin = NULL;
+            pinchHops = 0;
+            markTriangle(R);
+            link( g->P, g->p->o );
+            link( g->p->o, g->n->o );
+            link( g->n->o, g->N );
+            goRight;
+          }
+          else {
+            ++pinchHops;
+            if ( chooseHoleAdvanceDirection( g ) ) {
+              emitGateMove(G);
+              slideRight;
             }
-            else {  // has left neighbor
-              // TODO 
+            else {
+              emitGateMove(F);
+              slideLeft; 
             }
           }
-              
-          if ( measureBoundaryLengthRight( g ) == RIGHT_IS_SHORTER ) {
-            echoTriangleLabel(G);
-            slideRight;
-          }
-          else {  // LEFT_IS_SHORTER
-            echoTriangleLabel(F);
-            slideLeft;
-          }
-          ++triTravP;  // Must still be traversed regardless.
         }
 #if DBG_EDGEBREAKER
         printf( "\e[0m" );
 #endif
-      }  // literating over one island's triangles
+      }  /* triangles of one island */
+      }
     }   // if we haven't met this half-edge's triangle yet
     if ( hP->nextStartingGate ) {  // TODO is this right?
       printf("going to next bounding loop\n");
@@ -573,7 +624,9 @@ skipNewIslandLogic:
       clrgfHisto[R],  
       clrgfHisto[G],  
       clrgfHisto[F] );
-  assert( ( triTravP - meshP->triangleTraversalOrderA ) == arrayGetNElems( meshP->tri.u.triA ) + clrgfHisto[G] + clrgfHisto[F] );
+  /* G/F are gate moves, not triangles, so they are not stored in
+   * triangleTraversalOrderA and must not appear in this count. */
+  assert( ( triTravP - meshP->triangleTraversalOrderA ) == arrayGetNElems( meshP->tri.u.triA ) );
 #endif
 }
 
@@ -681,19 +734,13 @@ void compressPositions( Mesh* meshP ) {
   assert( arrayGetNElems( meshP->triangleTraversalOrderA ) == arrayGetNElems( meshP->tri.u.triA ) );
   // Allocate
   const int nPositions = arrayGetNElems( meshP->pos.u.vec3A );
-  Error e = arrayNew( (void**) &meshP->pos.quantized.pos.xA, sizeof( short ), nPositions );
-  assert( !e );
-  e = arrayNew( (void**) &meshP->pos.quantized.pos.yA, sizeof( short ), nPositions );
-  assert( !e );
-  e = arrayNew( (void**) &meshP->pos.quantized.pos.zA, sizeof( short ), nPositions );
-  assert( !e );
+  meshP->pos.quantized.pos.xA = arrayNew( sizeof( short ), nPositions, GENERAL );
+  meshP->pos.quantized.pos.yA = arrayNew( sizeof( short ), nPositions, GENERAL );
+  meshP->pos.quantized.pos.zA = arrayNew( sizeof( short ), nPositions, GENERAL );
   // Allocate arrays of residuals
-  e = arrayNew( (void**) &meshP->pos.residual.pos.xA, sizeof( short ), nPositions );
-  assert( !e );
-  e = arrayNew( (void**) &meshP->pos.residual.pos.yA, sizeof( short ), nPositions );
-  assert( !e );
-  e = arrayNew( (void**) &meshP->pos.residual.pos.zA, sizeof( short ), nPositions );
-  assert( !e );
+  meshP->pos.residual.pos.xA = arrayNew( sizeof( short ), nPositions, GENERAL );
+  meshP->pos.residual.pos.yA = arrayNew( sizeof( short ), nPositions, GENERAL );
+  meshP->pos.residual.pos.zA = arrayNew( sizeof( short ), nPositions, GENERAL );
   // =============
   // X-Coordinates
   // =============
@@ -742,7 +789,7 @@ void compressPositions( Mesh* meshP ) {
     // printf( "rP is %d / %d \n", rP - rA, arrayGetNElems( rA ) );
   endForEach_( traversal node )
 #if DBG_POS_COMPRESSION
-  printf( "\n%d residuals populated out of %d\n\n", rP - rA, arrayGetNElems( rA ) );
+  printf( "\n%ld residuals populated out of %d\n\n", rP - rA, arrayGetNElems( rA ) );
   printf( "min = %d, max = %d\n", xmin, xmax );
 #endif
 

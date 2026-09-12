@@ -1,4 +1,8 @@
 #include "x/xRender.h"
+#include "data/share.h"
+
+// TODO
+XConsumeGeneFuncDefUnused_(Render);
 
 // rendering system owns the graphical GUI. That way, excluding this system neatly excludes graphics.
 static Gui *_guiP = NULL; 
@@ -217,8 +221,7 @@ nextOrphan:
 //======================================================
 // Initialize xRender's system.
 //======================================================
-void xRenderIniSys(System *sP, void *sParamsP) {
-  unused_(sParamsP);
+void xRenderIniSys(System *sP) {
   XRender *xP = (XRender*) sP;
   // Components array should have already been allocated by this point, so it's safe to get its size.
   U32 nComponents = xGetNComps(sP);
@@ -230,7 +233,7 @@ void xRenderIniSys(System *sP, void *sParamsP) {
 // Initialize xRender's components' elements (images and tilemaps)
 //=========================================================================
 void xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void *dataP) {
-  assert (sP && entity && dataP && subtype);
+  assert (sP && dataP && subtype);
 
   Image* imgP;
   XRender *xP = (XRender*) sP;
@@ -255,15 +258,6 @@ void xRenderIniSubcomp(System *sP, const Entity entity, const Key subtype, void 
     frayAdd(xP->entityF, (void*) &entity, NULL);
   }
 }
-static const char* names[] = {
-  "UNUSED",  // because entities are 1-based
-  "red",
-  "tan",
-  "rct",
-  "rctcp1",
-  "rctcp2",
-  "rctcp3"
-};
 
 /* I want to make the 
  * Before I handle this, here's a question:
@@ -277,11 +271,9 @@ void xRenderProcessMessage(System *sP, Message *msgP) {
       _manageGui();
       break;
     case MSG_SOFT_COLLISIONS_DETECTED:
-      printf("[xrendr] hearda bout collision\n");
       xP->collisionsDetected = TRUE;
       break;
     case MSG_LAYER_CHANGED:  // move to a specific layer
-      printf("[xrendr] layer changed!\n");
       XRenderComp* cP = xGetCompPByEntity( sP, msgP->attn );
       assert(cP);
       assert( *cP->zHeightP < N_LAYERS_SUPPORTED );
@@ -314,7 +306,7 @@ static void fillRectFromStripmap(const Image *imgP, const Rect_* rectP, Color_* 
   Color_* colorizedStripsetP = arrayNew(sizeof(Color_), arrayGetNElems(imgP->cmP->sdP->ss.unpackedDataA), TEMPORARY);
   Color_* colorP = colorizedStripsetP;
   Color_* colorEndP = colorP + arrayGetNElems(colorizedStripsetP);
-  Color_ *colorPaletteP = imgP->cpP->colorA;
+  Color_ *colorPaletteP = (Color_*) imgP->cpP->colorA;
   U8* stripSetElemP = imgP->cmP->sdP->ss.unpackedDataA;
   for (; colorP < colorEndP; ++stripSetElemP, ++colorP) {
     *colorP = colorPaletteP[ *stripSetElemP ];
@@ -358,59 +350,59 @@ static void fillPortionOfRect( FillRectParamsMT* fillRectParamsP ) {
   for ( ; dstP < dstEndP; dstP += INCREMENT ) {
     const Color_* dstRowEndP = dstP + rectWidth;
     for ( ; dstP < dstRowEndP; ++dstP ) {
-      assert( ( cmElemP - fillRectParams
-            *dstP = cpA[ *(cmElemP++) ];  
-            }
-            }
-            }
+      // assert( ( cmElemP - fillRectParams  // ??? What was I doing here?
+      *dstP = cpA[ *(cmElemP++) ];  
+    }
+  }
+}
 
 #endif
 
 
-            static void fillRect( U8* cmA, Color_* cpA, const Rect_* rectP, Color_* atlasPixelA, const U32 ATLAS_WIDTH ) {
-            assert( cmA && cpA && rectP && atlasPixelA );
+static void fillRect( U8* cmA, Color_* cpA, const Rect_* rectP, Color_* atlasPixelA, const U32 ATLAS_WIDTH ) {
+  assert( cmA && cpA && rectP && atlasPixelA );
 
-            const U32 INCREMENT = ATLAS_WIDTH - rectP->w;
+  const U32 INCREMENT = ATLAS_WIDTH - rectP->w;
 
 #ifdef MULTITHREADED_
-            const U32 N_THREADS = ( rectP->h < N_CORES ) ? rectP->h : N_CORES;
+  const U32 N_THREADS = ( rectP->h < N_CORES ) ? rectP->h : N_CORES;
 
-            FillRectParamsMT* paramsA = arrayNew( sizeof( FillRectParamsMT ), N_THREADS, TEMPORARY );
-            U32 heightSliver = rectP->h / N_THREADS;
-            for ( U32 i = 0; i < N_THREADS; ++i ) {
-            paramsA[i].dstP      = atlasPixelA + rectP->x + ( rectP->y + ( i * heightSliver) ) * ATLAS_WIDTH;
-            paramsA[i].dstEndP   = paramsA[i].dstP + ( heightSliver * ATLAS_WIDTH );
-            paramsA[i].cmA       = cmA + ( i * heightSliver ) * rectP->w;  // rect is as wide as source colormap
-            paramsA[i].cpA       = cpA;
-            paramsA[i].INCREMENT = INCREMENT;
-            paramsA[i].rectWidth = rectP->w;
-            assert( paramsA[i].dstEndP > paramsA[i].dstP );
-            }
-            FillRectParamsMT** ptrA = arrayNew( sizeof( FillRectParamsMT* ), N_THREADS, TEMPORARY );
-            for ( U32 i = 0; i < N_THREADS; ++i ) {
-              ptrA[i] = &paramsA[i];
-            }
-            // Then finish off by giving the last thread a slightly more responsibility if the sections aren't divisible by N_THREADS.
-            paramsA[ N_THREADS - 1 ].dstEndP += ( rectP->h % N_THREADS ) * ATLAS_WIDTH;
-            multithread_( fillPortionOfRect, (void*) ptrA );
+  FillRectParamsMT* paramsA = arrayNew( sizeof( FillRectParamsMT ), N_THREADS, TEMPORARY );
+  U32 heightSliver = rectP->h / N_THREADS;
+  for ( U32 i = 0; i < N_THREADS; ++i ) {
+    paramsA[i].dstP      = atlasPixelA + rectP->x + ( rectP->y + ( i * heightSliver) ) * ATLAS_WIDTH;
+    paramsA[i].dstEndP   = paramsA[i].dstP + ( heightSliver * ATLAS_WIDTH );
+    paramsA[i].cmA       = cmA + ( i * heightSliver ) * rectP->w;  // rect is as wide as source colormap
+    paramsA[i].cpA       = cpA;
+    paramsA[i].INCREMENT = INCREMENT;
+    paramsA[i].rectWidth = rectP->w;
+    assert( paramsA[i].dstEndP > paramsA[i].dstP );
+  }
+  FillRectParamsMT** ptrA = arrayNew( sizeof( FillRectParamsMT* ), N_THREADS, TEMPORARY );
+  for ( U32 i = 0; i < N_THREADS; ++i ) {
+    ptrA[i] = &paramsA[i];
+  }
+  // Then finish off by giving the last thread a slightly more responsibility if the sections aren't divisible by N_THREADS.
+  paramsA[ N_THREADS - 1 ].dstEndP += ( rectP->h % N_THREADS ) * ATLAS_WIDTH;
+  multithread_( fillPortionOfRect, (void*) ptrA );
 #else
-            Color_* dstP = atlasPixelA + rectP->x + ( rectP->y ) * ATLAS_WIDTH;
-            Color_* dstEndP = dstP + ( rectP->h * ATLAS_WIDTH );
-            U8* cmElemP = cmA;
+  Color_* dstP = atlasPixelA + rectP->x + ( rectP->y ) * ATLAS_WIDTH;
+  Color_* dstEndP = dstP + ( rectP->h * ATLAS_WIDTH );
+  U8* cmElemP = cmA;
 
-            assert( arrayGetNElems( cmA ) == ( rectP->w * rectP->h ) );
-            // assert( ( dstEndP - dstP ) /  == rectP->h );
-            // assert( ( dstEndP - dstP ) / INCREMENT == rectP->h );
+  assert( arrayGetNElems( cmA ) == ( rectP->w * rectP->h ) );
+  // assert( ( dstEndP - dstP ) /  == rectP->h );
+  // assert( ( dstEndP - dstP ) / INCREMENT == rectP->h );
 
-            for ( ; dstP < dstEndP; dstP += INCREMENT ) {
-              const Color_* dstRowEndP = dstP + rectP->w;
-              for ( ; dstP < dstRowEndP; ++dstP ) {
-                assert( cmElemP < ( cmA + arrayGetNElems( cmA ) ) );
-                *dstP = cpA[ *(cmElemP++) ];
-              }
-            }
+  for ( ; dstP < dstEndP; dstP += INCREMENT ) {
+    const Color_* dstRowEndP = dstP + rectP->w;
+    for ( ; dstP < dstRowEndP; ++dstP ) {
+      assert( cmElemP < ( cmA + arrayGetNElems( cmA ) ) );
+      *dstP = cpA[ *(cmElemP++) ];
+    }
+  }
 #endif
-            }
+}
 
 // Texture atlas array
 Color_* assembleTextureAtlas(Image** imgPF, Atlas *atlasP) {
@@ -436,7 +428,7 @@ Color_* assembleTextureAtlas(Image** imgPF, Atlas *atlasP) {
     // Otherwise, it's a grayscale image that's ready to go.
     else {
       U8* cmP = ssGetOutput( imgP->cmP->sdP );
-      fillRect( cmP, imgP->cpP->colorA, dstRectP, atlasPixelA, ATLAS_WIDTH );
+      fillRect( cmP, (Color_*) imgP->cpP->colorA, dstRectP, atlasPixelA, ATLAS_WIDTH );
     }
   }
   return atlasPixelA;
@@ -460,50 +452,52 @@ static void _updateSrcRects(XRender *xP, Atlas *atlasP) {
   // Get all the animation rectangles we need to update when building our texture atlas.
   // First count all the rectangles we're going to need.
   // At this point, empty components will already have been added by xAddComp().
-  XRenderComp* cP;
+  // XRenderComp* cP;  // TODO uncomment when ready to do below
 
-  SubcompOwner *scoP = xP->system.subcompOwnerMP->mapA;
-  SubcompOwner *scoEndP = scoP + xP->system.subcompOwnerMP->population;
+  /* TODO do away with subcomp owner nastiness
+     SubcompOwner *scoP = xP->system.subcompOwnerMP->mapA;
+     SubcompOwner *scoEndP = scoP + xP->system.subcompOwnerMP->sbmP->population;
 
-  RectOffset rectOffset = {0};
-  Image *imgP;
+     RectOffset rectOffset = {0};
+     Image *imgP;
   // If we own the src rect map, we better populate its flags before we access it.
   // Give everybody an empty rectangle for now.
   if (xP->system.flags & RENDER_SYS_OWNS_SRC_AND_OFFSET) {
-    // Copy the flags from one map to another. It's a cheat code.
-    mapCopyKeys(xP->srcRectMP, xP->dstRectMP);
-    assert(xP->srcRectMP->population == xP->dstRectMP->population); 
-    assert(arrayGetElemSz(xP->srcRectMP->mapA) == arrayGetElemSz(xP->dstRectMP->mapA)); 
+  // Copy the flags from one map to another. It's a cheat code.
+  mapCopyKeys(xP->srcRectMP, xP->dstRectMP);
+  assert(xP->srcRectMP->sbmP->population == xP->dstRectMP->sbmP->population); 
+  assert(arrayGetElemSz(xP->srcRectMP->mapA) == arrayGetElemSz(xP->dstRectMP->mapA)); 
   }
   // Update all source rectangles' XY coordinates to their global positions in texture atlas.
   // For each entity...
   for (; scoP < scoEndP; ++scoP) {
-    imgP = (Image*) scoP->subcompA[IMG_SUBCOMP_IDX];
-    assert(scoP->owner);  
-    cP = xGetCompPByEntity( &xP->system, scoP->owner );
-    // Having a colormap is mandatory for xRender components.
-    // Source rectangle initialization (set flag first because implicit share maps don't know 
-    // which entities they should be mapped to ahead of time... would be nice if I found a way
-    // to use mapCopyKeys() for all systems prior to this function)
-    if (!(xP->system.flags & RENDER_SYS_OWNS_SRC_AND_OFFSET)) {
-      mapSetFlag(xP->srcRectMP, scoP->owner);
-    }
-    cP->srcRectP = (Rect_*) mapGet(xP->srcRectMP, scoP->owner);
-    assert (cP->srcRectP);
-    cP->srcRectP->x = atlasP->btP[imgP->sortedRectIdx].rect.x;
-    cP->srcRectP->y = atlasP->btP[imgP->sortedRectIdx].rect.y;
-    cP->srcRectP->w = atlasP->btP[imgP->sortedRectIdx].rect.w;
-    cP->srcRectP->h = atlasP->btP[imgP->sortedRectIdx].rect.h;
-    // If there's an animation system (which tells master that rect offsets are implied),
-    // tell the animation system to update its frame rectangles' XY coordinates to their places
-    // in the texture atlas.
-    if (xP->offsetRectMP) {
-      rectOffset.x = cP->srcRectP->x;
-      rectOffset.y = cP->srcRectP->y;
-      mapSet(xP->offsetRectMP, scoP->owner, &rectOffset);
-      mailboxWrite(xP->system.mailboxF, ANIMATION, scoP->owner, UPDATE_RECT, 0, NULL);
-    }
+  imgP = (Image*) scoP->subcompA[IMG_SUBCOMP_IDX];
+  assert(scoP->owner);  
+  cP = xGetCompPByEntity( &xP->system, scoP->owner );
+  // Having a colormap is mandatory for xRender components.
+  // Source rectangle initialization (set flag first because implicit share maps don't know 
+  // which entities they should be mapped to ahead of time... would be nice if I found a way
+  // to use mapCopyKeys() for all systems prior to this function)
+  if (!(xP->system.flags & RENDER_SYS_OWNS_SRC_AND_OFFSET)) {
+  mapSetFlag(xP->srcRectMP, scoP->owner);
   }
+  cP->srcRectP = (Rect_*) mapGet(xP->srcRectMP, scoP->owner);
+  assert (cP->srcRectP);
+  cP->srcRectP->x = atlasP->btP[imgP->sortedRectIdx].rect.x;
+  cP->srcRectP->y = atlasP->btP[imgP->sortedRectIdx].rect.y;
+  cP->srcRectP->w = atlasP->btP[imgP->sortedRectIdx].rect.w;
+  cP->srcRectP->h = atlasP->btP[imgP->sortedRectIdx].rect.h;
+  // If there's an animation system (which tells master that rect offsets are implied),
+  // tell the animation system to update its frame rectangles' XY coordinates to their places
+  // in the texture atlas.
+  if (xP->offsetRectMP) {
+  rectOffset.x = cP->srcRectP->x;
+  rectOffset.y = cP->srcRectP->y;
+  mapSet(xP->offsetRectMP, scoP->owner, &rectOffset);
+  mailboxWrite(xP->system.mailboxF, ANIMATION, scoP->owner, UPDATE_RECT, 0, NULL);
+  }
+  }
+  */
 }
 
 // Updates colormaps' indices to sorted rects so we can track their atlas XY offsets
@@ -517,9 +511,17 @@ void updateCmSrcRectIndices(Image **imgPF, Atlas *atlasP) {
 
 // Post-processing of components is done AFTER media genes are inflated and unpacked.
 // Rendering media genes are flagged to skip the strip-assembling stage; that's done here.
-XPostprocessCompsDef_(Render) {
+XMakeComponentsDef_(Render) {
   XRender *xP = (XRender*) sP;
-  
+
+  // Get source rect and rect offset maps. Give both a chance to run if we enter this block.
+  xP->dstRectMP = shareGetMap(DST_RECT);  
+  xP->zHeightMP = shareGetMap(Z_HEIGHT);  // Z-heights are shared since collision also needs them.
+  xP->srcRectMP = shareGetMap(SRC_RECT);  
+  // If there's no animation system, there won't be a source rect shared map in master.
+  xP->offsetRectMP = shareGetMap(RECT_OFFSET);  
+  // TODO make it so a map can just have miscellaneous pointers so we don't need a "BLOB" map with one elem, same for GUI
+  xP->blobLF    = (List*) shareGetPointer(BLOB_KEY_);
   // Uncondtionally try to start the GUI. It's safe.
   _manageGui();
 
@@ -544,8 +546,9 @@ XPostprocessCompsDef_(Render) {
   surfaceDel(&atlasSurfaceP);
 
   // Initialize the linked lists
-  for ( size_t i = 0; i < N_LAYERS_SUPPORTED; ++i ) {
-    listIni( &xP->layerListA[ i ], i, (void*) sP->cF, i == 0 );
+  listIni( &xP->layerListA[ 0 ], (void*) sP->cF, NULL, GENERAL );
+  for ( size_t i = 1; i < N_LAYERS_SUPPORTED; ++i ) {
+    listIni( &xP->layerListA[ i ], (void*) sP->cF, &xP->layerListA[0], GENERAL );
   }
 
   // Update source rectangles. That way animation system knows where its frames are in texture atlas.
@@ -593,19 +596,6 @@ XPostDeactivateFuncDef_(Render) {
   listRemove( &xP->layerListA[ *cP->zHeightP ], &cP->hdr );
 }
 
-// Only get the render and window. Components' src & dst rects come from SCENE_START stimulus to XAction.
-XGetShareFuncDef_(Render) {
-  XRender *xP = (XRender*) sP;
-  // Get source rect and rect offset maps. Give both a chance to run if we enter this block.
-  xP->dstRectMP = mapGetNestedMapP(shareMPMP, DST_RECT);  
-  xP->zHeightMP = mapGetNestedMapP(shareMPMP, Z_HEIGHT);  // Z-heights are shared since collision also needs them.
-  xP->srcRectMP = mapGetNestedMapP(shareMPMP, SRC_RECT);  
-  // If there's no animation system, there won't be a source rect shared map in master.
-  xP->offsetRectMP = mapGetNestedMapP(shareMPMP, RECT_OFFSET);  
-  // TODO make it so a map can just have miscellaneous pointers so we don't need a "BLOB" map with one elem, same for GUI
-  xP->blobLF    = (List*) mapGetNestedMapPElem(shareMPMP, SINGLETON_TYPE, BLOB_KEY_, NONMAP_POINTER);
-}
-
 XPostMutateFuncDef_(Render) {
   unused_(sP);
   unused_(cP);
@@ -623,7 +613,7 @@ static void zOrder( XRender* xP ) {
   Key nBlobMembersSorted;
   S32 i;
   List *zLayerLP;
-  Collision *collP, *collEndP;
+  CollisionBlob *collP, *collEndP;
   XRenderComp *cP, *anchorP, *pivotP;
   ListNodeHeader* anchorHdrP;
   ListNodeHeader* pivotHdrP;
@@ -633,17 +623,15 @@ static void zOrder( XRender* xP ) {
 
   // For each blob
   for ( ; blobLP < blobEndLP; ++blobLP ) {
-    collP = (Collision*) listGetHead( blobLP );
-    collEndP = (Collision*) listGetTail( blobLP );
-    collP = (Collision*) listGetHead( blobLP );
-    printf("list head = %s, tail %s, next %s\n", names[blobLP->head], names[blobLP->tail], names[collP->hdr.next]);
+    collP = (CollisionBlob*) listGetHead( blobLP );
+    collEndP = (CollisionBlob*) listGetTail( blobLP );
+    collP = (CollisionBlob*) listGetHead( blobLP );
     nBlobMembersSorted = 0;
     goto SKIP_FIRST_COLL_INCR;
     // For each entity in current blob
     for ( ; collP != collEndP; ++nBlobMembersSorted ) {
-      collP = (Collision*) listNodeGetNext( blobLP, &collP->hdr );
+      collP = (CollisionBlob*) listNodeGetNext( blobLP, &collP->hdr );
 SKIP_FIRST_COLL_INCR:
-      printf("curr node's name: %s, next = %d\n", names[ collP->entity ], collP->hdr.next );
       yip.bottomYCoord = collP->bottomYCoord;  // for sorting purposes
       cP = (XRenderComp*) xGetCompPByEntity( &xP->system, collP->entity );
       assert ( cP >= cF );
@@ -653,18 +641,11 @@ SKIP_FIRST_COLL_INCR:
       // Insert-sort highest to lowest Y-coordinates
       for ( i = 0; i < nBlobMembersSorted; ++i ) {
         if ( yip.bottomYCoord < sortedBlobMembers[i].bottomYCoord ) {
-          printf("moving %d members over one\n", nBlobMembersSorted);
           memmove( &sortedBlobMembers[i + 1], &sortedBlobMembers[i], sizeof( YIdxPair ) * nBlobMembersSorted );
           break;
         }
       }
-      printf("putting %s in sortedBlobMembers[ %d ]\n", names[ collP->entity ], i );
       sortedBlobMembers[ i ] = yip;
-      printf("sorted members = [ ");
-      for ( i = 0; i < nBlobMembersSorted + 1; ++i ) {
-        printf("%s ", names[ xGetEntityByCompIdx( &xP->system, sortedBlobMembers[i].frayIdx ) ]);
-      }
-      printf("]\n");
     }  // for every member of current blob
 
     // list of all active entities on current blob's Z-layer

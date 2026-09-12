@@ -1,22 +1,20 @@
-Keyring interface
-  make it easy by putting a text file with key names in the resources folder, then generating a header file off of that, refreshing it every time
-KeyValPairArray for animations
-Mutation detection in Gene script by searching for KeyValPairArray
-Gene interface 
-  including circular gene detection, erroring out in such cases
-Gene C file for inflation, distribution, and initialization
-listMerge() should update all new members' list IDs so listRemove() works on them
-each blob should now have the pair of collisions, maybe without the blob ID in them (A?)
-xRender::zOrder() should iterate over this blob list's new type differently:
+LEFT OFF HERE:
+==============
+* finished bitfield unit test. Now I need to go fix all my other unit tests, especially maps.
+* Give lists a way to grab the first available ID. Meta, if we need it may need a bitfield.
+
+* make a tool to generate genes and load them via an INDEPENDENT, auto-generated Makefile.
+
+* listMerge() should update all new members' list IDs so listRemove() works on them
+* each blob should now have the pair of collisions, maybe without the blob ID in them (A?)
+* xRender::zOrder() should iterate over this blob list's new type differently:
   i sense the pairs should enhance sorting since it's list-based. 
   Each pair item may use a boolean to tell if it's been sorted into the outgoing YIP array.
-    A B
-    B C
-    B E
-    D E
-    E F
-
-
+  -  A B
+  -  B C
+  -  B E
+  -  D E
+  -  E F
 
 add post pause and unpause generics
 add post pause and unpause to all systems till they compile

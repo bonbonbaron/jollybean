@@ -1,4 +1,6 @@
-BODY_DIR = ${HOME}/jb/build/Seed/Genome/Gene/Body
+all: ./o
+
+BODY_DIR = ${HOME}/.jb/build/Seed/Genome/Gene/Body
 
 COLORMAP_DIR = ${BODY_DIR}/Image/Colormap
 CM_SRC_DIR = ${COLORMAP_DIR}/src
@@ -12,7 +14,7 @@ CP_OBJ_DIR = ${COLOR_PALETTE_DIR}/obj
 
 JB_DIR = $(shell git rev-parse --show-toplevel)
 UTILS = ${JB_DIR}/utils
-KR_DIR = ${HOME}/jb/src/Keyring
+KR_DIR = ${HOME}/.jb/src/Keyring
 JB_INCS = -I${JB_DIR}/include
 
 ./o: ${CM_OBJ_DIR}/redColormap.o ${CM_OBJ_DIR}/blehColormap.o ${CM_OBJ_DIR}/heckColormap.o  ${CP_OBJ_DIR}/redColorPalette.o ${CP_OBJ_DIR}/blehColorPalette.o ${CP_OBJ_DIR}/heckColorPalette.o ./main.o ${JB_DIR}/lib/libjb.a ${CM_SRC_DIR}/blehColormap.c ${CM_SRC_DIR}/heckColormap.c ${CM_SRC_DIR}/redColormap.c

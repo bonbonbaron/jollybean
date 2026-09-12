@@ -1,87 +1,78 @@
 #include "data/map.h"
 
+#if __WORDSIZE == 32
+const static UWord BITCOUNT_MASK[] = {
+  0x00000000, 0x00000001, 0x00000003, 0x00000007, 
+  0x0000000f, 0x0000001f, 0x0000003f, 0x0000007f, 
+  0x000000ff, 0x000001ff, 0x000003ff, 0x000007ff, 
+  0x00000fff, 0x00001fff, 0x00003fff, 0x00007fff, 
+  0x0000ffff, 0x0001ffff, 0x0003ffff, 0x0007ffff, 
+  0x000fffff, 0x001fffff, 0x003fffff, 0x007fffff, 
+  0x00ffffff, 0x01ffffff, 0x03ffffff, 0x07ffffff, 
+  0x0fffffff, 0x1fffffff, 0x3fffffff, 0x7fffffff, 
+};
+#elif __WORDSIZE == 64
+// AIN'T IT BEAUTIFUL!!!
+const static UWord BITCOUNT_MASK[] = {
+  // First 32 bits
+  0x0000000000000000, 0x0000000000000001, 0x0000000000000003, 0x0000000000000007, 
+  0x000000000000000f, 0x000000000000001f, 0x000000000000003f, 0x000000000000007f, 
+  0x00000000000000ff, 0x00000000000001ff, 0x00000000000003ff, 0x00000000000007ff, 
+  0x0000000000000fff, 0x0000000000001fff, 0x0000000000003fff, 0x0000000000007fff, 
+  0x000000000000ffff, 0x000000000001ffff, 0x000000000003ffff, 0x000000000007ffff, 
+  0x00000000000fffff, 0x00000000001fffff, 0x00000000003fffff, 0x00000000007fffff, 
+  0x0000000000ffffff, 0x0000000001ffffff, 0x0000000003ffffff, 0x0000000007ffffff, 
+  0x000000000fffffff, 0x000000001fffffff, 0x000000003fffffff, 0x000000007fffffff, 
+  // Last 32 bits
+  0x00000000ffffffff, 0x00000001ffffffff, 0x00000003ffffffff, 0x00000007ffffffff, 
+  0x0000000fffffffff, 0x0000001fffffffff, 0x0000003fffffffff, 0x0000007fffffffff, 
+  0x000000ffffffffff, 0x000001ffffffffff, 0x000003ffffffffff, 0x000007ffffffffff, 
+  0x00000fffffffffff, 0x00001fffffffffff, 0x00003fffffffffff, 0x00007fffffffffff, 
+  0x0000ffffffffffff, 0x0001ffffffffffff, 0x0003ffffffffffff, 0x0007ffffffffffff, 
+  0x000fffffffffffff, 0x001fffffffffffff, 0x003fffffffffffff, 0x007fffffffffffff, 
+  0x00ffffffffffffff, 0x01ffffffffffffff, 0x03ffffffffffffff, 0x07ffffffffffffff, 
+  0x0fffffffffffffff, 0x1fffffffffffffff, 0x3fffffffffffffff, 0x7fffffffffffffff, 
+};
+#else
+static_assert( 0, "Jollybean only supports 32- and 64-bit architectures.");
+#endif
+
+// Done for *local* popcounting (base added after).
 Map* mapNew( MapElemType elemType, const U8 elemSz, const Key nElems, const PoolId poolId) {
 	assert (elemSz && nElems);
   Map* mapP = memAdd(sizeof(Map), poolId );
-  memset(mapP->flagA, 0, sizeof(FlagInfo) * N_FLAG_BYTES);
+  mapP->sbmP = sbmNew( nElems /* assume max bit == nElems for now */, poolId );
 	mapP->mapA = arrayNew(elemSz, nElems, poolId );
-  mapP->population = 0;
-  mapP->nestedRef = 0;  // number of times this is nested in an outer map
   mapP->elemType = elemType;
   return mapP;
 }
 
-inline static U8 _isMapValid(const Map *mapP) {
-	return (mapP != NULL && mapP->mapA != NULL); 
-}	
-
-/* Map GETTING functions */
-inline static U8 _countBits(Key bitfield) {
-#ifdef __ARM_NEON__
-  asm("vmov.8 d21[0], %0\n\t"
-      "vcnt.i8 d20, d21\n\t"
-      "vmov.u8 %0, d20[0]"
-      : "+r" (bitfield));
-	return bitfield;
-#else
-	register Key count = bitfield - ((bitfield >> 1) & 0x55555555);
-	count = (count & 0x33333333) + ((count >> 2) & 0x33333333);
-	count = (count + (count >> 4)) & 0x0f0f0f0f;
-	return (count * 0x01010101) >> 24;
-#endif
-}
-inline static FlagInfo _getFlagInfo(const Map *mapP, const Key key) {
-  return mapP->flagA[byteIdx_(key)];
-}
-
-#if 0
-inline static U8 _isFlagSet(const U8 flags, const Key key) {
-	return flags & (1 << ((key - 1) & 0x07));
-}
-#endif
-
-inline static U32 _getElemIdx(const FlagInfo f, const Key key) {
-	return f.prevBitCount + _countBits(f.flags & (bitFlag_(key) - 1));
-}
-
 Key mapGetIndex(const Map *mapP, const Key key) {
-	const register Key keyMinus1 = key - 1;
-	const register FlagInfo f = mapP->flagA[keyMinus1 >> 3];  // Divide N by 8 for byte with Nth bit.
-	const register Key bitFlag = 1 << (keyMinus1 & 0x07);     // 0x07 keeps bit inside 8-bit bounds.
-	assert (f.flags & bitFlag);
-  return _getElemIdx(f, key);
+	const BasedWord* basedWordP = sbmGetBasedWord( mapP->sbmP, key );
+  return rawBitCount( basedWordP->bits & BITCOUNT_MASK[ key & LOCAL_BIT_MASK ] ) + basedWordP->base;
 }
 
-inline static void* _getElemP(const Map *mapP, const FlagInfo f, const Key key) {
-	return _fast_arrayGetElemByIdx(mapP->mapA, _getElemIdx(f, key));
+inline static void* _getElemP(const Map *mapP, const Key key) {
+  assert( mapP );
+	return _fast_arrayGetElemByIdx(mapP->mapA, mapGetIndex(mapP, key));
 }	
 
 inline static U32 _getMapElemSz(const Map *mapP) {
   return arrayGetElemSz(mapP->mapA);
 }
 
+U32 mapHasKey(const Map* mP, const Key key ) {
+  assert (mP);
+  return sbmIsBitSet( mP->sbmP, key );
+}
+
 void* mapGet(const Map *mapP, const Key key) {
-  assert (mapP && key);  // key has to be 1 or greater.
-	const register U32 keyMinus1 = key - 1;
-	const register FlagInfo f = mapP->flagA[keyMinus1 >> 3];
-	const register U32 bitFlag = 1 << (keyMinus1 & 0x07);
-	// If the bit flag in question is set, that means a value exists for the input key.
-	if (f.flags & bitFlag) {
-    register U32 count = f.flags & (bitFlag - 1);  // initialize count with the bits we're counting
-    // The desired array index is the number of bits set before the key'th bit.
-#ifdef __ARM_NEON__
-    // This counts the number of high bits in a word in just a few single CPU cycles.
-    asm("vmov.8 d21[0], %0\n\t"
-        "vcnt.i8 d20, d21\n\t"
-        "vmov.u8 %0, d20[0]"
-        : "+r" (count));
-#else
-		count = count - ((count >> 1) & 0x55555555);
-		count = (count & 0x33333333) + ((count >> 2) & 0x33333333);
-		count = (count + (count >> 4)) & 0x0f0f0f0f;
-		count = (count * 0x01010101) >> 24;
-#endif
-		return _fast_arrayGetElemByIdx(mapP->mapA, count + f.prevBitCount);
+  assert (mapP );
+  BasedWord* basedWordP;
+  // This "Ex" function lets us see if a bit is set without having to reload its bitfield afterward.
+	if ( sbmIsBitSetEx( mapP->sbmP, key, &basedWordP ) ) {
+     UWord popcount = bmSum( basedWordP->bits & BITCOUNT_MASK[ key & LOCAL_BIT_MASK ], basedWordP->base);
+		return _fast_arrayGetElemByIdx(mapP->mapA, popcount);
 	}
 	return NULL;
 }
@@ -92,101 +83,61 @@ inline static U8 _idxIsPopulated(const U32 nBitsSet, U32 idx) {
   return (idx < nBitsSet);
 }
 
-static void _preMapSet(const Map *mapP, const Key key, void **elemPP, void **nextElemPP, U32 *nBytesTMoveP) {
-  *nBytesTMoveP = 0;
-  FlagInfo f;
-  f = _getFlagInfo(mapP, key);
-  *elemPP = _getElemP(mapP, f, key);
-  if (*elemPP) {  /* Side-stepping mapGet() to avoid NULL pointers and double-calling _isMapValid() */
-    U32 keyElemIdx = _getElemIdx(f, key);
-    /* If something's already in the target index, move everything over one. */
-    if (_idxIsPopulated(mapP->population, keyElemIdx)) {
+// If something's already in the target index, move everything over one. 
+static U32 countBytesToShiftOver(const Map *mapP, const Key key, void **elemPP, void **nextElemPP) {
+  *elemPP = _getElemP(mapP, key);
+  if (*elemPP) {
+    U32 keyElemIdx = mapGetIndex( mapP, key );
+    if (_idxIsPopulated(mapP->sbmP->population, keyElemIdx)) {
       U32 mapElemSz = _getMapElemSz(mapP);
-      *nBytesTMoveP = (mapP->population - keyElemIdx) * mapElemSz;
       *nextElemPP = (U8*) *elemPP + mapElemSz;
+      return (mapP->sbmP->population - keyElemIdx) * mapElemSz;
     }
   }
-}
-
-void mapSetFlag(Map *mapP, const Key key) {
-  Key byteIdx = byteIdx_(key);
-  mapP->flagA[byteIdx].flags |= bitFlag_(key);  /* flagNum & 0x07 gives you # of bits in the Nth byte */
-  /* Increment all prevBitCounts in bytes above affected one. */
-  // TODO vectorize the below if it's available
-  while (++byteIdx < N_FLAG_BYTES) {
-    ++mapP->flagA[byteIdx].prevBitCount;
-  }
+  return 0;
 }
 
 void mapSet(Map *mapP, const Key key, const void *valP) {
-  assert (mapP && key && valP);
-  assert (mapP->population < arrayGetNElems(mapP->mapA));
+  assert (mapP && valP);
+  assert (mapP->sbmP->population < arrayGetNElems(mapP->mapA));
 	void *elemP, *nextElemP;
-  U32 nBytesToMove;
-  _preMapSet(mapP, key, &elemP, &nextElemP, &nBytesToMove);
+  U32 nBytesToMove = countBytesToShiftOver(mapP, key, &elemP, &nextElemP);
   if (nBytesToMove) {
     memmove(nextElemP, (const void*) elemP, nBytesToMove);
   }
-  if ( mapP->elemType == MAP_POINTER ) {
-    // increment the reference so you can track how many places this pointer exists.
-    // That way we can easily and safely free it at the right time.
-    // It's appropriate to do so here if the mutation map is designated as
-    // MAP_POINTER type.
-    ++(*((Map**) valP ))->nestedRef;
-  }
-  /* Write value to map element. */
+  /* Write value in array. */
   memcpy(elemP, valP, _getMapElemSz(mapP));
-  /* Set flag. */
-  mapSetFlag(mapP, key);
-  /* Increment map's population. */
-  ++mapP->population;
+  sbmSetBit( mapP->sbmP, key );
 }
 
 void mapRem(Map *mapP, const Key key) {
-  assert (mapP && key);
+  assert (mapP);
 	void *elemP, *nextElemP;
-  U32 nBytesToMove;
-  _preMapSet(mapP, key, &elemP, &nextElemP, &nBytesToMove);
+  U32 nBytesToMove = countBytesToShiftOver( mapP, key, &elemP, &nextElemP );
   if (nBytesToMove) {
-    // First, you have to account for the "how many bytes
-    // to move" equation in _preMapSet() having been written
-    // for how many bytes to move to the RIGHT. That's when
-    // we're adding something in the value's slot; in mapSet()
-    // we'd have to shift everything to the right of the 
-    // current value AND itself to the right..
-    // But in this case, we're removing the value's slot and 
-    // shifting everything TO THE RIGHT OF (excluding) it.
     nBytesToMove -= _getMapElemSz(mapP);
-
-    // This is trying to read 2 bytes at the very end of mapA.
     memmove(elemP, (const void*) nextElemP, nBytesToMove);
   }
-  /* Unset flag. */
-  U8 byteIdx = byteIdx_(key);
-  mapP->flagA[byteIdx].flags &= ~bitFlag_(key);  /* key's bit position byteIdx'th byte */
-  /* Increment all prevBitCounts in bytes above affected one. */
-  while (++byteIdx < N_FLAG_BYTES) {
-    --mapP->flagA[byteIdx].prevBitCount;
-  }
-  --mapP->population;
+  sbmUnsetBit( mapP->sbmP, key );
 }
 
 void mapCopyKeys(Map *dstMP, Map *srcMP) {
-  assert (dstMP &&  srcMP);
-  memcpy(dstMP->flagA, srcMP->flagA, N_FLAG_BYTES * sizeof(FlagInfo));
+  assert (srcMP);
+  assert (dstMP);
+  assert( !dstMP->sbmP );  // Don't want to leak memory.
+  dstMP->sbmP = sbmClone(srcMP->sbmP, GENERAL);
 }
 
 Map* mapGetNestedMapP(Map *outerMP, Key mapKey) {
-  assert (outerMP && mapKey && outerMP->elemType == MAP_POINTER);
-  Map **_innerMapPP = (Map**) mapGet(outerMP, mapKey);
-  if (_innerMapPP && *_innerMapPP) {
-    return *_innerMapPP;
-  }
-  return NULL;
+  assert (outerMP && outerMP->elemType == MAP_POINTER);
+  Map **innerMapPP = (Map**) mapGet(outerMP, mapKey);
+  assert( innerMapPP );
+  assert( *innerMapPP );
+  return *innerMapPP;
 }
 
 void* mapGetNestedMapPElem(Map *mapP, Key mapKey, Key elemKey, MapElemType expectedElemType) {
-  assert (mapP && mapKey && elemKey);
+  assert (mapP);
 
   Map *nestedMP = mapGetNestedMapP(mapP, mapKey);
   assert (nestedMP->elemType == expectedElemType);

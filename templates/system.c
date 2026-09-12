@@ -27,7 +27,7 @@ XIniSysFuncDef_(REPLACEME) {
 XIniSubcompFuncDefUnused_(REPLACEME);
 #else
 XIniSubcompFuncDef_(REPLACEME) {
-	assert (sP && entity && subtype && dataP);
+	assert (sP && subtype && dataP);
 
   XREPLACEME *xP = (XREPLACEME*) sP;
   // template for subtype switch structure. You probably need to store these in maps for access in xREPLACEMEPostprocessComps().

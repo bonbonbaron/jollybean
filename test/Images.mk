@@ -2,10 +2,10 @@ NAMES_1BPP := bleh heck
 NAMES_4BPP := red
 NAMES := $(NAMES_1BPP) $(NAMES_4BPP)
 
-IMG_DIR = ${HOME}/jb/src/Image
+IMG_DIR = ${HOME}/.jb/src/Image
 COLORMAP_DIR = ${IMG_DIR}/Colormap
 COLORPAL_DIR = ${IMG_DIR}/ColorPalette
-BUILD_DIR = ${HOME}/jb/build
+BUILD_DIR = ${HOME}/.jb/build
 
 COLORMAP_SRCS := $(addsuffix Colormap.c, $(addprefix $(COLORMAP_DIR)/1bpp/, $(NAMES_1BPP)))
 COLORMAP_SRCS := $(COLORMAP_SRCS) $(addsuffix Colormap.c, $(addprefix $(COLORMAP_DIR)/4bpp/, $(NAMES_4BPP)))
@@ -49,3 +49,9 @@ $(CPI_SRCS): ${UTL_DIR}/build/body
 
 ${UTL_DIR}/build/body:
 	make -C ${UTL_DIR}
+
+.PHONY: clean
+clean:
+	rm -f ${HOME}/.jb/src/Image/{bleh,heck,red}Img.c
+	rm -f ${HOME}/.jb/src/Image/Colormap/[124]bpp/{bleh,heck,red}Colormap.c
+	rm -f ${HOME}/.jb/src/Image/ColorPalette/[124]bpp/{bleh,heck,red}ColorPalette.c

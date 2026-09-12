@@ -51,7 +51,7 @@ XIniSysFuncDef_(A) {
 XIniSubcompFuncDefUnused_(A); 
 #else 
 XIniSubcompFuncDef_(A) {
-	assert (sP && entity && subtype && dataP);
+	assert (sP && subtype && dataP);
 
 	XA *xP = (XA*) sP;
 

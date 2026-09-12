@@ -51,7 +51,7 @@ TEST_F_SETUP(Tau) {
   tau->nEntities = N_ENTITIES;
   tau->nMutationsPerEntity = N_MUTATIONS_PER_ENTITY;
   tau->nFramesPerStrip = N_FRAMES_PER_STRIP;
-  xIniSys(tau->sP, tau->nEntities, NULL);
+  xIniSys(tau->sP, tau->nEntities);
   tau->animCompF = tau->sP->cF;
   tau->frameAF = frayNew( sizeof( AnimFrame* ), tau->nEntities * tau->nMutationsPerEntity, GENERAL );
 

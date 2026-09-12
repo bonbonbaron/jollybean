@@ -101,7 +101,7 @@ void writeImage(char *imgNameA, U8 verbose) {
   if (verbose) {
     printf("writing image...\n");
   }
-  FILE *fP = getSrcFile("Image/", imgNameA, "Img.c", verbose);
+  FILE *fP = getSrcFile("Image", imgNameA, "Img.c", verbose);
   assert(fP);
   // Make Title format of image name.
   fprintf(fP, "#include \"x/xRender.h\"\n");

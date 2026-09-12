@@ -97,6 +97,8 @@ void sdInflate(StripDataS *sdP, const PoolId poolId) {
   if (!(sdP->flags & SD_SKIP_ASSEMBLY_) )  {
     inflatableIni(sdP->sm.infP, localPoolId);
   }
+  // Clean up after ourselves so the next xReset() can re-inflate it.
+  sdP->flags &= ~SD_SET_FOR_INFLATION_;
 }
 
 // Unpack bits to reconstruct original data (uesd for debugging img.c)
@@ -178,6 +180,8 @@ void sdUnpack(StripDataS *sdP, const PoolId poolId) {
     size_t lastUnpackedWord = ((*packedWordP >> j) & mask) + offset;
     memcpy((void*) dstUnpackedWordP, &lastUnpackedWord, nUnitsInExtraPackedWord);
   }
+  // Clean up after ourselves so the next xReset() can re-inflate it.
+  sdP->flags &= ~SD_SET_FOR_INFLATION_;
 }  // sdUnpack() 
 
 void sdAssemble(StripDataS *sdP, const PoolId poolId) {
@@ -210,10 +214,14 @@ void sdAssemble(StripDataS *sdP, const PoolId poolId) {
         sdP->ss.unpackedDataA + (*smElemP * sdP->ss.nUnitsPerStrip),
         sdP->ss.nUnitsPerStrip);
   }
+  // Clean up after ourselves so the next xReset() can re-inflate it.
+  sdP->flags &= ~SD_SET_FOR_INFLATION_;
 }
 
 // This is the single-threaded version of inflating stripd data.
 void stripIni(StripDataS *sdP, const PoolId poolId) {
+  // Every one of these functions unsets the claimed-for-inflation flag, 
+  // because the active operations vary from media to media.
   sdP->assembledDataA = NULL;
   sdInflate(sdP, poolId);
   sdUnpack(sdP, poolId);

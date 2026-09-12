@@ -22,19 +22,19 @@ typedef struct {
 } Stripmap;
 
 // Strip Data flags
-// prevents biome from double-counting an SD when determining SD array size for inflation
-#define SD_IS_COUNTED_        (0x00000001)
-// prevents biome from double-inserting an SD into the array for inflation
-#define SD_SET_FOR_INFLATION_ (0x00000002)
+// prevents gene.c from double-inserting an SD into the array for inflation
+#define SD_SET_FOR_INFLATION_ (0x01)
 /* The rest of these are self-explanatory. 
  * For example, systems like XRender want to skip the assembling step so it can assemble them
  * straight into its texture instead. */
-#define SD_SKIP_INFLATION_    (0x00000004)
-#define SD_SKIP_UNPACKING_    (0x00000008)
-#define SD_SKIP_ASSEMBLY_     (0x00000010)
+#define SD_SKIP_INFLATION_    (0x02)
+#define SD_SKIP_UNPACKING_    (0x04)
+#define SD_SKIP_ASSEMBLY_     (0x08)
 
 typedef struct {
-  U32 flags;     // used to indicate distinct histo inclusion, flags to skip inflation steps, etc.
+  // 2-byte gene hdr is expected to go here for each media gene; separating this struct from it helps
+  // us to make a pointer to it more easily though.
+  U8 flags;     // used to indicate distinct histo inclusion, flags to skip inflation steps, etc.
   Stripmap sm;
   Stripset ss;
   U8 *assembledDataA;  // destination of strip data's assembling step, if not skipped

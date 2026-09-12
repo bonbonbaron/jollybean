@@ -9,4 +9,4 @@ INCS   := -I${UTL_DIR}/include -I${RPO_DIR}/include -I${RPO_DIR}/test/include
 clean:
 	rm -f ./*.o 
 	rm -f ./o
-	rm -f ${HOME}/jb/build/*.o
+	rm -f ${HOME}/.jb/build/*.o

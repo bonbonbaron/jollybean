@@ -11,7 +11,7 @@
 #include <sys/stat.h>
 #include <termios.h>
 
-
+#include "gene/Image.h"
 #define KEYFILE "/dev/input/event0" // Use your keyboard's event file
 #define VAL_KEY_UP (0)
 #define VAL_KEY_DOWN (1)
@@ -33,9 +33,9 @@ Gui* guiNew() {
   assert(guiP->windowP);
 
   // Init renderer
-  guiP->rendererP = memAdd(sizeof(Window), IMAGE );
+  guiP->rendererP = memAdd(sizeof(Window), GRAPHIC );
   assert(guiP->rendererP);
-  guiP->rendererP->dstTextureP = arrayNew(sizeof(Texture_), 1, IMAGE );
+  guiP->rendererP->dstTextureP = arrayNew(sizeof(Texture_), 1, GRAPHIC );
 
   // open up the keyboard file in read binary mode so we can accept key presses.
   file = fopen(KEYFILE, "rb"); 
@@ -141,9 +141,9 @@ void appendAtlasPalette(Surface_ *atlasSurfaceP, ColorPalette *srcPaletteP) {
 
 Texture* textureNew(Renderer_ *rendererP, Surface_ *surfaceP) {
   assert(  rendererP && surfaceP );
-  Texture *textureP = memAdd(sizeof( Texture_ ), IMAGE );
+  Texture *textureP = memAdd(sizeof( Texture_ ), GRAPHIC );
   assert(textureP);
-  textureP->pixelA = arrayNew( sizeof( Color_ ), surfaceP->w * surfaceP->h, IMAGE );
+  textureP->pixelA = arrayNew( sizeof( Color_ ), surfaceP->w * surfaceP->h, GRAPHIC );
   assert(textureP->pixelA);
   textureP->w = surfaceP->w;
   textureP->h = surfaceP->h;
@@ -232,7 +232,9 @@ void guiProcessEvents(Gui *guiP) {
 
     if ((ev.type == EV_KEY) && (ev.value != VAL_KEY_REPEAT))
     {
+#ifndef NDEBUG
       printf("type: %d, val: %d, code: %d\n", ev.type, ev.value, ev.code); // EV_KEY corresponds to key press events
+#endif
       if ( ev.value == VAL_KEY_UP ) {
         switch( ev.code ) {
           case KEY_a_:      guiP->buttonsPressed &= ~BTN_PRESSED_a; break;

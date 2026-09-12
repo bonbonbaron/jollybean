@@ -14,4 +14,4 @@ o: mem_arena.o $(LIBJB)
 clean:
 	rm -f ./*.o 
 	rm -f ./o
-	rm -f ${HOME}/jb/build/*.o
+	rm -f ${HOME}/.jb/build/*.o

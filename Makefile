@@ -1,4 +1,5 @@
 CC=gcc
+OPT=-O0
 
 RPO_DIR := $(shell git rev-parse --show-toplevel)
 SRC_DIR := $(RPO_DIR)/src
@@ -11,12 +12,14 @@ SDL_LFLAGS := $(shell sdl2-config --libs)
 SDL_CFLAGS := $(shell sdl2-config --cflags)
 LIBJB := $(LIB_DIR)/libjb.a
 
-D_SRCS  := $(SRC_DIR)/data/strip.c $(SRC_DIR)/data/inflatable.c $(SRC_DIR)/data/bt.c $(SRC_DIR)/data/share.c $(SRC_DIR)/data/map.c $(SRC_DIR)/data/mail.c $(SRC_DIR)/data/list.c $(SRC_DIR)/data/fray.c $(SRC_DIR)/data/array.c  $(SRC_DIR)/data/mem.c
+D=$(SRC_DIR)/data
+D_SRCS  := $(D)/strip.c $(D)/inflatable.c $(D)/bt.c $(D)/share.c $(D)/map.c $(D)/mail.c $(D)/list.c $(D)/fray.c $(D)/bitmap.c $(D)/array.c  $(D)/mem.c
 
 # Implemented systems must come before their dependency, x.c.
 #XI_SRCS := $(shell find $(SRC_DIR)/x -type f -name "x[^.]*.c") $(shell find $(SRC_DIR)/x -type f -name "x.c") $(shell find $(SRC_DIR)/interface -type f -name "*.c")
 X := $(SRC_DIR)/x
 XI_SRCS := $(X)/x.c $(X)/xAnim.c $(X)/xMotion.c $(X)/xRender.c $(X)/xAction.c $(X)/xCollision.c $(shell find $(SRC_DIR)/interface -type f -name "*.c")
+#XI_SRCS := 
 
 SRCS    := $(XI_SRCS) $(D_SRCS) 
 
@@ -33,7 +36,7 @@ BLD_SEN := $(BLD_SUB:%=%.sentinel.bldsnl)
 DEP_SUB := $(BLD_SUB:$(BLD_DIR)%=$(DEP_DIR)%)
 DEP_SEN := $(DEP_SUB:%=%.sentinel.depsnl)
 
-TGT=${LIB_DIR}/libjb.a
+TGT=${LIBJB}
 
 #all: ; echo ${OBJS}
 all: $(TGT)
@@ -41,15 +44,18 @@ all: $(TGT)
 $(TGT): $(OBJS)
 	ar rcs $(TGT) $(OBJS) 
 
+$(BLD_DIR)/%.o: ${SRC_DIR}/%.c ${INC_DIR}/%.h $(DEP_DIR)/%.d | ${BLD_SEN} ${DEP_SEN}
+	$(CC) $(OPT) -Wall --coverage -g $(SDL_CFLAGS) $(DEPFLGS) $(DEP_DIR)/$*.d -I${RPO_DIR}/include -c $< -o $@
+
 $(BLD_DIR)/interface/%.o: ${SRC_DIR}/interface/%.c ${INC_DIR}/interface/%.h
 $(BLD_DIR)/interface/%.o: ${SRC_DIR}/interface/%.c $(DEP_DIR)/interface/%.d | ${BLD_SEN} ${DEP_SEN}
-	$(CC) -Wall --coverage -g $(SDL_CFLAGS) $(DEPFLGS) $(DEP_DIR)/interface/$*.d -I${RPO_DIR}/include -c $< -o $@
+	$(CC) $(OPT) -Wall --coverage -g $(SDL_CFLAGS) $(DEPFLGS) $(DEP_DIR)/interface/$*.d -I${RPO_DIR}/include -c $< -o $@
 
 $(BLD_DIR)/x/%.o: ${SRC_DIR}/x/%.c ${INC_DIR}/x/%.h $(DEP_DIR)/x/%.d | ${BLD_SEN} ${DEP_SEN}
-	$(CC) -Wall --coverage -g $(SDL_CFLAGS) $(DEPFLGS) $(DEP_DIR)/x/$*.d -I${RPO_DIR}/include -c $< -o $@
+	$(CC) $(OPT) -Wall --coverage -g $(SDL_CFLAGS) $(DEPFLGS) $(DEP_DIR)/x/$*.d -I${RPO_DIR}/include -c $< -o $@
 
 $(BLD_DIR)/data/%.o: ${SRC_DIR}/data/%.c ${INC_DIR}/data/%.h $(DEP_DIR)/data/%.d | ${BLD_SEN} ${DEP_SEN}
-	$(CC) -Wall --coverage -g $(DEPFLGS) $(DEP_DIR)/data/$*.d -I${RPO_DIR}/include -c $< -o $@
+	$(CC) $(OPT) -Wall --coverage -g $(DEPFLGS) $(DEP_DIR)/data/$*.d -I${RPO_DIR}/include -c $< -o $@
 
 # Mention each dependency as a target so Make doesn't fail above if it doesn't exist.
 $(DEPS):

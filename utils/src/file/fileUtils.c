@@ -1,6 +1,6 @@
 #include "fileUtils.h"
 
-char JB_DIR_NAME[] = "jb";
+char JB_DIR_NAME[] = ".jb";
 char SRC_DIR_NAME[] = "src";
 char RESOURCE_DIR_NAME[] = "resource";
 char BUILD_DIR_NAME[] = "build";

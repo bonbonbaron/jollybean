@@ -47,12 +47,3 @@ TEST_F(Tau, mailboxWrite_TillFull) {
     CHECK_EQ(tau->mailboxF[lastMsg].arg, 4);
   }
 }
-
-TEST_F(Tau, mailboxForward) {
-  mailboxWrite(tau->mailboxF, 1, 2, 3, 4, NULL);
-  mailboxForward(tau->fwdMailboxF, &tau->mailboxF[0]);
-  CHECK_EQ(tau->mailboxF[0].address, tau->fwdMailboxF[0].address);
-  CHECK_EQ(tau->mailboxF[0].attn,    tau->fwdMailboxF[0].attn);
-  CHECK_EQ(tau->mailboxF[0].cmd,     tau->fwdMailboxF[0].cmd);
-  CHECK_EQ(tau->mailboxF[0].arg,     tau->fwdMailboxF[0].arg);
-}

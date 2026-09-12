@@ -1,34 +1,36 @@
 #include "data/map.h"
-#include "data/mail.h"
+#include "data/share.h"
 
-#define MAX_NUM_KEYS_ ( ( sizeof(Key) << 8 ) - 1 )
-
-static Map* _sharedMemMapOfMapsP = NULL;
-static Map* _sharedMemRawPointerMapP = NULL;
-static Map* _sharedMemInboxMapP = NULL;
+static Map* _sharedMapOfMapsP = NULL;
+static Map* _sharedPointerMapP = NULL;
 // May add more types later
 
-void shareIni( const Key N_SYSTEM_TYPES ) {
-  _sharedMemMapOfMapsP = mapNew( MAP_POINTER, sizeof(Map*), MAX_NUM_KEYS_, GENERAL );
-  _sharedMemRawPointerMapP = mapNew( NONMAP_POINTER, sizeof(Map*), MAX_NUM_KEYS_, GENERAL );
-  _sharedMemInboxMapP = mapNew( NONMAP_POINTER, sizeof(Map*), N_SYSTEM_TYPES, GENERAL );
+void shareIni( ) {
+  _sharedMapOfMapsP = mapNew( MAP_POINTER, sizeof(Map*), KEY_MAX, GENERAL );
+  _sharedPointerMapP = mapNew( NONMAP_POINTER, sizeof(Map*), KEY_MAX, GENERAL );
 }
 
-Message* shareNewInbox( const Key SYSTEM_ID, const Key N_SLOTS ) {
-  assert( _sharedMemInboxMapP );
-  Message* inboxP = mailboxNew( N_SLOTS, GENERAL );
-  mapSet( _sharedMemInboxMapP, SYSTEM_ID, (void*) &inboxP );
-  return inboxP;
+void shareAddMap( const Key KEY, MapElemType mapElemType, const U32 elemSz, const Key nElems, const PoolId poolId ) {
+  assert( _sharedMapOfMapsP );
+  if ( poolId == PERMANENT && mapHasKey( _sharedMapOfMapsP, KEY ) ) {
+    return;
+  }
+  Map *mP = mapNew( mapElemType, elemSz, nElems, poolId );
+  mapSet( _sharedMapOfMapsP, KEY, (void*) &mP );
 }
 
-Message* shareGetInbox( const Key KEY ) {
+Map* shareGetMap( const Key KEY ) {
+  return (Map*) mapGetNestedMapP(_sharedMapOfMapsP, KEY);
+}
+
+Map* shareGetPointer( const Key KEY ) {
 #ifndef NDEBUG
-  Message** mailboxPP = (Message**) mapGet( _sharedMemInboxMapP, KEY );
-  assert( mailboxPP && *mailboxPP );
-  return *mailboxPP;
+  void** rawPP = (void**) mapGet(_sharedPointerMapP, KEY);
+  assert( rawPP );
+  assert( *rawPP );
+  return *rawPP;
 #else
-  return *( (Message**) mapGet( _sharedMemInboxMapP, KEY );
+  return mapGet(_sharedPointerMapP, KEY);
 #endif
 }
 
-// void shareSetMapOfMapsElem()

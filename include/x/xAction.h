@@ -3,24 +3,14 @@
 #include "x/x.h"
 
 #define ACTION_ (2)
-#define PERSONALITY (0x40)
-#define BLACKBOARD (0x80)
 
 void hivemindDel(Map **hivemindMPP);
 void activityMPMPDel(Map **activityMPMPP);
-XPostMutateFuncDef_(Action);
 
-typedef enum { SET_TARGET = 1 } ActionMailCmdEnum;
-// Think params through really carefully.
-/* msgP can tell us WHOM to act on. 
- * But we need a way to write potentially mutlipel message to our mailbox.
- * You know what, though? We might considerable time by just passing in the
- * whole action component to the function rather than each painful part one by one. */
 struct Activity;
-typedef void (*Action)(Entity entity, struct Activity *activityP, Message* mailboxF );
+typedef void (*Action)(Entity entity, struct Activity *activityP );
 #define ActionFuncDef_( name_ ) void name_( Entity entity, Activity* activityP, Message* mailboxF )
 #define assertAction_ \
-  assert ( entity ); \
   assert ( activityP ); \
   assert ( activityP->quirkP ); \
   assert ( activityP->quirkP->actionU ); \
@@ -52,16 +42,6 @@ typedef struct {
 } Quirk;
 
 typedef struct {
-  U32 nQuirks;
-  Quirk **quirkPA;
-} Personality;   // Gene-level data we expect to receive
-
-typedef struct {
-  Entity entity;
-  Personality *personalityP;
-} EntityPersonalityPair;
-
-typedef struct {
   Entity entity;
   Map *bbMP;
 } EntityBlackboardPair;
@@ -84,11 +64,8 @@ typedef struct {
 	Map                   *hivemindMP; // maps triggers to arrays of 
   Key                    nDistinctHivemindTriggers;
   U32                   *histoHivemindTriggerA;
-  EntityPersonalityPair *entityPersonalityPairF;
   EntityBlackboardPair  *entityBlackboardPairF;
 } XAction;
-XIniSubcompFuncDef_(Action);
-XPostprocessCompsDef_(Action);
 
 extern System *sActionP;
 #endif

@@ -49,7 +49,7 @@ TEST_F_SETUP(Tau) {
   tau->xP = &xA;
   tau->nEntities = N_ENTITIES;
   tau->nMutationsPerEntity = N_MUTATIONS_PER_ENTITY;
-  xIniSys(sAP, tau->nEntities, NULL);
+  xIniSys(sAP, tau->nEntities);
   REQUIRE_EQ(sAP->compSz, sizeof(XAComp));
   REQUIRE_EQ(frayGetNElems_((void**) sAP->cF), tau->nEntities);
   // These will store the entities' immutable subcomponent data since xAddEntityData needs a pointer to them.

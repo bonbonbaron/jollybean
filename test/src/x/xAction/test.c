@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
   // Array of arrays of pointers
   const U32 N_ENTITIES = 2;
 
-  xIniSys(sActionP, N_ENTITIES, NULL);
+  xIniSys(sActionP, N_ENTITIES);
   // Add the subcomponents ( personalities and blackboards ).
   for (Entity entity = 1; entity <= N_ENTITIES; ++entity) {
     // Give this entity a component. We'll make the first quirk it.

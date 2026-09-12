@@ -14,24 +14,26 @@ struct Array {
 
 static const int N_ELEMS = 100;
 
-TAU_MAIN()
+TAU_MAIN();
 
-  TEST_F_SETUP(Array) {
-    tau->P = arrayNew( sizeof(Elem), N_ELEMS, GENERAL );
-    REQUIRE_EQ(arrayGetNElems(tau->P), N_ELEMS);
-    REQUIRE_EQ(arrayGetElemSz(tau->P), sizeof(Elem));
-    // Populate the array.
-    for (U32 i = 0; i < N_ELEMS; ++i) {
-      tau->P[i].i = i;
-    }
-    // Init the lists.
-    listIni( &tau->list1, tau->P );
-    listIni( &tau->list2, tau->P );
-    CHECK_EQ( tau->list1.head, UNSET_ );
-    CHECK_EQ( tau->list1.tail, UNSET_ );
-    CHECK_EQ( tau->list2.head, UNSET_ );
-    CHECK_EQ( tau->list2.tail, UNSET_ );
+TEST_F_SETUP(Array) {
+  tau->P = arrayNew( sizeof(Elem), N_ELEMS, GENERAL );
+  REQUIRE_EQ(arrayGetNElems(tau->P), N_ELEMS);
+  REQUIRE_EQ(arrayGetElemSz(tau->P), sizeof(Elem));
+  // Populate the array.
+  for (U32 i = 0; i < N_ELEMS; ++i) {
+    tau->P[i].i = i;
   }
+  // Init the lists.
+  listIni( &tau->list1, tau->P, NULL, GENERAL );
+  listIni( &tau->list2, tau->P, &tau->list1, GENERAL );
+  CHECK_EQ( tau->list1.head, UNSET_ );
+  CHECK_EQ( tau->list1.tail, UNSET_ );
+  CHECK_EQ( tau->list2.head, UNSET_ );
+  CHECK_EQ( tau->list2.tail, UNSET_ );
+  CHECK_EQ( tau->list1.id, UNSET_ );
+  CHECK_EQ( tau->list2.id, UNSET_ );
+}
 
 TEST_F_TEARDOWN(Array) {
   memRst( GENERAL );
@@ -84,12 +86,15 @@ TEST_F(Array, listRemoveNodeWhenEmpty) {
 }
 
 TEST_F(Array, listRemoveTheOnlyNode) {
+  CHECK_EQ( tau->list1.id, UNSET_);
   listAppend( &tau->list1, &tau->P[0].hdr );
+  CHECK_EQ( tau->list1.id, 0);
   CHECK_EQ( tau->list1.head, 0);
   CHECK_EQ( tau->list1.tail, 0);
   listRemove( &tau->list1, &tau->P[0].hdr );
-  CHECK_EQ( tau->list1.head, UNSET_);
+  CHECK_EQ( tau->list1.head, UNSET_);  // failing here
   CHECK_EQ( tau->list1.tail, UNSET_);
+  CHECK_EQ( tau->list1.id, UNSET_);
 }
 
 TEST_F(Array, listRemoveNodeAfterAppends) {
@@ -213,6 +218,9 @@ start1:
 start2:
     CHECK_EQ( elemP->i, correctVal );
   }
+
+  CHECK_EQ( tau->list1.id, 1 );
+  CHECK_EQ( tau->list2.id, 0 );
 }
 
 TEST_F(Array, prependMultipleListsIntoOneArray ) {
@@ -246,6 +254,8 @@ start1:
 start2:
     CHECK_EQ( elemP->i, correctVal );
   }
+  CHECK_EQ( tau->list1.id, 1 );
+  CHECK_EQ( tau->list2.id, 0 );
 }
 
 TEST_F( Array, listMerge ) {
@@ -270,4 +280,8 @@ TEST_F( Array, listMerge ) {
 start3:
     CHECK_EQ( elemP->i, i );
   }
+  CHECK_TRUE( tau->list2.metaP != NULL );  // list2, though empty, should still have metaP
+  CHECK_TRUE( tau->list2.array  != NULL );  // list2, though empty, should still have array pointer
+  CHECK_EQ( vbmGetFirstZero( tau->list1.metaP->availableIdBitmapA ), 1 );
 }
+

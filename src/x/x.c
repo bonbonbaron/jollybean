@@ -1,12 +1,15 @@
 #include "x/x.h"
 #include "data/share.h"
 
+static Map* _sysMP =  NULL;  // used strictly when distributing genes
+static Map* _inboxMP =  NULL;  // used for inter-system communication
+
 inline static Entity _getEntityByCompIdx(System *sP, Key compIdx) {
   return sP->cIdx2eA[compIdx];
 }
 
 void* xGetCompPByEntity(System *sP, Entity entity) {
-  if (!sP || !entity) {
+  if (!sP) {
     return NULL;
   }
   Key *elemIdxP = _getCompIdxPByEntity(sP, entity);
@@ -21,7 +24,7 @@ Entity xGetEntityByCompIdx(System *sP, Key compIdx) {
 }
 
 Key xGetCompIdxByEntity( System *sP, Entity entity ) {
-  assert( sP && entity );
+  assert( sP );
 #ifndef NDEBUG
   return *( _getCompIdxPByEntity( sP, entity ) );
 #else
@@ -62,7 +65,7 @@ static void _xSwap(System *sP, FrayChanges *changesP) {
 }
 
 void xActivateComponentByEntity(System *sP, Entity entity) {
-  assert (sP && entity);
+  assert (sP);
   // We use a pointer instead of a new one to swap its actual location later.
   FrayChanges changes;
   Key *compOrigIdxP = _getCompIdxPByEntity(sP, entity);
@@ -74,7 +77,7 @@ void xActivateComponentByEntity(System *sP, Entity entity) {
 }
 
 void xDeactivateComponentByEntity(System *sP, Entity entity) {
-  assert (sP && entity);
+  assert (sP);
   FrayChanges changes;
   Key *compOrigIdxP = _getCompIdxPByEntity(sP, entity);
   assert (compOrigIdxP);
@@ -85,7 +88,7 @@ void xDeactivateComponentByEntity(System *sP, Entity entity) {
 }
 
 void xPauseComponentByEntity(System *sP, Entity entity) {
-  assert (sP && entity);
+  assert (sP);
   FrayChanges changes;
   Key *compOrigIdxP = _getCompIdxPByEntity(sP, entity);
   assert (compOrigIdxP);
@@ -95,7 +98,7 @@ void xPauseComponentByEntity(System *sP, Entity entity) {
 }
 
 void xUnpauseComponentByEntity(System *sP, Entity entity) {
-  assert (sP && entity);
+  assert (sP);
   FrayChanges changes;
   Key *compOrigIdxP = _getCompIdxPByEntity(sP, entity);
   assert (compOrigIdxP);
@@ -109,128 +112,85 @@ U32 xGetNComps(System *sP) {
 	return arrayGetNElems(sP->cF);
 }
 
-// Insert inner mutation map (maps trigger to mutation) into outer mutation map (maps Entity to Map*)
-void xAddMutationMap(System *sP, Entity entity, Map *mutationMP) {
-  assert(entity &&  sP);  // null mutation map is okay
-  assert (mutationMP && sP->mutationMPMP);
-  assert(arrayGetElemSz(mutationMP->mapA) == sP->mutationSz);
-  // If the component is immutable, that's fine, don't worry about it. 
-  // If the user intended to mutate the gene, ensure we have both pieces of data.
-  mapSet(sP->mutationMPMP, entity, &mutationMP);
-  // Otherwise just return successfully, assuming they never intended to mutate this entity's component in the first place.
+// This adds a mutation map for an entity to the system and returns a poitner to it.
+static Map* xNewMutationMap( const System* sP, const Entity entity, const Key nElems ) {
+  assert( sP );
+  assert( nElems );
+  Map* mP = mapNew( RAW_DATA, sP->mutationSz, nElems, GENERAL );
+  assert( mP );
+  assert( sP->mutationMPMP );
+  // Add new map to the system's nested maps of mutations before returning it.
+  mapSet( sP->mutationMPMP, entity, &mP );
+  return mP;
 }
 
+// First makes a new mutation map that gets added to mutation map nest, then fills it with mutations
+void xMakeMutationMap( const System* sP, const Entity entity, const GeneHdr *geneP ) {
+  assert( sP );
+  assert( geneP );
+  assert( geneP->class == MUTABLE );
+  // Don't assert the map not having the key. Instead, allow overrides (and thus *little* waste). 
 
-void xAddComp(System *sP, Entity entity, void *compDataP) {
-  assert (sP &&  entity);
-  // Skip entities who already have a component in this system.
-  if (!mapGet(sP->e2cIdxMP, entity)) {
-    // Put component in first empty slot. (Will be zeros if this is a map. That's okay.)
-    U32 cIdx; 
-    if (compDataP) {
-      frayAdd(sP->cF, compDataP, &cIdx); 
-    }
-    else {
-      frayAddEmpty(sP->cF, &cIdx);
-    }
-    // Add lookups from C -> E and E -> C.
-    mapSet(sP->e2cIdxMP, entity, &cIdx);
-    sP->cIdx2eA[cIdx] = entity;
+  MutableGene* mutableGeneP = (MutableGene*) geneP;
+  Map* entitysMutationMP = xNewMutationMap( sP, entity, mutableGeneP->n );
+
+  Mutation* mutationP = mutableGeneP->mutationA;
+  Mutation* mutationEndP = mutationP + mutableGeneP->n;
+  for ( ; mutationP < mutationEndP; ++mutationP ) {
+    assert( mutationP->mutationBodyP );
+    mapSet(entitysMutationMP, mutationP->key, mutationP->mutationBodyP);
   }
 }
 
-void _xAddEmptyComp(System *sP, Entity entity) {
-  assert (sP &&  entity);
-  // Skip entities who already have a component in this system.
-  if (!mapGet(sP->e2cIdxMP, entity)) {
-    // Put component in first empty slot. (Will be zeros if this is a map. That's okay.)
-    U32 cIdx; 
-    frayAddEmpty(sP->cF, &cIdx);
-    // Add lookups from C -> E and E -> C.
-    mapSet(sP->e2cIdxMP, entity, &cIdx);
-    sP->cIdx2eA[cIdx] = entity;
-  }
-}
-
-inline static void _iniSubcompOwner(System *sP, Entity entity, Key subcompType, void *dataP) {
-  // If subcomponent type doesn't fall into subcomponent mask
-  assert ((subcompType & MASK_COMPONENT_SUBTYPE) == subcompType);
-  SubcompOwner newSubcompOwner = {0};
-  newSubcompOwner.owner = entity;
-  newSubcompOwner.subcompA[getSubcompIdx_(subcompType)] = dataP;
-  mapSet(sP->subcompOwnerMP, entity, &newSubcompOwner);
-}
-
-
-void xAddEntityData(System *sP, Entity entity, Key compType, void *entityDataP) {
-  assert (sP &&  entity &&  compType);   // entityDataP is allowed to be null so xAddComp() can call frayAddEmpty() in such a case.
-  // Make sure the component belongs to this system. This is only checked at load-time.
-  assert ((compType & MASK_COMPONENT_TYPE) == sP->id);
-  // If upper two bits are nonzero, this is a subcomponent. 
-  if (compType & MASK_COMPONENT_SUBTYPE) {
-    // If entity doesn't own any subcomponents yet, make a slot for it in subcomp ownership map.
-    SubcompOwner *subcompOwnerP = mapGet(sP->subcompOwnerMP, entity);
-    Key subcompType = compType & MASK_COMPONENT_SUBTYPE;
-    if (!subcompOwnerP) {
-      _iniSubcompOwner(sP, entity, subcompType, entityDataP);
-    }
-    // Otherwise, update its existing onwership record.
-    else {
-      subcompOwnerP->subcompA[getSubcompIdx_(subcompType)] = entityDataP;
-    }
-    // Now you can operate on the subcomponent in the system carefree.
-    sP->iniSubcomp(sP, entity, compType & MASK_COMPONENT_SUBTYPE, entityDataP);
-    /* Let's take the burden of adding components off our individual systems 
-     * (unless they insist otherwise with their flags) so they only have to 
-     * worry about mutations. */
-    // Entity needs a component even if it's not populated right now.
-    _xAddEmptyComp(sP, entity);
-  }
-  // Else it's the main component; feed it straight in baby.
-  else {
-    xAddComp(sP, entity, entityDataP);
-  }
-}
-
-void xIniSys(System *sP, U32 nComps, void *miscP) {
+static void _xIniSystem(System *sP, U32 nComps) {
   // Sytems with special parts need to initialize maps in sIniU().
   sP->cF = frayNew(sP->compSz, nComps, GENERAL );
   sP->cIdx2eA = arrayNew(sizeof(Entity), nComps, GENERAL );
   sP->e2cIdxMP = mapNew( RAW_DATA, sizeof(Key), nComps, GENERAL );
   sP->deactivateQueueF = frayNew(sizeof(Entity), nComps, GENERAL );
   sP->pauseQueueF = frayNew( sizeof(Entity), nComps, GENERAL );
+  assert( _sysMP );
+  assert( _inboxMP );
+  mapSet( _sysMP, sP->id, &sP );
+  mapSet( _inboxMP, sP->id, &sP->mailboxF );
   if (!(sP->flags & FLG_NO_MUTATIONS_) && sP->mutationSz) {
     sP->mutationMPMP = mapNew( MAP_POINTER, sizeof(Map*), nComps, GENERAL );
   }
-	// Only allocate one mailbox; it serves as input and output.
+  // Only allocate one mailbox; it serves as input and output.
   // TODO make this smarter than a raw constant
   // Also, give it ample room to handle multiple messages per entity.
 #define MAILBOX_MULTIPLY_NUM_SLOTS (3)
-  sP->mailboxF = shareNewInbox( sP->id, nComps * MAILBOX_MULTIPLY_NUM_SLOTS );
-  sP->subcompOwnerMP = mapNew(RAW_DATA, sizeof(SubcompOwner), nComps, TEMPORARY );
+  sP->mailboxF = mailboxNew( nComps * MAILBOX_MULTIPLY_NUM_SLOTS, GENERAL );
   // Finally, call the system's unique initializer.
-  (*sP->iniSys)(sP, miscP);  // fail-assert if this bombs
+  (*sP->iniSys)(sP);  // fail-assert if this bombs
+}
+
+static void _xIniSystems( const System* sPA[], const GeneHisto* geneHisto, const Key nSystems ) {
+  assert( sPA );
+  assert( geneHisto->nExclusivesA );
+  assert( nSystems );
+  for ( Key i = 0; i < nSystems; ++i ) {
+    if ( geneHisto[i].nExclusivesA[i] ) {
+      _xIniSystem( (System*) sPA[i], geneHisto[i].nExclusivesA[i] );
+    }
+  }
 }
 
 void xMutateComponent(System *sP, Entity entity, Key newCompKey) {
   // Make sure entity, system, and the key to the new component are all valid parameters.
-  assert (sP &&  entity &&  newCompKey);
+  assert (sP);
   // Make sure the system was set up for mutations in the first place.
   if (!(sP->flags & FLG_NO_MUTATIONS_)) {
     // Get the nested map of mutations for this particular entity.
     Map *mutationMP = mapGetNestedMapP(sP->mutationMPMP, entity);
-#if 0  /* I don't think we need to guard against map element types. xAction uses Quirk pointers. */
-    // Ensure the nested map has raw data-- nothing funky like pointers or (more) inner maps.
-    assert(mutationMP->elemType == RAW_DATA);
-#endif
     // Get a pointer to the entity's component.
     void* cP = xGetCompPByEntity(sP, entity);
     if (cP) {
       // Get a pointer to the mutation.
-      void *tmpP = mapGet(mutationMP, newCompKey);
-      if (tmpP) {
+      void *mutationP = mapGet(mutationMP, newCompKey);
+      if (mutationP) {
         // Mutate the only part of the component that should change.
-        memcpy((U8*) cP + sP->mutationOffset, tmpP, arrayGetElemSz(mutationMP->mapA));
+        memcpy((U8*) cP + sP->mutationOffset, mutationP, arrayGetElemSz(mutationMP->mapA));
         return sP->postMutate(sP, cP);
       }
       // It's a design decision to not error out when mutation doesn't exist. 
@@ -298,6 +258,23 @@ static void _deactivateQueue(System *sP) {
   }
 }
 
+static void _xAddEntity( const System* sP, const Entity entity ) {
+  assert( sP );
+  assert( sP->e2cIdxMP );
+  assert( sP->cIdx2eA );
+  // This is okay, given devs can minimize the number of re-entries with intracomposites.
+  if ( !mapHasKey( sP->e2cIdxMP, entity ) ) {
+    U32 cIdx = 0;
+    // Add empty component to fray. Get its index too so you know which belongs to this entity.
+    frayAddEmpty( sP->cF, &cIdx );
+    assert( cIdx < arrayGetNElems( sP->cF ) );
+    assert( cIdx < KEY_MAX );
+    sP->cIdx2eA[ cIdx ] = entity;
+    mapSet( sP->e2cIdxMP, entity, (Key*) &cIdx );
+  }
+}
+  
+
 Entity xGetEntityByVoidComponentPtr(System *sP, void *componentP) {
   assert (sP && componentP);
   Entity compIdx = ((void*) componentP - (void*) sP->cF) / sP->compSz;
@@ -327,3 +304,121 @@ void xRun(System *sP) {
   _deactivateQueue(sP);
   _pauseQueue(sP);
 }
+
+// We don't need to share systems.
+// We don't need to share inboxes either. Only systems need each other's inboxes.
+
+static System* _getSystem( const SystemId sysId ) {
+  assert( _sysMP );
+  System** sPP = mapGet( _sysMP, sysId );
+  assert( sPP );
+  assert( *sPP );
+  return *sPP;
+}
+
+Message* xGetInbox( const SystemId sysId ) {
+  assert( _sysMP );
+  return (Message*) mapGet( _sysMP, sysId );
+}
+
+
+static StripDataS** _sdPF;
+
+// Inflate a whole array of strip data.
+static void _inflateMedia() {
+  if ( _sdPF ) {
+#if MULTITHREADED
+    multithread_(sdInflate, (void*) _sdPF);
+    multithread_(sdUnpack, (void*) _sdPF);
+    multithread_(sdAssemble, (void*) _sdPF);
+#else 
+    StripDataS** sdPP = _sdPF;
+    StripDataS** sdEndPP = sdPP + frayGetNElems_(_sdPF);
+    for ( ;  sdPP < sdEndPP; ++sdPP ) {  // TODO make this more pro bruh
+      stripIni(*sdPP, TEMPORARY);
+    }
+#endif
+  }
+}
+
+void xRegisterForInflation( StripDataS* sdP ) {
+  // We use a static array in order to allow all systems to put stuff into it without passing it everywhere.
+  assert( _sdPF );  
+  assert( sdP );  
+  // Defer inflation to optimize icache and for multithreaded inflation.
+  if (!(sdP->flags & SD_SET_FOR_INFLATION_)) {
+    sdP->flags |= SD_SET_FOR_INFLATION_;
+    frayAdd(_sdPF, &sdP, NULL);  // this asserts frayP != NULL, so no need to do it above.
+  }
+}
+
+static void _distributeGene( Entity entity, GeneHdr* geneHdrP ) {
+  assert(geneHdrP);
+
+  GeneHdr** currGeneHdrPP;
+  GeneHdr** geneHdrEndPP;
+  System *sP;
+  switch (geneHdrP->class) {
+    case INTERCOMPOSITE:  // recurses
+      InterCompositeGene* compGeneP = (InterCompositeGene*) geneHdrP;
+      currGeneHdrPP = compGeneP->geneHdrPA;
+      geneHdrEndPP = currGeneHdrPP + compGeneP->hdr.u.n;
+      for (; currGeneHdrPP < geneHdrEndPP; ++currGeneHdrPP) {
+        assert(currGeneHdrPP);
+        _distributeGene(entity, *currGeneHdrPP );
+      }
+      break;
+    case INTRACOMPOSITE:
+    case IMMUTABLE:
+    case MUTABLE:
+      sP = _getSystem( geneHdrP->u.type ); 
+      assert(sP);
+      _xAddEntity( sP, entity );
+      sP->consumeGene(sP, entity, geneHdrP);
+      break;
+    default:
+      assert(FALSE); // gene has an incompatible gene class
+      break;
+  }
+}
+
+static void _distributeGenes( const RootGene* rootP ) {
+  assert( rootP );
+  assert( rootP->hdr.class == ROOT );
+
+  _sdPF = NULL;
+  if ( rootP->histo.nDistinctMedia ) {
+    _sdPF = frayNew( sizeof(StripDataS*), rootP->histo.nDistinctMedia, TEMPORARY);  
+  }
+
+  GeneHdr** genomePP = rootP->genomePA;
+  GeneHdr** genomeEndPP = genomePP + rootP->hdr.u.n;
+  for (Entity entity = -1; genomePP < genomeEndPP; ++genomePP) { // entity = -1 -> preincrement is slightly faster lol
+    _distributeGene( ++entity, *genomePP );
+  }
+
+  _inflateMedia();  
+}
+
+static void _xMakeComponents( const System* sPA[], const Key nSystems ) {
+  assert( sPA );
+  assert( nSystems );
+  for ( Key i = 0; i < nSystems; ++i ) {
+    sPA[i]->makeComponents( (System*) sPA[i] );
+  }
+}
+
+void xIni( const System* sPA[],  const Key nSystems, const RootGene* rootP ) {
+  // Reset memory
+  memRstAll();
+  // init permanent system memory
+  if ( !_sysMP && !_inboxMP ) {
+    _sysMP = mapNew( NONMAP_POINTER, sizeof(System*), N_SYSTEM_TYPES, PERMANENT );
+    _inboxMP = mapNew( NONMAP_POINTER, sizeof(Message*), N_SYSTEM_TYPES, PERMANENT );
+  }
+
+  _xIniSystems( sPA, &rootP->histo, nSystems );
+  _distributeGenes( rootP );
+  _xMakeComponents( sPA, nSystems );
+}
+

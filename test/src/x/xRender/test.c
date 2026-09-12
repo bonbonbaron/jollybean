@@ -190,7 +190,6 @@ static void checkForCollisions( Tau* tau ) {
 }  //checkForCollisions()
 
 static Key elevateEntity( Tau* tau, Entity entity, S32 deltaZ ) {
-  assert( entity  );
   Map *sharedZHeightMP = mapGetNestedMapP( tau->shareMPMP, Z_HEIGHT );
   assert( sharedZHeightMP );
   U8* zP = (U8*) mapGet( sharedZHeightMP, entity );
@@ -202,7 +201,6 @@ static Key elevateEntity( Tau* tau, Entity entity, S32 deltaZ ) {
 }
 
 static void moveEntity( Tau* tau, Entity entity, S32 x, S32 y ) {
-  assert( entity  );
   Map *sharedDstRectMP = mapGetNestedMapP( tau->shareMPMP, DST_RECT );
   assert( sharedDstRectMP );
   Rect_* rectP = (Rect_*) mapGet( sharedDstRectMP, entity );
@@ -212,7 +210,6 @@ static void moveEntity( Tau* tau, Entity entity, S32 x, S32 y ) {
 }
 
 static void elevateAndSend( Tau* tau, Entity entity, S32 deltaZ ) {
-  assert( entity  );
   Key oldZHeight = elevateEntity( tau, entity, deltaZ );
   printf("old z height: %d\e[0m\n", oldZHeight);
   mailboxWrite( tau->xP->system.mailboxF, RENDER, entity, MSG_LAYER_CHANGED, oldZHeight, NULL );
@@ -272,7 +269,7 @@ TEST_F_SETUP(Tau) {
   tau->nImgs = sizeof( imgA ) / sizeof( imgA[0] );  // for lack of anything better for now
   U32 nEntities;
   tau->nMutationsPerEntity = N_MUTATIONS_PER_ENTITY;
-  xIniSys(tau->sP, tau->nEntities, NULL);
+  xIniSys(tau->sP, tau->nEntities);
   tau->renderCompF = tau->sP->cF;
   REQUIRE_EQ(tau->sP->compSz, sizeof(XRenderComp));
   REQUIRE_EQ(xGetNComps(tau->sP), tau->nEntities);

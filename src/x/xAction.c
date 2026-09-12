@@ -1,23 +1,35 @@
 #include "x/xAction.h"
+#include "data/share.h"
 
-//#define XIniSysFuncDef_(name_) Error x##name_##IniSys(System *sP, void *sParamsP)
+XPostMutateFuncDefUnused_(Action);
+XPostActivateFuncDefUnused_(Action);
+XPostDeactivateFuncDefUnused_(Action);
+
+//#define XIniSysFuncDef_(name_) Error x##name_##IniSys(System *sP)
 XIniSysFuncDef_(Action) {
-  unused_(sParamsP);
   XAction *xActionP = (XAction*) sP;
   xActionP->nDistinctHivemindTriggers = 0;
-  xActionP->entityPersonalityPairF = frayNew( sizeof( EntityPersonalityPair ), xGetNComps(sP), TEMPORARY );
   xActionP->entityBlackboardPairF = frayNew( sizeof( EntityBlackboardPair ), xGetNComps(sP), TEMPORARY );
   xActionP->histoHivemindTriggerA = arrayNew( sizeof(U32), KEY_MAX, TEMPORARY );
   memset( xActionP->histoHivemindTriggerA, 0, sizeof(U32) * KEY_MAX );
 }
 
+// void x##name_##ConsumeGene(System *sP, const Gene *geneP)
+XConsumeGeneFuncDef_(Action) {
+  // XAction* xP = (XAction*) sP;
+  assert( sP );
+  assert( geneP );
+  // Gene needs a geneFindNext( TYPE ) function.
+}
+
+
 //#define XIniSubcompFuncDef_(name_)  Error x##name_##IniSubcomp(System *sP, const Entity entity, const Key subtype, void *dataP)
+// TODO relocate logic and convert to Gene
+#if 0
 XIniSubcompFuncDef_(Action) {
   XAction *xActionP = (XAction*) sP;
   if (subtype == PERSONALITY) {
     Personality *personalityP = (Personality*) dataP;
-    Quirk **quirkPP = personalityP->quirkPA;
-    Quirk **quirkEndPP = quirkPP + personalityP->nQuirks;
     EntityPersonalityPair epPair = {
       .entity = entity,
       .personalityP = personalityP
@@ -25,12 +37,20 @@ XIniSubcompFuncDef_(Action) {
     frayAdd(xActionP->entityPersonalityPairF, &epPair, NULL);
     // For each quirk in the personality, increment the number of distinct triggers
     // whenever you find one we've never encountered before.
-    for (; quirkPP < quirkEndPP; ++quirkPP) {
-      U32 *histoElemP = &xActionP->histoHivemindTriggerA[ (*quirkPP)->trigger ];
-      if ( *histoElemP  ) {
-        ++xActionP->nDistinctHivemindTriggers;
+    for (; epP < epEndP; ++epP) {
+      Facet **facetPP = epP->personalityP->facetPA; 
+      Facet **facetEndPP = facetPP + epP->personalityP->nFacets;
+      for (; facetPP < facetEndPP; ++facetPP) {
+        Quirk **quirkPP = (*facetPP)->quirkPA; 
+        Quirk **quirkEndPP = (*facetPP)->nQuirks;
+        for (; quirkPP < quirkEndPP; ++quirkPP) {
+          U32 *histoElemP = &xActionP->histoHivemindTriggerA[ (*quirkPP)->trigger ];
+          if ( *histoElemP  ) {
+            ++xActionP->nDistinctHivemindTriggers;
+          }
+          ++( *histoElemP );
+        }
       }
-      ++( *histoElemP );
     }
   }
   else if ( subtype == BLACKBOARD  ) {
@@ -41,11 +61,12 @@ XIniSubcompFuncDef_(Action) {
     frayAdd( xActionP->entityBlackboardPairF, &ebbPair, NULL );
   }
 }
+#endif
 
 static void _distributeHiveminds(XAction *xActionP) {
   // Histo the number of trees existing for each trigger.
   assert (xActionP && xActionP->histoHivemindTriggerA);
-  Entity **hivemindEntitiesAP = NULL;
+  // /Entity **hivemindEntitiesAP = NULL;  TODO uncomment when ready
   // Allocate hivemind map
   xActionP->hivemindMP = mapNew( ARRAY, sizeof(Entity*), xActionP->nDistinctHivemindTriggers, GENERAL);
   // Allocate empty hiveminds.
@@ -57,23 +78,31 @@ static void _distributeHiveminds(XAction *xActionP) {
     }
   }
   // Fill the hiveminds.
+#if 0
   EntityPersonalityPair *epP = xActionP->entityPersonalityPairF;
   EntityPersonalityPair *epEndP = epP + arrayGetNElems(epP);
   for (; epP < epEndP; ++epP) {
-    Quirk **quirkPP = epP->personalityP->quirkPA; 
-    Quirk **quirkEndPP = quirkPP + epP->personalityP->nQuirks;
-    for (; quirkPP < quirkEndPP; ++quirkPP) {
-      // Get pointer to array of entities out of hivemind map.
-      hivemindEntitiesAP = (Entity**) mapGet(xActionP->hivemindMP, (*quirkPP)->trigger);
-      // This is how we fill arrays without storing current index of each one's next empty slot.
-      if (hivemindEntitiesAP) {
-        (*hivemindEntitiesAP)[--xActionP->histoHivemindTriggerA[(*quirkPP)->trigger]] = epP->entity;
+    Facet **facetPP = epP->personalityP->facetPA; 
+    Facet **facetEndPP = facetPP + epP->personalityP->nFacets;
+    for (; facetPP < facetEndPP; ++facetPP) {
+      Quirk **quirkPP = (*facetPP)->quirkPA; 
+      Quirk **quirkEndPP = (*facetPP)->nQuirks;
+      for (; quirkPP < quirkEndPP; ++quirkPP) {
+        // Get pointer to array of entities out of hivemind map.
+        hivemindEntitiesAP = (Entity**) mapGet(xActionP->hivemindMP, (*quirkPP)->trigger);
+        // This is how we fill arrays without storing current index of each one's next empty slot.
+        if (hivemindEntitiesAP) {
+          (*hivemindEntitiesAP)[--xActionP->histoHivemindTriggerA[(*quirkPP)->trigger]] = epP->entity;
+        }
       }
     }
   }
+#endif
 }
 
-XPostprocessCompsDef_(Action) {
+XMakeComponentsDef_(Action) {
+  // XAction doesn't need system mailboxes since actions will grab other systems' mailboxes internally.
+  // That way you don't have to include an ugly mailbox argument across all your actions.
   _distributeHiveminds((XAction*) sP);
   // Everybody should have empty components right now.
   // What we need to do is populate the blackboard pointers.
@@ -136,13 +165,6 @@ static void _triggerHivemind(XAction *xActionSysP, Message *msgP) {
   }
 }
 
-XGetShareFuncDefUnused_(Action);
-
-XPostMutateFuncDefUnused_(Action);
-
-XPostActivateFuncDefUnused_(Action);
-XPostDeactivateFuncDefUnused_(Action);
-
 // Entity acts on message if it's more urgent than its current activity.
 XProcMsgFuncDef_(Action) {
   XAction *xActionSysP = (XAction*) sP;
@@ -159,11 +181,11 @@ void xActionRun(System *sP) {
   XActionComp *cP = sP->cF;
   XActionComp *cEndP = cP + _frayGetFirstInactiveIdx(sP->cF);
   for (; cP < cEndP; cP++) {
-    cP->quirkP->actionU( xGetEntityByVoidComponentPtr( sP, cP ),  (Activity*) cP, sP->mailboxF );
+    cP->quirkP->actionU( xGetEntityByVoidComponentPtr( sP, cP ),  (Activity*) cP );
     if ( cP->complete ) {
       xQueueDeactivate( sP, cP );
     }
   }
 }
 
-X_(Action, 2, quirkP, FLG_NO_CF_SRC_A_);
+X_(Action, 2, quirkP, 0);
