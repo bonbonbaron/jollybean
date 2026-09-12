@@ -595,7 +595,7 @@ skipNewIslandLogic:
             }
             else {
               emitGateMove(F);
-              slideLeft;
+              slideLeft; 
             }
           }
         }
