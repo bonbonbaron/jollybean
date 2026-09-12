@@ -55,10 +55,9 @@
 //
 //
 // Velllcommme.... tooooo HELLLL!!!!!
-static void hellNew( HeLinkListNode** hellFP, unsigned int nElems ) {
-  assert(hellFP && nElems);
-  Error e = frayNew(  (void**) &(*hellFP), sizeof( HeLinkListNode ), nElems );
-  assert( !e );
+static HeLinkListNode* hellNew( unsigned int nElems ) {
+  HeLinkListNode* hellF = frayNew( sizeof( HeLinkListNode ), nElems, GENERAL );
+  return hellF;
 }
 
 static inline int hellIsHead (HeLinkListNode *hellF, int idx) {
@@ -73,23 +72,19 @@ static HeLinkListNode* hellAdd( HeLinkListNode* hellF, HeLinkListNode* headP, Ha
     .head = headP,
     .tail = 0
   };
-  // head node of 0 means "this should be a new head"
-  Error e = SUCCESS;
   // If either the user is trying to start a new list or... 
   if ( !headP ) {
     U32 newHeadIdx;
-    e = frayAdd( (void**) hellF, (void*) &heNewNode, &newHeadIdx ); 
+    frayAdd( (void**) hellF, (void*) &heNewNode, &newHeadIdx ); 
     hellF[newHeadIdx].head = &hellF[ newHeadIdx ];
     hellF[newHeadIdx].tail = &hellF[ newHeadIdx ];
-    assert( !e );
     return &hellF[newHeadIdx];
   }
   else {
     // If you're adding to an existing linked list, update the former tail's "next" to point to new tail.
     unsigned newTailIdx;
     HeLinkListNode* origTailP = headP->tail;
-    e = frayAdd( (void**) hellF, (void*) &heNewNode, &newTailIdx); 
-    assert( !e );
+    frayAdd( (void**) hellF, (void*) &heNewNode, &newTailIdx); 
     // Head's tail and orig tail's next are new tail
     origTailP->next = headP->tail = &hellF[newTailIdx];
     headP->tail->head = headP;
@@ -120,7 +115,9 @@ void dispList( HeLinkListNode* hellF, unsigned headIdx ) {
     printf("\n\n");
   }
 }
+#endif
 
+#if DBG_BOUNDARY_MARKER
 static void dispBoundaryLink( Vec3* v1, Vec3 *v2 ) {
   printf( "\t\e[34m{ %f, %f, %f } -> { %f, %f, %f }\e[0m\n", 
       v1->x,
@@ -231,16 +228,12 @@ void getEdges( Mesh *meshP ) {
   Triangle* triangleA = meshP->tri.u.triA;  // convenience pointer
   HalfEdge *heA;  // convenience pointer
   // Half-edge array
-  Error e = arrayNew( (void**) &meshP->heA, sizeof(HalfEdge), 3 * arrayGetNElems(triangleA) );
-  assert( !e && meshP->heA );
+  meshP->heA = arrayNew( sizeof(HalfEdge), 3 * arrayGetNElems(triangleA), GENERAL );
   heA = meshP->heA;
   // Vertex-met array
-  e = arrayNew( (void**) &meshP->vstatA, sizeof(VertexStatus), arrayGetNElems( meshP->pos.u.vec3A ) );
-  assert( !e && meshP->vstatA );
+  meshP->vstatA = arrayNew( sizeof(VertexStatus), arrayGetNElems( meshP->pos.u.vec3A ), GENERAL );
   // Half-edge linked list
-  HeLinkListNode *hellF = NULL;
-  hellNew( &hellF, 3 * arrayGetNElems( triangleA ) );
-  assert( hellF );
+  HeLinkListNode *hellF = hellNew( 3 * arrayGetNElems( triangleA ) );
   // Iterate through triangles
   int nHalfEdges = 0;
   HalfEdge *hcP, *hnP, *hpP;  // current, next, and previous (corresponds to CCW in triangle, starting at gate)
@@ -340,10 +333,6 @@ void getEdges( Mesh *meshP ) {
 
   markBoundaries( meshP );
   assert( meshP->initialGate );
-
-
-  // free hell
-  frayDel( (void**) &hellF );
 }
 
 typedef enum { LEFT_IS_SHORTER, RIGHT_IS_SHORTER } BoundaryMeasOutcome;
@@ -427,14 +416,12 @@ void getConnectivity( Mesh *meshP ) {
   // Make a stack pointer point to it for faster than "getLastElement()".
   // Allocate an array of traversal order of triangles.
   // Make a pointer to it for speed too.
-  Error e = arrayNew( (void**) &meshP->triangleTraversalOrderA, sizeof( TriangleTraversalNode ), arrayGetNElems( meshP->tri.u.triA ) );
-  assert( !e );
+  meshP->triangleTraversalOrderA = arrayNew( sizeof( TriangleTraversalNode ), arrayGetNElems( meshP->tri.u.triA ), GENERAL );
   TriangleTraversalNode* triTravP = meshP->triangleTraversalOrderA;
   int clrgfHisto[5] = {0};
   // Allocate an array of traversal order of unmet vertices.
   // Make a pointer to it for speed too.
-  e = arrayNew( (void**) &meshP->vertexTraversalOrderA, sizeof( VertexTraversalNode ), arrayGetNElems( meshP->pos.u.vec3A ) + 1 );
-  assert( !e );
+  meshP->vertexTraversalOrderA = arrayNew( sizeof( VertexTraversalNode ), arrayGetNElems( meshP->pos.u.vec3A ) + 1, GENERAL );
 #if DBG_EDGEBREAKER
   int nTrianglesRemaining = arrayGetNElems( meshP->tri.u.triA );
   printf("num tris: %d; num verts: %d\n", arrayGetNElems( meshP->tri.u.triA ), arrayGetNElems( meshP->pos.u.vec3A ) );
@@ -484,7 +471,7 @@ skipNewIslandLogic:
         assert( g->P );
 #endif
 #if DBG_EDGEBREAKER
-        printf("\niter # %5d ( @ tri %5d, he %5d )\n", ++nIters, g->t - meshP->tri.u.triA, g - meshP->initialGate );
+        printf("\niter # %5d ( @ tri %5ld, he %5ld )\n", ++nIters, g->t - meshP->tri.u.triA, g - meshP->initialGate );
         // dispBoundary( meshP->initialGate->o, g );
         printf( "\e[95msev = { %d, %d, %d }\e[0m\n", 
           g->s->posIdx,
@@ -681,19 +668,13 @@ void compressPositions( Mesh* meshP ) {
   assert( arrayGetNElems( meshP->triangleTraversalOrderA ) == arrayGetNElems( meshP->tri.u.triA ) );
   // Allocate
   const int nPositions = arrayGetNElems( meshP->pos.u.vec3A );
-  Error e = arrayNew( (void**) &meshP->pos.quantized.pos.xA, sizeof( short ), nPositions );
-  assert( !e );
-  e = arrayNew( (void**) &meshP->pos.quantized.pos.yA, sizeof( short ), nPositions );
-  assert( !e );
-  e = arrayNew( (void**) &meshP->pos.quantized.pos.zA, sizeof( short ), nPositions );
-  assert( !e );
+  meshP->pos.quantized.pos.xA = arrayNew( sizeof( short ), nPositions, GENERAL );
+  meshP->pos.quantized.pos.yA = arrayNew( sizeof( short ), nPositions, GENERAL );
+  meshP->pos.quantized.pos.zA = arrayNew( sizeof( short ), nPositions, GENERAL );
   // Allocate arrays of residuals
-  e = arrayNew( (void**) &meshP->pos.residual.pos.xA, sizeof( short ), nPositions );
-  assert( !e );
-  e = arrayNew( (void**) &meshP->pos.residual.pos.yA, sizeof( short ), nPositions );
-  assert( !e );
-  e = arrayNew( (void**) &meshP->pos.residual.pos.zA, sizeof( short ), nPositions );
-  assert( !e );
+  meshP->pos.residual.pos.xA = arrayNew( sizeof( short ), nPositions, GENERAL );
+  meshP->pos.residual.pos.yA = arrayNew( sizeof( short ), nPositions, GENERAL );
+  meshP->pos.residual.pos.zA = arrayNew( sizeof( short ), nPositions, GENERAL );
   // =============
   // X-Coordinates
   // =============
@@ -742,7 +723,7 @@ void compressPositions( Mesh* meshP ) {
     // printf( "rP is %d / %d \n", rP - rA, arrayGetNElems( rA ) );
   endForEach_( traversal node )
 #if DBG_POS_COMPRESSION
-  printf( "\n%d residuals populated out of %d\n\n", rP - rA, arrayGetNElems( rA ) );
+  printf( "\n%ld residuals populated out of %d\n\n", rP - rA, arrayGetNElems( rA ) );
   printf( "min = %d, max = %d\n", xmin, xmax );
 #endif
 
