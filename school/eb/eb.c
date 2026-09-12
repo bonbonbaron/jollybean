@@ -374,15 +374,26 @@ static inline BoundaryMeasOutcome measureBoundaryLengthRight( HalfEdge *heP ) {
 #define link( a, b ) a->N = b; b->P = a;
 
 static inline int chooseHoleAdvanceDirection( HalfEdge *g ) {
-  // If one side still has an unvisited neighbor, keep traversing that side.
-  // The shorter-loop rule is only a fallback; it can loop forever when a mesh
-  // has actual holes and both sides are valid boundary continuations.
+  // A hole pinch point must not slide back into a triangle already processed.
+  // If one side would revisit a seen triangle, prefer the other side even if it
+  // is the longer loop. That is the condition that causes the observed F/G oscillation.
+  HalfEdge *rightGate = g->P;
+  HalfEdge *leftGate = g->N;
+
+  if ( rightGate && rightGate->t && rightGate->t->m && !(leftGate && leftGate->t && !leftGate->t->m) ) {
+    return 0;
+  }
+  if ( leftGate && leftGate->t && leftGate->t->m && !(rightGate && rightGate->t && !rightGate->t->m) ) {
+    return 1;
+  }
+
   if ( hasRightNeighbor && !hasLeftNeighbor ) {
     return 1;
   }
   if ( hasLeftNeighbor && !hasRightNeighbor ) {
     return 0;
   }
+
   return measureBoundaryLengthRight( g ) == RIGHT_IS_SHORTER;
 }
 
