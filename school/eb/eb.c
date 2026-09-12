@@ -342,10 +342,10 @@ static inline BoundaryMeasOutcome measureBoundaryLengthRight( HalfEdge *heP ) {
   HalfEdge *g;
   // Count to the right until you hit the gate's opposite vertex (the pinch point between two regions).
   for ( g = heP->N; 
-        g->s != heP->v &&  g != heP;
+        g && g->s != heP->v && g != heP;
         g = g->N, ++rBoundaryLen );
   for ( g = heP->P; 
-        g->e != heP->v && g != heP; 
+        g && g->e != heP->v && g != heP; 
         g = g->P, ++lBoundaryLen );
   printf("\e[33mright boundary: %d\nleft boundary:  %d\n\e[0m", rBoundaryLen, lBoundaryLen );
   if ( lBoundaryLen >= rBoundaryLen ) {
@@ -372,6 +372,20 @@ static inline BoundaryMeasOutcome measureBoundaryLengthRight( HalfEdge *heP ) {
 #define markVertexAsSeen(h, d) h->d->m = 1
 #define markTriangleAsSeen(h) h->t->m = 1
 #define link( a, b ) a->N = b; b->P = a;
+
+static inline int chooseHoleAdvanceDirection( HalfEdge *g ) {
+  // If one side still has an unvisited neighbor, keep traversing that side.
+  // The shorter-loop rule is only a fallback; it can loop forever when a mesh
+  // has actual holes and both sides are valid boundary continuations.
+  if ( hasRightNeighbor && !hasLeftNeighbor ) {
+    return 1;
+  }
+  if ( hasLeftNeighbor && !hasRightNeighbor ) {
+    return 0;
+  }
+  return measureBoundaryLengthRight( g ) == RIGHT_IS_SHORTER;
+}
+
 // TODO look at first edgebreaker paper for deets on changing active boundary
 #if DBG_EDGEBREAKER
 #define markTriangle(clrgfChar_)\
@@ -513,24 +527,13 @@ skipNewIslandLogic:
         // There's a boundary loop to the left and the right.
         // Whichever one's shorter is the direction you go in.
         else {
-          // This means the current triangle bounds two holes.
-          // TODO hypothesis: this means we're at a through-hole. This causes infinite slides.
-          if ( g->v->nGatesPointingAtMe == 1 ) {  // I'm no longer convinced this is the right way to approach it. It can spread out after a few triangles and yield an eventual C. 
-                                                  // We gotta figure out a better way to do this.
-            // TODO
-            if ( hasRightNeighbor ) {
-              // TODO
-            }
-            else {  // has left neighbor
-              // TODO 
-            }
-          }
-              
-          if ( measureBoundaryLengthRight( g ) == RIGHT_IS_SHORTER ) {
+          // This is the hole case: both sides are valid boundary continuations.
+          // Prefer the live unvisited side; only use the shorter-loop metric as a fallback.
+          if ( chooseHoleAdvanceDirection( g ) ) {
             echoTriangleLabel(G);
             slideRight;
           }
-          else {  // LEFT_IS_SHORTER
+          else {
             echoTriangleLabel(F);
             slideLeft;
           }
