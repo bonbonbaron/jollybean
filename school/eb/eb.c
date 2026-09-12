@@ -389,6 +389,7 @@ static inline int chooseHoleAdvanceDirection( HalfEdge *g ) {
 // TODO look at first edgebreaker paper for deets on changing active boundary
 #if DBG_EDGEBREAKER
 #define markTriangle(clrgfChar_)\
+  assert( nTrianglesRemaining-- >= 0 );\
   triTravP->clrgfChar = clrgfChar_; markAllAsSeen(g)\
   (triTravP++)->g = g;\
   ++clrgfHisto[clrgfChar_];\
@@ -467,7 +468,6 @@ skipNewIslandLogic:
           g->t->v[0].nml->y,
           g->t->v[0].nml->z
           );
-        --nTrianglesRemaining;
 #endif
         markTriangle(C);
         goRight;
@@ -480,7 +480,6 @@ skipNewIslandLogic:
       // ?4: Is the boundary properly formed along each N and P?
       while ( g ) {
 #if DBG_EDGEBREAKER
-        assert( nTrianglesRemaining-- >= 0 );  // keeps it from going forever on bad bugs
         assert( g->N );
         assert( g->P );
 #endif
@@ -528,16 +527,17 @@ skipNewIslandLogic:
         // Whichever one's shorter is the direction you go in.
         else {
           // This is the hole case: both sides are valid boundary continuations.
-          // Prefer the live unvisited side; only use the shorter-loop metric as a fallback.
+          // The current triangle still needs to be emitted and marked as seen before
+          // sliding to the next gate; otherwise the boundary walk never shrinks and
+          // the remaining-triangle assertion fires.
           if ( chooseHoleAdvanceDirection( g ) ) {
-            echoTriangleLabel(G);
+            markTriangle(G);
             slideRight;
           }
           else {
-            echoTriangleLabel(F);
+            markTriangle(F);
             slideLeft;
           }
-          ++triTravP;  // Must still be traversed regardless.
         }
 #if DBG_EDGEBREAKER
         printf( "\e[0m" );
