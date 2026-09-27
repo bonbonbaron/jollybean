@@ -663,7 +663,7 @@ skipNewIslandLogic:
 // For residual coding:
 // ====================
 //    During compression (process coordinates separately):
-//    X3' = X1 + (X2 - X1)
+//    X3' = X1 + (X2 - X1)    <-- parallelogram prediction
 //    residual = X3' - X3
 //    (?2) How do I determine the necessary bitlength needed for quantizing?
 //    Or is VLE really that great? There's also huffman, so I might fall back on that for performance.
@@ -745,21 +745,21 @@ void compressPositions( Mesh* meshP ) {
   // X-Coordinates
   // =============
   TriangleTraversalNode* travA = meshP->triangleTraversalOrderA;  // convenience pointer
-  const float convx = 1024.0 / fabs( meshP->pos.max.vec3.x - meshP->pos.min.vec3.x );
-  short* qxA = meshP->pos.quantized.pos.xA;  // convenience pointer
+  const float convx = 1024.0 / fabs( meshP->pos.max.vec3.x - meshP->pos.min.vec3.x ); // encodes the distance between the minimum and maximum X coordinates within 10 bits.
+  short* qxA = meshP->pos.quantized.pos.xA;  // convenience pointer to array of quantized X-coordinates
   short xmin = SHRT_MAX, xmax = SHRT_MIN;
   int i;
-  /* Quantize */
+  /* Quantize X-coordinates. */
   for (i = 0; i < nPositions; ++i) {
     qxA[i] = (short) ( (meshP->pos.u.vec3A[i].x - meshP->pos.min.vec3.x ) * convx);
     // printf("quantx[%d] = %d, orig = %f\n", i, qxA[i], meshP->pos.u.vec3A[i].x );
-    assert( qxA[i] >= 0 && qxA[i] <= 1024 );
+    assert( qxA[i] >= 0 && qxA[i] <= 1024 );  // 1024 is 10 bits. So we're allowing 10 bits per position within a mesh.
   }
 #if DBG_POS_COMPRESSION
   printf("%d elems were quantized out of %d\n", i, arrayGetNElems( qxA ) );
 #endif
   short* rA = meshP->pos.residual.pos.xA;  // convenience pointer
-  short* rP = rA;  // convenience pointer
+  short* rP = rA;  // Convenience pointer; these are the "residuals," or parallelogram predictions of the next point based on the former triangle.
   // The first three values will be raw.
   short* qxP = qxA;
   *(rP++) = *(qxP++);
@@ -769,10 +769,16 @@ void compressPositions( Mesh* meshP ) {
   // How about, to speed this up, we add a traversal order of vertices too?
   forEachInArray_( TriangleTraversalNode, trav ) 
     // Check to see if this gate is missing an opposite half-edge.
+    assert(travP->g->o);
     // If it is, then we need to generate a  point for it on the fly.
     // The way we'll go about doing that is  just reverse-computing the
     // backwards g.o.v. 
-    if ( travP->g->v->m ) {
+    if ( travP->g->v->m ) {  // If we've met this triangle...
+      // Parallelogram prediction:
+      //    X3' = X1 + (X2 - X1)
+      // Residual:
+      //    r3  = X3' - X3
+      //
       *rP = qxA[ travP->g->v->posIdx ]   /* actual value */
        - (  qxA[ travP->g->s->posIdx ] 
           + qxA[ travP->g->e->posIdx ] 
@@ -783,8 +789,9 @@ void compressPositions( Mesh* meshP ) {
       if ( *rP > xmax ) {
         xmax = *rP;
       }
+      printf("%d\n", *rP);
       ++rP;
-      travP->g->v->m = 0;  // toggle the flag so we don't have to reset them all. now 0 = we've met.
+      travP->g->v->m = 0;  // Toggle the "met" flag so we don't have to reset them all. So now, "m == 0" means we've met.
     }
     // printf( "rP is %d / %d \n", rP - rA, arrayGetNElems( rA ) );
   endForEach_( traversal node )
@@ -793,7 +800,7 @@ void compressPositions( Mesh* meshP ) {
   printf( "min = %d, max = %d\n", xmin, xmax );
 #endif
 
-  // TODO macro the above out after you validate it
+  // TODO macro the above out after you validate it to reuse with Y- and Z-coordinates.
 #if 0
   // Y-Coordinates
   const float convY = 1024.0 / fabs( meshP->pos.max.vec3.y - meshP->pos.min.vec3.y );

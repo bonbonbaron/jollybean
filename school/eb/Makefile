@@ -2,11 +2,11 @@ include $(shell git rev-parse --show-toplevel)/Makefile
 
 all: o
 
-o: build/main.o build/xmlParser.o build/eb.o build/vec3.o xmlParser.c eb.c main.c ../../lib/libjb.a
-	gcc --coverage -g -Wall build/*.o $(shell pkg-config libxml-2.0 --libs) -lz -L../../lib -ljb -o $@
+o: build/main.o build/objParser.o build/eb.o build/vec3.o objParser.c eb.c main.c ../../lib/libjb.a
+	gcc --coverage -g -Wall build/*.o -lz -L../../lib -ljb -o $@
 
 build/%.o: %.c 
-	gcc --coverage -g -Wall -I../../include $(shell pkg-config libxml-2.0 --cflags) -c $< -Iinclude -o $@
+	gcc --coverage -g -Wall -I../../include -c $< -Iinclude -o $@
 
 .PHONY: this-clean
 this-clean:

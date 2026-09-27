@@ -41,8 +41,8 @@ typedef struct {
 } VertexStatus;
 
 typedef struct {
-  int m;
-  Vec3 normal;
+  int m;           // presumably whether this triangle's been "met"
+  Vec3 normal;     // normal vector coming out of this triangle's face
   struct HalfEdge* g;  // gate used to access this triangle
   Vertex v[3];  // indices to the vertex array
 } Triangle;
@@ -94,7 +94,7 @@ typedef struct {
   } max;
   Residual residual;
   Quantized quantized;
-} XmlResult;
+} ObjResult;
 
 typedef enum { UNMET, MET, DISCARDED } MetStatus;
 typedef struct HalfEdge {
@@ -148,7 +148,7 @@ typedef struct {
  */
 
 typedef struct Mesh {
-  XmlResult pos, nml, clr, tex, tri;
+  ObjResult pos, nml, clr, tex, tri;
   HalfEdge *heA;
   HalfEdge *initialGate;  // TODO if you have a boundary, find the first bounding half-edge and start there
   TriangleTraversalNode* triangleTraversalOrderA;
