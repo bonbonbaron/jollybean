@@ -14,59 +14,51 @@ XIniSysFuncDef_(Action) {
   memset( xActionP->histoHivemindTriggerA, 0, sizeof(U32) * KEY_MAX );
 }
 
-// void x##name_##ConsumeGene(System *sP, const Gene *geneP)
+// Action genes:
+//   MUTABLE:   the entity's personality; each mutation is a Quirk* keyed by its trigger.
+//   IMMUTABLE: the entity's blackboard (body is a Map* of void pointers).
 XConsumeGeneFuncDef_(Action) {
-  // XAction* xP = (XAction*) sP;
+  XAction* xP = (XAction*) sP;
   assert( sP );
   assert( geneP );
-  // Gene needs a geneFindNext( TYPE ) function.
-}
-
-
-//#define XIniSubcompFuncDef_(name_)  Error x##name_##IniSubcomp(System *sP, const Entity entity, const Key subtype, void *dataP)
-// TODO relocate logic and convert to Gene
-#if 0
-XIniSubcompFuncDef_(Action) {
-  XAction *xActionP = (XAction*) sP;
-  if (subtype == PERSONALITY) {
-    Personality *personalityP = (Personality*) dataP;
-    EntityPersonalityPair epPair = {
-      .entity = entity,
-      .personalityP = personalityP
-    };
-    frayAdd(xActionP->entityPersonalityPairF, &epPair, NULL);
-    // For each quirk in the personality, increment the number of distinct triggers
-    // whenever you find one we've never encountered before.
-    for (; epP < epEndP; ++epP) {
-      Facet **facetPP = epP->personalityP->facetPA; 
-      Facet **facetEndPP = facetPP + epP->personalityP->nFacets;
-      for (; facetPP < facetEndPP; ++facetPP) {
-        Quirk **quirkPP = (*facetPP)->quirkPA; 
-        Quirk **quirkEndPP = (*facetPP)->nQuirks;
-        for (; quirkPP < quirkEndPP; ++quirkPP) {
-          U32 *histoElemP = &xActionP->histoHivemindTriggerA[ (*quirkPP)->trigger ];
-          if ( *histoElemP  ) {
-            ++xActionP->nDistinctHivemindTriggers;
-          }
-          ++( *histoElemP );
+  switch ( geneP->class ) {
+    case MUTABLE: {
+      xMakeMutationMap( sP, entity, geneP );
+      // Histo the triggers so hiveminds can be sized in makeComponents().
+      const MutableGene* mutGeneP = (const MutableGene*) geneP;
+      const Mutation* mutationP = mutGeneP->mutationA;
+      const Mutation* mutationEndP = mutationP + mutGeneP->n;
+      for ( ; mutationP < mutationEndP; ++mutationP ) {
+        U32 *histoElemP = &xP->histoHivemindTriggerA[ mutationP->key ];
+        if ( !*histoElemP ) {
+          ++xP->nDistinctHivemindTriggers;
         }
+        ++( *histoElemP );
       }
+      break;
     }
-  }
-  else if ( subtype == BLACKBOARD  ) {
-    EntityBlackboardPair ebbPair = {
-      .entity = entity,
-      .bbMP = (Map*) dataP
-    };
-    frayAdd( xActionP->entityBlackboardPairF, &ebbPair, NULL );
+    case IMMUTABLE: {
+      const ImmutableGene* immGeneP = (const ImmutableGene*) geneP;
+      assert( immGeneP->bodyP );
+      EntityBlackboardPair ebbPair = {
+        .entity = entity,
+        .bbMP = (Map*) immGeneP->bodyP
+      };
+      frayAdd( xP->entityBlackboardPairF, &ebbPair, NULL );
+      break;
+    }
+    case INTRACOMPOSITE:
+      xConsumeGeneDefault( sP, entity, geneP );
+      break;
+    default:
+      assert( FALSE );
+      break;
   }
 }
-#endif
 
 static void _distributeHiveminds(XAction *xActionP) {
   // Histo the number of trees existing for each trigger.
   assert (xActionP && xActionP->histoHivemindTriggerA);
-  // /Entity **hivemindEntitiesAP = NULL;  TODO uncomment when ready
   // Allocate hivemind map
   xActionP->hivemindMP = mapNew( ARRAY, sizeof(Entity*), xActionP->nDistinctHivemindTriggers, GENERAL);
   // Allocate empty hiveminds.
@@ -77,27 +69,27 @@ static void _distributeHiveminds(XAction *xActionP) {
       mapSet(xActionP->hivemindMP, trigger, &entityA);
     }
   }
-  // Fill the hiveminds.
-#if 0
-  EntityPersonalityPair *epP = xActionP->entityPersonalityPairF;
-  EntityPersonalityPair *epEndP = epP + arrayGetNElems(epP);
-  for (; epP < epEndP; ++epP) {
-    Facet **facetPP = epP->personalityP->facetPA; 
-    Facet **facetEndPP = facetPP + epP->personalityP->nFacets;
-    for (; facetPP < facetEndPP; ++facetPP) {
-      Quirk **quirkPP = (*facetPP)->quirkPA; 
-      Quirk **quirkEndPP = (*facetPP)->nQuirks;
-      for (; quirkPP < quirkEndPP; ++quirkPP) {
-        // Get pointer to array of entities out of hivemind map.
-        hivemindEntitiesAP = (Entity**) mapGet(xActionP->hivemindMP, (*quirkPP)->trigger);
-        // This is how we fill arrays without storing current index of each one's next empty slot.
-        if (hivemindEntitiesAP) {
-          (*hivemindEntitiesAP)[--xActionP->histoHivemindTriggerA[(*quirkPP)->trigger]] = epP->entity;
-        }
+  // Fill the hiveminds. Counting histo elements back down fills each array without tracking indices.
+  System *sP = &xActionP->system;
+  if ( !sP->mutationMPMP ) {
+    return;
+  }
+  Entity *entityP = sP->cIdx2eA;
+  Entity *entityEndP = entityP + *_frayGetFirstEmptyIdxP( sP->cF );
+  Entity **hivemindEntitiesAP;
+  for ( ; entityP < entityEndP; ++entityP ) {
+    if ( !mapHasKey( sP->mutationMPMP, *entityP ) ) {
+      continue;
+    }
+    Map *quirkMP = mapGetNestedMapP( sP->mutationMPMP, *entityP );
+    for ( U32 trigger = 0; trigger < nElems; ++trigger ) {
+      if ( xActionP->histoHivemindTriggerA[ trigger ] && mapHasKey( quirkMP, trigger ) ) {
+        hivemindEntitiesAP = (Entity**) mapGet( xActionP->hivemindMP, trigger );
+        assert( hivemindEntitiesAP && *hivemindEntitiesAP );
+        (*hivemindEntitiesAP)[ --xActionP->histoHivemindTriggerA[ trigger ] ] = *entityP;
       }
     }
   }
-#endif
 }
 
 XMakeComponentsDef_(Action) {
@@ -133,9 +125,10 @@ static void _triggerIndividual(XAction *xActionSysP, Message *msgP) {
   XActionComp* cP = (XActionComp*) xGetCompPByEntity( sP, msgP->attn );
   assert (cP);
   // Get the personality, one per entity.
-  Map **activityMPMP = (Map**) mapGet(sP->mutationMPMP, msgP->attn);
+  Map *activityMP = mapGetNestedMapP(sP->mutationMPMP, msgP->attn);
+  assert( activityMP );
   // Get the tree that *would* be triggered if the entity is inactive or doing something less important. 
-  Quirk** requestedQuirkPP = (Quirk**) mapGet(*activityMPMP, msgP->cmd);
+  Quirk** requestedQuirkPP = (Quirk**) mapGet(activityMP, msgP->cmd);
   assert( requestedQuirkPP && *requestedQuirkPP );
   // Queue new action if it's higher priority than old or entity's inactive.
   if (!xIsEntityActive(sP, msgP->attn) || !cP->quirkP ||
@@ -188,4 +181,4 @@ void xActionRun(System *sP) {
   }
 }
 
-X_(Action, 2, quirkP, 0);
+X_(Action, ACTION, quirkP, 0);

@@ -25,9 +25,18 @@ typedef struct {
   U8 *colissionA;
 } CollisionPalette;
 
-typedef struct XCollisionMutation {
-  int idkfornow;
-} XCollisionMutation;
+// Collision rectangles swap across animation frames, so the mutable part is the CollRect.
+typedef CollRect XCollisionMutation;
+
+// Collision-specific commands (start after the engine-wide message commands in jb.h).
+typedef enum {
+  COLL_CHANGE_LAYER = MSG_MOTION_STOPPPED + 1,
+  COLL_COLLISION,
+  COLL_ANTICOLLISION,
+  COLL_SET_CAMERA,
+  COLL_CAMERA_STARTED_MOVING,
+  COLL_CAMERA_STOPPED_MOVING
+} CollisionKeychain;
 
 typedef Collision XCollisionComp;
 
@@ -43,7 +52,6 @@ typedef struct {
 } XCollision;
 
 // Functions
-void xCollisionIniS(System *sP, void *sParamsP);
 void xCollisionProcessMessage(System *sP, Message *msgP);
 extern System *sCollisionP;
 #endif

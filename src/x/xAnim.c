@@ -3,8 +3,7 @@
 
 // Unused X functions
 XIniSysFuncDefUnused_(Anim);
-XConsumeGeneFuncDefUnused_(Anim);
-XMakeComponentsDefUnused_(Anim);
+XConsumeGeneFuncDefDefault_(Anim);  // animation strips arrive as mutations keyed by strip ID
 XPostActivateFuncDefUnused_(Anim);
 XPostDeactivateFuncDefUnused_(Anim);
 
@@ -47,15 +46,14 @@ XProcMsgFuncDef_(Anim) {
   }
 }
 
-// TODO move this to postprocess()
-#if 0
-XGetShareFuncDef_(Anim) {
+// Runs after media genes are inflated: hook components up to the shared rectangles.
+XMakeComponentsDef_(Anim) {
   assert(sP);
   // Get shared inner maps of resources we need (offsets and source rects)
   XAnim *xP = (XAnim*) sP;
-  xP->offsetMP = mapGetNestedMapP(shareMPMP, RECT_OFFSET);
-  xP->srcRectMP = mapGetNestedMapP(shareMPMP, SRC_RECT);
-  xP->dstRectMP = mapGetNestedMapP(shareMPMP, DST_RECT);
+  xP->offsetMP = shareGetMap(RECT_OFFSET);
+  xP->srcRectMP = shareGetMap(SRC_RECT);
+  xP->dstRectMP = shareGetMap(DST_RECT);
   assert(xP->offsetMP);
   assert(xP->srcRectMP);
   assert(xP->dstRectMP);
@@ -70,7 +68,6 @@ XGetShareFuncDef_(Anim) {
     assert (cP->dstRectP);
   }
 }
-#endif
 
 XPostMutateFuncDef_(Anim) {
   assert(sP && cP);

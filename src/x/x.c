@@ -142,6 +142,47 @@ void xMakeMutationMap( const System* sP, const Entity entity, const GeneHdr *gen
   }
 }
 
+// Default gene consumption shared by systems whose genes need no special treatment:
+//   MUTABLE:        builds the entity's mutation map.
+//   IMMUTABLE:      copies the gene body into the component's mutable region (or the whole
+//                   component if the system has no mutations).
+//   INTRACOMPOSITE: feeds each sub-gene back through the system's own consumeGene().
+void xConsumeGeneDefault( System* sP, const Entity entity, const GeneHdr *geneP ) {
+  assert( sP );
+  assert( geneP );
+  switch ( geneP->class ) {
+    case MUTABLE:
+      xMakeMutationMap( sP, entity, geneP );
+      break;
+    case IMMUTABLE: {
+      const ImmutableGene* immGeneP = (const ImmutableGene*) geneP;
+      assert( immGeneP->bodyP );
+      void* cP = xGetCompPByEntity( sP, entity );
+      assert( cP );
+      if ( sP->mutationSz ) {
+        memcpy( (U8*) cP + sP->mutationOffset, immGeneP->bodyP, sP->mutationSz );
+      }
+      else {
+        memcpy( cP, immGeneP->bodyP, sP->compSz );
+      }
+      break;
+    }
+    case INTRACOMPOSITE: {
+      const IntraCompositeGene* intraGeneP = (const IntraCompositeGene*) geneP;
+      GeneHdr** subGenePP = intraGeneP->geneHdrPA;
+      GeneHdr** subGeneEndPP = subGenePP + intraGeneP->n;
+      for ( ; subGenePP < subGeneEndPP; ++subGenePP ) {
+        assert( *subGenePP );
+        sP->consumeGene( sP, entity, *subGenePP );
+      }
+      break;
+    }
+    default:
+      assert( FALSE );  // systems don't consume roots or intercomposites
+      break;
+  }
+}
+
 static void _xIniSystem(System *sP, U32 nComps) {
   // Sytems with special parts need to initialize maps in sIniU().
   sP->cF = frayNew(sP->compSz, nComps, GENERAL );
@@ -317,8 +358,10 @@ static System* _getSystem( const SystemId sysId ) {
 }
 
 Message* xGetInbox( const SystemId sysId ) {
-  assert( _sysMP );
-  return (Message*) mapGet( _sysMP, sysId );
+  assert( _inboxMP );
+  Message** mailboxPP = (Message**) mapGet( _inboxMP, sysId );
+  assert( mailboxPP );
+  return *mailboxPP;
 }
 
 

@@ -12,7 +12,7 @@
 // Initialize Motion's system.
 //======================================================
 XIniSysFuncDefUnused_(Motion);
-XConsumeGeneFuncDefUnused_(Motion);
+XConsumeGeneFuncDefDefault_(Motion);  // velocity mutations (or a fixed immutable velocity)
 XPostActivateFuncDefUnused_(Motion);
 XPostDeactivateFuncDefUnused_(Motion);
 
@@ -21,15 +21,15 @@ XMakeComponentsDef_(Motion) {
   XMotion *xP = (XMotion*) sP;
   xP->dstRectMP = shareGetMap( DST_RECT );
   Entity *entityP = sP->cIdx2eA;
-  Entity *entityEndP = entityP + arrayGetNElems(sP->cIdx2eA);
+  Entity *entityEndP = entityP + *_frayGetFirstEmptyIdxP(sP->cF);
 
   // Populate each motion system component. Start out with zero velocity and let action system mutate it later.
   for (XMotionComp *cP; entityP < entityEndP; ++entityP) {
     cP = (XMotionComp*) xGetCompPByEntity(sP, *entityP);
     if (cP) {
       cP->dstRectP = (Rect_*) mapGet(xP->dstRectMP, *entityP);
+      assert (cP->dstRectP);
     }
-    assert (cP->dstRectP);
   }
 }
 

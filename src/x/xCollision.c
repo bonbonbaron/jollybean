@@ -2,11 +2,6 @@
 #include "jb.h"
 #include "data/share.h"
 
-// TODO  (this whole file)
-XConsumeGeneFuncDefUnused_(Collision);  // TODO
-
-XIniSysFuncDefUnused_(Collision);
-XMakeComponentsDefUnused_(Collision);
 XPostMutateFuncDefUnused_(Collision);
 XPostActivateFuncDefUnused_(Collision);
 XPostDeactivateFuncDefUnused_(Collision);
@@ -25,61 +20,97 @@ XPostDeactivateFuncDefUnused_(Collision);
 
 
 //======================================================
-// Initialize xCollision's components, which are Images.
+// Initialize xCollision's system.
 //======================================================
-void xCollisionIniSubcomp(System *sP, void *compDataP, void *compDataSrcP) {
-  assert(sP && compDataP && compDataSrcP);
-  XCollisionComp *cP = (XCollisionComp*) compDataP;
-  cP->type = *((U8*) compDataSrcP);
+XIniSysFuncDef_(Collision) {
+  XCollision *xP = (XCollision*) sP;
+  xP->cameraEntity   = 0;
+  xP->cameraIsMoving = FALSE;
+  xP->collisionA     = NULL;
+  xP->worldWidth     = 0;
+  xP->worldHeight    = 0;
+  xP->rectA          = NULL;
+  xP->gridA          = NULL;  // static tile grid; stays NULL until a tilemap gene supplies one
 }
 
-#define CHANGE_LAYER (1) //TODO
-#define ENTITY_STARTED_MOVING (2) //TODO
-#define ENTITY_STOPPED_MOVING (3) //TODO
-void xCollisionProcessMessage(System *sP, Message *msgP) {
-  assert(sP && msgP);
-  XCollisionComp *cP;
-  cP = xGetCompPByEntity(sP, msgP->attn);
+//======================================================
+// Consume collision genes
+//   IMMUTABLE: body is the collision type (Key).
+//   MUTABLE:   CollRect mutations swapped in as animation frames change.
+//======================================================
+XConsumeGeneFuncDef_(Collision) {
+  assert( sP && geneP );
+  XCollisionComp *cP = (XCollisionComp*) xGetCompPByEntity( sP, entity );
   assert( cP );
-  switch (msgP->cmd) {
-    case CHANGE_LAYER:
-      cP->layer = msgP->arg;
-      break; 
-    // XColl pauses entities when they come onscreen (1 swap). If they start moving, simply unpause.
-    case MSG_MOTION_STARTED:
-      // TODO redo this logic with lists
-      // xUnpauseComponentByEntity(sP, msgP->attn);
+  cP->entity = entity;
+  switch ( geneP->class ) {
+    case IMMUTABLE:
+      assert( ((const ImmutableGene*) geneP)->bodyP );
+      cP->type = *((Key*) ((const ImmutableGene*) geneP)->bodyP);
       break;
-    case MSG_MOTION_STOPPPED:
-      // TODO redo this logic with lists
-      // xPauseComponentByEntity(sP, msgP->attn);
+    case MUTABLE:
+    case INTRACOMPOSITE:
+      xConsumeGeneDefault( sP, entity, geneP );
+      break;
+    default:
+      assert( FALSE );
       break;
   }
 }
 
-#define RECT (1)  // TODO move to enum (call these "keychains")
-#define LAYER (2)  // TODO move to enum (call these "keychains")
-#if 0  // TODO move to makecomponents
-XGetShareFuncDef_(Collision) {
-  XCollision *xCollisionSysP = (XCollision*) sP;
-  // Get system the rectangle array from master.
+//======================================================
+// Hook components up to shared rects and z-heights (z-height doubles as collision layer).
+//======================================================
+XMakeComponentsDef_(Collision) {
+  XCollision *xP = (XCollision*) sP;
   Map *rectMP = shareGetMap( DST_RECT );
-  Map *layerMP = shareGetMap( LAYER );
-  xCollisionSysP->rectA = rectMP->mapA;
-  // Give each component the index to its rectangle.
-  XCollisionComp *cP = sP->cF;
+  Map *zHeightMP = shareGetMap( Z_HEIGHT );
+  assert( rectMP );
+  xP->rectA = (Rect_*) rectMP->mapA;
+  XCollisionComp *cP = (XCollisionComp*) sP->cF;
   XCollisionComp *cStartP = cP;
-  XCollisionComp *cEndP = cP + arrayGetNElems(sP->cF);
-  U8 *layerP;
+  XCollisionComp *cEndP = cP + *_frayGetFirstEmptyIdxP(sP->cF);
+  Key *layerP;
   for (; cP < cEndP; ++cP) {
     cP->entity = sP->cIdx2eA[cP - cStartP];
+    assert( mapHasKey( rectMP, cP->entity ) );
     cP->collRect.idx = mapGetIndex(rectMP, cP->entity);
-    layerP = (U8*) mapGet(layerMP, cP->entity);
-    assert( layerP );
-    cP->layer = *layerP;
+    layerP = zHeightMP ? (Key*) mapGet(zHeightMP, cP->entity) : NULL;
+    cP->layer = layerP ? *layerP : 0;
   }
 }
-#endif
+
+XProcMsgFuncDef_(Collision) {
+  assert(sP && msgP);
+  XCollision *xP = (XCollision*) sP;
+  XCollisionComp *cP;
+  switch (msgP->cmd) {
+    case COLL_CHANGE_LAYER:
+    case MSG_LAYER_CHANGED:
+      cP = xGetCompPByEntity(sP, msgP->attn);
+      assert( cP );
+      cP->layer = msgP->arg;
+      break; 
+    case COLL_SET_CAMERA:
+      xP->cameraEntity = msgP->attn;
+      break;
+    case COLL_CAMERA_STARTED_MOVING:
+      xP->cameraIsMoving = TRUE;
+      break;
+    case COLL_CAMERA_STOPPED_MOVING:
+      xP->cameraIsMoving = FALSE;
+      break;
+    // Onscreen still entities sit in the paused section; moving ones are active.
+    case MSG_MOTION_STARTED:
+      xUnpauseComponentByEntity(sP, msgP->attn);
+      break;
+    case MSG_MOTION_STOPPPED:
+      xPauseComponentByEntity(sP, msgP->attn);
+      break;
+    default:
+      break;
+  }
+}
 
 inline static Bln _collided(const register Rect_ *r1P, const register Rect_ *r2P) {
   return r1P->y        < r2P->y + r2P->h &&  
@@ -88,17 +119,19 @@ inline static Bln _collided(const register Rect_ *r1P, const register Rect_ *r2P
          r1P->x + r1P->w > r2P->x;        
 }
 
-#define COLLISION 1 //TODO move to enum
-#define ANTICOLLISION 2 //TODO move to enum
 #define CAMERA_COLLISION_TYPE 3
 #define TILE_DIM_LOG 3
 #define HALF_TILE_DIM 4
 inline static void _alertCollision(System *sP, Entity entity, Key collType, Entity otherEntity) {
-  mailboxWrite(sP->mailboxF, entity, COLLISION, collType, otherEntity, NULL);
+  // Collisions drive behavior, so the Action system is the listener:
+  //   cmd = trigger, arg = other entity, attachment = other party's collision type.
+  Generic attachment = { .u32 = collType };
+  mailboxWrite(xGetInbox(ACTION), ACTION, entity, COLL_COLLISION, otherEntity, &attachment);
 }
 
 inline static void _alertAntiCollision(System *sP, Entity entity, Entity cameraEntity) {
-  mailboxWrite(sP->mailboxF, entity, ANTICOLLISION, CAMERA_COLLISION_TYPE, cameraEntity, NULL);
+  Generic attachment = { .u32 = CAMERA_COLLISION_TYPE };
+  mailboxWrite(xGetInbox(ACTION), ACTION, entity, COLL_ANTICOLLISION, cameraEntity, &attachment);
 }
 
 static void _alertCollisions(System *sP, Rect_ *rectA, XCollisionComp *c1P, XCollisionComp *c2P) {
@@ -120,7 +153,11 @@ void xCollisionRun(System *sP) {
   XCollision *xCollSysP = (XCollision*) sP;
   Rect_ *rectA = xCollSysP->rectA;
   // Get camera.
+  if (!rectA)
+    return;
   XCollisionComp *camCP = (XCollisionComp*) xGetCompPByEntity(sP, xCollSysP->cameraEntity);
+  if (!camCP)
+    return;  // no camera registered yet (see COLL_SET_CAMERA)
   Rect_ camRect = rectA[camCP->collRect.idx];
   Entity cameraEntity = camCP->entity;
   // You'll need this later.
@@ -165,6 +202,8 @@ void xCollisionRun(System *sP) {
   }
 
   // Finally, check mobile entities for collisions against static grid.
+  if (!xCollSysP->gridA)
+    return;
   U32 xStart, xEnd, y, yEnd, xN;
   U8 *tileP,*tileEndP;
   Rect_ entityRect;

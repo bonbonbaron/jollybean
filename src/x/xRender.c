@@ -1,8 +1,6 @@
 #include "x/xRender.h"
 #include "data/share.h"
 
-// TODO
-XConsumeGeneFuncDefUnused_(Render);
 
 // rendering system owns the graphical GUI. That way, excluding this system neatly excludes graphics.
 static Gui *_guiP = NULL; 
@@ -227,6 +225,42 @@ void xRenderIniSys(System *sP) {
   U32 nComponents = xGetNComps(sP);
   xP->imgPF = frayNew(sizeof(Image*), nComponents, TEMPORARY);
   xP->entityF = frayNew( sizeof(Entity), nComponents, TEMPORARY);
+  xP->entityImgPF = frayNew( sizeof(Image*), nComponents, TEMPORARY);
+}
+
+//=========================================================================
+// Consume render genes. An Image is itself the renderer's top-level gene.
+//=========================================================================
+static void _trackImage( XRender* xP, const Entity entity, Image* imgP ) {
+  assert( imgP && imgP->cmP );
+  // Images will prevent duplicate colormap-palette pairs in the texture atlas.
+  if ( !( imgP->state & INITIALIZED ) ) {
+    imgP->state |= INITIALIZED;
+    frayAdd( xP->imgPF, (void*) &imgP, NULL );
+    // Colormaps are media; defer their inflation until every gene has been distributed.
+    if ( imgP->cmP->sdP ) {
+      xRegisterForInflation( imgP->cmP->sdP );
+    }
+  }
+  // Track each entity once, alongside its image.
+  frayAdd( xP->entityF, (void*) &entity, NULL );
+  frayAdd( xP->entityImgPF, (void*) &imgP, NULL );
+}
+
+XConsumeGeneFuncDef_(Render) {
+  assert( sP && geneP );
+  XRender* xP = (XRender*) sP;
+  switch ( geneP->class ) {
+    case IMMUTABLE:
+      _trackImage( xP, entity, (Image*) geneP );
+      break;
+    case INTRACOMPOSITE:
+      xConsumeGeneDefault( sP, entity, geneP );  // recurses back into this function per sub-gene
+      break;
+    default:
+      assert( FALSE );  // renderer has no mutations (XRenderMutation is empty)
+      break;
+  }
 }
 
 //=========================================================================
@@ -449,55 +483,39 @@ Color_* assembleTextureAtlas(Image** imgPF, Atlas *atlasP) {
 // (?) How does it know if a deall is anim'd?
 // Then it gets shared map of source rectangles and updates the rect there.
 static void _updateSrcRects(XRender *xP, Atlas *atlasP) {
-  // Get all the animation rectangles we need to update when building our texture atlas.
-  // First count all the rectangles we're going to need.
-  // At this point, empty components will already have been added by xAddComp().
-  // XRenderComp* cP;  // TODO uncomment when ready to do below
-
-  /* TODO do away with subcomp owner nastiness
-     SubcompOwner *scoP = xP->system.subcompOwnerMP->mapA;
-     SubcompOwner *scoEndP = scoP + xP->system.subcompOwnerMP->sbmP->population;
-
-     RectOffset rectOffset = {0};
-     Image *imgP;
-  // If we own the src rect map, we better populate its flags before we access it.
-  // Give everybody an empty rectangle for now.
-  if (xP->system.flags & RENDER_SYS_OWNS_SRC_AND_OFFSET) {
-  // Copy the flags from one map to another. It's a cheat code.
-  mapCopyKeys(xP->srcRectMP, xP->dstRectMP);
-  assert(xP->srcRectMP->sbmP->population == xP->dstRectMP->sbmP->population); 
-  assert(arrayGetElemSz(xP->srcRectMP->mapA) == arrayGetElemSz(xP->dstRectMP->mapA)); 
-  }
+  assert( xP && atlasP );
+  assert( xP->srcRectMP );
+  RectOffset rectOffset = {0};
+  Rect_ emptyRect = {0};
+  XRenderComp *cP;
+  Image *imgP;
+  Entity *entityP = xP->entityF;
+  Entity *entityEndP = entityP + *_frayGetFirstEmptyIdxP(xP->entityF);
+  Image **imgPP = xP->entityImgPF;
   // Update all source rectangles' XY coordinates to their global positions in texture atlas.
-  // For each entity...
-  for (; scoP < scoEndP; ++scoP) {
-  imgP = (Image*) scoP->subcompA[IMG_SUBCOMP_IDX];
-  assert(scoP->owner);  
-  cP = xGetCompPByEntity( &xP->system, scoP->owner );
-  // Having a colormap is mandatory for xRender components.
-  // Source rectangle initialization (set flag first because implicit share maps don't know 
-  // which entities they should be mapped to ahead of time... would be nice if I found a way
-  // to use mapCopyKeys() for all systems prior to this function)
-  if (!(xP->system.flags & RENDER_SYS_OWNS_SRC_AND_OFFSET)) {
-  mapSetFlag(xP->srcRectMP, scoP->owner);
+  for (; entityP < entityEndP; ++entityP, ++imgPP) {
+    imgP = *imgPP;
+    cP = (XRenderComp*) xGetCompPByEntity( &xP->system, *entityP );
+    assert( cP && imgP );
+    // Implicit share maps don't know which entities they belong to ahead of time, so add one if missing.
+    if ( !mapHasKey( xP->srcRectMP, *entityP ) ) {
+      mapSet( xP->srcRectMP, *entityP, &emptyRect );
+    }
+    cP->srcRectP = (Rect_*) mapGet( xP->srcRectMP, *entityP );
+    assert( cP->srcRectP );
+    cP->srcRectP->x = atlasP->btP[imgP->sortedRectIdx].rect.x;
+    cP->srcRectP->y = atlasP->btP[imgP->sortedRectIdx].rect.y;
+    cP->srcRectP->w = atlasP->btP[imgP->sortedRectIdx].rect.w;
+    cP->srcRectP->h = atlasP->btP[imgP->sortedRectIdx].rect.h;
+    // If there's an animation system (which implies rect offsets), tell it to shift its frame
+    // rectangles' XY coordinates to their places in the texture atlas.
+    if ( xP->offsetRectMP ) {
+      rectOffset.x = cP->srcRectP->x;
+      rectOffset.y = cP->srcRectP->y;
+      mapSet( xP->offsetRectMP, *entityP, &rectOffset );
+      mailboxWrite( xGetInbox( ANIMATION ), ANIMATION, *entityP, UPDATE_RECT, 0, NULL );
+    }
   }
-  cP->srcRectP = (Rect_*) mapGet(xP->srcRectMP, scoP->owner);
-  assert (cP->srcRectP);
-  cP->srcRectP->x = atlasP->btP[imgP->sortedRectIdx].rect.x;
-  cP->srcRectP->y = atlasP->btP[imgP->sortedRectIdx].rect.y;
-  cP->srcRectP->w = atlasP->btP[imgP->sortedRectIdx].rect.w;
-  cP->srcRectP->h = atlasP->btP[imgP->sortedRectIdx].rect.h;
-  // If there's an animation system (which tells master that rect offsets are implied),
-  // tell the animation system to update its frame rectangles' XY coordinates to their places
-  // in the texture atlas.
-  if (xP->offsetRectMP) {
-  rectOffset.x = cP->srcRectP->x;
-  rectOffset.y = cP->srcRectP->y;
-  mapSet(xP->offsetRectMP, scoP->owner, &rectOffset);
-  mailboxWrite(xP->system.mailboxF, ANIMATION, scoP->owner, UPDATE_RECT, 0, NULL);
-  }
-  }
-  */
 }
 
 // Updates colormaps' indices to sorted rects so we can track their atlas XY offsets
@@ -556,7 +574,7 @@ XMakeComponentsDef_(Render) {
   // TODO use subcomp map below
   // Dest rect pointers
   Entity *entityP = xP->entityF;
-  Entity *entityEndP = entityP + arrayGetNElems(xP->entityF);
+  Entity *entityEndP = entityP + *_frayGetFirstEmptyIdxP(xP->entityF);
   XRenderComp *cP = NULL;
   for (; entityP < entityEndP; ++entityP) {
     cP = (XRenderComp*) xGetCompPByEntity(sP, *entityP);

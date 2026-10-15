@@ -81,6 +81,7 @@ typedef struct {
   Bln            collisionsDetected;
   Image        **imgPF;
   Entity        *entityF;  // components aren't added till postProcess(), so track entities here
+  Image        **entityImgPF;  // parallel to entityF: each tracked entity's image (imgPF is de-duplicated)
   List           layerListA[ N_LAYERS_SUPPORTED ];
   Texture_      *atlasTextureP;
   Map           *offsetRectMP;

@@ -102,6 +102,9 @@ typedef void (*XPostDeactivateU)(struct _System *sP, FrayChanges *changesP);  //
 #define XMakeComponentsDef_(name_) void x##name_##MakeComponents(System *sP)
 
 #define XConsumeGeneFuncDef_(name_) void x##name_##ConsumeGene(System *sP, const Entity entity, const GeneHdr *geneP)
+#define XConsumeGeneFuncDefDefault_(name_) XConsumeGeneFuncDef_(name_) {\
+  xConsumeGeneDefault( sP, entity, geneP );\
+}
 #define XConsumeGeneFuncDefUnused_(name_) void x##name_##ConsumeGene(System *sP, const Entity entity, const GeneHdr *geneP) {\
   unused_(sP);\
   unused_(geneP);\
@@ -172,6 +175,7 @@ typedef struct _System {
 void     xIni( const System* sysPA[], const Key NSYSTEMS, const RootGene* root );
 void     xAddEntity( const System* sP, const Entity entity );
 Entity   xGetEntityByVoidComponentPtr(System *sP, void *componentP);
+void     xConsumeGeneDefault( System* sP, const Entity entity, const GeneHdr *geneP );
 void     xMakeMutationMap( const System* sP, const Entity entity, const GeneHdr *geneP );
 void     xMutateComponent(System *sP, Entity entity, Key newCompKey);
 U32      xGetNComps(System *sP);
